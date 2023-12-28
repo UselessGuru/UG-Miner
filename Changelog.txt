@@ -1,0 +1,7 @@
+Known issues:
+- Balance Tracker / Earnings Graph: Date change take does not respect local time zone (accumulated data is calculated in UTC time)
+
+ChangeLog UG-Miner 6.0.0.0 2023/12/29
+=====================================
+
+Initial release. Code base is taken from NemosMiner 5.0.2.5.
