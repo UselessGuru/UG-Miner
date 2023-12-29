@@ -45,7 +45,7 @@ Easy configuration, easy start:
 
       Note: 2. you only need to change the username if you are using MiningDutch, MiningPoolhub or ProHashing
 
-![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/tag/Images#:~:text=UG%2DMiner_FirstStart.png "UG-Miner Web GUI")
+![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
    Algorithm selection / removal
 
