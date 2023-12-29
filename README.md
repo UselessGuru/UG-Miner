@@ -111,29 +111,27 @@ Easy configuration, easy start:
 
 
    Developer/Contributors Donation: 
-      The list and wallets is stored in [UG-Miner Directory]\Data\DonationData.json
-
-      Donation Fee = 0.9%
-      There is 13 minute per day default donation (0.9%),
+      Donation Fee is approx. 1% (15 minutes per day)
       which can be increased or decreased in the configuration editor.
       Please help support the great team behind UG-Miner by leaving mining donations turned on.
       We want to stay completely transparent on the way fees are managed in the product.
-      Donation cycle occurs once in 24hrs (or once until midnight if UG-Miner has been running less than 24hrs).
+      Donation cycle occurs only once in 24hrs (or once until midnight if UG-Miner has been running less than 24hrs).
       Donation start time is randomized each time.
-      It will then mine for one randomly chosen developer / contributor for the configured duration.
+      It will then mine for UselessGuru for the configured duration.
 
-      Example for default parameters (13 minutes):
+      Example for default parameters (15 minutes):
       - UG-Miner was started at 10:00h
-      - First donation cycle starts somewhen between 10:01h and 23:47h and will then donate for 13 minutes, then mine for you again until the next donation run.
+      - First donation cycle starts somewhen between 10:01h and 23:47h and will then donate for 15 minutes, then mine for you again until the next donation run.
       - After 00:00h the donation start time is randomized again. 
-      - When donation start time is reached it will then donate for 13 minutes, then mine for you again until the next donation run.
+      - When donation start time is reached it will then donate for 15 minutes, then mine for you again until the next donation run.
       All donation time and addresses are recorded in the logs files.
+
+      The list and wallets is stored in [UG-Miner Directory]\Data\DonationData.json
 
    Web & Legacy GUI
 
       UG-Miner relies on config files. No need to edit bat files. Simply run UG-Miner.bat
       Set the config in the Web GUI (http://localhost:3999/configedit.html), apply & start mining
-      Version 3.9.9.x (Beta) and later has a Web GUI making it easy to configure and run.
 
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
