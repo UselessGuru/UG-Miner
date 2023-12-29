@@ -110,7 +110,8 @@ Easy configuration, easy start:
       normal - uses current price data in pool API to calculate profit (no estimates or advanced calculations)
 
 
-   Developer/Contributors Donation: 
+   Developer/Contributors Donation
+
       Donation Fee is approx. 1% (15 minutes per day)
       which can be increased or decreased in the configuration editor.
       Please help support the great team behind UG-Miner by leaving mining donations turned on.
