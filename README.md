@@ -2,22 +2,22 @@
 
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 
-Updated 2023/09/05
+Updated 2024/01/01
 
 
-Copyright (c) 2018-2023 UselessGuru
+Copyright (c) 2018-2024 UselessGuru
 
 This is free software, and you are welcome to redistribute it
 under certain conditions.
 https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 
-Updated/Maintained by UselessGuru
+Updated & maintained by UselessGuru
 
 UG-Miner code is partly based on
 
 - MultiPoolMiner which can be found here: https://github.com/MultiPoolMiner/MultiPoolMiner (Project is no longer maintained)
 - NPlusMiner which can be found here: https://github.com/MrPlusGH/NPlusMiner (Project is no longer maintained)
-- NemosMiner which can be found here: https://github.com/UselessGuru/miners/releases (Project is no longer maintained)
+- NemosMiner which can be found here: https://github.com/Minerx117/NemosMiner (Project is no longer maintained)
 
 *****
 
@@ -28,7 +28,6 @@ UG-Miner code is partly based on
    - Fully automated
    - Auto downloads miner binaries
    - Auto updates
-   - Monitoring
    - Earnings graph
    - Low developer fee (can be set to 0)
    - Calculate power cost (optional software installation required)
@@ -46,7 +45,7 @@ Easy configuration, easy start:
 
       Note: 2. you only need to change the username if you are using MiningDutch, MiningPoolhub or ProHashing
 
-![alt text](https://github.com/UselessGuru/miners/releases/download/Pictures/UG-Miner_FirstStart.png "UG-Miner Web GUI")
+![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI")
 
    Algorithm selection / removal
 
@@ -59,17 +58,17 @@ Easy configuration, easy start:
       Do not combine + and - for the same algorithm
 
       Examples:
-      Algorithm list = '-x16r'
-      Will mine anything but x16r
+      Algorithm list = '-ethash'
+      Will mine anything but ethash
 
-      Algorithm list = '-x16r,-bcd'
-      Will mine anything but x16r and bcd
+      Algorithm list = '-ethash,-kawpow'
+      Will mine anything but ethash and kawpow
 
-      Algorithm list = +x16r
-      Will mine only x16r
+      Algorithm list = +ethash
+      Will mine only ethash
 
-      Algorithm list = '+x16r,+bcd'
-      Will mine only x16r and BCD
+      Algorithm list = '+ethash,+kawpow'
+      Will mine only ethash and kawpow
 
       Algorithm list blank
       Will mine anything
@@ -130,12 +129,6 @@ Easy configuration, easy start:
       - When donation start time is reached it will then donate for 13 minutes, then mine for you again until the next donation run.
       All donation time and addresses are recorded in the logs files.
 
-   UG-Miner Monitoring Server: https://UG-Miner.com
-
-      Keep tabs on all your mining rigs from one place
-      You can now optionally monitor all your workers remotely, both in the GUI and via https://UG-Miner.com
-      Monitoring setup instructions https://UG-Miner.com/setup.php
-
    Web & Legacy GUI
 
       UG-Miner relies on config files. No need to edit bat files. Simply run UG-Miner.bat
@@ -143,7 +136,7 @@ Easy configuration, easy start:
       Version 3.9.9.x (Beta) and later has a Web GUI making it easy to configure and run.
 
 
-![alt text](https://github.com/UselessGuru/miners/releases/download/Pictures/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
+![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
 
 
    Pause mining
@@ -159,7 +152,7 @@ Easy configuration, easy start:
       The prerun scripts can be used to set per miner/algorithm OC via nvidiaInspector or OverdriveNTool.
       Before starting a miner executable UG-Miner is trying to launch one of the following 3 prerun scripts (in this order):
       1. <MinerName>_<Algorithm>.bat
-         Simply create a file named <MinerName>_<AlgorithmName>.bat in prerun folder, e.g. 'Bminer-v16.4.11-1xRadeonRX5808GB-Handshake-10.bat' or 'CcminerMTP-v1.3.2-1xGTX10606GB_MTP.bat'
+         Simply create a file named <MinerName>_<AlgorithmName>.bat in prerun folder, e.g. 'MiniZ-v2.2c-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat'
       2. <Algorithm>.bat
          Simply create a file named <AlgorithmName>.bat in prerun folder, e.g. 'Ethash.bat'
       3. default.bat
@@ -279,7 +272,7 @@ Easy configuration, easy start:
 
 PowerShell Version 7.x is required:
 
-[Download Installer for version 7.3.8](https://github.com/PowerShell/PowerShell/releases/download/v7.3.8/PowerShell-7.3.8-win-x64.msi)
+[Download Installer for version 7.4.0](https://github.com/PowerShell/PowerShell/releases/download/v7.3.8/PowerShell-7.4.0-win-x64.msi)
 
 **Some miners may need 'Visual C+ RunTimes download/extract, run install_all.bat file**
 
