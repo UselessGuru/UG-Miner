@@ -291,7 +291,7 @@ If you use older drivers some miners will not be available.
 
    UG-Miner is currently tested on the following Rigs: 
 
-      Windows11-1xGTX1030-2GB/1xGTX-1060Super/1xGTX750Ti-2GB/1xRX580-8GB/RX5700/Inteli5-8600K
+      Windows11-1xGTX1030-2GB/1xGTX-1060Super-6GB/1xGTX750Ti-2GB/1xRX580-8GB/1xRX5700-8GB/Inteli5-8600K
       Windows11-1xMX250/Inteli10-10210u
 
 *****
