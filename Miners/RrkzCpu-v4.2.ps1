@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -29,7 +29,7 @@ $Path = ".\Bin\$()$Name)\cpuminer.exe"
 
 $Algorithms = @(
 #   [PSCustomObject]@{ Algorithm = "CpuPower";   MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @(); Arguments = " --algo cpupower" } # ASIC
-    [PSCustomObject]@{ Algorithm = "Yespower2b"; Minerset = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo power2b" }
+    [PSCustomObject]@{ Algorithm = "Yespower2b"; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo power2b" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -44,7 +44,7 @@ If ($Algorithms) {
     $Algorithms.ForEach(
         { 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }) | Select-Object -Last 1)) {  
+            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })[-1])) {  
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"

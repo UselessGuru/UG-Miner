@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -36,11 +36,11 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("UbqHash");            Type = "AMD"; Fee = @(0.0065);   MinMemGiB = 0.77; MinerSet = 0; Tuning = " -mi 12 -straps 1"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();                 ExcludePools = @(@(), @()); Arguments = " -amd -eres 1 -coin UBQ" }
     [PSCustomObject]@{ Algorithms = @("UbqHash", "Blake2s"); Type = "AMD"; Fee = @(0.009, 0); MinMemGiB = 0.77; MinerSet = 0; Tuning = " -mi 12 -straps 1"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("RDNA1", "RDNA2"); ExcludePools = @(@(), @()); Arguments = " -amd -eres 1 -coin UBQ -dcoin blake2s" }
       
-    [PSCustomObject]@{ Algorithms = @("EtcHash");            Type = "NVIDIA"; Fee = @(0.0065);   MinMemGiB = 0.77; Minerset = 1; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1 -coin ETC" } # GMiner-v3.42 is just as fast, PhoenixMiner-v6.2c is maybe faster, but I see lower speed at the pool
+    [PSCustomObject]@{ Algorithms = @("EtcHash");            Type = "NVIDIA"; Fee = @(0.0065);   MinMemGiB = 0.77; MinerSet = 1; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1 -coin ETC" } # GMiner-v3.42 is just as fast, PhoenixMiner-v6.2c is maybe faster, but I see lower speed at the pool
     [PSCustomObject]@{ Algorithms = @("EtcHash", "Blake2s"); Type = "NVIDIA"; Fee = @(0.009, 0); MinMemGiB = 0.77; MinerSet = 0; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1 -coin ETC -dcoin blake2s" }
-    [PSCustomObject]@{ Algorithms = @("Ethash");             Type = "NVIDIA"; Fee = @(0.0065);   MinMemGiB = 0.77; Minerset = 1; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1" } # GMiner-v3.42 is just as fast, PhoenixMiner-v6.2c is maybe faster, but I see lower speed at the pool
+    [PSCustomObject]@{ Algorithms = @("Ethash");             Type = "NVIDIA"; Fee = @(0.0065);   MinMemGiB = 0.77; MinerSet = 1; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1" } # GMiner-v3.42 is just as fast, PhoenixMiner-v6.2c is maybe faster, but I see lower speed at the pool
     [PSCustomObject]@{ Algorithms = @("Ethash", "Blake2s");  Type = "NVIDIA"; Fee = @(0.009, 0); MinMemGiB = 0.77; MinerSet = 0; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1 -dcoin blake2s" }
-    [PSCustomObject]@{ Algorithms = @("UbqHash");            Type = "NVIDIA"; Fee = @(0.0065);   MinMemGiB = 0.77; Minerset = 1; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1 -coin UBQ" }
+    [PSCustomObject]@{ Algorithms = @("UbqHash");            Type = "NVIDIA"; Fee = @(0.0065);   MinMemGiB = 0.77; MinerSet = 1; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1 -coin UBQ" }
     [PSCustomObject]@{ Algorithms = @("UbqHash", "Blake2s"); Type = "NVIDIA"; Fee = @(0.009, 0); MinMemGiB = 0.77; MinerSet = 0; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 1 -coin UBQ -dcoin blake2s" }
 )
 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash Internal.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -82,7 +82,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.NiceHashAPIKey -and
 
         If ($APIResponse.active) { 
             Return [PSCustomObject]@{ 
-                DateTime   = ([DateTime]::Now).ToUniversalTime()
+                DateTime   = [DateTime]::Now.ToUniversalTime()
                 Pool       = $Name
                 Currency   = $PayoutCurrency
                 Wallet     = $Wallet
@@ -104,3 +104,6 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.NiceHashAPIKey -and
 
     $RetryCount--
 }
+
+$Error.Clear()
+[System.GC]::Collect()

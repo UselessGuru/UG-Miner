@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -30,26 +30,26 @@ $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Autolykos2");           Fee = @(0.02);       MinMemGiB = 1.08; MinerSet = 0; Tuning = " --mt 3"; WarmupTimes = @(45, 0);   ExcludePools = @(@(), @()); Arguments = " --algo autolykos2 --intensity 25" }
-    [PSCustomObject]@{ Algorithms = @("Blake3");               Fee = @(0.01);       MinMemGiB = 2;    Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(45, 0);   ExcludePools = @(@(), @()); Arguments = " --algo blake3 --intensity 25" }
-    [PSCustomObject]@{ Algorithms = @("EtcHash");              Fee = @(0.01);       MinMemGiB = 1.08; Minerset = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 5);   ExcludePools = @(@(), @()); Arguments = " --algo etchash --intensity 25" } # GMiner-v3.42 is fastest
-    [PSCustomObject]@{ Algorithms = @("EtcHash", "Blake3");    Fee = @(0.01, 0.01); MinMemGiB = 1.08; Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo etchash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
-    [PSCustomObject]@{ Algorithms = @("Ethash");               Fee = @(0.01);       MinMemGiB = 1.08; Minerset = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --intensity 25" } # GMiner-v3.42 is fastest
-    [PSCustomObject]@{ Algorithms = @("Ethash", "Autolykos2"); Fee = @(0.01, 0.02); MinMemGiB = 8;    Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo autolykos2 --lhr-tune -1 --lhr-autotune-interval 1" }
-    [PSCustomObject]@{ Algorithms = @("Ethash", "Blake3");     Fee = @(0.01, 0.01); MinMemGiB = 1.08; Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
-    [PSCustomObject]@{ Algorithms = @("Ethash", "FiroPow");    Fee = @(0.01, 0.01); MinMemGiB = 10;   Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo firopow --lhr-tune -1" }
-    [PSCustomObject]@{ Algorithms = @("Ethash", "KawPow");     Fee = @(0.01, 0.01); MinMemGiB = 10;   Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo kawpow --lhr-tune -1" }
-    [PSCustomObject]@{ Algorithms = @("Ethash", "Octopus");    Fee = @(0.01, 0.02); MinMemGiB = 8;    Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo octopus --lhr-tune -1" }
-    [PSCustomObject]@{ Algorithms = @("FiroPow");              Fee = @(0.01);       MinMemGiB = 1.08; Minerset = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow --intensity 25" }
-    [PSCustomObject]@{ Algorithms = @("KawPow");               Fee = @(0.01);       MinMemGiB = 1.08; Minerset = 1; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.20.0 is almost as fast but has no fee
-    [PSCustomObject]@{ Algorithms = @("MTP");                  Fee = @(0.01);       MinMemGiB = 3;    Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
-    [PSCustomObject]@{ Algorithms = @("MTPTcr");               Fee = @(0.01);       MinMemGiB = 3;    Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp-tcr --intensity 21" }
-    [PSCustomObject]@{ Algorithms = @("Multi");                Fee = @(0.01);       MinMemGiB = 2;    Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo multi --intensity 25" }
-    [PSCustomObject]@{ Algorithms = @("Octopus");              Fee = @(0.02);       MinMemGiB = 1.08; Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo octopus" } # 6GB is not enough
-    [PSCustomObject]@{ Algorithms = @("ProgPowSero");          Fee = @(0.01);       MinMemGiB = 1.08; Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow --coin sero" }
-    [PSCustomObject]@{ Algorithms = @("ProgPowVeil");          Fee = @(0.01);       MinMemGiB = 1.08; Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veil --intensity 24" }
-    [PSCustomObject]@{ Algorithms = @("ProgPowVeriblock");     Fee = @(0.01);       MinMemGiB = 2;    Minerset = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veriblock" }
+    [PSCustomObject]@{ Algorithms = @("Blake3");               Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(45, 0);   ExcludePools = @(@(), @()); Arguments = " --algo blake3 --intensity 25" }
+    [PSCustomObject]@{ Algorithms = @("EtcHash");              Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 5);   ExcludePools = @(@(), @()); Arguments = " --algo etchash --intensity 25" } # GMiner-v3.42 is fastest
+    [PSCustomObject]@{ Algorithms = @("EtcHash", "Blake3");    Fee = @(0.01, 0.01); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo etchash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
+    [PSCustomObject]@{ Algorithms = @("Ethash");               Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --intensity 25" } # GMiner-v3.42 is fastest
+    [PSCustomObject]@{ Algorithms = @("Ethash", "Autolykos2"); Fee = @(0.01, 0.02); MinMemGiB = 8;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo autolykos2 --lhr-tune -1 --lhr-autotune-interval 1" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "Blake3");     Fee = @(0.01, 0.01); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "FiroPow");    Fee = @(0.01, 0.01); MinMemGiB = 10;   MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo firopow --lhr-tune -1" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "KawPow");     Fee = @(0.01, 0.01); MinMemGiB = 10;   MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo kawpow --lhr-tune -1" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "Octopus");    Fee = @(0.01, 0.02); MinMemGiB = 8;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo octopus --lhr-tune -1" }
+    [PSCustomObject]@{ Algorithms = @("FiroPow");              Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow --intensity 25" }
+    [PSCustomObject]@{ Algorithms = @("KawPow");               Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.20.0 is almost as fast but has no fee
+    [PSCustomObject]@{ Algorithms = @("MTP");                  Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
+    [PSCustomObject]@{ Algorithms = @("MTPTcr");               Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp-tcr --intensity 21" }
+    [PSCustomObject]@{ Algorithms = @("Multi");                Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo multi --intensity 25" }
+    [PSCustomObject]@{ Algorithms = @("Octopus");              Fee = @(0.02);       MinMemGiB = 1.08; MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo octopus" } # 6GB is not enough
+    [PSCustomObject]@{ Algorithms = @("ProgPowSero");          Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow --coin sero" }
+    [PSCustomObject]@{ Algorithms = @("ProgPowVeil");          Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veil --intensity 24" }
+    [PSCustomObject]@{ Algorithms = @("ProgPowVeriblock");     Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veriblock" }
     [PSCustomObject]@{ Algorithms = @("ProgPowZ");             Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 0; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpowz --intensity 25" }
-#   [PSCustomObject]@{ Algorithms = @("Tensority");            Fee = @(0.01);       MinMemGiB = 2;    Minerset = 3; Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo tensority --intensity 25" } # ASIC
+#   [PSCustomObject]@{ Algorithms = @("Tensority");            Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 3; Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo tensority --intensity 25" } # ASIC
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

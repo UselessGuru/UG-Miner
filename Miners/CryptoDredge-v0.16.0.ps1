@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -34,13 +34,13 @@ $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Allium";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(); Arguments = " --algo allium --intensity 8" } # FPGA
-    [PSCustomObject]@{ Algorithm = "Exosis";    Fee = @(0.01); MinMemGiB = 2; Minerset = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo exosis --intensity 8" }
-    [PSCustomObject]@{ Algorithm = "Dedal";     Fee = @(0.01); MinMemGiB = 2; Minerset = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo dedal --intensity 8" }
+    [PSCustomObject]@{ Algorithm = "Exosis";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo exosis --intensity 8" }
+    [PSCustomObject]@{ Algorithm = "Dedal";     Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo dedal --intensity 8" }
     [PSCustomObject]@{ Algorithm = "HMQ1725";   Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo hmq1725 --intensity 8" } # CryptoDredge v0.26.0 is fastest
     [PSCustomObject]@{ Algorithm = "Neoscrypt"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 6" } # FPGA
-#   [PSCustomObject]@{ Algorithm = "Phi";       Fee = @(0.01); MinMemGiB = 2; Minerset = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi --intensity 8" } # ASIC
-    [PSCustomObject]@{ Algorithm = "Phi2";      Fee = @(0.01); MinMemGiB = 2; Minerset = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi2 --intensity 8" }
-    [PSCustomObject]@{ Algorithm = "Pipe";      Fee = @(0.01); MinMemGiB = 2; Minerset = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo pipe --intensity 8" }
+#   [PSCustomObject]@{ Algorithm = "Phi";       Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi --intensity 8" } # ASIC
+    [PSCustomObject]@{ Algorithm = "Phi2";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi2 --intensity 8" }
+    [PSCustomObject]@{ Algorithm = "Pipe";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo pipe --intensity 8" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

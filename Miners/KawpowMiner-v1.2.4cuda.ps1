@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\kawpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "KawPow"; MinMemGiB = 0.93; Minerset = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
+    [PSCustomObject]@{ Algorithm = "KawPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

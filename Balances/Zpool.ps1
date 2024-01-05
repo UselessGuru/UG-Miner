@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -46,7 +46,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
 
                 If ($APIResponse.currency -ne "INVALID" -and $APIResponse.currency -and ($APIResponse.unsold -or $APIResponse.balance -or $APIResponse.unpaid)) { 
                     [PSCustomObject]@{ 
-                        DateTime = ([DateTime]::Now).ToUniversalTime()
+                        DateTime = [DateTime]::Now.ToUniversalTime()
                         Pool     = $Name
                         Currency = $APIResponse.currency
                         Wallet   = $Wallet
@@ -69,3 +69,6 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
         }
     }
 )
+
+$Error.Clear()
+[System.GC]::Collect()

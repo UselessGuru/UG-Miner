@@ -56,12 +56,12 @@
                 <th data-field="Type" data-sortable="true" data-filter-control="select" data-visible="false">Type</th>
                 <th data-field="tStatus" data-sortable="true" data-filter-control="select">Status</th>
                 <th data-field="Reasons" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Reasons</th>
-                <th data-field="Earning_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="per 24hrs (estimated)">Earning (Biased)</th>
-                <th data-field="Earning" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="per 24hrs (estimated)">Earning</th>
-                <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="per 24hrs (estimated)">Power Cost</th>
-                <th data-field="Profit_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="per 24hrs (estimated)">Profit (Biased)</th>
-                <th data-field="Profit" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="per 24hrs (estimated)">Profit</th>
-                <th data-field="PowerConsumption" data-align="right" data-sortable="true" data-formatter="formatWatt" class="text-nowrap" data-title-tooltip="per 24hrs (estimated)">Power</th>
+                <th data-field="Earning_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning (Biased)</th>
+                <th data-field="Earning" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning</th>
+                <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Power Cost</th>
+                <th data-field="Profit_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Profit (Biased)</th>
+                <th data-field="Profit" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Profit</th>
+                <th data-field="PowerConsumption" data-align="right" data-sortable="true" data-formatter="formatWatt" class="text-nowrap" data-title-tooltip="(estimated value)">Power</th>
                 <th data-field="tTotalMiningDuration" data-sortable="true" data-visible="false">Total Mining Duration</th>
                 <th data-field="tEarningAccuracy" data-align="right" data-sortable="true">Accuracy</th>
                 <th data-field="tPrimaryAlgorithm" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Primary Algorithm</th>
@@ -114,6 +114,9 @@
 
             $table.bootstrapTable({
               async: 'true',
+              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
+              height: $(window).height() - $table.offset().top + 26,
+
               onLoadSuccess: function() {
                 if (config.CalculatePowerCost == true) {
                   $table.bootstrapTable('showColumn', 'Profit_Bias');
@@ -138,29 +141,28 @@
                     if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());
                   });
                 };
-              },
-
-              onReorderColumn: function() {
                 $(".addlocalcurrency").each(function () {
-                  this.childNodes[0].innerText = this.childNodes[0].innerText + '\n(' + config.MainCurrency + ')';
+                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
                 });
-              },
+              }
+            });
 
-              onAll: function() {
-                try {
-                  document.getElementById('btn-re-benchmark').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-                  document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-                  document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-                  document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-                  document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-                } catch {}
-              },
+            $('#miners').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function (e) {
+              $(".addlocalcurrency").each(function () {
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
+              });
+            });
 
-              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
-              height: $(window).height() - $table.offset().top + 26
+            $('#miners').on('check.bs.table check-all.bs.table check-some.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
+              document.getElementById('btn-re-benchmark').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+              document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+              document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+              document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+              document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 
             $(document).ready(function () {
+
               $('#btn-re-benchmark').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
@@ -248,10 +250,6 @@
                   });
                   $table.bootstrapTable('refresh');
                 }
-              });
-
-              $(".addlocalcurrency").each(function () {
-                this.childNodes[0].innerText = this.childNodes[0].innerText + '\n(' + config.MainCurrency + ')';
               });
             });
 

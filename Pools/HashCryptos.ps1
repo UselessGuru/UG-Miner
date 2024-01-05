@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 param(
@@ -103,3 +103,4 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
 }
 
 $Error.Clear()
+[System.GC]::Collect()

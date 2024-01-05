@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 using module ..\Includes\Include.psm1
@@ -62,7 +62,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
         } While ($AlgoData.PSObject.Properties.Name.Count -lt 2)
 
-        $Timestamp = ([DateTime]::Now).ToUniversalTime()
+        $Timestamp = [DateTime]::Now.ToUniversalTime()
 
         # Change numeric string to numbers, some values are null
         $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
@@ -131,9 +131,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
     Remove-Variable CurrenciesData, Duration -ErrorAction Ignore
 
-    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and ([DateTime]::Now).ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
-
+    
     $Error.Clear()
+    [System.GC]::Collect()
 }

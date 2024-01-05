@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -36,24 +36,24 @@ $Path = "$PWD\Bin\$Name\z-enemy.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Aergo";      MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo aergo --intensity 23 --statsavg 5" }
-#   [PSCustomObject]@{ Algorithm = "BCD";        MinMemGiB = 3;    Minerset = 3; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo bcd --statsavg 5" } # ASIC
-#   [PSCustomObject]@{ Algorithm = "Bitcore";    MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(90, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo bitcore --intensity 22 --statsavg 5" } # Bitcore is using MegaBtx
-    [PSCustomObject]@{ Algorithm = "C11";        MinMemGiB = 3;    Minerset = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo c11 --intensity 24 --statsavg 5" }
-    [PSCustomObject]@{ Algorithm = "Hex";        MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo hex --intensity 24 --statsavg 5" }
-    [PSCustomObject]@{ Algorithm = "KawPow";     MinMemGiB = 0.77; Minerset = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo kawpow --intensity 24 --statsavg 1" }
-#   [PSCustomObject]@{ Algorithm = "Phi";        MinMemGiB = 3;    Minerset = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo phi --statsavg 5" } # ASIC
-    [PSCustomObject]@{ Algorithm = "Phi2";       MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo phi2 --statsavg 5" }
-    [PSCustomObject]@{ Algorithm = "Polytimos";  MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo poly --statsavg 5" }
-    [PSCustomObject]@{ Algorithm = "SkunkHash";  MinMemGiB = 3;    Minerset = 3; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo skunk --statsavg 1" } # No hashrate in time for old cards
-#   [PSCustomObject]@{ Algorithm = "Sonoa";      MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(90, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo sonoa --statsavg 1" } # No hashrate in time
-    [PSCustomObject]@{ Algorithm = "Timetravel"; MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo timetravel --statsavg 5" }
+    [PSCustomObject]@{ Algorithm = "Aergo";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo aergo --intensity 23 --statsavg 5" }
+#   [PSCustomObject]@{ Algorithm = "BCD";        MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo bcd --statsavg 5" } # ASIC
+#   [PSCustomObject]@{ Algorithm = "Bitcore";    MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo bitcore --intensity 22 --statsavg 5" } # Bitcore is using MegaBtx
+    [PSCustomObject]@{ Algorithm = "C11";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo c11 --intensity 24 --statsavg 5" }
+    [PSCustomObject]@{ Algorithm = "Hex";        MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo hex --intensity 24 --statsavg 5" }
+    [PSCustomObject]@{ Algorithm = "KawPow";     MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo kawpow --intensity 24 --statsavg 1" }
+#   [PSCustomObject]@{ Algorithm = "Phi";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo phi --statsavg 5" } # ASIC
+    [PSCustomObject]@{ Algorithm = "Phi2";       MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo phi2 --statsavg 5" }
+    [PSCustomObject]@{ Algorithm = "Polytimos";  MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo poly --statsavg 5" }
+    [PSCustomObject]@{ Algorithm = "SkunkHash";  MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo skunk --statsavg 1" } # No hashrate in time for old cards
+#   [PSCustomObject]@{ Algorithm = "Sonoa";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo sonoa --statsavg 1" } # No hashrate in time
+    [PSCustomObject]@{ Algorithm = "Timetravel"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo timetravel --statsavg 5" }
 #   [PSCustomObject]@{ Algorithm = "Tribus";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(90, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo tribus --statsavg 1" } # ASIC
-#   [PSCustomObject]@{ Algorithm = "X16r";       MinMemGiB = 3;    Minerset = 3; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16r --statsavg 1" } # ASIC
+#   [PSCustomObject]@{ Algorithm = "X16r";       MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16r --statsavg 1" } # ASIC
     [PSCustomObject]@{ Algorithm = "X16rv2";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16rv2 --statsavg 5" }
-    [PSCustomObject]@{ Algorithm = "X16s";       MinMemGiB = 3;    Minerset = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16s --statsavg 5" } # FPGA
+    [PSCustomObject]@{ Algorithm = "X16s";       MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16s --statsavg 5" } # FPGA
     [PSCustomObject]@{ Algorithm = "X17";        MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 0); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x17 --statsavg 1" }
-#   [PSCustomObject]@{ Algorithm = "Xevan";      MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(90, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo xevan --intensity 26 --diff-factor 1 --statsavg 1" } # No hashrate in time
+#   [PSCustomObject]@{ Algorithm = "Xevan";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo xevan --intensity 26 --diff-factor 1 --statsavg 1" } # No hashrate in time
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

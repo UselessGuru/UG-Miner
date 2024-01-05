@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [Version]"450.80.02" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @( 
-    [PSCustomObject]@{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; Minerset = 0; WarmupTimes = @(180, 0); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
+    [PSCustomObject]@{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 0); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -56,7 +56,7 @@ If ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "OneZero"
-                                Arguments   = "$($_.Arguments) --pool $(If ($Pool.PoolPorts[1]) { "ssl://"} )$($Pool.Host):$($Pool.PoolPorts[0] | Select-Object -Last 1) --wallet $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.PoolPorts[1] -and $Config.SSLAllowSelfSignedCertificate) { " --no-cert-validation" } ) --api-port $MinerAPIPort --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$($_.Arguments) --pool $(If ($Pool.PoolPorts[1]) { "ssl://"} )$($Pool.Host):$($Pool.PoolPorts[0][-1]) --wallet $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.PoolPorts[1] -and $Config.SSLAllowSelfSignedCertificate) { " --no-cert-validation" } ) --api-port $MinerAPIPort --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMiner_Devices.Name
                                 Fee         = $_.Fee # Dev fee
                                 MinerSet    = $_.MinerSet

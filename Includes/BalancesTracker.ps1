@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 using module .\Include.psm1
@@ -154,67 +154,67 @@ Do {
                             $PoolBalanceObject.Balance += $PoolBalanceObject.Withdrawal
                             $Payout = 0
                         }
-                        ElseIf (($PoolBalanceObjects | Select-Object -Last 1).Withdrawal -gt 0 -and $PoolBalanceObject.Withdrawal -eq 0) { 
+                        ElseIf (($PoolBalanceObjects[-1]).Withdrawal -gt 0 -and $PoolBalanceObject.Withdrawal -eq 0) { 
                             # Payout occurred
-                            $Payout = ($PoolBalanceObjects | Select-Object -Last 1).Withdrawal
+                            $Payout = ($PoolBalanceObjects[-1]).Withdrawal
                         }
                         ElseIf ($PoolBalanceObject.Withdrawal -eq 0) { 
                             # NiceHash temporarily hides some 'pending' value while processing payouts
-                            If ($PoolBalanceObject.Pending -lt ($PoolBalanceObjects | Select-Object -Last 1).Pending) { 
-                                $HiddenPending = ($PoolBalanceObjects | Select-Object -Last 1).Pending - $PoolBalanceObject.Pending
+                            If ($PoolBalanceObject.Pending -lt ($PoolBalanceObjects[-1]).Pending) { 
+                                $HiddenPending = ($PoolBalanceObjects[-1]).Pending - $PoolBalanceObject.Pending
                                 $PoolBalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
                             }
                             # When payouts are processed the hidden pending value gets added to the balance
-                            If (($PoolBalanceObjects | Select-Object -Last 1).HiddenPending -gt 0) { 
-                                If ($PoolBalanceObject.Balance -eq (($PoolBalanceObjects | Select-Object -Last 1).Balance)) { 
+                            If (($PoolBalanceObjects[-1]).HiddenPending -gt 0) { 
+                                If ($PoolBalanceObject.Balance -eq (($PoolBalanceObjects[-1]).Balance)) { 
                                     # Payout processing complete
                                     $HiddenPending *= -1
                                 }
                                 Else { 
                                     # Still processing payouts
-                                    $HiddenPending = ($PoolBalanceObjects | Select-Object -Last 1).HiddenPending
+                                    $HiddenPending = ($PoolBalanceObjects[-1]).HiddenPending
                                     $PoolBalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
                                 }
                             }
-                            If (($PoolBalanceObjects | Select-Object -Last 1).Unpaid -gt $PoolBalanceObject.Unpaid) { 
-                                $Payout = ($PoolBalanceObjects | Select-Object -Last 1).Unpaid - $PoolBalanceObject.Unpaid
+                            If (($PoolBalanceObjects[-1]).Unpaid -gt $PoolBalanceObject.Unpaid) { 
+                                $Payout = ($PoolBalanceObjects[-1]).Unpaid - $PoolBalanceObject.Unpaid
                             }
                             Else { 
                                 $Payout = 0
                             }
                         }
-                        $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects | Select-Object -Last 1).Unpaid
-                        $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects | Select-Object -Last 1).Earnings + $Delta + $HiddenPending + $Payout) -Force
+                        $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects[-1]).Unpaid
+                        $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings + $Delta + $HiddenPending + $Payout) -Force
                     }
                     ElseIf ($PoolBalanceObject.Pool -eq "MiningPoolHub") { 
                         # MiningHubPool never reduces earnings
-                        $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects | Select-Object -Last 1).Unpaid
+                        $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects[-1]).Unpaid
                         If ($Delta -lt 0) { 
                             # Payout occured
                             $Payout = -$Delta
-                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects | Select-Object -Last 1).Earnings) -Force
+                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings) -Force
                         }
                         Else { 
                             $Payout = 0
-                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects | Select-Object -Last 1).Earnings + $Delta) -Force
+                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings + $Delta) -Force
                         }
                     }
                     ElseIf ($PoolBalanceObject.Pool -match '^ProHashing.*') { 
                         # ProHashing never reduces earnings
-                        $Delta = $PoolBalanceObject.Balance - ($PoolBalanceObjects | Select-Object -Last 1).Balance
-                        If ($PoolBalanceObject.Unpaid -lt ($PoolBalanceObjects | Select-Object -Last 1).Unpaid) { 
+                        $Delta = $PoolBalanceObject.Balance - ($PoolBalanceObjects[-1]).Balance
+                        If ($PoolBalanceObject.Unpaid -lt ($PoolBalanceObjects[-1]).Unpaid) { 
                             # Payout occured
-                            $Payout = ($PoolBalanceObjects | Select-Object -Last 1).Unpaid - $PoolBalanceObject.Unpaid
-                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects | Select-Object -Last 1).Earnings + $PoolBalanceObject.Unpaid) -Force
+                            $Payout = ($PoolBalanceObjects[-1]).Unpaid - $PoolBalanceObject.Unpaid
+                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings + $PoolBalanceObject.Unpaid) -Force
                         }
                         Else { 
                             $Payout = 0
-                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects | Select-Object -Last 1).Earnings + $Delta) -Force
+                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings + $Delta) -Force
                         }
                     }
                     Else { 
                         # HashCryptos, Hiveon, MiningDutch, ZergPool, ZPool
-                        $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects | Select-Object -Last 1).Unpaid
+                        $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects[-1]).Unpaid
                         # Current 'Unpaid' is smaller
                         If ($Delta -lt 0) { 
                             If (-$Delta -gt $PayoutThreshold * 0.5) { 
@@ -225,11 +225,11 @@ Do {
                                 # Pool reduced earnings
                                 $Payout = $Delta = 0
                             }
-                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects | Select-Object -Last 1).Earnings) -Force
+                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings) -Force
                         }
                         Else { 
                             $Payout = 0
-                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects | Select-Object -Last 1).Earnings + $Delta) -Force
+                            $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings + $Delta) -Force
                         }
                     }
                     $PoolBalanceObject | Add-Member Payout ([Double]$Payout) -Force
@@ -305,7 +305,7 @@ Do {
                     $EarningsObject | Export-Csv -NoTypeInformation -Append ".\Logs\BalancesTrackerLog.csv" -Force -ErrorAction Ignore
                 }
 
-                $PoolTodaysEarning = $Earnings.Where({ $_.Pool -eq $PoolBalanceObject.Pool -and $_.Currency -eq $PoolBalanceObject.Currency -and $_.Wallet -eq $PoolBalanceObject.Wallet }) | Select-Object -Last 1
+                $PoolTodaysEarning = $Earnings.Where({ $_.Pool -eq $PoolBalanceObject.Pool -and $_.Currency -eq $PoolBalanceObject.Currency -and $_.Wallet -eq $PoolBalanceObject.Wallet })[-1]
 
                 If ([String]$PoolTodaysEarning.Date -eq $Now.ToString("yyyy-MM-dd")) { 
                     $PoolTodaysEarning.DailyEarnings = [Double]$GrowthToday
@@ -418,4 +418,10 @@ Do {
 
     While ($Config.BalancesTrackerPollInterval -eq 0) { Start-Sleep -Seconds 5 }
 
+    $Error.Clear()
+    [System.GC]::Collect()
+
 } While ($true)
+
+$Error.Clear()
+[System.GC]::Collect()

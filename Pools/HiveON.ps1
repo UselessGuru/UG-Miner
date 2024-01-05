@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 param(
@@ -41,7 +41,7 @@ If ($PoolConfig.Wallets) {
 
     Do {
         Try { 
-            $Request = Invoke-RestMethod -Uri "https://Hiveon.net/api/v1/stats/pool" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
+            $Request = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
         }
         Catch { 
             $APICallFails ++
@@ -51,13 +51,13 @@ If ($PoolConfig.Wallets) {
 
     If (-not $Request) { Return }
 
-    ForEach ($Pool in $Request.cryptoCurrencies.Where({ $Variables.Rates.($_.name).BTC })) { 
+    ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
         $Currency = $Pool.name -replace ' \s+'
         If ($Algorithm_Norm = Get-AlgorithmFromCurrency $Currency) { 
             $Divisor = [Double]$Pool.profitPerPower
 
             # Add coin name
-            If ($_.title -and $Currency) { 
+            If ($Pool.title -and $Currency) { 
                 [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $Pool.title.Trim().ToLower())
             }
 
@@ -101,3 +101,4 @@ If ($PoolConfig.Wallets) {
 }
 
 $Error.Clear()
+[System.GC]::Collect()

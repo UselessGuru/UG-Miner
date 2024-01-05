@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -53,7 +53,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
                             }
 
                             [PSCustomObject]@{ 
-                                DateTime        = ([DateTime]::Now).ToUniversalTime()
+                                DateTime        = [DateTime]::Now.ToUniversalTime()
                                 Pool            = $Name
                                 Currency        = $Currency
                                 Wallet          = $Config.MiningDutchUserName
@@ -79,3 +79,6 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
 
     $RetryCount--
 }
+
+$Error.Clear()
+[System.GC]::Collect()

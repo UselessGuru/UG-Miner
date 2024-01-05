@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 using module ..\Includes\Include.psm1
@@ -68,7 +68,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
         } While (-not $APIdata.PSObject.Properties.Name)
 
-        $Timestamp = ([DateTime]::Now).ToUniversalTime()
+        $Timestamp = [DateTime]::Now.ToUniversalTime()
 
         $APIdata.PSObject.Properties.Name.Where({ $APIdata.$_.algo -eq "Token" -or $_ -like "*-*" }).ForEach({ $APIdata.PSObject.Properties.Remove($_) })
         $APIdata.PSObject.Properties.Name.Where({ $APIdata.$_.algo }).ForEach(
@@ -87,7 +87,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         )
 
         # Change last24: -> last24h: (Error in API?), numeric string to numbers, some values are null
-        $APIdata = ($APIdata | ConvertTo-Json) -replace '_last24":', 'last24h":' -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+        $APIdata = ($APIdata | ConvertTo-Json) -replace '_last24":', '_last24h":' -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
 
         ForEach ($PoolName in $APIdata.PSObject.Properties.Name) { 
             $Algorithm_Norm = Get-Algorithm $APIdata.$PoolName.algo
@@ -95,7 +95,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             If ($AlgoData.$Algo.actual_last24h_shared) { $AlgoData.$Algo.actual_last24h_shared /= 1000 }
             $BasePrice = If ($APIdata.$PoolName.actual_last24h_shared) { $APIdata.$PoolName.actual_last24h_shared } Else { $APIdata.$PoolName.estimate_last24h }
 
-            # Add currency and coin name do database
+            # Add currency and coin name to database
             If ($APIdata.$PoolName.CoinName) { 
                 Try { 
                     [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $APIdata.$PoolName.CoinName)
@@ -107,7 +107,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             If ($Algorithm_Norm -match $Variables.RegexAlgoHasDAG -and $APIdata.$PoolName.height -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                 If ($Variables.DAGdata.Currency) { 
                     $DAGdata = (Get-DAGData -BlockHeight $APIdata.$PoolName.height -Currency $PoolName -EpochReserve 2)
-                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime()
+                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                     $DAGdata | Add-Member Url $Uri
                     $Variables.DAGdata.Currency | Add-Member $PoolName $DAGdata -Force
                     $Variables.DAGdata.Updated | Add-Member $Uri ([DateTime]::Now).ToUniversalTime() -Force
@@ -176,9 +176,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
     Remove-Variable APIdata, Duration -ErrorAction Ignore
 
-    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and ([DateTime]::Now).ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
 
     $Error.Clear()
+    [System.GC]::Collect()
 }

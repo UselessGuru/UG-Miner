@@ -1,6 +1,30 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.0.1 2024/01/??
+===================================
+
+Changes:
+- Fix typos
+- Minimize memory leak
+- Minor code optimizations
+
+Enhancements:
+- Includes.psm1 / Update-DAGdata: Do not query 'evr.cryptoscope.io' unless needed
+- Legacy GUI: Add '[Currency] to miner algorithm columns
+
+Fixes:
+- Brains:  No pool data for 'ZergPoolCoins24hr'
+- Core: 'UnrealPoolPriceFactor' not excluding NiceHash & MiningPoolHub (their prices are always right)
+
+Miner changes:
+- BzMiner-v19.2.1
+
+Web GUI:
+- Fix column alignment
+- Fix 'm' not added to culumn headers
+
+
 ChangeLog UG-Miner 6.0.0 2024/01/01
 ===================================
 

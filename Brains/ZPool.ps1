@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.0.0
+Version:        6.0.1
 Version date:   08 July 2023
 #>
 
@@ -63,7 +63,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
         } While (-not ($AlgoData -and $CurrenciesData))
 
-        $Timestamp = ([DateTime]::Now).ToUniversalTime()
+        $Timestamp = [DateTime]::Now.ToUniversalTime()
 
         # Change numeric string to numbers, some values are null
         $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
@@ -115,10 +115,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 If ($Currency -match $Variables.RegexAlgoHasDAG -and $AlgoData.$Algo.height -gt ($Variables.DAGdata.Currency.$Currency.BlockHeight)) { 
                     # Keep DAG data data up to date
                     $DAGdata = (Get-DAGData -BlockHeight $AlgoData.$Algo.height -Currency $Currency -EpochReserve 2)
-                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime()
+                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
                     $DAGdata | Add-Member Url $PoolConfig.PoolCurrenciesUri
                     $Variables.DAGdata.Currency | Add-Member $Pool $DAGdata -Force
-                    $Variables.DAGdata.Updated[$PoolConfig.PoolCurrenciesUri] = ([DateTime]::Now).ToUniversalTime()
+                    $Variables.DAGdata.Updated[$PoolConfig.PoolCurrenciesUri] = [DateTime]::Now.ToUniversalTime()
                 }
                 $AlgoData.$Algo | Add-Member conversion_disabled $CurrenciesData.$Currency.conversion_disabled -Force
                 If ($CurrenciesData.$Currency.error) { 
@@ -194,9 +194,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
     Remove-Variable AlgoData, CurrenciesData, Duration -ErrorAction Ignore
 
-    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and ([DateTime]::Now).ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
 
     $Error.Clear()
+    [System.GC]::Collect()
 }

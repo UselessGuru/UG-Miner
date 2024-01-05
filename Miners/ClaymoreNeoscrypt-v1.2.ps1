@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -lt [Version]"26.20.15011.10003" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\NeoScryptMiner.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Neoscrypt"; MinMemGiB = 2; Minerset = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @("RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(); Arguments = "" } # FPGA
+    [PSCustomObject]@{ Algorithm = "Neoscrypt"; MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @("RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(); Arguments = "" } # FPGA
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

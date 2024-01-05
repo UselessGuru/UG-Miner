@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 [Void] [System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -85,12 +85,12 @@ Function CheckBoxSwitching_Click {
             $SwitchingDGV.Columns[0].FillWeight = 50
             $SwitchingDGV.Columns[1].FillWeight = 50
             $SwitchingDGV.Columns[2].FillWeight = 90; $SwitchingDGV.Columns[2].HeaderText = "Miner"
-            $SwitchingDGV.Columns[3].FillWeight = 60 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 40; $SwitchingDGV.Columns[3].HeaderText = "Pool(s)"
-            $SwitchingDGV.Columns[4].FillWeight = 50 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $SwitchingDGV.Columns[4].HeaderText = "Algorithm(s)"
-            $SwitchingDGV.Columns[5].FillWeight = 90 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 50; $SwitchingDGV.Columns[5].HeaderText = "Account(s)"
+            $SwitchingDGV.Columns[3].FillWeight = 60 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 40; $SwitchingDGV.Columns[3].HeaderText = "Pool"
+            $SwitchingDGV.Columns[4].FillWeight = 50 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $SwitchingDGV.Columns[4].HeaderText = "Algorithm"
+            $SwitchingDGV.Columns[5].FillWeight = 90 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 50; $SwitchingDGV.Columns[5].HeaderText = "Account"
             $SwitchingDGV.Columns[6].FillWeight = 30; $SwitchingDGV.Columns[6].HeaderText = "Cycles"; $SwitchingDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $SwitchingDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
             $SwitchingDGV.Columns[7].FillWeight = 35; $SwitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $SwitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
-            $SwitchingDGV.Columns[8].FillWeight = 30 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 15; $SwitchingDGV.Columns[8].HeaderText = "Device(s)"
+            $SwitchingDGV.Columns[8].FillWeight = 30 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 15; $SwitchingDGV.Columns[8].HeaderText = "Device"
             $SwitchingDGV.Columns[9].FillWeight = 30
         }       If ($Config.UseColorForMinerStatus) { 
             ForEach ($Row in $SwitchingDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $Colors[$Row.DataBoundItem.Action] }
@@ -158,9 +158,9 @@ Function Update-TabControl {
                         @{ Name = "Power Cost`r$($Config.MainCurrency)/day"; Expression = { If ($Variables.CalculatePowerCost -and -not [Double]::IsNaN($_.PowerCost)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }
                         @{ Name = "Profit (Biased)`r$($Config.MainCurrency)/day"; Expression = { If ($Variables.CalculatePowerCost -and -not [Double]::IsNaN($_.Profit)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }
                         @{ Name = "Power Consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W"} } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } } }
-                        @{ Name = "Algorithm"; Expression = { $_.Algorithms -join ' & ' } }, 
+                        @{ Name = "Algorithm"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) {"[$($_.Pool.Currency)]"} )" }) -join ' & '} }, 
                         @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join ' & ' } }
-                        @{ Name = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } } }
+                        @{ Name = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } } }
                         @{ Name = "Running Time`r(hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor((([DateTime]::Now).ToUniversalTime() - $_.BeginTime).TotalDays * 24), (([DateTime]::Now).ToUniversalTime() - $_.BeginTime) } }
                         @{ Name = "Total active`r(hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                         If ($RadioButtonPoolsUnavailable.checked) { @{ Name = "Reason"; Expression = { $_.Reasons -join ', ' } } }
@@ -369,7 +369,7 @@ Function Update-TabControl {
                         @{ Name = "Power Cost`r$($Config.MainCurrency)/day"; Expression = { If (-not [Double]::IsNaN($_.PowerCost)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }, 
                         @{ Name = "Profit (Biased)`r$($Config.MainCurrency)/day"; Expression = { If ($Variables.CalculatePowerCost -and -not [Double]::IsNaN($_.Profit_Bias)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }, 
                         @{ Name = "Power Consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W"} } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } } }
-                        @{ Name = "Algorithm"; Expression = { $_.Algorithms -join ' & ' } }, 
+                        @{ Name = "Algorithm"; Expression = { $_.Workers.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) {"[$($_.Pool.Currency)]"} )" }) -join ' & '} }, 
                         @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join ' & ' } }, 
                         @{ Name = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } } }
                         If ($RadioButtonMinersUnavailable.checked -or $RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
@@ -481,10 +481,10 @@ Function Update-TabControl {
         #                 @{ Name = "Currency"; Expression = { $_.data.Currency | Select-Object -Unique } }, 
         #                 @{ Name = "Estimated Earning/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Config.DecimalsMax)}" -f (($_.Data.Earning.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum) * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } }, 
         #                 @{ Name = "Estimated Profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Config.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum) * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } }, 
-        #                 @{ Name = "Miner(s)"; Expression = { $_.data.Name -join $nl } }, 
-        #                 @{ Name = "Pool(s)"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join ' & ' }) -join $nl } }, 
-        #                 @{ Name = "Algorithm(s)"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join ' & ' }) -join $nl } }, 
-        #                 @{ Name = "Live Hashrate(s)"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }) -join $nl } }, 
+        #                 @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } }, 
+        #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join ' & ' }) -join $nl } }, 
+        #                 @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join ' & ' }) -join $nl } }, 
+        #                 @{ Name = "Live Hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }) -join $nl } }, 
         #                 @{ Name = "Benchmark Hashrate(s)"; Expression = { $_.data.ForEach({ $_.EstimatedSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }) -join $nl } }
         #             ) | Sort-Object -Property "Worker" | Out-DataTable
         #             If ($WorkersDGV.Columns) { 

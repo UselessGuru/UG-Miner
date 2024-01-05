@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -28,7 +28,7 @@ $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\cpuminer-aes-sse42.exe" # Intel
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Ghostrider"; Minerset = 1; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo gr" }
+    [PSCustomObject]@{ Algorithm = "Ghostrider"; MinerSet = 1; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo gr" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -50,7 +50,7 @@ If ($Algorithms) {
     $Algorithms.ForEach(
         { 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }) | Select-Object -Last 1)) {  
+            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })[-1])) {  
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"

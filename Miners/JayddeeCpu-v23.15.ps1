@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -39,21 +39,21 @@ Else { Return }
 
 $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Blake2b";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo blake2b" } # FPGA
-    [PSCustomObject]@{ Algorithm = "HMQ1725";       Minerset = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo hmq1725" } # GPU
+    [PSCustomObject]@{ Algorithm = "HMQ1725";       MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo hmq1725" } # GPU
 #   [PSCustomObject]@{ Algorithm = "Lyra2z330";     MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo lyra2z330" } # Algorithm is dead
-    [PSCustomObject]@{ Algorithm = "m7m";           Minerset = 1; WarmupTimes = @(45, 80); ExcludePools = @(); Arguments = " --algo m7m" } # NosuchCpu-v3.8.8.1 is fastest
+    [PSCustomObject]@{ Algorithm = "m7m";           MinerSet = 1; WarmupTimes = @(45, 80); ExcludePools = @(); Arguments = " --algo m7m" } # NosuchCpu-v3.8.8.1 is fastest
     [PSCustomObject]@{ Algorithm = "SHA3d";         MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo SHA3d" } # FPGA
-    [PSCustomObject]@{ Algorithm = "ScryptN11";     Minerset = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo scrypt(N,1,1)" } # GPU
-    [PSCustomObject]@{ Algorithm = "ScryptN2";      Minerset = 1; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " --algo scrypt --param-n 1048576" }
+    [PSCustomObject]@{ Algorithm = "ScryptN11";     MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo scrypt(N,1,1)" } # GPU
+    [PSCustomObject]@{ Algorithm = "ScryptN2";      MinerSet = 1; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " --algo scrypt --param-n 1048576" }
     [PSCustomObject]@{ Algorithm = "VertHash";      MinerSet = 0; WarmupTimes = @(45, 50); ExcludePools = @(); Arguments = " --algo verthash --data-file ..\.$($Variables.VerthashDatPath)" }
-    [PSCustomObject]@{ Algorithm = "YespowerARWN";  Minerset = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "ARWN"' } # Arrowana
-    [PSCustomObject]@{ Algorithm = "YespowerIc";    Minerset = 2; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC"' }
-    [PSCustomObject]@{ Algorithm = "YespowerIots";  Minerset = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
-    [PSCustomObject]@{ Algorithm = "YespowerLitb";  Minerset = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"' }
-    [PSCustomObject]@{ Algorithm = "YespowerLtncg"; Minerset = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LTNCGYES"' }
-    [PSCustomObject]@{ Algorithm = "YespowerMGPC";  Minerset = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Magpies are birds of the Corvidae family."' } # Magpiecoin
-    [PSCustomObject]@{ Algorithm = "YespowerSugar"; Minerset = 1; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
-    [PSCustomObject]@{ Algorithm = "YespowerTIDE";  Minerset = 1; WarmupTimes = @(45, 55); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
+    [PSCustomObject]@{ Algorithm = "YespowerARWN";  MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "ARWN"' } # Arrowana
+    [PSCustomObject]@{ Algorithm = "YespowerIc";    MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC"' }
+    [PSCustomObject]@{ Algorithm = "YespowerIots";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
+    [PSCustomObject]@{ Algorithm = "YespowerLitb";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"' }
+    [PSCustomObject]@{ Algorithm = "YespowerLtncg"; MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LTNCGYES"' }
+    [PSCustomObject]@{ Algorithm = "YespowerMGPC";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Magpies are birds of the Corvidae family."' } # Magpiecoin
+    [PSCustomObject]@{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    [PSCustomObject]@{ Algorithm = "YespowerTIDE";  MinerSet = 1; WarmupTimes = @(45, 55); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
     [PSCustomObject]@{ Algorithm = "YespowerUrx";   MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
@@ -69,7 +69,7 @@ If ($Algorithms) {
     $Algorithms.ForEach(
         { 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }) | Select-Object -Last 1)) { 
+            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })[-1])) { 
 
                 If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                     $PrerequisitePath = $Variables.VerthashDatPath

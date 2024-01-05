@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -32,7 +32,7 @@ $Path = "$PWD\Bin\$Name\hellminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "VerusHash"; Fee = @(0.01); Minerset = 0; WarmupTimes = @(45, 90); ExcludePools = @(); Arguments = "" }
+    [PSCustomObject]@{ Algorithm = "VerusHash"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(45, 90); ExcludePools = @(); Arguments = "" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -47,7 +47,7 @@ If ($Algorithms) {
     $Algorithms.ForEach(
         { 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools }) | Select-Object -Last 1)) { 
+            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })[-1])) { 
 
                 [PSCustomObject]@{ 
                     API         = "HellMiner"

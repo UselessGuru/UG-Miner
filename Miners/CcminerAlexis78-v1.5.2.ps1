@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.1" }))) { Return }
@@ -29,16 +29,16 @@ $Path = "$PWD\Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "C11";       MinMemGiB = 3; Minerset = 1; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo c11 --intensity 22" }
-#   [PSCustomObject]@{ Algorithm = "Keccak";    MinMemGiB = 3; Minerset = 3; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
-#   [PSCustomObject]@{ Algorithm = "Lyra2RE2";  MinMemGiB = 3; Minerset = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
+    [PSCustomObject]@{ Algorithm = "C11";       MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo c11 --intensity 22" }
+#   [PSCustomObject]@{ Algorithm = "Keccak";    MinMemGiB = 3; MinerSet = 3; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
+#   [PSCustomObject]@{ Algorithm = "Lyra2RE2";  MinMemGiB = 3; MinerSet = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
     [PSCustomObject]@{ Algorithm = "Neoscrypt"; MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 15.5" } # FPGA
 #   [PSCustomObject]@{ Algorithm = "Skein";     MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo skein" } # ASIC
     [PSCustomObject]@{ Algorithm = "Skein2";    MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo skein2 --intensity 31.9" }
-    [PSCustomObject]@{ Algorithm = "Veltor";    MinMemGiB = 2; Minerset = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
-    [PSCustomObject]@{ Algorithm = "Whirlcoin"; MinMemGiB = 2; Minerset = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo whirlcoin" }
-    [PSCustomObject]@{ Algorithm = "Whirlpool"; MinMemGiB = 2; Minerset = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo whirlpool" }
-    [PSCustomObject]@{ Algorithm = "X11evo";    MinMemGiB = 2; Minerset = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
+    [PSCustomObject]@{ Algorithm = "Veltor";    MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
+    [PSCustomObject]@{ Algorithm = "Whirlcoin"; MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo whirlcoin" }
+    [PSCustomObject]@{ Algorithm = "Whirlpool"; MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo whirlpool" }
+    [PSCustomObject]@{ Algorithm = "X11evo";    MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
     [PSCustomObject]@{ Algorithm = "X17";       MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo x17 --intensity 22" }
 )
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\evrprogpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "EvrProgPow"; MinMemGiB = $MinerPools[0].EvrProgPow.DAGSizeGiB + 0.77; Minerset = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
+    [PSCustomObject]@{ Algorithm = "EvrProgPow"; MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -LE $Config.MinerSet })
@@ -49,7 +49,7 @@ If ($Algorithms) {
                     ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        $MinMemGiB  = $_.MinMemGiB 
+                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB 
                         If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"

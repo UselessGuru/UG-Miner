@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 Function Start-APIServer { 
@@ -610,7 +610,7 @@ Function Start-APIServer {
                             }
                             "/functions/variables/get" { 
                                 If ($Key) { 
-                                    $Data = $Variables.($Key -replace '\\|/', '.' -split '\.' | Select-Object -Last 1) | Get-SortedObject | ConvertTo-Json -Depth 10
+                                    $Data = $Variables.($Key -replace '\\|/', '.' -split '\.'[-1]) | Get-SortedObject | ConvertTo-Json -Depth 10
                                 }
                                 Else { 
                                     $Data = $Variables.psBase.Keys | Sort-Object | ConvertTo-Json -Depth 1

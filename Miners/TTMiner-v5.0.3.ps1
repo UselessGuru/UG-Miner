@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -29,14 +29,14 @@ $Path = "$PWD\Bin\$Name\TT-Miner.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-#   [PSCustomObject]@{ Algorithm = "Eaglesong";    MinMemGiB = 2;    Minerset = 3; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo EAGLESONG" } # ASIC
-    [PSCustomObject]@{ Algorithm = "Ethash";       MinMemGiB = 1.22; Minerset = 0; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo ETHASH -intensity 15" }
-    [PSCustomObject]@{ Algorithm = "KawPow";       MinMemGiB = 1.22; Minerset = 2; WarmupTimes = @(90, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo KAWPOW" }
-#   [PSCustomObject]@{ Algorithm = "Lyra2RE3";     MinMemGiB = 2;    Minerset = 2; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo LYRA2V3" } # ASIC
-    [PSCustomObject]@{ Algorithm = "MTP";          MinMemGiB = 3;    Minerset = 2; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
-    [PSCustomObject]@{ Algorithm = "ProgPowEpic";  MinMemGiB = 1.22; Minerset = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin EPIC" }
-    [PSCustomObject]@{ Algorithm = "ProgPowSero";  MinMemGiB = 1.22; Minerset = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin SERO" }
-    [PSCustomObject]@{ Algorithm = "ProgPowVeil";  MinMemGiB = 1.22; Minerset = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin VEIL" }
+#   [PSCustomObject]@{ Algorithm = "Eaglesong";    MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo EAGLESONG" } # ASIC
+    [PSCustomObject]@{ Algorithm = "Ethash";       MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo ETHASH -intensity 15" }
+    [PSCustomObject]@{ Algorithm = "KawPow";       MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(90, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo KAWPOW" }
+#   [PSCustomObject]@{ Algorithm = "Lyra2RE3";     MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo LYRA2V3" } # ASIC
+    [PSCustomObject]@{ Algorithm = "MTP";          MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
+    [PSCustomObject]@{ Algorithm = "ProgPowEpic";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin EPIC" }
+    [PSCustomObject]@{ Algorithm = "ProgPowSero";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin SERO" }
+    [PSCustomObject]@{ Algorithm = "ProgPowVeil";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin VEIL" }
     [PSCustomObject]@{ Algorithm = "ProgPowZ";     MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin ZANO" }
     [PSCustomObject]@{ Algorithm = "UbqHash";      MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo UBQHASH -intensity 15" }
 )

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -148,7 +148,7 @@ Class Pool {
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
     [Boolean]$SSLSelfSignedCertificate
     [Double]$StablePrice
-    [DateTime]$Updated = ([DateTime]::Now).ToUniversalTime()
+    [DateTime]$Updated = [DateTime]::Now.ToUniversalTime()
     [String]$User
     [String]$Variant
     [String]$WorkerName = ""
@@ -164,7 +164,7 @@ Class Worker {
     [Double]$Hashrate
     [Pool]$Pool
     [TimeSpan]$TotalMiningDuration
-    [DateTime]$Updated = ([DateTime]::Now).ToUniversalTime()
+    [DateTime]$Updated = [DateTime]::Now.ToUniversalTime()
 }
 
 Enum MinerStatus { 
@@ -326,7 +326,7 @@ Class Miner {
             $this.StatusInfo = "Dry run '$($this.Info)'"
             $this.SubStatus = "Idle"
             Write-Message -Level Info "Dry run for miner '$($this.Info)'..."
-            $this.StatStart = $this.BeginTime = ([DateTime]::Now).ToUniversalTime()
+            $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
         }
         Else { 
             $this.StatusInfo = "Starting '$($this.Info)'"
@@ -370,7 +370,7 @@ Class Miner {
                     $this.DataSampleTimestamp = [DateTime]0
                     $this.Status = [MinerStatus]::Running
                     $this.SubStatus = "Starting"
-                    $this.StatStart = $this.BeginTime = ([DateTime]::Now).ToUniversalTime()
+                    $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
                     $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                     $this.StartDataReader()
                     Break
@@ -396,7 +396,7 @@ Class Miner {
 
         $this.StopDataReader()
 
-        $this.EndTime = ([DateTime]::Now).ToUniversalTime()
+        $this.EndTime = [DateTime]::Now.ToUniversalTime()
 
         If ($this.Process) { 
             [Void]$this.Process.CloseMainWindow()
@@ -432,7 +432,7 @@ Class Miner {
             Duration          = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
             Earning           = $this.Earning
             Earning_Bias      = $this.Earning_Bias
-            LastDataSample    = $this.Data | Select-Object -Last 1 -ErrorAction Ignore | ConvertTo-Json -Compress
+            LastDataSample    = $this.Data | Select-Object -Last 1 | ConvertTo-Json -Compress
             MeasurePowerConsumption = $this.MeasurePowerConsumption
             Pools             = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join '; '
             Profit            = $this.Profit
@@ -489,7 +489,7 @@ Class Miner {
             Return $this.Process.EndTime
         }
         ElseIf ($this.Process.BeginTime) { 
-            Return ([DateTime]::Now).ToUniversalTime()
+            Return [DateTime]::Now.ToUniversalTime()
         }
         ElseIf ($this.EndTime) { 
             Return $this.EndTime
@@ -749,7 +749,7 @@ namespace PInvoke.Win32 {
         }
     )
 
-    $Variables.IdleRunspace | Add-Member @{ PowerShell = $PowerShell; StartTime = ([DateTime]::Now).ToUniversalTime() }
+    $Variables.IdleRunspace | Add-Member @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
     $Powershell.BeginInvoke() | Out-Null
 }
 
@@ -803,7 +803,7 @@ Function Start-Core {
         $PowerShell.Runspace = $Runspace
         [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
 
-        $Global:CoreRunspace = @{ PowerShell = $PowerShell; StartTime = ([DateTime]::Now).ToUniversalTime() }
+        $Global:CoreRunspace = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
 
         $Powershell.BeginInvoke() | Out-Null
 
@@ -886,7 +886,7 @@ Function Start-Brain {
                         $PowerShell.Runspace = $Runspace
                         $Powershell.AddScript($BrainScript)
 
-                        $Variables.Brains.$_ = @{ PowerShell = $PowerShell; StartTime = ([DateTime]::Now).ToUniversalTime() }
+                        $Variables.Brains.$_ = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
 
                         $PowerShell.BeginInvoke() | Out-Null
 
@@ -953,7 +953,7 @@ Function Start-BalancesTracker {
                 $PowerShell = [PowerShell]::Create()
                 $PowerShell.Runspace = $Runspace
                 [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1")
-                $Global:BalancesTrackerRunspace = @{ PowerShell = $PowerShell; StartTime = ([DateTime]::Now).ToUniversalTime() }
+                $Global:BalancesTrackerRunspace = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
 
                 $Powershell.BeginInvoke() | Out-Null
                 $Variables.BalancesTrackerRunning = $true
@@ -1016,9 +1016,9 @@ Function Get-Rate {
     # Use stored currencies from last run
     If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = $Variables.Rates.PSObject.Properties.Name | Where-Object { $_ -eq  ($_ -replace '^m') } }
 
-    $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
+    $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies }).Where({ $_ -notlike "US*-*" })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
 
-    If (-not $Variables.Rates.BTC.($Config.MainCurrency) -or (Compare-Object @(@($Variables.Rates.PSObject.Properties.Name | Select-Object) + @($Variables.RatesMissingCurrencies | Select-Object)) @($Variables.AllCurrencies | Select-Object) | Where-Object SideIndicator -eq "=>") -or ($Variables.RatesUpdated -lt ([DateTime]::Now).ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)))) { 
+    If (-not $Variables.Rates.BTC.($Config.MainCurrency) -or (Compare-Object @(@($Variables.Rates.PSObject.Properties.Name | Select-Object) + @($Variables.RatesMissingCurrencies | Select-Object)) @($Variables.AllCurrencies | Select-Object) | Where-Object SideIndicator -eq "=>") -or ($Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)))) { 
         Try { 
             $TSymBatches = @()
             $TSyms = "BTC"
@@ -1091,7 +1091,7 @@ Function Get-Rate {
                 }
                 Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for '$($Variables.RatesMissingCurrencies -join ', ')'." })"
                 $Variables.Rates = $Rates
-                $Variables.RatesUpdated = ([DateTime]::Now).ToUniversalTime()
+                $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
 
                 $Variables.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
             }
@@ -2937,7 +2937,7 @@ Function Get-PoolBaseName {
         [String[]]$PoolNames
     )
 
-    Return ($PoolNames -replace '24hr$|coins$|coins24h$|coinsplus$|plus$')
+    Return ($PoolNames -replace '24hr$|coins$|coins24hr$|coinsplus$|plus$')
 }
 
 Function Get-NMVersion { 
@@ -3077,7 +3077,7 @@ Function Update-DAGdata {
     If (-not $Variables.DAGdata."Updated") { $Variables.DAGdata | Add-Member "Updated" ([PSCustomObject]@{ }) }
 
     $Url = "https://whattomine.com/coins.json"
-    If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt ([DateTime]::Now).ToUniversalTime().AddDays(-1)) { 
+    If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
         Try { 
             $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
@@ -3119,7 +3119,7 @@ Function Update-DAGdata {
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
     $Url = "https://minerstat.com/dag-size-calculator"
-    If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt ([DateTime]::Now).ToUniversalTime().AddDays(-1)) { 
+    If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from Minerstat
         Try { 
             $DAGdataResponse = Invoke-WebRequest -Uri $Url -TimeoutSec 5 # PWSH 6+ no longer supports basic parsing -> parse text
@@ -3159,7 +3159,7 @@ Function Update-DAGdata {
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
     $Url = "https://prohashing.com/api/v1/currencies"
-    If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt ([DateTime]::Now).ToUniversalTime().AddDays(-1)) { 
+    If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from ProHashing
         Try { 
             $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
@@ -3197,10 +3197,10 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
-    If ($Variables.PoolName -notmatch "_ZergPoolCoins.*") { 
+    If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
         # ZergPool also supplies Evr DAG data
         $Url = "https://evr.cryptoscope.io/api/getblockcount"
-        If (-not $Variables.DAGdata.Currency.EVR.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt ([DateTime]::Now).ToUniversalTime().AddDays(-1)) { 
+        If (-not $Variables.DAGdata.Currency.EVR.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from EVR block explorer
             Try { 
                 $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
@@ -3241,7 +3241,6 @@ Function Update-DAGdata {
                 Start-Sleep 0
             }
         }
-        Remove-Variable BlockHeight, DAGsize, Epoch -ErrorAction Ignore
 
         # SCC firo variant
         If ($Variables.DAGdata.Algorithm."FiroPow") { 
@@ -3253,7 +3252,6 @@ Function Update-DAGdata {
             $Variables.DAGdata.Currency."SCC" | Add-Member Algorithm "FiroPowSCC" -Force
             $Variables.DAGdata.Currency."SCC" | Add-Member CoinName "StakeCubeCoin" -Force
         }
-        Remove-Variable Algorithm
 
         # Add default '*' (equal to highest)
         $Variables.DAGdata.Currency | Add-Member "*" ([PSCustomObject]@{ 
@@ -3265,6 +3263,8 @@ Function Update-DAGdata {
 
         $Variables.DAGdata = $Variables.DAGdata | Get-SortedObject
         $Variables.DAGdata | ConvertTo-Json | Out-File -LiteralPath ".\Data\DAGdata.json" -Force
+
+        Remove-Variable Algorithm, BlockHeight, Currency, DAGdata, DAGdataKeys, DAGdataResponse, DAGsize, Epoch, Url -ErrorAction Ignore
     }
 }
 

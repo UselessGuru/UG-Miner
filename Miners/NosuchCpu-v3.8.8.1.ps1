@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -32,7 +32,7 @@ ElseIf ($AvailableMiner_Devices.CpuFeatures -match 'sse2') { $Path = "$PWD\Bin\$
 Else { Return }
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "BinariumV1"; Minerset = 2; WarmupTimes = @(30, 15); ExcludePools = @(); Arguments = " --algo binarium-v1" }
+    [PSCustomObject]@{ Algorithm = "BinariumV1"; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @(); Arguments = " --algo binarium-v1" }
     [PSCustomObject]@{ Algorithm = "m7m";        MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @(); Arguments = " --algo m7m" }
 )
 
@@ -49,7 +49,7 @@ If ($Algorithms) {
     $Algorithms.ForEach(
         { 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools }) | Select-Object -Last 1)) { 
+            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })[-1])) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"

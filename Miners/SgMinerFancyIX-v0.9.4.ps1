@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.0
-Version date:   2024/01/01
+Version:        6.0.1
+Version date:   2024/01/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { Return }
@@ -29,8 +29,8 @@ $Path = "$PWD\Bin\$Name\sgminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "0x10";          MinMemGiB = 2; Minerset = 2; WarmupTimes = @(60, 0); ExcludePools = @();           ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel chainox" }
-    [PSCustomObject]@{ Algorithm = "HeavyHash";     MinMemGiB = 2; Minerset = 1; WarmupTimes = @(60, 0); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @("RDNA1"); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 23 --kernel heavyhash" } # FPGA
+    [PSCustomObject]@{ Algorithm = "0x10";          MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 0); ExcludePools = @();           ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel chainox" }
+    [PSCustomObject]@{ Algorithm = "HeavyHash";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 0); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @("RDNA1"); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 23 --kernel heavyhash" } # FPGA
     [PSCustomObject]@{ Algorithm = "Neoscrypt";     MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt" } # FPGA
     [PSCustomObject]@{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt-xaya" }
 #   [PSCustomObject]@{ Algorithm = "YescryptR16";   MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @();           ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 20 --pool-nfactor 100 --kernel yescryptr16" } # Invalid hash rate
