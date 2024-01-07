@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.0.1
-Version date:   2024/01/05
+Version:        6.0.2
+Version date:   2024/01/07
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -2947,11 +2947,11 @@ Function Get-NMVersion {
     $Config.LogToFile = $Config.LogToScreen = @("Info", "Warn", "Error", "Verbose", "Debug")
 
     Try { 
-        $UpdateVersion = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/UselessGuru/UG-Miner/master/Version.txt" -TimeoutSec 15 -SkipCertificateCheck -Headers @{ "Cache-Control" = "no-cache" }).Content | ConvertFrom-Json
+        $UpdateVersion = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/UselessGuru/UG-Miner/main/Version.txt" -TimeoutSec 15 -SkipCertificateCheck -Headers @{ "Cache-Control" = "no-cache" }).Content | ConvertFrom-Json
 
         $Variables.CheckedForUpdate = Get-Date
 
-        If ($UpdateVersion.Product -eq $Variables.Branding.ProductLabel -and [Version]$UpdateVersion.Version -gt $Variables.Branding.Version) { 
+        If ($Variables.Branding.ProductLabel -and [Version]$UpdateVersion.Version -gt $Variables.Branding.Version) { 
             If ($UpdateVersion.AutoUpdate) { 
                 If ($Config.AutoUpdate) { 
                     Write-Message -Level Verbose "Version checker: New Version $($UpdateVersion.Version) found. Starting update..."

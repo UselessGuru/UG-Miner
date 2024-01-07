@@ -1,7 +1,18 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
-ChangeLog UG-Miner 6.0.1 2024/01/??
+ChangeLog UG-Miner 6.0.2 2024/01/07
+===================================
+
+Fixes:
+- 'CUDAVersion.json' missing
+- Error 'Version checker could not contact update server.'
+
+Miner changes:
+- SRBMinerMulti-v2.4.5
+
+
+ChangeLog UG-Miner 6.0.1 2024/01/05
 ===================================
 
 Changes:

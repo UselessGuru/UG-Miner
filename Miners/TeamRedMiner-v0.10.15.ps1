@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.1
-Version date:   2024/01/05
+Version:        6.0.2
+Version date:   2024/01/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
@@ -34,7 +34,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "IronFish");   Fee = @(0.025, 0.025); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=autolykos2" } # Pools with support at this time are Herominers, Flexpool and Kryptex
     [PSCustomObject]@{ Algorithms = @("Chukwa");                   Fee = @(0.025);        MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=trtl_chukwa" }
     [PSCustomObject]@{ Algorithms = @("Chukwa2");                  Fee = @(0.025);        MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=trtl_chukwa2" }
-    [PSCustomObject]@{ Algorithms = @("CryptonightCcx");           Fee = @(0.025);        MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cn_conceal --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" } # SRBMinerMulti-v2.4.4 is fastest
+    [PSCustomObject]@{ Algorithms = @("CryptonightCcx");           Fee = @(0.025);        MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cn_conceal --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
     [PSCustomObject]@{ Algorithms = @("CryptonightHeavy");         Fee = @(0.025);        MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cn_heavy --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
     [PSCustomObject]@{ Algorithms = @("CryptonightHaven");         Fee = @(0.025);        MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cn_haven --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
     [PSCustomObject]@{ Algorithms = @("CryptonightHeavyTube");     Fee = @(0.025);        MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cn_saber --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
