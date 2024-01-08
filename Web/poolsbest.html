@@ -84,10 +84,12 @@
               height: $(window).height() - $table.offset().top + 30,
 
               onPostBody: function () {
-                if (config.UsemBTC) {
-                  $(".addm").each(function () {
-                    this.childNodes[0].innerText = ("m" + this.childNodes[0].innerText).replace('mm', 'm');
-                  });
+                if (this.data.length > 0) {
+                  if (config.UsemBTC) {
+                    $(".addm").each(function () {
+                      this.childNodes[0].innerText = ("m" + this.childNodes[0].innerText).replace('mm', 'm');
+                    });
+                  };
                 };
               }
             });

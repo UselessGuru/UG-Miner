@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2023 UselessGuru
+Copyright (c) 2018-2024 UselessGuru
 
 
 UG-Miner is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.0.2
+Version:        6.0.3
 Version date:   08 July 2023
 #>
 

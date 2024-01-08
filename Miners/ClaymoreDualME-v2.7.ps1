@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2023 UselessGuru
+Copyright (c) 2018-2024 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.0.2
-Version date:   2024/01/07
+Version:        6.0.3
+Version date:   2024/01/08
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -le [Version]"20.45.01.28") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return } # Only supports AMD drivers until 20.12.1

@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2023 UselessGuru
+Copyright (c) 2018-2024 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.0.2
-Version date:   2024/01/07
+Version:        6.0.3
+Version date:   2024/01/08
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://UG-Miner.com"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.0.2"
+    Version      = [System.Version]"6.0.3"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -845,12 +845,12 @@ Function MainLoop {
                 # Miner list format
                 [System.Collections.ArrayList]$Miner_Table = @(
                     @{ Label = "Miner"; Expression = { $_.Name } }
-                    If (-not $Config.IgnorePowerCost -and $Variables.ShowProfitBias -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost -and -not $Config.IgnorePowerCost) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.BTC.($Config.MainCurrency)) } }; Align = "right" } }
-                    If (-not $Config.IgnorePowerCost -and $Variables.ShowProfit -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost -and -not $Config.IgnorePowerCost) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.BTC.($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Config.IgnorePowerCost -and $Variables.ShowProfitBias -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.BTC.($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Config.IgnorePowerCost -and $Variables.ShowProfit -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } }; Align = "right" } }
+                    If (-not $Config.IgnorePowerCost -and $Variables.ShowProfitBias -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost -and -not $Config.IgnorePowerCost) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                    If (-not $Config.IgnorePowerCost -and $Variables.ShowProfit -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost -and -not $Config.IgnorePowerCost) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                    If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                    If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                    If ($Config.IgnorePowerCost -and $Variables.ShowProfitBias -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                    If ($Config.IgnorePowerCost -and $Variables.ShowProfit -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                     If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power Consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W"} } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } }; Align = "right" } }
                     If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "PowerCost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                     If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.Pool.Accuracy.ForEach({ "{0:P0}" -f [Double]$_ }) }; Align = "right" } }
@@ -965,11 +965,11 @@ Function MainLoop {
                 If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                     If ($Variables.MiningProfit -lt 0) { 
                         # Mining causes a loss
-                        Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and causes a loss of {0} {1:n$($Config.DecimalsMax)} / day (including Base Power Cost)." -f $Config.MainCurrency, (-$Variables.MiningProfit * $Variables.Rates.BTC.($Config.MainCurrency)))
+                        Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and causes a loss of {0} {1:n$($Config.DecimalsMax)} / day (including Base Power Cost)." -f $Config.MainCurrency, (-$Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)))
                     }
                     If ($Variables.MiningProfit -lt $Config.ProfitabilityThreshold) { 
                         # Mining profit is below the configured threshold
-                        Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.MainCurrency, ($Variables.MiningProfit * $Variables.Rates.BTC.($Config.MainCurrency)), $Config.ProfitabilityThreshold)
+                        Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.MainCurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.ProfitabilityThreshold)
                     }
                 }
 

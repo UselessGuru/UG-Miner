@@ -1,6 +1,20 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.0.3 2024/01/08
+===================================
+
+Fixes:
+- Core: Invalid earnings & profit numbers if payout currency is not BTC
+
+Improvements:
+- Web GUI: Do not allow to save config if no main currency is configured
+- Web GUI: Miner speed improvements for pool & miner tables
+
+Miner changes:
+- MiniZ-v2.2c: Disable 'Equihash1927' for RX 7900
+
+
 ChangeLog UG-Miner 6.0.2 2024/01/07
 ===================================
 

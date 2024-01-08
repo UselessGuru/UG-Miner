@@ -1,6 +1,6 @@
 <!--#include file="/parts/head.html" -->
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h2 id="title" data-navbaractive="navconfigedit">Edit Configuration</h2>
+  <h2 id="title" data-navbaractive="navconfigedit">Edit configuration</h2>
 </div>
 <div id="configfilenames" class="alert alert-info" role="alert">&ensp;</div>
 <form id="configuration">
@@ -15,7 +15,7 @@
       <tr style="vertical-align: top; line-height: 125%">
         <td>
           <!-- Wallet Addresses and User Names -->
-          <legend title="Define your wallet and user names.&#10;All your earnings will be sent to the accounts defined here.&#10;Correct data is essential." class=h6><b>Wallet Addresses and User Names</b>
+          <legend title="Define your wallet and user names.&#10;All your earnings will be sent to the accounts defined here.&#10;Correct data is essential." class=h6><b>Wallet addresses and user names</b>
             <button title="Add a new currency to wallet list" class="btn btn-light btn-sm addwalletbutton" id="btn-addwallet" style="height:20px; float: right; padding-top:0px; " type="button">Add new wallet</button>
           </legend>
           <fieldset style="padding-top: 0.3rem" title="Set your wallet addresses">
@@ -96,8 +96,8 @@
           </select>
           <br><br>
 
-          <!-- Currency Settings -->
-          <legend class=h6><b>Currency Settings</b></legend>
+          <!-- Currency settings -->
+          <legend class=h6><b>Currency settings</b></legend>
           <div title="Main currency used for BTC conversion&#10;Power cost, profit and earnings are shown in this currency">Main currency
             <select id="MainCurrency" name="MainCurrency" style="margin-top: 0.2rem"></select>
           </div>
@@ -112,8 +112,8 @@
           </div>
           <br>
 
-          <!-- General Settings -->
-          <legend class=h6><b>General Settings</b></legend>
+          <!-- General settings -->
+          <legend class=h6><b>General settings</b></legend>
           <div style="padding-top: 0.2rem" title="Identifies your worker&#10;e.g. Computername&#10;(min. 2 and max. 32 characters or numbers)">
             <label for="WorkerName">Worker name</label>
             <input type="text" id="WorkerName" name="WorkerName" maxlength=33 size=38 value="Workername">
@@ -167,23 +167,23 @@
         </td>
         <td>
           <div style="line-height: 100%" class="col-md-12">
-            <!-- Select Mining Devices -->
+            <!-- Select mining devices -->
             <fieldset title="Enable / disable mining devices&#10;&#10;Unsupported devices are greyed out and cannot be enabled.">
-              <legend class=h6><b>Select Mining Devices</b></legend>
+              <legend class=h6><b>Select mining devices</b></legend>
               <div id="Devices"></div>
             </fieldset>
             <br>
 
-            <!-- Pool Selection -->
+            <!-- Pool selection -->
             <fieldset title="You cannot select multiple variants of the same pool">
-              <legend class=h6><b>Pool Selection</b></legend>
+              <legend class=h6><b>Pool selection</b></legend>
               <div style="padding-top: 0.1rem" id="Pools"></div>
             </fieldset>
             <br>
 
-            <!-- Pool Network Settings -->
+            <!-- Network settings -->
             <fieldset title="Note: Region is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
-              <legend class=h6><b>Pool Network Settings</b></legend>
+              <legend class=h6><b>Network settings</b></legend>
               <div style="padding-top: 0.2rem" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature.&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
                 <input type="checkbox" class="toggle-switch" id="UseAnycast" name="UseAnycast"> Use anycast for best network performance and ping times
               </div>
@@ -201,17 +201,17 @@
             </fieldset>
             <br>
 
-            <!-- Select the Region closest to your Location -->
+            <!-- Select the region closest to your Location -->
             <fieldset title="Note: Region is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
-              <legend class=h6><b>Select the Region closest to your Location</b></legend>
+              <legend class=h6><b>Select the region closest to your Location</b></legend>
               <div style="padding-top: 0.1rem; line-height: 125%" id="Regions"></div>
             </fieldset>
           </div>
         </td>
 
         <td>
-          <!-- Miner Selection -->
-          <legend class=h6><b>Miner Selection</b></legend>
+          <!-- Miner selection -->
+          <legend class=h6><b>Miner selection</b></legend>
           <div style="padding-top: 0.3rem" title="UG-Miner will run separate miner instances per GPU device model.&#10;Recommended for rigs with mixed GPU device models of the same vendor installed, e.g. GTX 1060 & GTX 1070&#10;This will increase profitability&#10;&#10;Note: Miners of different device types (AMD, CPU, INTEL & NVIDIA) will always run as separate instances.">
             <input type="checkbox" class="toggle-switch" id="MinerInstancePerDeviceModel" name="MinerInstancePerDeviceModel"> Run separate miner instance per GPU device model
           </div>
@@ -248,8 +248,8 @@
           </div>
           <br>
 
-          <!-- Miner Runtime Settings -->
-          <legend title="Miner Runtime Settings" class=h6><b>Miner Runtime Settings</b></legend>
+          <!-- Miner runtime settings -->
+          <legend title="Miner Runtime Settings" class=h6><b>Miner runtime settings</b></legend>
 
           <label for="MinerWindowStyle">Run miner</label>
           <select name="" id="MinerWindowStyle">
@@ -291,8 +291,8 @@
           </div>
           <br>
 
-          <!-- Power Cost Calculation Settings -->
-          <legend title="These settings are relevant for true profit calculation" class=h6><b>Power Cost Calculation Settings</b></legend>
+          <!-- Power cost calculation settings -->
+          <legend title="These settings are relevant for true profit calculation" class=h6><b>Power cost calculation settings</b></legend>
           <div style="padding-top: 0.3rem" title="Calculate power cost, required for true profit calculation&#10;Requires extra configuration of HWiNFO64&#10;(See ConfigHWinfo64.pdf)">
             <input type="checkbox" class="toggle-switch" id="CalculatePowerCost" name="CalculatePowerCost"> Calculate power cost
           </div>
@@ -310,8 +310,8 @@
           </div>
           <br>
 
-          <!-- Calculation Settings -->
-          <legend title="These settings are used to calculate the best miners" class=h6><b>Calculation Settings</b></legend>
+          <!-- Calculation settings -->
+          <legend title="These settings are used to calculate the best miners" class=h6><b>Calculation settings</b></legend>
           <div style="padding-top: 0.3rem" title="Mark a pool as unavailable if price is x times higher than&#10;the average price of all pools with same algorithm&#10;(min=1, max=10, default=1.5; 1 disables this check)&#10;&#10;Note: This applies only to algorithms that have at two least pools"> Unreal pool price factor
             <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealPoolPriceFactor" name="UnrealPoolPriceFactor">
           </div>
@@ -349,9 +349,9 @@
           </div>
           <br>
 
-          <!-- Balance Tracker Settings -->
+          <!-- Balances tracker settings -->
           <fieldset>
-            <legend class=h6><b>Balance Tracker Settings</b></legend>
+            <legend class=h6><b>Balances tracker settings</b></legend>
             <div style="padding-top: 0.3rem" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;(min=10, max=60, default=15 minutes). Set to 0 to disable the balance tracker.&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the Web GUI dashboard and API"> Poll pools for balances & earnings every
               <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15> minutes
             <div style="padding-top: 0.6rem" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earning sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard.">
@@ -375,9 +375,9 @@
           </fieldset>
         </td>
         <td style="vertical-align: top; line-height: 125%">
-          <!-- Console Display Settings -->
+          <!-- Display settings (Console) -->
           <div class="col-md-12">
-            <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console Display Settings</b></legend>
+            <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Display settings (Console)</b></legend>
             <div style="padding-top: 0.3rem" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing 's' in the console window while waiting for the next cycle"> UI Style
               <select name="UIStyle" id="UIStyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>
@@ -430,29 +430,29 @@
             </div>
             <br>
 
-            <!-- GUI Display Settings -->
-            <legend class=h6><b>GUI Display Settings</b></legend>
+            <!-- GUI display settings -->
+            <legend class=h6><b>Display settings (GUI)</b></legend>
             <div style="padding-top: 0.3rem" title="Miners and Rigs will be shown with colored background depending on status">
               <input type="checkbox" class="toggle-switch" id="UseColorForMinerStatus" name="UseColorForMinerStatus"> Use colors for miner & rig status
             </div>
             <br>
 
-            <!-- Log To File Settings -->
+            <!-- Log to file settings -->
             <fieldset title="Defines the detail level of information written to the log file&#10;&#10;It is recommended to keep at least 'Info' enabled.">
-              <legend class=h6><b>Log Level Details (File)</b></legend>
+              <legend class=h6><b>Log level details (File)</b></legend>
               <div style="padding-top: 0.3rem" id="LogToFile"></div>
             </fieldset>
             <br>
 
-            <!-- Log To Screen Settings -->
+            <!-- Log to screen settings -->
             <fieldset title="Defines the detail level of information written to the screen&#10;&#10;It is recommended to keep at least 'Info' enabled.">
-              <legend class=h6><b>Log Level Details (Screen)</b></legend>
+              <legend class=h6><b>Log level details (Screen)</b></legend>
               <div style="padding-top: 0.3rem" id="LogToScreen"></div>
             </fieldset>
             <br>
 
-            <!-- Auto Update Settings -->
-            <legend class=h6><b>Auto Update Settings</b></legend>
+            <!-- Auto update settings -->
+            <legend class=h6><b>Auto update settings</b></legend>
             <div style="padding-top: 0.3rem" title="UG-Miner will periodically check for a new program version&#10;(min=0, max=30, default=1 days).&#10;Set to 0 to disable checking for new versions"> Check for new version every
               <input type="number" id="AutoUpdateCheckInterval" name="AutoUpdateCheckInterval" min=0 max=50 step=1 value=15> days
             </div>
@@ -497,7 +497,7 @@
       document.getElementById('btn-editpoolsconfig').disabled = true;
       $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(configfile), function () {
         if (this.outerText) {
-          $('.modal-title').text('Edit Config file');
+          $('.modal-title').text("Edit 'Config' file");
           $('#myModal').modal({ 
             show: true
           });
@@ -516,7 +516,7 @@
       document.getElementById('btn-editpoolsconfig').disabled = true;
       $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(poolsconfigfile), function () {
         if (this.outerText) {
-          $('.modal-title').text('Edit PoolsConfig file');
+          $('.modal-title').text("Edit 'PoolsConfig' file");
           $('#myModal').modal({ 
             show: true
           });
