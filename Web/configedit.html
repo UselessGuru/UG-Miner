@@ -1,4 +1,4 @@
-<!--#include file="/parts/head.html" -->
+<!-- #include file="/parts/head.html" -->
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
   <h2 id="title" data-navbaractive="navconfigedit">Edit configuration</h2>
 </div>
@@ -1468,7 +1468,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if (config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount ) {
+        if (config.MainCurrency && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount ) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1476,6 +1476,12 @@
             document.body.style.cursor = 'default';
             $('#myModal').on('hidden.bs.modal', function () { location.reload(true) })
           });
+        } else if (!config.MainCurrency) {
+          // No main currency
+          $('.modal-title').html('Error: Invalid configuration');
+          $('.modal-body').html('Cannot save configuration - you must set the main currency.');
+          document.body.style.cursor = 'default';
+          $('#myModal').modal({ show: true });
         } else if (config.ExcludeDeviceName.length >= enabledDevicesCount) {
           // No mining device selected
           $('.modal-title').html('Error: Invalid configuration');
@@ -1494,4 +1500,4 @@
   });
 </script>
 <!-- End of page scripts 'configedit.html' -->
-<!--#include file="/parts/foot.html" -->
+<!-- #include file="/parts/foot.html" -->

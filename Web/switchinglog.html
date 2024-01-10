@@ -1,10 +1,10 @@
-<!--#include file="/parts/head.html" -->
+<!-- #include file="/parts/head.html" -->
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h2 id="title" data-navbaractive="navswitchinglog">Switching Log</h2>
+            <h2 id="title" data-navbaractive="navswitchinglog">Switching log</h2>
           </div>
           <div class="alert alert-info" role="alert">Lists the executed miners and the command lines used (last 1000 entries).</div>
           <div id="toolbar">
-            <button id="btn-clear-log" class="btn btn-info">Clear Switching Log</button>
+            <button id="btn-clear-log" class="btn btn-info">Clear switching log</button>
           </div>
           <table id="switchinglog" class="table"
             data-ajax-options="ajaxOptions"
@@ -22,6 +22,7 @@
             data-header-style="headerStyleAlignTop"
             data-icons="icons"
             data-maintain-meta-data="true"
+            data-reorderable-columns="true"
             data-response-handler="formatData"
             data-show-button-text="true"
             data-show-columns="true"
@@ -36,7 +37,7 @@
             <thead>
               <tr>
                 <th data-switchable="false" data-field="tAction" data-class="hidden statuscolor"></th>
-                <th data-field="DateTime" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-formatter="formatDate">Date & Time</th>
+                <th data-field="DateTime" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-formatter="formatDate">Date & time</th>
                 <th data-field="Action" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Action</th>
                 <th data-field="Name" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Name</th>
                 <th data-field="Pools" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Pool</th>
@@ -44,17 +45,17 @@
                 <th data-field="Accounts" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Account</th>
                 <th data-field="Activated" data-sortable="true" data-filter-strict-search="false">Activated</th>
                 <th data-field="Cycle" data-sortable="true" data-filter-strict-search="false">Cycles</th>
-                <th data-field="Duration" data-sortable="true" data-filter-strict-search="false" data-formatter="formatDuration">Running Time</th>
+                <th data-field="Duration" data-sortable="true" data-filter-strict-search="false" data-formatter="formatDuration">Running time</th>
                 <th data-field="DeviceNames" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Device(s)</th>
                 <th data-field="Type" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Type</th>
                 <th data-field="CommandLine" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">CommandLine</th>
-                <th data-field="Reason" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">Failure Reason</th>
-                <th data-field="Profit" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Profit</th>
-                <th data-field="Earning" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Earning</th>
-                <th data-field="Profit_Bias" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Profit Bias</th>
-                <th data-field="Earning_Bias" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Earning Bias</th>
+                <th data-field="Reason" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">Failure reason</th>
+                <th data-field="Profit" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Profit</th>
+                <th data-field="Earning" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Earning</th>
+                <th data-field="Profit_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Profit (biased)</th>
+                <th data-field="Earning_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip = "per 24hrs (estimated)" data-visible="false">Earning (biased)</th>
                 <th data-field="Benchmark" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Benchmark</th>
-                <th data-field="MeasurePowerUsage" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Measure<br>Power Usage</th>
+                <th data-field="MeasurePowerUsage" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Measure<br>Power consumption</th>
               </tr>
             </thead>
           </table>
@@ -72,15 +73,27 @@
             }
 
             $table.bootstrapTable({
+              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
+              height: $(window).height() - $table.offset().top - 20,
+
               onPostBody: function () {
-                if (config.UseColorForMinerStatus == true) {
-                  $(".statuscolor").each(function () {
-                    if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());
+                if (this.data.length > 0) {
+                  if (config.UseColorForMinerStatus == true) {
+                    $(".statuscolor").each(function () {
+                      if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());
+                    });
+                  };
+                  $(".addlocalcurrency").each(function () {
+                    if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
                   });
                 };
-              },
-              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
-              height: $(window).height() - $table.offset().top - 20
+              }
+            });
+
+            $('#switchinglog').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
+              $(".addlocalcurrency").each(function () {
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
+              });
             });
 
             $(document).ready(function () {
@@ -104,4 +117,4 @@
             })
           </script>
 <!-- End of page scripts 'switchinglog.html' -->
-<!--#include file="/parts/foot.html" -->
+<!-- #include file="/parts/foot.html" -->

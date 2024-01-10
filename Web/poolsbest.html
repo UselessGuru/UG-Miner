@@ -1,12 +1,12 @@
-<!--#include file="/parts/head.html" -->
+<!-- #include file="/parts/head.html" -->
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h2 id="title" data-navbaractive="navpoolsbest">Best Pools</h2>
+            <h2 id="title" data-navbaractive="navpoolsbest">Best pools</h2>
           </div>
           <div class="alert alert-info" role="alert">This is the list of the best paying pool for each algorithm.</div>
           <div id="toolbar">
-            <!-- <button id="btn-enable" class="btn btn-success" disabled>Enable Algorithm @ Pool</button> -->
-            <!-- <button id="btn-disable" class="btn btn-danger" disabled>Disable Algorithm @ Pool</button> -->
-            <button id="btn-reset-data" class="btn btn-warning" disabled>Reset Pool Stat Data</button>
+            <!-- <button id="btn-enable" class="btn btn-success" disabled>Enable algorithm @ pool</button> -->
+            <!-- <button id="btn-disable" class="btn btn-danger" disabled>Disable algorithm @ pool</button> -->
+            <button id="btn-reset-data" class="btn btn-warning" disabled>Reset pool stat data</button>
           </div>
           <table id="pools" class="table"
             data-ajax-options="ajaxOptions"
@@ -42,33 +42,33 @@
                 <th data-field="state" data-checkbox="true"></th>
                 <th data-field="PoolUri" data-switchable="false" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-class="hidden">Pool Uri</th>
                 <th data-field="Algorithm" data-sortable="true" data-filter-control="select">Algorithm</th>
-                <th data-field="AlgorithmVariant" data-sortable="true" data-filter-control="input" data-visible="false">Algorithm (Variant)</th>
-                <th data-field="CoinName" data-sortable="true" data-filter-control="select">Coin Name</th>
+                <th data-field="AlgorithmVariant" data-sortable="true" data-filter-control="input" data-visible="false">Algorithm (variant)</th>
+                <th data-field="CoinName" data-sortable="true" data-filter-control="select">Coin name</th>
                 <th data-field="Currency" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Currency</th>
                 <th data-field="Reasons" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Reasons</th>
                 <th data-field="tPrice" class="addm" data-align="right" data-sortable="true" data-formatter="formatPrices" data-visible="false">BTC/GH/24hr</th>
-                <th data-field="tPrice_Bias" class="addm" data-align="right" data-sortable="true" data-formatter="formatPrices" data-visible="false">BTC/GH/24hr<br>(Biased)</th>
-                <th data-field="tStablePrice" class="addm" data-align="right" data-sortable="true" data-formatter="formatPrices" data-visible="false">BTC/GH/24hr<br>(Week)</th>
+                <th data-field="tPrice_Bias" class="addm" data-align="right" data-sortable="true" data-formatter="formatPrices" data-visible="false">BTC/GH/24hr<br>(biased)</th>
+                <th data-field="tStablePrice" class="addm" data-align="right" data-sortable="true" data-formatter="formatPrices" data-visible="false">BTC/GH/24hr<br>(week)</th>
                 <th data-field="Accuracy" data-align="right" data-sortable="true" data-formatter="formatPercent" data-width=2>Accuracy</th>
-                <th data-field="Variant" data-sortable="true" data-filter-control="input">Pool Name (Variant)</th>
-                <th data-field="Name" data-sortable="true" data-filter-control="select" data-visible="false">Pool Name</th>
+                <th data-field="Variant" data-sortable="true" data-filter-control="input">Pool name (variant)</th>
+                <th data-field="Name" data-sortable="true" data-filter-control="select" data-visible="false">Pool name</th>
                 <th data-field="Region" data-sortable="true" data-filter-control="select" data-visible="false">Region</th>
-                <th data-field="User" data-sortable="true" data-filter-control="select" data-visible="false">Username or Wallet</th>
-                <th data-field="WorkerName" data-sortable="true" data-filter-control="select" data-visible="false">WorkerName</th>
+                <th data-field="User" data-sortable="true" data-filter-control="select" data-visible="false">Username or wallet</th>
+                <th data-field="WorkerName" data-sortable="true" data-filter-control="select" data-visible="false">Worker name</th>
                 <th data-field="Pass" data-sortable="true" data-filter-control="select" data-visible="false">Password</th>
                 <th data-field="Host" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">Host</th>
                 <th data-field="Port" data-align="right" data-sortable="true" data-formatter="formatPorts" data-filter-control="input" data-filter-strict-search="false" data-width=1>Port</th>
-                <th data-field="PortSSL" data-align="right" data-sortable="true" data-formatter="formatPorts" data-filter-control="input" data-filter-strict-search="false" data-width=1>SSL Port</th>
-                <th data-field="PoolPorts" data-align="right" data-sortable="true" data-formatter="formatPorts" data-filter-control="input" data-filter-strict-search="false" data-width=1 data-visible="false">Available Ports</th>
-                <th data-field="EarningsAdjustmentFactor" data-align="right" data-sortable="true" data-formatter="format3DecimalDigits" data-width=1>Earnings<br>Adjustment<br>Factor</th>
+                <th data-field="PortSSL" data-align="right" data-sortable="true" data-formatter="formatPorts" data-filter-control="input" data-filter-strict-search="false" data-width=1>SSL port</th>
+                <th data-field="PoolPorts" data-align="right" data-sortable="true" data-formatter="formatPorts" data-filter-control="input" data-filter-strict-search="false" data-width=1 data-visible="false">Available ports</th>
+                <th data-field="EarningsAdjustmentFactor" data-align="right" data-sortable="true" data-formatter="format3DecimalDigits" data-width=1>Earnings<br>adjustment<br>factor</th>
                 <th data-field="Fee" data-align="right" data-sortable="true" data-formatter="formatPercent" data-width=1>Fee</th>
                 <th data-field="Protocol" data-align="right" data-sortable="true" data-filter-control="select" data-visible="false">Protocol</th>
-                <th data-field="SendHashrate" data-align="right" data-sortable="true" data-visible="false">Send<br>Hashrate</th>
+                <th data-field="SendHashrate" data-align="right" data-sortable="true" data-visible="false">Send<br>hashrate</th>
                 <th data-field="Workers" data-align="right" data-sortable="true" data-visible="false">Workers</th>
                 <th data-field="DAGSizeGiB" data-align="right" data-sortable="true" data-visible="false" data-formatter="formatGiBDigits3" data-visible="false">DAG Size</th>
                 <th data-field="Epoch" data-align="right" data-sortable="true" data-visible="false">Epoch</th>
-                <th data-field="BlockHeight" data-align="right" data-sortable="true" data-visible="false">Block Height</th>
-                <th data-field="Updated" data-sortable="true" data-formatter="formatTimeSince" data-width=250>Last Updated</th>
+                <th data-field="BlockHeight" data-align="right" data-sortable="true" data-visible="false">Block height</th>
+                <th data-field="Updated" data-sortable="true" data-formatter="formatTimeSince" data-width=250>Last updated</th>
                 <th data-field="Key" data-sortable="true" data-filter-control="select" data-visible="false">Key</th>
                 <th data-field="Prioritize" data-sortable="true" data-filter-control="select" data-visible="false">Prioritize</th>
               </tr>
@@ -123,4 +123,4 @@
             })
           </script>
 <!-- End of page scripts 'poolsbest.html' -->
-<!--#include file="/parts/foot.html" -->
+<!-- #include file="/parts/foot.html" -->

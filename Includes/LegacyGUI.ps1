@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.0.3
-Version date:   2024/01/08
+Version:        6.0.4
+Version date:   2024/01/10
 #>
 
 [Void] [System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -55,7 +55,11 @@ Function Set-TableColor {
         $DataGridView
     )
     If ($Config.UseColorForMinerStatus) { 
-        ForEach ($Row in $DataGridView.Rows) { $Row.DefaultCellStyle.Backcolor = $Colors[$Row.DataBoundItem.Status] }
+        ForEach ($Row in $DataGridView.Rows) { 
+            If ($Colors[$Row.DataBoundItem.Status]) { 
+                $Row.DefaultCellStyle.Backcolor = $Colors[$Row.DataBoundItem.Status]
+            } 
+        }
     }
 }
 
@@ -138,7 +142,7 @@ Function Update-TabControl {
             $ContextMenuStripItem2.Visible = $true
             $ContextMenuStripItem3.Text = "Mark as failed"
             $ContextMenuStripItem3.Visible = $true
-            $ContextMenuStripItem4.Enable = $true
+            $ContextMenuStripItem4.Enabled = $true
             $ContextMenuStripItem4.Text = "Disable"
             $ContextMenuStripItem4.Visible = $true
             $ContextMenuStripItem5.Visible = $false

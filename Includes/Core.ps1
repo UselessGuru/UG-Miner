@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.0.3
-Version date:   2024/01/08
+Version:        6.0.4
+Version date:   2024/01/10
 #>
 
 using module .\Include.psm1
@@ -1352,8 +1352,8 @@ Do {
 
         Do { 
             Start-Sleep -Milliseconds 100
-            ForEach ($Miner in $Variables.RunningMiners.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
-                Try { 
+            Try { 
+                ForEach ($Miner in $Variables.RunningMiners.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
                         $Miner.StatusInfo = "Error: '$($Miner.Info)' exited unexpectedly"
@@ -1420,11 +1420,11 @@ Do {
                     }
                     $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                 }
-                Catch { 
-                    "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error_Dev.txt"
-                    $_.Exception | Format-List -Force >> "Logs\Error_Dev.txt"
-                    $_.InvocationInfo | Format-List -Force >> "Logs\Error_Dev.txt"
-                }
+            }
+            Catch { 
+                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error_Dev.txt"
+                $_.Exception | Format-List -Force >> "Logs\Error_Dev.txt"
+                $_.InvocationInfo | Format-List -Force >> "Logs\Error_Dev.txt"
             }
             Remove-Variable Miner, Sample, Samples -ErrorAction Ignore
 

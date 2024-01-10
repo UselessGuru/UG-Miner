@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.0.3
-Version date:   2024/01/08
+Version:        6.0.4
+Version date:   2024/01/10
 #>
 
 using module .\Includes\Include.psm1
@@ -864,7 +864,7 @@ Function MainLoop {
                     If ($Variables.ShowCoinName) { @{ Label = "CoinName"; Expression = { If ($_.Workers.Pool.CoinName) { $_.Workers.Pool.CoinName } } } }
                 )
                 # Display available miners list
-                $Bias = If ($Variables.CalculatePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
+                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
                 ($Variables.Miners.Where({ $_.Available }) | Group-Object -Property { $_.DeviceNames }).ForEach(
                     { 
                         $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
@@ -981,6 +981,8 @@ Function MainLoop {
                 }
             }
         }
+        $Error.Clear()
+        [System.GC]::Collect()
     }
 }
 

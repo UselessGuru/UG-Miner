@@ -1,6 +1,16 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.0.4 2024/01/10
+===================================
+
+Fixes:
+- Includes.psm1 / ConvertTo-Hash: Converted values 1000 to high
+- LegacyGUI: Fix errors in line 58: Exception setting "Backcolor": "Cannot convert null to type "System.Drawing.Color"."
+- LegacyGUI: Fix errors in line 141: The property 'Enable' cannot be found on this object.
+- Main text window: Invalid best miner selection if '$IgnorePowerCost -eq $true'
+
+
 ChangeLog UG-Miner 6.0.3 2024/01/08
 ===================================
 
