@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://UG-Miner.com"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.0.3"
+    Version      = [System.Version]"6.0.4"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
