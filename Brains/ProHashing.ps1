@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ProHashing.ps1
-Version:        6.0.4
-Version date:   2024/01/10
+Version:        6.1.0
+Version date:   2024/01/14
 #>
 
 using module ..\Includes\Include.psm1

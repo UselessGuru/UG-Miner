@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.0.4
-Version date:   2024/01/10
+Version:        6.1.0
+Version date:   2024/01/14
 #>
 
 using module .\Include.psm1
@@ -629,7 +629,7 @@ Do {
                                     }
                                 }
                             }
-                            Remove-Variable Worker -ErrorAction Ignore
+                            Remove-Variable WatchdogTimer, Worker -ErrorAction Ignore
                         }
                         If ($Config.BadShareRatioThreshold -gt 0) { 
                             If ($LatestMinerSharesData = ($Miner.Data | Select-Object -Last 1).Shares) { 
@@ -640,8 +640,8 @@ Do {
                                         $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                     }
                                 }
-                                Remove-Variable Algorithm
                             }
+                            Remove-Variable Algorithm, LatestMinerSharesData -ErrorAction Ignore
                         }
                     }
                     Else { 
@@ -808,7 +808,7 @@ Do {
                         $MinerGroup = $MinerGroups.Where({ $Name -eq $_.Name }).Group
                         $_.Group.ForEach(
                             { 
-                                If ($_.KeepRunning = ($_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun)) -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle ) { # Minimum numbers of full cycles not yet reached
+                                If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and $_.Workers.Pool.Variant -eq $Miner.Workers.Pool.Variant -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle ) { # Minimum numbers of full cycles not yet reached
                                     $_.Restart = $false
                                 }
                                 Else { 
@@ -823,6 +823,7 @@ Do {
                                         $_.PrerequisitePath = $Miner.PrerequisitePath
                                         $_.PrerequisiteURI = $Miner.PrerequisiteURI
                                         $_.WarmupTimes = $Miner.WarmupTimes
+                                        $_.Workers = $Miner.Workers # In case pool variant changes
                                     }
                                 }
                                 $_.Refresh($Variables.PowerCostBTCperW, $Variables.CalculatePowerCost)
@@ -1296,6 +1297,7 @@ Do {
                     $Miner.DataCollectInterval = $DataCollectInterval
                     $Miner.RestartDataReader()
                 }
+                Remove-Variable DataCollectInterval
             }
 
             $Message = "$(If ($Miner.Benchmark) { "Benchmark" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and " })$(If($Miner.MeasurePowerConsumption) { "Power consumption measurement" })"

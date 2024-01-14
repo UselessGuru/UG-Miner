@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.0.4
-Version date:   2024/01/10
+Version:        6.1.0
+Version date:   2024/01/14
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://UG-Miner.com"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.0.4"
+    Version      = [System.Version]"6.1.0"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -523,7 +523,7 @@ Function MainLoop {
     # Core watchdog. Sometimes core loop gets stuck
     If (-not $Variables.SuspendCycle -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
         Write-Message -Level Warn "Core cycle is stuck - restarting..."
-        Stop-Core -Quick
+        Stop-Core -Quick6
         $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
         $Variables.MiningStatus = $Variables.NewMiningStatus
         Start-Core

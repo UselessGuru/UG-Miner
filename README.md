@@ -2,7 +2,7 @@
 
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 
-Updated 2024/01/10
+Updated 2024/01/14
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -181,7 +181,7 @@ Easy configuration, easy start:
          - Edit 'Config\PoolsConfig.json'
          - Add an entry for the pool you want to customize
             - The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
-            - (**careful with json formating ;)**
+            - (**careful with json formatting ;)**
 
       Note that the GUI only updates default values (valid for ALL pools unless there is pool specific configuration setting defined in 'Config\PoolConfig.json'). Any other changes need to be done manually.
 
@@ -270,7 +270,7 @@ Easy configuration, easy start:
 
 PowerShell Version 7.x is required:
 
-[Download Installer for version 7.4.0](https://github.com/PowerShell/PowerShell/releases/download/v7.3.8/PowerShell-7.4.0-win-x64.msi)
+[Download Installer for version 7.4.1](https://github.com/PowerShell/PowerShell/releases/download/v7.3.8/PowerShell-7.4.1-win-x64.msi)
 
 **Some miners may need 'Visual C+ RunTimes download/extract, run install_all.bat file**
 

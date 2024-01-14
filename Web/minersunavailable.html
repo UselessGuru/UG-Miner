@@ -48,14 +48,14 @@
               <tr>
                 <th data-switchable="false" data-field="SubStatus" data-class="hidden statuscolor"></th>
                 <th data-field="state" data-checkbox="true" data-checkbox-enabled="true"></th>
-                <th data-field="tName" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">Name</th>
+                <th data-field="tName" data-sortable="true" data-filter-control="input">Name</th>
                 <th data-field="tBaseName" data-sortable="true" data-filter-control="select" data-visible="false">Miner</th>
                 <th data-field="Version" data-sortable="true" data-filter-control="select" data-visible="false">Version</th>
                 <th data-field="CommandLine" data-sortable="true" data-filter-control="input" data-visible="false">CommandLine</th>
                 <th data-field="tDevices" data-sortable="true" data-filter-control="select">Devices</th>
                 <th data-field="Type" data-sortable="true" data-filter-control="select" data-visible="false">Type</th>
                 <th data-field="tStatus" data-sortable="true" data-filter-control="select" data-visible="false">Status</th>
-                <th data-field="Reasons" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Reasons</th>
+                <th data-field="Reasons" data-sortable="true" data-filter-control="select">Reasons</th>
                 <th data-field="Earning_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning (biased)</th>
                 <th data-field="Earning" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning</th>
                 <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Power cost</th>
@@ -68,30 +68,30 @@
                 <th data-field="tPrimaryAlgorithmVariant" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Primary algorithm (variant)</th>
                 <th data-field="tPrimaryCurrency" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Primary currency</th>
                 <th data-field="tPrimaryCoinName" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Primary coin name</th>
-                <th data-field="tPrimaryPool" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Primary pool</th>
-                <th data-field="tPrimaryPoolVariant" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Primary pool (variant)</th>
-                <th data-field="tPrimaryPoolUser" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Primary user</th>
+                <th data-field="tPrimaryPool" data-sortable="true" data-filter-control="select">Primary pool</th>
+                <th data-field="tPrimaryPoolVariant" data-sortable="true" data-filter-control="select" data-visible="false">Primary pool (variant)</th>
+                <th data-field="tPrimaryPoolUser" data-sortable="true" data-filter-control="select" data-visible="false">Primary user</th>
                 <th data-field="tPrimaryHashrate" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" class="text-nowrap">Primary<br>hashrate</th>
-                <th data-field="tPrimaryPoolFee" data-align="right" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-formatter="formatPercent" data-width=1 data-visible="false">Primary pool fee</th>
-                <th data-field="tPrimaryMinerFee" data-align="right" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-formatter="formatPercent" data-width=1 data-visible="false">Primary miner fee</th>
+                <th data-field="tPrimaryPoolFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Primary pool fee</th>
+                <th data-field="tPrimaryMinerFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Primary miner fee</th>
                 <th data-field="tSecondaryAlgorithm" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Secondary algorithm</th>
                 <th data-field="tSecondaryAlgorithmVariant" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Secondary algorithm (variant)</th>
                 <th data-field="tSecondaryCurrency" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Secondary currency</th>
                 <th data-field="tSecondaryCoinName" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Secondary coin name</th>
-                <th data-field="tSecondaryPool" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Secondary pool</th>
-                <th data-field="tSecondaryPoolVariant" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Secondary pool (variant)</th>
-                <th data-field="tSecondaryPoolUser" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">Secondary user</th>
+                <th data-field="tSecondaryPool" data-sortable="true" data-filter-control="select">Secondary pool</th>
+                <th data-field="tSecondaryPoolVariant" data-sortable="true" data-filter-control="select" data-visible="false">Secondary pool (variant)</th>
+                <th data-field="tSecondaryPoolUser" data-sortable="true" data-filter-control="select" data-visible="false">Secondary user</th>
                 <th data-field="tSecondaryHashrate" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" class="text-nowrap">Secondary<br>hashrate</th>
-                <th data-field="tSecondaryPoolFee" data-align="right" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-formatter="formatPercent" data-width=1 data-visible="false">Secondary pool fee</th>
-                <th data-field="tSecondaryMinerFee" data-align="right" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-formatter="formatPercent" data-width=1 data-visible="false">Secondary miner fee</th>
+                <th data-field="tSecondaryPoolFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Secondary pool fee</th>
+                <th data-field="tSecondaryMinerFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Secondary miner fee</th>
                 <th data-field="API" data-sortable="true" data-filter-control="select" data-visible="false">Miner API</th>
-                <th data-field="Port" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-visible="false">API port</th>
+                <th data-field="Port" data-sortable="true" data-filter-control="input" data-visible="false">API port</th>
                 <th data-field="MinDataSample" data-sortable="true" data-filter-control="select" data-visible="false">Min. data samples</th>
-                <th data-field="tWarmupTimes0" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-visible="false" data-title-tooltip="Seconds until miner must send first sample&#10;If no sample is received miner will be marked as failed">WarmupTime [0]</th>
-                <th data-field="tWarmupTimes1" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-visible="false" data-title-tooltip="Seconds until miner sends stable hashrates&#10;that will count for benchmarking">WarmupTime [1]</th>
+                <th data-field="tWarmupTimes0" data-sortable="true" data-filter-control="input" data-visible="false" data-title-tooltip="Seconds until miner must send first sample&#10;If no sample is received miner will be marked as failed">WarmupTime [0]</th>
+                <th data-field="tWarmupTimes1" data-sortable="true" data-filter-control="input" data-visible="false" data-title-tooltip="Seconds until miner sends stable hashrates&#10;that will count for benchmarking">WarmupTime [1]</th>
                 <th data-field="Updated" data-sortable="true" data-formatter="formatTimeSince" data-width=250 data-visible="false">Updated</th>
-                <th data-field="EnvVars" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-visible="false">Environment variables</th>
-                <th data-field="Activated" data-sortable="true" data-filter-control="input" data-filter-strict-search="false" data-visible="false">Activated</th>
+                <th data-field="EnvVars" data-sortable="true" data-filter-control="input" data-visible="false">Environment variables</th>
+                <th data-field="Activated" data-sortable="true" data-filter-control="input" data-visible="false">Activated</th>
                 <th data-field="WindowStyle" data-sortable="true" data-filter-control="select" data-visible="false">WindowStyle</th>
                 <th data-field="Benchmark" data-sortable="true" data-filter-control="select" data-visible="false">Benchmark</th>
                 <th data-field="MeasurePowerConsumption" data-sortable="true" data-filter-control="select" data-visible="false">Measure power consumption</th>
@@ -103,7 +103,7 @@
                 <th data-field="KeepRunning" data-sortable="true" data-filter-control="select" data-visible="false">Keep running</th>
                 <th data-field="ContinousCycle" data-sortable="true" data-filter-control="select" data-visible="false">Continous cycles</th>
                 <th data-field="Prioritize" data-sortable="true" data-filter-control="select" data-visible="false">Prioritize</th>
-                <th data-field="MinerSet" data-sortable="true" data-filter-control="select" data-filter-strict-search="false" data-visible="false">MinerSet</th>
+                <th data-field="MinerSet" data-sortable="true" data-filter-control="select" data-visible="false">MinerSet</th>
               </tr>
             </thead>
           </table>

@@ -1,6 +1,22 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.1.0 2024/01/14
+===================================
+
+Changes:
+- Include.psm1: Remove obsolete code
+- README.MD: Fix typo
+
+Fixes:
+- Core: Miners not using updated pool data when pool variant changes
+- Miners: Algorithm 'KarlsenHash' not working in some combinations or devices
+
+Miner changes:
+- NanoMiner-v3.8.9
+- Rigel-v1.13.0
+
+
 ChangeLog UG-Miner 6.0.4 2024/01/10
 ===================================
 
@@ -8,14 +24,14 @@ Fixes:
 - Includes.psm1 / ConvertTo-Hash: Converted values 1000 to high
 - LegacyGUI: Fix errors in line 58: Exception setting "Backcolor": "Cannot convert null to type "System.Drawing.Color"."
 - LegacyGUI: Fix errors in line 141: The property 'Enable' cannot be found on this object.
-- Main text window: Invalid best miner selection if '$IgnorePowerCost -eq $true'
+- Main text window: Invalid best miner listed when '$IgnorePowerCost -eq $true'
 
 
 ChangeLog UG-Miner 6.0.3 2024/01/08
 ===================================
 
 Fixes:
-- Core: Invalid earnings & profit numbers if payout currency is not BTC
+- Core: Invalid earnings & profit numbers if '$PayoutPayout' -ne 'BTC'
 
 Improvements:
 - Web GUI: Do not allow to save config if no main currency is configured

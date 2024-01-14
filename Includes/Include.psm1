@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.0.4
-Version date:   2024/01/10
+Version:        6.1.0
+Version date:   2024/01/14
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1600,11 +1600,6 @@ Function Write-Config {
     $Config.Remove("ConfigFile")
     $Config.Remove("PoolsConfig")
     "$Header$($Config | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $ConfigFile -Force
-
-    If ($Config.ShowConsole) { 
-        If ($Variables.Summary) { Show-Console }
-    } 
-    Else { Hide-Console }
 
     $Variables.ShowAccuracy = $Config.ShowAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
@@ -3437,28 +3432,6 @@ Function Get-Median {
     Else { 
         # Odd number of elements, so the median is the middle element.
         $Numbers[$Length / 2]
-    }
-}
-
-Function Show-Console {
-    # Based on https://www.reddit.com/r/PowerShell/comments/a0jj6m/startprocess_hidden/
-    If ($ConsolePtr = [Console.Window]::GetConsoleWindow()) { 
-
-        # Hide = 0,
-        # ShowNormal = 1,
-        # ShowMinimized = 2,
-        # ShowMaximized = 3,
-        # Maximize = 3,
-        # ShowNormalNoActivate = 4,
-        # Show = 5,
-        # Minimize = 6,
-        # ShowMinNoActivate = 7,
-        # ShowNoActivate = 8,
-        # Restore = 9,
-        # ShowDefault = 10,
-        # ForceMinimized = 11
-
-        [Console.Window]::ShowWindow($ConsolePtr, 9)
     }
 }
 
