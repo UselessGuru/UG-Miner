@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           Core.ps1
 Version:        6.1.0
-Version date:   2024/01/14
+Version date:   2024/01/15
 #>
 
 using module .\Include.psm1
@@ -740,7 +740,6 @@ Do {
 
             # Get new miners
             If ($AvailableMinerPools = If ($Config.MinerUseBestPoolsOnly) { $Variables.Pools.Where({ $_.Available -and ($_.Best -or $_.Prioritize) }) } Else { $Variables.Pools.Where({ $_.Available }) }) { 
-                # $AvailableMinerPools = ($AvailableMinerPools | Group-Object Variant, AlgorithmVariant, MiningCurrency).ForEach({ $_.Group | Sort-Object -Property Updated -Bottom 1 })
                 $MinerPools = @([Ordered]@{ "" = "" }, [Ordered]@{ "" = "" } )
                 ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable primary algorithm" }) | Group-Object Algorithm).ForEach({ $MinerPools[0][$_.Name] = @($_.Group | Sort-Object -Property Price_Bias -Descending) })
                 ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable secondary algorithm" }) | Group-Object Algorithm).ForEach({ $MinerPools[1][$_.Name] = @($_.Group | Sort-Object -Property Price_Bias -Descending) })

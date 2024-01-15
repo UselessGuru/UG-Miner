@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Xgminer.ps1
 Version:        6.1.0
-Version date:   2024/01/14
+Version date:   2024/01/15
 #>
 
 Class XgMiner : Miner { 

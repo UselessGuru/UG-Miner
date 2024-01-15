@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           UG-Miner.ps1
 Version:        6.1.0
-Version date:   2024/01/14
+Version date:   2024/01/15
 #>
 
 using module .\Includes\Include.psm1
@@ -109,7 +109,7 @@ param(
     [Parameter(Mandatory = $false)]
     [Switch]$LegacyGUIStartMinimized = $true, # If true will start legacy GUI as minimized window
     [Parameter(Mandatory = $false)]
-    [Switch]$LogBalanceAPIResponse = $false, # If true wi6ll log the pool balance API data
+    [Switch]$LogBalanceAPIResponse = $false, # If true will log the pool balance API data
     [Parameter(Mandatory = $false)]
     [String[]]$LogToFile = @("Info", "Warn", "Error", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of @("Info", "Warn", "Error", "Verbose", "Debug")
     [Parameter(Mandatory = $false)]
@@ -523,7 +523,7 @@ Function MainLoop {
     # Core watchdog. Sometimes core loop gets stuck
     If (-not $Variables.SuspendCycle -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
         Write-Message -Level Warn "Core cycle is stuck - restarting..."
-        Stop-Core -Quick6
+        Stop-Core -Quick
         $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
         $Variables.MiningStatus = $Variables.NewMiningStatus
         Start-Core

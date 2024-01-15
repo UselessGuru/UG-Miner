@@ -5,6 +5,7 @@ ChangeLog UG-Miner 6.1.0 2024/01/14
 ===================================
 
 Changes:
+- Core: Renamed algorithm 'kHeavyHash' to 'HeavyHashKaspa"
 - Include.psm1: Remove obsolete code
 - README.MD: Fix typo
 

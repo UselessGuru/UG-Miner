@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.1.0
-Version date:   2024/01/14
+Version date:   2024/01/15
 #>
 
 using module ..\Includes\Include.psm1
@@ -44,7 +44,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "EvrProgPow";       Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" }
     [PSCustomObject]@{ Algorithm = "FiroPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(55, 45); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --pers=firo" }
     [PSCustomObject]@{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 35); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" }
-    [PSCustomObject]@{ Algorithm = "kHeavyHash";       Type = "AMD"; Fee = @(0.008);  MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 35); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --par=kaspa" }
+    [PSCustomObject]@{ Algorithm = "HeavyHashKaspa";   Type = "AMD"; Fee = @(0.008);  MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 35); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --par=kaspa" }
     [PSCustomObject]@{ Algorithm = "ProgPowSero";      Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(30, 15); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=sero" }
     [PSCustomObject]@{ Algorithm = "ProgPowVeil";      Type = "AMD"; Fee = @(0.01);   MinMemGiB = 8.0;  MinerSet = 2; WarmupTimes = @(30, 15); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=veil" }
     [PSCustomObject]@{ Algorithm = "ProgPowVeriblock"; Type = "AMD"; Fee = @(0.01);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 15); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1");                           ExcludePools = @(); AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=VeriBlock" }
@@ -62,7 +62,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "EthashB3";         Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --par=ethashb3 --dag-fix" }
     [PSCustomObject]@{ Algorithm = "EvrProgPow";       Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" }
     [PSCustomObject]@{ Algorithm = "FiroPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(55, 45); ExcludeGPUArchitecture = @();        ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --pers=firo" }
-    [PSCustomObject]@{ Algorithm = "kHeavyHash";       Type = "NVIDIA"; Fee = @(0.008);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 35); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --par=kaspa" }
+    [PSCustomObject]@{ Algorithm = "HeavyHashKaspa";   Type = "NVIDIA"; Fee = @(0.008);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 35); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --par=kaspa" }
     [PSCustomObject]@{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 35); ExcludeGPUArchitecture = @();        ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" }
     [PSCustomObject]@{ Algorithm = "ProgPowSero";      Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUArchitecture = @();        ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --pers=sero" }
     [PSCustomObject]@{ Algorithm = "ProgPowVeil";      Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 8.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUArchitecture = @();        ExcludePools = @(); AutoCoinPers = "";             Arguments = " --nvidia --pers=veil" }
