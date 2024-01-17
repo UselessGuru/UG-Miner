@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.1.0
+Version:        6.1.1
 Version date:   2024/01/15
 #>
 
@@ -303,7 +303,7 @@ Function Start-APIServer {
                                     $TempConfig.Keys | ForEach-Object { $Config.$_ = $TempConfig.$_ }
 
                                     $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }) | ForEach-Object { 
-                                        If ($_.Name -in @($Config.ExcludeDeviceName)) { 
+                                        If ($_.Name -in $Config.ExcludeDeviceName) { 
                                             $_.State = [DeviceState]::Disabled
                                             If ($_.Status -like "Mining *}") { $_.Status = "$($_.Status); will get disabled at end of cycle" }
                                         }

@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.0
+Version:        6.1.1
 Version date:   2024/01/15
 #>
 
 # Return 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.13.0/rigel-1.13.0-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.13.1/rigel-1.13.1-win.zip"
 $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"

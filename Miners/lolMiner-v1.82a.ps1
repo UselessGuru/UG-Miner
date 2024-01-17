@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.0
+Version:        6.1.1
 Version date:   2024/01/15
 #>
 
@@ -64,7 +64,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("SHA512256d");                   Type = "AMD"; Fee = @(0.0075);     MinMemGiB = 1.00; MinerSet = 0; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo RADIANT" }
     [PSCustomObject]@{ Algorithms = @("UbqHash");                      Type = "AMD"; Fee = @(0.007);      MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH" }
     [PSCustomObject]@{ Algorithms = @("UbqHash", "Blake3");            Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode ALEPHDUAL" }
-    [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKarlsen");  Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KARLSENDUAL" }
+#   [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKarlsen");  Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KARLSENDUAL" } # No hashrate for second algorithm
 #   [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKaspa");    Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(90, 90); ExcludeGPUArchitecture = "^RDNA1$";   ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KASPADUAL" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1987 & https://github.com/Lolliedieb/lolMiner-releases/issues/1991
 #   [PSCustomObject]@{ Algorithms = @("UbqHash", "SHA512256d");        Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = "^GCN4$";    ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode RXDDUAL" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1986
 
@@ -113,7 +113,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("SHA512256d");                   Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo RADIANT" } 
     [PSCustomObject]@{ Algorithms = @("UbqHash");                      Type = "NVIDIA"; Fee = @(0.007);      MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH" }
     [PSCustomObject]@{ Algorithms = @("UbqHash", "Blake3");            Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode ALEPHDUAL --maxdualimpact *" }
-    [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKarlsen");  Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KARLSENDUAL --maxdualimpact *" }
+#   [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKarlsen");  Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KARLSENDUAL --maxdualimpact *" } # No hashrate for second algorithm
 #   [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(90, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KASPADUAL --maxdualimpact *" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1991
 #   [PSCustomObject]@{ Algorithms = @("UbqHash", "SHA512256d");        Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode RXDDUAL --maxdualimpact *" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1986
 )

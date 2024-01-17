@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.1.0
+Version:        6.1.1
 Version date:   2024/01/15
 #>
 
@@ -373,6 +373,7 @@ Do {
             # Use dates for x-axis label
             Earnings = $PoolChartData
         }
+        Remove-Variable PoolChartData -ErrorAction Ignore
 
         $Variables.Remove("EarningsChartData")
         $Variables.EarningsChartData = $EarningsChartData.PSObject.Copy()
@@ -381,6 +382,7 @@ Do {
         # Keep earnings for max. 1 year
         $OldestEarningsDate = ([DateTime]::Now).AddYears(-1).ToString("yyyy-MM-dd")
         $Earnings = $Earnings.Where({ $_.Date -ge $OldestEarningsDate })
+        Remove-Variable OldestEarningsDate
 
         # At least 31 days are needed for Growth720
         If ($Variables.BalancesData.Count -gt 1) { 
@@ -404,6 +406,7 @@ Do {
         Catch { 
             Write-Message -Level Warn "Balances Tracker failed to save earnings data to '.\Data\DailyEarnings.csv' (should have $($Earnings.count) entries)."
         }
+        Remove-Variable Earnings
 
         If ($Variables.BalancesData.Count -ge 1) { $Variables.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
         If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }

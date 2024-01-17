@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.0
+Version:        6.1.1
 Version date:   2024/01/15
 #>
 
@@ -91,9 +91,8 @@ Do {
         $Variables.NiceHashWalletIsInternal = $Config.NiceHashWalletIsInternal
         $Variables.PoolTimeout = [Math]::Floor($Config.PoolTimeout)
 
-        # Update enabled devices
-        $Variables.EnabledDevices = [Device[]]@($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName }).ForEach({ Copy-Object $_ }))
-        If ($Variables.EnabledDevices) { 
+        If ($Variables.EnabledDevices = [Device[]]@($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName }).ForEach({ $_ | Select-Object -Property * }))) { 
+            # Update enabled devices
             $Variables.EnabledDevices.ForEach(
                 { 
                     # Miner name must not contain spaces
@@ -192,7 +191,7 @@ Do {
                 Try { 
                     If ($StatFiles = [String[]](Get-ChildItem -Path "Stats" -File).BaseName) { 
                         If ($Keys = [String[]]($Stats.psBase.Keys)) { 
-                            (Compare-Object $StatFiles $Keys -PassThru).Where({ $_.SideIndicator -eq "=>"}).ForEach(
+                            (Compare-Object $StatFiles $Keys -PassThru).Where({ $_.SideIndicator -eq "=>" }).ForEach(
                                 { 
                                     # Remove stat if deleted on disk
                                     $Stats.Remove($_)
@@ -246,7 +245,7 @@ Do {
                                     { 
                                         $DeviceName = $_
                                         If ($ConfiguredPowerConsumption = $Config.PowerConsumption.$_ -as [Double]) { 
-                                            If ($_ -in @($Variables.EnabledDevices.Name) -and -not $PowerConsumptionData.$_) { Write-Message -Level Warn "HWiNFO64 cannot read power consumption data for device ($_). Using configured value of $ConfiguredPowerConsumption) W." }
+                                            If ($_ -in $Variables.EnabledDevices.Name -and -not $PowerConsumptionData.$_) { Write-Message -Level Warn "HWiNFO64 cannot read power consumption data for device ($_). Using configured value of $ConfiguredPowerConsumption) W." }
                                             $PowerConsumptionData[$_] = "$ConfiguredPowerConsumption W"
                                         }
                                         $Variables.EnabledDevices.Where({ $_.Name -eq $DeviceName }).ForEach({ $_.ConfiguredPowerConsumption = $ConfiguredPowerConsumption })
@@ -260,7 +259,7 @@ Do {
                                 Remove-Variable DeviceNamesMissingSensor
 
                                 # Enable read power consumption for configured devices
-                                $Variables.EnabledDevices.ForEach({ $_.ReadPowerConsumption = $_.Name -in @($PowerConsumptionData.psBase.Keys) })
+                                $Variables.EnabledDevices.ForEach({ $_.ReadPowerConsumption = $_.Name -in $PowerConsumptionData.psBase.Keys })
                                 Remove-Variable ConfiguredPowerConsumption, DeviceName, PowerConsumptionData -ErrorAction Ignore
                             }
                         }
@@ -367,7 +366,6 @@ Do {
                         # Clear reasons for gone pools
                         $ComparePools.Where({ $_.SideIndicator -eq "=>" }).ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@() })
                         $Pools += $Variables.PoolsAdded
-                        Remove-Variable ComparePools
 
                         # Update all pools, make smaller groups for faster update
                         $PoolGroups = $Variables.PoolsUpdated | Group-Object -Property Name
@@ -565,8 +563,10 @@ Do {
                         }
 
                         # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
-                        ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object { $_.Prioritize }, { $_.Price_Bias } -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
+                        # ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object { $_.Prioritize }, { $_.Price_Bias } -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
+                        ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
                     }
+                    Remove-Variable ComparePools
 
                     # Update data in API
                     $Variables.Pools = $Pools
@@ -677,11 +677,13 @@ Do {
 
                         ForEach ($Worker in $Miner.Workers) { 
                             $Algorithm = $Worker.Pool.AlgorithmVariant
-                            $Factor = 1
                             $LatestMinerSharesData = ($Miner.Data[-1]).Shares
                             If ($Miner.Data.Count -gt $Miner.MinDataSample -and -not $Miner.Benchmark -and $Config.SubtractBadShares -and $LatestMinerSharesData.$Algorithm -gt 0) { # Need $Miner.MinDataSample shares before adjusting hashrate
                                 $Factor = (1 - $LatestMinerSharesData.$Algorithm[1] / $LatestMinerSharesData.$Algorithm[3])
                                 $Miner_Hashrates.$Algorithm *= $Factor
+                            } 
+                            Else { 
+                                $Factor = 1
                             }
                             $Stat_Name = "$($Miner.Name)_$($Worker.Pool.AlgorithmVariant)_Hashrate"
                             $Stat = Set-Stat -Name $Stat_Name -Value $Miner_Hashrates.$Algorithm -Duration $Stat_Span -FaultDetection ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Variables.WatchdogCount) -ToleranceExceeded ($Variables.WatchdogCount + 1)
@@ -769,7 +771,7 @@ Do {
                             }
                             $Miner.PSObject.Properties.Remove("Fee")
                             $Miner | Add-Member Algorithms $Miner.Workers.Pool.AlgorithmVariant
-                            $Miner | Add-Member Info "$(($Miner.Name -split '-')[0..2] -join '-') {$($Miner.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.MiningCurrency) { "[$($_.Pool.MiningCurrency)]" })", $_.Pool.Name -join '@' }) -join ' & ')}$(If (($Miner.Name -split '-')[4]) { " (Dual Intensity $(($Miner.Name -split '-')[4]))"})"
+                            $Miner | Add-Member Info "$(($Miner.Name -split '-')[0..2] -join '-') {$($Miner.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.MiningCurrency) { "[$($_.Pool.MiningCurrency)]" })", $_.Pool.Name -join '@' }) -join ' & ')}$(If (($Miner.Name -split '-')[4]) { " (Dual Intensity $(($Miner.Name -split '-')[4]))" })"
                             If ($Config.UseAllPoolAlgoCombos) { $Miner.Name = $Miner.Info -replace "\{", "(" -replace "\}", ")" -replace " " }
                             $Miner -as $_.API
                         }
@@ -807,7 +809,7 @@ Do {
                         $MinerGroup = $MinerGroups.Where({ $Name -eq $_.Name }).Group
                         $_.Group.ForEach(
                             { 
-                                If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and $_.Workers.Pool.Variant -eq $Miner.Workers.Pool.Variant -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle ) { # Minimum numbers of full cycles not yet reached
+                                If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and $_.Workers.Pool.Variant -eq $Miner.Workers.Pool.Variant -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle) { # Minimum numbers of full cycles not yet reached
                                     $_.Restart = $false
                                 }
                                 Else { 
@@ -1026,7 +1028,7 @@ Do {
             $Variables.MinersBestPerDevice_Combo.ForEach({ $_.Best = $true })
             If ($Variables.Rates.($Config.PayoutCurrency)) { 
                 If ($Variables.MinersNeedingBenchmark.Count) { 
-                    $Variables.Summary = "Earning / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If (($Variables.EnabledDevices | Sort-Object -Property { $_.DeviceNames }).Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object -Property { $_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]"}))"
+                    $Variables.Summary = "Earning / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If (($Variables.EnabledDevices | Sort-Object -Property { $_.DeviceNames }).Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object -Property { $_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]" }))"
                 }
                 ElseIf ($Variables.MiningEarning -gt 0) { 
                     $Variables.Summary = "Earning / day: {0:n} {1}" -f ($Variables.MiningEarning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.MainCurrency
@@ -1039,7 +1041,7 @@ Do {
                     If ($Variables.Summary -ne "") { $Variables.Summary += "&ensp;&ensp;&ensp;" }
 
                     If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
-                        $Variables.Summary += "Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If (($Variables.EnabledDevices | Sort-Object -Property { $_.DeviceNames }).Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object -Property { $_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]"}))"
+                        $Variables.Summary += "Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If (($Variables.EnabledDevices | Sort-Object -Property { $_.DeviceNames }).Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object -Property { $_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]" }))"
                     }
                     ElseIf ($Variables.MinersNeedingBenchmark.Count) { 
                         $Variables.Summary += "Profit / day: n/a"

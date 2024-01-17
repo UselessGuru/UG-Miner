@@ -336,9 +336,9 @@ function formatBytes(bytes) {
     decimals = 2;
     var k = 1024;
     dm = decimals || 2;
-    sizes = ['Bytes', 'kiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    sizes = [' Bytes', ' kiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB'];
     i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + '&nbsp;' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + sizes[i];
   }
   return '-';
 }

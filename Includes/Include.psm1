@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.0
+Version:        6.1.1
 Version date:   2024/01/15
 #>
 
@@ -1004,7 +1004,7 @@ Function Initialize-Application {
 Function Get-DefaultAlgorithm { 
 
     If ($PoolsAlgos = Get-Content ".\Data\PoolsConfig-Recommended.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore) { 
-        Return ($PoolsAlgos.PSObject.Properties.Name.Where({ $_ -in @(Get-PoolBaseName $Config.PoolName) }).ForEach({ $PoolsAlgos.$_.Algorithm })) | Sort-Object -Unique
+        Return ($PoolsAlgos.PSObject.Properties.Name.Where({ $_ -in (Get-PoolBaseName $Config.PoolName) }).ForEach({ $PoolsAlgos.$_.Algorithm })) | Sort-Object -Unique
     }
     Return
 }
@@ -1673,28 +1673,22 @@ Function Get-SortedObject {
     Try { 
         Switch -Regex ($Object.GetType().Name) { 
             "PSCustomObject" { 
-
                 $SortedObject = [PSCustomObject]@{ }
-
                 ($Object.PSObject.Properties.Name | Sort-Object).ForEach(
                     { 
-                        If ($Object.$_ -is [PSCustomObject]) { $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_) }
-                        ElseIf ($Object.$_ -is [Hashtable]) { $SortedObject[$_] = Get-SortedObject $Object.$_ }
+                        If ($Object.$_ -is [Hashtable] -or $Object.$_ -is [PSCustomObject]) { $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_) }
                         ElseIf ($Object.$_ -is [Array]) { $SortedObject | Add-Member $_ @($Object.$_ | Sort-Object) }
                         Else { $SortedObject | Add-Member $_ ($Object.$_) }
                     }
                 )
             }
             "Hashtable|OrderedDictionary|SyncHashtable" {  
-
                 $SortedObject = [Ordered]@{ }
-
                 ($Object.GetEnumerator().Name | Sort-Object).ForEach(
                     { 
-                        If ($Object.$_ -is [PSCustomObject]) { $SortedObject | Add-Member $_.Name (Get-SortedObject $Object.($_.Name)) }
-                        If ($Object.$_ -is [Hashtable]) { $SortedObject[$_] = Get-SortedObject $Object.$_ }
-                        ElseIf ($Object.$_ -is [Array]) { $SortedObject[$_] = @($Object.$_ | Sort-Object) }
-                        Else { $SortedObject[$_] = $Object.$_ }
+                        If ($Object[$_] -is [Hashtable] -or $Object[$_] -is [PSCustomObject]) { $SortedObject[$_] = Get-SortedObject $Object[$_] }
+                        ElseIf ($Object.$_ -is [Array]) { $SortedObject[$_] = @($Object[$_] | Sort-Object) }
+                        Else { $SortedObject[$_] = $Object[$_] }
                     }
                 )
             }
@@ -1750,10 +1744,9 @@ Function Disable-Stat {
         [String]$Name
     )
 
+    $Path = "Stats\$Name.txt"
     $Stat = Get-Stat -Name $Name
     If (-not $Stat) { $Stat = Set-Stat -Name $Name -Value 0 }
-
-    $Path = "Stats\$Name.txt"
     $Stat.Disabled = $true
 
     @{ 
@@ -1801,7 +1794,7 @@ Function Set-Stat {
     $SmallestValue = 1E-20
     $Stat = Get-Stat -Name $Name
 
-    If ($Stat -is [Hashtable] -and $Stat.IsSynchronized -and -not [Double]::IsNaN($Stat.Minute_Fluctuation)) { 
+    If ($Stat -is [Hashtable] -and -not [Double]::IsNaN($Stat.Minute_Fluctuation)) { 
         If (-not $Stat.Timer) { $Stat.Timer = $Stat.Updated.AddMinutes(-1) }
         If (-not $Duration) { $Duration = $Updated - $Stat.Timer }
         If ($Duration -le 0) { Return $Stat }
@@ -1819,7 +1812,6 @@ Function Set-Stat {
 
         If ($Value -lt $ToleranceMin -or $Value -gt $ToleranceMax) { $Stat.ToleranceExceeded ++ }
         Else { $Stat.ToleranceExceeded = [UInt16]0 }
-        # Else { $Stat | Add-Member ToleranceExceeded ([UInt16]0) -Force }
 
         If ($Value -gt 0 -and $Stat.ToleranceExceeded -gt 0 -and $Stat.ToleranceExceeded -lt $ToleranceExceeded -and $Stat.Week -gt 0) { 
             If ($Name -match '.+_Hashrate$') { 
@@ -1875,29 +1867,27 @@ Function Set-Stat {
     Else { 
         If (-not $Duration) { $Duration = [TimeSpan]::FromMinutes(1) }
 
-        $Global:Stats[$Name] = $Stat = [Hashtable]::Synchronized(
-            @{ 
-                Name                  = [String]$Name
-                Live                  = [Double]$Value
-                Minute                = [Double]$Value
-                Minute_Fluctuation    = [Double]0
-                Minute_5              = [Double]$Value
-                Minute_5_Fluctuation  = [Double]0
-                Minute_10             = [Double]$Value
-                Minute_10_Fluctuation = [Double]0
-                Hour                  = [Double]$Value
-                Hour_Fluctuation      = [Double]0
-                Day                   = [Double]$Value
-                Day_Fluctuation       = [Double]0
-                Week                  = [Double]$Value
-                Week_Fluctuation      = [Double]0
-                Duration              = [TimeSpan]$Duration
-                Updated               = [DateTime]$Updated
-                Disabled              = [Boolean]$false
-                Timer                 = [DateTime]$Timer
-                ToleranceExceeded     = [UInt16]0
-            }
-        )
+        $Global:Stats[$Name] = $Stat = @{ 
+            Name                  = [String]$Name
+            Live                  = [Double]$Value
+            Minute                = [Double]$Value
+            Minute_Fluctuation    = [Double]0
+            Minute_5              = [Double]$Value
+            Minute_5_Fluctuation  = [Double]0
+            Minute_10             = [Double]$Value
+            Minute_10_Fluctuation = [Double]0
+            Hour                  = [Double]$Value
+            Hour_Fluctuation      = [Double]0
+            Day                   = [Double]$Value
+            Day_Fluctuation       = [Double]0
+            Week                  = [Double]$Value
+            Week_Fluctuation      = [Double]0
+            Duration              = [TimeSpan]$Duration
+            Updated               = [DateTime]$Updated
+            Disabled              = [Boolean]$false
+            Timer                 = [DateTime]$Timer
+            ToleranceExceeded     = [UInt16]0
+        }
     }
 
     @{ 
@@ -1931,46 +1921,42 @@ Function Get-Stat {
 
     $Name.ForEach(
         { 
-            $Stat_Name = $_
-
-            If ($Global:Stats[$Stat_Name] -isnot [Hashtable] -or -not $Global:Stats[$Stat_Name].IsSynchronized) { 
+            If ($Global:Stats[$_] -isnot [Hashtable]) { 
                 # Reduce number of errors
-                If (-not (Test-Path -LiteralPath "Stats\$Stat_Name.txt" -PathType Leaf)) { 
+                If (-not (Test-Path -LiteralPath "Stats\$_.txt" -PathType Leaf)) { 
                     Return
                 }
 
                 Try { 
-                    $Stat = [System.IO.File]::ReadAllLines("Stats\$Stat_Name.txt") | ConvertFrom-Json -ErrorAction Stop
-                    $Global:Stats[$Stat_Name] = [Hashtable]::Synchronized(
-                        @{ 
-                            Name                  = [String]$Stat_Name
-                            Live                  = [Double]$Stat.Live
-                            Minute                = [Double]$Stat.Minute
-                            Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
-                            Minute_5              = [Double]$Stat.Minute_5
-                            Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
-                            Minute_10             = [Double]$Stat.Minute_10
-                            Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
-                            Hour                  = [Double]$Stat.Hour
-                            Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
-                            Day                   = [Double]$Stat.Day
-                            Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
-                            Week                  = [Double]$Stat.Week
-                            Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
-                            Duration              = [TimeSpan]$Stat.Duration
-                            Updated               = [DateTime]$Stat.Updated
-                            Disabled              = [Boolean]$Stat.Disabled
-                            ToleranceExceeded     = [UInt16]0
-                        }
-                    )
+                    $Stat = [System.IO.File]::ReadAllLines("Stats\$_.txt") | ConvertFrom-Json -ErrorAction Stop
+                    $Global:Stats[$_] = @{ 
+                        Name                  = [String]$Stat_Name
+                        Live                  = [Double]$Stat.Live
+                        Minute                = [Double]$Stat.Minute
+                        Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
+                        Minute_5              = [Double]$Stat.Minute_5
+                        Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
+                        Minute_10             = [Double]$Stat.Minute_10
+                        Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
+                        Hour                  = [Double]$Stat.Hour
+                        Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
+                        Day                   = [Double]$Stat.Day
+                        Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
+                        Week                  = [Double]$Stat.Week
+                        Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
+                        Duration              = [TimeSpan]$Stat.Duration
+                        Updated               = [DateTime]$Stat.Updated
+                        Disabled              = [Boolean]$Stat.Disabled
+                        ToleranceExceeded     = [UInt16]0
+                    }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Stat file ($Stat_Name) is corrupt and will be reset."
-                    Remove-Stat $Stat_Name
+                    Write-Message -Level Warn "Stat file ($_) is corrupt and will be reset."
+                    Remove-Stat $_
                 }
             }
 
-            Return $Global:Stats[$Stat_Name]
+            Return $Global:Stats[$_]
         }
     )
 }
@@ -2016,7 +2002,7 @@ Function Invoke-TcpRequest {
         $Writer.WriteLine($Request)
         $Response = If ($ReadToEnd) { $Reader.ReadToEnd() } Else { $Reader.ReadLine() }
     }
-    Catch { $Error.Remove($error[$Error.Count - 1]) }
+    Catch { $Error.Remove($Error[$Error.Count - 1]) }
     Finally { 
         If ($Reader) { $Reader.Close() }
         If ($Writer) { $Writer.Close() }
@@ -2030,11 +2016,8 @@ Function Invoke-TcpRequest {
 Function Get-CpuId { 
     # Brief : gets CPUID (CPU name and registers)
 
-    # OS Features
-    # $OS_x64 = "" # not implemented
-    # $OS_AVX = "" # not implemented
-    # $OS_AVX512 = "" # not implemented
-
+    # Name
+    $Name = "" # not implemented
     # Vendor
     $Vendor = "" # not implemented
 
@@ -2157,7 +2140,7 @@ Function Get-CpuId {
     # Wrap data into PSObject
     Return [PSCustomObject]@{ 
         Vendor   = $Vendor
-        Name     = $name
+        Name     = $Name
         Features = $Features.psBase.Keys.ForEach{ If ($Features.$_) { $_ } }
     }
 }
@@ -2309,7 +2292,7 @@ Function Get-Device {
                     }
 
                     $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
-                    $Device.Model = (($Device.Model -split ' ' -replace 'Processor', 'CPU' -replace 'Graphics', 'GPU') -notmatch $Device.Type -notmatch $Device.Vendor) -join ' ' -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^ A-Z0-9\.]' -replace ' \s+' -replace ' $'
+                    $Device.Model = (($Device.Model -split ' ' -replace 'Processor', 'CPU' -replace 'Graphics', 'GPU') -notmatch $Device.Type -notmatch $Device.Vendor) -join ' ' -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^ A-Z0-9\.]' -replace ' \s+' -replace ' $' -replace '^ '
 
                     If (-not $Type_Vendor_Id.($Device.Type)) { 
                         $Type_Vendor_Id.($Device.Type) = @{ }
@@ -2379,7 +2362,7 @@ Function Get-Device {
                     Else { 
                         $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)"
                     }
-                    $Device.Model = (($Device.Model -split ' ' -replace 'Processor', 'CPU' -replace 'Graphics', 'GPU') -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB" -join ' ' -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^ A-Z0-9\.]' -replace ' \s+' -replace ' $'
+                    $Device.Model = (($Device.Model -split ' ' -replace 'Processor', 'CPU' -replace 'Graphics', 'GPU') -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB" -join ' ' -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^ A-Z0-9\.]' -replace ' \s+' -replace ' $' -replace '^ '
 
                     If (-not $Type_Vendor_Id.($Device.Type)) { 
                         $Type_Vendor_Id.($Device.Type) = @{ }
@@ -2784,7 +2767,7 @@ Function Expand-WebRequest {
         If (Test-Path -LiteralPath $Path_New -PathType Container) { Remove-Item $Path_New -Recurse -Force }
 
         # use first (topmost) directory, some miners, e.g. ClaymoreDual_v11.9, contain multiple miner binaries for different driver versions in various sub dirs
-        $Path_Old = (Get-ChildItem -Path $Path_Old -File -Recurse | Where-Object { $_.Name -EQ $(Split-Path $Path -Leaf) }).Directory | Select-Object -First 1
+        $Path_Old = (Get-ChildItem -Path $Path_Old -File -Recurse | Where-Object { $_.Name -eq $(Split-Path $Path -Leaf) }).Directory | Select-Object -First 1
 
         If ($Path_Old) { 
             (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = Get-Date })
@@ -2974,26 +2957,6 @@ Function Get-NMVersion {
     $Config.LogToScreen = $ConfigLogToScreen
 }
 
-Function Copy-Object { 
-
-    Param(
-        [Parameter(Mandatory = $true)]
-        [Object]$Object
-    )
-
-    $Copy = @()
-    $Object.ForEach({
-        $CurrentObject = $_
-        $CurrentObjectCopy = New-Object $CurrentObject.GetType().Name
-        $CurrentObjectCopy.PSObject.Properties.ForEach({
-            $_.Value = $CurrentObject.PSObject.Properties[$_.Name].Value
-        })
-        $Copy += $CurrentObjectCopy
-    })
-
-    $Copy
-}
-
 Function Initialize-Autoupdate { 
 
     Param(
@@ -3160,7 +3123,7 @@ Function Update-DAGdata {
             $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
 
             If ($DAGdataResponse.code -eq 200) { 
-                $DAGdataResponse.data.PSObject.Properties.Name.Where({ $DAGdataResponse.data.$_.enabled -and $DAGdataResponse.data.$_.height -and ($Variables.RegexAlgoHasDAG -match (Get-Algorithm $DAGdataResponse.data.$_.algo) -or $_ -in @($Variables.DAGdata.Currency.psBase.Keys))}).ForEach(
+                $DAGdataResponse.data.PSObject.Properties.Name.Where({ $DAGdataResponse.data.$_.enabled -and $DAGdataResponse.data.$_.height -and ($Variables.RegexAlgoHasDAG -match (Get-Algorithm $DAGdataResponse.data.$_.algo) -or $_ -in $Variables.DAGdata.Currency.psBase.Keys)}).ForEach(
                     { 
                         If (Get-AlgorithmFromCurrency -Currency $_) { 
                             If ($DAGdataResponse.data.$_.height -gt $Variables.DAGdata.Currency.$_.BlockHeight) { 
@@ -3497,6 +3460,7 @@ Function Initialize-Environment {
         $WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
+
     # Load currency algorithm data
     $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
     ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
@@ -3506,6 +3470,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 10
         Exit
     }
+
     # Load EquihashCoinPers data
     $Variables.EquihashCoinPers = [Ordered]@{ } # as case insensitive hash table
     ((Get-Content -Path ".\Data\EquihashCoinPers.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value })
@@ -3565,6 +3530,33 @@ Function Initialize-Environment {
     # Load Balances data to make it available early in GUI
     If (Test-Path -LiteralPath ".\Data\Balances.json" -PathType Leaf) { $Variables.Balances = Get-Content ".\Data\Balances.json" | ConvertFrom-Json }
     Else { Write-Host "Loaded balances data." }
+
+    # Load CUDA version table
+    $Variables.CUDAVersionTable = Get-Content -Path ".\Data\CUDAVersion.json" | ConvertFrom-Json -AsHashtable | Get-SortedObject
+    If (-not $Variables.CUDAVersionTable) { 
+        Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\CUDAVersion.json' is not a valid JSON file. Please restore it from your original download."
+        $WscriptShell.Popup("File '.\Data\CUDAVersion.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    Else { Write-Host "Loaded CUDA version table." }
+
+    # Load NVidia GPU architecture table
+    $Variables.GPUArchitectureDbNvidia = Get-Content "Data\GPUArchitectureNvidia.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore
+    If (-not $Variables.GPUArchitectureDbNvidia) { 
+        Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
+        $WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    Else { Write-Host "Loaded NVidia GPU architecture table." }
+
+    # Load AMD GPU architecture table
+    $Variables.GPUArchitectureDbAMD = Get-Content "Data\GPUArchitectureAMD.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore
+    If (-not $Variables.GPUArchitectureDbAMD) { 
+        Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
+        $WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    Else { Write-Host "Loaded AMD GPU architecture table." }
 
     $Variables.BalancesCurrencies = @($variables.Balances.PSObject.Properties.Name.ForEach({ $Variables.Balances.$_.Currency }))
 
