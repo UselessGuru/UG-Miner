@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"455.23") }))) { Return }
 
-$URI = "https://github.com/nanopool/nanominer/releases/download/v3.8.9/nanominer-windows-3.8.9.zip"
+$URI = "https://github.com/nanopool/nanominer/releases/download/v3.8.10/nanominer-windows-3.8.10.zip"
 $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\nanominer.exe"
 $DeviceEnumerator = "Slot"

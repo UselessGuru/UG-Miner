@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://UG-Miner.com"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.1"
+    Version      = [System.Version]"6.1.2"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -314,6 +314,8 @@ If (-not ($Variables.MyIP = (Get-NetIPAddress -InterfaceIndex ((Get-NetRoute).Wh
 }
 
 Write-Host "Preparing environment and loading data files..."
+$Variables.PID = $PID
+
 # Create directories
 If (-not (Test-Path -LiteralPath ".\Cache" -PathType Container)) { New-Item -Path . -Name "Cache" -ItemType Directory | Out-Null }
 If (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { New-Item -Path . -Name "Config" -ItemType Directory | Out-Null }
@@ -441,7 +443,7 @@ $Variables.WatchdogTimers = @()
 
 $Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^UbqHash"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^ProgPow"
-$Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^Octopus|^ProgPow|^UbqHash"
+$Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^Octopus$|^ProgPow|^UbqHash"
 
 $Variables.Summary = "Loading miner device information...<br>This may take a while."
 Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')

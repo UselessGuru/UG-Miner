@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -112,7 +112,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("MemeHash");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 30);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm memehash") }
     [PSCustomObject]@{ Algorithms = @("Mike");                 Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 60);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm mike") }
     [PSCustomObject]@{ Algorithms = @("MinotaurX");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(40, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm minotaurx") }
-    [PSCustomObject]@{ Algorithms = @("Panthera");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm panthera") }
+    [PSCustomObject]@{ Algorithms = @("Panthera");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm panthera") }
     [PSCustomObject]@{ Algorithms = @("Pufferfish2BMB");       Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm pufferfish2bmb") }
     [PSCustomObject]@{ Algorithms = @("RandomxArq");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
     [PSCustomObject]@{ Algorithms = @("RandomxEpic");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomepic") }

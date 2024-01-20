@@ -1,6 +1,23 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.1.2 2024/01/20
+===================================
+
+Fixes:
+- Core / Includes.psm1: Get-Stat not setting 'Name' property (Regression from 6.1.1)
+- No profitable miners found if only one miner is available
+
+Improvements:
+- Brains: Reset history when stat gets reset
+
+Miner updates:
+- BzMiner-v19.2.3
+- FrkHashMiner-v1.3.14 (new)
+- NanoMiner-v3.8.10
+- Rigel-v1.13.2
+
+
 ChangeLog UG-Miner 6.1.1 2024/01/17
 ===================================
 

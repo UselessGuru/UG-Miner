@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0"} ))) { Return }
@@ -61,7 +61,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("HeavyHashPyrin");               Type = "AMD"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 50); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo PYRIN" }
 #   [PSCustomObject]@{ Algorithms = @("HeavyHashKaspa");               Type = "AMD"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 50); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo KASPA" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1991
     [PSCustomObject]@{ Algorithms = @("NexaPow");                      Type = "AMD"; Fee = @(0.02);       MinMemGiB = 3.0;  MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo NEXA" }
-    [PSCustomObject]@{ Algorithms = @("SHA512256d");                   Type = "AMD"; Fee = @(0.0075);     MinMemGiB = 1.00; MinerSet = 0; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo RADIANT" }
+    [PSCustomObject]@{ Algorithms = @("SHA512256d");                   Type = "AMD"; Fee = @(0.0075);     MinMemGiB = 1.0;  MinerSet = 0; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo RADIANT" }
     [PSCustomObject]@{ Algorithms = @("UbqHash");                      Type = "AMD"; Fee = @(0.007);      MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH" }
     [PSCustomObject]@{ Algorithms = @("UbqHash", "Blake3");            Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode ALEPHDUAL" }
 #   [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKarlsen");  Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KARLSENDUAL" } # No hashrate for second algorithm
@@ -104,13 +104,13 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EthashB3", "HeavyHashPyrin");   Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode PYRINDUAL --maxdualimpact *" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "HeavyHashKarlsen"); Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode KARLSENDUAL --maxdualimpact *" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "SHA512256d");       Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode RXDDUAL --maxdualimpact *" }
-    [PSCustomObject]@{ Algorithms = @("Flux");                         Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo FLUX" }
+    [PSCustomObject]@{ Algorithms = @("Flux");                         Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.0;  MinerSet = 2; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo FLUX" }
     [PSCustomObject]@{ Algorithms = @("HeavyHashKarlsen");             Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 50); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo KARLSEN" }
     [PSCustomObject]@{ Algorithms = @("HeavyHashPyrin");               Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 50); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo PYRIN" }
     [PSCustomObject]@{ Algorithms = @("IronFish");                     Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo IRONFISH" }
 #   [PSCustomObject]@{ Algorithms = @("HeavyHashKaspa");               Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 50); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo KASPA" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1991
     [PSCustomObject]@{ Algorithms = @("NexaPow");                      Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo NEXA" }
-    [PSCustomObject]@{ Algorithms = @("SHA512256d");                   Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo RADIANT" } 
+    [PSCustomObject]@{ Algorithms = @("SHA512256d");                   Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 1.0;  MinerSet = 2; WarmupTimes = @(60, 70); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo RADIANT" } 
     [PSCustomObject]@{ Algorithms = @("UbqHash");                      Type = "NVIDIA"; Fee = @(0.007);      MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH" }
     [PSCustomObject]@{ Algorithms = @("UbqHash", "Blake3");            Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode ALEPHDUAL --maxdualimpact *" }
 #   [PSCustomObject]@{ Algorithms = @("UbqHash", "HeavyHashKarlsen");  Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo UBQHASH --dualmode KARLSENDUAL --maxdualimpact *" } # No hashrate for second algorithm

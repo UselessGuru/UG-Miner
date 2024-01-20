@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" } ))) { Return }
@@ -32,7 +32,7 @@ $Path = "$PWD\Bin\$Name\TT-Miner.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Blake3";           Fee = @(0.01); MinMemGiB = 2.00; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Blake3" }
+    [PSCustomObject]@{ Algorithm = "Blake3";           Fee = @(0.01); MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Blake3" }
     [PSCustomObject]@{ Algorithm = "EtcHash";          Fee = @(0.01); MinMemGiB = 1.42; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a EtcHash" }
     [PSCustomObject]@{ Algorithm = "Ethash";           Fee = @(0.01); MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Ethash" }
     [PSCustomObject]@{ Algorithm = "EthashB3";         Fee = @(0.01); MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a EthashB3" }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 Function Start-APIServer { 
@@ -449,7 +449,7 @@ Function Start-APIServer {
                                 }
                             }
                             "/functions/stat/get" { 
-                                $TempStats = @(If ($null -ne $Parameters.Value) { @($Stats.psBase.Keys.Where({ $_ -like "*$($Parameters.Type)" -and $Stats[$_].Live -eq $Parameters.Value }).ForEach({ $Stats[$_] })) } Else { @($Stats) })
+                                $TempStats = @(If ($null -ne $Parameters.Value) { @($Stats.psBase.Keys.Where({ $_ -like "*_$($Parameters.Type)" -and $Stats[$_].Live -eq $Parameters.Value }).ForEach({ $Stats[$_] })) } Else { @($Stats) })
                                 If ($TempStats) { 
                                     If ($null -ne $Parameters.Value) { 
                                         ($TempStats | Sort-Object -Property Name).ForEach({ $Data += "$($_.Name -replace "_$($Parameters.Type)")`n" })

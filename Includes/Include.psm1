@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1156,9 +1156,9 @@ Function Write-Message {
     }
 
     If (-not $Config.Keys -or $Level -in $Config.LogToFile) { 
-        # Get mutex. Mutexes are shared across all threads and processes. 
-        # This lets us ensure only one thread is trying to write to the file at a time. 
-        $Mutex = New-Object System.Threading.Mutex($false, $Variables.Branding.ProductLabel)
+        # Get mutex. Mutexes are shared across all threads and processes.
+        # This lets us ensure only one thread is trying to write to the file at a time.
+        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.PID)_Write-Message")
 
         $LogFile = "$($Variables.MainPath)\Logs\$($Variables.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
         If ($Variables.LogFile -ne $LogFile) { $Variables.LogFile = $LogFIle }
@@ -1891,6 +1891,7 @@ Function Set-Stat {
     }
 
     @{ 
+        Name                  = [String]$Name
         Live                  = [Double]$Stat.Live
         Minute                = [Double]$Stat.Minute
         Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
@@ -1930,7 +1931,7 @@ Function Get-Stat {
                 Try { 
                     $Stat = [System.IO.File]::ReadAllLines("Stats\$_.txt") | ConvertFrom-Json -ErrorAction Stop
                     $Global:Stats[$_] = @{ 
-                        Name                  = [String]$Stat_Name
+                        Name                  = [String]$Name
                         Live                  = [Double]$Stat.Live
                         Minute                = [Double]$Stat.Minute
                         Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
@@ -2819,9 +2820,9 @@ Function Add-CoinName {
     )
 
     If (-not ($Variables.CoinNames[$Currency] -and $Variables.CurrencyAlgorithm[$Currency])) { 
-        # Get mutex. Mutexes are shared across all threads and processes. 
-        # This lets us ensure only one thread is trying to write to the file at a time. 
-        $Mutex = New-Object System.Threading.Mutex($false, "$($PWD -replace '[^A-Z0-9]')_Add-CoinName")
+        # Get mutex. Mutexes are shared across all threads and processes.
+        # This lets us ensure only one thread is trying to write to the file at a time.
+        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.PID)_Add-CoinName")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
         If ($Mutex.WaitOne(1000)) { 
@@ -3085,7 +3086,7 @@ Function Update-DAGdata {
                 ($DAGdataResponse.Content -split '\n' -replace '"', "'" | Where-Object { $_ -like "<div class='block' title='Current block height of *" }).ForEach(
                     { 
                         $Currency = $_ -replace "^<div class='block' title='Current block height of " -replace "'>.*$"
-                        If ($Currency -ne "ETF") { # ETF has invalid DAG data og 444GiB
+                        If ($Currency -notin @("ETF")) { # ETF has invalid DAG data of 444GiB
                             $BlockHeight = [Math]::Floor(($_ -replace "^<div class='block' title='Current block height of $Currency'>" -replace "</div>"))
                             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $BlockHeight -ge $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                                 $DAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2

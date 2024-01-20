@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.1
-Version date:   2024/01/15
+Version:        6.1.2
+Version date:   2024/01/20
 #>
 
 using module .\Include.psm1
@@ -405,7 +405,10 @@ Do {
                                             $_.Workers                  = $Pool[0].Workers
                                             $_.WorkerName               = $Pool[0].WorkerName
                                         }
-                                        If (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
+                                        If ($_.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 
+                                            $_.AlgorithmVariant = "$($_.Algorithm)"
+                                        }
+                                        ElseIf (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
                                             $_.BlockHeight      = $Variables.DAGdata.Currency.($_.Currency).BlockHeight
                                             $_.Epoch            = $Variables.DAGdata.Currency.($_.Currency).Epoch
                                             $_.DAGSizeGiB       = $Variables.DAGdata.Currency.($_.Currency).DAGsize / 1GB 
@@ -428,20 +431,19 @@ Do {
                             }
                         )
                         Remove-Variable Key, Name, Pool, PoolGroup, PoolGroups -ErrorAction Ignore
-                        If ($Variables.CycleStarts.Count -ge $Config.SyncWindow) { 
-                            # Remove Pools that have not been updated for 1 day
-                            $Pools = @($Pools.Where({ $_.Updated -ge [DateTime]::Now.ToUniversalTime().AddDays(-1) }))
 
-                            $MaxPoolAgeMinutes = $Config.SyncWindow * $Config.SyncWindow * $Config.SyncWindow * ($Variables.CycleStarts[-1] - $Variables.CycleStarts[0]).TotalMinutes
-                            $Pools.Where({ $_.Updated -lt $Variables.CycleStarts[0] }).ForEach(
-                                { 
-                                    # Pool data is older than earliest CycleStart
-                                    If ([Math]::Floor(($Variables.CycleStarts[-1] - $_.Updated).TotalMinutes) -gt $MaxPoolAgeMinutes) { $_.Reasons.Add("Data too old") }
-                                    Else { $_.Price_Bias *= [Math]::Pow(0.9, ($Variables.CycleStarts[0] - $_.Updated).TotalMinutes) }
-                                }
-                            )
-                            Remove-Variable MaxPoolAgeMinutes
-                        }
+                        # Remove Pools that have not been updated for 1 day
+                        $Pools = @($Pools.Where({ $_.Updated -ge [DateTime]::Now.ToUniversalTime().AddDays(-1) }))
+
+                        $MaxPoolAgeMinutes = $Config.SyncWindow * $Config.SyncWindow * $Config.SyncWindow * ($Variables.CycleStarts[-1] - $Variables.CycleStarts[0]).TotalMinutes
+                        $Pools.Where({ $_.Updated -lt $Variables.CycleStarts[0] }).ForEach(
+                            { 
+                                # Pool data is older than earliest CycleStart
+                                If ([Math]::Floor(($Variables.CycleStarts[-1] - $_.Updated).TotalMinutes) -gt $MaxPoolAgeMinutes) { $_.Reasons.Add("Data too old") }
+                                Else { $_.Price_Bias *= [Math]::Pow(0.9, ($Variables.CycleStarts[0] - $_.Updated).TotalMinutes) }
+                            }
+                        )
+                        Remove-Variable MaxPoolAgeMinutes
                         # No username or wallet
                         $Pools.Where({ -not $_.User }).ForEach({ $_.Reasons.Add("No username or wallet") })
                         # Pool disabled by stat file
@@ -563,7 +565,6 @@ Do {
                         }
 
                         # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
-                        # ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object { $_.Prioritize }, { $_.Price_Bias } -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
                         ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
                     }
                     Remove-Variable ComparePools
@@ -760,7 +761,7 @@ Do {
                             $_.InvocationInfo | Format-List -Force >> "Logs\Error_Dev.txt"
                         }
                     }
-                 ).ForEach(
+                ).ForEach(
                     { 
                         Try { 
                             $Miner = $_
@@ -969,7 +970,7 @@ Do {
                 Write-Message -Level Info "Selecting best miner$(If (@($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { "s" }) based on$(If ($Variables.CalculatePowerCost) { " profit (power cost $($Config.MainCurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earning" })..."
 
                 If ($Miners.Where({ $_.Available }).Count -eq 1) { 
-                    $Variables.MinersBestPerDevice_Combo = $Variables.MinersBestPerDevice = $Variables.MinersMostProfitable = $Miners
+                    $Variables.MinersBestPerDevice_Combo = $Variables.MinersBestPerDevice = $Variables.MinersMostProfitable = $Miners.Where({ $_.Available })
                 }
                 Else { 
                     # Add running miner bonus
@@ -1140,7 +1141,7 @@ Do {
                 )
                 Start-Sleep -Milliseconds 500
                 $Loops ++
-                If ($Loops -gt 100) { 
+                If ($Loops -gt 50) { 
                     $Message = "Cannot stop all miners graciously."
                     If ($Config.AutoReboot) { 
                         Write-Message -Level Error "$Message Restarting computer in 30 seconds..."
@@ -1317,7 +1318,7 @@ Do {
                 # Display benchmarking progress
                 If ($MinersDeviceGroupNeedingBenchmark) { 
                     $Count = ($MinersDeviceGroupNeedingBenchmark | Select-Object -Property { $_.Algorithms }, { $_.Name } -Unique).Count
-                    Write-Message -Level Info "Benchmarking for '$($_.Name)' in progress. $Count miner$(If ($Count -gt 1) { 's' }) left to complete benchmark."
+                    Write-Message -Level Info "Benchmarking for '$($_.Name)' in progress. $Count miner$(If ($Count -gt 1) { 's' }) left to complete benchmarking."
                 }
                 # Display power consumption measurement progress
                 If ($MinersDeviceGroupNeedingPowerConsumptionMeasurement) { 
