@@ -314,15 +314,14 @@ If ($NetRoute = ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) 
 }
 If ($MyIP) { 
     $Variables.MyIP = $MyIP
-    Remove-Variable MyIp, NetRoure -ErrorAction Ignore
 }
 Else { 
     $Variables.MyIP = $null
-    Remove-Variable MyIp, NetRoure -ErrorAction Ignore
     Write-Host "Terminating Error - No internet connection." -ForegroundColor "Red"
     $WscriptShell.Popup("No internet connection", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
+   Remove-Variable MyIp, NetRoute -ErrorAction Ignore
 
 Write-Host "Preparing environment and loading data files..."
 $Variables.PID = $PID

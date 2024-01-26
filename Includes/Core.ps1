@@ -43,11 +43,11 @@ Do {
             }
             If ($MyIP) { 
                 $Variables.MyIP = $MyIP
-                Remove-Variable MyIp, NetRoure -ErrorAction Ignore
+                Remove-Variable MyIp, NetRoute -ErrorAction Ignore
             }
             Else { 
                 $Variables.MyIP = $null
-                Remove-Variable MyIp, NetRoure -ErrorAction Ignore
+                Remove-Variable MyIp, NetRoute -ErrorAction Ignore
                 Write-Message -Level Error "No internet connection - will retry in 60 seconds..."
                 #Stop all miners
                 ForEach ($Miner in $Variables.Miners.Where({ $_.Status -ne [MinerStatus]::Idle })) { 
