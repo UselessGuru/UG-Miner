@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.1.2
-Version date:   2024/01/20
+Version:        6.1.3
+Version date:   2024/01/26
 #>
 
 using module .\Include.psm1
@@ -30,6 +30,8 @@ Do {
     If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" -Append -Force }
 
     (Get-Process -Id $PID).PriorityClass = "BelowNormal"
+
+    $Variables.BalancesTrackerRunning = $true
 
     $Variables.BalancesData = @()
     $Earnings = @()
@@ -406,7 +408,6 @@ Do {
         Catch { 
             Write-Message -Level Warn "Balances Tracker failed to save earnings data to '.\Data\DailyEarnings.csv' (should have $($Earnings.count) entries)."
         }
-        Remove-Variable Earnings
 
         If ($Variables.BalancesData.Count -ge 1) { $Variables.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
         If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }
@@ -425,6 +426,8 @@ Do {
     [System.GC]::Collect()
 
 } While ($true)
+
+$Variables.BalancesTrackerRunning = $false
 
 $Error.Clear()
 [System.GC]::Collect()

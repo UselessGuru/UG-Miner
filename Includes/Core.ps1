@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.2
-Version date:   2024/01/20
+Version:        6.1.3
+Version date:   2024/01/26
 #>
 
 using module .\Include.psm1
@@ -37,8 +37,17 @@ Do {
 
         # Internet connection check when no new pools
         If (-not $Variables.PoolsNew) { 
-            If (-not ($Variables.MyIP = (Get-NetIPAddress -InterfaceIndex ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) | Get-NetIPInterface).Where({ $_.ConnectionState -eq "Connected" }).ifIndex -AddressFamily IPV4).IPAddress)) {
+            # Internet connection must be available
+            If ($NetRoute = ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) | Get-NetIPInterface).Where({ $_.ConnectionState -eq "Connected" })) { 
+                $MyIP = ((Get-NetIPAddress -InterfaceIndex $NetRoute.ifIndex -AddressFamily IPV4).IPAddress)
+            }
+            If ($MyIP) { 
+                $Variables.MyIP = $MyIP
+                Remove-Variable MyIp, NetRoure -ErrorAction Ignore
+            }
+            Else { 
                 $Variables.MyIP = $null
+                Remove-Variable MyIp, NetRoure -ErrorAction Ignore
                 Write-Message -Level Error "No internet connection - will retry in 60 seconds..."
                 #Stop all miners
                 ForEach ($Miner in $Variables.Miners.Where({ $_.Status -ne [MinerStatus]::Idle })) { 
@@ -56,6 +65,9 @@ Do {
         }
 
         $Variables.PoolsConfig = $Config.PoolsConfig.Clone()
+
+        # Tuning parameters require local admin rights
+        $Variables.UseMinerTweaks = $Variables.IsLocalAdmin -and $Config.UseMinerTweaks
 
         If ($Config.IdleDetection) { 
             If (-not $Variables.IdleRunspace) { 
@@ -120,7 +132,7 @@ Do {
 
                 # Expire watchdog timers
                 If ($Config.Watchdog) { $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.Kicked -ge $Variables.Timer.AddSeconds( - $Variables.WatchdogReset) })) }
-                Else { $Variables.WatchdogTimers = @() }
+                Else { $Variables.WatchdogTimers = [PSCustomObject[]]@() }
 
                 # Check for new version
                 If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt ([DateTime]::Now).AddDays(-$Config.AutoUpdateCheckInterval)) { Get-NMVersion }
@@ -432,7 +444,7 @@ Do {
                         )
                         Remove-Variable Key, Name, Pool, PoolGroup, PoolGroups -ErrorAction Ignore
 
-                        # Remove Pools that have not been updated for 1 day
+                        # Remove pools that have not been updated for 1 day
                         $Pools = @($Pools.Where({ $_.Updated -ge [DateTime]::Now.ToUniversalTime().AddDays(-1) }))
 
                         $MaxPoolAgeMinutes = $Config.SyncWindow * $Config.SyncWindow * $Config.SyncWindow * ($Variables.CycleStarts[-1] - $Variables.CycleStarts[0]).TotalMinutes
@@ -582,9 +594,6 @@ Do {
                 Remove-Variable Pools, PoolsDeconfigured, PoolsNew, PoolTimestamp -ErrorAction Ignore
 
                 $Variables.PoolsBest = $Variables.Pools.Where({ $_.Best }) | Sort-Object -Property Algorithm
-
-                # Tuning parameters require local admin rights
-                $Variables.UseMinerTweaks = [Boolean]($Variables.IsLocalAdmin -and $Config.UseMinerTweaks)
             }
             Else { 
                 $Variables.EndCycleTime = $Variables.EndCycleTime.AddSeconds([Math]::Floor($Config.Interval / 2))
@@ -883,9 +892,9 @@ Do {
                     }
                 }
 
-                $Miners.Where({ $_.Workers[0].Hashrate -eq 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") })
+                $Miners.Where({ $_.Workers.Hashrate -eq 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") })
 
-                $Variables.MinersMissingBinary = @()
+                $Variables.MinersMissingBinary = [Miner[]]@()
                 $Miners.Where({ -not $_.Reasons -and -not (Test-Path -LiteralPath $_.Path -Type Leaf) }).ForEach(
                     { 
                         $_.Reasons.Add("Binary missing")
@@ -893,7 +902,7 @@ Do {
                     }
                 )
 
-                $Variables.MinersMissingPrerequisite = @()
+                $Variables.MinersMissingPrerequisite = [Miner[]]@()
                 $Miners.Where({ -not $_.Reasons -and $_.PrerequisitePath }).ForEach(
                     { 
                         $_.Reasons.Add("Prerequisite missing ($(Split-Path -Path $_.PrerequisitePath -Leaf))")
@@ -928,8 +937,7 @@ Do {
 
                 Write-Message -Level Info "Loaded $($Miners.Count) miner$(If ($Miners.Count -ne 1) { 's' }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { 's' }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { 's' }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { 's' })."
 
-                $DownloadList = @($Variables.MinersMissingPrerequisite | Select-Object @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }) + @($Variables.MinersMissingBinary | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }) | Select-Object * -Unique
-                If ($DownloadList) { 
+                If ($DownloadList = @($Variables.MinersMissingPrerequisite | Select-Object @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }) + @($Variables.MinersMissingBinary | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }) | Select-Object * -Unique) { 
                     If ($Variables.Downloader.State -ne "Running") { 
                         # Download miner binaries
                         Write-Message -Level Info "Some miners binaries are missing ($($DownloadList.Count) item$(If ($DownloadList.Count -ne 1) { "s" })), starting downloader..."
@@ -1178,6 +1186,7 @@ Do {
             $Variables.Miners.ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
             $Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
             $Variables.Miners = [Miner[]]@()
+            $Variables.RefreshNeeded = $true
             If (-not $Variables.EnabledDevices) { 
                 Write-Message -Level Warn "No enabled devices - retrying in $($Config.Interval) seconds..."
                 Start-Sleep -Seconds $Config.Interval
@@ -1200,18 +1209,20 @@ Do {
             }
             Continue
         }
-        ElseIf (-not $Variables.MinersBestPerDevice_Combo) { 
+
+        # Update data in API
+        $Variables.Miners = $Miners
+        Remove-Variable Miners
+
+        If (-not $Variables.MinersBestPerDevice_Combo) { 
             $Variables.Miners.ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
             $Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
+            $Variables.RefreshNeeded = $true
             Write-Message -Level Warn "No profitable miners - retrying in $($Config.Interval) seconds..."
             Start-Sleep -Seconds $Config.Interval
             Write-Message -Level Info "Ending cycle (No profitable miners)."
             Continue
         }
-
-        # Update data in API
-        $Variables.Miners = $Miners
-        Remove-Variable Miners
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -1302,8 +1313,7 @@ Do {
                 Remove-Variable DataCollectInterval
             }
 
-            $Message = "$(If ($Miner.Benchmark) { "Benchmark" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and " })$(If($Miner.MeasurePowerConsumption) { "Power consumption measurement" })"
-            If ($Message) { 
+            If ($Message = "$(If ($Miner.Benchmark) { "Benchmark" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and " })$(If($Miner.MeasurePowerConsumption) { "Power consumption measurement" })") { 
                 $Message = $Message.Substring(0, 1).toUpper() + $Message.Substring(1).toLower()
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) samples]..."
             }
@@ -1472,7 +1482,7 @@ Do {
     }
 
     $Error.Clear()
-    [System.GC]::Collect()
+    [System.GC]::Collect()  
 
     Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)."
 

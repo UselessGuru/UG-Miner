@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.1.2
+Version:        6.1.3
 Version date:   08 July 2023
 #>
 
@@ -32,7 +32,6 @@ If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocat
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
 $BrainName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
-$PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })  
 
 $PoolObjects = @()
 $APICallFails = 0
@@ -42,6 +41,7 @@ $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
+    $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })  
     $StartTime = [DateTime]::Now
 
     Try { 
@@ -76,6 +76,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             { 
                 $CurrenciesData.$_ | Add-Member @{ Currency = If ($CurrenciesData.$_.symbol) { $CurrenciesData.$_.symbol -replace '-.+$' } Else { $_ -replace '-.+$' } } -Force
                 $CurrenciesData.$_ | Add-Member @{ CoinName = If ($CurrenciesData.$_.name) { $CurrenciesData.$_.name } Else { $_ } } -Force
+                $CurrenciesData.$_ | Add-Member @{ conversion_supported = [Boolean]($PoolConfig.Wallets.($CurrenciesData.$_.Currency) -or -not $CurrenciesData.$_.conversion_disabled) } -Force
+                
                 $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
                 $CurrenciesData.$_.PSObject.Properties.Remove("name")
                 $CurrenciesArray += $CurrenciesData.$_
@@ -90,13 +92,14 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
         )
 
-        # Get best currency
+        # Get best currency, prefer currencies that can be converted
         ($CurrenciesArray | Group-Object algo).ForEach(
             { 
                 If ($AlgoData.($_.name)) { 
-                    $BestCurrency = ($_.Group | Sort-Object estimate -Descending | Select-Object -First 1)
+                    $BestCurrency = ($_.Group | Sort-Object conversion_supported, estimate -Descending | Select-Object -First 1)
                     $AlgoData.($_.name) | Add-Member Currency $BestCurrency.currency -Force
                     $AlgoData.($_.name) | Add-Member CoinName $BestCurrency.coinname -Force
+                    $AlgoData.($_.name) | Add-Member conversion_supported $BestCurrency.conversion_supported -Force
                 }
             }
         )
@@ -109,6 +112,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
          }
 
         ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
+            $Algorithm_Norm = Get-Algorithm $Algo
             If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h /= 1000 }
             $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
 
@@ -136,22 +140,28 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
             $AlgoData.$Algo | Add-Member Updated $Timestamp -Force
 
-            # Reset history when stat file got removed
-            $Stat_Name = "$($PoolVariant)_$($Algorithm_Norm)_Profit"
-            If (-not $Stats.$Stat_Name) { $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algo }) }
+            If ($PoolVariant) { 
+                # Reset history when stat file got removed
+                $StatName = If ($Currency) { "$($PoolVariant)_$Algorithm_Norm-$($Currency)_Profit" } Else { "$($PoolVariant)_$($Algorithm_Norm)_Profit" }
+                If (-not (Get-Stat -Name $StatName)) { 
+                    $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
+                    Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit')"
+                }
+            }
 
             $PoolObjects += [PSCustomObject]@{ 
                 actual_last24h      = $BasePrice
+                currency            = $Currency
                 Date                = $Timestamp
                 estimate_current    = $AlgoData.$Algo.estimate_current
                 estimate_last24h    = $AlgoData.$Algo.estimate_last24h
                 Last24hDrift        = $AlgoData.$Algo.estimate_current - $BasePrice
                 Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algo.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
                 Last24hDriftSign    = If ($AlgoData.$Algo.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
-                Name                = $Algo
+                Name                = $Algorithm_Norm
             }
         }
-        Remove-Variable Algo, BasePrice, BestCurrency, CurrenciesArray, CurrenciesData, Currency, DAGdata -ErrorAction Ignore
+        Remove-Variable Algo, Algorithm_Norm, BasePrice, BestCurrency, CurrenciesArray, CurrenciesData, Currency, DAGdata -ErrorAction Ignore
 
         # Created here for performance optimization, minimize # of lookups
         $CurPoolObjects = $PoolObjects.Where({ $_.Date -eq $Timestamp })
@@ -167,16 +177,27 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf | Where-Object { $_.Name -eq $PoolName + ", Up" }).Count - ($GroupAvgSampleSizeHalf | Where-Object { $_.Name -eq $Name + ", Down" }).Count) / (($GroupMedSampleSizeHalf | Where-Object { $_.Name -eq $PoolName }).Count)) * [Math]::abs(($GroupMedSampleSizeHalf | Where-Object { $_.Name -eq $PoolName }).Median)
             $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize | Where-Object { $_.Name -eq $PoolName + ", Up" }).Count - ($GroupAvgSampleSize | Where-Object { $_.Name -eq $Name + ", Down" }).Count) / (($GroupMedSampleSize | Where-Object { $_.Name -eq $PoolName }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent | Where-Object { $_.Name -eq $PoolName }).Median)
             $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)
-            $Price = [Math]::max(0, [Double]($Penalty + $CurPoolObjects.Where({ $_.Name -eq $PoolName }).actual_last24h))
-            $AlgoData.$PoolName | Add-Member Plus_Price $Price -Force
+            $CurPoolObject = $CurPoolObjects.Where({ $_.Name -eq $PoolName })
+            $Currency = $CurPoolObject.currency
+            $LastPrice = [Double]$CurPoolObject.actual_last24h
+            $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
+            
+            # Reset history if PlusPrice is not within +/- 1000% of LastPrice
+            If ($LastPrice -gt 0 -and ($PlusPrice -lt $LastPrice * 0.1 -or $PlustPrice -gt $LastPrice * 10)) { 
+                $StatName = If ($Currency) { "$($PoolVariant)_$Algorithm_Norm-$($Currency)_Profit" } Else { "$($PoolVariant)_$($Algorithm_Norm)_Profit" }
+                Remove-Stat -Name $StatName
+                $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
+                $PlusPrice = $LastPrice
+                Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $Poolname (LastPrice: $LastPrice vs. PlusPrice: $PlusPrice)"
+            }
+            $AlgoData.$PoolName | Add-Member PlusPrice $PlusPrice -Force
         }
-        Remove-Variable CurPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PoolName, Price, SampleSizets, SampleSizeHalfts
+        Remove-Variable CurPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizets, SampleSizeHalfts, StatName -ErrorAction Ignore
 
         If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
             ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
         }
 
-        $Variables.BrainData.Remove($BrainName)
         $Variables.BrainData.$BrainName = $AlgoData
         $Variables.Brains.$BrainName["Updated"] = $Timestamp
 

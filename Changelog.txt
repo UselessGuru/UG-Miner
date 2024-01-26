@@ -1,6 +1,28 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+
+ChangeLog UG-Miner 6.1.3 2024/01/26
+===================================
+
+Fixes:
+- APIServer: Enable/Disable devices not updating device status colors in Web GUI.
+- BalancesTracker.ps1: DailyEarnings broken (Regression from 6.1.1)
+- Includes.psm1/Write-Config: Do not removre 'PoolsConfig' from $Config
+
+Improvements:
+- Miner code optimizations
+
+Miner updates:
+- BzMiner-v19.3.0
+- NanoMiner-v3.8.11
+- SRBMinerMulti-v2.4.6
+
+Pool & Brain changes:
+- Reset price history if PlusPrice is not within +/- 1000% of LastPrice
+- ZPool: Prefer currencies that can be converted
+
+
 ChangeLog UG-Miner 6.1.2 2024/01/20
 ===================================
 

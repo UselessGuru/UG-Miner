@@ -54,7 +54,7 @@
       },
       "HashCryptosPlus": {
         "DivisorMultiplier": 1000000,
-        "PriceField": "Plus_Price"
+        "PriceField": "PlusPrice"
       }
     }
   },
@@ -137,7 +137,7 @@
       },
       "MiningDutchPlus": {
         "DivisorMultiplier": 1000000,
-        "PriceField": "Plus_Price"
+        "PriceField": "PlusPrice"
       }
     }
   },
@@ -268,7 +268,7 @@
       },
       "ProHashingPlus": {
         "DivisorMultiplier": 1,
-        "PriceField": "Plus_Price"
+        "PriceField": "PlusPrice"
       }
     }
   },
@@ -341,11 +341,11 @@
       },
       "ZergPoolCoinsPlus": {
         "DivisorMultiplier": 1000000000,
-        "PriceField": "Plus_Price"
+        "PriceField": "PlusPrice"
       },
       "ZergPoolPlus": {
         "DivisorMultiplier": 1000000,
-        "PriceField": "Plus_Price"
+        "PriceField": "PlusPrice"
       }
     }
   },
@@ -397,7 +397,7 @@
       },
       "ZPoolPlus": {
         "DivisorMultiplier": 1000000,
-        "PriceField": "Plus_Price"
+        "PriceField": "PlusPrice"
       }
     }
   }

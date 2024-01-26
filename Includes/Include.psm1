@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.2
-Version date:   2024/01/20
+Version:        6.1.3
+Version date:   2024/01/26
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -283,6 +283,7 @@ Class Miner {
             Catch { 
                 Return $_
             }
+            Remove-Variable Miner, NextLoop -ErrorAction Ignore
         }
 
         $this.DataCollectInterval = If ($this.Benchmark -or $this.MeasurePowerConsumption) { 1 } Else { 5 }
@@ -848,7 +849,7 @@ Function Stop-Core {
     $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
     $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
     $Variables.EndCycleTime = $null
-    $Variables.WatchdogTimers = @()
+    $Variables.WatchdogTimers = [PSCustomObject[]]@()
     $Variables.CycleStarts = @()
 
     [System.GC]::Collect()
@@ -956,7 +957,6 @@ Function Start-BalancesTracker {
                 $Global:BalancesTrackerRunspace = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
 
                 $Powershell.BeginInvoke() | Out-Null
-                $Variables.BalancesTrackerRunning = $true
             }
             Catch { 
                 Write-Message -Level Error "Failed to start Balances Tracker [$Error[0]]."
@@ -1597,9 +1597,13 @@ Function Write-Config {
         Get-ChildItem -Path "$($ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
     }
 
+    $PoolsConfig = $Config["PoolsConfig"]
     $Config.Remove("ConfigFile")
     $Config.Remove("PoolsConfig")
+
     "$Header$($Config | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $ConfigFile -Force
+
+    $Config["PoolsConfig"] = $PoolsConfig
 
     $Variables.ShowAccuracy = $Config.ShowAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
@@ -1815,7 +1819,7 @@ Function Set-Stat {
 
         If ($Value -gt 0 -and $Stat.ToleranceExceeded -gt 0 -and $Stat.ToleranceExceeded -lt $ToleranceExceeded -and $Stat.Week -gt 0) { 
             If ($Name -match '.+_Hashrate$') { 
-                Write-Message -Level Warn "Error saving hashrate for '$($Name -replace '_Hashrate$')'. $(($Value | ConvertTo-Hash)) is outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash)) to $(($ToleranceMax | ConvertTo-Hash))) [Iteration $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
+                Write-Message -Level Warn "Error saving hashrate for '$($Name -replace '_Hashrate$')'. $(($Value | ConvertTo-Hash) -replace ' ') is outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash) -replace ' ') to $(($ToleranceMax | ConvertTo-Hash) -replace ' ')) [Iteration $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
             }
             ElseIf ($Name -match '.+_PowerConsumption') { 
                 Write-Message -Level Warn "Error saving power consumption for '$($Name -replace '_PowerConsumption$')'. $($Value.ToString("N2"))W is outside fault tolerance ($($ToleranceMin.ToString("N2"))W to $($ToleranceMax.ToString("N2"))W) [Iteration $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
@@ -1826,7 +1830,7 @@ Function Set-Stat {
             If (-not $Stat.Disabled -and ($Value -eq 0 -or $Stat.ToleranceExceeded -ge $ToleranceExceeded -or $Stat.Week_Fluctuation -ge 1)) { 
                 If ($Value -gt 0 -and $Stat.ToleranceExceeded -ge $ToleranceExceeded) { 
                     If ($Name -match '.+_Hashrate$') { 
-                        Write-Message -Level Warn "Hashrate '$($Name -replace '_Hashrate$')' was forcefully updated. $(($Value | ConvertTo-Hash)) was outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash)) to $(($ToleranceMax | ConvertTo-Hash)))$(If ($Stat.Week_Fluctuation -lt 1) { " for $($Stats.($Stat.Name).ToleranceExceeded) times in a row." })"
+                        Write-Message -Level Warn "Hashrate '$($Name -replace '_Hashrate$')' was forcefully updated. $(($Value | ConvertTo-Hash) -replace ' ') was outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash) -replace ' ') to $(($ToleranceMax | ConvertTo-Hash) -replace ' '))$(If ($Stat.Week_Fluctuation -lt 1) { " for $($Stats.($Stat.Name).ToleranceExceeded) times in a row." })"
                     }
                     ElseIf ($Name -match '.+_PowerConsumption$') { 
                         Write-Message -Level Warn "Power consumption for '$($Name -replace '_PowerConsumption$')' was forcefully updated. $($Value.ToString("N2"))W was outside fault tolerance ($($ToleranceMin.ToString("N2"))W to $($ToleranceMax.ToString("N2"))W)$(If ($Stat.Week_Fluctuation -lt 1) { " for $($Stats.($Stat.Name).ToleranceExceeded) times in a row." })"
@@ -2855,6 +2859,7 @@ Function Get-AlgorithmFromCurrency {
 
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
         ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+
         If ($Variables.CurrencyAlgorithm[$Currency]) { 
             Return $Variables.CurrencyAlgorithm[$Currency]
         }
@@ -2876,6 +2881,7 @@ Function Get-CurrencyFromAlgorithm {
 
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
         ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+
         If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm } ))) { 
             Return $Currencies
         }

@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.1.2
-Version date:   2024/01/20
+Version:        6.1.3
+Version date:   2024/01/26
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.3.12"
+    $APIVersion = "0.5.3.14"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIPort -ne $Variables.APIRunspace.APIPort) { 
         Stop-APIServer
@@ -244,8 +244,11 @@ Function Start-APIServer {
                                             ForEach ($DeviceName in $Values) { 
                                                 $Variables.Devices.Where({ $_.Name -eq $DeviceName }) | ForEach-Object { 
                                                     $_.State = [DeviceState]::Disabled
-                                                    If ($_.Status -like "* {*@*}") { $_.Status = "$($_.Status); will get disabled at end of cycle" }
-                                                    Else { $_.Status = "Disabled (ExcludeDeviceName: '$($_.Name)')" }
+                                                    If ($_.SubStatus -in ("Benchmarking", "Running", "WarmingUp")) { $_.StatusInfo = "$($_.StatusInfo); will get disabled at end of cycle" }
+                                                    Else { 
+                                                        $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')"
+                                                        $_.Status = "Idle"
+                                                    }
                                                 }
                                             }
                                             Remove-Variable DeviceName
@@ -278,8 +281,8 @@ Function Start-APIServer {
                                             $Variables.Devices.Where({ $_.Name -in $Values }).ForEach(
                                                 { 
                                                     $_.State = [DeviceState]::Enabled
-                                                    If ($_.Status -like "* {*@*}; will get disabled at end of cycle") { $_.Status = $_.Status -replace '; will get disabled at end of cycle' }
-                                                    Else { $_.Status = "Idle" }
+                                                    If ($_.StatusInfo -like "* {*@*}; will get disabled at end of cycle") { $_.StatusInfo = $_.StatusInfo -replace '; will get enabled at end of cycle' }
+                                                    Else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
                                                 }
                                             )
                                             Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" } ) '$($Values -join ', ')' enabled. Configuration file '$($Variables.ConfigFile)' updated."

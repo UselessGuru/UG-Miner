@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.2
-Version date:   2024/01/20
+Version:        6.1.3
+Version date:   2024/01/26
 #>
 
 using module .\Includes\Include.psm1
@@ -292,9 +292,9 @@ $Global:Variables = [Hashtable]::Synchronized(@{ })
 # Load Branding
 $Variables.Branding = [PSCustomObject]@{ 
     BrandName    = "UG-Miner"
-    BrandWebSite = "https://UG-Miner.com"
+    BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.2"
+    Version      = [System.Version]"6.1.3"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -304,10 +304,21 @@ If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") {
     $WscriptShell.Popup("Unsupported PowerShell version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PowerShell version 7.0.0 which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
+If ($PSVersiontable.PSVersion -lt [System.Version]"7.4.1") { 
+    Write-Host "`nPowerShell version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with the latest PowerShell version 7.4.1 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
+}
 
 # Internet connection must be available
-If (-not ($Variables.MyIP = (Get-NetIPAddress -InterfaceIndex ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) | Get-NetIPInterface).Where({ $_.ConnectionState -eq "Connected" }).ifIndex -AddressFamily IPV4).IPAddress)) {
+If ($NetRoute = ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) | Get-NetIPInterface).Where({ $_.ConnectionState -eq "Connected" })) { 
+    $MyIP = ((Get-NetIPAddress -InterfaceIndex $NetRoute.ifIndex -AddressFamily IPV4).IPAddress)
+}
+If ($MyIP) { 
+    $Variables.MyIP = $MyIP
+    Remove-Variable MyIp, NetRoure -ErrorAction Ignore
+}
+Else { 
     $Variables.MyIP = $null
+    Remove-Variable MyIp, NetRoure -ErrorAction Ignore
     Write-Host "Terminating Error - No internet connection." -ForegroundColor "Red"
     $WscriptShell.Popup("No internet connection", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
@@ -439,7 +450,7 @@ $Variables.RestartCycle = $true
 $Variables.Pools = [Pool[]]@()
 $Variables.ScriptStartTime = (Get-Process -id $PID).StartTime.ToUniversalTime()
 $Variables.SuspendCycle = $false
-$Variables.WatchdogTimers = @()
+$Variables.WatchdogTimers = [PSCustomObject[]]@()
 
 $Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^UbqHash"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^ProgPow"
@@ -524,7 +535,6 @@ Function MainLoop {
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
     If ($Variables.RestartCycle) { 
-
         $Variables.RestartCycle = $false
 
         If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
