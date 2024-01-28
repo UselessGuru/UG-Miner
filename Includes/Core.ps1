@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.3
-Version date:   2024/01/26
+Version:        6.1.4
+Version date:   2024/01/28
 #>
 
 using module .\Include.psm1
@@ -819,7 +819,7 @@ Do {
                         $MinerGroup = $MinerGroups.Where({ $Name -eq $_.Name }).Group
                         $_.Group.ForEach(
                             { 
-                                If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and $_.Workers.Pool.Variant -eq $Miner.Workers.Pool.Variant -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle) { # Minimum numbers of full cycles not yet reached
+                                If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and ([String]($_.Workers.Pool.Variant) -eq [String]($Miner.Workers.Pool.Variant)) -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle) { # Minimum numbers of full cycles not yet reached
                                     $_.Restart = $false
                                 }
                                 Else { 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.3
-Version date:   2024/01/26
+Version:        6.1.4
+Version date:   2024/01/28
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3317,13 +3317,14 @@ Function Get-EpochLength {
     )
 
     Switch ($Algorithm) { 
-        "Octopus"    { Return 524288 }
-        "Autolykos2" { Return 1024 }
-        "EtcHash"    { If ($BlockHeight -ge 11700000 ) { Return 60000 } Else { Return 30000 } }
-        "EvrProgPow" { Return 12000 }
-        "FiroPow"    { Return 1300 }
-        "KawPow"     { Return 7500 }
-        Default      { Return 30000 }
+        "EthashSHA256" { Return 4000 }
+        "Autolykos2"   { Return 1024 }
+        "EtcHash"      { If ($BlockHeight -ge 11700000 ) { Return 60000 } Else { Return 30000 } }
+        "EvrProgPow"   { Return 12000 }
+        "FiroPow"      { Return 1300 }
+        "KawPow"       { Return 7500 }
+        "Octopus"      { Return 524288 }
+        Default        { Return 30000 }
     }
 }
 

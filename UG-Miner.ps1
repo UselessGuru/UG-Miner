@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.3
-Version date:   2024/01/26
+Version:        6.1.4
+Version date:   2024/01/28
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.3"
+    Version      = [System.Version]"6.1.4"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -321,7 +321,7 @@ Else {
     $WscriptShell.Popup("No internet connection", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
-   Remove-Variable MyIp, NetRoute -ErrorAction Ignore
+Remove-Variable MyIp, NetRoute -ErrorAction Ignore
 
 Write-Host "Preparing environment and loading data files..."
 $Variables.PID = $PID
@@ -836,13 +836,6 @@ Function MainLoop {
                 Remove-Variable Currency -ErrorAction Ignore
             }
 
-            If ($Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
-                If ($Config.UIStyle -ne "full") { 
-                    $Variables.UIStyle = "full"
-                    Write-Host "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)" -ForegroundColor Yellow
-                }
-            }
-
             If ($Variables.MiningStatus -eq "Running" -and $Variables.Miners.Where({ $_.Available })) { 
                 # Miner list format
                 [System.Collections.ArrayList]$Miner_Table = @(
@@ -898,7 +891,7 @@ Function MainLoop {
             If ($Variables.MinersBestPerDevice_Combo) { 
                 Write-Host "`nRunning $(If ($Variables.MinersBestPerDevice_Combo.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBestPerDevice_Combo.Count)" })"
                 [System.Collections.ArrayList]$Miner_Table = @(
-                    @{ Label = "Hashrate("; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
+                    @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
                     If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
                     @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f (([DateTime]::Now).ToUniversalTime() - $_.BeginTime) } }
                     @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
@@ -912,6 +905,10 @@ Function MainLoop {
             }
 
             If ($Variables.UIStyle -eq "full" -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
+                If ($Variables.UIStyle -ne "full") { 
+                    Write-Host "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" -ForegroundColor Yellow
+                }
+
                 If ($ProcessesIdle = @($Variables.Miners.Where({ $_.Activated -and $_.Status -eq "Idle" -and $_.GetActiveLast().ToLocalTime().AddHours(24) -gt [DateTime]::Now }))) { 
                     Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) in the past 24 hrs:"
                     [System.Collections.ArrayList]$Miner_Table = @(
@@ -919,7 +916,7 @@ Function MainLoop {
                         If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
                         @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.GetActiveLast().ToLocalTime()) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
-                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { "$_" } } } }
+                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                         @{ Label = "Name"; Expression = { $_.Name } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
@@ -936,7 +933,7 @@ Function MainLoop {
                         If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
                         @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.GetActiveLast().ToLocalTime()) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
-                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { "$_" } } } }
+                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                         @{ Label = "Name"; Expression = { $_.Name } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }

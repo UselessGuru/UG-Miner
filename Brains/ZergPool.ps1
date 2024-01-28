@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.1.3
-Version date:   2024/01/26
+Version:        6.1.4
+Version date:   2024/01/28
 #>
 
 using module ..\Includes\Include.psm1
@@ -40,7 +40,8 @@ $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
-    $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })    
+    $PoolVariantOld = $PoolVariant
+    $PoolVariant = [String]$Config.PoolName.Where({ $_ -like "$BrainName*" })    
     $StartTime = [DateTime]::Now
 
     Try { 
@@ -49,15 +50,15 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Do {
             Try { 
+                If ([Boolean]($PoolVariantOld -match "$($BrainName)Coins.*") -ne [Boolean]($PoolVariant -match "$($BrainName)Coins.*")) { 
+                    # Variant got changed, reset data
+                    $PoolObjects = @()
+                }
                 If ($PoolVariant -match "$($BrainName)Coins.*") { 
                     $Uri = $PoolConfig.PoolCurrenciesUri
-                    # In case variant got changed to *Coins only keep algo data with currencies
-                    $PoolObjects = $PoolObjects.Where({ $_.Currency })
                 }
                 Else { 
                     $Uri = $PoolConfig.PoolStatusUri
-                    # In case variant got changed from *Coins only keep algo data without currencies
-                    $PoolObjects = $PoolObjects.Where({ -not $_.Currency })
                 }
                 $APIdata = Invoke-RestMethod -Uri $Uri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
 

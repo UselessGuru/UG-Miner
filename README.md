@@ -2,7 +2,7 @@
 
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 
-Updated 2024/01/26
+Updated 2024/01/28
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -29,7 +29,7 @@ UG-Miner code is partly based on
    - Auto downloads miner binaries
    - Auto updates
    - Earnings graph
-   - Low developer fee (can be set to 0)
+   - Low developer fee of 1% (can be set to 0)
    - Calculate power cost (optional software installation required)
 
 *****
