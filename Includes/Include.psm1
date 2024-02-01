@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.4
-Version date:   2024/01/28
+Version:        6.1.5
+Version date:   2024/02/01
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -578,7 +578,7 @@ Class Miner {
         $this.Available = $true
         $this.Benchmark = $false
         $this.Best = $false
-        $this.Prioritize = $false
+        $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
         $this.Reasons = [System.Collections.Generic.List[String]]@()
 
         $this.Workers.ForEach(
@@ -597,7 +597,6 @@ Class Miner {
                     $_.Disabled = $false
                     $_.Hashrate = [Double]::NaN
                 }
-                If ($_.Pool.Prioritize) { $this.Prioritize = $true }
             }
         )
 
@@ -981,24 +980,6 @@ Function Stop-BalancesTracker {
         $Variables.Summary += "<br>Balances Tracker background process stopped."
         Write-Message -Level Info "Balances Tracker background process stopped."
     }
-}
-
-Function Initialize-Application { 
-    # Keep only the last 10 files
-    Get-ChildItem -Path ".\Logs\$($Variables.Branding.ProductLabel)_*.log" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
-    Get-ChildItem -Path ".\Logs\SwitchingLog_*.csv" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
-    Get-ChildItem -Path "$($Variables.ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
-
-    If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls12) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls12 }
-
-    If ($Config.Proxy -eq "") { $PSDefaultParameterValues.Remove("*:Proxy") }
-    Else { $PSDefaultParameterValues["*:Proxy"] = $Config.Proxy }
-
-    # Load currency exchange rates
-    [Void](Get-Rate)
-
-    # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
-    (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 }
 
 Function Get-DefaultAlgorithm { 
@@ -3317,9 +3298,9 @@ Function Get-EpochLength {
     )
 
     Switch ($Algorithm) { 
-        "EthashSHA256" { Return 4000 }
         "Autolykos2"   { Return 1024 }
         "EtcHash"      { If ($BlockHeight -ge 11700000 ) { Return 60000 } Else { Return 30000 } }
+        "EthashSHA256" { Return 4000 }
         "EvrProgPow"   { Return 12000 }
         "FiroPow"      { Return 1300 }
         "KawPow"       { Return 7500 }

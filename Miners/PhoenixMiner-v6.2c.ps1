@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.4
-Version date:   2024/01/28
+Version:        6.1.5
+Version date:   2024/02/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -84,14 +84,14 @@ If ($Algorithms) {
             ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                 { 
                     $ExcludePools = $_.ExcludePools
-                    ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and  $_.Epoch -lt 602  -and ($_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302) }))) { 
+                    ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and  $_.Epoch -lt 602 -and ($_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302) }))) { 
                         ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
 
                             $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
                             $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                             If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
                                 If ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
-                                    If ($_.MinMemGiB -gt 4) { Return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
+                                    If ($Pool0.DAGSizeGiB -ge 4) { Return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
                                     $AvailableMiner_Devices = $AvailableMiner_Devices.Where({ [Version]$_.CIM.DriverVersion -le [Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)
                                 }
 

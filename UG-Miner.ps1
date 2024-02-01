@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.4
-Version date:   2024/01/28
+Version:        6.1.5
+Version date:   2024/02/01
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.4"
+    Version      = [System.Version]"6.1.5"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -541,7 +541,21 @@ Function MainLoop {
 
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or (Compare-Object $Config.PoolName $Variables.PoolName)) { 
 
-            Initialize-Application
+            # Keep only the last 10 files
+            Get-ChildItem -Path ".\Logs\$($Variables.Branding.ProductLabel)_*.log" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
+            Get-ChildItem -Path ".\Logs\SwitchingLog_*.csv" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
+            Get-ChildItem -Path "$($Variables.ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
+
+            If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls12) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls12 }
+
+            If ($Config.Proxy -eq "") { $PSDefaultParameterValues.Remove("*:Proxy") }
+            Else { $PSDefaultParameterValues["*:Proxy"] = $Config.Proxy }
+
+            # Load currency exchange rates
+            [Void](Get-Rate)
+
+            # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
+            (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 

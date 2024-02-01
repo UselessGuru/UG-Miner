@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NBMiner.ps1
-Version:        6.1.4
-Version date:   2024/01/28
+Version:        6.1.5
+Version date:   2024/02/01
 #>
 
 Class NBMiner : Miner { 

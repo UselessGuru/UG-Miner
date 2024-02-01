@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.4
-Version date:   2024/01/28
+Version:        6.1.5
+Version date:   2024/02/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -in @("AMD", "INTEL") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
@@ -29,7 +29,6 @@ $Path = "$PWD\Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"
 
 $Algorithms = @(
-    # https://github.com/bzminer/bzminer/issues/279???
     [PSCustomObject]@{ Algorithms = @("Autolykos2");       Type = "AMD"; Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();       ExcludeGPUModel = ""; ExcludePools = @(@(), @());             Arguments = @(" -a ergo") }
     [PSCustomObject]@{ Algorithms = @("Blake3");           Type = "AMD"; Fee = @(0.005);      MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();       ExcludeGPUModel = ""; ExcludePools = @(@(), @());             Arguments = @(" -a alph") }
     [PSCustomObject]@{ Algorithms = @("DynexSolve");       Type = "AMD"; Fee = @(0.005);      MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();       ExcludeGPUModel = ""; ExcludePools = @(@("ZergPool"), @());   Arguments = @(" -a dynex") }
@@ -100,12 +99,11 @@ If ($Algorithms) {
 
             ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                 { 
-
                     $ExcludeGPUModel = $_.ExcludeGPUModel
                     If ($AvailableMiner_Devices = If ($_.ExcludeGPUModel) { $Miner_Devices.Where({ $_.Model -notmatch $ExcludeGPUModel }) } Else { $Miner_Devices }) { 
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($_."Ethash".Epoch -eq $null -or $_."Ethash".Epoch -gt 0) -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) }))) { 
+                        ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($_.Ethash.Epoch -eq $null -or $_.Ethash.Epoch -gt 0) -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) }))) { 
                             ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) }))) { 
 
                                 $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
