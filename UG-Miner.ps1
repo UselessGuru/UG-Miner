@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.5
-Version date:   2024/02/01
+Version:        6.1.6
+Version date:   2024/02/04
 #>
 
 using module .\Includes\Include.psm1
@@ -263,7 +263,7 @@ param(
     [Parameter(Mandatory = $false)]
     [Switch]$UseAnycast = $true, # If true pools (currently ZergPool only) will use anycast for best network performance and ping times
     [Parameter(Mandatory = $false)]
-    [Hashtable]$Wallets = @{ "BTC" = (Get-Random("134bw4oTorEJUUVFhokDQDfNqTs7rBMNYy", "1QGADhdMRpp9Pk5u5zG1TrHKRrdK5R81TE", "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF")); "ETC" = "0x7CF99ec9029A98AFd385f106A93977D8105Fec0f"; "ETH" = "0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }, 
+    [Hashtable]$Wallets = @{ "BTC" = "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF" }, 
     [Parameter(Mandatory = $false)]
     [Switch]$Watchdog = $true, # if true will automatically put pools and/or miners temporarily on hold it they fail $WatchdogCount times in a row
     [Parameter(Mandatory = $false)]
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.5"
+    Version      = [System.Version]"6.1.6"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell

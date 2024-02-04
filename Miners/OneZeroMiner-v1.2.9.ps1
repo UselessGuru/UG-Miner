@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.5
-Version date:   2024/02/01
+Version:        6.1.6
+Version date:   2024/02/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [Version]"450.80.02" }))) { Return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.2.8/onezerominer-win64-1.2.8.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.2.9/onezerominer-win64-1.2.9.zip"
 $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"

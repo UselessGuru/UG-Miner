@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.1.5
-Version date:   2024/02/01
+Version:        6.1.6
+Version date:   2024/02/04
 #>
 
 [Void] [System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -702,7 +702,7 @@ $MiningSummaryLabel.Tag = ""
 $MiningSummaryLabel.TextAlign = "MiddleLeft"
 $MiningSummaryLabel.Visible = $true
 $LegacyGUIControls += $MiningSummaryLabel
-$Tooltip.SetToolTip($MiningSummaryLabel, "Color legend:`rBlack: Mining is idle`rGreen: Mining is profitable`rRed: Mining is NOT profitable")
+$Tooltip.SetToolTip($MiningSummaryLabel, "Color legend:`rBlack: Mining profitability is unknown`rGreen: Mining is profitable`rRed: Mining is NOT profitable")
 
 $ButtonPause = New-Object System.Windows.Forms.Button
 $ButtonPause.Enabled = $Config.Autostart
