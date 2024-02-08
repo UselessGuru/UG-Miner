@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.6
-Version date:   2024/02/04
+Version:        6.1.7
+Version date:   2024/02/08
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1139,7 +1139,7 @@ Function Write-Message {
     If (-not $Config.Keys -or $Level -in $Config.LogToFile) { 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.PID)_Write-Message")
+        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
 
         $LogFile = "$($Variables.MainPath)\Logs\$($Variables.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
         If ($Variables.LogFile -ne $LogFile) { $Variables.LogFile = $LogFIle }
@@ -2807,7 +2807,7 @@ Function Add-CoinName {
     If (-not ($Variables.CoinNames[$Currency] -and $Variables.CurrencyAlgorithm[$Currency])) { 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.PID)_Add-CoinName")
+        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
         If ($Mutex.WaitOne(1000)) { 

@@ -2,7 +2,43 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
-ChangeLog UG-Miner 6.1.4 2024/01/nn
+ChangeLog UG-Miner 6.1.7 2024/02/08
+===================================
+
+Enhancements:
+- Legacy GUI: Show message box before closing legacy GUI
+
+Fixes:
+- Legacy GUI: 'System status /Active miners' & 'Miners' tables: Context menu options broken (Regression from 6.0.1)
+- Legacy GUI: Update status when loading legacy GUI
+- TeamBlackMiner-v2-17: Error invalid parameter 'System.Collections.Hashtable [1]' (Regression from 6.1.6)
+
+
+ChangeLog UG-Miner 6.1.6 2024/02/03
+===================================
+
+Fixes:
+- UG-Miner.ps1: Preconfigured BTC donation address needs only one default value
+
+Improvements:
+- Miner code optimizations
+
+Miner updates:
+- GMiner-3.43: Support more dual algorithm combinations
+- OneZeroMiner-v1.2.9
+
+
+ChangeLog UG-Miner 6.1.5 2024/02/01
+===================================
+
+Miner changes:
+- NanoMiner-v3.8.12
+- Rigel-v1.14.1
+- TeamBlackMiner-v2.17
+- TeamRedMiner-v0.10.17
+
+
+ChangeLog UG-Miner 6.1.4 2024/01/28
 ===================================
 
 Enhancements:

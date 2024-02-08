@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.6
-Version date:   2024/02/04
+Version:        6.1.7
+Version date:   2024/02/08
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.6"
+    Version      = [System.Version]"6.1.7"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -323,9 +323,6 @@ Else {
 }
 Remove-Variable MyIp, NetRoute -ErrorAction Ignore
 
-Write-Host "Preparing environment and loading data files..."
-$Variables.PID = $PID
-
 # Create directories
 If (-not (Test-Path -LiteralPath ".\Cache" -PathType Container)) { New-Item -Path . -Name "Cache" -ItemType Directory | Out-Null }
 If (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { New-Item -Path . -Name "Config" -ItemType Directory | Out-Null }
@@ -345,10 +342,15 @@ $Variables.AllCommandLineParameters = [Ordered]@{ }
         Remove-Variable $_
     }
 )
+
+Write-Host "Preparing environment and loading data files..."
 Initialize-Environment
 
 # Read configuration
 [Void](Read-Config -ConfigFile $Variables.ConfigFile)
+
+Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$(([DateTime]::Now).Year) UselessGuru"
+Write-Host ""
 
 # Update config file to include all new config items
 If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
@@ -361,9 +363,7 @@ If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocat
 # Start Log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
 Start-LogReader
 
-Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$(([DateTime]::Now).Year) UselessGuru"
 If (-not $Variables.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile)'." }
-Write-Message -Level Info "PWSH version $($PSVersiontable.PSVersion)"
 Write-Host ""
 
 #Prerequisites check
@@ -533,13 +533,13 @@ Function MainLoop {
     }
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
-    If ($Variables.RestartCycle) { 
+    If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $MiningSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
 
         If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
-        If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or (Compare-Object $Config.PoolName $Variables.PoolName)) { 
+        If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or ($Variables.PoolName -and (Compare-Object $Config.PoolName $Variables.PoolName))) { 
 
             # Keep only the last 10 files
             Get-ChildItem -Path ".\Logs\$($Variables.Branding.ProductLabel)_*.log" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
@@ -564,16 +564,6 @@ Function MainLoop {
                     Stop-IdleDetection
                     If ($Config.ReportToServer) { Write-MonitoringData }
 
-                    If ($Variables.MiningStatus -and $LegacyGUIform) { 
-                        $MiningStatusLabel.Text = "$($Variables.Branding.ProductLabel) is stopped"
-                        $MiningStatusLabel.ForeColor = [System.Drawing.Color]::Red
-                        $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-                        $MiningSummaryLabel.Text = "Click the 'Start mining' button to make money."
-                        $ButtonPause.Enabled = $true
-                        $ButtonStart.Enabled = $true
-                        $ButtonStop.Enabled = $false
-                    }
-
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is stopped.<br>Click the 'Start mining' button to make money."
                     Write-Host "`n"
                     Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
@@ -586,16 +576,6 @@ Function MainLoop {
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
                     If ($Config.ReportToServer) { Write-MonitoringData }
 
-                    If ($LegacyGUIform) { 
-                        $MiningStatusLabel.Text = "$($Variables.Branding.ProductLabel) is paused"
-                        $MiningStatusLabel.ForeColor = [System.Drawing.Color]::Blue
-                        $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-                        $MiningSummaryLabel.Text = "Click the 'Start mining' button to make money."
-                        $ButtonPause.Enabled = $false
-                        $ButtonStart.Enabled = $true
-                        $ButtonStop.Enabled = $true
-                    }
-
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is paused.<br>Click the 'Start mining' button to make money."
                     Write-Host "`n"
                     Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
@@ -605,16 +585,6 @@ Function MainLoop {
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
                     Start-Core
 
-                    If ($LegacyGUIform) { 
-                        $MiningStatusLabel.Text = "$($Variables.Branding.ProductLabel) is running"
-                        $MiningStatusLabel.ForeColor = [System.Drawing.Color]::Green
-                        $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-                        $MiningSummaryLabel.Text = "Starting mining processes..."
-                        $ButtonPause.Enabled = $true
-                        $ButtonStart.Enabled = $false
-                        $ButtonStop.Enabled = $true
-                    }
-
                     If ($Variables.CycleStarts.Count -eq 1) { 
                         $Variables.Summary = "$($Variables.Branding.ProductLabel) is getting ready.<br>Please wait..."
                         Write-Host "`n"
@@ -623,10 +593,8 @@ Function MainLoop {
                     Break
                 }
             }
-
-            If ($LegacyGUIform) { Update-TabControl }
-
             $Variables.MiningStatus = $Variables.NewMiningStatus
+            If ($LegacyGUIform) { Update-GUIstatus }
         }
     }
 
@@ -806,12 +774,12 @@ Function MainLoop {
         $Variables.RefreshNeeded = $false
 
         $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan](([DateTime]::Now).ToUniversalTime() - $Variables.ScriptStartTime)
-        If ($LegacyGUIForm) { $LegacyGUIForm.Text = $host.UI.RawUI.WindowTitle }
+        If ($LegacyGUIForm) { 
+            $LegacyGUIForm.Text = $host.UI.RawUI.WindowTitle 
 
-        # Refresh selected tab
-        If ($LegacyGUIform) { Update-TabControl }
+            # Refresh selected tab
+            Update-TabControl
 
-        If ($LegacyGUIform) { 
             $MiningSummaryLabel.Text = ""
             $MiningSummaryLabel.SendToBack()
             (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $MiningSummaryLabel.Text += "`r`n$_" })
@@ -1003,7 +971,7 @@ While ($true) {
     If ($Config.LegacyGUI) { 
         If (-not $LegacyGUIform.CanSelect) { 
             . .\Includes\LegacyGUI.ps1
-            Form_Resize
+            Form-Resize
         }
         # Show legacy GUI
         $LegacyGUIform.ShowDialog() | Out-Null

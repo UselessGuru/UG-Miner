@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.6
-Version date:   2024/02/04
+Version:        6.1.7
+Version date:   2024/02/08
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"11.6") }))) { Return }
@@ -129,7 +129,7 @@ If ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API              = "TeamBlackMiner"
-                                        Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort $DeviceSelector [$(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique | ForEach-Object { '{0:x}' -f $_ }) -join ',')]"
+                                        Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort$($DeviceSelector.($AvailableMiner_Devices.Type | Select-Object -Unique)) [$(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique | ForEach-Object { '{0:x}' -f $_ }) -join ',')]"
                                         DeviceNames      = $AvailableMiner_Devices.Name
                                         Fee              = $_.Fee # Dev fee
                                         MinerSet         = $_.MinerSet
