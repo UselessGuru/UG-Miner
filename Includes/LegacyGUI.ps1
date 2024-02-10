@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.1.7
-Version date:   2024/02/08
+Version:        6.1.8
+Version date:   2024/02/10
 #>
 
 [Void] [System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -311,7 +311,7 @@ Function Update-TabControl {
                     ) | Sort-Object -Property Pool | Out-DataTable
 
                     If ($BalancesDGV.Columns) { 
-                        $BalancesDGV.Columns[0].Visible = $False
+                        $BalancesDGV.Columns[0].Visible = $false
                         $BalancesDGV.Columns[1].FillWeight = 140 
                         $BalancesDGV.Columns[2].FillWeight = 90; $BalancesDGV.Columns[2].DefaultCellStyle.Alignment = "MiddleRight"; $BalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
                         $BalancesDGV.Columns[3].FillWeight = 90; $BalancesDGV.Columns[3].DefaultCellStyle.Alignment = "MiddleRight"; $BalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
@@ -360,7 +360,7 @@ Function Update-TabControl {
 
                 If (-not ($ContextMenuStrip.Visible -and $ContextMenuStrip.Enabled)) { 
 
-                    If ($RadioButtonMostProfitable.checked) { $DataSource = $Variables.MinersMostProfitable }
+                    If ($RadioButtonMinersOptimal.checked) { $DataSource = $Variables.MinersOptimal }
                     ElseIf ($RadioButtonMinersUnavailable.checked) { $DataSource = $Variables.Miners.Where({ -not $_.Available }) }
                     Else { $DataSource = $Variables.Miners }
 
@@ -382,11 +382,11 @@ Function Update-TabControl {
                         If ($RadioButtonMinersUnavailable.checked -or $RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
                     ) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, "Device(s)", Miner | Out-DataTable
                     If ($MinersDGV.Columns) { 
-                        $MinersDGV.Columns[0].Visible = $False
-                        $MinersDGV.Columns[1].Visible = $False
+                        $MinersDGV.Columns[0].Visible = $false
+                        $MinersDGV.Columns[1].Visible = $false
                         $MinersDGV.Columns[2].FillWeight = 160
                         $MinersDGV.Columns[3].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
-                        $MinersDGV.Columns[4].FillWeight = 50
+                        $MinersDGV.Columns[4].Visible = -not $RadioButtonMinersUnavailable.checked; $MinersDGV.Columns[4].FillWeight = 50
                         $MinersDGV.Columns[5].FillWeight = 55; $MinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
                         $MinersDGV.Columns[6].FillWeight = 60; $MinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
                         $MinersDGV.Columns[7].FillWeight = 55; $MinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
@@ -1202,32 +1202,32 @@ $EarningsPageControls += $BalancesDGV
 # Miner page Controls
 $MinersPageControls = @()
 
-$RadioButtonMostProfitable = New-Object System.Windows.Forms.RadioButton
-$RadioButtonMostProfitable.AutoSize = $false
-$RadioButtonMostProfitable.Checked = $true
-$RadioButtonMostProfitable.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$RadioButtonMostProfitable.Height = 22
-$RadioButtonMostProfitable.Location = [System.Drawing.Point]::new(0, 0)
-$RadioButtonMostProfitable.Text = "Most profitable miners"
-$RadioButtonMostProfitable.Width = 172
-$RadioButtonMostProfitable.Add_Click({ Update-TabControl })
-$Tooltip.SetToolTip($RadioButtonMostProfitable, "These are the best miners per algorithm and device.")
+$RadioButtonMinersOptimal = New-Object System.Windows.Forms.RadioButton
+$RadioButtonMinersOptimal.AutoSize = $false
+$RadioButtonMinersOptimal.Checked = $true
+$RadioButtonMinersOptimal.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$RadioButtonMinersOptimal.Height = 22
+$RadioButtonMinersOptimal.Location = [System.Drawing.Point]::new(0, 0)
+$RadioButtonMinersOptimal.Text = "Optimal miners"
+$RadioButtonMinersOptimal.Width = 150
+$RadioButtonMinersOptimal.Add_Click({ Update-TabControl })
+$Tooltip.SetToolTip($RadioButtonMinersOptimal, "These are all optimal miners per algorithm and device.")
 
 $RadioButtonMinersUnavailable = New-Object System.Windows.Forms.RadioButton
 $RadioButtonMinersUnavailable.AutoSize = $false
 $RadioButtonMinersUnavailable.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$RadioButtonMinersUnavailable.Height = 22
-$RadioButtonMinersUnavailable.Location = [System.Drawing.Point]::new($RadioButtonMostProfitable.Width, 0)
+$RadioButtonMinersUnavailable.Height = $RadioButtonMinersOptimal.Height
+$RadioButtonMinersUnavailable.Location = [System.Drawing.Point]::new(150, 0)
 $RadioButtonMinersUnavailable.Text = "Unavailable miners"
-$RadioButtonMinersUnavailable.Width = 154
+$RadioButtonMinersUnavailable.Width = 170
 $RadioButtonMinersUnavailable.Add_Click({ Update-TabControl })
 $Tooltip.SetToolTip($RadioButtonMinersUnavailable, "These are all unavailable miners.`rThe column 'Reason(s)' shows the filter criteria(s) that made the miner unavailable.")
 
 $RadioButtonMiners = New-Object System.Windows.Forms.RadioButton
 $RadioButtonMiners.AutoSize = $false
 $RadioButtonMiners.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$RadioButtonMiners.Height = 22
-$RadioButtonMiners.Location = [System.Drawing.Point]::new(($RadioButtonMostProfitable.Width + $RadioButtonMinersUnavailable.Width), 0)
+$RadioButtonMiners.Height = $RadioButtonMinersUnavailable.Height
+$RadioButtonMiners.Location = [System.Drawing.Point]::new(320, 0)
 $RadioButtonMiners.Text = "All miners"
 $RadioButtonMiners.Width = 100
 $RadioButtonMiners.Add_Click({ Update-TabControl })
@@ -1244,9 +1244,9 @@ $MinersPageControls += $MinersLabel
 $MinersPanel = New-Object System.Windows.Forms.Panel
 $MinersPanel.Height = 22
 $MinersPanel.Location = [System.Drawing.Point]::new(8, ($MinersLabel.Height + 6))
-$MinersPanel.Controls.Add($RadioButtonMiners)
+$MinersPanel.Controls.Add($RadioButtonMinersOptimal)
 $MinersPanel.Controls.Add($RadioButtonMinersUnavailable)
-$MinersPanel.Controls.Add($RadioButtonMostProfitable)
+$MinersPanel.Controls.Add($RadioButtonMiners)
 $MinersPageControls += $MinersPanel
 
 $MinersDGV = New-Object System.Windows.Forms.DataGridView
@@ -1291,7 +1291,7 @@ $RadioButtonPoolsBest.Height = 22
 $RadioButtonPoolsBest.Location = [System.Drawing.Point]::new(0, 0)
 $RadioButtonPoolsBest.Tag = ""
 $RadioButtonPoolsBest.Text = "Best pools"
-$RadioButtonPoolsBest.Width = 100
+$RadioButtonPoolsBest.Width = 120
 $RadioButtonPoolsBest.Checked = $true
 $RadioButtonPoolsBest.Add_Click({ Update-TabControl })
 $Tooltip.SetToolTip($RadioButtonPoolsBest, "This is the list of the best paying pool for each algorithm.")
@@ -1299,19 +1299,19 @@ $Tooltip.SetToolTip($RadioButtonPoolsBest, "This is the list of the best paying 
 $RadioButtonPoolsUnavailable = New-Object System.Windows.Forms.RadioButton
 $RadioButtonPoolsUnavailable.AutoSize = $false
 $RadioButtonPoolsUnavailable.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$RadioButtonPoolsUnavailable.Height = 22
-$RadioButtonPoolsUnavailable.Location = [System.Drawing.Point]::new($RadioButtonPoolsBest.Width, 0)
+$RadioButtonPoolsUnavailable.Height = $RadioButtonPoolsBest.Height
+$RadioButtonPoolsUnavailable.Location = [System.Drawing.Point]::new(120, 0)
 $RadioButtonPoolsUnavailable.Tag = ""
 $RadioButtonPoolsUnavailable.Text = "Unavailable pools"
-$RadioButtonPoolsUnavailable.Width = 150
+$RadioButtonPoolsUnavailable.Width = 170
 $RadioButtonPoolsUnavailable.Add_Click({ Update-TabControl })
 $Tooltip.SetToolTip($RadioButtonPoolsUnavailable, "This is the pool data of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
 
 $RadioButtonPools = New-Object System.Windows.Forms.RadioButton
 $RadioButtonPools.AutoSize = $false
 $RadioButtonPools.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$RadioButtonPools.Height = 22
-$RadioButtonPools.Location = [System.Drawing.Point]::new(($RadioButtonPoolsBest.Width + $RadioButtonPoolsUnavailable.Width), 0)
+$RadioButtonPools.Height = $RadioButtonPoolsUnavailable.Height
+$RadioButtonPools.Location = [System.Drawing.Point]::new((120 + 175), 0)
 $RadioButtonPools.Tag = ""
 $RadioButtonPools.Text = "All pools"
 $RadioButtonPools.Width = 100

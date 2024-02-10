@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.7
-Version date:   2024/02/08
+Version:        6.1.8
+Version date:   2024/02/10
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.7"
+    Version      = [System.Version]"6.1.8"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -873,13 +873,13 @@ Function MainLoop {
             If ($Variables.MinersBestPerDevice_Combo) { 
                 Write-Host "`nRunning $(If ($Variables.MinersBestPerDevice_Combo.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBestPerDevice_Combo.Count)" })"
                 [System.Collections.ArrayList]$Miner_Table = @(
-                    @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
+                    @{ Label = "Name"; Expression = { $_.Name } }
                     If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
+                    @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
                     @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f (([DateTime]::Now).ToUniversalTime() - $_.BeginTime) } }
                     @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
                     @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { "$_" } } } }
                     @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
-                    @{ Label = "Name"; Expression = { $_.Name } }
                     @{ Label = "Command"; Expression = { $_.CommandLine } }
                 )
                 $Variables.MinersBestPerDevice_Combo | Sort-Object -Property DeviceNames | Format-Table $Miner_Table -Wrap | Out-Host
@@ -894,13 +894,13 @@ Function MainLoop {
                 If ($ProcessesIdle = @($Variables.Miners.Where({ $_.Activated -and $_.Status -eq "Idle" -and $_.GetActiveLast().ToLocalTime().AddHours(24) -gt [DateTime]::Now }))) { 
                     Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) in the past 24 hrs:"
                     [System.Collections.ArrayList]$Miner_Table = @(
-                        @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
+                        @{ Label = "Name"; Expression = { $_.Name } }
                         If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
+                        @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
                         @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.GetActiveLast().ToLocalTime()) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
                         @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
-                        @{ Label = "Name"; Expression = { $_.Name } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
                     $ProcessesIdle | Sort-Object { $_.GetActiveLast } -Descending | Format-Table $Miner_Table -Wrap | Out-Host
@@ -955,7 +955,7 @@ Function MainLoop {
                 }
 
                 If ($Variables.CycleStarts.Count -gt 1 -or $Variables.Miners) { 
-                    $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $($Variables.EndCycleTime.ToLocalTime().ToString('G'))   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnprstuvwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
+                    $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $($Variables.EndCycleTime.ToLocalTime().ToString('G'))   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnoprstuwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
                     Write-Host ("-" * $StatusInfo.Length)
                     Write-Host -ForegroundColor Yellow $StatusInfo
                     Remove-Variable StatusInfo

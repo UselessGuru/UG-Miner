@@ -1,8 +1,8 @@
 <!-- #include file="/parts/head.html" -->
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h2 id="title" data-navbaractive="navminersmostprofitable">Most profitable miners</h2>
+            <h2 id="title" data-navbaractive="navminersoptimal">Optimal miners</h2>
           </div>
-          <div class="alert alert-info" role="alert">These are the most profitable miners per algorithm and device.</div>
+          <div class="alert alert-info" role="alert">These are the optimal miners per algorithm and device.</div>
           <div id="toolbar">
             <button id="btn-re-benchmark" class="btn btn-primary" disabled title="The marked miners will re-benchmark&#10;Use this if the recorded hashrate is unreal or to re-enable disabled miners">Re-benchmark</button>
             <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power consumption is unreal">Re-measure power consumption</button>
@@ -17,7 +17,7 @@
             data-cache="true"
             data-click-to-select="true"
             data-cookie="true"
-            data-cookie-id-table="minersmostprofitable"
+            data-cookie-id-table="minersOptimal"
             data-cookies-enabled="['bs.table.hiddenColumns', 'bs.table.columns']"
             data-detail-formatter="detailFormatter"
             data-detail-view="true"
@@ -37,7 +37,7 @@
             data-toggle="table"
             data-toolbar="#toolbar"
             data-undefined-text=""
-            data-url="/miners/mostprofitable"
+            data-url="/miners/Optimal"
             >
             <thead>
               <tr>
@@ -92,7 +92,7 @@
                 <th data-field="MeasurePowerConsumption" data-sortable="true" data-filter-control="select" data-visible="false">Measure power consumption</th>
                 <th data-field="ReadPowerConsumption" data-sortable="true" data-filter-control="select" data-visible="false">Read power consumption</th>
                 <th data-field="Best" data-sortable="true" data-filter-control="select" data-visible="false">Best</th>
-                <th data-field="MostProfitable" data-sortable="true" data-filter-control="select" data-visible="false">Most profitable</th>
+                <th data-field="Optimal" data-sortable="true" data-filter-control="select" data-visible="false">Optimal</th>
                 <th data-field="Disabled" data-sortable="true" data-filter-control="select" data-visible="false">Disabled</th>
                 <th data-field="Restart" data-sortable="true" data-filter-control="select" data-visible="false">Restart</th>
                 <th data-field="KeepRunning" data-sortable="true" data-filter-control="select" data-visible="false">Keep running</th>
@@ -102,7 +102,7 @@
               </tr>
             </thead>
           </table>
-<!-- Start of page scripts 'minersmostprofitable.html' -->
+<!-- Start of page scripts 'minersOptimal.html' -->
           <script type="text/javascript">
             var $table = $('#miners');
 
@@ -268,5 +268,5 @@
               }, 200);
             })
           </script>
-<!-- End of page scripts 'minersmostprofitable.html' -->
+<!-- End of page scripts 'minersOptimal.html' -->
 <!-- #include file="/parts/foot.html" -->

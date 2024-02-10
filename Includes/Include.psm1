@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.7
-Version date:   2024/02/08
+Version:        6.1.8
+Version date:   2024/02/10
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -207,8 +207,8 @@ Class Miner {
     [Int]$MinDataSample # for safe hashrate values
     [Int]$MinerSet
     [String]$MinerUri
-    [Bool]$MostProfitable
     [String]$Name
+    [Bool]$Optimal
     [String]$Path
     [String]$PrerequisitePath
     [String]$PrerequisiteURI
@@ -575,7 +575,6 @@ Class Miner {
     }
 
     [Void]Refresh([Double]$PowerCostBTCperW, [Boolean]$CalculatePowerCost) { 
-        $this.Available = $true
         $this.Benchmark = $false
         $this.Best = $false
         $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
@@ -600,16 +599,11 @@ Class Miner {
             }
         )
 
-        If ($this.Workers.Where({ $_.Hashrate -eq 0 })) { 
-            $this.Earning = [Double]::NaN
-            $this.Earning_Bias = [Double]::NaN
-            $this.Earning_Accuracy = [Double]::NaN
-        }
-        ElseIf ($this.Workers.Where({ [Double]::IsNaN($_.Hashrate) })) { 
+        $this.Earning = [Double]::NaN
+        $this.Earning_Bias = [Double]::NaN
+        $this.Earning_Accuracy = [Double]::NaN
+        If ($this.Workers.Where({ [Double]::IsNaN($_.Hashrate) })) { 
             $this.Benchmark = $true
-            $this.Earning = [Double]::NaN
-            $this.Earning_Bias = [Double]::NaN
-            $this.Earning_Accuracy = [Double]::NaN
         }
         Else { 
             $this.Earning = $this.Workers.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum

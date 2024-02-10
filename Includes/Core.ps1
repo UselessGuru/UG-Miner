@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.7
-Version date:   2024/02/08
+Version:        6.1.8
+Version date:   2024/02/10
 #>
 
 using module .\Include.psm1
@@ -30,6 +30,7 @@ If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocat
 
 Do { 
     Try { 
+        $Variables.EndCycleMessage = ""
         # Set master timer
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
@@ -874,6 +875,7 @@ Do {
             $Miners.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled by user"); $_.Status = [MinerStatus]::Disabled })
             If ($Config.ExcludeMinerName.Count) { $Miners.Where({ (Compare-Object @($Config.ExcludeMinerName | Select-Object) @($_.BaseName, "$($_.BaseName)-$($_.Version)", $_.Name | Select-Object -Unique) -IncludeEqual -ExcludeDifferent | Measure-Object).Count -gt 0 }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Config.ExcludeMinerName -join ', '))") }) }
             $Miners.Where({ $_.Earning -eq 0 }).ForEach({ $_.Reasons.Add("Earning -eq 0") })
+            $Miners.Where({ $_.Workers.Hashrate -contains 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") })
             If ($Config.DisableMinersWithFee) { $Miners.Where({ $_.Workers.Fee }).ForEach({ $_.Reasons.Add("Config.DisableMinersWithFee") }) }
             If ($Config.DisableDualAlgoMining) { $Miners.Where({ $_.Workers.Count -eq 2 }).ForEach({ $_.Reasons.Add("Config.DisableDualAlgoMining") }) }
             ElseIf ($Config.DisableSingleAlgoMining) { $Miners.Where({ $_.Workers.Count -eq 1 }).ForEach({ $_.Reasons.Add("Config.DisableSingleAlgoMining") }) }
@@ -903,8 +905,6 @@ Do {
                     }
                 }
             }
-
-            $Miners.Where({ $_.Workers.Hashrate -eq 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") })
 
             $Variables.MinersMissingBinary = [Miner[]]@()
             $Miners.Where({ -not $_.Reasons -and -not (Test-Path -LiteralPath $_.Path -Type Leaf) }).ForEach(
@@ -945,7 +945,7 @@ Do {
                 )
             }
 
-            $Miners.Where({ $_.Reasons }).ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique); $_.Available = $false })
+            $Miners.ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique); $_.Available = -not [Boolean]$_.Reasons })
 
             Write-Message -Level Info "Loaded $($Miners.Count) miner$(If ($Miners.Count -ne 1) { 's' }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { 's' }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { 's' }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { 's' })."
 
@@ -980,21 +980,21 @@ Do {
                     }
                 }
             }
-            $Variables.MinersMostProfitable = $Variables.MinersBestPerDevice = $Variables.Miners_Device_Combos = $Variables.MinersBestPerDevice_Combos = $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
+            $Variables.MinersOptimal = $Variables.MinersBestPerDevice = $Variables.Miners_Device_Combos = $Variables.MinersBestPerDevice_Combos = $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
 
             If ($Miners.Where({ $_.Available })) { 
                 Write-Message -Level Info "Selecting best miner$(If (@($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { "s" }) based on$(If ($Variables.CalculatePowerCost) { " profit (power cost $($Config.MainCurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earning" })..."
 
                 If ($Miners.Where({ $_.Available }).Count -eq 1) { 
-                    $Variables.MinersBestPerDevice_Combo = $Variables.MinersBestPerDevice = $Variables.MinersMostProfitable = $Miners.Where({ $_.Available })
+                    $Variables.MinersBestPerDevice_Combo = $Variables.MinersBestPerDevice = $Variables.MinersOptimal = $Miners.Where({ $_.Available })
                 }
                 Else { 
                     # Add running miner bonus
                     $RunningMinerBonusFactor = 1 + $Config.MinerSwitchingThreshold / 100
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias *= $RunningMinerBonusFactor })
 
-                    # Get most profitable miners per algorithm and device
-                    $Variables.MinersMostProfitable = @(($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.MostProfitable = $true; $_ }) }))
+                    # Get the optimal miners per algorithm and device
+                    $Variables.MinersOptimal = @(($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) }))
                     # Get the best miners per device
                     $Variables.MinersBestPerDevice = @(($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true } -Top 1 }))
                     $Variables.Miners_Device_Combos = @((Get-Combination @($Variables.MinersBestPerDevice | Select-Object DeviceNames -Unique)).Where({ (Compare-Object ($_.Combination | Select-Object -ExpandProperty DeviceNames -Unique) ($_.Combination | Select-Object -ExpandProperty DeviceNames) | Measure-Object).Count -eq 0 }))
@@ -1366,7 +1366,6 @@ Do {
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
-        $Variables.EndCycleMessage = ""
         $Variables.RefreshTimestamp = [DateTime]::Now.ToUniversalTime()
         $Variables.RefreshNeeded = $true
 
