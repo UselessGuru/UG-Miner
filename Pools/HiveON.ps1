@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.1.8
-Version date:   2024/02/10
+Version:        6.1.9
+Version date:   2024/02/11
 #>
 
 param(

@@ -1,6 +1,15 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.1.9 2024/02/11
+===================================
+
+Fixes:
+- Core: Miner data not available in API data if no available miners
+- 'Data/CurrencyAlgorithm.json' incomplete (Regression from 6.1.8)
+- TeamRedMiner-v2.4.7: Creating duplicate miner objects
+
+
 ChangeLog UG-Miner 6.1.8 2024/02/10
 ===================================
 
@@ -13,7 +22,7 @@ Fixes:
 - Main text window: Miner list not sorting optimal/best miners at the top
 
 Improvements:
-- Miner code optimizations
+- Minor code optimizations
 
 Miner updates:
 - BzMiner-v19.3.1
@@ -40,7 +49,7 @@ Fixes:
 - UG-Miner.ps1: Preconfigured BTC donation address needs only one default value
 
 Improvements:
-- Miner code optimizations
+- Minor code optimizations
 
 Miner updates:
 - GMiner-3.43: Support more dual algorithm combinations
@@ -82,7 +91,7 @@ Fixes:
 - Includes.psm1/Write-Config: Do not remove 'PoolsConfig' from $Config
 
 Improvements:
-- Miner code optimizations
+- Minor code optimizations
 
 Miner updates:
 - BzMiner-v19.3.0
@@ -115,7 +124,7 @@ ChangeLog UG-Miner 6.1.1 2024/01/17
 ===================================
 
 Changes:
-- Core: Miner code optimizations
+- Core: Minor code optimizations
 - Core: Remove obsolete code
 
 Miner changes:

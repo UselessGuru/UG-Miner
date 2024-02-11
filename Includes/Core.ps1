@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.8
-Version date:   2024/02/10
+Version:        6.1.9
+Version date:   2024/02/11
 #>
 
 using module .\Include.psm1
@@ -548,7 +548,7 @@ Do {
                         }
 
                         # Make pools unavailable
-                        $Pools.Where({ $_.Reasons }).ForEach({ $_.Available = $false })
+                        $Pools.ForEach({ $_.Available = -not [Boolean]$_.Reasons })
 
                         # Filter pools on miner set
                         If ($Config.MinerSet -lt 2) { 
@@ -825,12 +825,12 @@ Do {
             If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
             # Make smaller groups for faster update
-            $MinerGroups = $MinersNew | Group-Object -Property Name
+            $MinersNewGroups = $MinersNew | Group-Object -Property Name
             ($Miners | Group-Object -Property Name).ForEach(
                 { 
                     Try { 
                         $Name = $_.Name
-                        $MinerGroup = $MinerGroups.Where({ $Name -eq $_.Name }).Group
+                        $MinersNewGroup = $MinersNewGroups.Where({ $Name -eq $_.Name }).Group
                         $_.Group.ForEach(
                             { 
                                 If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and ([String]($_.Workers.Pool.Variant) -eq [String]($Miner.Workers.Pool.Variant)) -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle) { # Minimum numbers of full cycles not yet reached
@@ -838,7 +838,7 @@ Do {
                                 }
                                 Else { 
                                     $Info = $_.Info
-                                    If ($Miner = $MinerGroup.Where({ $Info -eq $_.Info })[0]) { 
+                                    If ($Miner = $MinersNewGroup.Where({ $Info -eq $_.Info })[0]) { 
                                         # Update existing miners
                                         If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
                                             $_.Arguments = $Miner.Arguments
@@ -861,7 +861,7 @@ Do {
                     }
                 }
             )
-            Remove-Variable Info, Miner, MinerGroup, MinerGroups, MinersNew, Name -ErrorAction Ignore
+            Remove-Variable Info, Miner, MinersNewGroup, MinersNewGroups, MinersNew, Name -ErrorAction Ignore
 
             $Variables.MinerDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
 
@@ -1190,7 +1190,11 @@ Do {
             }
         )
 
-        If (-not ($Variables.EnabledDevices -and $Miners.Where({ $_.Available }))) {
+        # Update data in API
+        $Variables.Miners = $Miners
+        Remove-Variable Miners
+
+        If (-not ($Variables.EnabledDevices -and $Variables.Miners.Where({ $_.Available }))) {
             $Variables.Miners.ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
             $Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
             $Variables.Miners = [Miner[]]@()
@@ -1217,10 +1221,6 @@ Do {
             }
             Continue
         }
-
-        # Update data in API
-        $Variables.Miners = $Miners
-        Remove-Variable Miners
 
         If (-not $Variables.MinersBestPerDevice_Combo) { 
             $Variables.Miners.ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
