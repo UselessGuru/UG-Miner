@@ -7,6 +7,9 @@ ChangeLog UG-Miner 6.1.9 2024/02/11
 Fixes:
 - Core: Miner data not available in API data if no available miners
 - 'Data/CurrencyAlgorithm.json' incomplete (Regression from 6.1.8)
+
+Miner changes:
+- OneZeroMer-v1.3.0: Error mining SSL 
 - TeamRedMiner-v2.4.7: Creating duplicate miner objects
 
 
