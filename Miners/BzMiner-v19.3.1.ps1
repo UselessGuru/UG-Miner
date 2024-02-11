@@ -60,7 +60,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "HeavyHashKaspa"); Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @("ProHashing")); Arguments = @(" -a ergo", " --a2 kaspa") }
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "SHA512256d");     Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());             Arguments = @(" -a ergo", " --a2 radiant") }
     [PSCustomObject]@{ Algorithms = @("Blake3");                       Type = "NVIDIA"; Fee = @(0.005);      MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludeGPUModel = "";            ExcludePools = @(@(), @());             Arguments = @(" -a alph") }
-    [PSCustomObject]@{ Algorithms = @("DynexSolve");                   Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = @(); ExcludeGPUModel = "";            ExcludePools = @(@(), @());             Arguments = @(" -a dynex") }
+    [PSCustomObject]@{ Algorithms = @("DynexSolve");                   Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = @("Other"); ExcludeGPUModel = "";            ExcludePools = @(@(), @());             Arguments = @(" -a dynex") }
     [PSCustomObject]@{ Algorithms = @("EtcHash");                      Type = "NVIDIA"; Fee = @(0.005);      MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 20); ExcludeGPUArchitecture = @(); ExcludeGPUModel = "";            ExcludePools = @(@(), @());             Arguments = @(" -a etchash") }
     [PSCustomObject]@{ Algorithms = @("EtcHash", "Blake3");            Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @(); ExcludeGPUModel = "";            ExcludePools = @(@(), @());             Arguments = @(" -a etchash", " --a2 alph") }
     [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @(); ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @("ProHashing")); Arguments = @(" -a etchash", " --a2 kaspa") }
@@ -158,7 +158,7 @@ If ($Algorithms) {
                                         Type             = $_.Type
                                         URI              = $Uri
                                         WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers          = @(($Pool0, $Pool1).Where({ $_ } ) | ForEach-Object { @{ Pool = $_ } })
+                                        Workers          = @(($Pool0, $Pool1).Where({ $_ }) | ForEach-Object { @{ Pool = $_ } })
                                     }
                                 }
                             }
