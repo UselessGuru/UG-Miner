@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.1.9
-Version date:   2024/02/11
+Version:        6.1.10
+Version date:   2024/02/17
 #>
 
 using module ..\Includes\Include.psm1
@@ -48,7 +48,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
     Try { 
 
-        Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec. / Avg. loop duration: $(($Durations | Measure-Object -Average | Select-Object -ExpandProperty Average)) sec.)" })"
+        Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
         Do {
             Try { 
@@ -59,7 +59,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
             If ($AlgoData.PSObject.Properties.Name.Count -lt 2) { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
-                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * $PoolConfig.PoolAPIRetryInterval)))
+                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)))
             }
         } While ($AlgoData.PSObject.Properties.Name.Count -lt 2)
 
@@ -91,7 +91,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 Last24hDrift        = $AlgoData.$Algo.estimate_current - $BasePrice
                 Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algo.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
                 Last24hDriftSign    = If ($AlgoData.$Algo.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
-                Name                = $Algo
+                Name                = $Algorithm_Norm
             }
         }
         Remove-Variable Algo, Algorithm_Norm, BasePrice, StatName -ErrorAction Ignore
@@ -122,7 +122,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
             $AlgoData.$PoolName | Add-Member PlusPrice $PlusPrice -Force
         }
-        Remove-Variable CurAlgoObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizets, SampleSizeHalfts -ErrorAction Ignore
+        Remove-Variable CurPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizets, SampleSizeHalfts -ErrorAction Ignore
 
         If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
             ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
@@ -140,20 +140,19 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
         $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
     }
+    Remove-Variable CurrenciesData -ErrorAction Ignore
 
     $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
     $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
     $Durations = @($Durations | Select-Object -Last 20)
-    $DurationsAvg = ([Int]($Durations | Measure-Object -Average | Select-Object -ExpandProperty Average) + 3)
+    $DurationsAvg = $Durations | Measure-Object -Average | Select-Object -ExpandProperty Average
 
-    Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec.); found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
+    Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
 
-    Remove-Variable CurrenciesData, Duration -ErrorAction Ignore
-
-    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While ($Timestamp -ge $Variables.PoolDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
-    
+
     $Error.Clear()
     [System.GC]::Collect()
 }

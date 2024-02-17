@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.1.9
-Version date:   2024/02/11
+Version:        6.1.10
+Version date:   2024/02/17
 #>
 
 param(
@@ -55,7 +55,7 @@ If ($Wallet) {
         }
         Catch { 
             $APICallFails ++
-            Start-Sleep -Seconds ($APICallFails * $PoolConfig.PoolAPIRetryInterval)
+            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)
         }
     } While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -lt 3)
 

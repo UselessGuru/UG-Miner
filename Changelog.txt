@@ -1,6 +1,26 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.1.10 2024/02/15
+====================================
+
+Brains:
+- ProHashing: Optimize code
+- Reduce pool timeout wait time
+- When debug output is enabled print previous loop time
+
+Fixes:
+- Core: Do not set reason '0 H/s Stat file' until benchmarked
+
+Miner changes:
+- lolMiner-v1.84
+- TeamBlackMiner-v2.18
+- TeamRedMiner-v0.10.18
+
+Pool changes:
+- HiveOn, MiningPoolHub & NiceHash: Reduce pool timeout wait time
+
+
 ChangeLog UG-Miner 6.1.9 2024/02/11
 ===================================
 

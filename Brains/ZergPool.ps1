@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.1.9
-Version date:   2024/02/11
+Version:        6.1.10
+Version date:   2024/02/17
 #>
 
 using module ..\Includes\Include.psm1
@@ -46,7 +46,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
     Try { 
 
-        Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec. / Avg. loop duration: $(($Durations | Measure-Object -Average | Select-Object -ExpandProperty Average)) sec.)" })"
+        Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
         Do {
             Try { 
@@ -66,7 +66,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
             Catch { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
-                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * $PoolConfig.PoolAPIRetryInterval)))
+                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)))
             }
         } While (-not $APIdata.PSObject.Properties.Name)
 
@@ -189,17 +189,16 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
         $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
     }
+    Remove-Variable APIdata -ErrorAction Ignore
 
     $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
     $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
     $Durations = @($Durations | Select-Object -Last 20)
-    $DurationsAvg = ([Int]($Durations | Measure-Object -Average | Select-Object -ExpandProperty Average) + 3)
+    $DurationsAvg = $Durations | Measure-Object -Average | Select-Object -ExpandProperty Average
 
-    Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec.); found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
+    Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
 
-    Remove-Variable APIdata, Duration -ErrorAction Ignore
-
-    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While ($Timestamp -ge $Variables.PoolDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
 

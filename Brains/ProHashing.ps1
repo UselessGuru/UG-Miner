@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ProHashing.ps1
-Version:        6.1.9
-Version date:   2024/02/11
+Version:        6.1.10
+Version date:   2024/02/17
 #>
 
 using module ..\Includes\Include.psm1
@@ -35,7 +35,6 @@ $BrainName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolObjects = @()
 $APICallFails = 0
-$CurrenciesData = @()
 $Durations = [TimeSpan[]]@()
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
@@ -49,7 +48,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
     Try { 
 
-        Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec. / Avg. loop duration: $(($Durations | Measure-Object -Average | Select-Object -ExpandProperty Average)) sec.)" })"
+        Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
         Do {
             Try { 
@@ -63,7 +62,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
             Catch { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
-                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * $PoolConfig.PoolAPIRetryInterval)))
+                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)))
             }
         } While (-not ($AlgoData -and $CurrenciesData))
 
@@ -72,11 +71,13 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         # Change numeric string to numbers, some values are null
         $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
         $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+        # Only recods with 24h_btc are relevant
+        $CurrenciesData = $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_."24h_btc" }).ForEach({ $CurrenciesData.$_ })
 
         ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
             $Algorithm_Norm = Get-Algorithm $Algo
             $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
-            $Currencies = @($CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -eq $Algo -and $CurrenciesData.$_."24h_btc" }))
+            $Currencies = @($CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -eq $Algo }))
             $Currency = If ($Currencies.Count -eq 1) { $($Currencies[0] -replace '-.+' -replace ' \s+' -replace ' $') } Else { "" }
             $AlgoData.$Algo | Add-Member Currency $Currency -Force
             $AlgoData.$Algo | Add-Member Updated $Timestamp -Force
@@ -99,7 +100,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 Last24hDrift        = $AlgoData.$Algo.estimate_current - $BasePrice
                 Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algo.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
                 Last24hDriftSign    = If ($AlgoData.$Algo.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
-                Name                = $Algo
+                Name                = $Algorithm_Norm
             }
         }
         Remove-Variable Algo, Algorithm_Norm, BasePrice, Currency, Currencies, CurrenciesData, StatName -ErrorAction Ignore
@@ -149,17 +150,16 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
         $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
     }
+    Remove-Variable AlgoData, CurrenciesData -ErrorAction Ignore
 
     $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
     $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
     $Durations = @($Durations | Select-Object -Last 20)
-    $DurationsAvg = ([Int]($Durations | Measure-Object -Average | Select-Object -ExpandProperty Average) + 3)
+    $DurationsAvg = $Durations | Measure-Object -Average | Select-Object -ExpandProperty Average
 
-    Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec.); found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
+    Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
 
-    Remove-Variable CurrenciesData, Duration -ErrorAction Ignore
-
-    While ($Timestamp -ge $Variables.MinerDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While ($Timestamp -ge $Variables.PoolDataCollectedTimeStamp -or (([DateTime]::Now).ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
 

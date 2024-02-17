@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.9
-Version date:   2024/02/11
+Version:        6.1.10
+Version date:   2024/02/17
 #>
 
 using module .\Include.psm1
@@ -31,6 +31,7 @@ If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocat
 Do { 
     Try { 
         $Variables.EndCycleMessage = ""
+
         # Set master timer
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
@@ -321,7 +322,7 @@ Do {
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
-                $PoolTimestamp = If ($Variables.MinerDataCollectedTimeStamp) { $Variables.MinerDataCollectedTimeStamp } Else { $Variables.ScriptStartTime }
+                $PoolTimestamp = If ($Variables.PoolDataCollectedTimeStamp) { $Variables.PoolDataCollectedTimeStamp } Else { $Variables.ScriptStartTime }
 
                 # Wait for all brains
                 While (([DateTime]::Now).ToUniversalTime() -lt $Variables.Timer.AddSeconds($Variables.PoolTimeout) -and ($Variables.Brains.psBase.Keys.Where({ $Variables.Brains[$_] -and $Variables.Brains[$_].Updated -lt $PoolTimestamp }))) { 
@@ -811,6 +812,8 @@ Do {
             }
             Remove-Variable AvailableMinerPools -ErrorAction Ignore
 
+            $Variables.PoolDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
+
             $CompareMiners = Compare-Object @($Miners | Select-Object) @($MinersNew | Select-Object) -Property Info -IncludeEqual -PassThru
             # Properties that need to be set only once because they are not dependent on any config or pool information
             $MinerDevices = @($Variables.EnabledDevices | Select-Object -Property Bus, ConfiguredPowerConsumption, Name, ReadPowerConsumption, Status)
@@ -863,8 +866,6 @@ Do {
             )
             Remove-Variable Info, Miner, MinersNewGroup, MinersNewGroups, MinersNew, Name -ErrorAction Ignore
 
-            $Variables.MinerDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
-
             # Faster shutdown
             If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
@@ -875,7 +876,7 @@ Do {
             $Miners.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled by user"); $_.Status = [MinerStatus]::Disabled })
             If ($Config.ExcludeMinerName.Count) { $Miners.Where({ (Compare-Object @($Config.ExcludeMinerName | Select-Object) @($_.BaseName, "$($_.BaseName)-$($_.Version)", $_.Name | Select-Object -Unique) -IncludeEqual -ExcludeDifferent | Measure-Object).Count -gt 0 }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Config.ExcludeMinerName -join ', '))") }) }
             $Miners.Where({ $_.Earning -eq 0 }).ForEach({ $_.Reasons.Add("Earning -eq 0") })
-            $Miners.Where({ $_.Workers.Hashrate -contains 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") })
+            $Miners.Where({ -not $_.Benchmark -and $_.Workers.Hashrate -contains 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") })
             If ($Config.DisableMinersWithFee) { $Miners.Where({ $_.Workers.Fee }).ForEach({ $_.Reasons.Add("Config.DisableMinersWithFee") }) }
             If ($Config.DisableDualAlgoMining) { $Miners.Where({ $_.Workers.Count -eq 2 }).ForEach({ $_.Reasons.Add("Config.DisableDualAlgoMining") }) }
             ElseIf ($Config.DisableSingleAlgoMining) { $Miners.Where({ $_.Workers.Count -eq 1 }).ForEach({ $_.Reasons.Add("Config.DisableSingleAlgoMining") }) }

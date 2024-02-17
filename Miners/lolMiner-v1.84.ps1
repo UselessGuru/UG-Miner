@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.9
-Version date:   2024/02/11
+Version:        6.1.10
+Version date:   2024/02/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0"} ))) { Return }
 
-$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.82a/lolMiner_v1.82a_Win64.zip"
+$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.84/lolMiner_v1.84_Win64.zip"
 $Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\lolminer.exe"
 $DeviceEnumerator = "Bus"
@@ -55,7 +55,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EthashB3", "Blake3");           Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode ALEPHDUAL" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "HeavyHashKarlsen"); Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = "^GCN4$";    ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode KARLSENDUAL" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "HeavyHashPyrin");   Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = "^GCN4$";    ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode PYRINDUAL" }
-#   [PSCustomObject]@{ Algorithms = @("EthashB3", "SHA512256d");       Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = "^GCN4$";    ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode RXDDUAL" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1986
+    [PSCustomObject]@{ Algorithms = @("EthashB3", "SHA512256d");       Type = "AMD"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = "^GCN4$";    ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode RXDDUAL" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1986
     [PSCustomObject]@{ Algorithms = @("Flux");                         Type = "AMD"; Fee = @(0.01);       MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(45, 70); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo FLUX" }
     [PSCustomObject]@{ Algorithms = @("IronFish");                     Type = "AMD"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo IRONFISH" }
     [PSCustomObject]@{ Algorithms = @("HeavyHashPyrin");               Type = "AMD"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 50); ExcludeGPUArchitecture = " ";         ExcludePools = @(@(), @()); Arguments = " --algo PYRIN" }
@@ -92,7 +92,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EtcHash");                      Type = "NVIDIA"; Fee = @(0.007);      MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETCHASH" } # PhoenixMiner-v6.2c is faster
     [PSCustomObject]@{ Algorithms = @("EtcHash", "Blake3");            Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETCHASH --dualmode ALEPHDUAL --maxdualimpact *" }
 #   [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKarlsen");  Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETCHASH --dualmode KARLSENDUAL --maxdualimpact *" } # No hashrate for second algorithm
-#   [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETCHASH --dualmode KASPADUAL --maxdualimpact *" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1991
+    [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETCHASH --dualmode KASPADUAL --maxdualimpact *" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1991
 #   [PSCustomObject]@{ Algorithms = @("EtcHash", "SHA512256d");        Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETCHASH --dualmode RXDDUAL --maxdualimpact *" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1986
     [PSCustomObject]@{ Algorithms = @("Ethash");                       Type = "NVIDIA"; Fee = @(0.007);      MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETHASH" } # PhoenixMiner-v6.2c is faster
     [PSCustomObject]@{ Algorithms = @("Ethash", "Blake3");             Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETHASH --dualmode ALEPHDUAL --maxdualimpact *" }

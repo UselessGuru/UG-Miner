@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.9
-Version date:   2024/02/11
+Version:        6.1.10
+Version date:   2024/02/17
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -578,7 +578,10 @@ Class Miner {
         $this.Benchmark = $false
         $this.Best = $false
         $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
+        $this.ReadPowerConsumption = [Boolean]($this.Devices.ReadPowerConsumption -notcontains $false)
         $this.Reasons = [System.Collections.Generic.List[String]]@()
+        $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
+        $this.Updated = $this.Workers.Updated | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
 
         $this.Workers.ForEach(
             { 
@@ -593,17 +596,22 @@ Class Miner {
                     $_.Updated = $Stat.Updated
                 }
                 Else { 
+                    $this.Benchmark = $true
                     $_.Disabled = $false
                     $_.Hashrate = [Double]::NaN
                 }
             }
         )
 
-        $this.Earning = [Double]::NaN
-        $this.Earning_Bias = [Double]::NaN
-        $this.Earning_Accuracy = [Double]::NaN
-        If ($this.Workers.Where({ [Double]::IsNaN($_.Hashrate) })) { 
-            $this.Benchmark = $true
+        If ($this.Workers.Where({ $_.Disabled })) { 
+            $this.Status = [MinerStatus]::Disabled
+            $this.Disabled = $true
+        }
+
+        If ($this.Benchmark -eq $true) { 
+            $this.Earning = [Double]::NaN
+            $this.Earning_Bias = [Double]::NaN
+            $this.Earning_Accuracy = [Double]::NaN
         }
         Else { 
             $this.Earning = $this.Workers.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum
@@ -612,19 +620,9 @@ Class Miner {
             If ($this.Earning) { $this.Workers.ForEach({ $this.Earning_Accuracy += $_.Earning_Accuracy * $_.Earning / $this.Earning }) }
         }
 
-        If ($this.Workers.Where( { $_.Disabled })) { 
-            $this.Status = [MinerStatus]::Disabled
-            $this.Disabled = $true
-        }
-
-        $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
-        $this.Updated = $this.Workers.Updated | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
-
         $this.MeasurePowerConsumption = $false
         $this.PowerCost = [Double]::NaN
         $this.PowerConsumption = [Double]::NaN
-        $this.ReadPowerConsumption = [Boolean]($this.Devices.ReadPowerConsumption -notcontains $false)
-
         $this.Profit = [Double]::NaN
         $this.Profit_Bias = [Double]::NaN
         If ($CalculatePowerCost) { 
