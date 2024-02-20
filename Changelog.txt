@@ -1,6 +1,14 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+ChangeLog UG-Miner 6.1.11 2024/02/20
+====================================
+
+Miner updates:
+- BzMiner-v20.0.0
+- TTMiner-v2024.1.3
+
+
 ChangeLog UG-Miner 6.1.10 2024/02/15
 ====================================
 
