@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -lt [Version]"26.20.15011.10003" }))) { Return }
 
 $URI = "https://github.com/UselessGuru/miners/releases/download/ClaymoreNeoscrypt/claymore_neoscrypt_1.2.zip"
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\NeoScryptMiner.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
@@ -48,11 +48,11 @@ If ($Algorithms) {
                 $Algorithms.ForEach(
                     { 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools }))) { 
+                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] }).Where({ $_.Name -notin $ExcludePools }))) { 
 
                             $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
                             $MinMemGiB  = $_.MinMemGiB 
-                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                                 $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
 

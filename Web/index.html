@@ -8,7 +8,7 @@
             <button id="btn-failed" class="btn btn-warning" disabled title="The marked miners will be marked as failed&#10;Use this if the miners fail benchmarking or produce unpredictable results">Mark as failed</button>
             <button id="btn-disable" class="btn btn-danger" disabled title="The marked miners will be marked as disabled&#10;To re-enable trigger re-benchmarking">Disable</button>
           </div>
-          <table id="miners" class="table"
+          <table id="activeminers" class="table"
             data-ajax-options="ajaxOptions"
             data-auto-refresh="true"
             data-auto-refresh-status="true"
@@ -96,7 +96,7 @@
           <pre id="logtext" style="font-size: 17px; line-height: 22px; margin-top: 20px; overflow: auto; display: flex; flex-direction: column-reverse;"></pre>
 <!-- Start of page scripts 'index.html' -->
           <script type="text/javascript">
-            var $table = $('#miners');
+            var $table = $('#activeminers');
 
             function tailf() {
               $.ajax({
@@ -153,13 +153,13 @@
               }
             });
 
-            $('#miners').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
+            $('#activeminers').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
               $(".addlocalcurrency").each(function () {
                 if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
               });
             });
 
-            $('#miners').on('check.bs.table check-all.bs.table check-some.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
+            $('#activeminers').on('check.bs.table check-all.bs.table check-some.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
               document.getElementById('btn-re-benchmark').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
@@ -184,7 +184,7 @@
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
-                  $('#miners').bootstrapTable('refresh');
+                  $('#activeminers').bootstrapTable('refresh');
                 }
               });
 
@@ -202,7 +202,7 @@
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
-                  $('#miners').bootstrapTable('refresh');
+                  $('#activeminers').bootstrapTable('refresh');
                 }
               });
 
@@ -221,7 +221,7 @@
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
-                  $('#miners').bootstrapTable('refresh');
+                  $('#activeminers').bootstrapTable('refresh');
                 }
               });
 
@@ -238,7 +238,7 @@
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
-                  $('#miners').bootstrapTable('refresh');
+                  $('#activeminers').bootstrapTable('refresh');
                 }
               });
             });

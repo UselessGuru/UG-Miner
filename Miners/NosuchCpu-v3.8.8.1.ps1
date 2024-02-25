@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 $URI = "https://github.com/patrykwnosuch/cpuminer-nosuch/releases/download/3.8.8.1-nosuch-m4/cpu-nosuch-m4-win64.7z"
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 If ($AvailableMiner_Devices.CpuFeatures -match 'sha')      { $Path = "$PWD\Bin\$Name\cpuminer-avx2-sha.exe" }
 ElseIf ($AvailableMiner_Devices.CpuFeatures -match 'avx2') { $Path = "$PWD\Bin\$Name\cpuminer-avx2.exe" }
 ElseIf ($AvailableMiner_Devices.CpuFeatures -match 'aes')  { $Path = "$PWD\Bin\$Name\cpuminer-aes-sse2.exe" }
@@ -49,7 +49,7 @@ If ($Algorithms) {
     $Algorithms.ForEach(
         { 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })[-1])) { 
+            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] }).Where({ $_.Name -notin $ExcludePools })[-1])) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"

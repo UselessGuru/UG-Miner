@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 Class Fireice : Miner { 

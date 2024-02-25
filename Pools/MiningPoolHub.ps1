@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 param(
@@ -31,12 +31,14 @@ param(
 
 $ProgressPreference = "SilentlyContinue"
 
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolConfig = $Variables.PoolsConfig.$Name
 
 $Headers = @{ "Cache-Control" = "no-cache" }
 $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+
+Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 If ($PoolConfig.UserName) { 
 
@@ -83,15 +85,15 @@ If ($PoolConfig.UserName) {
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - $Stat.Week_Fluctuation
-                    Algorithm                = [String]$Algorithm_Norm
-                    Currency                 = [String]$Currency
+                    Algorithm                = $Algorithm_Norm
+                    Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Pool.Fee / 100
                     Host                     = [String]($Pool.host_list.split(";") | Sort-Object -Descending { $_ -ilike "$Region*" } | Select-Object -First 1)
-                    Key                      = [String]$Key
+                    Key                      = $Key
                     MiningCurrency           = ""
-                    Name                     = [String]$Name
+                    Name                     = $Name
                     Pass                     = "x"
                     Port                     = [UInt16]$Pool.port
                     PortSSL                  = 0
@@ -99,21 +101,23 @@ If ($PoolConfig.UserName) {
                     Price                    = $Stat.Live * (1 - [Math]::Min($Stat.Day_Fluctuation, 1)) + $Stat.Day * [Math]::Min($Stat.Day_Fluctuation, 1)
                     Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
-                    Region                   = [String]$Region_Norm
+                    Region                   = $Region_Norm
                     SendHashrate             = $false
                     SSLSelfSignedCertificate = $true
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Stat.Updated
                     User                     = "$($PoolConfig.UserName).$($PoolConfig.WorkerName)"
-                    WorkerName               = [String]$PoolConfig.WorkerName
-                    Workers                  = [Int]$Pool.workers
-                    Variant                  = [String]$PoolVariant
+                    WorkerName               = $PoolConfig.WorkerName
+                    Workers                  = [UInt]$Pool.workers
+                    Variant                  = $PoolVariant
                 }
                 Break
             }
         }
     }
 }
+
+Write-Message -Level Debug "Pool '$PoolVariant': End"
 
 $Error.Clear()
 [System.GC]::Collect()

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 Function Start-APIServer { 
@@ -636,7 +636,7 @@ Function Start-APIServer {
                                 }
                                 Remove-Variable Miner
                                 ForEach ($Pool in ($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
-                                    If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -EQ $Pool.Algorithm}))) {
+                                    If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm}))) {
                                         # Remove Watchdog timers
                                         $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
 

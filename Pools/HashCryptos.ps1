@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 param(
@@ -31,7 +31,7 @@ param(
 
 $ProgressPreference = "SilentlyContinue"
 
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Hostsuffix = "stratum1.hashcryptos.com"
 
 $PoolConfig = $Variables.PoolsConfig.$Name
@@ -40,6 +40,8 @@ $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PayoutCurrency = $PoolConfig.PayoutCurrency
 $Wallet = $PoolConfig.Wallets.$PayoutCurrency
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
+
+Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 If ($DivisorMultiplier -and $PriceField -and $Wallet) { 
 
@@ -73,15 +75,15 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
 
         [PSCustomObject]@{ 
             Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-            Algorithm                = [String]$Algorithm_Norm
-            Currency                 = [String]$Currency
+            Algorithm                = $Algorithm_Norm
+            Currency                 = $Currency
             Disabled                 = $Stat.Disabled
             EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
             Fee                      = $Request.$Algorithm.Fees / 100
-            Host                     = [String]$HostSuffix
-            Key                      = [String]$Key
+            Host                     = $HostSuffix
+            Key                      = $Key
             MiningCurrency           = ""
-            Name                     = [String]$Name
+            Name                     = $Name
             Pass                     = "x"
             Port                     = [UInt16]($Request.$Algorithm.port -split ' ')[0]
             PortSSL                  = If (($Request.$Algorithm.port -split ' ')[2]) { ($Request.$Algorithm.port -split ' ')[2] } Else { $null }
@@ -94,13 +96,15 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
             SSLSelfSignedCertificate = $true
             StablePrice              = $Stat.Week
             Updated                  = [DateTime]$Request.$Algorithm.Updated
-            User                     = [String]$Wallet
-            WorkerName               = [String]$PoolConfig.WorkerName
-            Workers                  = [Int]$Request.$Algorithm.workers
-            Variant                  = [String]$PoolVariant
+            User                     = $Wallet
+            WorkerName               = $PoolConfig.WorkerName
+            Workers                  = [UInt]$Request.$Algorithm.workers
+            Variant                  = $PoolVariant
         }
     }
 }
+
+Write-Message -Level Debug "Pool '$PoolVariant': End"
 
 $Error.Clear()
 [System.GC]::Collect()

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -518,7 +518,7 @@ Class Miner {
         # Read power consumption from HwINFO64 reg key, otherwise use hardconfigured value
         $RegistryData = Get-ItemProperty "HKCU:\Software\HWiNFO64\VSB"
         ForEach ($Device in $this.Devices) { 
-            If ($RegistryEntry = $RegistryData.PSObject.Properties.Where({ ($_.Value -split " ") -contains $Device.Name })) { 
+            If ($RegistryEntry = $RegistryData.PSObject.Properties.Where({ ($_.Value -split ' ') -contains $Device.Name })) { 
                 $TotalPowerConsumption += [Double](($RegistryData.($RegistryEntry.Name -replace 'Label', 'Value') -split ' ')[0])
             }
             Else { 
@@ -819,16 +819,15 @@ Function Stop-Core {
         While (-not $Quick -and ($Variables.Miners | Where-Object { $_.Status -eq [MinerStatus]::Running }) -and ([DateTime]::Now) -le $Timestamp) { 
             Start-Sleep -Seconds 1
         }
-        $Global:CoreRunspace.PowerShell.Runspace.Dispose()
 
-        #Stop all running miners
+        # Stop all running miners
         ForEach ($Miner in $Variables.Miners.Where({ $_.Status -ne [MinerStatus]::Idle })) { 
             $Miner.SetStatus([MinerStatus]::Idle)
-            $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames}).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo })
+            $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
         }
-        $Variables.RunningMiners = [Miner[]]@()
-        $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
-        $Variables.FailedMiners = [Miner[]]@()
+        Remove-Variable Miner -ErrorAction Ignore
+
+        $Global:CoreRunspace.PowerShell.Runspace.Dispose()
         Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
     }
 
@@ -837,7 +836,10 @@ Function Stop-Core {
         $Variables.PoolsCount = 0
         $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBestPerDevice_Combos = $Variables.MinersMostProfitable = $Variables.RunningMiners = [Miner[]]@()
     }
+    $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
+    $Variables.FailedMiners = [Miner[]]@()
     $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
+    $Variables.RunningMiners = [Miner[]]@()
     $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
     $Variables.EndCycleTime = $null
     $Variables.WatchdogTimers = [PSCustomObject[]]@()
@@ -2668,7 +2670,7 @@ public static class Kernel32
         }
 
         # Set local environment
-        ($EnvBlock | Select-Object).ForEach({ Set-Item -Path "Env:$($_ -split '=' | Select-Object -Index 0)" "$($_ -split '=' | Select-Object -Index 1)" -Force })
+        ($EnvBlock | Select-Object).ForEach({ Set-Item -Path "Env:$(($_ -split '=')[0])" "$(($_ -split '=')[1])" -Force })
 
         # StartupInfo Struct
         $StartupInfo = New-Object STARTUPINFO
@@ -2991,7 +2993,7 @@ Function Get-ObsoleteMinerStats {
     $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_HashRate.txt", "*_PowerConsumption.txt").BaseName
     $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
 
-    Return @($StatFiles | Where-Object { (($_ -split '-' | Select-Object -First 2) -join '-') -notin $MinerNames})
+    Return @($StatFiles | Where-Object { (($_ -split '-')[0, 1] -join '-') -notin $MinerNames})
 }
 
 Function Test-Prime { 
@@ -3419,7 +3421,7 @@ Function Initialize-Environment {
     }
     Write-Host "Loaded donation data."
 
-    # Verify donation log
+    # Load donation log
     $Variables.DonationLog = Get-Content -Path ".\Logs\DonateLog.json" -ErrorAction Ignore | ConvertFrom-Json -NoEnumerate
     If (-not $Variables.DonationLog) { $Variables.DonationLog = @() }
     Else { Write-Host "Loaded donation log." }

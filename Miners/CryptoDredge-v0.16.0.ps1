@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -28,7 +28,7 @@ $URI = Switch ($Variables.DriverVersion.CUDA) {
     { $_ -ge "9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CryptoDredge/CryptoDredge_0.16.0_cuda_9.2_windows.zip"; Break }
     Default { Return }
 }
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\CryptoDredge.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
@@ -52,43 +52,44 @@ If ($Algorithms) {
 
     ($Devices | Select-Object Model -Unique).ForEach(
         { 
-            $Miner_Devices = $Devices | Where-Object Model -EQ $_.Model
-            $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
+            If ($Miner_Devices = $Devices | Where-Object Model -EQ $_.Model) { 
+                $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
 
-            $Algorithms.ForEach(
-                { 
-                    $ExcludePools = $_.ExcludePools
-                    ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools }))) { 
+                $Algorithms.ForEach(
+                    { 
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] }).Where({ $_.Name -notin $ExcludePools }))) { 
 
-                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        $MinMemGiB  = $_.MinMemGiB 
-                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                            $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                            $MinMemGiB  = $_.MinMemGiB 
+                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
-                            $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
+                                $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
 
-                            $Arguments = $_.Arguments
-                            $Arguments += " --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User)"
-                            If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments += ".$($Pool.WorkerName)" }
-                            $Arguments += " --pass $($Pool.Pass)"
+                                $Arguments = $_.Arguments
+                                $Arguments += " --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User)"
+                                If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments += ".$($Pool.WorkerName)" }
+                                $Arguments += " --pass $($Pool.Pass)"
 
-                            [PSCustomObject]@{ 
-                                API         = "CcMiner"
-                                Arguments   = "$Arguments --cpu-priority $($Config.GPUMinerProcessPriority + 2) --no-watchdog --no-crashreport --retries 1 --retry-pause 1 --api-type ccminer-tcp --api-bind=127.0.0.1:$($MinerAPIPort) --device $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                DeviceNames = $AvailableMiner_Devices.Name
-                                Fee         = $_.Fee # Dev fee
-                                MinerSet    = $_.MinerSet
-                                Name        = $Miner_Name
-                                Path        = $Path
-                                Port        = $MinerAPIPort
-                                Type        = "NVIDIA"
-                                URI         = $Uri
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                [PSCustomObject]@{ 
+                                    API         = "CcMiner"
+                                    Arguments   = "$Arguments --cpu-priority $($Config.GPUMinerProcessPriority + 2) --no-watchdog --no-crashreport --retries 1 --retry-pause 1 --api-type ccminer-tcp --api-bind=127.0.0.1:$($MinerAPIPort) --device $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    DeviceNames = $AvailableMiner_Devices.Name
+                                    Fee         = $_.Fee # Dev fee
+                                    MinerSet    = $_.MinerSet
+                                    Name        = $Miner_Name
+                                    Path        = $Path
+                                    Port        = $MinerAPIPort
+                                    Type        = "NVIDIA"
+                                    URI         = $Uri
+                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    Workers     = @(@{ Pool = $Pool })
+                                }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     )
 }

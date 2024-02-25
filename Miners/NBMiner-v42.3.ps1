@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"10.0") } ))) { Return }
 
 $URI = "https://github.com/NebuTech/NBMiner/releases/download/v42.3/NBMiner_42.3_Win.zip"
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\nbminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
@@ -51,61 +51,62 @@ If ($Algorithms) {
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            $Miner_Devices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model
-            $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
+            If ($Miner_Devices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model) { 
+                $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
 
-            ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
-                { 
-                    $ExcludePools = $_.ExcludePools
-                    ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
+                ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
+                    { 
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
 
-                        $MinComputeCapability = $_.MinComputeCapability
-                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
-                        # Windows 10 requires more memory on some algos
-                        If ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
-                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB -and[Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability })) { 
+                            $MinComputeCapability = $_.MinComputeCapability
+                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                            # Windows 10 requires more memory on some algos
+                            If ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
+                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB  }).Where({ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability })) { 
 
-                            $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
+                                $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
 
-                            $Arguments = $_.Arguments
-                            $Arguments += Switch ($Pool.Protocol) { 
-                                "ethstratum1"  { " --url stratum" }
-                                "ethstratum2"  { " --url nicehash" }
-                                "ethstratumnh" { " --url nicehash" }
-                                Default        { " --url stratum" }
-                            }
-                            $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else  { "+tcp://" }
-                            $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"
-                            $Arguments += " --password $($Pool.Pass)"
+                                $Arguments = $_.Arguments
+                                $Arguments += Switch ($Pool.Protocol) { 
+                                    "ethstratum1"  { " --url stratum" }
+                                    "ethstratum2"  { " --url nicehash" }
+                                    "ethstratumnh" { " --url nicehash" }
+                                    Default        { " --url stratum" }
+                                }
+                                $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else  { "+tcp://" }
+                                $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"
+                                $Arguments += " --password $($Pool.Pass)"
 
-                            # Optionally disable dev fee mining
-                            If ($Config.DisableMinerFee) { 
-                                $_.Fee = 0
-                                $Arguments += " --fee 0"
-                            }
+                                # Optionally disable dev fee mining
+                                If ($Config.DisableMinerFee) { 
+                                    $_.Fee = 0
+                                    $Arguments += " --fee 0"
+                                }
 
-                            # Apply tuning parameters
-                            If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
+                                # Apply tuning parameters
+                                If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
-                            [PSCustomObject]@{ 
-                                API         = "NBMiner"
-                                Arguments   = "$Arguments --no-watchdog --api 127.0.0.1:$($MinerAPIPort) --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                DeviceNames = $AvailableMiner_Devices.Name
-                                Fee         = $_.Fee # Dev fee
-                                MinerSet    = $_.MinerSet
-                                MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                Name        = $Miner_Name
-                                Path        = $Path
-                                Port        = $MinerAPIPort
-                                Type        = $_.Type
-                                URI         = $Uri
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                [PSCustomObject]@{ 
+                                    API         = "NBMiner"
+                                    Arguments   = "$Arguments --no-watchdog --api 127.0.0.1:$($MinerAPIPort) --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    DeviceNames = $AvailableMiner_Devices.Name
+                                    Fee         = $_.Fee # Dev fee
+                                    MinerSet    = $_.MinerSet
+                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                                    Name        = $Miner_Name
+                                    Path        = $Path
+                                    Port        = $MinerAPIPort
+                                    Type        = $_.Type
+                                    URI         = $Uri
+                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    Workers     = @(@{ Pool = $Pool })
+                                }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     )
 }

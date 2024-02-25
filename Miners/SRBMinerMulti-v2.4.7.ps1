@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
 
 $URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/2.4.7/SRBMiner-Multi-2-4-7-win64.zip"
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
@@ -229,7 +229,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }) | ForEach-Object { $_.Algorithms += "" }
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and ($_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]]) })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] }).Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
 $Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 
@@ -238,7 +238,7 @@ If ($Algorithms) {
     # Allowed max loss for 1. algorithm
     # $GpuDualMaxLosses = @($null, 2, 4, 7, 10, 15, 21, 30)
     # $GpuDualMaxLosses = @($null, 5)
-    $GpuDualMaxLosses = @($null)
+    # $GpuDualMaxLosses = @($null)
 
     # Build command sets for max loss
     # $Algorithms = $Algorithms | ForEach-Object { 
@@ -253,77 +253,78 @@ If ($Algorithms) {
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            $Miner_Devices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model
-            $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
+            If ($Miner_Devices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model) { 
+                $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
 
-            ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
-                { 
-                    $ExcludePools = $_.ExcludePools
-                    ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count }))) { 
-                        ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[1][$_.Algorithms[1]].Count }))) { 
-                            $Pools = @(($Pool0, $Pool1).Where({ $_ }))
+                ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
+                    { 
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count }))) { 
+                            ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[1][$_.Algorithms[1]].Count }))) { 
+                                $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
-                            $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                            $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Type -eq "CPU" -or ($_.MemoryGiB -gt $MinMemGiB -and $_.Architecture -notin $ExcludeGPUArchitecture) })) { 
+                                $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Type -eq "CPU" -or ($_.MemoryGiB -gt $MinMemGiB -and $_.Architecture -notin $ExcludeGPUArchitecture) })) { 
 
-                                $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })$(If ($_.GpuDualMaxLoss) { "-$($_.GpuDualMaxLoss)" })"
+                                    $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })$(If ($_.GpuDualMaxLoss) { "-$($_.GpuDualMaxLoss)" })"
 
-                                $Arguments = ""
-                                ForEach ($Pool in $Pools) { 
-                                    $Arguments += Switch ($Pool.Protocol) { 
-                                        "minerproxy"   { " --esm 0" }
-                                        "ethproxy"     { " --esm 0" }
-                                        "ethstratum1"  { " --esm 1" }
-                                        "ethstratum2"  { " --esm 2" }
-                                        "ethstratumnh" { " --esm 2" }
+                                    $Arguments = ""
+                                    ForEach ($Pool in $Pools) { 
+                                        $Arguments += Switch ($Pool.Protocol) { 
+                                            "minerproxy"   { " --esm 0" }
+                                            "ethproxy"     { " --esm 0" }
+                                            "ethstratum1"  { " --esm 1" }
+                                            "ethstratum2"  { " --esm 2" }
+                                            "ethstratumnh" { " --esm 2" }
+                                        }
+                                        $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
+                                        $Arguments += " --password $($Pool.Pass)"
+                                        If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
+                                        $Arguments += If ($Pool.PoolPorts[1]) { " --tls true" } Else { " --tls false" }
+                                        If ($_.GpuDualMaxLoss) { $Arguments += " --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
                                     }
-                                    $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
-                                    $Arguments += " --password $($Pool.Pass)"
-                                    If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
-                                    $Arguments += If ($Pool.PoolPorts[1]) { " --tls true" } Else { " --tls false" }
-                                    If ($_.GpuDualMaxLoss) { $Arguments += " --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
-                                }
-                                Remove-Variable Pool
+                                    Remove-Variable Pool
 
-                                If (($AvailableMiner_Devices.Type | Select-Object -Unique) -eq "CPU") { 
-                                    $Arguments += " --cpu-threads $($AvailableMiner_Devices.CIM.NumberOfLogicalProcessors -1)"
-                                }
-                                Else { 
-                                    $Arguments += " --gpu-id $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                }
+                                    If (($AvailableMiner_Devices.Type | Select-Object -Unique) -eq "CPU") { 
+                                        $Arguments += " --cpu-threads $($AvailableMiner_Devices.CIM.NumberOfLogicalProcessors -1)"
+                                    }
+                                    Else { 
+                                        $Arguments += " --gpu-id $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    }
 
-                                If ($_.Algorithms[0] -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                                    $PrerequisitePath = $Variables.VerthashDatPath
-                                    $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
-                                }
-                                Else { 
-                                    $PrerequisitePath = $PrerequisiteURI = ""
-                                }
-                                If ($_.Type -eq "CPU" -and $Variables.UseMinerTweaks) { $Arguments += " --disable-msr-tweaks" }
+                                    If ($_.Algorithms[0] -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                                        $PrerequisitePath = $Variables.VerthashDatPath
+                                        $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+                                    }
+                                    Else { 
+                                        $PrerequisitePath = $PrerequisiteURI = ""
+                                    }
+                                    If ($_.Type -eq "CPU" -and $Variables.UseMinerTweaks) { $Arguments += " --disable-msr-tweaks" }
 
-                                [PSCustomObject]@{ 
-                                    API              = "SRBMiner"
-                                    Arguments        = "$Arguments --api-rig-name $($Config.WorkerName) --api-enable --api-port $MinerAPIPort"
-                                    DeviceNames      = $AvailableMiner_Devices.Name
-                                    Fee              = $_.Fee # Dev fee
-                                    MinerSet         = $_.MinerSet
-                                    MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/stats"
-                                    Name             = $Miner_Name
-                                    Path             = $Path
-                                    Port             = $MinerAPIPort
-                                    PrerequisitePath = $PrerequisitePath
-                                    PrerequisiteURI  = $PrerequisiteURI
-                                    Type             = $_.Type
-                                    URI              = $Uri
-                                    WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers          = @($Pools | ForEach-Object { @{ Pool = $_ } })
+                                    [PSCustomObject]@{ 
+                                        API              = "SRBMiner"
+                                        Arguments        = "$Arguments --api-rig-name $($Config.WorkerName) --api-enable --api-port $MinerAPIPort"
+                                        DeviceNames      = $AvailableMiner_Devices.Name
+                                        Fee              = $_.Fee # Dev fee
+                                        MinerSet         = $_.MinerSet
+                                        MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/stats"
+                                        Name             = $Miner_Name
+                                        Path             = $Path
+                                        Port             = $MinerAPIPort
+                                        PrerequisitePath = $PrerequisitePath
+                                        PrerequisiteURI  = $PrerequisiteURI
+                                        Type             = $_.Type
+                                        URI              = $Uri
+                                        WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        Workers          = @($Pools | ForEach-Object { @{ Pool = $_ } })
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     )
 }

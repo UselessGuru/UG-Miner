@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.11"
+    Version      = [System.Version]"6.1.12"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -473,17 +473,17 @@ $Variables.Devices.Where({ $_.Name -in $Config.ExcludeDeviceName -and $_.State -
 # Build driver version table
 $Variables.DriverVersion = [PSCustomObject]@{ }
 $Variables.DriverVersion | Add-Member "CIM" ([PSCustomObject]@{ })
-$Variables.DriverVersion.CIM | Add-Member "CPU" ([Version](($Variables.Devices.Where({ $_.Type -EQ "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
+$Variables.DriverVersion.CIM | Add-Member "CPU" ([Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
 $Variables.DriverVersion.CIM | Add-Member "AMD" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).CIM.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
 $Variables.DriverVersion.CIM | Add-Member "NVIDIA" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).CIM.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
 $Variables.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
-$Variables.DriverVersion.OpenCL | Add-Member "CPU" ([Version](($Variables.Devices.Where({ $_.Type -EQ "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
+$Variables.DriverVersion.OpenCL | Add-Member "CPU" ([Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "AMD" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "NVIDIA" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split ' ' | Select-Object -First 1))
 
 If ($Variables.DriverVersion.OpenCL.NVIDIA) { 
     $Variables.DriverVersion | Add-Member "CUDA" ([Version]($Variables.CUDAVersionTable.($Variables.CUDAVersionTable.Keys.Where({ $_ -le ([System.Version]$Variables.DriverVersion.OpenCL.NVIDIA).Major }) | Sort-Object -Bottom 1)))
-    $Variables.Devices.Where({ $_.Type -EQ "GPU" -and $_.Vendor -eq "NVIDIA" }).ForEach({ $_.CUDAVersion = [Version]$Variables.DriverVersion.CUDA })
+    $Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).ForEach({ $_.CUDAVersion = [Version]$Variables.DriverVersion.CUDA })
 }
 
 # Driver version changed
@@ -536,7 +536,6 @@ Function MainLoop {
     If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $MiningSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
 
-        If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or ($Variables.PoolName -and (Compare-Object $Config.PoolName $Variables.PoolName))) { 
@@ -559,10 +558,15 @@ Function MainLoop {
 
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 
+                    $Variables.Summary = "'Stop Mining' button clicked."
+                    Write-Host "`n"
+                    Write-Message -Level Info $Variables.Summary
+
+                    Stop-IdleDetection
                     Stop-Core
                     Stop-Brain
-                    Stop-IdleDetection
-                    If ($Config.ReportToServer) { Write-MonitoringData }
+                    Stop-BalancesTracker
+                    # If ($Config.ReportToServer) { Write-MonitoringData }
 
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is stopped.<br>Click the 'Start mining' button to make money."
                     Write-Host "`n"
@@ -570,11 +574,16 @@ Function MainLoop {
                     Break
                 }
                 "Paused" { 
-                    Stop-Core
+                    $Variables.Summary = "'Pause Mining' button clicked."
+                    Write-Host "`n"
+                    Write-Message -Level Info $Variables.Summary
+
                     Stop-IdleDetection
+                    Stop-Core
                     Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
-                    If ($Config.ReportToServer) { Write-MonitoringData }
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
+                    # If ($Config.ReportToServer) { Write-MonitoringData }
 
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is paused.<br>Click the 'Start mining' button to make money."
                     Write-Host "`n"
@@ -582,20 +591,25 @@ Function MainLoop {
                     Break
                 }
                 "Running" { 
+                    If ($Variables.MiningStatus) { 
+                        $Variables.Summary = "'Start Mining' button clicked."
+                    }
+                    Else {
+                        $Variables.Summary = "$($Variables.Branding.ProductLabel) is getting ready.<br>Please wait..."
+                    }
+                    Write-Host "`n"
+                    Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
+
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
                     Start-Core
-
-                    If ($Variables.CycleStarts.Count -eq 1) { 
-                        $Variables.Summary = "$($Variables.Branding.ProductLabel) is getting ready.<br>Please wait..."
-                        Write-Host "`n"
-                        Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
-                    }
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     Break
                 }
             }
             $Variables.MiningStatus = $Variables.NewMiningStatus
             If ($LegacyGUIform) { Update-GUIstatus }
         }
+        If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
     }
 
     If ($Config.ShowConsole) { 

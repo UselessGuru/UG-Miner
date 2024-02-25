@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 [Void] [System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -83,7 +83,7 @@ Function CheckBoxSwitching_Click {
     $SwitchingDisplayTypes = @()
     $SwitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
-        $SwitchingLogLabel.Text = "Switching log - updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
+        $SwitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
         $SwitchingDGV.DataSource = (Get-Content ".\Logs\SwitchingLog.csv" | ConvertFrom-Csv).Where({ $_.Type -in $SwitchingDisplayTypes }) | Select-Object -Last 1000 | ForEach-Object { $_.Datetime = (Get-Date $_.DateTime); $_ } | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
         If ($SwitchingDGV.Columns) { 
             $SwitchingDGV.Columns[0].FillWeight = 50
@@ -150,7 +150,7 @@ Function Update-TabControl {
             If ($Variables.MinersBestPerDevice_Combo) { 
 
                 If (-not ($ContextMenuStrip.Visible -and $ContextMenuStrip.Enabled)) { 
-                    $ActiveMinersLabel.Text = "Active miners - updated $(([DateTime]::Now).ToString())"
+                    $ActiveMinersLabel.Text = "Active miners updated $(([DateTime]::Now).ToString())"
 
                     $ActiveMinersDGV.BeginInit()
                     $ActiveMinersDGV.ClearSelection()
@@ -294,7 +294,7 @@ Function Update-TabControl {
             }
             If ($Config.BalancesTrackerPollInterval -gt 0) { 
                 If ($Variables.Balances) { 
-                    $BalancesLabel.Text = "Balances data - updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())"
+                    $BalancesLabel.Text = "Balances data updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())"
 
                     $BalancesDGV.BeginInit()
                     $BalancesDGV.ClearSelection()
@@ -356,8 +356,6 @@ Function Update-TabControl {
             $ContextMenuStripItem5.Visible = $true
 
             If ($Variables.Miners) { 
-                $MinersLabel.Text = "Miner data read from stats - updated $(([DateTime]::Now).ToString())"
-
                 If (-not ($ContextMenuStrip.Visible -and $ContextMenuStrip.Enabled)) { 
 
                     If ($RadioButtonMinersOptimal.checked) { $DataSource = $Variables.MinersOptimal }
@@ -399,6 +397,9 @@ Function Update-TabControl {
                     $MinersDGV.EndInit()
                 }
             }
+            If ($MinersDGV.Columns) { $MinersLabel.Text = "Miner data updated $(([DateTime]::Now).ToString())" }
+            ElseIf ($Variables.MiningStatus -eq "Idle") { $MinersLabel.Text = "No data - mining is stopped"}
+            ElseIf ($Variables.MiningStatus -eq "Paused") { $MinersLabel.Text = "No data - mining is paused"}
             Else { $MinersLabel.Text = "Waiting for data..." }
             Break
         }
@@ -412,8 +413,6 @@ Function Update-TabControl {
             $ContextMenuStripItem5.Visible = $false
 
             If ($Variables.Pools) { 
-                $PoolsLabel.Text = "Pool data read from stats - updated $(([DateTime]::Now).ToString())"
-
                 If (-not ($ContextMenuStrip.Visible -and $ContextMenuStrip.Enabled)) { 
 
                     If ($RadioButtonPoolsBest.checked) { $DataSource = $Variables.PoolsBest }
@@ -461,9 +460,10 @@ Function Update-TabControl {
                     $PoolsDGV.EndInit()
                 }
             }
-            Else { 
-                $PoolsLabel.Text = "Waiting for data..."
-            }
+            If ($PoolsDGV.Columns) { $PoolsLabel.Text = "Pool data updated $(([DateTime]::Now).ToString())" }
+            ElseIf ($Variables.MiningStatus -eq "Idle") { $PoolsLabel.Text = "No data - mining is stopped"}
+            ElseIf ($Variables.MiningStatus -eq "Paused") { $PoolsLabel.Text = "No data - mining is paused"}
+            Else { $PoolsLabel.Text = "Waiting for data..." }
             Break
         }
         # "Rig monitor" { 
@@ -475,8 +475,6 @@ Function Update-TabControl {
         #         Read-MonitoringData | Out-Null
 
         #         If ($Variables.Workers) { 
-        #             $WorkersLabel.Text = "Worker status - updated $($Variables.WorkersLastUpdated.ToString())"
-
         #             $nl = "`n" # Must use variable, cannot join with '`n' directly
 
         #             $WorkersDGV.BeginInit()
@@ -512,7 +510,11 @@ Function Update-TabControl {
         #             Set-WorkerColor
         #             $WorkersDGV.EndInit()
         #         }
-        #         Else { $WorkersLabel.Text = "Worker status - no workers" }
+        #             If ($Variables.Workers) { $WorkersLabel.Text = "Worker status updated $($Variables.WorkersLastUpdated.ToString())" }
+        #             ElseIf ($Variables.MiningStatus -eq "Idle") { $WorkersLabel.Text = "No data - mining is stopped"}
+        #             ElseIf ($Variables.MiningStatus -eq "Paused") { $WorkersLabel.Text = "No data - mining is paused"}
+        #             Else  { $WorkersLabel.Text = "Waiting for data..." }
+
         #     }
         #     Else { 
         #         $WorkersLabel.Text = "Worker status reporting is disabled$(If (-not $Variables.APIRunspace) { " (Configuration item 'ShowWorkerStatus' -eq `$false)" })."
@@ -520,10 +522,10 @@ Function Update-TabControl {
         #     Break
         # }
         "Switching Log" { 
-            $CheckShowSwitchingCPU.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -EQ "CPU" }))
-            $CheckShowSwitchingAMD.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -EQ "GPU" -and $_.Vendor -EQ "AMD" }))
-            $CheckShowSwitchingINTEL.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -EQ "GPU" -and $_.Vendor -EQ "INTEL" }))
-            $CheckShowSwitchingNVIDIA.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -NE [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -EQ "GPU" -and $_.Vendor -EQ "NVIDIA" }))
+            $CheckShowSwitchingCPU.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "CPU" }))
+            $CheckShowSwitchingAMD.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }))
+            $CheckShowSwitchingINTEL.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }))
+            $CheckShowSwitchingNVIDIA.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -NE [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
 
             If (-not $CheckShowSwitchingCPU.Enabled) { $CheckShowSwitchingCPU.Checked = $false }
             If (-not $CheckShowSwitchingAMD.Enabled) { $CheckShowSwitchingAMD.Checked = $false }
@@ -539,7 +541,7 @@ Function Update-TabControl {
 
             If ($Config.Watchdog) { 
                 If ($Variables.WatchdogTimers) { 
-                    $WatchdogTimersLabel.Text = "Watchdog timers - updated $(([DateTime]::Now).ToString())"
+                    $WatchdogTimersLabel.Text = "Watchdog timers updated $(([DateTime]::Now).ToString())"
 
                     $WatchdogTimersDGV.BeginInit()
                     $WatchdogTimersDGV.ClearSelection()
@@ -548,7 +550,7 @@ Function Update-TabControl {
                         @{ Name = "Algorithms"; Expression = { $_.Algorithm } }, 
                         @{ Name = "Pool name"; Expression = { $_.PoolName } }, 
                         @{ Name = "Region"; Expression = { $_.PoolRegion } }, 
-                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ', '} }, 
+                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ', ' } }, 
                         @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
                     ) | Out-DataTable
                     If ($WatchdogTimersDGV.Columns) { 
@@ -752,8 +754,8 @@ $ButtonPause.Width = 100
 $ButtonPause.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Paused") { 
-            $Variables.Summary = "'Pause mining' button pressed.<br>Pausing $($Variables.Branding.ProductLabel)..."
-            Write-Message -Level Info "'Pause mining' button pressed. Pausing $($Variables.Branding.ProductLabel)..."
+            # $Variables.Summary = "'Pause mining' button pressed.<br>Pausing $($Variables.Branding.ProductLabel)..."
+            # Write-Message -Level Info "'Pause mining' button pressed. Pausing $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Paused"
             $Variables.RestartCycle = $true
         }
@@ -772,8 +774,8 @@ $ButtonStart.Width = 100
 $ButtonStart.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace -eq "Idle") { 
-            $Variables.Summary = "Start mining' button clicked.<br>Starting $($Variables.Branding.ProductLabel)..."
-            Write-Message -Level Info "'Start mining' button clicked. Starting $($Variables.Branding.ProductLabel)..."
+            # $Variables.Summary = "Start mining' button clicked.<br>Starting $($Variables.Branding.ProductLabel)..."
+            # Write-Message -Level Info "'Start mining' button clicked. Starting $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Running"
             $Variables.RestartCycle = $true
         }
@@ -792,8 +794,8 @@ $ButtonStop.Width = 100
 $ButtonStop.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Idle") { 
-            $Variables.Summary = "'Stop mining' button clicked.<br>Stopping $($Variables.Branding.ProductLabel)..."
-            Write-Message -Level Info "'Stop mining' button clicked. Stopping $($Variables.Branding.ProductLabel)..."
+            # $Variables.Summary = "'Stop mining' button clicked.<br>Stopping $($Variables.Branding.ProductLabel)..."
+            # Write-Message -Level Info "'Stop mining' button clicked. Stopping $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"
             $Variables.RestartCycle = $true
         }
@@ -1457,7 +1459,7 @@ $CheckShowSwitchingCPU.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }
 
 $CheckShowSwitchingAMD = New-Object System.Windows.Forms.CheckBox
 $CheckShowSwitchingAMD.AutoSize = $false
-$CheckShowSwitchingAMD.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName.Where({ $_.Name -like "GPU#*" -and $_.Vendor -EQ "AMD" }) }))
+$CheckShowSwitchingAMD.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName.Where({ $_.Name -like "GPU#*" -and $_.Vendor -eq "AMD" }) }))
 $CheckShowSwitchingAMD.Height = 20
 $CheckShowSwitchingAMD.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CheckShowSwitchingAMD.Location = [System.Drawing.Point]::new(($SwitchingLogClearButton.Width + 40 + $CheckShowSwitchingCPU.Width), ($SwitchingLogLabel.Height + 10))
@@ -1469,7 +1471,7 @@ $CheckShowSwitchingAMD.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }
 
 $CheckShowSwitchingINTEL = New-Object System.Windows.Forms.CheckBox
 $CheckShowSwitchingINTEL.AutoSize = $false
-$CheckShowSwitchingINTEL.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName  -and $_.Name -Like "GPU#*" -and $_.Vendor -EQ "INTEL" }))
+$CheckShowSwitchingINTEL.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName  -and $_.Name -Like "GPU#*" -and $_.Vendor -eq "INTEL" }))
 $CheckShowSwitchingINTEL.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CheckShowSwitchingINTEL.Height = 20
 $CheckShowSwitchingINTEL.Location = [System.Drawing.Point]::new(($SwitchingLogClearButton.Width + 40 + $CheckShowSwitchingCPU.Width + $CheckShowSwitchingAMD.Width), ($SwitchingLogLabel.Height + 10))
@@ -1481,7 +1483,7 @@ $CheckShowSwitchingINTEL.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this)
 
 $CheckShowSwitchingNVIDIA = New-Object System.Windows.Forms.CheckBox
 $CheckShowSwitchingNVIDIA.AutoSize = $false
-$CheckShowSwitchingNVIDIA.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Name -Like "GPU#*" -and $_.Vendor -EQ "NVIDIA" }))
+$CheckShowSwitchingNVIDIA.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Name -Like "GPU#*" -and $_.Vendor -eq "NVIDIA" }))
 $CheckShowSwitchingNVIDIA.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CheckShowSwitchingNVIDIA.Height = 20
 $CheckShowSwitchingNVIDIA.Location = [System.Drawing.Point]::new(($SwitchingLogClearButton.Width + 40 + $CheckShowSwitchingCPU.Width + $CheckShowSwitchingAMD.Width + $CheckShowSwitchingINTEL.Width), ($SwitchingLogLabel.Height + 10))
@@ -1669,8 +1671,8 @@ $LegacyGUIForm.Add_FormClosing(
             Write-Message -Level Info "Shutting down $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"
 
-            Stop-Core
             Stop-IdleDetection
+            Stop-Core
             Stop-Brain
             Stop-BalancesTracker
 

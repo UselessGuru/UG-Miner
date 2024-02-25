@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 # Return 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
 $URI = "https://github.com/rigelminer/rigel/releases/download/1.14.2/rigel-1.14.2-win.zip"
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
  
@@ -77,7 +77,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }) | ForEach-Object { $_.Algorithms += "" }
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and ($_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]]) })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] }).Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
 $Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 
@@ -85,68 +85,69 @@ If ($Algorithms) {
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            $Miner_Devices = $Devices | Where-Object Model -EQ $_.Model
-            $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
+            If ($Miner_Devices = $Devices | Where-Object Model -EQ $_.Model) { 
+                $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
 
-            $Algorithms.ForEach(
-                { 
-                    $ExcludePools = $_.ExcludePools
-                    ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
-                        ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
-                            $Pools = @(($Pool0, $Pool1).Where({ $_ }))
+                $Algorithms.ForEach(
+                    { 
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
+                            ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
+                                $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
-                            $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                            $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB
-                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                                $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB
+                                If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
-                                $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })"
+                                    $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })"
 
-                                $Arguments = $_.Arguments
-                                If ($Pool0.Currency -in @("AIPG", "CLORE", "ETHW", "NEOX", "OCTA", "RVN", "XNA", "XPB")) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
+                                    $Arguments = $_.Arguments
+                                    If ($Pool0.Currency -in @("AIPG", "CLORE", "ETHW", "NEOX", "OCTA", "RVN", "XNA", "XPB")) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
 
-                                $Index = 1
-                                ForEach ($Pool in $Pools) { 
-                                    Switch ($Pool.Protocol) { 
-                                        "ethproxy"     { $Arguments += " --url [$Index]ethproxy"; Break }
-                                        "ethstratum1"  { $Arguments += " --url [$Index]ethstratum"; Break }
-                                        "ethstratum2"  { $Arguments += " --url [$Index]ethstratum"; Break }
-                                        "ethstratumnh" { $Arguments += " --url [$Index]ethstratum"; Break }
-                                        Default        { $Arguments += " --url [$Index]stratum" }
+                                    $Index = 1
+                                    ForEach ($Pool in $Pools) { 
+                                        Switch ($Pool.Protocol) { 
+                                            "ethproxy"     { $Arguments += " --url [$Index]ethproxy"; Break }
+                                            "ethstratum1"  { $Arguments += " --url [$Index]ethstratum"; Break }
+                                            "ethstratum2"  { $Arguments += " --url [$Index]ethstratum"; Break }
+                                            "ethstratumnh" { $Arguments += " --url [$Index]ethstratum"; Break }
+                                            Default        { $Arguments += " --url [$Index]stratum" }
+                                        }
+                                        $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
+                                        $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
+                                        $Arguments += " --username [$Index]$($Pool.User -replace "\.$($Config.Workername)$")"
+                                        $Arguments += " --password [$Index]$($Pool.Pass)"
+                                        $Arguments += " --worker [$Index]$($Config.WorkerName)"
+                                        $Index ++
                                     }
-                                    $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
-                                    $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " --username [$Index]$($Pool.User -replace "\.$($Config.Workername)$")"
-                                    $Arguments += " --password [$Index]$($Pool.Pass)"
-                                    $Arguments += " --worker [$Index]$($Config.WorkerName)"
-                                    $Index ++
-                                }
-                                Remove-Variable Pool
+                                    Remove-Variable Pool
 
-                                $Arguments += If ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { " --no-strict-ssl" } # Parameter cannot be used multiple times
+                                    $Arguments += If ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { " --no-strict-ssl" } # Parameter cannot be used multiple times
 
-                                # Apply tuning parameters
-                                If ($Variables.UseMinerTweaks -and ($AvailableMiner_Devices.Architecture | Sort-Object -Unique) -eq "Pascal" -and ($AvailableMiner_Devices.Model | Sort-Object -Unique) -notmatch "^MX\d+") { $Arguments += $_.Tuning }
+                                    # Apply tuning parameters
+                                    If ($Variables.UseMinerTweaks -and ($AvailableMiner_Devices.Architecture | Sort-Object -Unique) -eq "Pascal" -and ($AvailableMiner_Devices.Model | Sort-Object -Unique) -notmatch "^MX\d+") { $Arguments += $_.Tuning }
 
-                                [PSCustomObject]@{ 
-                                    API         = "Rigel"
-                                    Arguments   = "$Arguments --api-bind 127.0.0.1:$($MinerAPIPort) --no-watchdog --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                    DeviceNames = $AvailableMiner_Devices.Name
-                                    Fee         = $_.Fee # Dev fee
-                                    MinerSet    = $_.MinerSet
-                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                    Name        = $Miner_Name
-                                    Path        = $Path
-                                    Port        = $MinerAPIPort
-                                    Type        = "NVIDIA"
-                                    URI         = $Uri
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @($Pools | ForEach-Object { @{ Pool = $_ } })
+                                    [PSCustomObject]@{ 
+                                        API         = "Rigel"
+                                        Arguments   = "$Arguments --api-bind 127.0.0.1:$($MinerAPIPort) --no-watchdog --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                        DeviceNames = $AvailableMiner_Devices.Name
+                                        Fee         = $_.Fee # Dev fee
+                                        MinerSet    = $_.MinerSet
+                                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                                        Name        = $Miner_Name
+                                        Path        = $Path
+                                        Port        = $MinerAPIPort
+                                        Type        = "NVIDIA"
+                                        URI         = $Uri
+                                        WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        Workers     = @($Pools | ForEach-Object { @{ Pool = $_ } })
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     )
 }

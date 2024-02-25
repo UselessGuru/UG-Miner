@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 param(
@@ -31,13 +31,15 @@ param(
 
 $ProgressPreference = "SilentlyContinue"
 
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $HostSuffix = "mining.prohashing.com"
 
 $PoolConfig = $Variables.PoolsConfig.$Name
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
+
+Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) { 
 
@@ -57,7 +59,7 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
         { 
             $Algorithm = $Request.$_.name
             $Algorithm_Norm = Get-Algorithm $Algorithm
-            $Currency = $Request.$_.currency
+            $Currency = [String]$Request.$_.currency
             $Divisor = $DivisorMultiplier * [Double]$Request.$_.mbtc_mh_factor
             $Fee = If ($Currency) { $Request.$_."$($PoolConfig.MiningMode)_fee" } Else { $Request.$_."pps_fee" }
             $Pass = "a=$($Algorithm.ToLower()),n=$($PoolConfig.WorkerName)$(If ($Config.ProHashingMiningMode -eq "PPLNS" -and $Request.$_.CoinName) { ",c=$($Request.$_.CoinName.ToLower()),m=pplns" })"
@@ -78,29 +80,29 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
 
                     [PSCustomObject]@{ 
                         Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                        Algorithm                = [String]$Algorithm_Norm
-                        Currency                 = [String]$Currency
+                        Algorithm                = $Algorithm_Norm
+                        Currency                 = $Currency
                         Disabled                 = $Stat.Disabled
                         EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                         Fee                      = $Fee
                         Host                     = "$($Region.ToLower()).$HostSuffix"
-                        Key                      = [String]$Key
+                        Key                      = $Key
                         MiningCurrency           = ""
-                        Name                     = [String]$Name
-                        Pass                     = [String]$Pass
+                        Name                     = $Name
+                        Pass                     = $Pass
                         Port                     = [UInt16]$Request.$_.port
                         PortSSL                  = 0
                         Price                    = $Stat.Live
                         Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                         Reasons                  = $Reasons
-                        Region                   = [String]$Region_Norm
+                        Region                   = $Region_Norm
                         SendHashrate             = $false
                         SSLSelfSignedCertificate = $true
                         StablePrice              = $Stat.Week
                         Updated                  = [DateTime]$Stat.Updated
-                        User                     = [String]$PoolConfig.UserName
-                        Variant                  = [String]$PoolVariant
-                        WorkerName               = [String]$PoolConfig.WorkerName
+                        User                     = $PoolConfig.UserName
+                        Variant                  = $PoolVariant
+                        WorkerName               = $PoolConfig.WorkerName
                     }
                     Break
                 }
@@ -108,6 +110,8 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
         }
     )
 }
+
+Write-Message -Level Debug "Pool '$PoolVariant': End"
 
 $Error.Clear()
 [System.GC]::Collect()

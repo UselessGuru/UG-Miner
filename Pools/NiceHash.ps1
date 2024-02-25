@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 param(
@@ -29,7 +29,7 @@ param(
     [Hashtable]$Variables
 )
 
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PoolHost = "auto.nicehash.com"
 
 $PoolConfig = $Variables.PoolsConfig.$Name
@@ -38,6 +38,8 @@ $PoolVariant = If ($Variables.NiceHashWalletIsInternal) { "NiceHash Internal" } 
 $Fee = $PoolConfig.Variant.$PoolVariant.Fee
 $PayoutCurrency = $PoolConfig.Variant.$PoolVariant.PayoutCurrency
 $Wallet = $PoolConfig.Variant.$PoolVariant.Wallets.$PayoutCurrency
+
+Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 If ($Wallet) { 
 
@@ -51,7 +53,12 @@ If ($Wallet) {
             If (-not $RequestAlgodetails) { 
                 $RequestAlgodetails = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/mining/algorithms/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
             }
-            $Request.miningAlgorithms.ForEach({ $Algorithm = $_.Algorithm; $_ | Add-Member -Force @{ algodetails = $RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }) } })
+            $Request.miningAlgorithms.ForEach(
+                { 
+                    $Algorithm = $_.Algorithm
+                    $_ | Add-Member -Force @{ algodetails = $RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }) }
+                }
+            )
         }
         Catch { 
             $APICallFails ++
@@ -66,7 +73,7 @@ If ($Wallet) {
                 $Algorithm = $_.Algorithm
                 $Algorithm_Norm = Get-Algorithm $Algorithm
                 $Currencies = Get-CurrencyFromAlgorithm $Algorithm_Norm
-                $Currency = If ($Currencies.Count -eq 1) { $Currencies } Else { "" }
+                $Currency = If ($Currencies.Count -eq 1) { [String]$Currencies } Else { "" }
 
                 $Divisor = 100000000
 
@@ -79,15 +86,15 @@ If ($Wallet) {
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Minute_5_Fluctuation), 1) # Use short timespan to counter price spikes
-                    Algorithm                = [String]$Algorithm_Norm
-                    Currency                 = [String]$Currency
+                    Algorithm                = $Algorithm_Norm
+                    Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Fee
                     Host                     = "$Algorithm.$PoolHost".ToLower()
-                    Key                      = [String]$Key
+                    Key                      = $Key
                     MiningCurrency           = ""
-                    Name                     = [String]$Name
+                    Name                     = $Name
                     Pass                     = "x"
                     Port                     = 9200
                     PortSSL                  = 443
@@ -102,12 +109,14 @@ If ($Wallet) {
                     Updated                  = [DateTime]$Stat.Updated
                     User                     = "$Wallet.$($PoolConfig.WorkerName)"
                     WorkerName               = ""
-                    Variant                  = [String]$Name
+                    Variant                  = $Name
                 }
             }
         )
     }
 }
+
+Write-Message -Level Debug "Pool '$PoolVariant': End"
 
 $Error.Clear()
 [System.GC]::Collect()

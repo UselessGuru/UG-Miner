@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 param(
@@ -31,7 +31,7 @@ param(
 
 $ProgressPreference = "SilentlyContinue"
 
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Hostsuffix = "mining-dutch.nl"
 
 $PoolConfig = $Variables.PoolsConfig.$Name
@@ -40,6 +40,8 @@ $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PayoutCurrency = $PoolConfig.Wallets.psBase.Keys | Select-Object -First 1
 $Wallet = $PoolConfig.Wallets.$PayoutCurrency
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
+
+Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 If ($DivisorMultiplier -and $PriceField -and $Wallet) { 
 
@@ -69,26 +71,25 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
 
         $Reasons = [System.Collections.Generic.List[String]]@()
-        # Temp Fix: Sometimes pool returns $null hashrate for all algorithms
+        # Sometimes pool returns $null hashrate for all algorithms
         If ($Request.$Algorithm.hashrate -eq 0 -and $Algorithm.hashrate_last24h -ne $null) { 
             $Reasons.Add("No hashrate at pool") 
         }
-        # If ($Algorithm.hashrate -eq 0 ) { $Reasons.Add("No hashrate at pool") }
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                    Algorithm                = [String]$Algorithm_Norm
-                    Currency                 = [String]$Currency
+                    Algorithm                = $Algorithm_Norm
+                    Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Request.$Algorithm.Fees / 100
                     Host                     = "$($Region).$($HostSuffix)"
-                    Key                      = [String]$Key
+                    Key                      = $Key
                     MiningCurrency           = ""
-                    Name                     = [String]$Name
+                    Name                     = $Name
                     Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency"
                     Port                     = [UInt16]$Request.$Algorithm.port
                     PortSSL                  = 0
@@ -96,21 +97,23 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
                     Price                    = $Stat.Live
                     Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
-                    Region                   = [String]$Region_Norm
+                    Region                   = $Region_Norm
                     SendHashrate             = $false
                     SSLSelfSignedCertificate = $true
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Request.$Algorithm.Updated
                     User                     = "$($PoolConfig.UserName).$($PoolConfig.WorkerName)"
-                    Workers                  = [Int]$Algorithm.workers
+                    Workers                  = [UInt]$Algorithm.workers
                     WorkerName               = ""
-                    Variant                  = [String]$PoolVariant
+                    Variant                  = $PoolVariant
                 }
                 Break
             }
         }
     }
 }
+
+Write-Message -Level Debug "Pool '$PoolVariant': End"
 
 $Error.Clear()
 [System.GC]::Collect()

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 param(
@@ -31,7 +31,7 @@ param(
 
 $ProgressPreference = "SilentlyContinue"
 
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $HostSuffix = "mine.zergpool.com"
 
 $PoolConfig = $Variables.PoolsConfig.$Name
@@ -39,6 +39,10 @@ $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $Regions = If ($Config.UseAnycast -and $PoolConfig.Region -contains "n/a (Anycast)") { "n/a (Anycast)" } Else { $PoolConfig.Region | Where-Object { $_ -ne "n/a (Anycast)" } }
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
+
+$WorkerName = $PoolConfig.WorkerName -replace '^ID='
+
+Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 If ($DivisorMultiplier -and $Regions) {
 
@@ -57,14 +61,13 @@ If ($DivisorMultiplier -and $Regions) {
     ForEach ($Pool in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.Brains.$Name."Updated" })) { 
         $Algorithm = $Request.$Pool.algo
         $Algorithm_Norm = Get-Algorithm $Algorithm
-        $Currency = $Request.$Pool.Currency
+        $Currency = [String]$Request.$Pool.Currency
         $Divisor = $DivisorMultiplier * [Double]$Request.$Pool.mbtc_mh_factor
-
-        $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Pool -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
 
         $Key = "$($PoolVariant)_$($Algorithm_Norm)$(If ($Currency) { "-$($Currency)" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Pool.$PriceField / $Divisor) -FaultDetection $false
 
+        $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Pool -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
         $PayoutThreshold = $PoolConfig.PayoutThreshold.$PayoutCurrency
         If ($PayoutThreshold -gt $Request.$Pool.minpay) { $PayoutThreshold = $Request.$Pool.minpay }
         If (-not $PayoutThreshold -and $PayoutCurrency -eq "BTC" -and $PoolConfig.PayoutThreshold.mBTC) { $PayoutThreshold = $PoolConfig.PayoutThreshold.mBTC / 1000 }
@@ -87,37 +90,39 @@ If ($DivisorMultiplier -and $Regions) {
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                    Algorithm                = [String]$Algorithm_Norm
-                    Currency                 = [String]$Currency
+                    Algorithm                = $Algorithm_Norm
+                    Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Request.$Pool.Fees / 100
-                    Host                     = [String]$PoolHost
-                    Key                      = [String]$Key
+                    Host                     = $PoolHost
+                    Key                      = $Key
                     MiningCurrency           = If ($Currency) { $Currency } Else { "" }
-                    Name                     = [String]$Name
-                    Pass                     = "c=$PayoutCurrency$(If ($Currency) { ",mc=$Currency" }),ID=$($PoolConfig.WorkerName -replace '^ID=')$PayoutThresholdParameter" # Pool profit switching breaks Option 2 (static coin), instead it will still send DAG data for any coin
+                    Name                     = $Name
+                    Pass                     = "c=$PayoutCurrency$(If ($Currency) { ",mc=$Currency" }),ID=$WorkerName$PayoutThresholdParameter" # Pool profit switching breaks Option 2 (static coin), instead it will still send DAG data for any coin
                     Port                     = [UInt16]$Request.$Pool.port
                     PortSSL                  = [UInt16]$Request.$Pool.tls_port
                     PoolUri                  = "https://zergpool.com/site/mining?algo=$($Algorithm)"
                     Price                    = $Stat.Live
                     Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
-                    Region                   = [String]$Region_Norm
+                    Region                   = $Region_Norm
                     SendHashrate             = $false
                     SSLSelfSignedCertificate = $false
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Request.$Pool.Updated
-                    User                     = [String]$PoolConfig.Wallets.$PayoutCurrency
-                    Workers                  = [Int]$Request.$Pool.workers_shared
+                    User                     = $PoolConfig.Wallets.$PayoutCurrency
+                    Workers                  = [UInt]$Request.$Pool.workers_shared
                     WorkerName               = ""
-                    Variant                  = [String]$PoolVariant
+                    Variant                  = $PoolVariant
                 }
                 Break
             }
         }
     }
 }
+
+Write-Message -Level Debug "Pool '$PoolVariant': End"
 
 $Error.Clear()
 [System.GC]::Collect()

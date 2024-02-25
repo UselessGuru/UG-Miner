@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.1.11
-Version date:   2024/02/20
+Version:        6.1.12
+Version date:   2024/02/25
 #>
 
 param(
@@ -31,9 +31,11 @@ param(
 
 $ProgressPreference = "SilentlyContinue"
 
-$Name = (Get-Item $MyInvocation.MyCommand.Path).BaseName
+$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolConfig = $Variables.PoolsConfig.$Name
+
+Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 If ($PoolConfig.Wallets) { 
 
@@ -58,11 +60,11 @@ If ($PoolConfig.Wallets) {
 
             # Add coin name
             If ($Pool.title -and $Currency) { 
-                [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $Pool.title.Trim().ToLower())
+                [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $Pool.title)
             }
 
             $Key = "$($PoolVariant)_$($Algorithm_Norm)$(If ($Currency) { "-$Currency" })"
-            $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.($Pool.name).BTC / $Divisor) -FaultDetection $false
+            $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
 
             $Reasons = [System.Collections.Generic.List[String]]@()
             If ($Request.stats.($_.name).hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
@@ -70,15 +72,15 @@ If ($PoolConfig.Wallets) {
 
             [PSCustomObject]@{ 
                 Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                Algorithm                = [String]$Algorithm_Norm
-                Currency                 = [String]$Currency
+                Algorithm                = $Algorithm_Norm
+                Currency                 = $Currency
                 Disabled                 = $Stat.Disabled
                 EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                 Fee                      = 0.03
                 Host                     = [String]$Pool.servers[0].host
-                Key                      = [String]$Key
+                Key                      = $Key
                 MiningCurrency           = ""
-                Name                     = [String]$Name
+                Name                     = $Name
                 Pass                     = "x"
                 Port                     = [UInt16]$Pool.servers[0].ports[0]
                 PortSSL                  = [UInt16]$Pool.servers[0].ssl_ports[0]
@@ -92,13 +94,15 @@ If ($PoolConfig.Wallets) {
                 StablePrice              = $Stat.Week
                 Updated                  = [DateTime]$Stat.Updated
                 User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }
-                Workers                  = [Int]$Request.stats.($Pool.name).workers
-                WorkerName               = [String]$PoolConfig.WorkerName
-                Variant                  = [String]$PoolVariant
+                Workers                  = [UInt]$Request.stats."$($Pool.name)".workers
+                WorkerName               = $PoolConfig.WorkerName
+                Variant                  = $PoolVariant
             }
         }
     }
 }
+
+Write-Message -Level Debug "Pool '$PoolVariant': End"
 
 $Error.Clear()
 [System.GC]::Collect()
