@@ -1,6 +1,17 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+
+ChangeLog UG-Miner 6.1.13 2024/02/28
+====================================
+
+Changes:
+- Rework idle detection & start / pause / stop mechanism for faster response
+
+Miner changes:
+- TeamBlackMiner-v2.20
+
+
 ChangeLog UG-Miner 6.1.12 2024/02/25
 ====================================
 

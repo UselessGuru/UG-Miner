@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.12
-Version date:   2024/02/25
+Version:        6.1.13
+Version date:   2024/02/28
 #>
 
 using module .\Include.psm1
@@ -66,39 +66,20 @@ Do {
             }
         }
 
+        If ($Variables.NewMiningStatus -eq "Running") { 
+            # Read config only if config files have changed
+            If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
+                [Void](Read-Config -ConfigFile $Variables.ConfigFile)
+                Write-Message -Level Verbose "Activated changed configuration."
+            }
+        }
+    
         $Variables.PoolsConfig = $Config.PoolsConfig.Clone()
 
         # Tuning parameters require local admin rights
         $Variables.UseMinerTweaks = $Variables.IsLocalAdmin -and $Config.UseMinerTweaks
 
-        If ($Config.IdleDetection) { 
-            If (-not $Variables.IdleRunspace) { 
-                Start-IdleDetection
-            }
-            If ($Variables.IdleRunspace.MiningStatus -eq "Idle") { 
-                # Stop all miners
-                ForEach ($Miner in $Variables.Miners.Where({ $_.Status -ne [MinerStatus]::Idle })) { 
-                    $Miner.SetStatus([MinerStatus]::Idle)
-                    $Miner.StatusInfo = "Waiting for system to become idle '$($Miner.Info)'"
-                    $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-                }
-                Remove-Variable Miner -ErrorAction Ignore
-                $Variables.RunningMiners = [Miner[]]@()
-                $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
-                $Variables.FailedMiners = [Miner[]]@()
-                $Variables.Summary = "Mining is suspended until system is idle<br>again for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })..."
-                Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
-                $Variables.IdleRunspace | Add-Member MiningStatus "Idle" -Force
-
-                While ($Variables.NewMiningStatus -eq "Running" -and $Config.IdleDetection -and $Variables.IdleRunspace.MiningStatus -eq "Idle") { Start-Sleep -Seconds 1 }
-
-                If ($Config.IdleDetection) { Write-Message -Level Info "Started new cycle (System was idle for $($Config.IdleSec) seconds)." }
-            }
-        }
-        Else { 
-            If ($Variables.IdleRunspace) { Stop-IdleDetection }
-            Write-Message -Level Info "Started new cycle."
-        }
+        Write-Message -Level Info "Started new cycle."
 
         # Use values from config
         $Variables.PoolName = $Config.PoolName
@@ -183,7 +164,9 @@ Do {
                 }
 
                 # Stop / Start brain background jobs
-                [Void](Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin @(Get-PoolBaseName $Variables.PoolName) })))
+                $Brains = $Variables.Brains.psBase.Keys # Error 'Collection was modified; enumeration operation may not execute'
+                [Void](Stop-Brain @($Brains.Where({ $_ -notin @(Get-PoolBaseName $Variables.PoolName) })))
+                Remove-Variable Brains
                 [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
@@ -209,9 +192,6 @@ Do {
 
                 # Get DAG data
                 [Void](Update-DAGdata)
-
-                # Faster shutdown
-                If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -298,9 +278,6 @@ Do {
                     $Variables.UnprofitableAlgorithms = @{ }
                 }
 
-                # Faster shutdown
-                If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
-
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
@@ -352,8 +329,8 @@ Do {
                         }
                     ).ForEach(
                         { 
-                            $Pool = $_
-                            Try { 
+                            # $Pool = $_
+                            # Try { 
                                 $Pool = [Pool]$_
                                 $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
                                 $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
@@ -362,13 +339,13 @@ Do {
                                 $Pool.StablePrice *= $Factor
                                 $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
                                 $Pool
-                            }
-                            Catch { 
-                                Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
-                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error_Dev.txt"
-                                $_.Exception | Format-List -Force >> "Logs\Error_Dev.txt"
-                                $_.InvocationInfo | Format-List -Force >> "Logs\Error_Dev.txt"
-                            }
+                            # }
+                            # Catch { 
+                                # Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
+                                # "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error_Dev.txt"
+                                # $_.Exception | Format-List -Force >> "Logs\Error_Dev.txt"
+                                # $_.InvocationInfo | Format-List -Force >> "Logs\Error_Dev.txt"
+                            # }
                         }
                     )
 
@@ -379,9 +356,6 @@ Do {
                         Write-Message -Level Warn "No data received from pool$(If ($PoolsWithNoData.Count -gt 1) { "s" }) '$($PoolsWithNoData -join ', ')'."
                     }
                     Remove-Variable PoolsWithNoData
-
-                    # Faster shutdown
-                    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
                     # Expire pools that have not been updated for 1 day
                     $PoolsExpiredCount = @($Variables.Pools.Where({ $_.Updated -lt [DateTime]::Now.ToUniversalTime().AddDays(-1) })).Count
@@ -717,10 +691,7 @@ Do {
             If ($Variables.AlgorithmsLastUsed.Values.Updated -gt $Variables.BeginCycleTime) { $Variables.AlgorithmsLastUsed | Get-SortedObject | ConvertTo-Json | Out-File -LiteralPath ".\Data\AlgorithmsLastUsed.json" -Force }
 
             # Send data to monitoring server
-            If ($Config.ReportToServer) { Write-MonitoringData }
-
-            # Faster shutdown
-            If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
+            # If ($Config.ReportToServer) { Write-MonitoringData }
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -792,9 +763,6 @@ Do {
             Remove-Variable Miner, MinerDevices -ErrorAction Ignore
             $Miners = [Miner[]]@($CompareMiners.Where({ $_.SideIndicator -ne "<=" }))
 
-            # Faster shutdown
-            If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
-
             # Make smaller groups for faster update
             $MinersNewGroups = $MinersNew | Group-Object -Property Name
             ($Miners | Group-Object -Property Name).ForEach(
@@ -836,9 +804,6 @@ Do {
                 }
             )
             Remove-Variable Info, Miner, MinersNewGroup, MinersNewGroups, MinersNew, Name -ErrorAction Ignore
-
-            # Faster shutdown
-            If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -1207,9 +1172,6 @@ Do {
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
-        # Faster shutdown
-        If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
-
         # Optional delay to avoid blue screens
         Start-Sleep -Seconds $Config.Delay
 
@@ -1442,9 +1404,9 @@ Do {
             # - all benchmarking miners have collected enough samples
             # - WarmupTimes[0] is reached and no readout from miner
             # - Interval time is over
-        } While (-not $Variables.EndCycleMessage -and $Variables.IdleRunspace.MiningStatus -ne "Idle" -and (([DateTime]::Now).ToUniversalTime() -le $Variables.EndCycleTime -or $Variables.BenchmarkingOrMeasuringMiners))
+        } While (-not $Variables.EndCycleMessage -and (([DateTime]::Now).ToUniversalTime() -le $Variables.EndCycleTime -or $Variables.BenchmarkingOrMeasuringMiners))
 
-        If ($Variables.IdleRunspace.MiningStatus -eq "Idle") { $Variables.EndCycleMessage = " (System activity detected)" }
+
 
         # Expire brains loop to collect data
         If ($Variables.EndCycleMessage) { 
@@ -1464,18 +1426,8 @@ Do {
     $Error.Clear()
     [System.GC]::Collect()  
 
-    Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)."
-
-    If ($Variables.NewMiningStatus -eq "Running") { 
-        # Read config only if config files have changed
-        If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
-            [Void](Read-Config -ConfigFile $Variables.ConfigFile)
-            Write-Message -Level Verbose "Activated changed configuration."
-        }
-    }
+    If ($Variables.IdleDetectionRunspace.MiningStatus -ne "Suspended") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
 
     $Variables.RestartCycle = $true
 
 } While ($Variables.NewMiningStatus -eq "Running")
-
-$Variables.RestartCycle = $true

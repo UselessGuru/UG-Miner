@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.12
-Version date:   2024/02/25
+Version:        6.1.13
+Version date:   2024/02/28
 #>
 
 using module .\Includes\Include.psm1
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.12"
+    Version      = [System.Version]"6.1.13"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -523,10 +523,44 @@ If ($Variables.FreshConfig) {
 
 Function MainLoop { 
 
+    If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
+
+    If ($Variables.NewMiningStatus -eq "Running") {
+        If ($Config.IdleDetection) {
+            Start-IdleDetection
+            If ($Variables.IdleDetectionRunspace) { 
+                If ($Variables.IdleDetectionRunspace.MiningStatus -eq "Suspended") { 
+                    If ($Global:CoreRunspace) { 
+                        Write-Message -Level Info "Ending cycle (System activity detected)."
+                        Stop-Core
+                        $Variables.Summary = "Mining is suspended until system is idle<br>for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+                        Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
+                        If ($LegacyGUIform) { Update-TabControl }
+                    }
+                }
+                If ($Variables.IdleDetectionRunspace.MiningStatus -eq "Running") {
+                    If (-not $Global:CoreRunspace) { 
+                        If ($Variables.Timer) { 
+                            $Variables.Summary = "Resuming mining.<br>System has been idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+                            Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
+                            $MiningSummaryLabel.Text = ($Variables.Summary -replace '<br>', ' ')
+                            If ($LegacyGUIform) { Update-TabControl }
+                        }
+                        Start-Core
+                    }
+                }
+            }
+        }
+        Else { 
+            Stop-IdleDetection
+            If (-not $Global:CoreRunspace) { Start-Core }
+        }
+    }
+
     # Core watchdog. Sometimes core loop gets stuck
-    If (-not $Variables.SuspendCycle -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
+    If (-not $Variables.SuspendCycle -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
         Write-Message -Level Warn "Core cycle is stuck - restarting..."
-        Stop-Core -Quick
+        Stop-Core
         $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
         $Variables.MiningStatus = $Variables.NewMiningStatus
         Start-Core
@@ -535,8 +569,6 @@ Function MainLoop {
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
     If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $MiningSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
-
-        If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or ($Variables.PoolName -and (Compare-Object $Config.PoolName $Variables.PoolName))) { 
 
@@ -562,8 +594,8 @@ Function MainLoop {
                     Write-Host "`n"
                     Write-Message -Level Info $Variables.Summary
 
-                    Stop-IdleDetection
                     Stop-Core
+                    Stop-IdleDetection
                     Stop-Brain
                     Stop-BalancesTracker
                     # If ($Config.ReportToServer) { Write-MonitoringData }
@@ -578,8 +610,8 @@ Function MainLoop {
                     Write-Host "`n"
                     Write-Message -Level Info $Variables.Summary
 
-                    Stop-IdleDetection
                     Stop-Core
+                    Stop-IdleDetection
                     Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
                     If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
@@ -601,7 +633,7 @@ Function MainLoop {
                     Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
 
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
-                    Start-Core
+                    If (-not $Config.IdleDetection) { Start-Core }
                     If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     Break
                 }

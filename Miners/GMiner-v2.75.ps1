@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.12
-Version date:   2024/02/25
+Version:        6.1.13
+Version date:   2024/02/28
 #>
 
 using module ..\Includes\Include.psm1

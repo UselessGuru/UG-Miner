@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.12
-Version date:   2024/02/25
+Version:        6.1.13
+Version date:   2024/02/28
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -643,31 +643,33 @@ Class Miner {
 
 Function Start-IdleDetection { 
 
-    # Function tracks how long the system has been idle and controls the paused state
-    $Variables.IdleRunspace = [RunspaceFactory]::CreateRunspace()
-    $Variables.IdleRunspace.ApartmentState = "STA"
-    $Variables.IdleRunspace.Name = "IdleRunspace"
-    $Variables.IdleRunspace.ThreadOptions = "ReuseThread"
-    $Variables.IdleRunspace.Open()
-    (Get-Variable -Scope Global).Where({ $_.Name -in @("Config", "Variables") }).ForEach(
-        { 
-            $Variables.IdleRunspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
-        }
-    )
-    [Void]$Variables.IdleRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath) | Out-Null
-    $Variables.IdleRunspace | Add-Member MiningStatus "Running" -Force
+    If (-not $Variables.IdleDetectionRunspace) { 
 
-    $PowerShell = [PowerShell]::Create()
-    $PowerShell.Runspace = $Variables.IdleRunspace
-    [Void]$Powershell.AddScript(
-        { 
-            # Set the starting directory
-            Set-Location (Split-Path $MyInvocation.MyCommand.Path)
+        # Function tracks how long the system has been idle and controls the paused state
+        $Variables.IdleDetectionRunspace = [RunspaceFactory]::CreateRunspace()
+        $Variables.IdleDetectionRunspace.ApartmentState = "STA"
+        $Variables.IdleDetectionRunspace.Name = "IdleDetectionRunspace"
+        $Variables.IdleDetectionRunspace.ThreadOptions = "ReuseThread"
+        $Variables.IdleDetectionRunspace.Open()
+        (Get-Variable -Scope Global).Where({ $_.Name -in @("Config", "Variables") }).ForEach(
+            { 
+                $Variables.IdleDetectionRunspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
+            }
+        )
+        [Void]$Variables.IdleDetectionRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath) | Out-Null
+        $Variables.IdleDetectionRunspace | Add-Member MiningStatus "Running" -Force
 
-            $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
+        $PowerShell = [PowerShell]::Create()
+        $PowerShell.Runspace = $Variables.IdleDetectionRunspace
+        [Void]$Powershell.AddScript(
+            { 
+                # Set the starting directory
+                Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-            # No native way to check how long the system has been idle in PowerShell. Have to use .NET code.
-            Add-Type -TypeDefinition @'
+                $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
+
+                # No native way to check how long the system has been idle in PowerShell. Have to use .NET code.
+                Add-Type -TypeDefinition @'
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -711,68 +713,52 @@ namespace PInvoke.Win32 {
 }
 '@
 
-            $ProgressPreference = "SilentlyContinue"
-            $IdleSeconds = [Math]::Round(([PInvoke.Win32.UserInput]::IdleTime).TotalSeconds)
+                $ProgressPreference = "SilentlyContinue"
 
-            $Variables.IdleRunspace | Add-Member NewMiningStatus "Idle" -Force
+                Write-Message -Level Verbose "Starting idle detection..."
 
-            Write-Message -Level Verbose "Started idle detection."
+                While ($true) { 
+                    $IdleSeconds = [Math]::Round(([PInvoke.Win32.UserInput]::IdleTime).TotalSeconds)
 
-            While ($true) { 
-                $IdleSeconds = [Math]::Round(([PInvoke.Win32.UserInput]::IdleTime).TotalSeconds)
+                    # Activity detected, pause mining
+                    If ($IdleSeconds -lt $Config.IdleSec -and $Variables.IdleDetectionRunspace.MiningStatus -ne "Suspended") { 
+                        $Variables.IdleDetectionRunspace | Add-Member MiningStatus "Suspended" -Force
+                    }
 
-                # Activity detected, pause mining
-                If ($IdleSeconds -lt $Config.IdleSec -and $Variables.IdleRunspace.MiningStatus -ne "Idle") { 
-                    $Variables.IdleRunspace | Add-Member MiningStatus "Idle" -Force
+                    # System has been idle long enough, start mining
+                    If ($IdleSeconds -gt $Config.IdleSec -and $Variables.IdleDetectionRunspace.MiningStatus -ne "Running") { 
+                        $Variables.IdleDetectionRunspace | Add-Member MiningStatus "Running" -Force
+                    }
 
-                    $MiningStatusLabel.Text = "$($Variables.Branding.ProductLabel) is idle"
-                    $MiningStatusLabel.ForeColor = [System.Drawing.Color]::Green
+                    Start-Sleep -Milliseconds 500
                 }
-
-                # System has been idle long enough, start mining
-                If ($IdleSeconds -ge $Config.IdleSec -and $Variables.IdleRunspace.MiningStatus -ne "Running") { 
-                    $Variables.IdleRunspace | Add-Member MiningStatus "Running" -Force
-
-                    $MiningStatusLabel.Text = "$($Variables.Branding.ProductLabel) is running"
-                    $MiningStatusLabel.ForeColor = [System.Drawing.Color]::Green
-                }
-                Start-Sleep -Seconds 1
             }
-        }
-    )
+        )
 
-    $Variables.IdleRunspace | Add-Member @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
-    $Powershell.BeginInvoke() | Out-Null
+        $Variables.IdleDetectionRunspace | Add-Member @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
+        $Powershell.BeginInvoke() | Out-Null
+    }
 }
 
 Function Stop-IdleDetection { 
 
-    If ($Variables.IdleRunspace) { 
-        $Variables.IdleRunspace.Close()
-        If ($Variables.IdleRunspace.PowerShell) { $Variables.IdleRunspace.PowerShell.Dispose() }
-        $Variables.IdleRunspace.Dispose()
-        $Variables.Remove("IdleRunspace")
+    If ($Variables.IdleDetectionRunspace) { 
+        $Variables.IdleDetectionRunspace.Close()
+        If ($Variables.IdleDetectionRunspace.PowerShell) { $Variables.IdleDetectionRunspace.PowerShell.Dispose() }
+        $Variables.IdleDetectionRunspace.Dispose()
+        $Variables.Remove("IdleDetectionRunspace")
         Write-Message -Level Verbose "Stopped idle detection."
-    }
 
-    [System.GC]::Collect()
+        [System.GC]::Collect()
+    }
 }
 
 Function Start-Core { 
 
     If (-not $Global:CoreRunspace) { 
 
-        # Read config only if config files have changed
-        If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
-            [Void](Read-Config -ConfigFile $Variables.ConfigFile)
-            Write-Message -Level Verbose "Activated changed configuration."
-        }
-
-        $Variables.Summary = "Starting mining processes..."
-        Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
-
-        $Variables.Timer = $null
         $Variables.LastDonated = ([DateTime]::Now).AddDays(-1).AddHours(1)
+        $Variables.PoolDataCollectedTimeStamp = $null
         $Variables.Pools = [Pool[]]@()
         $Variables.Miners = [Miner[]]@()
         $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
@@ -798,52 +784,44 @@ Function Start-Core {
         $Global:CoreRunspace = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
 
         $Powershell.BeginInvoke() | Out-Null
-
-        $Variables.Summary = "Mining processes are running."
     }
 }
 
 Function Stop-Core { 
 
-    Param(
-        [Parameter(Mandatory = $false)]
-        [Switch]$Quick = $false
-    )
-
     If ($Global:CoreRunspace) { 
-        $Variables.Summary = "Stopping mining processes..."
-        Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
 
-        # Give core loop time to shut down gracefully
-        $Timestamp = ([DateTime]::Now).AddSeconds(30)
-        While (-not $Quick -and ($Variables.Miners | Where-Object { $_.Status -eq [MinerStatus]::Running }) -and ([DateTime]::Now) -le $Timestamp) { 
-            Start-Sleep -Seconds 1
+        If ($Variables.NewMiningStatus -eq "Idle") { 
+            $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
+            $Variables.PoolsCount = 0
+            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBestPerDevice_Combos = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
+            $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
+            $Variables.EndCycleTime = $null
+            $Variables.CycleStarts = @()
+            $Variables.Timer = $null
         }
 
+        $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
+
+        $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
+        $Variables.FailedMiners = [Miner[]]@()
+        $Variables.RunningMiners = [Miner[]]@()
+
+
         # Stop all running miners
-        ForEach ($Miner in $Variables.Miners.Where({ $_.Status -ne [MinerStatus]::Idle })) { 
+        ForEach ($Miner in $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) { 
             $Miner.SetStatus([MinerStatus]::Idle)
             $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
         }
         Remove-Variable Miner -ErrorAction Ignore
 
-        $Global:CoreRunspace.PowerShell.Runspace.Dispose()
-        Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
     }
 
-    If ($Variables.NewMiningStatus -eq "Idle") { 
-        $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
-        $Variables.PoolsCount = 0
-        $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBestPerDevice_Combos = $Variables.MinersMostProfitable = $Variables.RunningMiners = [Miner[]]@()
-    }
-    $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
-    $Variables.FailedMiners = [Miner[]]@()
-    $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
-    $Variables.RunningMiners = [Miner[]]@()
-    $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
-    $Variables.EndCycleTime = $null
-    $Variables.WatchdogTimers = [PSCustomObject[]]@()
-    $Variables.CycleStarts = @()
+    # Must remove after miners wer stopped, otherwise methods don't work any longer
+    $Global:CoreRunspace.PowerShell.Runspace.Dispose()
+    Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
+
+    Start-Sleep 2
 
     [System.GC]::Collect()
 }
@@ -3056,7 +3034,7 @@ Function Update-DAGdata {
     }
 
     # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
+    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
     $Url = "https://minerstat.com/dag-size-calculator"
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3096,7 +3074,7 @@ Function Update-DAGdata {
     }
 
     # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
+    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
     $Url = "https://prohashing.com/api/v1/currencies"
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3135,7 +3113,7 @@ Function Update-DAGdata {
     }
 
     # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleRunspace.MiningStatus -eq "Idle") { Continue }
+    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
     If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
         # ZergPool also supplies Evr DAG data
