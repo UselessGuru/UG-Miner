@@ -2,11 +2,12 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
-ChangeLog UG-Miner 6.1.13 2024/03/06
+ChangeLog UG-Miner 6.1.14 2024/03/06
 ====================================
 
 Fixes:
 - Includes.psm1: Mitigate memory leak with runspace handling (regression from 6.1.13)
+- Legacy GUI: ToolTips broken on some controls
 
 Improvements:
 - UG-Miner.ps1: Remove obsolete code; improve performance

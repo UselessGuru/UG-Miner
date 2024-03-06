@@ -244,7 +244,7 @@ Function Update-TabControl {
                     $Color = @(255, 255, 255, 255) #"FFFFFF"
 
                     $DaySum = @(0) * $DataSource.Labels.Count
-                    $ToolTip = $DataSource.Labels.Clone()
+                    $ToolTipTest = $DataSource.Labels.Clone()
 
                     ForEach ($Pool in $DataSource.Earnings.PSObject.Properties.Name) { 
 
@@ -262,7 +262,7 @@ Function Update-TabControl {
                                 $EarningsChart.Series[$Pool].Points.addxy(0, $_) | Out-Null
                                 $Daysum[$I] += $_
                                 If ($_) { 
-                                    $ToolTip[$I] = "$($ToolTip[$I])`r$($Pool): {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $_
+                                    $ToolTipText[$I] = "$($ToolTipText[$I])`r$($Pool): {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $_
                                 }
                                 $I ++
                             }
@@ -274,10 +274,10 @@ Function Update-TabControl {
                     $DataSource.Labels.ForEach(
                         { 
                             $ChartArea.AxisX.CustomLabels.Add($I +0.5, $I + 1.5, " $_ ")
-                            $ChartArea.AxisX.CustomLabels[$I].ToolTip = "$($ToolTip[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $Daysum[$I]
+                            $ChartArea.AxisX.CustomLabels[$I].ToolTip = "$($ToolTipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $Daysum[$I]
                             ForEach ($Pool in $DataSource.Earnings.PSObject.Properties.Name) { 
                                 If ($Datasource.Earnings.$Pool[$I]) { 
-                                    $EarningsChart.Series[$Pool].Points[$I].ToolTip = "$($ToolTip[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $Daysum[$I]
+                                    $EarningsChart.Series[$Pool].Points[$I].ToolTip = "$($ToolTipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $Daysum[$I]
                                 }
                             }
                             $I ++
