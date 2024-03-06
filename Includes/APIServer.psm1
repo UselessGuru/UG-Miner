@@ -18,28 +18,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.1.13
-Version date:   2024/02/28
+Version:        6.1.14
+Version date:   2024/03/06
 #>
 
 Function Start-APIServer { 
 
     $APIVersion = "0.5.3.14"
 
-    If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIPort -ne $Variables.APIRunspace.APIPort) { 
+    If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
-        $Variables.Remove("APIVersion")
     }
 
     # Initialize API & Web GUI
-    If ($Config.APIPort -and -not $Variables.APIRunspace.APIPort) { 
+    If ($Config.APIport -and -not $Variables.APIRunspace.APIport) { 
 
-        Write-Message -Level Verbose "Initializing API & Web GUI on 'http://localhost:$($Config.APIPort)'..."
+        Write-Message -Level Verbose "Initializing API & Web GUI on 'http://localhost:$($Config.APIport)'..."
 
         $TCPclient = New-Object -TypeName System.Net.Sockets.TCPClient
-        $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Config.APIPort, $null, $null)
+        $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Config.APIport, $null, $null)
         If ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
-            Write-Message -Level Error "Error initializing API & Web GUI on port $($Config.APIPort). Port is in use."
+            Write-Message -Level Error "Error initializing API & Web GUI on port $($Config.APIport). Port is in use."
             [Void]$TCPclient.EndConnect($AsyncResult)
             [Void]$TCPclient.Dispose()
         }
@@ -50,22 +49,21 @@ Function Start-APIServer {
             If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API ($APIVersion) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore}
 
             # Setup runspace to launch the API server in a separate thread
-            $Variables.APIRunspace = [RunspaceFactory]::CreateRunspace()
-            $Variables.APIRunspace.ApartmentState = "STA"
-            $Variables.APIRunspace.Name = "APIServer"
-            $Variables.APIRunspace.ThreadOptions = "ReuseThread"
-            $Variables.APIRunspace.Open()
+            $Runspace = [RunspaceFactory]::CreateRunspace()
+            $Runspace.ApartmentState = "STA"
+            $Runspace.Name = "APIServer"
+            $Runspace.ThreadOptions = "ReuseThread"
+            $Runspace.Open()
             (Get-Variable -Scope Global).Where({ $_.Name -in @("Config", "Stats", "Variables") }).ForEach(
                 { 
-                    $Variables.APIRunspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
+                    $Runspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
                 }
             )
-            $Variables.APIRunspace.SessionStateProxy.SetVariable("APIVersion", $APIVersion)
-            $Variables.APIRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
-            $Variables.APIRunspace | Add-Member -Force @{ APIPort = $Config.APIPort }
+            $Runspace.SessionStateProxy.SetVariable("APIVersion", $APIVersion)
+            $Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
             $PowerShell = [PowerShell]::Create()
-            $PowerShell.Runspace = $Variables.APIRunspace
+            $PowerShell.Runspace = $Runspace
             $Powershell.AddScript(
                 { 
                     $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
@@ -91,10 +89,11 @@ Function Start-APIServer {
 
                     # Setup the listener
                     $Server = New-Object System.Net.HttpListener
-                    $Variables.APIRunspace | Add-Member -Force @{ APIServer = $Server }
+                    $Variables.APIRunspace.APIServer = $Server
+                    $Variables.APIRunspace.APIport = $Config.APIport 
 
                     # Listening on anything other than localhost requires admin privileges
-                    $Server.Prefixes.Add("http://localhost:$($Config.APIPort)/")
+                    $Server.Prefixes.Add("http://localhost:$($Config.APIport)/")
                     $Server.Start()
 
                     While ($Server.IsListening) { 
@@ -1072,18 +1071,19 @@ Function Start-APIServer {
                 }
             ) # End of $APIServer
 
-            $Variables.APIRunspace | Add-Member -Force @{ PowerShell = $PowerShell; StartTime = $(([DateTime]::Now).ToUniversalTime()) }
-
-            $Powershell.BeginInvoke() | Out-Null
+            $Variables.APIRunspace = @{}
+            $Variables.APIRunspace.AsyncObject = $Powershell.BeginInvoke()
+            $Variables.APIRunspace.PowerShell  = $PowerShell
+            $Variables.APIRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
 
             # Wait for API to get ready
             $RetryCount = 3
             While (-not ($Variables.APIVersion) -and $RetryCount -gt 0) { 
                 Try {
-                    If ($Variables.APIVersion = (Invoke-RestMethod "http://localhost:$($Variables.APIRunspace.APIPort)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
-                        Write-Message -Level Info "Web GUI and API (version $($Variables.APIVersion)) running on http://localhost:$($Variables.APIRunspace.APIPort)."
+                    If ($Variables.APIVersion = (Invoke-RestMethod "http://localhost:$($Variables.APIRunspace.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
+                        Write-Message -Level Info "Web GUI and API (version $($Variables.APIVersion)) running on http://localhost:$($Variables.APIRunspace.APIport)."
                         # Start Web GUI (show configuration edit if no existing config)
-                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIRunspace.APIPort)/$(If ($Variables.FreshConfig) { "configedit.html" })" }
+                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/$(If ($Variables.FreshConfig) { "configedit.html" })" }
                         Break
                     }
                 }
@@ -1091,7 +1091,7 @@ Function Start-APIServer {
                 $RetryCount--
                 Start-Sleep -Seconds 1
             }
-            If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API & Web GUI on port $($Config.APIPort)." }
+            If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API & Web GUI on port $($Config.APIport)." }
         }
     }
 }
@@ -1102,13 +1102,15 @@ Function Stop-APIServer {
             If ($Variables.APIRunspace.APIServer.IsListening) { $Variables.APIRunspace.APIServer.Stop() }
             $Variables.APIRunspace.APIServer.Close()
         }
-        If ($Variables.APIRunspace.APIPort) { $Variables.APIRunspace.APIPort = $null }
-        If ($Variables.APIRunspace.PowerShell) { $Variables.APIRunspace.PowerShell.Dispose() }
-        $Variables.APIRunspace.Close()
+        If ($Variables.APIRunspace.APIport) { $Variables.APIRunspace.Remove("APIport") }
+        $Variables.APIRunspace.PowerShell.Stop() | Out-Null
+        $Variables.APIRunspace.PowerShell.EndInvoke() | Out-Null
+        $Variables.APIRunspace.PowerShell.Runspace.Close() | Out-Null
+        $Variables.APIRunspace.PowerShell.Dispose() | Out-Null
         $Variables.Remove("APIRunspace")
+        $Variables.Remove("APIVersion")
 
         $Error.Clear()
-
         [System.GC]::Collect()
     }
 }

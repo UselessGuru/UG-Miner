@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.13
-Version date:   2024/02/28
+Version:        6.1.14
+Version date:   2024/03/06
 #>
 
 using module .\Includes\Include.psm1
@@ -294,18 +294,21 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.13"
+    Version      = [System.Version]"6.1.14"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "`nUnsupported PowerShell version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PowerShell version 7.0.0 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
-    $WscriptShell.Popup("Unsupported PowerShell version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PowerShell version 7.0.0 which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Host "`nUnsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
+    $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
-If ($PSVersiontable.PSVersion -lt [System.Version]"7.4.1") { 
-    Write-Host "`nPowerShell version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with the latest PowerShell version 7.4.1 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
+If ($PSVersiontable.PSVersion -lt [System.Version]"7.2.18") { 
+    Write-Host "`Outdated PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
+}
+If ($PSVersiontable.PSVersion -gt [System.Version]"7.3.0") { 
+    Write-Host "`Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended`n`n" -ForegroundColor Magenta
 }
 
 # Internet connection must be available
@@ -456,7 +459,7 @@ $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^ProgPow"
 $Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^Octopus$|^ProgPow|^UbqHash"
 
 $Variables.Summary = "Loading miner device information...<br>This may take a while."
-Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
+Write-Message -Level Verbose $Variables.Summary
 
 $Variables.SupportedCPUDeviceVendors = @("AMD", "INTEL")
 $Variables.SupportedGPUDeviceVendors = @("AMD", "INTEL", "NVIDIA")
@@ -533,9 +536,10 @@ Function MainLoop {
                     If ($Global:CoreRunspace) { 
                         Write-Message -Level Info "Ending cycle (System activity detected)."
                         Stop-Core
-                        $Variables.Summary = "Mining is suspended until system is idle<br>for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
-                        Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
-                        If ($LegacyGUIform) { Update-TabControl }
+                        Write-Host "System activity detected. Mining is suspended."
+                        $Variables.Summary = "Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+                        Write-Message -Level Verbose $Variables.Summary
+                        If ($LegacyGUIform) { Update-GUIstatus }
                     }
                 }
                 If ($Variables.IdleDetectionRunspace.MiningStatus -eq "Running") {
@@ -543,9 +547,10 @@ Function MainLoop {
                         If ($Variables.Timer) { 
                             $Variables.Summary = "Resuming mining.<br>System has been idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                             Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
+                            Write-Host ($Variables.Summary -replace '<br>', ' ')
                             $MiningSummaryLabel.Text = ($Variables.Summary -replace '<br>', ' ')
-                            If ($LegacyGUIform) { Update-TabControl }
                         }
+                        If ($LegacyGUIform) { Update-GUIstatus }
                         Start-Core
                     }
                 }
@@ -633,7 +638,7 @@ Function MainLoop {
                     Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
 
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
-                    If (-not $Config.IdleDetection) { Start-Core }
+                    If (-not $Config.IdleDetection -and -not $Global:CoreRunspace) { Start-Core }
                     If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     Break
                 }
@@ -868,12 +873,10 @@ Function MainLoop {
                 # Miner list format
                 [System.Collections.ArrayList]$Miner_Table = @(
                     @{ Label = "Miner"; Expression = { $_.Name } }
-                    If (-not $Config.IgnorePowerCost -and $Variables.ShowProfitBias -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost -and -not $Config.IgnorePowerCost) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If (-not $Config.IgnorePowerCost -and $Variables.ShowProfit -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost -and -not $Config.IgnorePowerCost) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                     If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                     If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Config.IgnorePowerCost -and $Variables.ShowProfitBias -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Config.IgnorePowerCost -and $Variables.ShowProfit -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                    If ($Variables.MiningPowerCost -and $Variables.ShowProfitBias) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                    If ($Variables.MiningPowerCost -and $Variables.ShowProfit) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                     If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power Consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } }; Align = "right" } }
                     If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "PowerCost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                     If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.Pool.Accuracy.ForEach({ "{0:P0}" -f [Double]$_ }) }; Align = "right" } }
@@ -985,9 +988,7 @@ Function MainLoop {
 
             If ($Variables.MiningStatus -eq "Running") { 
                 If ($Variables.Timer) { 
-                    $nl = "`n" # Must use variable, cannot join with '`n' directly
-                    Write-Host ($Variables.Summary -replace '<br>', $nl -replace '&ensp;', ' ' -replace '\s*/\s*', '/' -replace '\s*=\s*', '=')
-                    Remove-Variable nl
+                    Write-Host ($Variables.Summary -replace '<br>', ' ' -replace '&ensp;', ' ' -replace '\s*/\s*', '/' -replace '\s*=\s*', '=')
                 }
                 If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                     If ($Variables.MiningProfit -lt 0) { 
@@ -1001,7 +1002,7 @@ Function MainLoop {
                 }
 
                 If ($Variables.CycleStarts.Count -gt 1 -or $Variables.Miners) { 
-                    $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $($Variables.EndCycleTime.ToLocalTime().ToString('G'))   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnoprstuwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
+                    $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString('G')) } Else { 'n/a (Mining is suspended)' } )   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnoprstuwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
                     Write-Host ("-" * $StatusInfo.Length)
                     Write-Host -ForegroundColor Yellow $StatusInfo
                     Remove-Variable StatusInfo

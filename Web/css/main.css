@@ -93,9 +93,9 @@ footer {
 }
 
 .navbar-brand {
+  margin-top: 1.4rem;
+  margin-bottom: 1.4rem;
   padding-left: 2rem;
-  padding-top: 1.4rem;
-  padding-bottom: 1.4rem;
   font-size: 1.4rem;
 }
 
@@ -107,12 +107,12 @@ footer {
 .navbar-summary {
   position: absolute;
   padding-right: 30px;
-  padding-top: 0.6rem;
   left: 770px;
   color: white;
   font-size: 1.2rem;
-  height: 75px;
+  height: 5.6rem;
   align-items : center;
+  display: flex;
   justify-content : center;
   overflow-y: auto;
 }

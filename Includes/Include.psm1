@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.13
-Version date:   2024/02/28
+Version:        6.1.14
+Version date:   2024/03/06
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -645,22 +645,23 @@ Function Start-IdleDetection {
 
     If (-not $Variables.IdleDetectionRunspace) { 
 
+        $Variables.IdleDetectionRunspace = @{}
+
         # Function tracks how long the system has been idle and controls the paused state
-        $Variables.IdleDetectionRunspace = [RunspaceFactory]::CreateRunspace()
-        $Variables.IdleDetectionRunspace.ApartmentState = "STA"
-        $Variables.IdleDetectionRunspace.Name = "IdleDetectionRunspace"
-        $Variables.IdleDetectionRunspace.ThreadOptions = "ReuseThread"
-        $Variables.IdleDetectionRunspace.Open()
+        $Runspace = [RunspaceFactory]::CreateRunspace()
+        $Runspace.ApartmentState = "STA"
+        $Runspace.Name = "IdleDetectionRunspace"
+        $Runspace.ThreadOptions = "ReuseThread"
+        $Runspace.Open()
         (Get-Variable -Scope Global).Where({ $_.Name -in @("Config", "Variables") }).ForEach(
             { 
-                $Variables.IdleDetectionRunspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
+                $Runspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
             }
         )
-        [Void]$Variables.IdleDetectionRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath) | Out-Null
-        $Variables.IdleDetectionRunspace | Add-Member MiningStatus "Running" -Force
+        [Void]$Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath) | Out-Null
 
         $PowerShell = [PowerShell]::Create()
-        $PowerShell.Runspace = $Variables.IdleDetectionRunspace
+        $PowerShell.Runspace = $Runspace
         [Void]$Powershell.AddScript(
             { 
                 # Set the starting directory
@@ -722,12 +723,12 @@ namespace PInvoke.Win32 {
 
                     # Activity detected, pause mining
                     If ($IdleSeconds -lt $Config.IdleSec -and $Variables.IdleDetectionRunspace.MiningStatus -ne "Suspended") { 
-                        $Variables.IdleDetectionRunspace | Add-Member MiningStatus "Suspended" -Force
+                        $Variables.IdleDetectionRunspace.MiningStatus = "Suspended"
                     }
 
                     # System has been idle long enough, start mining
                     If ($IdleSeconds -gt $Config.IdleSec -and $Variables.IdleDetectionRunspace.MiningStatus -ne "Running") { 
-                        $Variables.IdleDetectionRunspace | Add-Member MiningStatus "Running" -Force
+                        $Variables.IdleDetectionRunspace.MiningStatus = "Running"
                     }
 
                     Start-Sleep -Milliseconds 500
@@ -735,18 +736,23 @@ namespace PInvoke.Win32 {
             }
         )
 
-        $Variables.IdleDetectionRunspace | Add-Member @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
-        $Powershell.BeginInvoke() | Out-Null
+        $Variables.IdleDetectionRunspace.AsyncObject = $Powershell.BeginInvoke()
+        $Variables.IdleDetectionRunspace.PowerShell  = $PowerShell
+        $Variables.IdleDetectionRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
     }
 }
 
 Function Stop-IdleDetection { 
 
     If ($Variables.IdleDetectionRunspace) { 
-        $Variables.IdleDetectionRunspace.Close()
-        If ($Variables.IdleDetectionRunspace.PowerShell) { $Variables.IdleDetectionRunspace.PowerShell.Dispose() }
-        $Variables.IdleDetectionRunspace.Dispose()
+
+        $Variables.IdleDetectionRunspace.PowerShell.Stop() | Out-Null
+        $Variables.IdleDetectionRunspace.PowerShell.EndInvoke($Global:CoreRunspace.AsyncObject) | Out-Null
+        $Variables.IdleDetectionRunspace.PowerShell.Runspace.Close() | Out-Null
+        $Variables.IdleDetectionRunspace.PowerShell.Dispose() | Out-Null
+
         $Variables.Remove("IdleDetectionRunspace")
+
         Write-Message -Level Verbose "Stopped idle detection."
 
         [System.GC]::Collect()
@@ -757,9 +763,10 @@ Function Start-Core {
 
     If (-not $Global:CoreRunspace) { 
 
+        $Global:CoreRunspace = @{}
+
         $Variables.LastDonated = ([DateTime]::Now).AddDays(-1).AddHours(1)
-        $Variables.PoolDataCollectedTimeStamp = $null
-        $Variables.Pools = [Pool[]]@()
+        # $Variables.Pools = [Pool[]]@()
         $Variables.Miners = [Miner[]]@()
         $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
 
@@ -781,9 +788,9 @@ Function Start-Core {
         $PowerShell.Runspace = $Runspace
         [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
 
-        $Global:CoreRunspace = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
-
-        $Powershell.BeginInvoke() | Out-Null
+        $Global:CoreRunspace.AsyncObject = $Powershell.BeginInvoke()
+        $Global:CoreRunspace.PowerShell  = $PowerShell
+        $Global:CoreRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
     }
 }
 
@@ -791,22 +798,22 @@ Function Stop-Core {
 
     If ($Global:CoreRunspace) { 
 
+        $Global:CoreRunspace.PowerShell.Stop() | Out-Null
+        $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.AsyncObject) | Out-Null
+
         If ($Variables.NewMiningStatus -eq "Idle") { 
             $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
             $Variables.PoolsCount = 0
             $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBestPerDevice_Combos = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
             $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
-            $Variables.EndCycleTime = $null
             $Variables.CycleStarts = @()
             $Variables.Timer = $null
         }
 
         $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
-
         $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
         $Variables.FailedMiners = [Miner[]]@()
         $Variables.RunningMiners = [Miner[]]@()
-
 
         # Stop all running miners
         ForEach ($Miner in $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) { 
@@ -815,15 +822,17 @@ Function Stop-Core {
         }
         Remove-Variable Miner -ErrorAction Ignore
 
+        $Variables.Remove("EndCycleTime")
+
+        # Must close runspace after miners were stopped, otherwise methods don't work any longer
+        $Global:CoreRunspace.PowerShell.Runspace.Dispose() | Out-Null
+        $Global:CoreRunspace.PowerShell.Dispose() | Out-Null
+
+        $Global:CoreRunspace.Remove("PowerShell")
+        Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
+
+        [System.GC]::Collect()
     }
-
-    # Must remove after miners wer stopped, otherwise methods don't work any longer
-    $Global:CoreRunspace.PowerShell.Runspace.Dispose()
-    Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
-
-    Start-Sleep 2
-
-    [System.GC]::Collect()
 }
 
 Function Start-Brain { 
@@ -842,6 +851,7 @@ Function Start-Brain {
                 If ($Config.PoolsConfig.$_.BrainConfig -and -not $Variables.Brains.$_) { 
                     $BrainScript = ".\Brains\$($_).ps1"
                     If (Test-Path -LiteralPath $BrainScript -PathType Leaf) { 
+                        $Variables.Brains.$_ = @{}
 
                         $Runspace = [RunspaceFactory]::CreateRunspace()
                         $Runspace.ApartmentState = "STA"
@@ -858,9 +868,9 @@ Function Start-Brain {
                         $PowerShell.Runspace = $Runspace
                         $Powershell.AddScript($BrainScript)
 
-                        $Variables.Brains.$_ = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
-
-                        $PowerShell.BeginInvoke() | Out-Null
+                        $Variables.Brains.$_.AsyncObject = $PowerShell.BeginInvoke()
+                        $Variables.Brains.$_.PowerShell  = $PowerShell
+                        $Variables.Brains.$_.StartTime   = [DateTime]::Now.ToUniversalTime()
 
                         $BrainsStarted += $_
                     }
@@ -889,16 +899,19 @@ Function Stop-Brain {
         $Brains.Where({ $Variables.Brains.$_ }).ForEach(
             { 
                 # Stop Brains
-                $Variables.Brains[$_].PowerShell.Runspace.Dispose() | Out-Null
+                $Variables.Brains[$_].PowerShell.Stop() | Out-Null
+                $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].AsyncObject) | Out-Null
+                $Variables.Brains[$_].PowerShell.Runspace.Close() | Out-Null
+                $Variables.Brains[$_].PowerShell.Dispose() | Out-Null
                 $Variables.Brains.Remove($_)
                 $Variables.BrainData.Remove($_)
                 $BrainsStopped += $_
             }
         )
         If ($BrainsStopped.Count -gt 0) { Write-Message -Level Info  "Pool brain backgound job$(If ($BrainsStopped.Count -gt 1) { "s" }) for '$(($BrainsStopped | Sort-Object) -join ", ")' stopped." }
-    }
 
-    [System.GC]::Collect()
+        [System.GC]::Collect()
+    }
 }
 
 Function Start-BalancesTracker { 
@@ -907,6 +920,8 @@ Function Start-BalancesTracker {
 
         If (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
             Try { 
+                $Global:BalancesTrackerRunspace = @{}
+
                 $Variables.Summary = "Starting Balances Tracker background process..."
                 Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
 
@@ -925,9 +940,10 @@ Function Start-BalancesTracker {
                 $PowerShell = [PowerShell]::Create()
                 $PowerShell.Runspace = $Runspace
                 [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1")
-                $Global:BalancesTrackerRunspace = @{ PowerShell = $PowerShell; StartTime = [DateTime]::Now.ToUniversalTime() }
 
-                $Powershell.BeginInvoke() | Out-Null
+                $Global:BalancesTrackerRunspace.AsyncObject = $Powershell.BeginInvoke()
+                $Global:BalancesTrackerRunspace.PowerShell  = $PowerShell
+                $Global:BalancesTrackerRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
             }
             Catch { 
                 Write-Message -Level Error "Failed to start Balances Tracker [$Error[0]]."
@@ -943,8 +959,12 @@ Function Stop-BalancesTracker {
 
     If ($BalancesTrackerRunspace) { 
 
-        $BalancesTrackerRunspace.PowerShell.Runspace.Dispose()
         $Variables.BalancesTrackerRunning = $false
+        $BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
+        $BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
+        $BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
+        $BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
+
         Remove-Variable BalancesTrackerRunspace -Scope Global -ErrorAction Ignore
 
         [System.GC]::Collect()
@@ -954,7 +974,7 @@ Function Stop-BalancesTracker {
     }
 }
 
-Function Get-DefaultAlgorithm { 
+Function §Get-DefaultAlgorithm { 
 
     If ($PoolsAlgos = Get-Content ".\Data\PoolsConfig-Recommended.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore) { 
         Return ($PoolsAlgos.PSObject.Properties.Name.Where({ $_ -in (Get-PoolBaseName $Config.PoolName) }).ForEach({ $PoolsAlgos.$_.Algorithm })) | Sort-Object -Unique
@@ -1879,16 +1899,18 @@ Function Get-Stat {
 
     $Name.ForEach(
         { 
-            If ($Global:Stats[$_] -isnot [Hashtable]) { 
+            $StatName = $_
+
+            If ($Global:Stats[$StatName] -isnot [Hashtable]) { 
                 # Reduce number of errors
-                If (-not (Test-Path -LiteralPath "Stats\$_.txt" -PathType Leaf)) { 
+                If (-not (Test-Path -LiteralPath "Stats\$StatName.txt" -PathType Leaf)) { 
                     Return
                 }
 
                 Try { 
-                    $Stat = [System.IO.File]::ReadAllLines("Stats\$_.txt") | ConvertFrom-Json -ErrorAction Stop
-                    $Global:Stats[$_] = @{ 
-                        Name                  = [String]$Name
+                    $Stat = [System.IO.File]::ReadAllLines("Stats\$StatName.txt") | ConvertFrom-Json -ErrorAction Stop
+                    $Global:Stats[$StatName] = @{ 
+                        Name                  = [String]$StatName
                         Live                  = [Double]$Stat.Live
                         Minute                = [Double]$Stat.Minute
                         Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
@@ -1909,12 +1931,12 @@ Function Get-Stat {
                     }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Stat file ($_) is corrupt and will be reset."
-                    Remove-Stat $_
+                    Write-Message -Level Warn "Stat file ($StatName) is corrupt and will be reset."
+                    Remove-Stat $StatName
                 }
             }
 
-            Return $Global:Stats[$_]
+            Return $Global:Stats[$StatName]
         }
     )
 }

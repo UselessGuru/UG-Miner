@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.1.13
-Version date:   2024/02/28
+Version:        6.1.14
+Version date:   2024/03/06
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -462,7 +462,7 @@ Function Update-TabControl {
         }
         # "Rig monitor" { 
         #     $WorkersDGV.Visible = $Config.ShowWorkerStatus
-        #     $EditMonitoringLink.Visible = $Variables.APIRunspace.APIPort
+        #     $EditMonitoringLink.Visible = $Variables.APIRunspace.APIport
 
         #     If ($Config.ShowWorkerStatus) { 
 
@@ -815,7 +815,7 @@ $EditConfigLink.LinkColor = [System.Drawing.Color]::Blue
 $EditConfigLink.Location = [System.Drawing.Point]::new(10, ($LegacyGUIForm.Bottom - 26))
 $EditConfigLink.TextAlign = "MiddleLeft"
 $EditConfigLink.Size = New-Object System.Drawing.Size(380, 26)
-$EditConfigLink.Add_Click({ If ($EditConfigLink.Tag -eq "WebGUI") { Start-Process "http://localhost:$($Variables.APIRunspace.APIPort)/configedit.html" } Else { Edit-File $Variables.ConfigFile } })
+$EditConfigLink.Add_Click({ If ($EditConfigLink.Tag -eq "WebGUI") { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/configedit.html" } Else { Edit-File $Variables.ConfigFile } })
 $LegacyGUIControls += $EditConfigLink
 $Tooltip.SetToolTip($EditConfigLink, "Click to the edit configuration")
 
@@ -1415,7 +1415,7 @@ $EditMonitoringLink.TextAlign = "MiddleRight"
 $EditMonitoringLink.Size = New-Object System.Drawing.Size(330, 26)
 $EditMonitoringLink.Visible = $false
 $EditMonitoringLink.Width = 330
-$EditMonitoringLink.Add_Click({ Start-Process "http://localhost:$($Variables.APIRunspace.APIPort)/rigmonitor.html" })
+$EditMonitoringLink.Add_Click({ Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/rigmonitor.html" })
 $RigMonitorPageControls += $EditMonitoringLink
 $Tooltip.SetToolTip($EditMonitoringLink, "Click to the edit the monitoring configuration in the Web GUI")
 
@@ -1638,9 +1638,9 @@ $LegacyGUIForm.Add_Load(
         $MiningSummaryLabel.SendToBack()
         (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $MiningSummaryLabel.Text += "`r`n$_" })
         $MiningSummaryLabel.Text += "`r`n "
-        If ($Variables.MiningProfit -ge 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
+        If (-not $Variables.MinersBestPerDevice_Combo) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+        ElseIf ($Variables.MiningProfit -ge 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
         ElseIf ($Variables.MiningProfit -lt 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
-        Else { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
 
         $TimerUI = New-Object System.Windows.Forms.Timer
         $TimerUI.Interval = 100
