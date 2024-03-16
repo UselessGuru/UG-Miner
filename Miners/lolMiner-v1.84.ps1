@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -85,7 +85,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Cuckaroo30CTX");                Type = "NVIDIA"; Fee = @(0.025);      MinMemGiB = 8.0;  MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo C30CTX" }
 #   [PSCustomObject]@{ Algorithms = @("Cuckatoo31");                   Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo C31" } # ASIC
 #   [PSCustomObject]@{ Algorithms = @("Cuckatoo32");                   Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo C32" } # ASIC
-    [PSCustomObject]@{ Algorithms = @("Equihash1254");                 Type = "NVIDIA"; Fee = @(0.015);      MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --coin ZEL" } # MiniZ-v2.1c is fastest, but has 2% miner fee
+    [PSCustomObject]@{ Algorithms = @("Equihash1254");                 Type = "NVIDIA"; Fee = @(0.015);      MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --coin ZEL" } # MiniZ-v2.3c is fastest, but has 2% miner fee
     [PSCustomObject]@{ Algorithms = @("Equihash1445");                 Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --coin $(If ($MinerPools[0].Equihash1445.Currency -in @("BTCZ", "BTG", "EXCC", "XSG")) { $MinerPools[0].Equihash1445.Currency } Else { "AUTO144_5" })" } # FPGA
     [PSCustomObject]@{ Algorithms = @("Equihash1927");                 Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --coin $(If ($MinerPools[0].Equihash1927.Currency -in @("YEC", "ZCL", "ZER")) { $MinerPools[0].Equihash1927.Currency } Else { "AUTO192_7" })" } # FPGA
     [PSCustomObject]@{ Algorithms = @("Equihash2109");                 Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUArchitecture = " "; ExcludePools = @(@(), @()); Arguments = " --algo EQUI210_9" }
@@ -120,7 +120,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }) | ForEach-Object { $_.Algorithms += "" }
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] }).Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
 $Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 
@@ -151,53 +151,56 @@ If ($Algorithms) {
 
                 ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                     { 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
-                            ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
+                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notmatch $ExcludeGPUArchitecture })) { 
 
-                                $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                # Windows 10 requires more memory on some algos
-                                If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0")) { $MinMemGiB += 1 }
-                                If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notmatch $ExcludeGPUArchitecture })) { 
+                            $ExcludePools = $_.ExcludePools
+                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
+                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
 
-                                    $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })$(If ($_.MaxDualImpact -gt 0) { "-$($_.MaxDualImpact)" })"
+                                    $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                    # Windows 10 requires more memory on some algos
+                                    If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0")) { $MinMemGiB += 1 }
+                                    If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                    $Arguments = $_.Arguments
-                                    $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
-                                    $Arguments += " --user $($Pool0.User)$(If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
-                                    $Arguments += " --pass $($Pool0.Pass)"
-                                    $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
-                                    $Arguments += Switch ($Pool0.Protocol) { 
-                                        "ethproxy"     { " --ethstratum ETHPROXY" }
-                                        "ethstratum1"  { " --ethstratum ETHV1" }
-                                        "ethstratum2"  { " --ethstratum ETHV1" }
-                                        "ethstratumnh" { " --ethstratum ETHV1" }
-                                        Default        { "" }
-                                    }
+                                        $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })$(If ($_.MaxDualImpact -gt 0) { "-$($_.MaxDualImpact)" })"
 
-                                    If ($_.Algorithms[1]) { 
-                                        $Arguments += " --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --dualuser $($Pool1.User)$(If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
-                                        $Arguments += " --dualpass $($Pool1.Pass)"
-                                        If ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
-                                        $Arguments += If ($Pool1.PoolPorts[1]) { " --dualtls on" } Else { " --dualtls off" }
-                                    }
+                                        $Arguments = $_.Arguments
+                                        $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
+                                        $Arguments += " --user $($Pool0.User)$(If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
+                                        $Arguments += " --pass $($Pool0.Pass)"
+                                        $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
+                                        $Arguments += Switch ($Pool0.Protocol) { 
+                                            "ethproxy"     { " --ethstratum ETHPROXY" }
+                                            "ethstratum1"  { " --ethstratum ETHV1" }
+                                            "ethstratum2"  { " --ethstratum ETHV1" }
+                                            "ethstratumnh" { " --ethstratum ETHV1" }
+                                            Default        { "" }
+                                        }
 
-                                    [PSCustomObject]@{ 
-                                        API         = "lolMiner"
-                                        Arguments   = "$Arguments --log off --apiport $MinerAPIPort --shortstats 1 --longstats 5 --digits 6 --watchdog exit --dns-over-https 1 --devicesbypcie --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0}:0' -f $_ }) -join ',')"
-                                        DeviceNames = $AvailableMiner_Devices.Name
-                                        Fee         = $_.Fee # Dev fee
-                                        MinerSet    = $_.MinerSet
-                                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                        Name        = $Miner_Name
-                                        Path        = $Path
-                                        Port        = $MinerAPIPort
-                                        Type        = $_.Type
-                                        URI         = $Uri
-                                        WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers      = @(($Pool0, $Pool1).Where({ $_ }) | ForEach-Object { @{ Pool = $_ } })
+                                        If ($_.Algorithms[1]) { 
+                                            $Arguments += " --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                            $Arguments += " --dualuser $($Pool1.User)$(If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
+                                            $Arguments += " --dualpass $($Pool1.Pass)"
+                                            If ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
+                                            $Arguments += If ($Pool1.PoolPorts[1]) { " --dualtls on" } Else { " --dualtls off" }
+                                        }
+
+                                        [PSCustomObject]@{ 
+                                            API         = "lolMiner"
+                                            Arguments   = "$Arguments --log off --apiport $MinerAPIPort --shortstats 1 --longstats 5 --digits 6 --watchdog exit --dns-over-https 1 --devicesbypcie --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0}:0' -f $_ }) -join ',')"
+                                            DeviceNames = $AvailableMiner_Devices.Name
+                                            Fee         = $_.Fee # Dev fee
+                                            MinerSet    = $_.MinerSet
+                                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                                            Name        = $Miner_Name
+                                            Path        = $Path
+                                            Port        = $MinerAPIPort
+                                            Type        = $_.Type
+                                            URI         = $Uri
+                                            WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                            Workers      = @(($Pool0, $Pool1).Where({ $_ }) | ForEach-Object { @{ Pool = $_ } })
+                                        }
                                     }
                                 }
                             }

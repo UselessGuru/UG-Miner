@@ -2,6 +2,25 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+ChangeLog UG-Miner 6.1.15 2024/03/16
+====================================
+
+Fixes:
+- Core / Includes.psm1: Error when deselecting pool with brain (Regression from 6.1.14)
+- Core / Includes.psm1: TotalMiningDuration empty (Regression from 6.1.10)
+- Legacy GUI: Earnings chart corrupt (Regression from 6.1.14)
+
+Improvements:
+- Minor code optimizations (Core & Miners)
+
+Miner updates:
+- CpuMinerAurum-v3.23.1
+- GMiner-v3.44
+- MiniZ-v2.3c
+- Rigel-v1.15.0
+- SRBMinerMulti-v2.4.8
+
+
 ChangeLog UG-Miner 6.1.14 2024/03/06
 ====================================
 

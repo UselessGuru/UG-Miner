@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.14"
+    Version      = [System.Version]"6.1.15"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -307,8 +307,8 @@ If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") {
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.2.18") { 
     Write-Host "`Outdated PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
 }
-If ($PSVersiontable.PSVersion -gt [System.Version]"7.3.0") { 
-    Write-Host "`Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended`n`n" -ForegroundColor Magenta
+If ($PSVersiontable.PSVersion -ge [System.Version]"7.3.0") { 
+    Write-Host "`Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended.`n`n" -ForegroundColor Magenta
 }
 
 # Internet connection must be available
@@ -521,7 +521,7 @@ Remove-Variable VertHashDatCheckJob
 
 If ($Variables.FreshConfig) { 
     $Variables.Summary = "Change your settings and apply the configuration.<br>Then Click the 'Start mining' button."
-    $WscriptShell.Popup("This is the first time you have started $($Variables.Branding.ProductLabel).`n`nUse the configuration editor to change your settings and apply the configuration.`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", 4112) | Out-Null
+    $WscriptShell.Popup("This is the first time you have started $($Variables.Branding.ProductLabel).`n`nUse the configuration editor to change your settings and apply the configuration.`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", 64) | Out-Null
 }
 
 Function MainLoop { 
@@ -592,7 +592,7 @@ Function MainLoop {
 
             # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
             (Get-Process -Id $PID).PriorityClass = "BelowNormal"
-
+        
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 
                     $Variables.Summary = "'Stop Mining' button clicked."
@@ -628,15 +628,16 @@ Function MainLoop {
                     Break
                 }
                 "Running" { 
-                    If ($Variables.MiningStatus) { 
-                        $Variables.Summary = "'Start Mining' button clicked."
+                    If ($Variables.MiningStatus -ne $Variables.NewMiningStatus) { 
+                        If ($Variables.MiningStatus) { 
+                            $Variables.Summary = "'Start Mining' button clicked."
+                        }
+                        Else {
+                            $Variables.Summary = "$($Variables.Branding.ProductLabel) is getting ready.<br>Please wait..."
+                        }
+                        Write-Host "`n"
+                        Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
                     }
-                    Else {
-                        $Variables.Summary = "$($Variables.Branding.ProductLabel) is getting ready.<br>Please wait..."
-                    }
-                    Write-Host "`n"
-                    Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
-
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
                     If (-not $Config.IdleDetection -and -not $Global:CoreRunspace) { Start-Core }
                     If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
@@ -658,10 +659,10 @@ Function MainLoop {
             If ($KeyPressed.Key -eq 80 -and $KeyPressed.Modifiers -eq 5) { 
                 $Variables.SuspendCycle = -not $Variables.SuspendCycle
                 If ($Variables.SuspendCycle) { 
-                    Write-Message -Level Debug "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again."
+                    Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again." -ForegroundColor Cyan 
                 }
                 Else { 
-                    Write-Message -Level Debug "'<Ctrl><Alt>P' pressed. Core cycle is running again."
+                    Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is running again." -ForegroundColor Cyan 
                     If (([DateTime]::Now).ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                 }
             }
@@ -778,7 +779,7 @@ Function MainLoop {
                     }
                     "s" { 
                         $Variables.UIStyle = If ($Variables.UIStyle -eq "light") { "full" } Else { "light" }
-                        Write-Host "UI " -NoNewline; Write-Host "S" -ForegroundColor Cyan -NoNewline; Write-Host "tyle set to " -NoNewline; Write-Host "$($Variables.UIStyle)" -ForegroundColor Blue -NoNewline; Write-Host " (Information about miners run in the past, failed miners & watchdog timers will " -NoNewline; If ($Variables.UIStyle -eq "light") { Write-Host "not " -ForegroundColor Red -NoNewline }; Write-Host "be shown)."
+                        Write-Host "UI " -NoNewline; Write-Host "S" -ForegroundColor Cyan -NoNewline; Write-Host "tyle set to " -NoNewline; Write-Host "$($Variables.UIStyle)" -ForegroundColor Blue -NoNewline; Write-Host " (Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will " -NoNewline; If ($Variables.UIStyle -eq "light") { Write-Host "not " -ForegroundColor Red -NoNewline }; Write-Host "be shown)."
                         Start-Sleep -Seconds 2
                         $Variables.RefreshNeeded = $true
                         Break
@@ -940,39 +941,41 @@ Function MainLoop {
                     Write-Host "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" -ForegroundColor Yellow
                 }
 
-                If ($ProcessesIdle = @($Variables.Miners.Where({ $_.Activated -and $_.Status -eq "Idle" -and $_.GetActiveLast().ToLocalTime().AddHours(24) -gt [DateTime]::Now }))) { 
-                    Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) in the past 24 hrs:"
+                $MinersActivatedLast24Hrs = @($Variables.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now }))
+
+                If ($ProcessesIdle = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Idle" })) { 
+                    Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"
                     [System.Collections.ArrayList]$Miner_Table = @(
                         @{ Label = "Name"; Expression = { $_.Name } }
                         If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
                         @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
-                        @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.GetActiveLast().ToLocalTime()) } }
+                        @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
                         @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
-                    $ProcessesIdle | Sort-Object { $_.GetActiveLast } -Descending | Format-Table $Miner_Table -Wrap | Out-Host
+                    $ProcessesIdle | Sort-Object { $_.EndTime } -Descending | Format-Table $Miner_Table -Wrap | Out-Host
                     Remove-Variable Miner_Table
                 }
                 Remove-Variable ProcessesIdle
 
-                If ($ProcessesFailed = @($Variables.Miners.Where({ $_.Activated -and $_.Status -eq "Failed" -and $_.GetActiveLast().ToLocalTime().AddHours(24) -gt [DateTime]::Now }))) { 
-                    Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed $(If ($ProcessesFailed.Count -eq 1) { "miner" } Else { "miners" }) in the past 24 hrs:"
+                If ($ProcessesFailed = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Failed" })) { 
+                    Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed $(If ($ProcessesFailed.Count -eq 1) { "miner" } Else { "miners" }) (past 24 hrs):"
                     [System.Collections.ArrayList]$Miner_Table = @(
-                        @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
+                        @{ Label = "Name"; Expression = { $_.Name } }
                         If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
-                        @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.GetActiveLast().ToLocalTime()) } }
+                        @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
+                        @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
                         @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
-                        @{ Label = "Name"; Expression = { $_.Name } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
-                    $ProcessesFailed | Sort-Object { If ($_.Process) { $_.Process.StartTime } Else { [DateTime]0 } } | Format-Table $Miner_Table -Wrap | Out-Host
+                    $ProcessesFailed | Sort-Object { If ($_.EndTime) { $_.EndTime } Else { [DateTime]0 } } | Format-Table $Miner_Table -Wrap | Out-Host
                     Remove-Variable Miner_Table
                 }
-                Remove-Variable ProcessesFailed
+                Remove-Variable MinersActivatedLast24Hrs, ProcessesFailed
 
                 If ($Config.Watchdog) { 
                     # Display watchdog timers

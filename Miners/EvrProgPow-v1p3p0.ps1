@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -45,37 +45,40 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
+                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
-                            $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB 
-                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                            $ExcludePools = $_.ExcludePools
+                            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
 
-                                $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
+                                $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB 
+                                If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                $Protocol = Switch ($Pool.Protocol) { 
-                                    "ethproxy"     { "stratum1"; Break }
-                                    "ethstratum1"  { "stratum2"; Break }
-                                    "ethstratum2"  { "stratum2"; Break }
-                                    Default        { "stratum" }
-                                }
-                                $Protocol += If ($Pool.PoolPorts[1]) { "+tls" } Else { "+tcp" }
+                                    $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
 
-                                [PSCustomObject]@{ 
-                                    API         = "EthMiner"
-                                    Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode("$($Pool.User)")):$([System.Web.HttpUtility]::UrlEncode($($Pool.Pass)))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-port -$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                    DeviceNames = $AvailableMiner_Devices.Name
-                                    EnvVars     = @("SSL_NOVERIFY=TRUE")
-                                    Fee         = @(0) # Dev fee
-                                    MinerSet    = $_.MinerSet
-                                    Name        = $Miner_Name
-                                    Path        = $Path
-                                    Port        = $MinerAPIPort
-                                    Type        = "NVIDIA"
-                                    URI         = $Uri
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
+                                    $Protocol = Switch ($Pool.Protocol) { 
+                                        "ethproxy"     { "stratum1"; Break }
+                                        "ethstratum1"  { "stratum2"; Break }
+                                        "ethstratum2"  { "stratum2"; Break }
+                                        Default        { "stratum" }
+                                    }
+                                    $Protocol += If ($Pool.PoolPorts[1]) { "+tls" } Else { "+tcp" }
+
+                                    [PSCustomObject]@{ 
+                                        API         = "EthMiner"
+                                        Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode("$($Pool.User)")):$([System.Web.HttpUtility]::UrlEncode($($Pool.Pass)))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-port -$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                        DeviceNames = $AvailableMiner_Devices.Name
+                                        EnvVars     = @("SSL_NOVERIFY=TRUE")
+                                        Fee         = @(0) # Dev fee
+                                        MinerSet    = $_.MinerSet
+                                        Name        = $Miner_Name
+                                        Path        = $Path
+                                        Port        = $MinerAPIPort
+                                        Type        = "NVIDIA"
+                                        URI         = $Uri
+                                        WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        Workers     = @(@{ Pool = $Pool })
+                                    }
                                 }
                             }
                         }

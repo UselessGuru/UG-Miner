@@ -22,10 +22,12 @@
             $('#myModal').modal({show:true});
           };
         });
-        document.getElementById('btn-miningpause').disabled = true;
-        document.getElementById('btn-miningstart').disabled = true;
-        document.getElementById('btn-miningstop').disabled = true;
-        updateSummary();
+        $("#myModal").on('hidden.bs.modal', function () {
+          updateButtonStatus();
+          updateSummary();
+          $('#activeminers').bootstrapTable('refresh');
+          $('#switchinglog').bootstrapTable('refresh');
+        });
       });
 
       $('#btn-miningstart').click(function () {
@@ -36,10 +38,12 @@
             $('#myModal').modal({show:true});
           };
         });
-        document.getElementById('btn-miningpause').disabled = true;
-        document.getElementById('btn-miningstart').disabled = true;
-        document.getElementById('btn-miningstop').disabled = true;
-        updateSummary();
+        $("#myModal").on('hidden.bs.modal', function () {
+          updateButtonStatus();
+          updateSummary();
+          $('#activeminers').bootstrapTable('refresh');
+          $('#switchinglog').bootstrapTable('refresh');
+        });
       });
 
       $('#btn-miningstop').click(function () {
@@ -50,10 +54,12 @@
             $('#myModal').modal({show:true});
           };
         });
-        document.getElementById('btn-miningpause').disabled = true;
-        document.getElementById('btn-miningstart').disabled = true;
-        document.getElementById('btn-miningstop').disabled = true;
-        updateSummary();
+        $("#myModal").on('hidden.bs.modal', function () {
+          updateButtonStatus();
+          updateSummary();
+          $('#activeminers').bootstrapTable('refresh');
+          $('#switchinglog').bootstrapTable('refresh');
+        });
       });
 
       updateSummary();

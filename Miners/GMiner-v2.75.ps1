@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -64,7 +64,7 @@ If ($Algorithms) {
 
                                 If ($Pool.DAGSizeGiB -ne $null -and $Pool.Name -in @("MiningPoolHub", "NiceHash", "ProHashing")) { $Arguments += " --proto stratum" }
                                 If ($Pool.PoolPorts[1]) { $Arguments += " --ssl 1" }
-                                If ($_.AutoCoinPers) {$Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers) }
+                                If ($_.AutoCoinPers) { $Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers) }
 
                                 # Apply tuning parameters
                                 If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }

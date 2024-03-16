@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -68,16 +68,16 @@ If ($Algorithms) {
 
     $Algorithms.ForEach(
         { 
+            If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                $PrerequisitePath = $Variables.VerthashDatPath
+                $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+            }
+            Else { 
+                $PrerequisitePath = $PrerequisiteURI = ""
+            }
+
             $ExcludePools = $_.ExcludePools
             ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })[-1])) { 
-
-                If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                    $PrerequisitePath = $Variables.VerthashDatPath
-                    $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
-                }
-                Else { 
-                    $PrerequisitePath = $PrerequisiteURI = ""
-                }
 
                 [PSCustomObject]@{ 
                     API              = "CcMiner"

@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -65,33 +65,36 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm] | Where-Object Name -notin $ExcludePools)) { 
+                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
-                            $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
-                            If ($_.Algorithm -eq "KawPow" -and $MinMemGB -lt 2) { $MinMemGiB = 4 } # No hash rates in time for GPUs with 2GB
-                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                            $ExcludePools = $_.ExcludePools
+                            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
 
-                                $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
+                                $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                                If ($_.Algorithm -eq "KawPow" -and $MinMemGB -lt 2) { $MinMemGiB = 4 } # No hash rates in time for GPUs with 2GB
+                                If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                $Arguments = $_.Arguments
-                                If ($AvailableMiner_Devices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace ' --intensity [0-9\.]+' }
+                                    $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
 
-                                [PSCustomObject]@{ 
-                                    API         = "Trex"
-                                    Arguments   = "$Arguments $(If ($Pool.PoolPorts[1]) { "$(If($Config.SSLAllowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl" } Else { "--url stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                    DeviceNames = $AvailableMiner_Devices.Name
-                                    Fee         = @(0.01) # Dev fee
-                                    MinerSet    = $_.MinerSet
-                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                    Name        = $Miner_Name
-                                    Path        = $Path
-                                    Port        = $MinerAPIPort
-                                    Type        = "NVIDIA"
-                                    URI         = $Uri
-                                    WarmupTimes = @($_.WarmupTimes) # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
+                                    $Arguments = $_.Arguments
+                                    If ($AvailableMiner_Devices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace ' --intensity [0-9\.]+' }
+
+                                    [PSCustomObject]@{ 
+                                        API         = "Trex"
+                                        Arguments   = "$Arguments $(If ($Pool.PoolPorts[1]) { "$(If($Config.SSLAllowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl" } Else { "--url stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                        DeviceNames = $AvailableMiner_Devices.Name
+                                        Fee         = @(0.01) # Dev fee
+                                        MinerSet    = $_.MinerSet
+                                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                                        Name        = $Miner_Name
+                                        Path        = $Path
+                                        Port        = $MinerAPIPort
+                                        Type        = "NVIDIA"
+                                        URI         = $Uri
+                                        WarmupTimes = @($_.WarmupTimes) # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        Workers     = @(@{ Pool = $Pool })
+                                    }
                                 }
                             }
                         }

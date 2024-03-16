@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -244,7 +244,7 @@ Function Update-TabControl {
                     $Color = @(255, 255, 255, 255) #"FFFFFF"
 
                     $DaySum = @(0) * $DataSource.Labels.Count
-                    $ToolTipTest = $DataSource.Labels.Clone()
+                    $ToolTipText = $DataSource.Labels.Clone()
 
                     ForEach ($Pool in $DataSource.Earnings.PSObject.Properties.Name) { 
 

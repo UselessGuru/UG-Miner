@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -580,7 +580,6 @@ Class Miner {
         $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
         $this.ReadPowerConsumption = [Boolean]($this.Devices.ReadPowerConsumption -notcontains $false)
         $this.Reasons = [System.Collections.Generic.List[String]]@()
-        $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
         $this.Updated = $this.Workers.Updated | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
 
         $this.Workers.ForEach(
@@ -602,6 +601,7 @@ Class Miner {
                 }
             }
         )
+        $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
 
         If ($this.Workers.Where({ $_.Disabled })) { 
             $this.Status = [MinerStatus]::Disabled
@@ -900,7 +900,7 @@ Function Stop-Brain {
             { 
                 # Stop Brains
                 $Variables.Brains[$_].PowerShell.Stop() | Out-Null
-                $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].AsyncObject) | Out-Null
+                If (-not $Variables.Brains[$_].AsyncObject.IsCompleted) { $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].AsyncObject) | Out-Null }
                 $Variables.Brains[$_].PowerShell.Runspace.Close() | Out-Null
                 $Variables.Brains[$_].PowerShell.Dispose() | Out-Null
                 $Variables.Brains.Remove($_)
@@ -974,7 +974,7 @@ Function Stop-BalancesTracker {
     }
 }
 
-Function §Get-DefaultAlgorithm { 
+Function Get-DefaultAlgorithm { 
 
     If ($PoolsAlgos = Get-Content ".\Data\PoolsConfig-Recommended.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore) { 
         Return ($PoolsAlgos.PSObject.Properties.Name.Where({ $_ -in (Get-PoolBaseName $Config.PoolName) }).ForEach({ $PoolsAlgos.$_.Algorithm })) | Sort-Object -Unique
@@ -989,7 +989,7 @@ Function Get-Rate {
     # Use stored currencies from last run
     If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = $Variables.Rates.PSObject.Properties.Name | Where-Object { $_ -eq  ($_ -replace '^m') } }
 
-    $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies }).Where({ $_ -notlike "US*-*" })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
+    $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies -and $_ -notlike "US*-*" })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
 
     If (-not $Variables.Rates.BTC.($Config.MainCurrency) -or (Compare-Object @(@($Variables.Rates.PSObject.Properties.Name | Select-Object) + @($Variables.RatesMissingCurrencies | Select-Object)) @($Variables.AllCurrencies | Select-Object) | Where-Object SideIndicator -eq "=>") -or ($Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)))) { 
         Try { 
@@ -1096,7 +1096,7 @@ Function Write-Message {
     $Message = $Message -replace '<br>', ' ' -replace '&ensp;', ' '
 
     # Make sure we are in main script
-    If ($Host.Name -eq "ConsoleHost") { 
+    If ($Host.Name -eq "ConsoleHost" -and (-not $Config.Keys -or $Level -in $Config.LogToScreen)) { 
         # Write to console
         Switch ($Level) { 
             "Error"   { Write-Host $Message -ForegroundColor "Red" }

@@ -19,11 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.1.13
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
 using module .\Include.psm1
+
+$ErrorLogFile = "Logs\Error.txt"
 
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
@@ -101,7 +103,7 @@ Do {
             )
 
             # Skip some stuff when previous cycle was shorter than half of what it should
-            If ((-not $Variables.Pools -or $Variables.EndCycleTime) -and ($Variables.BenchmarkingOrMeasuringMiners -or -not $Variables.Miners -or -not $Variables.BeginCycleTime -or (Compare-Object @($Config.PoolName | Select-Object) @($Variables.PoolName | Select-Object)) -or $Variables.BeginCycleTime.AddSeconds([Math]::Floor($Config.Interval / 2)) -lt [DateTime]::Now.ToUniversalTime() -or ((Compare-Object @($Config.ExtraCurrencies | Select-Object) @($Variables.AllCurrencies | Select-Object)).Where({ $_.SideIndicator -eq "<=" })))) {             # If ($Variables.BenchmarkingOrMeasuringMiners -or -not $Variables.Miners -or -not $Variables.BeginCycleTime -or (Compare-Object @($Config.PoolName | Select-Object) @($Variables.PoolName | Select-Object)) -or $Variables.BeginCycleTime.AddSeconds([Math]::Floor($Config.Interval / 2)) -lt [DateTime]::Now.ToUniversalTime() -or ((Compare-Object @($Config.ExtraCurrencies | Select-Object) @($Variables.AllCurrencies | Select-Object)).Where({ $_.SideIndicator -eq "<=" }))) { 
+            If ((-not $Variables.Pools -or $Variables.EndCycleTime) -and ($Variables.BenchmarkingOrMeasuringMiners -or -not $Variables.Miners -or -not $Variables.BeginCycleTime -or (Compare-Object @($Config.PoolName | Select-Object) @($Variables.PoolName | Select-Object)) -or $Variables.BeginCycleTime.AddSeconds([Math]::Floor($Config.Interval / 2)) -lt [DateTime]::Now.ToUniversalTime() -or ((Compare-Object @($Config.ExtraCurrencies | Select-Object) @($Variables.AllCurrencies | Select-Object)).Where({ $_.SideIndicator -eq "<=" })))) {
                 $Variables.BeginCycleTime = $Variables.Timer
                 $Variables.EndCycleTime = $Variables.Timer.AddSeconds($Config.Interval)
 
@@ -316,9 +318,9 @@ Do {
                                 }
                                 Catch { 
                                     Write-Message -Level Error "Error in pool file 'Pools\$PoolName.ps1'."
-                                    "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error.txt"
-                                    $_.Exception | Format-List -Force >> "Logs\Error.txt"
-                                    $_.InvocationInfo | Format-List -Force >> "Logs\Error.txt"
+                                    "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                    $_.Exception | Format-List -Force >> $ErrorLogFile
+                                    $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
                                 }
                             }
                         }
@@ -341,9 +343,9 @@ Do {
                             # }
                             # Catch { 
                                 # Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
-                                # "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error_Dev.txt"
-                                # $_.Exception | Format-List -Force >> "Logs\Error_Dev.txt"
-                                # $_.InvocationInfo | Format-List -Force >> "Logs\Error_Dev.txt"
+                                # "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                # $_.Exception | Format-List -Force >> $ErrorLogFile
+                                # $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
                             # }
                         }
                     )
@@ -425,7 +427,7 @@ Do {
                             ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm, Currency).Where({ $_.Count -ge 2 }).ForEach(
                                 { 
                                     If ($PriceThreshold = (($_.Group.Price_Bias | Measure-Object -Average | Select-Object -ExpandProperty Average) * $Config.UnrealPoolPriceFactor)) { 
-                                        $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") }).Where({ $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than average price)") })
+                                        $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") -and $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than average price)") })
                                     }
                                 }
                             )
@@ -434,7 +436,7 @@ Do {
                         If ($Config.Algorithm -like "+*") { 
                             # Filter non-enabled algorithms
                             $Pools.Where({ $Config.Algorithm -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in generic config") })
-                            $Pools.Where({ $Variables.PoolsConfig[$_.Name].Algorithm -like "+*" }).Where({ $Variables.PoolsConfig.$($_.Name).Algorithm -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
+                            $Pools.Where({ $Variables.PoolsConfig[$_.Name].Algorithm -like "+*" -and $Variables.PoolsConfig.$($_.Name).Algorithm -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
                         }
                         Else { 
                             # Filter disabled algorithms
@@ -444,7 +446,7 @@ Do {
                         If ($Config.Currency -like "+*") { 
                             # Filter non-enabled currencies
                             $Pools.Where({ $Config.Currency -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in generic config") })
-                            $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -like "+*" }).Where({ $Variables.PoolsConfig.$($_.Name).Currency -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
+                            $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -like "+*" -and $Variables.PoolsConfig.$($_.Name).Currency -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
                         }
                         Else {
                             # Filter disabled currencies
@@ -456,7 +458,7 @@ Do {
                         $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Config.MinWorker }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Config.MinWorker)`` in generic config)") })
                         # SSL
                         If ($Config.SSL -eq "Never") { $Pools.Where({ -not $_.PoolPorts[0] }).ForEach({ $_.Reasons.Add("Non-SSL port not available (Config.SSL -eq 'Never')") }) }
-                        If ($Config.SSL -eq "Always") {$Pools.Where({ -not $_.PoolPorts[1] }).ForEach({ $_.Reasons.Add("SSL port not available (Config.SSL -eq 'Always')") }) }
+                        If ($Config.SSL -eq "Always") { $Pools.Where({ -not $_.PoolPorts[1] }).ForEach({ $_.Reasons.Add("SSL port not available (Config.SSL -eq 'Always')") }) }
                         # SSL Allow selfsigned certificate
                         If (-not $Config.SSLAllowSelfSignedCertificate) { $Pools.Where({ $_.SSLSelfSignedCertificate }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (Config.SSLAllowSelfSignedCertificate -eq '`$false')") }) }
 
@@ -721,9 +723,9 @@ Do {
                         }
                         Catch { 
                             Write-Message -Level Error "Error in miner file 'Miners\$MinerFileName.ps1': $_."
-                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error.txt"
-                            $_.Exception | Format-List -Force >> "Logs\Error.txt"
-                            $_.InvocationInfo | Format-List -Force >> "Logs\Error.txt"
+                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                            $_.Exception | Format-List -Force >> $ErrorLogFile
+                            $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
                         }
                     }
                 ).ForEach(
@@ -743,9 +745,9 @@ Do {
                         }
                         Catch { 
                             Write-Message -Level Error "Failed to add Miner '$($Miner.Name)' as '$($Miner.API)' ($($Miner | ConvertTo-Json -Compress))"
-                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error.txt"
-                            $_.Exception | Format-List -Force >> "Logs\Error.txt"
-                            $_.InvocationInfo | Format-List -Force >> "Logs\Error.txt"
+                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                            $_.Exception | Format-List -Force >> $ErrorLogFile
+                            $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
                         }
                     }
                 )
@@ -753,57 +755,62 @@ Do {
             }
             Remove-Variable AvailableMinerPools -ErrorAction Ignore
 
-            $CompareMiners = Compare-Object @($Miners | Select-Object) @($MinersNew | Select-Object) -Property Info -IncludeEqual -PassThru
-            # Properties that need to be set only once because they are not dependent on any config or pool information
-            $MinerDevices = @($Variables.EnabledDevices | Select-Object -Property Bus, ConfiguredPowerConsumption, Name, ReadPowerConsumption, Status)
-            ForEach ($Miner in $CompareMiners.Where({ $_.SideIndicator -eq "=>" })) { 
-                $Miner.BaseName, $Miner.Version = ($Miner.Name -split '-')[0, 1]
-                $Miner.Devices = @($MinerDevices.Where({ $_.Name -in $Miner.DeviceNames }))
-            }
-            Remove-Variable Miner, MinerDevices -ErrorAction Ignore
-            $Miners = [Miner[]]@($CompareMiners.Where({ $_.SideIndicator -ne "<=" }))
+            # Sometimes there are no new miners (classes broken after GC?)
+            If ($MinersNew) { 
 
-            # Make smaller groups for faster update
-            $MinersNewGroups = $MinersNew | Group-Object -Property Name
-            ($Miners | Group-Object -Property Name).ForEach(
-                { 
-                    Try { 
-                        $Name = $_.Name
-                        $MinersNewGroup = $MinersNewGroups.Where({ $Name -eq $_.Name }).Group
-                        $_.Group.ForEach(
-                            { 
-                                If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and ([String]($_.Workers.Pool.Variant) -eq [String]($Miner.Workers.Pool.Variant)) -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle) { # Minimum numbers of full cycles not yet reached
-                                    $_.Restart = $false
-                                }
-                                Else { 
-                                    $Info = $_.Info
-                                    If ($Miner = $MinersNewGroup.Where({ $Info -eq $_.Info })[0]) { 
-                                        # Update existing miners
-                                        If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
-                                            $_.Arguments = $Miner.Arguments
-                                            $_.Port = $Miner.Port
-                                        }
-                                        $_.CommandLine = $Miner.GetCommandLine().Replace("$PWD\", "")
-                                        $_.PrerequisitePath = $Miner.PrerequisitePath
-                                        $_.PrerequisiteURI = $Miner.PrerequisiteURI
-                                        $_.WarmupTimes = $Miner.WarmupTimes
-                                        $_.Workers = $Miner.Workers # In case pool variant changes
-                                    }
-                                }
-                                $_.Refresh($Variables.PowerCostBTCperW, $Variables.CalculatePowerCost)
-                                $_.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $_.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
-                            }
-                        )
-                    }
-                    Catch { 
-                        Write-Message -Level Error "Failed to update miner '$($Miner.Name)': Error $_"
-                        "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error.txt"
-                        $_.Exception | Format-List -Force >> "Logs\Error.txt"
-                        $_.InvocationInfo | Format-List -Force >> "Logs\Error.txt"
-                    }
+                $CompareMiners = Compare-Object @($Miners | Select-Object) @($MinersNew | Select-Object) -Property Info -IncludeEqual -PassThru
+                # Properties that need to be set only once because they are not dependent on any config or pool information
+                $MinerDevices = @($Variables.EnabledDevices | Select-Object -Property Bus, ConfiguredPowerConsumption, Name, ReadPowerConsumption, Status)
+                ForEach ($Miner in $CompareMiners.Where({ $_.SideIndicator -eq "=>" })) { 
+                    $Miner.BaseName, $Miner.Version = ($Miner.Name -split '-')[0, 1]
+                    $Miner.Devices = @($MinerDevices.Where({ $_.Name -in $Miner.DeviceNames }))
                 }
-            )
-            Remove-Variable Info, Miner, MinersNewGroup, MinersNewGroups, MinersNew, Name -ErrorAction Ignore
+                Remove-Variable Miner, MinerDevices -ErrorAction Ignore
+
+                $Miners = [Miner[]]@($CompareMiners.Where({ $_.SideIndicator -ne "<=" }))
+
+                # Make smaller groups for faster update
+                $MinersNewGroups = $MinersNew | Group-Object -Property Name
+                ($Miners | Group-Object -Property Name).ForEach(
+                    { 
+                        Try { 
+                            $Name = $_.Name
+                            $MinersNewGroup = $MinersNewGroups.Where({ $Name -eq $_.Name }).Group
+                            $_.Group.ForEach(
+                                { 
+                                    If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and ([String]($_.Workers.Pool.Variant) -eq [String]($Miner.Workers.Pool.Variant)) -and -not ($_.Benchmark -or $_.MeasurePowerConsumption -or $Variables.DonationRunning) -and $_.ContinousCycle -lt $Config.MinCycle) { # Minimum numbers of full cycles not yet reached
+                                        $_.Restart = $false
+                                    }
+                                    Else { 
+                                        $Info = $_.Info
+                                        If ($Miner = $MinersNewGroup.Where({ $Info -eq $_.Info })[0]) { 
+                                            # Update existing miners
+                                            If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
+                                                $_.Arguments = $Miner.Arguments
+                                                $_.Port = $Miner.Port
+                                            }
+                                            $_.CommandLine = $Miner.GetCommandLine().Replace("$PWD\", "")
+                                            $_.PrerequisitePath = $Miner.PrerequisitePath
+                                            $_.PrerequisiteURI = $Miner.PrerequisiteURI
+                                            $_.WarmupTimes = $Miner.WarmupTimes
+                                            $_.Workers = $Miner.Workers # In case pool variant changes
+                                        }
+                                    }
+                                    $_.Refresh($Variables.PowerCostBTCperW, $Variables.CalculatePowerCost)
+                                    $_.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $_.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
+                                }
+                            )
+                        }
+                        Catch { 
+                            Write-Message -Level Error "Failed to update miner '$($Miner.Name)': Error $_"
+                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                            $_.Exception | Format-List -Force >> $ErrorLogFile
+                            $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                        }
+                    }
+                )
+                Remove-Variable Info, Miner, MinersNewGroup, MinersNewGroups, MinersNew, Name -ErrorAction Ignore
+            }
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -1304,11 +1311,11 @@ Do {
         $Variables.RefreshNeeded = $true
 
         Write-Message -Level Info "Collecting miner data while waiting for next cycle..."
-
+            
         Do { 
-            Start-Sleep -Milliseconds 100
+            Start-Sleep -Milliseconds 200
             Try { 
-                ForEach ($Miner in $Variables.RunningMiners.Where({ $Variables.NewMiningStatus -eq "Running" }).Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
+                ForEach ($Miner in ($Variables.RunningMiners.Where({ $_.Status -ne [MinerStatus]::DryRun }))) { 
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
                         $Miner.StatusInfo = "Error: '$($Miner.Info)' exited unexpectedly"
@@ -1337,7 +1344,7 @@ Do {
                                     Write-Message -Level Verbose "$($Miner.Name) data sample retrieved [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace ' ')$(If ($Config.BadShareRatioThreshold) { " / Shares Total: $($Sample.Shares.$_[3]), Rejected: $($Sample.Shares.$_[1]), Ignored: $($Sample.Shares.$_[2])" })" })) -join ' & ')$(If ($Sample.PowerConsumption) { " / Power consumption: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
                                     If ($Miner.Benchmark -or $Miner.MeasurePowerConsumption) { 
                                         $Miner.SubStatus = "Benchmarking"
-                                        $Miner.StatusInfo = "$($(If ($Miner.Benchmark) { "Benchmarking" }), $(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and " }), $(If ($Miner.MeasurePowerConsumption) { "Measuring power consumption" }) -join '') '$($Miner.Info)'"
+                                        $Miner.StatusInfo = "$($(If ($Miner.Benchmark) { "Benchmarking" }), $(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" }) -join '') '$($Miner.Info)'"
                                     }
                                     Else {
                                         $Miner.SubStatus = "Running"
@@ -1375,25 +1382,25 @@ Do {
                     }
                     $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                 }
+                Remove-Variable Miner, Sample, Samples -ErrorAction Ignore
+
+                $Variables.RunningMiners = @($Variables.RunningMiners.Where({ $_ -notin $Variables.FailedMiners }))
+                $Variables.BenchmarkingOrMeasuringMiners = @($Variables.RunningMiners.Where({ $_.Activated -gt 0 -and ($_.Benchmark -or $_.MeasurePowerConsumption) }))
+
+                If ($Variables.FailedMiners -and -not $Variables.BenchmarkingOrMeasuringMiners) { 
+                    # A miner crashed and we're not benchmarking, exit loop immediately
+                    $Variables.EndCycleMessage = " prematurely (Miner failed)"
+                }
+                ElseIf ($Variables.BenchmarkingOrMeasuringMiners -and -not ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.Data.Count -lt $_.MinDataSample }))) { 
+                    # Enough samples collected for this loop, exit loop immediately
+                    $Variables.EndCycleMessage = " (All running$(If ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.Benchmark })) { " benchmarking" })$(If ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.Benchmark -and $_.MeasurePowerConsumption })) { " and" })$(If ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.MeasurePowerConsumption })) { " power consumption measuring" }) miners have collected enough samples for this cycle)"
+                }
             }
             Catch { 
-                Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
-                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error.txt"
-                $_.Exception | Format-List -Force >> "Logs\Error.txt"
-                $_.InvocationInfo | Format-List -Force >> "Logs\Error.txt"
-            }
-            Remove-Variable Miner, Sample, Samples -ErrorAction Ignore
-
-            $Variables.RunningMiners = @($Variables.RunningMiners.Where({ $_ -notin $Variables.FailedMiners }))
-            $Variables.BenchmarkingOrMeasuringMiners = @($Variables.RunningMiners.Where({ $_.Activated -gt 0 -and ($_.Benchmark -or $_.MeasurePowerConsumption) }))
-
-            If ($Variables.FailedMiners -and -not $Variables.BenchmarkingOrMeasuringMiners) { 
-                # A miner crashed and we're not benchmarking, exit loop immediately
-                $Variables.EndCycleMessage = " prematurely (Miner failed)"
-            }
-            ElseIf ($Variables.BenchmarkingOrMeasuringMiners -and -not ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.Data.Count -lt $_.MinDataSample }))) { 
-                # Enough samples collected for this loop, exit loop immediately
-                $Variables.EndCycleMessage = " (All running$(If ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.Benchmark })) { " benchmarking" })$(If ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.Benchmark -and $_.MeasurePowerConsumption })) { " and" })$(If ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.MeasurePowerConsumption })) { " power consumption measuring" }) miners have collected enough samples for this cycle)"
+                Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting cycle..."
+                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                $_.Exception | Format-List -Force >> $ErrorLogFile
+                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
             }
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
@@ -1404,9 +1411,7 @@ Do {
             # - all benchmarking miners have collected enough samples
             # - WarmupTimes[0] is reached and no readout from miner
             # - Interval time is over
-        } While (-not $Variables.EndCycleMessage -and (([DateTime]::Now).ToUniversalTime() -le $Variables.EndCycleTime -or $Variables.BenchmarkingOrMeasuringMiners))
-
-
+        } While ($variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and (([DateTime]::Now).ToUniversalTime() -le $Variables.EndCycleTime -or $Variables.BenchmarkingOrMeasuringMiners))
 
         # Expire brains loop to collect data
         If ($Variables.EndCycleMessage) { 
@@ -1416,9 +1421,9 @@ Do {
     }
     Catch { 
         Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
-        "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Error.txt"
-        $_.Exception | Format-List -Force >> "Logs\Error.txt"
-        $_.InvocationInfo | Format-List -Force >> "Logs\Error.txt"
+        "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+        $_.Exception | Format-List -Force >> $ErrorLogFile
+        $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
         $Variables.EndCycleTime = $Variables.StartCycleTime.AddSeconds($Config.Interval) # Reset timers
         Continue
     }

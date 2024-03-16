@@ -8,9 +8,9 @@ function formatMiners(data) {
     try {
       // Format miner link
       if (item.MinerUri && item.Best && item.Status == 4) { 
-        item.tBaseName = '<a href="' + item.MinerUri + '" target ="_blank">' + item.BaseName + '</a>';
-        item.tName = '<a href="' + item.MinerUri + '" target ="_blank">' + item.Name + '</a>';
-        item.tStatusInfo = '<a href="' + item.MinerUri + '" target ="_blank">' + item.StatusInfo + '</a>';
+        item.tBaseName = '<a href="' + item.MinerUri + '" target="_blank">' + item.BaseName + '</a>';
+        item.tName = '<a href="' + item.MinerUri + '" target="_blank">' + item.Name + '</a>';
+        item.tStatusInfo = '<a href="' + item.MinerUri + '" target="_blank">' + item.StatusInfo + '</a>';
       } else {
         item.tBaseName = item.BaseName;
         item.tName = item.Name;
@@ -325,7 +325,14 @@ function formatGiBDigits10(value) {
 function detailFormatter(index, row) {
   var html = [];
   $.each(row, function (key, value) {
-    if (typeof value === 'string') html.push(`<p class="mb-0"><b>${key}:</b> ${JSON.stringify(value).replaceAll('\\\\', '\\')}</p>`);
+    if (typeof value === 'string') {
+      if (key === 'PoolUri') { 
+        var target = JSON.stringify(value).replaceAll('\\\\', '\\').replaceAll('"', '');
+        html.push(`<p class="mb-0"><b>${key}:</b> <a href=${target} target="_blank">${target}</a></p>`);
+      } else { 
+        html.push(`<p class="mb-0"><b>${key}:</b> ${JSON.stringify(value).replaceAll('\\\\', '\\')}</p>`);
+      }
+    }
     else html.push(`<p class="mb-0"><b>${key}:</b> ${JSON.stringify(value)}</p>`);
   });
   return html.join('');

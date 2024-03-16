@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -85,7 +85,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }) | ForEach-Object { $_.Algorithms += "" }
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] }).Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
 $Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 $Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLSelfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLSelfSignedCertificate -ne $true)) })
@@ -99,16 +99,16 @@ If ($Algorithms) {
 
                 ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                     { 
+                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
                         $ExcludeGPUModel = $_.ExcludeGPUModel
-                        If ($AvailableMiner_Devices = If ($_.ExcludeGPUModel) { $Miner_Devices.Where({ $_.Model -notmatch $ExcludeGPUModel }) } Else { $Miner_Devices }) { 
+                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ (-not $ExcludeGPUModel -or $_.Model -notmatch $ExcludeGPUModel) -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }).Where({ $_.Ethash.Epoch -eq $null -or $_.Ethash.Epoch -gt 0 }).Where({ $Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true }))) { 
-                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) }))) { 
+                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and $_.Ethash.Epoch -eq $null -or $_.Ethash.Epoch -gt 0 -and $Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true }))) { 
+                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and $Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true }))) { 
 
-                                    $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                                    If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                         $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })"
 

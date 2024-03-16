@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -70,7 +70,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }) | ForEach-Object { $_.Algorithms += "" }
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] }).Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
 $Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 
@@ -83,66 +83,68 @@ If ($Algorithms) {
 
                 ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                     { 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
-                            ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
+                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
-                                # Dual algorithm mining: Both pools must support same protocol (SSL or non-SSL) :-(
-                                If (-not $_.Algorithms[1] -or ($Pool0.PoolPorts[0] -and $Pool1.PoolPorts[0]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { 
+                            If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                                $PrerequisitePath = $Variables.VerthashDatPath
+                                $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+                            }
+                            Else { 
+                                $PrerequisitePath = $PrerequisiteURI = ""
+                            }
 
-                                    $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                                    $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                            $ExcludePools = $_.ExcludePools
+                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
+                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
 
-                                        $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })$(If ($_.Intensity) { "-$($_.Intensity)" })"
-                                        # $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($Pool1) { "-$($Pool0.AlgorithmVariant)&$($Pool1.AlgorithmVariant)" })$(If ($_.Intensity) { "-$($_.Intensity)" })"
+                                    # Dual algorithm mining: Both pools must support same protocol (SSL or non-SSL) :-(
+                                    If (-not $_.Algorithms[1] -or ($Pool0.PoolPorts[0] -and $Pool1.PoolPorts[0]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { 
 
-                                        $Arguments = $_.Arguments
-                                        $Arguments += " --hostname $($Pool0.Host)"
-                                        $Arguments += " --wallet $($Pool0.User)"
-                                        $Arguments += If (($Pool0.PoolPorts[1] -and -not $_.Algorithms[1]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { " --ssl --ssl-verify-none --ssl-port $($Pool0.PoolPorts[1])" } Else { " --port $($Pool0.PoolPorts[0])"}
-                                        If ($Pool0.Pass) { $Arguments += " --server-passwd $($Pool0.Pass)" }
+                                        $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                        If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                        $SecondAlgo = Switch ($_.Algorithms[1]) { 
-                                            "EthashB3" { "ethb3" }
-                                            "FiroPow"  { "firo" }
-                                            "KawPow"   { "rvn" }
-                                            "VertHash" { "vtc" }
-                                            Default    { "" }
-                                        }
-                                        If ($SecondAlgo) { 
-                                            $Arguments += " --$($SecondAlgo)-hostname $($Pool1.Host) --$($SecondAlgo)-wallet $($Pool1.User) --$($SecondAlgo)-passwd $($Pool1.Pass)"
-                                            $Arguments += If ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1]) { " --$($SecondAlgo)-port $($Pool1.PoolPorts[1])" } Else { " --$($SecondAlgo)-port $($Pool1.PoolPorts[0])" }
-                                            If ($_.Intensity) { $Arguments += " --dual-xintensity $($_.Intensity)" }
-                                        }
+                                            $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })$(If ($_.Intensity) { "-$($_.Intensity)" })"
 
-                                        # Apply tuning parameters
-                                        If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
+                                            $Arguments = $_.Arguments
+                                            $Arguments += " --hostname $($Pool0.Host)"
+                                            $Arguments += " --wallet $($Pool0.User)"
+                                            $Arguments += If (($Pool0.PoolPorts[1] -and -not $_.Algorithms[1]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { " --ssl --ssl-verify-none --ssl-port $($Pool0.PoolPorts[1])" } Else { " --port $($Pool0.PoolPorts[0])"}
+                                            If ($Pool0.Pass) { $Arguments += " --server-passwd $($Pool0.Pass)" }
 
-                                        If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                                            $PrerequisitePath = $Variables.VerthashDatPath
-                                            $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
-                                        }
-                                        Else { 
-                                            $PrerequisitePath = $PrerequisiteURI = ""
-                                        }
+                                            $SecondAlgo = Switch ($_.Algorithms[1]) { 
+                                                "EthashB3" { "ethb3" }
+                                                "FiroPow"  { "firo" }
+                                                "KawPow"   { "rvn" }
+                                                "VertHash" { "vtc" }
+                                                Default    { "" }
+                                            }
+                                            If ($SecondAlgo) { 
+                                                $Arguments += " --$($SecondAlgo)-hostname $($Pool1.Host) --$($SecondAlgo)-wallet $($Pool1.User) --$($SecondAlgo)-passwd $($Pool1.Pass)"
+                                                $Arguments += If ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1]) { " --$($SecondAlgo)-port $($Pool1.PoolPorts[1])" } Else { " --$($SecondAlgo)-port $($Pool1.PoolPorts[0])" }
+                                                If ($_.Intensity) { $Arguments += " --dual-xintensity $($_.Intensity)" }
+                                            }
 
-                                        [PSCustomObject]@{ 
-                                            API              = "TeamBlackMiner"
-                                            Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort$($DeviceSelector.($AvailableMiner_Devices.Type | Select-Object -Unique)) [$(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique | ForEach-Object { '{0:x}' -f $_ }) -join ',')]"
-                                            DeviceNames      = $AvailableMiner_Devices.Name
-                                            Fee              = $_.Fee # Dev fee
-                                            MinerSet         = $_.MinerSet
-                                            MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/summary"
-                                            Name             = $Miner_Name
-                                            Path             = $Path
-                                            Port             = $MinerAPIPort
-                                            PrerequisitePath = $PrerequisitePath
-                                            PrerequisiteURI  = $PrerequisiteURI
-                                            Type             = $_.Type
-                                            URI              = $Uri
-                                            WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers          = @(($Pool0, $Pool1).Where({ $_ }) | ForEach-Object { @{ Pool = $_ } })
+                                            # Apply tuning parameters
+                                            If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
+
+                                            [PSCustomObject]@{ 
+                                                API              = "TeamBlackMiner"
+                                                Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort$($DeviceSelector.($AvailableMiner_Devices.Type | Select-Object -Unique)) [$(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique | ForEach-Object { '{0:x}' -f $_ }) -join ',')]"
+                                                DeviceNames      = $AvailableMiner_Devices.Name
+                                                Fee              = $_.Fee # Dev fee
+                                                MinerSet         = $_.MinerSet
+                                                MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/summary"
+                                                Name             = $Miner_Name
+                                                Path             = $Path
+                                                Port             = $MinerAPIPort
+                                                PrerequisitePath = $PrerequisitePath
+                                                PrerequisiteURI  = $PrerequisiteURI
+                                                Type             = $_.Type
+                                                URI              = $Uri
+                                                WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                                Workers          = @(($Pool0, $Pool1).Where({ $_ }) | ForEach-Object { @{ Pool = $_ } })
+                                            }
                                         }
                                     }
                                 }

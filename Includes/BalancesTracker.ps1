@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -87,7 +87,7 @@ Do {
             }
 
             # Keep most recent balance objects, keep empty balances for 7 days
-            $BalanceObjects = @(@($BalanceObjects + $BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) }).Where({ $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet | ForEach-Object { $_.Group | Sort-Object DateTime -Bottom 1 })
+            $BalanceObjects = @(@($BalanceObjects + $BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet | ForEach-Object { $_.Group | Sort-Object DateTime -Bottom 1 })
 
             # Fix for pool reporting incorrect currency, e.g ZergPool ZER instead of BTC
             # $BalanceObjects = @($BalanceObjects.Where({ $_.Pool -in @("MiningDutch", "MiningPoolHub", "ProHashing") })) + @($BalanceObjects.Where({ $_.Pool -notin @("MiningDutch", "MiningPoolHub", "ProHashing") }) | Group-Object Pool, Wallet | ForEach-Object { $_.Group | Sort-Object DateTime -Bottom 1 })

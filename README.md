@@ -151,7 +151,7 @@ Easy configuration, easy start:
       The prerun scripts can be used to set per miner/algorithm OC via nvidiaInspector or OverdriveNTool.
       Before starting a miner executable UG-Miner is trying to launch one of the following 3 prerun scripts (in this order):
       1. <MinerName>_<Algorithm>.bat
-         Simply create a file named <MinerName>_<AlgorithmName>.bat in prerun folder, e.g. 'MiniZ-v2.2c-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat'
+         Simply create a file named <MinerName>_<AlgorithmName>.bat in prerun folder, e.g. 'MiniZ-v2.3c-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat'
       2. <Algorithm>.bat
          Simply create a file named <AlgorithmName>.bat in prerun folder, e.g. 'Ethash.bat'
       3. default.bat

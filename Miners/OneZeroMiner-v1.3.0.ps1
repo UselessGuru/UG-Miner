@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -45,12 +45,12 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
+                        $ExcludeArchitecture = $_.ExcludeArchitecture
+                        $MinMemGiB = $_.MinMemGiB
+                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                            $ExcludeArchitecture = $_.ExcludeArchitecture
-                            $MinMemGiB = $_.MinMemGiB
-                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeArchitecture })) { 
+                            $ExcludePools = $_.ExcludePools
+                            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
 
                                 $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
 

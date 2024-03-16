@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.14
+Version:        6.1.15
 Version date:   2024/03/06
 #>
 
@@ -47,21 +47,22 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] }).Where({ $_.Name -notin $ExcludePools }))) { 
+                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                        $MinMemGiB  = $_.MinMemGiB 
+                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                            $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                            $MinMemGiB  = $_.MinMemGiB 
-                            If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB }).Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                            $ExcludePools = $_.ExcludePools
+                            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools }))) { 
 
                                 $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
-
-                                $Fee = If ($Pool.PoolPorts[1]) { @(2.5) } Else { @(2) }
 
                                 # Disable dev fee mining
                                 If ($Config.DisableMinerFee) { 
                                     $Arguments += " --nofee 1"
                                     $Fee = @(0)
+                                }
+                                Else {
+                                    $Fee = If ($Pool.PoolPorts[1]) { @(2.5) } Else { @(2) }
                                 }
 
                                 [PSCustomObject]@{ 
