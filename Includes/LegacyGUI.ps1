@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
 Version:        6.1.15
-Version date:   2024/03/06
+Version date:   2024/03/16
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
