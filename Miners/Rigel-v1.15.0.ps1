@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 # Return 
@@ -107,7 +107,7 @@ If ($Algorithms) {
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB
                                     If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                        $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })"
+                                        $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                         $Arguments = $_.Arguments
                                         If ($Pool0.Currency -in @("AIPG", "CLORE", "ETHW", "NEOX", "OCTA", "RVN", "XNA", "XPB")) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }

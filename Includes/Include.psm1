@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -584,7 +584,7 @@ Class Miner {
 
         $this.Workers.ForEach(
             { 
-                If ($Stat = Get-Stat -Name "$($this.Name)_$($_.Pool.AlgorithmVariant)_Hashrate") { 
+                If ($Stat = Get-Stat -Name "$($this.Name)_$($_.Pool.Algorithm)_Hashrate") { 
                     $_.Hashrate = $Stat.Hour
                     $Factor = $_.Hashrate * (1 - $_.Fee - $_.Pool.Fee)
                     $_.Disabled = $Stat.Disabled
@@ -626,7 +626,7 @@ Class Miner {
         $this.Profit = [Double]::NaN
         $this.Profit_Bias = [Double]::NaN
         If ($CalculatePowerCost) { 
-            If ($Stat = Get-Stat -Name "$($this.Name)$(If ($this.Workers.Count -eq 1) { "_$($this.Workers[0].Pool.AlgorithmVariant)" })_PowerConsumption") { 
+            If ($Stat = Get-Stat -Name "$($this.Name)_PowerConsumption") { 
                 If ($Stat.Week) { 
                     $this.PowerConsumption = $Stat.Week
                     $this.PowerCost = $this.PowerConsumption * $PowerCostBTCperW
@@ -2618,7 +2618,9 @@ Function Invoke-CreateProcess {
         [String]$LogFile
     )
 
-    $Job = Start-ThreadJob -Name $JobName -StreamingHost $null -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
+    # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and running mines remain
+    $Job = Start-Job -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
+    # $Job = Start-ThreadJob -Name $JobName -StreamingHost $null -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
         Param($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID)
 
         $ControllerProcess = Get-Process -Id $ControllerProcessID
@@ -2702,7 +2704,7 @@ public static class Kernel32
         $Process.Handle | Out-Null
 
         Do { 
-            If ($ControllerProcess.WaitForExit(200)) { 
+            If ($ControllerProcess.WaitForExit(15000)) { 
                 [Void]$Process.CloseMainWindow()
                 [Void]$Process.WaitForExit()
                 [Void]$Process.Close()

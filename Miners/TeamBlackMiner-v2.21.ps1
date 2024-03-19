@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"11.6") }))) { Return }
 
-$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.20/TeamBlackMiner_2_20_cuda_12_0.7z"
+$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.21/TeamBlackMiner_2_21_cuda_12_2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\TBMiner.exe"
 
@@ -104,7 +104,7 @@ If ($Algorithms) {
                                         $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                         If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                            $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)$(If ($_.Algorithms[1]) { "-$($_.Algorithms[0])&$($_.Algorithms[1])" })$(If ($_.Intensity) { "-$($_.Intensity)" })"
+                                            $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.Intensity) { "-$($_.Intensity)" })"
 
                                             $Arguments = $_.Arguments
                                             $Arguments += " --hostname $($Pool0.Host)"

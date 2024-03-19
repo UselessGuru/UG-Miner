@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Vendor -ne "CPU" -or $_.CUDAVersion -ge [Version]"10.2" }))) { Return }
@@ -60,10 +60,10 @@ If ($Algorithms) {
                         $MinMemGiB = $_.MinMemGiB
                         If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
+                            $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)-$($_.Algorithm)"
+
                             $ExcludePools = $_.ExcludePools
                             ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools }))) { 
-
-                                $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)"
 
                                 $BlockSize = $_.BlockSize
                                 # 1 GB memory reserve, then 1 thread per 4GB

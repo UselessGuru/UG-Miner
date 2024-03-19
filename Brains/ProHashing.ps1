@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ProHashing.ps1
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 using module ..\Includes\Include.psm1
@@ -72,12 +72,12 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
         $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
         # Only recods with 24h_btc are relevant
-        $CurrenciesData = $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_."24h_btc" }).ForEach({ $CurrenciesData.$_ })
+        $CurrenciesData = $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.enabled }).ForEach({ $CurrenciesData.$_ })
 
         ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
             $Algorithm_Norm = Get-Algorithm $Algo
             $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
-            $Currencies = @($CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -eq $Algo }))
+            $Currencies = @($CurrenciesData.Where({ $_.algo -eq $Algo }).abbreviation)
             $Currency = If ($Currencies.Count -eq 1) { $($Currencies[0] -replace '-.+' -replace ' \s+' -replace ' $') } Else { "" }
             $AlgoData.$Algo | Add-Member Currency $Currency -Force
             $AlgoData.$Algo | Add-Member Updated $Timestamp -Force
@@ -100,7 +100,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 Last24hDrift        = $AlgoData.$Algo.estimate_current - $BasePrice
                 Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algo.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
                 Last24hDriftSign    = If ($AlgoData.$Algo.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
-                Name                = $Algorithm_Norm
+                Name                = $Algo
             }
         }
         Remove-Variable Algo, Algorithm_Norm, BasePrice, Currency, Currencies, CurrenciesData, StatName -ErrorAction Ignore

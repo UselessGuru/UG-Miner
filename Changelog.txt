@@ -2,6 +2,32 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+ChangeLog UG-Miner 6.2.0 2024/03/19
+====================================
+
+Changes:
+- Core: Change miner naming to always include algorithm variant, this requires re-benchmarking all miners
+  Naming convention:
+  [Miner base name (e.g. 'BzMiner')]-[Miner version (e.g. 'v20.0.0)]-[Device(s) (e.g. '1xGTX1660SUPER6G')]-[Algorithm variant(s) joined by '&', (eg. 'Autolykos2(4GiB)&HeavyHashKaspa')]
+  E.g.: BzMiner-v20.0.0-1xGTX1660SUPER6GB-Autolykos2(4GiB)&HeavyHashKaspa
+
+Enhancements:
+- Core: Added support for algoritm 'MeowPow' (MeowCoin)
+- Core: Speed up benchmark & power consumption measurement. End cycle as soon as one miner has collected enough samples.
+
+Fixes:
+- Core / Includes.psm1: Running miners not shut down when closing main window
+- Brain 'ProHashing': Invalid curreny 'Syncroot'
+
+Improvements:
+- Miners: Optimize core for faster processing
+
+Miner updates
+- SRBMinerMulti-v2.4.9
+- TeamBlackMiner-v2.21
+- TTMiner-v2024.1.6
+
+
 ChangeLog UG-Miner 6.1.15 2024/03/16
 ====================================
 
@@ -14,7 +40,7 @@ Improvements:
 - Minor code optimizations (Core & Miners)
 
 Miner updates:
-- CpuMinerAurum-v3.23.1
+- CpuMinerAurum-v3.23.1 (new)
 - GMiner-v3.44
 - MiniZ-v2.3c
 - Rigel-v1.15.0
@@ -120,7 +146,7 @@ Enhancements:
 - Legacy GUI: Show message box before closing legacy GUI
 
 Fixes:
-- Legacy GUI: 'System status /Active miners' & 'Miners' tables: Context menu options broken (Regression from 6.0.1)
+- Legacy GUI: 'Active miners' & 'Miners' tables: Context menu options broken (Regression from 6.0.1)
 - Legacy GUI: Update status when loading legacy GUI
 - TeamBlackMiner-v2-17: Error invalid parameter 'System.Collections.Hashtable [1]' (Regression from 6.1.6)
 

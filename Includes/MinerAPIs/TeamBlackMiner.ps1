@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 Class TeamBlackMiner : Miner { 
@@ -48,7 +48,7 @@ Class TeamBlackMiner : Miner {
 
         ForEach ($Algorithm in $this.Algorithms) { 
             $Data.pool.PSObject.Properties.Name | ForEach-Object { 
-                If ($Data.pool.$_.Algo -eq ($Algorithm -replace '-\dGiB$')) { 
+                If ($Data.pool.$_.Algo -eq $Algorithm) { 
                     $HashRate_Name = [String]$Algorithm
                     $HashRate_Value = [Double]($Data.pool.$_.total_hashrate)
                     $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }

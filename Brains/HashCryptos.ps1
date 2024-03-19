@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 using module ..\Includes\Include.psm1
@@ -91,7 +91,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 Last24hDrift        = $AlgoData.$Algo.estimate_current - $BasePrice
                 Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algo.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
                 Last24hDriftSign    = If ($AlgoData.$Algo.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
-                Name                = $Algorithm_Norm
+                Name                = $Algo
             }
         }
         Remove-Variable Algo, Algorithm_Norm, BasePrice, StatName -ErrorAction Ignore

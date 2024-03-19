@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.1.15
-Version date:   2024/03/16
+Version:        6.2.0
+Version date:   2024/03/19
 #>
 
 using module .\Includes\Include.psm1
@@ -27,7 +27,7 @@ using module .\Includes\APIServer.psm1
 
 param(
     [Parameter(Mandatory = $false)]
-    [String[]]$Algorithm = @(), # i.e. @("Ethash", "Equihash", "Cryptonight") etc.
+    [String[]]$Algorithm = @(), # i.e. @("Equihash1445", "Ethash", "KawPow") etc.
     [Parameter(Mandatory = $false)] 
     [String]$APILogfile = "", # API will log all requests to this file, leave empty to disable
     [Parameter(Mandatory = $false)]
@@ -111,9 +111,9 @@ param(
     [Parameter(Mandatory = $false)]
     [Switch]$LogBalanceAPIResponse = $false, # If true will log the pool balance API data
     [Parameter(Mandatory = $false)]
-    [String[]]$LogToFile = @("Info", "Warn", "Error", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of @("Info", "Warn", "Error", "Verbose", "Debug")
+    [String[]]$LogToFile = @("Debug", "Info", "Warn", "Error", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of @("Debug", "Info", "Warn", "Error", "Verbose", "Debug")
     [Parameter(Mandatory = $false)]
-    [String[]]$LogToScreen = @("Info", "Warn", "Error", "Verbose"), # Log level detail to be written to screen, see Write-Message function; any of @("Info", "Warn", "Error", "Verbose", "Debug")
+    [String[]]$LogToScreen = @("Debug", "Info", "Warn", "Error", "Verbose"), # Log level detail to be written to screen, see Write-Message function; any of @("Debug", "Info", "Warn", "Error", "Verbose", "Debug")
     [Parameter(Mandatory = $false)]
     [String]$LogViewerConfig = ".\Utils\UG-Miner_LogReader.xml", # Path to external log viewer config file
     [Parameter(Mandatory = $false)]
@@ -294,7 +294,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.1.15"
+    Version      = [System.Version]"6.2.0"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -455,8 +455,9 @@ $Variables.SuspendCycle = $false
 $Variables.WatchdogTimers = [PSCustomObject[]]@()
 
 $Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^UbqHash"
-$Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^ProgPow"
-$Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^Octopus$|^ProgPow|^UbqHash"
+$Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^ProgPow"
+$Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^Octopus|^ProgPow|^UbqHash"
+
 
 $Variables.Summary = "Loading miner device information...<br>This may take a while."
 Write-Message -Level Verbose $Variables.Summary
