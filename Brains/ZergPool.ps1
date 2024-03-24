@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 using module ..\Includes\Include.psm1
@@ -75,8 +75,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $APIdata.PSObject.Properties.Name.Where({ $APIdata.$_.algo -eq "Token" -or $_ -like "*-*" }).ForEach({ $APIdata.PSObject.Properties.Remove($_) })
         $APIdata.PSObject.Properties.Name.Where({ $APIdata.$_.algo }).ForEach(
             { 
-                $APIdata.$_ | Add-Member @{ Currency = If ($APIdata.$_.symbol) { $APIdata.$_.symbol } Else { "" } } -Force
-                $APIdata.$_ | Add-Member @{ CoinName = If ($APIdata.$_.name) { $APIdata.$_.name } Else { "" } } -Force
+                $APIdata.$_ | Add-Member Currency $(If ($APIdata.$_.symbol) { $APIdata.$_.symbol })
+                $APIdata.$_ | Add-Member CoinName $(If ($APIdata.$_.name) { $APIdata.$_.name })
                 $APIdata.$_.PSObject.Properties.Remove("symbol")
                 $APIdata.$_.PSObject.Properties.Remove("name")
             }
@@ -152,7 +152,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $GroupMedSampleSizeHalf = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average | Select-Object -ExpandProperty Average) } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
         $GroupMedSampleSizeNoPercent = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average | Select-Object -ExpandProperty Average) } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDrift } }
 
-        ForEach ($PoolName in (($PoolObjects.Name | Select-Object -Unique).Where({ $_ -in $APIdata.PSObject.Properties.Name }))) { 
+        ForEach ($PoolName in ($PoolObjects.Name | Select-Object -Unique).Where({ $_ -in $APIdata.PSObject.Properties.Name })) { 
             $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf | Where-Object { $_.Name -eq $PoolName + ", Up" }).Count - ($GroupAvgSampleSizeHalf | Where-Object { $_.Name -eq $Name + ", Down" }).Count) / (($GroupMedSampleSizeHalf | Where-Object { $_.Name -eq $PoolName }).Count)) * [Math]::abs(($GroupMedSampleSizeHalf | Where-Object { $_.Name -eq $PoolName }).Median)
             $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize | Where-Object { $_.Name -eq $PoolName + ", Up" }).Count - ($GroupAvgSampleSize | Where-Object { $_.Name -eq $Name + ", Down" }).Count) / (($GroupMedSampleSize | Where-Object { $_.Name -eq $PoolName }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent | Where-Object { $_.Name -eq $PoolName }).Median)
             $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)

@@ -21,7 +21,7 @@ $Data = [PSCustomObject]@{
     $CoinDB | Add-Member $_ $Data
 }
 
-ForEach ($Algorithm in (($CoinDB | Get-Member -MemberType NoteProperty).Name | ForEach-Object { $CoinDB.$_.Algorithms } | Sort-Object -Unique)) { 
+ForEach ($Algorithm in ($CoinDB | Get-Member -MemberType NoteProperty).Name | ForEach-Object { $CoinDB.$_.Algorithms } | Sort-Object -Unique) { 
     
     $Currencies = ($CoinDB | Get-Member -MemberType NoteProperty).Name | Where-Object { $CoinDB.$_.Algorithms -match $Algorithm }
     If ($Currencies.Count -eq 1) { 

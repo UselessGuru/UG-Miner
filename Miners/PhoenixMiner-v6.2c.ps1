@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -65,7 +65,7 @@ If ($Algorithms) {
                 $Intensity = $_.Intensity
                 $WarmupTimes = $_.WarmupTimes.PsObject.Copy()
                 If ($_.Type -eq "NVIDIA" -and $Intensity) { $Intensity *= 5 } # Nvidia allows much higher intensity
-                ForEach ($Intensity in ($IntensityValues.($_.Algorithms[1]) | Select-Object)) { 
+                ForEach ($Intensity in $IntensityValues.($_.Algorithms[1]) | Select-Object) { 
                     $_ | Add-Member Intensity $Intensity -Force
                     # Allow extra time for auto tuning
                     $_.WarmupTimes[1] = $WarmupTimes[1] + 45
@@ -86,8 +86,8 @@ If ($Algorithms) {
                         If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 }))) { 
-                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
+                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 })) { 
+                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] })) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                     If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
@@ -148,7 +148,7 @@ If ($Algorithms) {
                                                 Port        = $MinerAPIPort
                                                 Type        = $_.Type
                                                 URI         = $Uri
-                                                WarmupTimes = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                                 Workers     = @(($Pool0, $Pool1).Where({ $_ }) | ForEach-Object { @{ Pool = $_ } })
                                             }
                                         }

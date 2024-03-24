@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 using module ..\Includes\Include.psm1
@@ -54,7 +54,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo etchash --dalgo kheavyhash --cuda 1 --opencl 0" }
     [PSCustomObject]@{ Algorithms = @("EtcHash", "SHA512256d");        Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo etchash --dalgo radiant --cuda 1 --opencl 0" }
     [PSCustomObject]@{ Algorithms = @("Ethash");                       Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo ethash --cuda 1 --opencl 0" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
-    [PSCustomObject]@{ Algorithms = @("Ethash", "IronFish");           Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo ethash --dalgo ironfish --cuda 1 --opencl 0" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "IronFish");           Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo ethash --dalgo ironfish --cuda 1 --opencl 0" }
     [PSCustomObject]@{ Algorithms = @("Ethash", "HeavyHashKaspa");     Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo ethash --dalgo kheavyhash --cuda 1 --opencl 0" }
     [PSCustomObject]@{ Algorithms = @("Ethash", "SHA512256d");         Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo ethash --dalgo radiant --cuda 1 --opencl 0" }
     [PSCustomObject]@{ Algorithms = @("FiroPow");                      Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --nvml 0 --algo firo --cuda 1 --opencl 0" }
@@ -89,8 +89,8 @@ If ($Algorithms) {
                         If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
-                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
+                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] })) { 
+                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] })) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                     If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 

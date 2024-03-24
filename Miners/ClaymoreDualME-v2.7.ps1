@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -le [Version]"20.45.01.28") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return } # Only supports AMD drivers until 20.12.1
@@ -48,7 +48,7 @@ If ($Algorithms) {
                 ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                     { 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools -and $_.Epoch -le 600 }))) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools -and $_.Epoch -le 600 })) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                             If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 

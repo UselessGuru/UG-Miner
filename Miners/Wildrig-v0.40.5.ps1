@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"452.39.00") }))) { Return }
@@ -199,7 +199,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Hex";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @("Other");  ExcludePools = @();           Arguments = " --algo hex --watchdog" }
     [PSCustomObject]@{ Algorithm = "HMQ1725";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUArchitecture = @();         ExcludePools = @();           Arguments = " --algo hmq1725 --watchdog" } # CryptoDredge-v0.27.0 is fastest
     [PSCustomObject]@{ Algorithm = "JeongHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @();         ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
-    [PSCustomObject]@{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.90; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUArchitecture = @("Other");  ExcludePools = @();           Arguments = " --algo kawpow --watchdog" } # NBMiner-v42.3 is fastest
+    [PSCustomObject]@{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUArchitecture = @("Other");  ExcludePools = @();           Arguments = " --algo kawpow --watchdog" } # NBMiner-v42.3 is fastest
 #   [PSCustomObject]@{ Algorithm = "Lyra2RE2";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @();         ExcludePools = @();           Arguments = " --algo lyra2v2 --watchdog" } # ASIC
 #   [PSCustomObject]@{ Algorithm = "Lyra2RE3";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @();         ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
     [PSCustomObject]@{ Algorithm = "Lyra2TDC";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = @();         ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
@@ -273,7 +273,7 @@ If ($Algorithms) {
                         If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool in ($MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }))) { 
+                            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                                 If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 

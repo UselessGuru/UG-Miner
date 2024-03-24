@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 using module .\Includes\Include.psm1
@@ -231,6 +231,8 @@ param(
     [Parameter(Mandatory = $false)]
     [Switch]$ShowPowerConsumption = $true, # Show Power consumption column in main text window miner overview (if power price is available, see PowerPricekWh)
     [Parameter(Mandatory = $false)]
+    [Switch]$ShowShares = $true, # Show share data in log
+    [Parameter(Mandatory = $false)]
     [Switch]$ShowUser = $false, # Show pool user name column in main text window miner overview
     [Parameter(Mandatory = $false)]
     [Switch]$ShowWorkerStatus = $true, # Show worker status from other rigs (data retrieved from monitoring server)
@@ -294,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.0"
+    Version      = [System.Version]"6.2.1"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -305,10 +307,10 @@ If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") {
     Exit
 }
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.2.18") { 
-    Write-Host "`Outdated PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
+    Write-Host "Outdated PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
 }
 If ($PSVersiontable.PSVersion -ge [System.Version]"7.3.0") { 
-    Write-Host "`Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended.`n`n" -ForegroundColor Magenta
+    Write-Host "Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended.`n`n" -ForegroundColor Magenta
 }
 
 # Internet connection must be available
@@ -345,6 +347,9 @@ $Variables.AllCommandLineParameters = [Ordered]@{ }
         Remove-Variable $_
     }
 )
+
+$Variables.MutexAddCoinName = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
+$Variables.MutexWriteMessage = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_WriteMessage")
 
 Write-Host "Preparing environment and loading data files..."
 Initialize-Environment
@@ -431,6 +436,7 @@ If (Get-Item .\* -Stream Zone.*) {
 }
 
 Write-Message -Level Verbose "Setting variables..."
+$nl = "`n" # Must use variable, cannot join with '`n' with Write-Host
 
 # Align CUDA id with nvidia-smi order
 $env:CUDA_DEVICE_ORDER = 'PCI_BUS_ID'
@@ -457,7 +463,6 @@ $Variables.WatchdogTimers = [PSCustomObject[]]@()
 $Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^UbqHash"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^ProgPow"
 $Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^Octopus|^ProgPow|^UbqHash"
-
 
 $Variables.Summary = "Loading miner device information...<br>This may take a while."
 Write-Message -Level Verbose $Variables.Summary
@@ -527,8 +532,6 @@ If ($Variables.FreshConfig) {
 
 Function MainLoop { 
 
-    If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
-
     If ($Variables.NewMiningStatus -eq "Running") {
         If ($Config.IdleDetection) {
             Start-IdleDetection
@@ -575,6 +578,8 @@ Function MainLoop {
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
     If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $MiningSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
+
+        If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or ($Variables.PoolName -and (Compare-Object $Config.PoolName $Variables.PoolName))) { 
 
@@ -893,7 +898,7 @@ Function MainLoop {
                 )
                 # Display optimal miners list
                 $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
-                ($Variables.MinersOptimal | Group-Object -Property { $_.DeviceNames }).ForEach(
+                ($Variables.MinersOptimal | Group-Object -Property DeviceNames).ForEach(
                     { 
                         $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
                         $MinersDeviceGroupNeedingBenchmark = @($MinersDeviceGroup.Where({ $_.Benchmark }))
@@ -992,7 +997,7 @@ Function MainLoop {
 
             If ($Variables.MiningStatus -eq "Running") { 
                 If ($Variables.Timer) { 
-                    Write-Host ($Variables.Summary -replace '<br>', ' ' -replace '&ensp;', ' ' -replace '\s*/\s*', '/' -replace '\s*=\s*', '=')
+                    Write-Host ($Variables.Summary -replace '\.\.\.<br>', '... ' -replace '<br>', $nl -replace '&ensp;', ' ' -replace '\s*/\s*', '/' -replace '\s*=\s*', '=')
                 }
                 If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                     If ($Variables.MiningProfit -lt 0) { 

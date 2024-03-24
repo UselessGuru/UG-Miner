@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -in @("AMD", "INTEL") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
@@ -66,7 +66,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @("ProHashing"));           Arguments = @(" -a etchash", " --a2 kaspa") }
     [PSCustomObject]@{ Algorithms = @("EtcHash", "IronFish");          Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@(), @("Nicehash"));             Arguments = @(" -a etchash", " --a2 ironfish") } # https://github.com/bzminer/bzminer/issues/260
     [PSCustomObject]@{ Algorithms = @("EtcHash", "SHA512256d");        Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());                       Arguments = @(" -a etchash", " --a2 radiant") }
-    [PSCustomObject]@{ Algorithms = @("Ethash");                       Type = "NVIDIA"; Fee = @(0.005);      MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 20); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@(), @());                       Arguments = @(" -a ethash") }
+    [PSCustomObject]@{ Algorithms = @("Ethash");                       Type = "NVIDIA"; Fee = @(0.005);      MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 10); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@(), @());                       Arguments = @(" -a ethash") }
     [PSCustomObject]@{ Algorithms = @("Ethash", "Blake3");             Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@(), @());                       Arguments = @(" -a ethash", " --a2 alph") }
     [PSCustomObject]@{ Algorithms = @("Ethash", "HeavyHashKaspa");     Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());                       Arguments = @(" -a ethash", " --a2 kaspa") }
     [PSCustomObject]@{ Algorithms = @("Ethash", "IronFish");           Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@(), @("Nicehash"));             Arguments = @(" -a ethash", " --a2 ironfish") } # https://github.com/bzminer/bzminer/issues/260
@@ -104,8 +104,8 @@ If ($Algorithms) {
                         If ($AvailableMiner_Devices = $Miner_Devices.Where({ (-not $ExcludeGPUModel -or $_.Model -notmatch $ExcludeGPUModel) -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($_.Ethash.Epoch -eq $null -or $_.Ethash.Epoch -gt 0) -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) }))) { 
-                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) }))) { 
+                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($_.Ethash.Epoch -eq $null -or $_.Ethash.Epoch -gt 0) -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) })) { 
+                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) })) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                     If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 

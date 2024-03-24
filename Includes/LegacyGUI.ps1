@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -175,15 +175,15 @@ Function Update-TabControl {
                     $ActiveMinersDGV.Columns[1].FillWeight = 30 + ($Variables.MinersBestPerDevice_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
                     $ActiveMinersDGV.Columns[2].FillWeight = 160
                     $ActiveMinersDGV.Columns[3].FillWeight = 60
-                    $ActiveMinersDGV.Columns[4].FillWeight = 55; $ActiveMinersDGV.Columns[3].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                    $ActiveMinersDGV.Columns[5].FillWeight = 55; $ActiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[4].Visible = $Variables.CalculatePowerCost
-                    $ActiveMinersDGV.Columns[6].FillWeight = 55; $ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
-                    $ActiveMinersDGV.Columns[7].FillWeight = 55; $ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
+                    $ActiveMinersDGV.Columns[4].FillWeight = 55; $ActiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[5].FillWeight = 55; $ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
+                    $ActiveMinersDGV.Columns[6].FillWeight = 55; $ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
+                    $ActiveMinersDGV.Columns[7].FillWeight = 55; $ActiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[8].FillWeight = 70 + ($Variables.MinersBestPerDevice_Combo.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
                     $ActiveMinersDGV.Columns[9].FillWeight = 50 + ($Variables.MinersBestPerDevice_Combo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
-                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBestPerDevice_Combo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[9].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
-                    $ActiveMinersDGV.Columns[11].FillWeight = 65; $ActiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                    $ActiveMinersDGV.Columns[12].FillWeight = 65; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBestPerDevice_Combo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[11].FillWeight = 65; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[12].FillWeight = 65; $ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
                 }
                 Set-TableColor -DataGridView $ActiveMinersDGV
                 Form-Resize # To fully show lauched miners gridview
@@ -380,13 +380,13 @@ Function Update-TabControl {
                     $MinersDGV.Columns[2].FillWeight = 160
                     $MinersDGV.Columns[3].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
                     $MinersDGV.Columns[4].Visible = -not $RadioButtonMinersUnavailable.checked; $MinersDGV.Columns[4].FillWeight = 50
-                    $MinersDGV.Columns[5].FillWeight = 55; $MinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                    $MinersDGV.Columns[6].FillWeight = 60; $MinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
-                    $MinersDGV.Columns[7].FillWeight = 55; $MinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
-                    $MinersDGV.Columns[8].FillWeight = 55; $MinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
+                    $MinersDGV.Columns[5].FillWeight = 55; $MinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
+                    $MinersDGV.Columns[6].FillWeight = 60; $MinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
+                    $MinersDGV.Columns[7].FillWeight = 55; $MinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
+                    $MinersDGV.Columns[8].FillWeight = 55; $MinersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                     $MinersDGV.Columns[9].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
                     $MinersDGV.Columns[10].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
-                    $MinersDGV.Columns[11].FillWeight = 50 + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $MinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                    $MinersDGV.Columns[11].FillWeight = 50 + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $MinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
                 }
                 Set-TableColor -DataGridView $MinersDGV
                 $MinersDGV.EndInit()

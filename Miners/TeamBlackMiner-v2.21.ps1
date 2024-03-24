@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"11.6") }))) { Return }
@@ -53,12 +53,12 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EtcHash", "EthashB3");  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo etc+ethb3" }
     [PSCustomObject]@{ Algorithms = @("EtcHash", "FiroPow");   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo etc+firo" }
     [PSCustomObject]@{ Algorithms = @("EtcHash", "KawPow");    Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
-    [PSCustomObject]@{ Algorithms = @("EtcHash", "VertHash");  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" }
+    [PSCustomObject]@{ Algorithms = @("EtcHash", "VertHash");  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 20); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" }
     [PSCustomObject]@{ Algorithms = @("Ethash");               Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo ethash" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
     [PSCustomObject]@{ Algorithms = @("Ethash", "EthashB3");   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo eth+ethb3" }
     [PSCustomObject]@{ Algorithms = @("Ethash", "FiroPow");    Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo eth+firo" }
-    [PSCustomObject]@{ Algorithms = @("Ethash", "KawPow");     Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
-    [PSCustomObject]@{ Algorithms = @("Ethash", "VertHash");   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo eth+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "KawPow");     Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 20); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "VertHash");   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 20); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo eth+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" }
     [PSCustomObject]@{ Algorithms = @("EthashB3");             Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo ethashb3" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "FiroPow");  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo ethb3+firo" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "KawPow");   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
@@ -95,8 +95,8 @@ If ($Algorithms) {
                             }
 
                             $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in ($MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }))) { 
-                                ForEach ($Pool1 in ($MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }))) { 
+                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] })) { 
+                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] })) { 
 
                                     # Dual algorithm mining: Both pools must support same protocol (SSL or non-SSL) :-(
                                     If (-not $_.Algorithms[1] -or ($Pool0.PoolPorts[0] -and $Pool1.PoolPorts[0]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { 

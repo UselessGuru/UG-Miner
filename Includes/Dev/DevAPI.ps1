@@ -479,7 +479,7 @@ Switch ($Path) {
         Break
     }
     "/functions/watchdogtimers/remove" { 
-        ForEach ($WatchdogTimer in ($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore)) { 
+        ForEach ($WatchdogTimer in $Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore) { 
             If ($WatchdogTimers = @($Variables.WatchdogTimers | Where-Object MinerName -EQ $WatchdogTimer.Name | Where-Object { $_.Algorithm -eq $WatchdogTimer.Algorithms })) {
                 # Remove Watchdog timers
                 $Variables.WatchdogTimers = @($Variables.WatchdogTimers | Where-Object { $_ -notin $WatchdogTimers })
@@ -492,7 +492,7 @@ Switch ($Path) {
                 }
             }
         }
-        ForEach ($WatchdogTimer in ($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
+        ForEach ($WatchdogTimer in $Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore) { 
             If ($WatchdogTimers = @($Variables.WatchdogTimers | Where-Object PoolName -EQ $WatchdogTimer.Name | Where-Object { $_.Algorithm -EQ $WatchdogTimer.Algorithm })) {
                 # Remove Watchdog timers
                 $Variables.WatchdogTimers = @($Variables.WatchdogTimers | Where-Object { $_ -notin $WatchdogTimers })

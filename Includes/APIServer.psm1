@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.0"
+    $APIVersion = "0.5.4.1"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -67,7 +67,10 @@ Function Start-APIServer {
             $Powershell.AddScript(
                 { 
                     $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
-                    
+
+                    $GCStopWatch = [System.Diagnostics.StopWatch]::New()
+                    $GCStopWatch.Start()
+
                     (Get-Process -Id $PID).PriorityClass = "Normal"
 
                     # Set the starting directory
@@ -620,7 +623,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/watchdogtimers/remove" { 
-                                ForEach ($Miner in ($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore)) { 
+                                ForEach ($Miner in $Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore) { 
                                     If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.Algorithm -in $Miner.Workers.Pool.Algorithm }))) {
                                         # Remove Watchdog timers
                                         $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
@@ -634,7 +637,7 @@ Function Start-APIServer {
                                     }
                                 }
                                 Remove-Variable Miner
-                                ForEach ($Pool in ($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
+                                ForEach ($Pool in $Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore) { 
                                     If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm}))) {
                                         # Remove Watchdog timers
                                         $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
@@ -740,7 +743,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/currency" { 
-                                $Data = $Config.Currency
+                                $Data = $Config.MainCurrency
                                 Break
                             }
                             "/currencyalgorithm" { 
@@ -813,11 +816,11 @@ Function Start-APIServer {
                                 $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDevice | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | ForEach-Object { If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ } | Select-Object -ExcludeProperty WorkersRunning | Sort-Object -Property DeviceName)
                                 Break
                             }
-                            "/miners/best_combo" { 
+                            "/miners/bestcombo" { 
                                 $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDevice_Combo | Sort-Object DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
                                 Break
                             }
-                            "/miners/best_combos" { 
+                            "/miners/bestcombos" { 
                                 $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDevice_Combos | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
                                 Break
                             }
@@ -845,10 +848,6 @@ Function Start-APIServer {
                             }
                             "/miners/unavailable" { 
                                 $Data = ConvertTo-Json -Depth 4 @($Variables.Miners.Where({ $_.Available -ne $true }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property DeviceNames, Name, Algorithm)
-                                Break
-                            }
-                            "/miners/device_combos" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.Miners_Device_Combos | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp)
                                 Break
                             }
                             "/miningpowercost" { 
@@ -949,6 +948,10 @@ Function Start-APIServer {
                             }
                             "/stats" { 
                                 $Data = ConvertTo-Json -Depth 10 ($Stats | Select-Object)
+                                Break
+                            }
+                            "/summarytext" { 
+                                $Data = ConvertTo-Json -Depth 10 @((($Variables.Summary -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').trim())
                                 Break
                             }
                             "/summary" { 
@@ -1064,6 +1067,11 @@ Function Start-APIServer {
                         # If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Config.APILogFile -Append -ErrorAction Ignore }
                         $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
                         $Response.Close()
+
+                        If ($GCStopWatch.Elapsed.TotalSeconds -gt 120) {
+                            [System.GC]::Collect()
+                            $GCStopWatch.Restart()
+                        }
                     }
                     # Only gets here if something is wrong and the server couldn't start or stops listening
                     $Server.Stop()

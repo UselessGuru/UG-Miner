@@ -2,6 +2,24 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+ChangeLog UG-Miner 6.2.1 2024/03/24
+====================================
+
+Enhancements:
+- Added configuration item 'ShowShares'
+- Core: Minor code optimizations
+
+Fixes:
+- Core: Active miner not getting stopped when pool is no longer available
+- Core: Not benchmarking running miner (Regression from 6.2.0)
+
+Improvements:
+- Core: Make stopping miners faster (clean jobs later)
+
+Miner updates:
+- lolMiner-v1.85beta
+
+
 ChangeLog UG-Miner 6.2.0 2024/03/19
 ====================================
 
@@ -17,7 +35,7 @@ Enhancements:
 
 Fixes:
 - Core / Includes.psm1: Running miners not shut down when closing main window
-- Brain 'ProHashing': Invalid curreny 'Syncroot'
+- Brain 'ProHashing': Invalid currency 'Syncroot'
 
 Improvements:
 - Miners: Optimize core for faster processing

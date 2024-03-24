@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.0
-Version date:   2024/03/19
+Version:        6.2.1
+Version date:   2024/03/24
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -262,7 +262,7 @@ Class Miner {
         Return "$($this.Path)$($this.GetCommandLineParameters())"
     }
 
-    [Void]hidden StartDataReader() { 
+    hidden [Void]StartDataReader() { 
         $ScriptBlock = { 
             $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
 
@@ -294,7 +294,7 @@ Class Miner {
         Remove-Variable ScriptBlock -ErrorAction Ignore
     }
 
-    [Void]hidden StopDataReader() { 
+    hidden [Void]StopDataReader() { 
         If ($this.DataReaderJob) { 
             $this.DataReaderJob | Stop-Job
             # Get data before removing read data
@@ -304,12 +304,12 @@ Class Miner {
         }
     }
 
-    [Void]hidden RestartDataReader() { 
+    hidden [Void]RestartDataReader() { 
         $this.StopDataReader()
         $this.StartDataReader()
     }
 
-    [Void] hidden StartMining() { 
+    hidden [Void]StartMining() { 
         If ($this.Arguments -and (Test-Json $this.Arguments -ErrorAction Ignore)) { $this.CreateConfigFiles() }
 
         # Stat just got removed (Miner.Activated < 1, set by API)
@@ -385,7 +385,7 @@ Class Miner {
 
     }
 
-    [Void]hidden StopMining() { 
+    hidden [Void]StopMining() { 
         If ($this.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun)) { 
             $this.StatusInfo = "Stopping miner '$($this.Info)'..."
             Write-Message -Level Info $this.StatusInfo
@@ -399,20 +399,21 @@ Class Miner {
 
         $this.EndTime = [DateTime]::Now.ToUniversalTime()
 
-        If ($this.Process) { 
-            [Void]$this.Process.CloseMainWindow()
-            $this.Process = $null
-        }
-
         If ($this.ProcessId) { 
             If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore | Out-Null }
             $this.ProcessId = $null
         }
 
+        If ($this.Process) { 
+            [Void]$this.Process.CloseMainWindow()
+            $this.Process = $null
+        }
+
         If ($this.ProcessJob) { 
             Try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } Catch { }
-            $this.ProcessJob | Get-Job -ErrorAction Ignore | Stop-Job -ErrorAction Ignore | Receive-Job -ErrorAction Ignore | Out-Null
-            $this.ProcessJob | Remove-Job -ErrorAction Ignore -Force | Out-Null
+            # Jobs are getting removed in core loop (stopping immediately after stopping process here may take several seconds)
+            # $this.ProcessJob | Get-Job -ErrorAction Ignore | Stop-Job -ErrorAction Ignore | Receive-Job -ErrorAction Ignore | Out-Null
+            # $this.ProcessJob | Remove-Job -ErrorAction Ignore -Force | Out-Null
             $this.ProcessJob = $null
         }
 
@@ -1131,15 +1132,14 @@ Function Write-Message {
     If (-not $Config.Keys -or $Level -in $Config.LogToFile) { 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
 
         $LogFile = "$($Variables.MainPath)\Logs\$($Variables.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
         If ($Variables.LogFile -ne $LogFile) { $Variables.LogFile = $LogFIle }
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary
-        If ($Mutex.WaitOne(1000)) { 
+        If ($Variables.MutexWriteMessage.WaitOne(1000)) { 
             $Message | Out-File -LiteralPath $LogFile -Append -ErrorAction Ignore
-            [Void]$Mutex.ReleaseMutex()
+            [Void]$Variables.MutexWriteMessage.ReleaseMutex()
         }
     }
 }
@@ -2803,10 +2803,10 @@ Function Add-CoinName {
     If (-not ($Variables.CoinNames[$Currency] -and $Variables.CurrencyAlgorithm[$Currency])) { 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
+        # $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
-        If ($Mutex.WaitOne(1000)) { 
+        If ($Variables.MutexAddCoinName.WaitOne(1000)) { 
             If (-not $Variables.CurrencyAlgorithm[$Currency]) { 
                 $Variables.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
                 $Variables.CurrencyAlgorithm | Get-SortedObject | ConvertTo-Json | Out-File -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Ignore -Force
@@ -2817,7 +2817,7 @@ Function Add-CoinName {
                     $Variables.CoinNames | Get-SortedObject | ConvertTo-Json | Out-File -Path ".\Data\CoinNames.json" -ErrorAction Ignore -Force
                 }
             }
-            [Void]$Mutex.ReleaseMutex()
+            [Void]$Variables.MutexAddCoinName.ReleaseMutex()
         }
     }
 }
@@ -2835,7 +2835,11 @@ Function Get-AlgorithmFromCurrency {
         }
 
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
-        ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+        # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
+        If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
+            ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+            [Void]$Variables.MutexAddCoinName.ReleaseMutex()
+        }
 
         If ($Variables.CurrencyAlgorithm[$Currency]) { 
             Return $Variables.CurrencyAlgorithm[$Currency]
@@ -2857,7 +2861,10 @@ Function Get-CurrencyFromAlgorithm {
         }
 
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
-        ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+        If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
+            ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+            [Void]$Variables.MutexAddCoinName.ReleaseMutex()
+        }
 
         If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm } ))) { 
             Return $Currencies
@@ -2973,7 +2980,7 @@ Function Start-LogReader {
     If ((Test-Path -LiteralPath $Config.LogViewerExe -PathType Leaf) -and (Test-Path -LiteralPath $Config.LogViewerConfig -PathType Leaf)) { 
         $Variables.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Config.LogViewerConfig)
         $Variables.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Config.LogViewerExe)
-        If ($SnaketailProcess = (Get-CimInstance CIM_Process | Where-Object CommandLine -EQ "$($Variables.LogViewerExe) $($Variables.LogViewerConfig)")) { 
+        If ($SnaketailProcess = (Get-CimInstance CIM_Process | Where-Object CommandLine -EQ """$($Variables.LogViewerExe)"" $($Variables.LogViewerConfig)")) { 
             # Activate existing Snaketail window
             $LogViewerMainWindowHandle = (Get-Process -Id $SnaketailProcess.ProcessId).MainWindowHandle
             If (@($LogViewerMainWindowHandle).Count -eq 1) { 
@@ -2985,7 +2992,7 @@ Function Start-LogReader {
             }
         }
         Else { 
-            [Void](Invoke-CreateProcess -BinaryPath $Variables.LogViewerExe -ArgumentList $Variables.LogViewerConfig -WorkingDirectory (Split-Path $Variables.LogViewerExe) -WindowStyle "Normal" -EnvBlock $null -JobName "Snaketail" -LogFile $null)
+            [Void](& $($Variables.LogViewerExe) $($Variables.LogViewerConfig))
         }
     }
 }
@@ -3139,24 +3146,25 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
-    If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
-        # ZergPool also supplies Evr DAG data
+    If (-not ($Variables.PoolName -match "_ZergPoolCoins.*")) { 
+        # ZergPool also supplies EVR DAG data
+        $Currency = "EVR"
         $Url = "https://evr.cryptoscope.io/api/getblockcount"
         If (-not $Variables.DAGdata.Currency.EVR.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from EVR block explorer
             Try { 
                 $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
-                If ((Get-AlgorithmFromCurrency -Currency "EVR") -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.EVR.BlockHeight) { 
-                    $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency "EVR" -EpochReserve 2
+                If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                    $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                     If ($DAGdata.Epoch) {
                         $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
                         $DAGdata | Add-Member Url $Url -Force
-                        $Variables.DAGdata.Currency | Add-Member "EVR" $DAGdata -Force
+                        $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
                         $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now).ToUniversalTime() -Force
                         Write-Message -Level Info "Loaded DAG data from '$Url'."
                     }
                     Else { 
-                        Write-Message -Level Warn "Failed to load DAG data for 'EVR' from '$Url'."
+                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
                     }
                 }
             }
@@ -3165,6 +3173,32 @@ Function Update-DAGdata {
             }
         }
     }
+
+    $Currency = "MEWC"
+    $Url = "https://mewc.cryptoscope.io/api/getblockcount"
+    If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        # Get block data from MeowCoin block explorer
+        Try { 
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
+                If ($DAGdata.Epoch) {
+                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
+                    $DAGdata | Add-Member Url $Url -Force
+                    $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                    $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now).ToUniversalTime() -Force
+                    Write-Message -Level Info "Loaded DAG data from '$Url'."
+                }
+                Else { 
+                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                }
+            }
+        }
+        Catch { 
+            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+        }
+    }
+    Remove-Variable Currency
 
     If ($Variables.DAGdata.Updated.PSObject.Properties.Name.Where({ $Variables.DAGdata.Updated.$_ -gt $Variables.Timer })) { 
         #At least one DAG was updated, get maximum DAG size per algorithm
@@ -3300,6 +3334,7 @@ Function Get-EpochLength {
         "EvrProgPow"   { Return 12000 }
         "FiroPow"      { Return 1300 }
         "KawPow"       { Return 7500 }
+        "MeowPow"      { Return 7500 }
         "Octopus"      { Return 524288 }
         Default        { Return 30000 }
     }
@@ -3448,7 +3483,10 @@ Function Initialize-Environment {
 
     # Load currency algorithm data
     $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
-    ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+    If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
+        ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
+    }
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
