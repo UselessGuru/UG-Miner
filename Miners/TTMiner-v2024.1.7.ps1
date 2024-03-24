@@ -24,7 +24,7 @@ Version date:   2024/03/24
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" } ))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.1.6/TT-Miner-2024.1.6.zip" }
+    { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.1.7/TT-Miner-2024.1.7.zip" }
     Default           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
