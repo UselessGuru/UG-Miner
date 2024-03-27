@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           demo.psm1
-Version:        6.2.1
-Version date:   2024/03/24
+Version:        6.2.2
+Version date:   2024/03/28
 #>
 
 # Try running this script as:  http://localhost:3999/scripts/demo.ps1?message=Hello%20World!

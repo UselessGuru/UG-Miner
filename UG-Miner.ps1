@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.1
-Version date:   2024/03/24
+Version:        6.2.2
+Version date:   2024/03/28
 #>
 
 using module .\Includes\Include.psm1
@@ -898,7 +898,7 @@ Function MainLoop {
                 )
                 # Display optimal miners list
                 $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
-                ($Variables.MinersOptimal | Group-Object -Property DeviceNames).ForEach(
+                ($Variables.MinersOptimal | Group-Object -Property { $_.DeviceNames }).ForEach(
                     { 
                         $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
                         $MinersDeviceGroupNeedingBenchmark = @($MinersDeviceGroup.Where({ $_.Benchmark }))
@@ -938,7 +938,7 @@ Function MainLoop {
                     @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                     @{ Label = "Command"; Expression = { $_.CommandLine } }
                 )
-                $Variables.MinersBestPerDevice_Combo | Sort-Object -Property DeviceNames | Format-Table $Miner_Table -Wrap | Out-Host
+                $Variables.MinersBestPerDevice_Combo | Sort-Object -Property { $_.DeviceNames } | Format-Table $Miner_Table -Wrap | Out-Host
                 Remove-Variable Miner_Table
             }
 

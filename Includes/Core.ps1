@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.1
-Version date:   2024/03/24
+Version:        6.2.2
+Version date:   2024/03/28
 #>
 
 using module .\Include.psm1
@@ -554,7 +554,7 @@ Do {
             }
 
             # Ensure we get the hashrate for running miners prior looking for best miner
-            ForEach ($Miner in $Variables.MinersBestPerDevice_Combo | Sort-Object -Property DeviceNames) { 
+            ForEach ($Miner in $Variables.MinersBestPerDevice_Combo | Sort-Object -Property { $_.DeviceNames }) { 
                 If ($Miner.DataReaderJob.HasMoreData -and $Miner.Status -ne [MinerStatus]::DryRun) { 
                     $Miner.Data = @($Miner.Data | Select-Object -Last ($Miner.MinDataSample * 5)) # Reduce data to MinDataSample * 5
                     If ($Samples = @($Miner.DataReaderJob | Receive-Job | Select-Object)) { 
@@ -736,7 +736,7 @@ Do {
                             }
                             $Miner.PSObject.Properties.Remove("Fee")
                             $Miner | Add-Member Algorithms $Miner.Workers.Pool.Algorithm
-                            $Miner | Add-Member Info "$(($Miner.Name -split '-')[0..2] -join '-') {$($Miner.Workers.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })", $_.Pool.Name -join '@' }) -join ' & ')}$(If (($Miner.Name -split '-')[4]) { " (Dual Intensity $(($Miner.Name -split '-')[4]))" })"
+                            $Miner | Add-Member Info "$(($Miner.Name -split '-')[0..2] -join '-') {$($Miner.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })", $_.Pool.Name -join '@' }) -join ' & ')}$(If (($Miner.Name -split '-')[4]) { " (Dual Intensity $(($Miner.Name -split '-')[4]))" })"
                             If ($Config.UseAllPoolAlgoCombos) { $Miner.Name = $Miner.Info -replace "\{", "(" -replace "\}", ")" -replace " " }
                             $Miner -as $_.API
                         }
@@ -824,7 +824,7 @@ Do {
 
             # Detect miners with unreal earning (> x times higher than average of the next best 10% or at least 5 miners)
             If ($Config.UnrealMinerEarningFactor -gt 1) { 
-                ($Miners.Where({ -not $_.Reasons }) | Group-Object -Property DeviceNames).ForEach(
+                ($Miners.Where({ -not $_.Reasons }) | Group-Object -Property { $_.DeviceNames }).ForEach(
                     { 
                         If ($ReasonableEarning = [Double]($_.Group | Sort-Object -Descending -Property Earning_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) | Measure-Object Earning -Average).Average * $Config.UnrealMinerEarningFactor) { 
                             ($_.Group.Where({ $_.Earning -GT $ReasonableEarning })).ForEach(
@@ -976,15 +976,15 @@ Do {
             }
         }
 
-        $Variables.MinersNeedingBenchmark = @($Miners.Where({ $_.Available -and $_.Benchmark }) | Sort-Object -Property { [String]$_.Algorithms, $_.Name } -Unique)
-        $Variables.MinersNeedingPowerConsumptionMeasurement = @($Miners.Where({ $_.Available -and $_.MeasurePowerConsumption }) | Sort-Object -Property { [String]$_.Algorithms, $_.Name } -Unique)
+        $Variables.MinersNeedingBenchmark = @($Miners.Where({ $_.Available -and $_.Benchmark }) | Sort-Object -Property Name -Unique)
+        $Variables.MinersNeedingPowerConsumptionMeasurement = @($Miners.Where({ $_.Available -and $_.MeasurePowerConsumption }) | Sort-Object -Property Name -Unique)
 
         # ProfitabilityThreshold check - OK to run miners?
         If ($Variables.DonationRunning -or (-not $Config.CalculatePowerCost -and $Variables.MiningEarning -ge ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.MainCurrency))) -or ($Config.CalculatePowerCost -and $Variables.MiningProfit -ge ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.MainCurrency))) -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
             $Variables.MinersBestPerDevice_Combo.ForEach({ $_.Best = $true })
             If ($Variables.Rates.($Config.PayoutCurrency)) { 
                 If ($Variables.MinersNeedingBenchmark.Count) { 
-                    $Variables.Summary = "Earning / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object -Property DeviceNames | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]" }))"
+                    $Variables.Summary = "Earning / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object -Property { $_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]" }))"
                 }
                 ElseIf ($Variables.MiningEarning -gt 0) { 
                     $Variables.Summary = "Earning / day: {0:n} {1}" -f ($Variables.MiningEarning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.MainCurrency
@@ -997,7 +997,7 @@ Do {
                     If ($Variables.Summary -ne "") { $Variables.Summary += "&ensp;&ensp;&ensp;" }
 
                     If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
-                        $Variables.Summary += "Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object -Property DeviceNames | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]" }))"
+                        $Variables.Summary += "Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object -Property { $_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ', ')]" }))"
                     }
                     ElseIf ($Variables.MinersNeedingBenchmark.Count) { 
                         $Variables.Summary += "Profit / day: n/a"
@@ -1060,8 +1060,8 @@ Do {
         If (-not $Variables.MinersBestPerDevice_Combo -and $Miners) { $Miners.ForEach({ $_.Best = $false }) }
 
         # Stop running miners
-        ForEach ($Miner in @($Miners.Where({ $_.WorkersRunning }) | Sort-Object -Property DeviceNames)) { 
-            If ($Miner.Status -ne [MinerStatus]::DryRun -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
+        ForEach ($Miner in @($Miners.Where({ $_.Status -notin @([MinerStatus]::Idle, [MinerStatus]::Unavailable) }) | Sort-Object -Property { $_.DeviceNames })) { 
+            If ($Miner.Status -eq [MinerStatus]::Running -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
                 $Miner.StatusInfo = "Error: '$($Miner.Info)' exited unexpectedly"
                 $Miner.SetStatus([MinerStatus]::Failed)
             }
@@ -1090,10 +1090,11 @@ Do {
         If (-not $Config.DryRun -or $Variables.CycleStarts.Count -eq 1 -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
             $Loops = 0
             # Some miners, e.g. BzMiner spawn a second executable. These instances do not have a command line beginning with a drive letter
-            While ($StuckMinerProcessIDs = @((Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and ($Miners.Path | Sort-Object -Unique) -contains $_.ExecutablePath -and $_.CommandLine -match "[A-Z]\:\\" -and $Miners.ProcessID -notcontains $_.ProcessID }) | Select-Object -ExpandProperty ProcessID)) { 
-                $StuckMinerProcessIDs.ForEach(
+            While ($StuckMinerProcessIDs = @((Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and ($Miners.Path | Sort-Object -Unique) -contains $_.ExecutablePath -and (Get-CimInstance win32_process -Filter "ParentProcessId = $($_.ProcessId)") -and $Miners.ProcessID -notcontains $_.ProcessID }) | Select-Object -ExpandProperty ProcessID)) { 
+                    $StuckMinerProcessIDs.ForEach(
                     { 
                         If ($Miner = $Miners | Where-Object ProcessID -EQ $_) { Write-Message -Level Verbose "Killing stuck miner '$($Miner.Name)'." }
+                        If ($ChildProcessID = (Get-CimInstance win32_process -Filter "ParentProcessId = $_").ProcessID) { Stop-Process -Id $ChildProcessID -Force -ErrorAction Ignore }
                         Stop-Process -Id $_ -Force -ErrorAction Ignore
                     }
                 )
@@ -1112,7 +1113,7 @@ Do {
                     }
                 }
             }
-            Remove-Variable Loops, Message, Miner, StuckMinerProcessIDs -ErrorAction Ignore
+            Remove-Variable ChildProcessID, Loops, Message, Miner, StuckMinerProcessIDs -ErrorAction Ignore
         }
 
         $Miners.ForEach(
@@ -1180,7 +1181,7 @@ Do {
         # Optional delay to avoid blue screens
         Start-Sleep -Seconds $Config.Delay
 
-        ForEach ($Miner in $Variables.MinersBestPerDevice_Combo | Sort-Object -Property DeviceNames) { 
+        ForEach ($Miner in $Variables.MinersBestPerDevice_Combo | Sort-Object -Property { $_.DeviceNames }) { 
 
             If ($Miner.Status -ne [MinerStatus]::DryRun -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
                 If ($Miner.Status -ne [MinerStatus]::DryRun) { 
@@ -1261,7 +1262,7 @@ Do {
             }
         }
 
-        ForEach ($Miner in $Variables.MinersBestPerDevice_Combo | Sort-Object -Property DeviceNames) { 
+        ForEach ($Miner in $Variables.MinersBestPerDevice_Combo | Sort-Object -Property { $_.DeviceNames }) { 
             If ($Message = "$(If ($Miner.Benchmark) { "Benchmark" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and " })$(If($Miner.MeasurePowerConsumption) { "Power consumption measurement" })") { 
                 $Message = $Message.Substring(0, 1).toUpper() + $Message.Substring(1).toLower()
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) samples]..."
@@ -1270,7 +1271,7 @@ Do {
 
         Remove-Variable Miner, Message -ErrorAction Ignore
 
-        ($Variables.Miners.Where({ $_.Available }) | Group-Object -Property DeviceNames).ForEach(
+        ($Variables.Miners.Where({ $_.Available }) | Group-Object -Property { $_.DeviceNames }).ForEach(
             { 
                 $MinersDeviceGroupNeedingBenchmark = $_.Group.Where({ $_.Benchmark })
                 $MinersDeviceGroupNeedingPowerConsumptionMeasurement = $_.Group.Where({ $_.MeasurePowerConsumption })

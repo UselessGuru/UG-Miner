@@ -344,7 +344,7 @@
         "PriceField": "PlusPrice"
       },
       "ZergPoolPlus": {
-        "DivisorMultiplier": 1000000,
+        "DivisorMultiplier": 1000000000,
         "PriceField": "PlusPrice"
       }
     }

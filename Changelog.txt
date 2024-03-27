@@ -2,6 +2,17 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+ChangeLog UG-Miner 6.2.2 2024/03/28
+====================================
+
+Fixes:
+- ZergPoolCoins: Calculated earnings 1000x too high
+
+Miner Updates:
+- Rigel-v1.15.1
+- TTMiner-v2024.1.8
+
+
 ChangeLog UG-Miner 6.2.1 2024/03/24
 ====================================
 
@@ -18,6 +29,7 @@ Improvements:
 
 Miner updates:
 - lolMiner-v1.85beta
+- Rigel-v1.15.1
 - TTMiner-v2024.1.7
 
 

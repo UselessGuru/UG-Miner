@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.1
-Version date:   2024/03/24
+Version:        6.2.2
+Version date:   2024/03/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" } ))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.1.7/TT-Miner-2024.1.7.zip" }
+    { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.1.8/TT-Miner-2024.1.8.zip" }
     Default           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
