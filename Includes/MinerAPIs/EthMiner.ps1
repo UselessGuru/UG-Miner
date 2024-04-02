@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
@@ -77,7 +77,7 @@ Class EthMiner : Miner {
             }
 
             Return [PSCustomObject]@{ 
-                Date             = ([DateTime]::Now).ToUniversalTime()
+                Date             = [DateTime]::Now.ToUniversalTime()
                 HashRate         = $HashRate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares

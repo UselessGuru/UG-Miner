@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.1"
+    $APIVersion = "0.5.4.2"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -408,16 +408,13 @@ Function Start-APIServer {
                                         $Miners | ForEach-Object { 
                                             $Data += $_.Name
                                             ForEach ($Worker in $_.Workers) { 
-                                                Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
+                                                Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                                                 $Worker.Hashrate = [Double]::NaN
                                             }
                                             Remove-Variable Worker
-                                            $_.Disabled = $true
-                                            $_.Reasons = [System.Collections.Generic.List[String]]@("Disabled by user")
-                                            $_.Available = $false
                                         }
                                         $Data = $Data | Sort-Object -Unique
-                                        $Message = "$($Data.Count) $(If ($Data.Count -eq 1) { "Miner" } Else { "Miners" }) disbled"
+                                        $Message = "$($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" }) disabled"
                                         Write-Message -Level Verbose "Web GUI: $Message"
                                         $Data = "$($Data -join "`n")`n`n$Message"
                                     }
@@ -443,7 +440,7 @@ Function Start-APIServer {
                                             If (-not $_.Reasons) { $_.Available = $true }
                                         }
                                         $Data = $Data | Sort-Object -Unique
-                                        $Message = "$($Data.Count) $(If ($Data.Count -eq 1) { "Miner" } Else { "Miners" }) enabled"
+                                        $Message = "$($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" }) enabled"
                                         Write-Message -Level Verbose "Web GUI: $Message"
                                         $Data = "$($Data -join "`n")`n`n$Message"
                                     }
@@ -585,13 +582,13 @@ Function Start-APIServer {
                                                 $Stat_Name = "$($_.Name)_$($Algorithm)_$($Parameters.Type)"
                                                 If ($Parameters.Value -eq 0) { # Miner failed
                                                     Remove-Stat -Name $Stat_Name
+                                                    Set-Stat -Name $Stat_Name -Value $Parameters.Value -FaultDetection $false | Out-Null
                                                     $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
                                                     $_.Available = $false
                                                     $_.Disabled = $false
                                                     If ($_.Reasons -notcontains "0 H/s Stat file" ) { $_.Reasons.Add("0 H/s Stat file") }
                                                     $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Where-Object { $_ -notlike "Disabled by user" } | Sort-Object -Unique)
                                                     $_.Status = [MinerStatus]::Failed
-                                                    Set-Stat -Name $Stat_Name -Value $Parameters.Value -FaultDetection $false | Out-Null
                                                 }
                                             }
                                             Remove-Variable Algorithm
@@ -817,11 +814,11 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners/bestcombo" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDevice_Combo | Sort-Object DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
+                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDeviceCombo | Sort-Object DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
                                 Break
                             }
                             "/miners/bestcombos" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDevice_Combos | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
+                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDeviceCombos | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
                                 Break
                             }
                             "/miners/disabled" { 
@@ -833,7 +830,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners/launched" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDevice_Combo | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | ForEach-Object { $_.Workers = $_.WorkersRunning; $_ } | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDeviceCombo | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | ForEach-Object { $_.Workers = $_.WorkersRunning; $_ } | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/optimal" { 
@@ -983,7 +980,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/workers" { 
-                                If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt ([DateTime]::Now).AddSeconds(-30)) { 
+                                If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
                                     Read-MonitoringData
                                 }
                                 $Workers = [System.Collections.ArrayList]@(

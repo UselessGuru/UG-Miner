@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
@@ -147,13 +147,13 @@ Function Update-TabControl {
             $ContextMenuStripItem4.Visible = $true
             $ContextMenuStripItem5.Visible = $false
 
-            $ActiveMinersLabel.Text = If ($Variables.MinersBestPerDevice_Combo) { "Active miners updated $(([DateTime]::Now).ToString())" } Else { "No miners running." }
+            $ActiveMinersLabel.Text = If ($Variables.MinersBestPerDeviceCombo) { "Active miners updated $([DateTime]::Now.ToString())" } Else { "No miners running." }
 
             If (-not ($ContextMenuStrip.Visible -and $ContextMenuStrip.Enabled)) { 
 
                 $ActiveMinersDGV.BeginInit()
                 $ActiveMinersDGV.ClearSelection()
-                $ActiveMinersDGV.DataSource = $Variables.MinersBestPerDevice_Combo | Select-Object @(
+                $ActiveMinersDGV.DataSource = $Variables.MinersBestPerDeviceCombo | Select-Object @(
                     @{ Name = "Info"; Expression = { $_.Info } }
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join '; ' } }
                     @{ Name = "Miner"; Expression = { $_.Name } }
@@ -165,23 +165,23 @@ Function Update-TabControl {
                     @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join ' & '} }, 
                     @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join ' & ' } }
                     @{ Name = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } } }
-                    @{ Name = "Running time`r(hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor((([DateTime]::Now).ToUniversalTime() - $_.BeginTime).TotalDays * 24), (([DateTime]::Now).ToUniversalTime() - $_.BeginTime) } }
+                    @{ Name = "Running time`r(hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                     @{ Name = "Total active`r(hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     If ($RadioButtonPoolsUnavailable.checked) { @{ Name = "Reason"; Expression = { $_.Reasons -join ', ' } } }
                 ) | Sort-Object -Property "Device(s)" | Out-DataTable
 
                 If ($ActiveMinersDGV.Columns) { 
                     $ActiveMinersDGV.Columns[0].Visible = $false
-                    $ActiveMinersDGV.Columns[1].FillWeight = 30 + ($Variables.MinersBestPerDevice_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
+                    $ActiveMinersDGV.Columns[1].FillWeight = 30 + ($Variables.MinersBestPerDeviceCombo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
                     $ActiveMinersDGV.Columns[2].FillWeight = 160
                     $ActiveMinersDGV.Columns[3].FillWeight = 60
                     $ActiveMinersDGV.Columns[4].FillWeight = 55; $ActiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[5].FillWeight = 55; $ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[6].FillWeight = 55; $ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[7].FillWeight = 55; $ActiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
-                    $ActiveMinersDGV.Columns[8].FillWeight = 70 + ($Variables.MinersBestPerDevice_Combo.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
-                    $ActiveMinersDGV.Columns[9].FillWeight = 50 + ($Variables.MinersBestPerDevice_Combo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
-                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBestPerDevice_Combo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[8].FillWeight = 70 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
+                    $ActiveMinersDGV.Columns[9].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
+                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[11].FillWeight = 65; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[12].FillWeight = 65; $ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
                 }
@@ -392,7 +392,7 @@ Function Update-TabControl {
                 $MinersDGV.EndInit()
             }
 
-            If ($MinersDGV.Columns) { $MinersLabel.Text = "Miner data updated $(([DateTime]::Now).ToString())" }
+            If ($MinersDGV.Columns) { $MinersLabel.Text = "Miner data updated $([DateTime]::Now.ToString())" }
             ElseIf ($Variables.MiningStatus -eq "Idle") { $MinersLabel.Text = "No data - mining is stopped"}
             ElseIf ($Variables.MiningStatus -eq "Paused") { $MinersLabel.Text = "No data - mining is paused"}
             Else { $MinersLabel.Text = "Waiting for data..." }
@@ -454,7 +454,7 @@ Function Update-TabControl {
                 $PoolsDGV.EndInit()
             }
 
-            If ($PoolsDGV.Columns) { $PoolsLabel.Text = "Pool data updated $(([DateTime]::Now).ToString())" }
+            If ($PoolsDGV.Columns) { $PoolsLabel.Text = "Pool data updated $([DateTime]::Now.ToString())" }
             ElseIf ($Variables.MiningStatus -eq "Idle") { $PoolsLabel.Text = "No data - mining is stopped"}
             ElseIf ($Variables.MiningStatus -eq "Paused") { $PoolsLabel.Text = "No data - mining is paused"}
             Else { $PoolsLabel.Text = "Waiting for data..." }
@@ -535,7 +535,7 @@ Function Update-TabControl {
 
             If ($Config.Watchdog) { 
                 If ($Variables.WatchdogTimers) { 
-                    $WatchdogTimersLabel.Text = "Watchdog timers updated $(([DateTime]::Now).ToString())"
+                    $WatchdogTimersLabel.Text = "Watchdog timers updated $([DateTime]::Now.ToString())"
 
                     $WatchdogTimersDGV.BeginInit()
                     $WatchdogTimersDGV.ClearSelection()
@@ -825,7 +825,7 @@ $CopyrightLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CopyrightLabel.Location = [System.Drawing.Point]::new(10, ($LegacyGUIForm.Bottom - 26))
 $CopyrightLabel.LinkColor = [System.Drawing.Color]::Blue
 $CopyrightLabel.Size = New-Object System.Drawing.Size(380, 26)
-$CopyrightLabel.Text = "Copyright (c) 2018-$(([DateTime]::Now).Year) UselessGuru"
+$CopyrightLabel.Text = "Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru"
 $CopyrightLabel.TextAlign = "MiddleRight"
 $CopyrightLabel.Add_Click({ Start-Process "https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE" })
 $LegacyGUIControls += $CopyrightLabel
@@ -1638,7 +1638,7 @@ $LegacyGUIForm.Add_Load(
         $MiningSummaryLabel.SendToBack()
         (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $MiningSummaryLabel.Text += "`r`n$_" })
         $MiningSummaryLabel.Text += "`r`n "
-        If (-not $Variables.MinersBestPerDevice_Combo) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+        If (-not $Variables.MinersBestPerDeviceCombo) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
         ElseIf ($Variables.MiningProfit -ge 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
         ElseIf ($Variables.MiningProfit -lt 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
 

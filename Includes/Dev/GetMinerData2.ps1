@@ -38,14 +38,14 @@ Try {
     $Miner.
     While ($true) { 
         "$($Miner.name) '$($Miner.DataCollectInterval)'" >> "$($Miner.Name)_Debug.txt"
-        $NextLoop = ([DateTime]::Now).AddSeconds($Miner.DataCollectInterval)
+        $NextLoop = [DateTime]::Now.AddSeconds($Miner.DataCollectInterval)
         If ($Data = $Miner.GetMinerData()) { 
             $Miner.LastSample = $Data
             $Miner.Data.Add($Data)
             $Data | ConvertTo-Json >> "$($Miner.name)_Data.txt"
         }
 
-        While (([DateTime]::Now) -lt $NextLoop) { Start-Sleep -Milliseconds 200 }
+        While ([DateTime]::Now -lt $NextLoop) { Start-Sleep -Milliseconds 200 }
     }
 }
 Catch { 

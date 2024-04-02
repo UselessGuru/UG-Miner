@@ -19,7 +19,7 @@ $PowerShell.AddScript(
         $Data = [PSCustomObject]@{ }
 
         While ($true) { 
-            $NextLoop = ([DateTime]::Now).AddSeconds($Miner.DataCollectInterval)
+            $NextLoop = [DateTime]::Now.AddSeconds($Miner.DataCollectInterval)
             Try { 
                 "$($Miner.name) '$($Miner.DataCollectInterval)' 1" >> "$($Miner.Name)_Debug.txt"
                 If ($Data = $Miner.GetMinerData()) { 
@@ -33,7 +33,7 @@ $PowerShell.AddScript(
                 "$($Miner.name) '$($Miner.DataCollectInterval)' 3" >> "$($Miner.Name)_Debug.txt"
                 $Error[0] >> "$($Miner.Name)_Debug.txt"
             }
-            While (([DateTime]::Now) -lt $NextLoop) { Start-Sleep -Milliseconds 200 }
+            While (([DateTime]::Now -lt $NextLoop) { Start-Sleep -Milliseconds 200 }
         }
     }
 )

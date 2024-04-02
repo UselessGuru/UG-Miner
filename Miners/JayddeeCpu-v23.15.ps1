@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
@@ -38,14 +38,30 @@ ElseIf ((Compare-Object $AvailableMiner_Devices.CpuFeatures @("sse2")           
 Else { Return }
 
 $Algorithms = @(
+    [PSCustomObject]@{ Algorithm = "Allium";        MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo allium" }
+    [PSCustomObject]@{ Algorithm = "Anime";         MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo anime" }
+    [PSCustomObject]@{ Algorithm = "Argon2d250";    MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d250" }
+    [PSCustomObject]@{ Algorithm = "Argon2d500";    MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d500" }
+    [PSCustomObject]@{ Algorithm = "Argon2d5096";   MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d5096" }
     [PSCustomObject]@{ Algorithm = "Blake2b";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo blake2b" } # FPGA
+    [PSCustomObject]@{ Algorithm = "Bastiom";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo bastion" }
+    [PSCustomObject]@{ Algorithm = "BMW";           MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo bmw" }
     [PSCustomObject]@{ Algorithm = "HMQ1725";       MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo hmq1725" } # GPU
-#   [PSCustomObject]@{ Algorithm = "Lyra2z330";     MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo lyra2z330" } # Algorithm is dead
+    [PSCustomObject]@{ Algorithm = "Jha";           MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo jha" }
+    [PSCustomObject]@{ Algorithm = "Lyra2z330";     MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo lyra2z330" }
+    [PSCustomObject]@{ Algorithm = "Lyra2RE3";      MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo lyra2rev3" }
     [PSCustomObject]@{ Algorithm = "m7m";           MinerSet = 1; WarmupTimes = @(45, 80); ExcludePools = @(); Arguments = " --algo m7m" } # NosuchCpu-v3.8.8.1 is fastest
+    [PSCustomObject]@{ Algorithm = "Minotaur";      MinerSet = 1; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo minotaur" }
+    [PSCustomObject]@{ Algorithm = "Minotaurx";     MinerSet = 1; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo minotaurx" }
+    [PSCustomObject]@{ Algorithm = "power2b";       MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = ' --algo power2b --param-n 2048 --param-r 32 --param-key "Now I am become Death, the destroyer of worlds"' } # FPGA
     [PSCustomObject]@{ Algorithm = "SHA3d";         MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo SHA3d" } # FPGA
     [PSCustomObject]@{ Algorithm = "ScryptN11";     MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo scrypt(N,1,1)" } # GPU
     [PSCustomObject]@{ Algorithm = "ScryptN2";      MinerSet = 1; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " --algo scrypt --param-n 1048576" }
     [PSCustomObject]@{ Algorithm = "VertHash";      MinerSet = 0; WarmupTimes = @(45, 50); ExcludePools = @(); Arguments = " --algo verthash --data-file ..\.$($Variables.VerthashDatPath)" }
+    [PSCustomObject]@{ Algorithm = "Yescrypt";      MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescrypt" }
+    [PSCustomObject]@{ Algorithm = "YescryptR16";   MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr16" }
+    [PSCustomObject]@{ Algorithm = "YescryptR32";   MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr32" }
+    [PSCustomObject]@{ Algorithm = "YescryptR8";    MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr8" }
     [PSCustomObject]@{ Algorithm = "YespowerARWN";  MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "ARWN"' } # Arrowana
     [PSCustomObject]@{ Algorithm = "YespowerIc";    MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC"' }
     [PSCustomObject]@{ Algorithm = "YespowerIots";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
@@ -55,6 +71,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
     [PSCustomObject]@{ Algorithm = "YespowerTIDE";  MinerSet = 1; WarmupTimes = @(45, 55); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
     [PSCustomObject]@{ Algorithm = "YespowerUrx";   MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    [PSCustomObject]@{ Algorithm = "ZR5";           MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo zr5' }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

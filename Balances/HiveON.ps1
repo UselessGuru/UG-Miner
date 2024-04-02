@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Hiveon.ps1
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
@@ -41,7 +41,7 @@ $PoolConfig.Wallets.psBase.Keys.Where({ $_ -in @("BTC", "ETC", "RVN") }).ForEach
                 $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolConfig.PoolAPITimeout -ErrorAction Ignore
 
                 If ($Config.LogBalanceAPIResponse) { 
-                    "$(([DateTime]::Now).ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                    "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 }

@@ -616,7 +616,7 @@ Switch ($Path) {
         Break
     }
     "/displayworkers" { 
-        If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt ([DateTime]::Now).AddSeconds(-30)) { 
+        If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
             Read-MonitoringData
         }
         $Workers = [System.Collections.ArrayList]@(
@@ -706,8 +706,8 @@ Switch ($Path) {
         $Data = ConvertTo-Json -Depth 4 @($Variables.Miners | Where-Object Available -NE $true | Select-Object -Property * -ExcludeProperty Data, DataReaderJob, Devices, Process, SideIndicator | Sort-Object DeviceName, Name, Algorithm)
         Break
     }
-    "/miners_device_combos" { 
-        $Data = ConvertTo-Json -Depth 4 @($Variables.Miners_Device_Combos | Select-Object -Property * -ExcludeProperty Data, DataReaderJob, Devices, Process, SideIndicator)
+    "/MinersDeviceCombos" { 
+        $Data = ConvertTo-Json -Depth 4 @($Variables.MinersDeviceCombos | Select-Object -Property * -ExcludeProperty Data, DataReaderJob, Devices, Process, SideIndicator)
         Break
     }
     "/miningpowercost" { 

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
@@ -280,7 +280,7 @@ Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
 @"
 UG-Miner
-Copyright (c) 2018-$(([DateTime]::Now).Year) UselessGuru
+Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru
 This is free software, and you are welcome to redistribute it under certain conditions.
 https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 "@
@@ -296,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.2"
+    Version      = [System.Version]"6.2.3"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -357,7 +357,7 @@ Initialize-Environment
 # Read configuration
 [Void](Read-Config -ConfigFile $Variables.ConfigFile)
 
-Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$(([DateTime]::Now).Year) UselessGuru"
+Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru"
 Write-Host ""
 
 # Update config file to include all new config items
@@ -669,7 +669,7 @@ Function MainLoop {
                 }
                 Else { 
                     Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is running again." -ForegroundColor Cyan 
-                    If (([DateTime]::Now).ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    If ([DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                 }
             }
             Else { 
@@ -831,7 +831,7 @@ Function MainLoop {
     If ($Variables.RefreshNeeded) { 
         $Variables.RefreshNeeded = $false
 
-        $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan](([DateTime]::Now).ToUniversalTime() - $Variables.ScriptStartTime)
+        $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan]([DateTime]::Now.ToUniversalTime() - $Variables.ScriptStartTime)
         If ($LegacyGUIForm) { 
             $LegacyGUIForm.Text = $host.UI.RawUI.WindowTitle 
 
@@ -926,19 +926,19 @@ Function MainLoop {
                 Remove-Variable Bias, Miner_Table, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
             }
 
-            If ($Variables.MinersBestPerDevice_Combo) { 
-                Write-Host "`nRunning $(If ($Variables.MinersBestPerDevice_Combo.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBestPerDevice_Combo.Count)" })"
+            If ($Variables.MinersBestPerDeviceCombo) { 
+                Write-Host "`nRunning $(If ($Variables.MinersBestPerDeviceCombo.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBestPerDeviceCombo.Count)" })"
                 [System.Collections.ArrayList]$Miner_Table = @(
                     @{ Label = "Name"; Expression = { $_.Name } }
                     If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
                     @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
-                    @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f (([DateTime]::Now).ToUniversalTime() - $_.BeginTime) } }
+                    @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                     @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
                     @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { "$_" } } } }
                     @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                     @{ Label = "Command"; Expression = { $_.CommandLine } }
                 )
-                $Variables.MinersBestPerDevice_Combo | Sort-Object -Property { $_.DeviceNames } | Format-Table $Miner_Table -Wrap | Out-Host
+                $Variables.MinersBestPerDeviceCombo | Sort-Object -Property { $_.DeviceNames } | Format-Table $Miner_Table -Wrap | Out-Host
                 Remove-Variable Miner_Table
             }
 
@@ -990,7 +990,7 @@ Function MainLoop {
                         @{Label = "Pool"; Expression = { $_.PoolName } }, 
                         @{Label = "Algorithm"; Expression = { $_.Algorithm } }, 
                         @{Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }, 
-                        @{Label = "Last Updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f (([DateTime]::Now).ToUniversalTime() - $_.Kicked) }; Align = "right" }
+                        @{Label = "Last Updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
                     ) | Out-Host
                 }
             }

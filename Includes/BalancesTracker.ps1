@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
@@ -382,7 +382,7 @@ Do {
         $Variables.EarningsChartData | ConvertTo-Json | Out-File -LiteralPath ".\Data\EarningsChartData.json" -Force -ErrorAction Ignore
 
         # Keep earnings for max. 1 year
-        $OldestEarningsDate = ([DateTime]::Now).AddYears(-1).ToString("yyyy-MM-dd")
+        $OldestEarningsDate = [DateTime]::Now.AddYears(-1).ToString("yyyy-MM-dd")
         $Earnings = $Earnings.Where({ $_.Date -ge $OldestEarningsDate })
         Remove-Variable OldestEarningsDate
 
@@ -415,7 +415,7 @@ Do {
         $Error.Clear()
 
         # Sleep until next update (at least 1 minute, maximum 60 minutes)
-        While (([DateTime]::Now) -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum))) { Start-Sleep -Seconds 5 }
+        While ([DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum))) { Start-Sleep -Seconds 5 }
     }
 
     If ($Now) { Write-Message -Level Info "Balances Tracker stopped." }

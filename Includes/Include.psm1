@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.2
+Version:        6.2.3
 Version date:   2024/03/28
 #>
 
@@ -222,13 +222,13 @@ Class Miner {
     [Double]$Profit = [Double]::NaN
     [Double]$Profit_Bias = [Double]::NaN
     [Boolean]$ReadPowerConsumption = $false
-    [System.Collections.Generic.List[String]]$Reasons = @() # Why is a miner unavailable?
+    [System.Collections.Generic.List[String]]$Reasons = @() # Why is a miner not available?
     [Boolean]$Restart = $false 
     hidden [DateTime]$StatStart
     hidden [DateTime]$StatEnd
     [MinerStatus]$Status = [MinerStatus]::Idle
-    [String]$StatusInfo
-    [String]$SubStatus
+    [String]$StatusInfo = ""
+    [String]$SubStatus = [MinerStatus]::Idle
     [TimeSpan]$TotalMiningDuration # derived from pool and stats
     [String]$Type
     [DateTime]$Updated # derived from stats
@@ -275,9 +275,9 @@ Class Miner {
 
                 While ($true) { 
                     # Start-Sleep -Seconds 60
-                    $NextLoop = ([DateTime]::Now).AddSeconds($Miner.DataCollectInterval)
+                    $NextLoop = [DateTime]::Now.AddSeconds($Miner.DataCollectInterval)
                     $Miner.GetMinerData()
-                    While (([DateTime]::Now) -lt $NextLoop) { Start-Sleep -Milliseconds 50 }
+                    While ([DateTime]::Now -lt $NextLoop) { Start-Sleep -Milliseconds 50 }
                 }
             }
             Catch { 
@@ -386,7 +386,7 @@ Class Miner {
     }
 
     hidden [Void]StopMining() { 
-        If ($this.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun)) { 
+        If ($this.Status -in @([MinerStatus]::Running, [MinerStatus]::Disabled, [MinerStatus]::DryRun)) { 
             $this.StatusInfo = "Stopping miner '$($this.Info)'..."
             Write-Message -Level Info $this.StatusInfo
         }
@@ -605,7 +605,6 @@ Class Miner {
         $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
 
         If ($this.Workers.Where({ $_.Disabled })) { 
-            $this.Status = [MinerStatus]::Disabled
             $this.Disabled = $true
         }
 
@@ -766,10 +765,10 @@ Function Start-Core {
 
         $Global:CoreRunspace = @{}
 
-        $Variables.LastDonated = ([DateTime]::Now).AddDays(-1).AddHours(1)
+        $Variables.LastDonated = [DateTime]::Now.AddDays(-1).AddHours(1)
         # $Variables.Pools = [Pool[]]@()
         $Variables.Miners = [Miner[]]@()
-        $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
+        $Variables.MinersBestPerDeviceCombo = [Miner[]]@()
 
         $Variables.CycleStarts = @()
 
@@ -805,13 +804,13 @@ Function Stop-Core {
         If ($Variables.NewMiningStatus -eq "Idle") { 
             $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
             $Variables.PoolsCount = 0
-            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBestPerDevice_Combos = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
+            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBestPerDeviceCombos = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
             $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
             $Variables.CycleStarts = @()
             $Variables.Timer = $null
         }
 
-        $Variables.MinersBestPerDevice_Combo = [Miner[]]@()
+        $Variables.MinersBestPerDeviceCombo = [Miner[]]@()
         $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
         $Variables.FailedMiners = [Miner[]]@()
         $Variables.RunningMiners = [Miner[]]@()
@@ -1200,7 +1199,7 @@ Function Write-MonitoringData {
 
 Function Read-MonitoringData { 
 
-    If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt ([DateTime]::Now).AddSeconds(-30)) { 
+    If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
         Try { 
             $Workers = Invoke-RestMethod -Uri "$($Config.MonitoringServer)/api/workers.php" -Method Post -Body @{ user = $Config.MonitoringUser } -TimeoutSec 10 -ErrorAction Stop
             # Calculate some additional properties and format others
@@ -3041,7 +3040,7 @@ Function Update-DAGdata {
                             If ($DAGdataResponse.coins.$_.last_block -ge $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
                                 If ($DAGdata.Epoch -and $DAGdata.Algorithm -match $Variables.RegexAlgoHasDAG) { 
-                                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
+                                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                                     $DAGdata | Add-Member Url $Url -Force
                                     $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
                                 }
@@ -3052,7 +3051,7 @@ Function Update-DAGdata {
                         }
                     }
                 )
-                $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now).ToUniversalTime() -Force
+                $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
                 Write-Message -Level Info "Loaded DAG data from '$Url'."
             }
             Else { 
@@ -3081,7 +3080,7 @@ Function Update-DAGdata {
                             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $BlockHeight -ge $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                                 $DAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2
                                 If ($DAGdata.Epoch -and $DAGdata.Algorithm -match $Variables.RegexAlgoHasDAG) { 
-                                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
+                                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                                     $DAGdata | Add-Member Url $Url -Force
                                     $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
                                 }
@@ -3092,7 +3091,7 @@ Function Update-DAGdata {
                         }
                     }
                 )
-                $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now).ToUniversalTime() -Force
+                $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
                 Write-Message -Level Info "Loaded DAG data from '$Url'."
             }
             Else { 
@@ -3120,7 +3119,7 @@ Function Update-DAGdata {
                             If ($DAGdataResponse.data.$_.height -gt $Variables.DAGdata.Currency.$_.BlockHeight) { 
                                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.data.$_.height -Currency $_ -EpochReserve 2
                                 If ($DAGdata.Epoch -and $DAGdata.Algorithm -match $Variables.RegexAlgoHasDAG) { 
-                                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
+                                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                                     $DAGdata | Add-Member Url $Url -Force
                                     $Variables.DAGdata.Currency | Add-Member $_ $DAGdata -Force
                                 }
@@ -3131,7 +3130,7 @@ Function Update-DAGdata {
                         }
                     }
                 )
-                $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now).ToUniversalTime() -Force
+                $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
                 Write-Message -Level Info "Loaded DAG data from '$Url'."
             }
             Else { 
@@ -3146,8 +3145,8 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
-    If (-not ($Variables.PoolName -match "_ZergPoolCoins.*")) { 
-        # ZergPool also supplies EVR DAG data
+    If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
+        # ZergPool (Coins) also supplies EVR DAG data
         $Currency = "EVR"
         $Url = "https://evr.cryptoscope.io/api/getblockcount"
         If (-not $Variables.DAGdata.Currency.EVR.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3157,10 +3156,10 @@ Function Update-DAGdata {
                 If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                     $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                     If ($DAGdata.Epoch) {
-                        $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
+                        $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                         $DAGdata | Add-Member Url $Url -Force
                         $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
-                        $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now).ToUniversalTime() -Force
+                        $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
                         Write-Message -Level Info "Loaded DAG data from '$Url'."
                     }
                     Else { 
@@ -3172,33 +3171,33 @@ Function Update-DAGdata {
                 Write-Message -Level Warn "Failed to load DAG data from '$Url'."
             }
         }
-    }
-
-    $Currency = "MEWC"
-    $Url = "https://mewc.cryptoscope.io/api/getblockcount"
-    If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from MeowCoin block explorer
-        Try { 
-            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
-            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
-                $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
-                If ($DAGdata.Epoch) {
-                    $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
-                    $DAGdata | Add-Member Url $Url -Force
-                    $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
-                    $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now).ToUniversalTime() -Force
-                    Write-Message -Level Info "Loaded DAG data from '$Url'."
-                }
-                Else { 
-                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+        # ZergPool (Coins) also supplies MEWC DAG data
+        $Currency = "MEWC"
+        $Url = "https://mewc.cryptoscope.io/api/getblockcount"
+        If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            # Get block data from MeowCoin block explorer
+            Try { 
+                $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+                If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                    $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
+                    If ($DAGdata.Epoch) {
+                        $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                        $DAGdata | Add-Member Url $Url -Force
+                        $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                        $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                        Write-Message -Level Info "Loaded DAG data from '$Url'."
+                    }
+                    Else { 
+                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                    }
                 }
             }
+            Catch { 
+                Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            }
         }
-        Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
-        }
+        Remove-Variable Currency
     }
-    Remove-Variable Currency
 
     If ($Variables.DAGdata.Updated.PSObject.Properties.Name.Where({ $Variables.DAGdata.Updated.$_ -gt $Variables.Timer })) { 
         #At least one DAG was updated, get maximum DAG size per algorithm
@@ -3287,6 +3286,16 @@ Function Get-DAGsize {
             }
             Break
         }
+        "MEWC" { 
+            If ($Epoch -ge 110) { $Epoch *= 4 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L48 & https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.cpp#L249C1-L254C6
+            $Dataset_Bytes_Init = [Math]::Pow(2, 30) # 1GB
+            $Dataset_Bytes_Growth = [Math]::Pow(2, 23) # 8MB
+            $Mix_Bytes = 128
+            $Size = ($Dataset_Bytes_Init + $Dataset_Bytes_Growth * $Epoch) - $Mix_Bytes
+            While (-not (Test-Prime ($Size / $Mix_Bytes))) { 
+                $Size -= 2 * $Mix_Bytes
+            }
+        }
         Default { 
             $Dataset_Bytes_Init = [Math]::Pow(2, 30) # 1GB
             $Dataset_Bytes_Growth = [Math]::Pow(2, 23) # 8MB
@@ -3334,7 +3343,7 @@ Function Get-EpochLength {
         "EvrProgPow"   { Return 12000 }
         "FiroPow"      { Return 1300 }
         "KawPow"       { Return 7500 }
-        "MeowPow"      { Return 7500 }
+        "MeowPow"      { Return 7500 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L32
         "Octopus"      { Return 524288 }
         Default        { Return 30000 }
     }
