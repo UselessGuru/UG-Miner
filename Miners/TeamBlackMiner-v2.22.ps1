@@ -23,7 +23,7 @@ Version date:   2024/04/03
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"11.6") }))) { Return }
 
-$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.21/TeamBlackMiner_2_21_cuda_12_2.7z"
+$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.22/TeamBlackMiner_2_22_cuda_12_2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\TBMiner.exe"
 
@@ -46,7 +46,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EthashB3", "KawPow");   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(90, 45);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "VertHash"); Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = ""; WarmupTimes = @(120, 30); ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo ethb3+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" } # 120 Seconds; https://github.com/sp-hash/TeamBlackMiner/issues/427
     [PSCustomObject]@{ Algorithms = @("FiroPow");              Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 1; Tuning = ""; WarmupTimes = @(90, 15);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo firopow" }
-    [PSCustomObject]@{ Algorithms = @("KawPow");               Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 15);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
+    [PSCustomObject]@{ Algorithms = @("KawPow");               Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = ""; WarmupTimes = @(90, 15);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
     [PSCustomObject]@{ Algorithms = @("VertHash");             Type = "AMD"; Fee = @(0.005);        MinMemGiB = 3.0;  MinerSet = 1; Tuning = ""; WarmupTimes = @(30, 0);   ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo verthash --verthash-data ..\.$($Variables.VerthashDatPath)" }
  
     [PSCustomObject]@{ Algorithms = @("EtcHash");              Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo etchash" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool

@@ -14,6 +14,7 @@ Fixes:
 
 Miner changes:
 - SRBMinerMulti-v2.5.1
+- TeamBlackMiner-v2.22
 
 
 ChangeLog UG-Miner 6.2.3 2024/04/02
