@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.3
-Version date:   2024/03/28
+Version:        6.2.4
+Version date:   2024/04/03
 #>
 
 using module .\Includes\Include.psm1
@@ -296,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.3"
+    Version      = [System.Version]"6.2.4"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -593,9 +593,6 @@ Function MainLoop {
             If ($Config.Proxy -eq "") { $PSDefaultParameterValues.Remove("*:Proxy") }
             Else { $PSDefaultParameterValues["*:Proxy"] = $Config.Proxy }
 
-            # Load currency exchange rates
-            [Void](Get-Rate)
-
             # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
             (Get-Process -Id $PID).PriorityClass = "BelowNormal"
         
@@ -610,6 +607,9 @@ Function MainLoop {
                     Stop-Brain
                     Stop-BalancesTracker
                     # If ($Config.ReportToServer) { Write-MonitoringData }
+
+                    # Load currency exchange rates
+                    [Void](Get-Rate)
 
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is stopped.<br>Click the 'Start mining' button to make money."
                     Write-Host "`n"

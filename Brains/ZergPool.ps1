@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.2.3
-Version date:   2024/03/28
+Version:        6.2.4
+Version date:   2024/04/03
 #>
 
 using module ..\Includes\Include.psm1
@@ -50,7 +50,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Do {
             Try { 
-                If ([Boolean]($PoolVariantOld -match "$($BrainName)Coins.*") -ne [Boolean]($PoolVariant -match "$($BrainName)Coins.*")) { 
+                If ($PoolVariant -ne $PoolVariantOld) { 
                     # Variant got changed, reset data
                     $PoolObjects = @()
                 }
@@ -94,7 +94,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         ForEach ($PoolName in $APIdata.PSObject.Properties.Name) { 
             $Algorithm_Norm = Get-Algorithm $APIdata.$PoolName.algo
             $Currency = [String]$APIdata.$PoolName.Currency
-            If ($AlgoData.$Algo.actual_last24h_shared) { $AlgoData.$Algo.actual_last24h_shared /= 1000 }
+            If ($APIdata.$PoolName.actual_last24h_shared) { $APIdata.$PoolName.actual_last24h_shared /= 1000 }
             $BasePrice = If ($APIdata.$PoolName.actual_last24h_shared) { $APIdata.$PoolName.actual_last24h_shared } Else { $APIdata.$PoolName.estimate_last24h }
 
             # Add currency and coin name to database

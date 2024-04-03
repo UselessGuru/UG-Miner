@@ -21,6 +21,7 @@
   "Equihash965":  "*",
   "Groestl":  "*",
   "Handshake":  "1",
+  "HeavyHashKaspa":  "*",
   "Hodl": "*",
   "HoneyComb":  "*",
   "JeongHash":  "*",

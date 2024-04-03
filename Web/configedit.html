@@ -785,6 +785,13 @@
         document.getElementById('MiningDutchAPIKey').disabled = !(document.getElementById(poolname).checked);
       };
       if (poolname == 'pool-miningpoolhub') {
+        if (document.getElementById(poolname).checked) {
+          $('.modal-title').text("Warning!");
+          $('.modal-body').html("MiningPoolHub is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
+          $('#myModal').modal({ 
+            show: true
+          });
+        };
         document.getElementById('MiningPoolHubUserName').disabled = !(document.getElementById(poolname).checked);
         document.getElementById('MiningPoolHubAPIKey').disabled = !(document.getElementById(poolname).checked);
       };
@@ -803,6 +810,13 @@
     });
     $.each([config.PoolName].flat(), function (key, value) {
       if (document.getElementById(('pool-' + value).toString().toLowerCase())) document.getElementById(('pool-' + value).toString().toLowerCase()).checked = true;
+      if (value === "MiningPoolHub") {
+          $('.modal-title').text("Warning!");
+          $('.modal-body').html("MiningPoolHub is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
+          $('#myModal').modal({ 
+            show: true
+          });
+        };
     });
     if (document.getElementById('pool-miningdutch')) {
       document.getElementById('MiningDutchUserName').disabled = !(document.getElementById('pool-miningdutch').checked || (document.getElementById('pool-miningdutch24hr').checked) || document.getElementById('pool-miningdutchplus').checked);
@@ -1310,10 +1324,10 @@
           config.Wallets[key] = document.getElementById('Wallet' + key).value.toString();
         });
         config.MiningDutchUserName = document.getElementById('MiningDutchUserName').value.toString().trim();
-        if ((document.getElementById('MiningDutchUserName').value) == '') config.MiningDutchUserName = document.getElementById('MiningDutchUserName').value = 'Nemo';
+        if ((document.getElementById('MiningDutchUserName').value) == '') config.MiningDutchUserName = document.getElementById('MiningDutchUserName').value = 'UselessGuru';
         config.MiningDutchAPIKey = document.getElementById('MiningDutchAPIKey').value = document.getElementById('MiningDutchAPIKey').value.toString().trim();
         config.MiningPoolHubUserName = document.getElementById('MiningPoolHubUserName').value.toString().trim();
-        if ((document.getElementById('MiningPoolHubUserName').value) == '') config.MiningPoolHubUserName = document.getElementById('MiningPoolHubUserName').value = 'Nemo';
+        if ((document.getElementById('MiningPoolHubUserName').value) == '') config.MiningPoolHubUserName = document.getElementById('MiningPoolHubUserName').value = 'UselessGuru';
         config.MiningPoolHubAPIKey = document.getElementById('MiningPoolHubAPIKey').value = document.getElementById('MiningPoolHubAPIKey').value.toString().trim();
         config.NiceHashAPIKey = document.getElementById('NiceHashAPIKey').value = document.getElementById('NiceHashAPIKey').value.toString().trim();
         config.NiceHashAPISecret = document.getElementById('NiceHashAPISecret').value = document.getElementById('NiceHashAPISecret').value.toString().trim();
