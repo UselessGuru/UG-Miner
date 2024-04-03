@@ -7,7 +7,7 @@ ChangeLog UG-Miner 6.2.3 2024/04/02
 
 Enhancements:
 - Support for Fishhash algorithm (Iron coin)
-- Core: Support algoritm variant in algorithm selection, e.g. '-Ethash(6Gib)'
+- Core: Support algorithm variant in algorithm selection, e.g. '-Ethash(6Gib)'
 - Web GUI: Minor speed improvements
 
 Fixes:
