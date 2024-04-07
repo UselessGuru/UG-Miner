@@ -895,7 +895,7 @@ $ContextMenuStrip.Add_ItemClicked(
                     $ContextMenuStrip.Visible = $false
                     If ($Data) { 
                         $Data = $Data | Sort-Object -Unique
-                        $Message = "Re-benchmark triggered for $($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" })."
+                        $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
                         Update-TabControl
@@ -921,7 +921,7 @@ $ContextMenuStrip.Add_ItemClicked(
                     $ContextMenuStrip.Visible = $false
                     If ($Data) { 
                         $Data = $Data | Sort-Object -Unique
-                        $Message = "Re-measure power consumption triggered for $($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" })."
+                        $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
                         Update-TabControl
@@ -951,7 +951,7 @@ $ContextMenuStrip.Add_ItemClicked(
                     $ContextMenuStrip.Visible = $false
                     If ($Data) { 
                         $Data = $Data | Sort-Object -Unique
-                        $Message = "Marked $($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" }) as failed."
+                        $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
                         Update-TabControl
@@ -979,7 +979,7 @@ $ContextMenuStrip.Add_ItemClicked(
                     $ContextMenuStrip.Visible = $false
                     If ($Data) { 
                         $Data = $Data | Sort-Object -Unique
-                        $Message = "Disabled $($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" })."
+                        $Message = "Disabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
                         Update-TabControl
@@ -991,29 +991,24 @@ $ContextMenuStrip.Add_ItemClicked(
                         $This.SourceControl.SelectedRows.ForEach(
                             { 
                                 $SelectedMinerName = $_.Cells[2].Value
-                                $SelectedMinerAlgorithms = @($_.Cells[9].Value -split ' & ' -replace '\[.+\]')
-                                If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $SelectedMinerName -and [String]$_.Algorithm -eq [String]$SelectedMinerAlgorithms }))) {
-                                    # Remove Watchdog timers
-                                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
-                                    ForEach ($WatchdogTimer in $WatchdogTimers) { 
-                                        $Data += "$($WatchdogTimer.MinerName) {$($WatchdogTimer.Algorithm -join ', ')}"
-                                        # Update miner
-                                        $Variables.Miners.Where({ $_.Name -eq $electedMinerName -and [String]$_.Algorithm -eq [String]$SelectedMinerAlgorithms }).ForEach(
-                                            { 
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                                                If (-not $_.Reasons) { $_.Available = $true }
-                                            }
-                                        )
+                                # Update miner
+                                $Variables.Miners.Where({ $_.Name -eq $electedMinerName }).ForEach(
+                                    { 
+                                        $Data += "$($_.Name)"
+                                        $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                                        If (-not $_.Reasons) { $_.Available = $true }
                                     }
-                                    Remove-Variable WatchdogTimer
-                                }
+                                )
+
+                                # Remove Watchdog timers
+                                $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name }))
                             }
                         )
                     }
                     $ContextMenuStrip.Visible = $false
-                    If ($WatchdogTimers) { 
+                    If ($Data) { 
                         $Data = $Data | Sort-Object -Unique
-                        $Message = "$($Data.Count) miner $(If ($Data.Count -eq 1) { "watchdog timer" } Else { "watchdog timers" }) removed."
+                        $Message = "$($Data.Count) miner watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
                     }
@@ -1049,7 +1044,7 @@ $ContextMenuStrip.Add_ItemClicked(
                     $ContextMenuStrip.Visible = $false
                     If ($Data) { 
                         $Data = $Data | Sort-Object -Unique
-                        $Message = "Pool stats for $($Data.Count) $(If ($Data.Count -eq 1) { "pool" } Else { "pools" }) reset."
+                        $Message = "Pool stats for $($Data.Count) pool$(If ($Data.Count -ne 1) { "s" }) reset."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
                         Update-TabControl
@@ -1059,30 +1054,27 @@ $ContextMenuStrip.Add_ItemClicked(
                 "Remove watchdog timer" { 
                     $This.SourceControl.SelectedRows.ForEach(
                         { 
-                            $SelectedPoolName = $_.Cells[5].Value
-                            $SelectedPoolAlgorithm = $_.Cells[0].Value
-                            If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }))) {
+                            { 
+                                $SelectedPoolName = $_.Cells[5].Value
+                                $SelectedPoolAlgorithm = $_.Cells[0].Value
+                                # Update pool
+                                $Variables.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).ForEach(
+                                    { 
+                                        $Data += "$($_.Key) ($($_.Region))"
+                                        $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
+                                        If (-not $_.Reasons) { $_.Available = $true }
+                                    }
+                                )
+
                                 # Remove Watchdog timers
-                                $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
-                                ForEach ($WatchdogTimer in $WatchdogTimers) { 
-                                    $Data += "$($WatchdogTimer.PoolName) {$($WatchdogTimer.Algorithm -join ', ')}"
-                                    # Update pools
-                                    $Variables.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).ForEach(
-                                        { 
-                                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Algorithm@pool suspended by watchdog" }))
-                                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog*" }) | Sort-Object -Unique)
-                                            If (-not $_.Reasons) { $_.Available = $true }
-                                        }
-                                    )
-                                }
-                                Remove-Variable WatchdogTimer
+                                $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name -or $_.Algorithm -ne $SelectedPoolAlgorithm}))
                             }
                         }
                     )
                     $ContextMenuStrip.Visible = $false
-                    If ($WatchdogTimers) { 
+                    If ($Data) { 
                         $Data = $Data | Sort-Object -Unique
-                        $Message = "$($Data.Count) miner $(If ($Data.Count -eq 1) { "watchdog timer" } Else { "watchdog timers" }) removed."
+                        $Message = "$($Data.Count) pool watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
                     }
