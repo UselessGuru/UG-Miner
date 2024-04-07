@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.4
-Version date:   2024/04/03
+Version:        6.2.5
+Version date:   2024/04/07
 #>
 
 using module .\Includes\Include.psm1
@@ -296,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.4"
+    Version      = [System.Version]"6.2.5"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -662,7 +662,7 @@ Function MainLoop {
             Start-Sleep -Milliseconds 300
             $host.UI.RawUI.FlushInputBuffer()
 
-            If ($KeyPressed.Key -eq 80 -and $KeyPressed.Modifiers -eq 5) { 
+            If ($KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Alt><Crl>#>) { 
                 $Variables.SuspendCycle = -not $Variables.SuspendCycle
                 If ($Variables.SuspendCycle) { 
                     Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again." -ForegroundColor Cyan 

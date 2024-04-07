@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.2.4
-Version date:   2024/04/03
+Version:        6.2.5
+Version date:   2024/04/07
 #>
 
 param(
@@ -68,7 +68,7 @@ If ($PoolConfig.Wallets) {
 
             $Reasons = [System.Collections.Generic.List[String]]@()
             If ($Request.stats.($_.name).hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
-            If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for '$Currency' configured") }
+            If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
 
             [PSCustomObject]@{ 
                 Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)

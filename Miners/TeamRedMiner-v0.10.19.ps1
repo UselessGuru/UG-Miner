@@ -17,23 +17,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.4
-Version date:   2024/04/03
+Version:        6.2.5
+Version date:   2024/04/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TeamRedMiner/teamredminer-v0.10.18-win.zip"
+$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TeamRedMiner/teamredminer-v0.10.19-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\teamredminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Autolykos2");                       Fee = @(0.02);       MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=autolykos2" }
+    [PSCustomObject]@{ Algorithms = @("Autolykos2", "Blake3");             Fee = @(0.02, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=autolykos2" }
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "HeavyHashKarlsea");   Fee = @(0.02, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=autolykos2" }
 #   [PSCustomObject]@{ Algorithms = @("Autolykos2", "HeavyHashKaspa");     Fee = @(0.02, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=autolykos2" } # ASIC
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "HeavyHashPyrin");     Fee = @(0.02, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=autolykos2" }
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "IronFish");           Fee = @(0.02, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=autolykos2" } # Pools with support at this time are Herominers, Flexpool and Kryptex
+    [PSCustomObject]@{ Algorithms = @("Blake3");                           Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@("NiceHash"), @()); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=alph" }
     [PSCustomObject]@{ Algorithms = @("Chukwa");                           Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=trtl_chukwa" }
     [PSCustomObject]@{ Algorithms = @("Chukwa2");                          Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=trtl_chukwa2" }
     [PSCustomObject]@{ Algorithms = @("CryptonightCcx");                   Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cn_conceal --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
@@ -50,12 +52,19 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("CuckarooD29");                      Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cuckarood29_grin" } # 2GB is not enough
 #   [PSCustomObject]@{ Algorithms = @("Cuckatoo31");                       Fee = @(0.025);      MinMemGiB = 3.0;  MinerSet = 3; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); Arguments = " --algo=cuckatoo31_grin" } # ASIC
     [PSCustomObject]@{ Algorithms = @("EtcHash");                          Fee = @(0.01);       MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(45, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=etchash" } # PhoenixMiner-v6.2c is fastest
+    [PSCustomObject]@{ Algorithms = @("EtcHash", "Blake3");                Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=etchash" }
+    [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKarlsen");      Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=etchash" }
+#   [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashKaspa");        Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=etchash" } # ASIC
+#   [PSCustomObject]@{ Algorithms = @("EtcHash", "HeavyHashPyrin");        Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=etchash" } # ASIC
+    [PSCustomObject]@{ Algorithms = @("EtcHash", "IronFish");              Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=etchash" } # Pools with support at this time are Herominers, Flexpool and Kryptex
     [PSCustomObject]@{ Algorithms = @("Ethash");                           Fee = @(0.01);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ethash" } # PhoenixMiner-v6.2c is fastest
+    [PSCustomObject]@{ Algorithms = @("Ethash", "Blake3");                 Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ethash" }
     [PSCustomObject]@{ Algorithms = @("Ethash", "HeavyHashKarlsen");       Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ethash" }
 #   [PSCustomObject]@{ Algorithms = @("Ethash", "HeavyHashKaspa");         Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ethash" } # ASIC
 #   [PSCustomObject]@{ Algorithms = @("Ethash", "HeavyHashPyrin");         Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ethash" } 3 ASIC
     [PSCustomObject]@{ Algorithms = @("Ethash", "IronFish");               Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ethash" } # Pools with support at this time are Herominers, Flexpool and Kryptex
     [PSCustomObject]@{ Algorithms = @("EthashSHA256");                     Fee = @(0.01);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=abel" }
+    [PSCustomObject]@{ Algorithms = @("EthashSHA256", "Blake3");           Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=abel" }
     [PSCustomObject]@{ Algorithms = @("EthashSHA256", "HeavyHashKarlsen"); Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=abel" }
 #   [PSCustomObject]@{ Algorithms = @("EthashSHA256", "HeavyHashKaspa");   Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=abel" } # ASIC
     [PSCustomObject]@{ Algorithms = @("EthashSHA256", "HeavyHashPyrin");   Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=abel" }
@@ -99,7 +108,7 @@ If ($Algorithms) {
 
                             If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                                 $PrerequisitePath = $Variables.VerthashDatPath
-                                $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TeamRedMiner/teamredminer-v0.10.18-win.zip"
+                                $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TeamRedMiner/TeamRedMiner-v0.10.19-win.zip"
                             }
                             Else { 
                                 $PrerequisitePath = $PrerequisiteURI = ""
@@ -123,6 +132,7 @@ If ($Algorithms) {
                                         $Arguments += " --pass=$($Pool0.Pass)"
 
                                         Switch ($_.Algorithms[1]) { 
+                                            "Blake3"           { $Arguments += " --alph_start" }
                                             "HeavyHashKarlsen" { $Arguments += " --karlsen_start" }
                                             "HeavyHashKaspa"   { $Arguments += " --kas_start" }
                                             "HeavyHashPyrin"   { $Arguments += " --pyrin_start" }
@@ -134,6 +144,7 @@ If ($Algorithms) {
                                             $Arguments += " --pass=$($Pool1.Pass)"
                                         }
                                         Switch ($_.Algorithms[1]) { 
+                                            "Blake3"           { $Arguments += " --alph_end" }
                                             "HeavyHashKarlsen" { $Arguments += " --karlsen_end" }
                                             "HeavyHashKaspa"   { $Arguments += " --kas_end" }
                                             "HeavyHashPyrin"   { $Arguments += " --pyrin_end" }

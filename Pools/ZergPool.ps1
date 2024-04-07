@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.4
-Version date:   2024/04/03
+Version:        6.2.5
+Version date:   2024/04/07
 #>
 
 param(
@@ -74,7 +74,7 @@ If ($DivisorMultiplier -and $Regions) {
         If ($PayoutThreshold) { $PayoutThresholdParameter = ",pl=$([Double]$PayoutThreshold)" }
 
         $Reasons = [System.Collections.Generic.List[String]]@()
-        If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for '$Pool' configured") }
+        If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Pool] configured") }
         If ($Request.$Pool.hashrate_shared -eq 0) { $Reasons.Add("No hashrate at pool") }
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 

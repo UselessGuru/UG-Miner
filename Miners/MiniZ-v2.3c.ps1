@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.4
-Version date:   2024/04/03
+Version:        6.2.5
+Version date:   2024/04/07
 #>
 
 using module ..\Includes\Include.psm1
@@ -79,8 +79,6 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0].($_.Algorithm) })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].Name -notin $_.ExcludePools })
 
 If ($Algorithms) { 
-
-    $Algorithms.ForEach({ $_.MinMemGiB += $Pool.DAGSizeGiB })
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 

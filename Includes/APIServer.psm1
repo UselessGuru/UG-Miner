@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.4
-Version date:   2024/04/03
+Version:        6.2.5
+Version date:   2024/04/07
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.2"
+    $APIVersion = "0.5.4.4"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -167,16 +167,16 @@ Function Start-APIServer {
                                             $Pool.Reasons = [System.Collections.Generic.List[String]]@($Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config") | Sort-Object -Unique)
                                         }
                                         $Pool.Available = $false
-                                        $Data += "$($Pool.Algorithm)@$($Pool.Name)`n"
+                                        $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                                     }
                                     Remove-Variable Pool
                                     $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
                                     Write-Message -Level Verbose "Web GUI: $Message"
-                                    $Data += "`n$Message"
+                                    $Data = "$($Data -join "`n")`n`n$Message"
                                     $PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Variables.PoolsConfigFile -Force
                                 }
                                 Else { 
-                                    $Data = "No matching stats found."
+                                    $Data = "No matching stats found"
                                 }
                                 Break
                             }
@@ -196,12 +196,12 @@ Function Start-APIServer {
                                             $Pool.Reasons = [System.Collections.Generic.List[String]]@($Pool.Reasons.Where({ $_ -ne "Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)" }) | Sort-Object -Unique)
                                         }
                                         If (-not $Pool.Reasons) { $Pool.Available = $true }
-                                        $Data += "$($Pool.Algorithm)@$($Pool.Name)`n"
+                                        $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                                     }
                                     Remove-Variable Pool
                                     $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
                                     Write-Message -Level Verbose "Web GUI: $Message"
-                                    $Data += "`n$Message"
+                                    $Data = "$($Data -join "`n")`n`n$Message"
                                     $PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Variables.PoolsConfigFile -Force
                                 }
                                 Else { 
@@ -505,9 +505,13 @@ Function Start-APIServer {
                                                 $Worker.Hashrate = [Double]::NaN
                                             }
                                             Remove-Variable Worker
-                                            # Also clear power consumption
+                                            
+                                            # Clear power consumption
                                             Remove-Stat -Name "$($_.Name)_PowerConsumption"
                                             $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
+
+                                            # Remove watchdog
+                                            $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -ne $_.Name
 
                                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Where-Object { $_ -ne "Disabled by user" })
                                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Where-Object { $_ -ne "0 H/s Stat file" })
@@ -620,42 +624,41 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/watchdogtimers/remove" { 
-                                ForEach ($Miner in $Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore) { 
-                                    If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.Algorithm -in $Miner.Workers.Pool.Algorithm }))) {
-                                        # Remove Watchdog timers
-                                        $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
-
-                                        # Update miner
-                                        $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and [String]$_.Algorithms -eq [String]$Miner.Algorithms }) | ForEach-Object { 
-                                            $Data += "`n$($_.Info)"
+                                $Data = @()
+                                ForEach ($Miner in @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore)) { 
+                                    # Update miner
+                                    $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $_.Reasons -like "Miner suspended by watchdog *" }).ForEach(
+                                        { 
+                                            $Data += "$($_.Name)"
                                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
                                             If (-not $_.Reasons) { $_.Available = $true }
                                         }
-                                    }
+                                    )
+
+                                    # Remove Watchdog timers
+                                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name }))
                                 }
                                 Remove-Variable Miner
-                                ForEach ($Pool in $Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore) { 
-                                    If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm}))) {
-                                        # Remove Watchdog timers
-                                        $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
 
-                                        # Update pool
-                                        $Variables.Pools.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }).ForEach(
-                                            { 
-                                                $Data += "`n$($_.Key) ($($_.Region))"
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Algorithm@Pool suspended by watchdog" }))
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog*" }) | Sort-Object -Unique)
-                                                If (-not $_.Reasons) { $_.Available = $true }
-                                            }
-                                        )
-                                    }
+                                ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
+                                    # Update pool
+                                    $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $_.Reasons -like "Pool suspended by watchdog *" }).ForEach(
+                                        { 
+                                            $Data += "$($_.Key) ($($_.Region))"
+                                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
+                                            If (-not $_.Reasons) { $_.Available = $true }
+                                        }
+                                    )
+
+                                    # Remove Watchdog timers
+                                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm }))
                                 }
                                 Remove-Variable Pool
                                 $Data = $Data | Sort-Object -Unique
-                                If ($WatchdogTimers) { 
+                                If ($Data) { 
                                     $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed"
                                     Write-Message -Level Verbose "Web GUI: $Message"
-                                    $Data += "`n$Message"
+                                    $Data = "$($Data -join "`n")`n`n$Message"
                                 }
                                 Else { 
                                     $Data = "No matching watchdog timers found"
@@ -1109,7 +1112,7 @@ Function Stop-APIServer {
         }
         If ($Variables.APIRunspace.APIport) { $Variables.APIRunspace.Remove("APIport") }
         $Variables.APIRunspace.PowerShell.Stop() | Out-Null
-        $Variables.APIRunspace.PowerShell.EndInvoke() | Out-Null
+        If (-not $Variables.APIRunspace.AsyncObject.IsCompleted) { $Variables.APIRunspace.PowerShell.EndInvoke($Variables.APIRunspace.AsyncObject) | Out-Null }
         $Variables.APIRunspace.PowerShell.Runspace.Close() | Out-Null
         $Variables.APIRunspace.PowerShell.Dispose() | Out-Null
         $Variables.Remove("APIRunspace")

@@ -260,7 +260,7 @@
                   $('body').css('cursor', 'progress');
                   $url = '/functions/watchdogtimers/remove';
                   $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Name: $element.Name, Algorithms: $element.Algorithms})))
+                    'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-remove-watchdog').text());

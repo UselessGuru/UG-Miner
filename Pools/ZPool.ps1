@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.2.4
-Version date:   2024/04/03
+Version:        6.2.5
+Version date:   2024/04/07
 #>
 
 param(
@@ -65,7 +65,7 @@ If ($PriceField) {
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
 
         $Reasons = [System.Collections.Generic.List[String]]@()
-        If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("Conversion disabled at pool, no wallet address for '$Currency' configured") }
+        If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
         # If ($Request.$Algorithm.error) { $Reasons.Add($Request.$Algorithm.error) }
         If ($Request.$Algorithm.hashrate_last24h -eq 0) { $Reasons.Add("No hashrate at pool") }
 

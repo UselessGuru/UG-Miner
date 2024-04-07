@@ -2,6 +2,22 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+ChangeLog UG-Miner 6.2.5 2024/04/03
+===================================
+
+Fixes:
+- Core: Miners remain in status 'Unavailable' in some scenarions
+
+Improvements:
+- Core: Improve watchdog filter for miners & pools
+
+Miner updates:
+- BzMiner-v21.0.3
+- NanoMiner-v3.9.1
+- SRBMinerMulti-v2.5.2
+- TeamRedMiner-v0.10.19
+
+
 ChangeLog UG-Miner 6.2.4 2024/04/03
 ===================================
 

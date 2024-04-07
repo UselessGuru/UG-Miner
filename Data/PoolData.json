@@ -142,7 +142,7 @@
     }
   },
   "MiningPoolHub": {
-    "Algorithm": [
+    "_Algorithm": [
       "-Neoscrypt",
       "-Skein",
       "-VertHash"
