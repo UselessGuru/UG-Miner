@@ -8,8 +8,8 @@ ChangeLog UG-Miner 6.2.6 2024/04/14
 Enhancements:
 - Core: Optimize code for faster miners object generation
 - Core: Unhide console window when '$ShowConfig' is changing to '$true'
-- Legacy GUI: Add context menu item 'Enable' for algorithms
-- Web GUI: Add button 'Enable' for algorithms
+- Legacy GUI: Add context menu item 'Enable' for miners
+- Web GUI: Add button 'Enable' for miners
 
 Fixes:
 - Core: Power usage meassuring not ending when HWiNFO was not available
