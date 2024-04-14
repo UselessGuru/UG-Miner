@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^RX5[5|6]0$" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -199,7 +199,6 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "SHA512256d");       Type = "NVIDIA"; Fee = @(0.01, 0.0085);   MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 20); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm autolykos2", " --algorithm sha512_256d_radiant") }
     [PSCustomObject]@{ Algorithms = @("Aurum");                          Type = "NVIDIA"; Fee = @(0.02);           MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm aurum") }
     [PSCustomObject]@{ Algorithms = @("Blake3");                         Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm blake3_alephium") }
-    [PSCustomObject]@{ Algorithms = @("CryptonightGpu");                 Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm cryptonight_gpu") }
     [PSCustomObject]@{ Algorithms = @("CryptonightGpu");                 Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm cryptonight_gpu") }
     [PSCustomObject]@{ Algorithms = @("CryptonightHeavyXhv");            Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm cryptonight_xhv") }
     [PSCustomObject]@{ Algorithms = @("Decred");                         Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 20); ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm blake3_decred") }

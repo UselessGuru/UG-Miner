@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 using module ..\Includes\Include.psm1
@@ -88,8 +88,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
         )
 
-        # Change last24: -> last24h: (Error in API?), numeric string to numbers, some values are null
-        $APIdata = ($APIdata | ConvertTo-Json) -replace '_last24":', '_last24h":' -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+        # Change numeric string to numbers, some values are null
+        $APIdata = ($APIdata | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
 
         ForEach ($PoolName in $APIdata.PSObject.Properties.Name) { 
             $Algorithm_Norm = Get-Algorithm $APIdata.$PoolName.algo

@@ -181,6 +181,26 @@
           <TextColor>White</TextColor>
           <BackColor>Black</BackColor>
         </Keyword>
+        <Keyword>
+          <Keyword> Balances Tracker </Keyword>
+          <MatchCaseSensitive>false</MatchCaseSensitive>
+          <MatchRegularExpression>false</MatchRegularExpression>
+          <LogHitCounter>false</LogHitCounter>
+          <TextColoring>true</TextColoring>
+          <AlertHighlight>false</AlertHighlight>
+          <TextColor>#C8FFE0</TextColor>
+          <BackColor>Black</BackColor>
+        </Keyword>
+        <Keyword>
+          <Keyword> GUI: </Keyword>
+          <MatchCaseSensitive>true</MatchCaseSensitive>
+          <MatchRegularExpression>false</MatchRegularExpression>
+          <LogHitCounter>false</LogHitCounter>
+          <TextColoring>true</TextColoring>
+          <AlertHighlight>true</AlertHighlight>
+          <TextColor>#FFD7AE</TextColor>
+          <BackColor>Black</BackColor>
+        </Keyword>
       </KeywordHighlight>
       <ExternalTools />
     </TailFileConfig>

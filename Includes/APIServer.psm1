@@ -19,12 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
 Version:        6.2.5
-Version date:   2024/04/07
+Version date:   2024/04/14
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.4"
+    $APIVersion = "0.5.4.6"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -227,7 +227,6 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching entries found."
                                     }
-                                    $Data = "<pre>$Data</pre>"
                                     Break
                                 }
                             }
@@ -254,7 +253,7 @@ Function Start-APIServer {
                                                 }
                                             }
                                             Remove-Variable DeviceName
-                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" } ) '$($Values -join ', ')' disabled. Configuration file '$($Variables.ConfigFile)' updated."
+                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' disabled. Configuration file '$($Variables.ConfigFile)' updated."
                                         }
                                         Catch { 
                                             $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]"
@@ -265,7 +264,6 @@ Function Start-APIServer {
                                     }
                                 }
                                 Remove-Variable Key
-                                $Data = "<pre>$Data</pre>"
                                 Break
                             }
                             "/functions/config/device/enable" { 
@@ -287,7 +285,7 @@ Function Start-APIServer {
                                                     Else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
                                                 }
                                             )
-                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" } ) '$($Values -join ', ')' enabled. Configuration file '$($Variables.ConfigFile)' updated."
+                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' enabled. Configuration file '$($Variables.ConfigFile)' updated."
                                         }
                                         Catch { 
                                             $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]"
@@ -298,7 +296,6 @@ Function Start-APIServer {
                                     }
                                 }
                                 Remove-Variable Key
-                                $Data = "<pre>$Data</pre>"
                                 Break
                             }
                             "/functions/config/set" { 
@@ -325,7 +322,6 @@ Function Start-APIServer {
                                 Catch { 
                                     $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]"
                                 }
-                                $Data = "<pre>$Data</pre>"
                                 Break
                             }
                             "/functions/file/edit" {
@@ -339,7 +335,7 @@ Function Start-APIServer {
                             }
                             "/functions/log/get" { 
                                 $Lines = If ([Int]$Parameters.Lines) { [Int]$Parameters.Lines } Else { 100 }
-                                $Data = "$(Get-Content -Path $Variables.LogFile -Tail $Lines | ForEach-Object { "$($_)`n" } )"
+                                $Data = "$(Get-Content -Path $Variables.LogFile -Tail $Lines | ForEach-Object { "$($_)`n" })"
                                 Break
                             }
                             "/functions/mining/getstatus" { 
@@ -352,7 +348,6 @@ Function Start-APIServer {
                                     $Data = "Mining is being paused...`n$(If ($Variables.BalancesTrackerPollInterval -gt 0) { If ($Variables.BalancesTrackerRunning) { "Balances Tracker running." } Else { "Balances Tracker starting..." } })"
                                     $Variables.RestartCycle = $true
                                 }
-                                $Data = "<pre>$Data</pre>"
                                 Break
                             }
                             "/functions/mining/start" { 
@@ -361,7 +356,6 @@ Function Start-APIServer {
                                     $Data = "Mining processes starting...`n$(If ($Variables.BalancesTrackerPollInterval -gt 0) { If ($Variables.BalancesTrackerRunning) { "Balances Tracker running." } Else { "Balances Tracker starting..." } })"
                                     $Variables.RestartCycle = $true
                                 }
-                                $Data = "<pre>$Data</pre>"
                                 Break
                             }
                             "/functions/mining/stop" { 
@@ -370,7 +364,6 @@ Function Start-APIServer {
                                     $Data = "$($Variables.Branding.ProductLabel) is stopping...`n"
                                     $Variables.RestartCycle = $true
                                 }
-                                $Data = "<pre>$Data</pre>"
                                 Break
                             }
                             "/functions/querypoolapi" { 
@@ -405,13 +398,16 @@ Function Start-APIServer {
                                 If ($Parameters.Miners) { 
                                     If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
                                         $Data = @()
-                                        $Miners | ForEach-Object { 
+                                        $Miners | Where-Object { -not $_.Disabled } | ForEach-Object { 
                                             $Data += $_.Name
                                             ForEach ($Worker in $_.Workers) { 
                                                 Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                                                 $Worker.Hashrate = [Double]::NaN
                                             }
                                             Remove-Variable Worker
+                                            $_.Disabled = $true
+                                            $_.Reasons += "Disabled by user"
+                                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Where-Object { $_ -ne "Disabled by user" } | Sort-Object -Unique)
                                         }
                                         $Data = $Data | Sort-Object -Unique
                                         $Message = "$($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" }) disabled"
@@ -428,11 +424,10 @@ Function Start-APIServer {
                                 If ($Parameters.Miners) { 
                                     If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
                                         $Data = @()
-                                        $Miners | ForEach-Object { 
+                                        $Miners | Where-Object Disabled | ForEach-Object { 
                                             $Data += $_.Name
                                             ForEach ($Worker in $_.Workers) { 
-                                                Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
-                                                $Worker.Hashrate = [Double]::NaN
+                                                Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                                             }
                                             Remove-Variable Worker
                                             $_.Disabled = $false
@@ -654,8 +649,8 @@ Function Start-APIServer {
                                     $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm }))
                                 }
                                 Remove-Variable Pool
-                                $Data = $Data | Sort-Object -Unique
                                 If ($Data) { 
+                                    $Data = $Data | Sort-Object -Unique
                                     $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed"
                                     Write-Message -Level Verbose "Web GUI: $Message"
                                     $Data = "$($Data -join "`n")`n`n$Message"

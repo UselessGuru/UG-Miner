@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 using module .\Includes\Include.psm1
@@ -296,21 +296,21 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.5"
+    Version      = [System.Version]"6.2.6"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "`nUnsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
-    $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Host "`nUnsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.2.19) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
+    $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.2.19) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
-If ($PSVersiontable.PSVersion -lt [System.Version]"7.2.18") { 
-    Write-Host "Outdated PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
+If ($PSVersiontable.PSVersion -lt [System.Version]"7.2.19") { 
+    Write-Host "Outdated PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.19 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
 }
 If ($PSVersiontable.PSVersion -ge [System.Version]"7.3.0") { 
-    Write-Host "Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.18 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended.`n`n" -ForegroundColor Magenta
+    Write-Host "Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.19 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended.`n`n" -ForegroundColor Magenta
 }
 
 # Internet connection must be available
@@ -565,6 +565,13 @@ Function MainLoop {
             If (-not $Global:CoreRunspace) { Start-Core }
         }
     }
+    
+    If (-not $Config.ShowConsole) { 
+        Hide-Console
+    }
+    Else { 
+        Show-Console
+    }
 
     # Core watchdog. Sometimes core loop gets stuck
     If (-not $Variables.SuspendCycle -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
@@ -663,13 +670,19 @@ Function MainLoop {
             $host.UI.RawUI.FlushInputBuffer()
 
             If ($KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Alt><Crl>#>) { 
-                $Variables.SuspendCycle = -not $Variables.SuspendCycle
-                If ($Variables.SuspendCycle) { 
-                    Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again." -ForegroundColor Cyan 
-                }
+                If (-not $CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
+                    # Core is complete / gone. Cycle cannot be suspended anymore
+                    $Variables.SuspendCycle = $false
+                } 
                 Else { 
-                    Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is running again." -ForegroundColor Cyan 
-                    If ([DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    $Variables.SuspendCycle = -not $Variables.SuspendCycle
+                    If ($Variables.SuspendCycle) { 
+                        Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again." -ForegroundColor Cyan 
+                    }
+                    Else { 
+                        Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is running again." -ForegroundColor Cyan 
+                        If ([DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    }
                 }
             }
             Else { 
@@ -1011,7 +1024,7 @@ Function MainLoop {
                 }
 
                 If ($Variables.CycleStarts.Count -gt 1 -or $Variables.Miners) { 
-                    $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString('G')) } Else { 'n/a (Mining is suspended)' } )   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnoprstuwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
+                    $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString('G')) } Else { 'n/a (Mining is suspended)' })   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnoprstuwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
                     Write-Host ("-" * $StatusInfo.Length)
                     Write-Host -ForegroundColor Yellow $StatusInfo
                     Remove-Variable StatusInfo

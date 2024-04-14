@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -in @("AMD", "CPU") -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -169,7 +169,7 @@ If ($Algorithms) {
 
                                 [PSCustomObject]@{ 
                                     API         = "XmRig"
-                                    Arguments   = "$Arguments $(If ($Pool.Name -eq "NiceHash") { " --nicehash" } )$(If ($Pool.PoolPorts[1]) { " --tls" } ) --url=$($Pool.Host):$($Pool.PoolPorts.Where({ $_ -ne $null })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$($Config.WorkerName) --api-id=$($Miner_Name) --retries=90 --retry-pause=1"
+                                    Arguments   = "$Arguments $(If ($Pool.Name -eq "NiceHash") { " --nicehash" })$(If ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where({ $_ -ne $null })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$($Config.WorkerName) --api-id=$($Miner_Name) --retries=90 --retry-pause=1"
                                     DeviceNames = $AvailableMiner_Devices.Name
                                     Fee         = @(0.01) # Dev fee
                                     MinerSet    = $_.MinerSet

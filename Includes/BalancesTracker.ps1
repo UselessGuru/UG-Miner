@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 using module .\Include.psm1
@@ -411,6 +411,8 @@ Do {
 
         If ($Variables.BalancesData.Count -ge 1) { $Variables.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
         If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }
+
+        If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances Tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) '$($PoolsToTrack -join ', ')'." }
 
         $Error.Clear()
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 # Return 
@@ -48,7 +48,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Ethash", "HeavyHashKarlsen");       Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm ethash+karlsenhash" }
     [PSCustomObject]@{ Algorithms = @("Ethash", "HeavyHashPyrin");         Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm ethash+pyrinhash" }
     [PSCustomObject]@{ Algorithms = @("Ethash", "FishHash");               Fee = @(0.007, 0.01);  MinMemGiB = 6.0;  Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(45, 25); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm ethash+fishhash" }
-    [PSCustomObject]@{ Algorithms = @("Ethash", "SHA512256d");             Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @("ZPool")); Arguments = " --algorithm ethash+sha512256d" }
+    [PSCustomObject]@{ Algorithms = @("Ethash", "SHA512256d");             Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @("ZPool")); Arguments = " --algorithm ethash+sha512256d" }
     [PSCustomObject]@{ Algorithms = @("EthashB3");                         Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm ethashb3" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "Blake3");               Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm ethashb3+alephium" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "HeavyHashKarlsen");     Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 2; WarmupTimes = @(45, 25); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm ethashb3+karlsenhash" }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -179,7 +179,7 @@ Enum MinerStatus {
 Class Miner { 
     [Int]$Activated
     [TimeSpan]$Active = [TimeSpan]::Zero
-    [String[]]$Algorithms # derived from workers, required for GetDataReader & Web GUI
+    [String[]]$Algorithms = @() # derived from workers, required for GetDataReader & Web GUI
     [String]$API
     [String]$Arguments
     [Boolean]$Available = $true
@@ -192,7 +192,7 @@ Class Miner {
     [Int]$DataCollectInterval = 5 # Seconds
     [DateTime]$DataSampleTimestamp = 0 # Newest sample
     [String[]]$DeviceNames = @() # derived from devices
-    [PSCustomObject[]]$Devices = @()
+    [PSCustomObject[]]$Devices
     [Boolean]$Disabled = $false
     [Double]$Earning # derived from pool and stats
     [Double]$Earning_Bias # derived from pool and stats
@@ -203,7 +203,7 @@ Class Miner {
     [String]$Info
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
     [String]$LogFile
-    [Boolean]$MeasurePowerConsumption = $false
+    [Boolean]$MeasurePowerConsumption = $False
     [Int]$MinDataSample # for safe hashrate values
     [Int]$MinerSet
     [String]$MinerUri
@@ -221,7 +221,7 @@ Class Miner {
     [Int]$ProcessPriority = -1
     [Double]$Profit = [Double]::NaN
     [Double]$Profit_Bias = [Double]::NaN
-    [Boolean]$ReadPowerConsumption = $false
+    [Boolean]$ReadPowerConsumption
     [System.Collections.Generic.List[String]]$Reasons = @() # Why is a miner not available?
     [Boolean]$Restart = $false 
     hidden [DateTime]$StatStart
@@ -236,7 +236,7 @@ Class Miner {
     [DateTime]$ValidDataSampleTimestamp = 0
     [String]$Version
     [Int[]]$WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-    [String]$WindowStyle = "minimized"
+    [String]$WindowStyle
     [Worker[]]$Workers = @()
     [Worker[]]$WorkersRunning = @()
 
@@ -421,26 +421,26 @@ Class Miner {
 
         # Log switching information to .\Logs\SwitchingLog
         [PSCustomObject]@{ 
-            DateTime          = (Get-Date -Format o)
-            Action            = If ($this.Status -eq [MinerStatus]::Idle) { "Stopped" } Else { "Failed" }
-            Name              = $this.Name
-            Activated         = $this.Activated
-            Accounts          = $this.WorkersRunning.Pool.User -join '; '
-            Algorithms        = $this.WorkersRunning.Pool.AlgorithmVariant -join '; '
-            Benchmark         = $this.Benchmark
-            CommandLine       = $this.CommandLine
-            Cycle             = $this.ContinousCycle
-            DeviceNames       = $this.DeviceNames -join '; '
-            Duration          = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
-            Earning           = $this.Earning
-            Earning_Bias      = $this.Earning_Bias
-            LastDataSample    = $this.Data | Select-Object -Last 1 | ConvertTo-Json -Compress
+            DateTime                = (Get-Date -Format o)
+            Action                  = If ($this.Status -eq [MinerStatus]::Idle) { "Stopped" } Else { "Failed" }
+            Name                    = $this.Name
+            Activated               = $this.Activated
+            Accounts                = $this.WorkersRunning.Pool.User -join '; '
+            Algorithms              = $this.WorkersRunning.Pool.AlgorithmVariant -join '; '
+            Benchmark               = $this.Benchmark
+            CommandLine             = $this.CommandLine
+            Cycle                   = $this.ContinousCycle
+            DeviceNames             = $this.DeviceNames -join '; '
+            Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
+            Earning                 = $this.Earning
+            Earning_Bias            = $this.Earning_Bias
+            LastDataSample          = $this.Data | Select-Object -Last 1 | ConvertTo-Json -Compress
             MeasurePowerConsumption = $this.MeasurePowerConsumption
-            Pools             = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join '; '
-            Profit            = $this.Profit
-            Profit_Bias       = $this.Profit_Bias
-            Reason            = If ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo -replace "'$($this.StatusInfo)' " } Else { "" }
-            Type              = $this.Type
+            Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join '; '
+            Profit                  = $this.Profit
+            Profit_Bias             = $this.Profit_Bias
+            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo -replace "'$($this.StatusInfo)' " } Else { "" }
+            Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
         If ($this.Status -eq [MinerStatus]::Idle) { 
@@ -575,13 +575,15 @@ Class Miner {
         }
     }
 
-    [Void]Refresh([Double]$PowerCostBTCperW, [Boolean]$CalculatePowerCost) { 
-        $this.Benchmark = $false
+    [Void]Refresh([Double]$PowerCostBTCperW, [HashTable]$Config) { 
         $this.Best = $false
+        $this.MinDataSample = $Config.MinDataSample
         $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
-        $this.ReadPowerConsumption = [Boolean]($this.Devices.ReadPowerConsumption -notcontains $false)
+        $this.ProcessPriority = If ($this.Type -eq "CPU") { $Config.CPUMinerProcessPriority } Else { $Config.GPUMinerProcessPriority }
         $this.Reasons = [System.Collections.Generic.List[String]]@()
+        $this.ReadPowerConsumption = [Boolean]($this.Devices.ReadPowerConsumption -notcontains $false)
         $this.Updated = $this.Workers.Updated | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
+        $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
 
         $this.Workers.ForEach(
             { 
@@ -596,17 +598,13 @@ Class Miner {
                     $_.Updated = $Stat.Updated
                 }
                 Else { 
-                    $this.Benchmark = $true
                     $_.Disabled = $false
                     $_.Hashrate = [Double]::NaN
                 }
             }
         )
-        $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
-
-        If ($this.Workers.Where({ $_.Disabled })) { 
-            $this.Disabled = $true
-        }
+        $this.Benchmark = [Boolean]($this.Workers.Hashrate -match [Double]::NaN)
+        $this.Disabled = [Boolean]($this.Workers.Disabled -match $true)
 
         If ($this.Benchmark -eq $true) { 
             $this.Earning = [Double]::NaN
@@ -620,24 +618,22 @@ Class Miner {
             If ($this.Earning) { $this.Workers.ForEach({ $this.Earning_Accuracy += $_.Earning_Accuracy * $_.Earning / $this.Earning }) }
         }
 
-        $this.MeasurePowerConsumption = $false
-        $this.PowerCost = [Double]::NaN
-        $this.PowerConsumption = [Double]::NaN
-        $this.Profit = [Double]::NaN
-        $this.Profit_Bias = [Double]::NaN
-        If ($CalculatePowerCost) { 
-            If ($Stat = Get-Stat -Name "$($this.Name)_PowerConsumption") { 
-                If ($Stat.Week) { 
-                    $this.PowerConsumption = $Stat.Week
-                    $this.PowerCost = $this.PowerConsumption * $PowerCostBTCperW
-                    $this.Profit = $this.Earning - $this.PowerCost
-                    $this.Profit_Bias = $this.Earning_Bias - $this.PowerCost
-                }
-            }
-            Else { 
-                $this.MeasurePowerConsumption = $true
-            }
+        If ($Stat = Get-Stat -Name "$($this.Name)_PowerConsumption") { 
+            $this.PowerConsumption = $Stat.Week
+            $this.PowerCost = $this.PowerConsumption * $PowerCostBTCperW
+            $this.Profit = $this.Earning - $this.PowerCost
+            $this.Profit_Bias = $this.Earning_Bias - $this.PowerCost
+            $this.MeasurePowerConsumption = $false
         }
+        Else { 
+            $this.PowerCost = [Double]::NaN
+            $this.PowerConsumption = [Double]::NaN
+            $this.Profit = [Double]::NaN
+            $this.Profit_Bias = [Double]::NaN
+            $this.MeasurePowerConsumption = $Config.CalculatePowerCost
+        }
+
+        $this.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
     }
 }
 
@@ -989,7 +985,7 @@ Function Get-Rate {
     # Use stored currencies from last run
     If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = $Variables.Rates.PSObject.Properties.Name | Where-Object { $_ -eq  ($_ -replace '^m') } }
 
-    $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies -and $_ -notlike "US*-*" })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
+    $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
 
     If (-not $Variables.Rates.BTC.($Config.MainCurrency) -or (Compare-Object @(@($Variables.Rates.PSObject.Properties.Name | Select-Object) + @($Variables.RatesMissingCurrencies | Select-Object)) @($Variables.AllCurrencies | Select-Object) | Where-Object SideIndicator -eq "=>") -or ($Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)))) { 
         Try { 
@@ -1121,7 +1117,7 @@ Function Write-Message {
                     $Variables.TextBoxSystemLog.ScrollToCaret()
                 }
                 Else { 
-                    $Variables.TextBoxSystemLog.AppendText("`r`n$Message")
+                    $Variables.TextBoxSystemLog.AppendText("`n$Message")
                 }
             }
         }
@@ -1279,7 +1275,7 @@ Function Get-RandomDonationPoolsConfig {
 
     $Variables.DonationRandom = $Variables.DonationData | Get-Random
     $DonationRandomPoolsConfig = [Ordered]@{ }
-    ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).ForEach(
+    ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).Where({ $_ -in $Variables.DonationRandom.PoolName }).ForEach(
         { 
             $PoolConfig = $Config.PoolsConfig[$_] | ConvertTo-Json -Depth 99 -Compress | ConvertFrom-Json -AsHashTable
             $PoolConfig.EarningsAdjustmentFactor = 1
@@ -1493,8 +1489,6 @@ Function Read-Config {
 
     # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
     $ConfigFromFile.psBase.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
-
-    If (-not $Config.ShowConsole) { Hide-Console }
 
     $Variables.ShowAccuracy = $Config.ShowAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
@@ -2855,7 +2849,7 @@ Function Get-CurrencyFromAlgorithm {
     )
 
     If ($Algorithm) { 
-        If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm } ))) { 
+        If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm }))) { 
             Return $Currencies
         }
 
@@ -2865,7 +2859,7 @@ Function Get-CurrencyFromAlgorithm {
             [Void]$Variables.MutexAddCoinName.ReleaseMutex()
         }
 
-        If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm } ))) { 
+        If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm }))) { 
             Return $Currencies
         }
     }
@@ -3428,10 +3422,19 @@ Function Get-Median {
 }
 
 Function Hide-Console {
-    # Based on https://www.reddit.com/r/PowerShell/comments/a0jj6m/startprocess_hidden/
-    If ($ConsolePtr = [Console.Window]::GetConsoleWindow()) { 
-        #0 hide
-        [Console.Window]::ShowWindow($ConsolePtr, 0)
+    # https://stackoverflow.com/questions/3571627/show-hide-the-console-window-of-a-c-sharp-console-application
+    If ($Variables.ConsoleWindowHandle = [Console.Window]::GetConsoleWindow()) { 
+        # 0 = SW_HIDE
+        [Console.Window]::ShowWindow($Variables.ConsoleWindowHandle, 0)
+    }
+}
+
+Function Show-Console {
+    # https://stackoverflow.com/questions/3571627/show-hide-the-console-window-of-a-c-sharp-console-application
+    If ($Variables.ConsoleWindowHandle) { 
+        # 2 = SW_SHOWMINIMIZED
+        [Console.Window]::ShowWindow($Variables.ConsoleWindowHandle, 2)
+        $Variables.Remove("ConsoleWindowHandle")
     }
 }
 

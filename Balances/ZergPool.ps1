@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ZergPool.ps1
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -56,7 +56,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
                         Unpaid          = [Double]$APIResponse.Unpaid
                         # Paid            = [Double]$APIResponse.PaidTotal
                         # Total           = [Double]$APIResponse.Unpaid + [Double]$APIResponse.PaidTotal
-                        PayoutThreshold = [Double]($(If ($Config.PoolsConfig.$Name.PayoutThreshold.$Currency -gt $APIResponse.MinPay) { $Config.PoolsConfig.$Name.PayoutThreshold.$Currency } Else { $APIResponse.MinPay } ))
+                        PayoutThreshold = [Double]($(If ($Config.PoolsConfig.$Name.PayoutThreshold.$Currency -gt $APIResponse.MinPay) { $Config.PoolsConfig.$Name.PayoutThreshold.$Currency } Else { $APIResponse.MinPay })
                         Url             = "https://zergpool.com/?address=$Wallet"
                     }
                 }

@@ -8,6 +8,15 @@
     },
     "MiningDutchUserName": "UselessGuru",
     "MiningPoolHubUserName": "UselessGuru",
-    "ProHashingUserName": "UselessGuru"
+    "ProHashingUserName": "UselessGuru",
+    "PoolName": [
+      "HashCryptos",
+      "Hiveon",
+      "MiningDutch",
+      "NiceHash",
+      "ProHashing",
+      "ZergPoolCoins",
+      "ZPool"
+    ]
   }
 ]

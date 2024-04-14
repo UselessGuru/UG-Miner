@@ -7,7 +7,8 @@
             <button id="btn-re-benchmark" class="btn btn-primary" disabled title="The marked miners will re-benchmark&#10;Use this if the recorded hashrate is unreal or to re-enable disabled miners">Re-benchmark</button>
             <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power usage is unreal">Re-measure power consumption</button>
             <button id="btn-failed" class="btn btn-warning" disabled title="The marked miners will be marked as failed&#10;Use this if the miners fail benchmarking or produce unpredictable results">Mark as failed</button>
-            <button id="btn-disable" class="btn btn-danger" disabled title="The marked miners will be marked as disabled&#10;To re-enable trigger re-benchmarking">Disable</button>
+            <button id="btn-disable" class="btn btn-danger" disabled title="The marked miners will be marked as disabled">Disable</button>
+            <button id="btn-enable" class="btn btn-success" disabled title="The marked miners will be enabled">Enable</button>
             <button id="btn-remove-watchdog" class="btn btn-info" disabled title="Remove the watchdog timers for the marked miners">Remove watchdog</button>
           </div>
           <table id="miners" class="table"
@@ -17,7 +18,7 @@
             data-cache="true"
             data-click-to-select="true"
             data-cookie="true"
-            data-cookie-id-table="miners"
+            data-cookie-id-table="minersall"
             data-cookies-enabled="['bs.table.hiddenColumns', 'bs.table.columns']"
             data-detail-formatter="detailFormatter"
             data-detail-view="true"
@@ -25,7 +26,7 @@
             data-filter-control="true"
             data-group-by="true"
             data-group-by-collapsed-groups=""
-            data-group-by-field='["Name"]'
+            data-group-by-field="Name"
             data-group-by-show-toggle-icon="true"
             data-group-by-toggle="true"
             data-header-style="headerStyleAlignTop"
@@ -39,7 +40,7 @@
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
-            data-sort-select-options="true"
+            data-sort-select-options="false"
             data-toggle="table"
             data-toolbar="#toolbar"
             data-undefined-text=""
@@ -66,7 +67,7 @@
                 <th data-field="PowerConsumption" data-align="right" data-sortable="true" data-formatter="formatWatt" class="text-nowrap" data-title-tooltip="(estimated value)">Power</th>
                 <th data-field="TotalMiningDuration" data-sortable="true" data-visible="false">Total mining duration</th>
                 <th data-field="EarningAccuracy" data-align="right" data-sortable="true">Accuracy</th>
-                <th data-field="PrimaryAlgorithm" data-sortable="true" data-filter-control="select" data-visible="false">Primary algorithm</th>
+                <th data-field="PrimaryAlgorithm" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Primary algorithm</th>
                 <th data-field="PrimaryAlgorithmVariant" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Primary algorithm (variant)</th>
                 <th data-field="PrimaryCurrency" data-sortable="true" data-filter-control="select" data-visible="false">Primary currency</th>
                 <th data-field="PrimaryCoinName" data-sortable="true" data-filter-control="select" data-visible="false">Primary coin name</th>
@@ -76,7 +77,7 @@
                 <th data-field="PrimaryHashrate" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" class="text-nowrap">Primary<br>hashrate</th>
                 <th data-field="PrimaryPoolFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Primary pool fee</th>
                 <th data-field="PrimaryMinerFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Primary miner fee</th>
-                <th data-field="SecondaryAlgorithm" data-sortable="true" data-filter-control="select" data-visible="false">Secondary algorithm</th>
+                <th data-field="SecondaryAlgorithm" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Secondary algorithm</th>
                 <th data-field="SecondaryAlgorithmVariant" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Secondary algorithm (variant)</th>
                 <th data-field="SecondaryCurrency" data-sortable="true" data-filter-control="select" data-visible="false">Secondary currency</th>
                 <th data-field="SecondaryCoinName" data-sortable="true" data-filter-control="select" data-visible="false">Secondary coin name</th>
@@ -119,20 +120,6 @@
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 26,
 
-              onLoadSuccess: function() {
-                if (config.CalculatePowerCost == true) {
-                  $table.bootstrapTable('showColumn', 'Profit_Bias');
-                  $table.bootstrapTable('showColumn', 'Profit');
-                  $table.bootstrapTable('showColumn', 'PowerConsumption');
-                  $table.bootstrapTable('showColumn', 'PowerCost');
-                } else {
-                  $table.bootstrapTable('hideColumn', 'Profit_Bias');
-                  $table.bootstrapTable('hideColumn', 'Profit');
-                  $table.bootstrapTable('hideColumn', 'PowerConsumption');
-                  $table.bootstrapTable('hideColumn', 'PowerCost');
-                }
-              },
-
               onPostBody: function () {
                 if (this.data.length > 0) {
                   $("td.bs-checkbox").each(function () {
@@ -162,6 +149,7 @@
               document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+              document.getElementById('btn-enable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 
@@ -232,6 +220,23 @@
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-disable').text());
+                    $('body').css('cursor', 'default');
+                    $('#myModal').modal({show:true});
+                  });
+                  $table.bootstrapTable('refresh');
+                }
+              });
+
+              $('#btn-enable').click(function () {
+                var $data = $table.bootstrapTable('getSelections');
+                if ($data.length >= 1) {
+                  $('body').css('cursor', 'progress');
+                  $url = '/functions/stat/enable';
+                  $payload = {
+                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  };
+                  $('.modal-body').load($url, $payload, function() {
+                    $('.modal-title').text($('#btn-enable').text());
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });

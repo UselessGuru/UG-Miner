@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -52,7 +52,7 @@ If ($Algorithms) {
 
                 [PSCustomObject]@{ 
                     API         = "HellMiner"
-                    Arguments   = " --pool=stratum+$(If ($Pool.PoolPorts[1]) { "ssl" } Else { "tcp" } )://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user=$($Pool.User) --pass=$($Pool.Pass) --api-port=$MinerAPIPort"
+                    Arguments   = " --pool=stratum+$(If ($Pool.PoolPorts[1]) { "ssl" } Else { "tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user=$($Pool.User) --pass=$($Pool.Pass) --api-port=$MinerAPIPort"
                     DeviceNames = $AvailableMiner_Devices.Name
                     Fee         = $_.Fee # Dev fee
                     MinerSet    = $_.MinerSet

@@ -63,7 +63,7 @@
                 }
                 catch {}
               },
-              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
+              autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
               height: $(window).height() - $('#balanceobjects').offset().top - 20
             });
 

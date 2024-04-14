@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.5
-Version date:   2024/04/07
+Version:        6.2.6
+Version date:   2024/04/14
 #>
 
 param(
@@ -102,7 +102,7 @@ If ($DivisorMultiplier -and $Regions) {
                     Pass                     = "c=$PayoutCurrency$(If ($Currency) { ",mc=$Currency" }),ID=$WorkerName$PayoutThresholdParameter" # Pool profit switching breaks Option 2 (static coin), instead it will still send DAG data for any coin
                     Port                     = [UInt16]$Request.$Pool.port
                     PortSSL                  = [UInt16]$Request.$Pool.tls_port
-                    PoolUri                  = "https://zergpool.com/site/mining?algo=$($Algorithm)"
+                    PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"
                     Price                    = $Stat.Live
                     Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
