@@ -257,12 +257,12 @@ Easy configuration, easy start:
       i: Toggle Earning Bias column visibility
       m: Toggle Miner Fees column visibility
       n: Toggle CoinName column visibility
+      o: Toggle Listing all optimal miners
       p: Toggle Pool column visibility
       r: Toggle Profit Bias column visibility
       s: Toggle UI Style [full or light]
       t: Toggle Profit column visibility
       u: Toggle User column visibility
-      v: Toggle Listing all available miners
       w: Toggle Power usage column visibility
       y: Toggle Currency column visibility
 
