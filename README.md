@@ -272,7 +272,7 @@ PowerShell Version 7.x is required:
 
 UG-Miner works best with the latest PWSH version 7.2.x. Versions 7.3.x and later have a memory leak and are therefore not recommended.
 
-[Download Installer for version 7.2.18](https://github.com/PowerShell/PowerShell/releases/download/v7.2.18/PowerShell-7.2.18-win-x64.msi)
+[Download Installer for version 7.2.19](https://github.com/PowerShell/PowerShell/releases/download/v7.2.19/PowerShell-7.2.19-win-x64.msi)
 
 **Some miners may need 'Visual C+ RunTimes download/extract, run install_all.bat file**
 
