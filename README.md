@@ -31,6 +31,18 @@ UG-Miner code is partly based on
    - Earnings graph
    - Low developer fee of 1% (can be set to 0)
    - Calculate power cost (optional software installation required)
+   - Supports these pools: 
+       - HashCryptos
+       - Hiveon
+       - MiningDutch
+       - MiningPoolHub (*)
+       - NiceHash
+       - ProHashing
+       - ZergPool
+       - ZPool
+
+         (*) MiningPoolHub is no longer trustworthy. Outstanding balances will not get paid and support will not respond. Use at your own risk!
+
 
 *****
 
