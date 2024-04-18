@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.2.6
-Version date:   2024/04/14
+Version:        6.2.7
+Version date:   2024/04/18
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

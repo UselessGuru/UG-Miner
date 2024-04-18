@@ -2,7 +2,7 @@
 
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 
-Updated 2024/04/14
+Updated 2024/04/18
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -143,8 +143,8 @@ Easy configuration, easy start:
 
    Web & Legacy GUI
 
-      UG-Miner relies on config files. No need to edit bat files. Simply run UG-Miner.bat
-      Set the config in the Web GUI (http://localhost:3999/configedit.html), apply & start mining
+      UG-Miner relies on config files. There is no need to edit bat files. Simply run UG-Miner.bat
+      Set the config in the Web GUI (http://localhost:3999/configedit.html), apply & start mining.
 
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
@@ -152,10 +152,9 @@ Easy configuration, easy start:
 
    Pause mining
 
-      Ability to pause miners while keeping other jobs running (pause button)
-      This will stop mining activity
-      Brains will still run in the background avoiding the learning phase on resume
-      BalancesTracker will still run in the background to keep the pool balances up to date
+      Ability to pause miners while keeping other jobs running (pause button). This will stop mining activity
+      Brains will still run in the background avoiding the learning phase on resume.
+      BalancesTracker will still run in the background to keep the pool balances up to date.
 
    PreRun
 

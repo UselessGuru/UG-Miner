@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.6
-Version date:   2024/04/14
+Version:        6.2.7
+Version date:   2024/04/18
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"455.23") }))) { Return }
@@ -42,7 +42,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("FishHash");                     Type = "AMD"; Fee = @(0.01);         MinMemGiB = 6;    MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             ExcludeGPUArchitecture = @("RDNA1"); Arguments = @(" -algo Fishhash") } # https://github.com/nanopool/nanominer/issues/427
     [PSCustomObject]@{ Algorithms = @("HeavyHashKarlsen");             Type = "AMD"; Fee = @(0.01);         MinMemGiB = 2;    MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             ExcludeGPUArchitecture = @();        Arguments = @(" -algo Karlsen") }
 #   [PSCustomObject]@{ Algorithms = @("HeavyHashKaspa");               Type = "AMD"; Fee = @(0.01);         MinMemGiB = 2;    MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             ExcludeGPUArchitecture = @();        Arguments = @(" -algo Kaspa") } # ASIC
-    [PSCustomObject]@{ Algorithms = @("KawPow");                       Type = "AMD"; Fee = @(0.02);         MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludePools = @(@("ProHashing"), @()); ExcludeGPUArchitecture = @();        Arguments = @(" -algo KawPow") } # TeamRedMiner-v0.10.19 is fastest
+    [PSCustomObject]@{ Algorithms = @("KawPow");                       Type = "AMD"; Fee = @(0.02);         MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludePools = @(@("ProHashing"), @()); ExcludeGPUArchitecture = @();        Arguments = @(" -algo KawPow") } # TeamRedMiner-v0.10.20 is fastest
     [PSCustomObject]@{ Algorithms = @("UbqHash");                      Type = "AMD"; Fee = @(0.01);         MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             ExcludeGPUArchitecture = @();        Arguments = @(" -algo Ubqhash") } # PhoenixMiner-v6.2c is fastest
     [PSCustomObject]@{ Algorithms = @("VertHash");                     Type = "AMD"; Fee = @(0.01);         MinMemGiB = 3;    MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             ExcludeGPUArchitecture = @();        Arguments = @(" -algo Verthash") }
 

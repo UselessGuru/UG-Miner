@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.6
+Version:        6.2.7
 Version date:   2024/04/07
 #>
 
@@ -145,9 +145,9 @@ Function Update-TabControl {
             $ContextMenuStripItem4.Enabled = $true
             $ContextMenuStripItem4.Visible = $true
             $ContextMenuStripItem4.Text = "Disable"
-            $ContextMenuStripItem5.Enabled = $true
-            $ContextMenuStripItem5.Visible = $true
-            $ContextMenuStripItem5.Text = "Enable"
+            $ContextMenuStripItem5.Enabled = $false
+            $ContextMenuStripItem5.Visible = $false
+            $ContextMenuStripItem6.Enabled = $false
             $ContextMenuStripItem6.Visible = $false
 
             $ActiveMinersLabel.Text = If ($Variables.MinersBestPerDeviceCombo) { "Active miners updated $([DateTime]::Now.ToString())" } Else { "No miners running." }

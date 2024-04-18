@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.6
-Version date:   2024/04/14
+Version:        6.2.7
+Version date:   2024/04/18
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -274,7 +274,6 @@ Class Miner {
                 Start-Sleep -Seconds 2
 
                 While ($true) { 
-                    # Start-Sleep -Seconds 60
                     $NextLoop = [DateTime]::Now.AddSeconds($Miner.DataCollectInterval)
                     $Miner.GetMinerData()
                     While ([DateTime]::Now -lt $NextLoop) { Start-Sleep -Milliseconds 50 }
@@ -1117,7 +1116,7 @@ Function Write-Message {
                     $Variables.TextBoxSystemLog.ScrollToCaret()
                 }
                 Else { 
-                    $Variables.TextBoxSystemLog.AppendText("`n$Message")
+                    $Variables.TextBoxSystemLog.AppendText("`r`n$Message")
                 }
             }
         }
@@ -1573,18 +1572,19 @@ Function Write-Config {
 
     $Variables.ShowAccuracy = $Config.ShowAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
+    $Variables.ShowCoinName = $Config.ShowCoinName
+    $Variables.ShowCurrency = $Config.ShowCurrency
     $Variables.ShowEarning = $Config.ShowEarning
     $Variables.ShowEarningBias = $Config.ShowEarningBias
     $Variables.ShowMinerFee = $Config.ShowMinerFee
     $Variables.ShowPool = $Config.ShowPool
     $Variables.ShowPoolBalances = $Config.ShowPoolBalances
     $Variables.ShowPoolFee = $Config.ShowPoolFee
-    $Variables.ShowPowerCost = $Config.ShowPowerCost
     $Variables.ShowPowerConsumption = $Config.ShowPowerConsumption
+    $Variables.ShowPowerCost = $Config.ShowPowerCost
     $Variables.ShowProfit = $Config.ShowProfit
     $Variables.ShowProfitBias = $Config.ShowProfitBias
-    $Variables.ShowCoinName = $Config.ShowCoinName
-    $Variables.ShowCurrency = $Config.ShowCurrency
+    $Variables.ShowShares = $Config.ShowShares
     $Variables.ShowUser = $Config.ShowUser
     $Variables.UIStyle = $Config.UIStyle
 }
@@ -1816,17 +1816,17 @@ Function Set-Stat {
 
                 $Stat.Live = $Value
                 $Stat.Minute_Fluctuation = ((1 - $Span_Minute) * $Stat.Minute_Fluctuation) + ($Span_Minute * ([Math]::Abs($Value - $Stat.Minute) / [Math]::Max([Math]::Abs($Stat.Minute), $SmallestValue)))
-                $Stat.Minute = ((1 - $Span_Minute) * $Stat.Minute) + ($Span_Minute * $Value)
-                $Stat.Minute_5_Fluctuation = ((1 - $Span_Minute_5) * $Stat.Minute_5_Fluctuation) + ($Span_Minute_5 * ([Math]::Abs($Value - $Stat.Minute_5) / [Math]::Max([Math]::Abs($Stat.Minute_5), $SmallestValue)))
-                $Stat.Minute_5 = ((1 - $Span_Minute_5) * $Stat.Minute_5) + ($Span_Minute_5 * $Value)
-                $Stat.Minute_10_Fluctuation = ((1 - $Span_Minute_10) * $Stat.Minute_10_Fluctuation) + ($Span_Minute_10 * ([Math]::Abs($Value - $Stat.Minute_10) / [Math]::Max([Math]::Abs($Stat.Minute_10), $SmallestValue)))
-                $Stat.Minute_10 = ((1 - $Span_Minute_10) * $Stat.Minute_10) + ($Span_Minute_10 * $Value)
-                $Stat.Hour_Fluctuation = ((1 - $Span_Hour) * $Stat.Hour_Fluctuation) + ($Span_Hour * ([Math]::Abs($Value - $Stat.Hour) / [Math]::Max([Math]::Abs($Stat.Hour), $SmallestValue)))
-                $Stat.Hour = ((1 - $Span_Hour) * $Stat.Hour) + ($Span_Hour * $Value)
-                $Stat.Day_Fluctuation = ((1 - $Span_Day) * $Stat.Day_Fluctuation) + ($Span_Day * ([Math]::Abs($Value - $Stat.Day) / [Math]::Max([Math]::Abs($Stat.Day), $SmallestValue)))
-                $Stat.Day = ((1 - $Span_Day) * $Stat.Day) + ($Span_Day * $Value)
-                $Stat.Week_Fluctuation = ((1 - $Span_Week) * $Stat.Week_Fluctuation) + ($Span_Week * ([Math]::Abs($Value - $Stat.Week) / [Math]::Max([Math]::Abs($Stat.Week), $SmallestValue)))
-                $Stat.Week = ((1 - $Span_Week) * $Stat.Week) + ($Span_Week * $Value)
+                $Stat.Minute = (1 - $Span_Minute) * $Stat.Minute + $Span_Minute * $Value
+                $Stat.Minute_5_Fluctuation = (1 - $Span_Minute_5) * $Stat.Minute_5_Fluctuation + $Span_Minute_5 * ([Math]::Abs($Value - $Stat.Minute_5) / [Math]::Max([Math]::Abs($Stat.Minute_5), $SmallestValue))
+                $Stat.Minute_5 = (1 - $Span_Minute_5) * $Stat.Minute_5 + $Span_Minute_5 * $Value
+                $Stat.Minute_10_Fluctuation = (1 - $Span_Minute_10) * $Stat.Minute_10_Fluctuation + $Span_Minute_10 * ([Math]::Abs($Value - $Stat.Minute_10) / [Math]::Max([Math]::Abs($Stat.Minute_10), $SmallestValue))
+                $Stat.Minute_10 = (1 - $Span_Minute_10) * $Stat.Minute_10 + $Span_Minute_10 * $Value
+                $Stat.Hour_Fluctuation = (1 - $Span_Hour) * $Stat.Hour_Fluctuation + $Span_Hour * ([Math]::Abs($Value - $Stat.Hour) / [Math]::Max([Math]::Abs($Stat.Hour), $SmallestValue))
+                $Stat.Hour = (1 - $Span_Hour) * $Stat.Hour + $Span_Hour * $Value
+                $Stat.Day_Fluctuation = (1 - $Span_Day) * $Stat.Day_Fluctuation + $Span_Day * ([Math]::Abs($Value - $Stat.Day) / [Math]::Max([Math]::Abs($Stat.Day), $SmallestValue))
+                $Stat.Day = (1 - $Span_Day) * $Stat.Day + $Span_Day * $Value
+                $Stat.Week_Fluctuation = (1 - $Span_Week) * $Stat.Week_Fluctuation + $Span_Week * ([Math]::Abs($Value - $Stat.Week) / [Math]::Max([Math]::Abs($Stat.Week), $SmallestValue))
+                $Stat.Week = (1 - $Span_Week) * $Stat.Week + $Span_Week * $Value    
                 $Stat.Duration = $Stat.Duration + $Duration
                 $Stat.Updated = $Updated
                 $Stat.Timer = $Timer

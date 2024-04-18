@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.6
-Version date:   2024/04/14
+Version:        6.2.7
+Version date:   2024/04/18
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^RX5[5|6]0$" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -47,7 +47,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Blake3");                         Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm blake3_alephium") }
     [PSCustomObject]@{ Algorithms = @("CryptonightGpu");                 Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm cryptonight_gpu") }
     [PSCustomObject]@{ Algorithms = @("CryptonightHeavyXhv");            Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm cryptonight_xhv") }
-    [PSCustomObject]@{ Algorithms = @("CryptonightTurtle");              Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm cryptonight_turtle") } # TeamRedMiner-v0.10.19 is fastest
+    [PSCustomObject]@{ Algorithms = @("CryptonightTurtle");              Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm cryptonight_turtle") } # TeamRedMiner-v0.10.20 is fastest
     [PSCustomObject]@{ Algorithms = @("CryptonightUpx");                 Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm cryptonight_upx") }
     [PSCustomObject]@{ Algorithms = @("CurveHash");                      Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm curvehash") }
     [PSCustomObject]@{ Algorithms = @("Decred");                         Type = "AMD"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUArchitecture = @();       ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm blake3d_decred") }

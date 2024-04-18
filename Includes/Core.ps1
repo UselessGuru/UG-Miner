@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.6
-Version date:   2024/04/14
+Version:        6.2.7
+Version date:   2024/04/18
 #>
 
 using module .\Include.psm1
@@ -139,6 +139,7 @@ Do {
                             }
                         }
                     }
+
                     If ($Variables.DonationStart -and [DateTime]::Now -ge $Variables.DonationStart) { 
                         If (-not $Variables.DonationEnd) { 
                             $Variables.DonationStart = Get-Date
@@ -481,7 +482,7 @@ Do {
                                             $Group = $_.Group
                                             If ($PoolsToSuspend = $RelevantPools.Where({ -not $_.Reasons }).Where({ $_.Name -eq $Group[0].PoolName })) { 
                                                 $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") })
-                                                $Message = "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Bottom 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                                $Message = "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                                                 Write-Message -Level Warn $Message
                                                 $PoolWatchdogMessages += $Message
                                             }
@@ -497,16 +498,15 @@ Do {
                                             $Group = $_.Group
                                             If ($PoolsToSuspend = $RelevantPools.Where({ -not $_.Reasons }).Where({ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm })) { 
                                                 $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") })
-                                                $Message = "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Bottom 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                                $Message = "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                                                 Write-Message -Level Warn $Message
                                                 $PoolWatchdogMessages += $Message
                                             }
                                         }
                                     }
                                 )
-                                Remove-Variable Algorithms, Group, PoolsToSuspend, RelevantPools -ErrorAction Ignore
+                                Remove-Variable Algorithms, Group, PoolsToSuspend, RelevantPools, RelevantWatchdogTimers -ErrorAction Ignore
                             }
-                            Remove-Variable RelevantWatchdogTimers
                         }
 
                         # Make pools unavailable
@@ -900,7 +900,7 @@ Do {
                                 $Group = $_.Group
                                 If ($MinersToSuspend = $RelevantMiners.Where({ -not $_.Reasons }).Where({ (($_.Name -split '-')[0..1] -join '-') -eq (($Group[0].MinerName -split '-')[0..1] -join '-') })) { 
                                     $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [all algorithms & all devices]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..1] -join '-') [all algorithms & all devices]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Bottom 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..1] -join '-') [all algorithms & all devices]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                                 }
                             }
                         }
@@ -914,7 +914,7 @@ Do {
                                 $Group = $_.Group
                                 If ($MinersToSuspend = $RelevantMiners.Where({ -not $_.Reasons }).Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') })) { 
                                     $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [all algorithms]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Bottom 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                                 }
                             }
                         }
@@ -929,7 +929,7 @@ Do {
                                 If ($MinersToSuspend = $RelevantMiners.Where({ -not $_.Reasons }).Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') }).Where({ [String]$_.Algorithms -eq [String](($Group[0].MinerName -split '-')[3] -split '&' -replace '\(.*')})) { 
                                     $Algorithms = $MinersToSuspend[0].Workers.Pool.Algorithm -join '&'
                                     $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [Algorithm $Algorithms]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [Algorithm $Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Bottom 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [Algorithm $Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                                 }
                             }
                         }
@@ -944,14 +944,13 @@ Do {
                                 If ($MinersToSuspend = $RelevantMiners.Where({ -not $_.Reasons }).Where({ $_.Name -eq $Group[0].MinerName })) { 
                                     $Algorithms = $MinersToSuspend[0].Workers.Pool.AlgorithmVariant -join '&'
                                     $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [Algorithm variant $Algorithms]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [Algorithm variant $Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Bottom 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [Algorithm variant $Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                                 }
                             }
                         }
                     )
-                    Remove-Variable Algorithms, Group, MinersToSuspend, RelevantMiners -ErrorAction Ignore
+                    Remove-Variable Algorithms, Group, MinersToSuspend, RelevantMiners, RelevantWatchdogTimers -ErrorAction Ignore
                 }
-                Remove-Variable RelevantWatchdogTimers
             }
 
             $Miners.ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique); $_.Available = -not [Boolean]$_.Reasons })
@@ -1330,8 +1329,7 @@ Do {
         }
 
         ForEach ($Miner in $Variables.MinersBestPerDeviceCombo | Sort-Object -Property { $_.DeviceNames }) { 
-            If ($Message = "$(If ($Miner.Benchmark) { "Benchmark" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and " })$(If($Miner.MeasurePowerConsumption) { "Power consumption measurement" })") { 
-                $Message = $Message.Substring(0, 1).toUpper() + $Message.Substring(1).toLower()
+            If ($Message = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) samples]..."
             }
         }
@@ -1371,7 +1369,7 @@ Do {
         Write-Message -Level Info "Collecting miner data while waiting for next cycle..."
             
         Do { 
-            Start-Sleep -Milliseconds 200
+            Start-Sleep -Milliseconds 500
             Try { 
                 ForEach ($Miner in $Variables.RunningMiners.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
@@ -1402,8 +1400,8 @@ Do {
                                         $Miner.Data += $Samples
                                         Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace ' ')$(If ($Config.ShowShares) { " / Shares Total: $($Sample.Shares.$_[3]), Rejected: $($Sample.Shares.$_[1]), Ignored: $($Sample.Shares.$_[2])" })" })) -join ' & ')$(If ($Sample.PowerConsumption) { " / Power consumption: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
                                         If ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
-                                            $Miner.SubStatus = "Benchmarking"
-                                            $Miner.StatusInfo = "$($(If ($Miner.Benchmark) { "Benchmarking" }), $(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" }) -join '') '$($Miner.Info)'"
+                                            $Miner.SubStatus = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })"
+                                            $Miner.StatusInfo = "$($Miner.SubStatus) '$($Miner.Info)'"
                                         }
                                         Else {
                                             $Miner.SubStatus = "Running"
@@ -1412,7 +1410,7 @@ Do {
                                     }
                                     Else { 
                                         Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace ' ')$(If ($Config.ShowShares) { " / Shares Total: $($Sample.Shares.$_[3]), Rejected: $($Sample.Shares.$_[1]), Ignored: $($Sample.Shares.$_[2])" })" })) -join ' & ')$(If ($Sample.PowerConsumption) { " / Power consumption: $($Sample.PowerConsumption.ToString("N2"))W" })] (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace '-0', '0') sec])"
-                                        $Miner.SubStatus = "WarmingUp"
+                                        $Miner.SubStatus = "Warming up"
                                         $Miner.StatusInfo = "Warming up '$($Miner.Info)'"
                                     }
                                 }
