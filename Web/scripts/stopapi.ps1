@@ -18,11 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           demo.psm1
-Version:        6.2.8
+Version:        4.3.4.7
 Version date:   2024/06/08
 #>
 
-# Try running this script as:  http://localhost:3999/scripts/demo.ps1?message=Hello%20World!
+Write-Message -Level Info "Stop-APIServer"
 
-param($Parameters)
-Write-Output $Parameters.message
+Stop-APIServer

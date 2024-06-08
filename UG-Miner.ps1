@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.7
-Version date:   2024/04/18
+Version:        6.2.8
+Version date:   2024/06/08
 #>
 
 using module .\Includes\Include.psm1
@@ -296,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.7"
+    Version      = [System.Version]"6.2.8"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -351,7 +351,9 @@ $Variables.AllCommandLineParameters = [Ordered]@{ }
 $Variables.MutexAddCoinName = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
 $Variables.MutexWriteMessage = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_WriteMessage")
 
-Write-Host "Preparing environment and loading data files..."
+Write-Host "$($Variables.Branding.ProductLabel) is getting ready. Please wait..."
+
+Write-Host "`nPreparing environment and loading data files..."
 Initialize-Environment
 
 # Read configuration
@@ -464,7 +466,7 @@ $Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^UbqHash"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^ProgPow"
 $Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^Octopus|^ProgPow|^UbqHash"
 
-$Variables.Summary = "Loading miner device information...<br>This may take a while."
+$Variables.Summary = "Loading miner device information.<br>This may take a while..."
 Write-Message -Level Verbose $Variables.Summary
 
 $Variables.SupportedCPUDeviceVendors = @("AMD", "INTEL")
@@ -574,7 +576,7 @@ Function MainLoop {
     }
 
     # Core watchdog. Sometimes core loop gets stuck
-    If (-not $Variables.SuspendCycle -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
+    If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
         Write-Message -Level Warn "Core cycle is stuck - restarting..."
         Stop-Core
         $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
@@ -587,7 +589,6 @@ Function MainLoop {
         $Variables.RestartCycle = $false
 
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
-
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or ($Variables.PoolName -and (Compare-Object $Config.PoolName $Variables.PoolName))) { 
 
             # Keep only the last 10 files
@@ -641,15 +642,10 @@ Function MainLoop {
                     Break
                 }
                 "Running" { 
-                    If ($Variables.MiningStatus -ne $Variables.NewMiningStatus) { 
-                        If ($Variables.MiningStatus) { 
-                            $Variables.Summary = "'Start Mining' button clicked."
-                        }
-                        Else {
-                            $Variables.Summary = "$($Variables.Branding.ProductLabel) is getting ready.<br>Please wait..."
-                        }
+                    If ($Variables.MiningStatus) { 
+                        $Variables.Summary = "'Start Mining' button clicked."
                         Write-Host "`n"
-                        Write-Message -Level Info ($Variables.Summary -replace '<br>', ' ')
+                        Write-Message -Level Info $Variables.Summary
                     }
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
                     If (-not $Config.IdleDetection -and -not $Global:CoreRunspace) { Start-Core }
@@ -850,14 +846,20 @@ Function MainLoop {
 
             # Refresh selected tab
             Update-TabControl
-
-            $MiningSummaryLabel.Text = ""
-            $MiningSummaryLabel.SendToBack()
-            (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $MiningSummaryLabel.Text += "`r`n$_" })
-            $MiningSummaryLabel.Text += "`r`n "
-            If ($Variables.MiningProfit -ge 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
-            ElseIf ($Variables.MiningProfit -lt 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
-            Else { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+            If ($Variables.MyIP) { 
+                $MiningSummaryLabel.Text = ""
+                $MiningSummaryLabel.SendToBack()
+                (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $MiningSummaryLabel.Text += "`r`n$_" })
+                $MiningSummaryLabel.Text += "`r`n "
+                If ($Variables.MiningProfit -ge 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
+                ElseIf ($Variables.MiningProfit -lt 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
+                Else { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+            }
+            Else { 
+                Write-Message -Level Error $Variables.Message
+                $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red
+                $MiningSummaryLabel.Text = "Error: $($Variables.Summary)"
+            }
         }
 
         If ($Config.ShowConsole) { 
@@ -889,146 +891,151 @@ Function MainLoop {
                 Remove-Variable Currency -ErrorAction Ignore
             }
 
-            If ($Variables.MiningStatus -eq "Running" -and $Variables.Miners.Where({ $_.Available })) { 
-                # Miner list format
-                [System.Collections.ArrayList]$Miner_Table = @(
-                    @{ Label = "Miner"; Expression = { $_.Name } }
-                    If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Variables.MiningPowerCost -and $Variables.ShowProfitBias) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Variables.MiningPowerCost -and $Variables.ShowProfit) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power Consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } }; Align = "right" } }
-                    If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "PowerCost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
-                    If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.Pool.Accuracy.ForEach({ "{0:P0}" -f [Double]$_ }) }; Align = "right" } }
-                    @{ Label = "Algorithm"; Expression = { $_.Workers.Pool.Algorithm -join ' & ' } }
-                    If ($Variables.ShowMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
-                    If ($Variables.ShowPool) { @{ Label = "Pool"; Expression = { $_.Workers.Pool.Name -join ' & ' } } }
-                    If ($Variables.ShowUser) { @{ Label = "User"; Expression = { $_.Workers.Pool.User -join ' & ' } } }
-                    If ($Variables.ShowPoolFee -and ($Variables.Miners.Workers.Pool.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Pool.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
-                    @{ Label = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } }; Align = "right" }
-                    If ($Variables.ShowCurrency) { @{ Label = "Currency"; Expression = { If ($_.Workers.Pool.Currency) { $_.Workers.Pool.Currency } } } }
-                    If ($Variables.ShowCoinName) { @{ Label = "CoinName"; Expression = { If ($_.Workers.Pool.CoinName) { $_.Workers.Pool.CoinName } } } }
-                )
-                # Display optimal miners list
-                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
-                ($Variables.MinersOptimal | Group-Object -Property { $_.DeviceNames }).ForEach(
-                    { 
-                        $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
-                        $MinersDeviceGroupNeedingBenchmark = @($MinersDeviceGroup.Where({ $_.Benchmark }))
-                        $MinersDeviceGroupNeedingPowerConsumptionMeasurement = @($MinersDeviceGroup.Where({ $_.MeasurePowerConsumption }))
-                        $MinersDeviceGroup.Where(
-                            { 
-                                $Variables.ShowAllMiners -or <# List all miners #>
-                                $MinersDeviceGroupNeedingBenchmark.Count -gt 0 -or <# List all miners when benchmarking #>
-                                $MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count -gt 0 -or <# List all miners when measuring power consumption #>
-                                $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
-                            } 
-                        ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
-                        Format-Table $Miner_Table -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ',') [$(($Variables.EnabledDevices.Where({ $_.Name -In $MinersDeviceGroup[0].DeviceNames })).Model -join ', ')]" } } -AutoSize | Out-Host
+            If ($Variables.MyIP) { 
+                If ($Variables.MiningStatus -eq "Running" -and $Variables.Miners.Where({ $_.Available })) { 
+                    # Miner list format
+                    [System.Collections.ArrayList]$Miner_Table = @(
+                        @{ Label = "Miner"; Expression = { $_.Name } }
+                        If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                        If ($Variables.MiningPowerCost -and $Variables.ShowProfitBias) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                        If ($Variables.MiningPowerCost -and $Variables.ShowProfit) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power Consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } }; Align = "right" } }
+                        If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "PowerCost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.Pool.Accuracy.ForEach({ "{0:P0}" -f [Double]$_ }) }; Align = "right" } }
+                        @{ Label = "Algorithm"; Expression = { $_.Workers.Pool.Algorithm -join ' & ' } }
+                        If ($Variables.ShowMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
+                        If ($Variables.ShowPool) { @{ Label = "Pool"; Expression = { $_.Workers.Pool.Name -join ' & ' } } }
+                        If ($Variables.ShowUser) { @{ Label = "User"; Expression = { $_.Workers.Pool.User -join ' & ' } } }
+                        If ($Variables.ShowPoolFee -and ($Variables.Miners.Workers.Pool.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Pool.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
+                        @{ Label = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } }; Align = "right" }
+                        If ($Variables.ShowCurrency) { @{ Label = "Currency"; Expression = { If ($_.Workers.Pool.Currency) { $_.Workers.Pool.Currency } } } }
+                        If ($Variables.ShowCoinName) { @{ Label = "CoinName"; Expression = { If ($_.Workers.Pool.CoinName) { $_.Workers.Pool.CoinName } } } }
+                    )
+                    # Display optimal miners list
+                    $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
+                    ($Variables.MinersOptimal | Group-Object -Property { $_.DeviceNames }).ForEach(
+                        { 
+                            $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
+                            $MinersDeviceGroupNeedingBenchmark = @($MinersDeviceGroup.Where({ $_.Benchmark }))
+                            $MinersDeviceGroupNeedingPowerConsumptionMeasurement = @($MinersDeviceGroup.Where({ $_.MeasurePowerConsumption }))
+                            $MinersDeviceGroup.Where(
+                                { 
+                                    $Variables.ShowAllMiners -or <# List all miners #>
+                                    $MinersDeviceGroupNeedingBenchmark.Count -gt 0 -or <# List all miners when benchmarking #>
+                                    $MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count -gt 0 -or <# List all miners when measuring power consumption #>
+                                    $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
+                                } 
+                            ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
+                            Format-Table $Miner_Table -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ',') [$(($Variables.EnabledDevices.Where({ $_.Name -In $MinersDeviceGroup[0].DeviceNames })).Model -join ', ')]" } } -AutoSize | Out-Host
 
-                        # Display benchmarking progress
-                        If ($MinersDeviceGroupNeedingBenchmark) { 
-                            "Benchmarking for device$(If (($MinersDeviceGroup.DeviceNames | Select-Object -Unique).Count -gt 1) { " group" }) '$(($MinersDeviceGroup.DeviceNames | Sort-Object -Unique) -join ',')' in progress: $($MinersDeviceGroupNeedingBenchmark.Count) miner$(If ($MinersDeviceGroupNeedingBenchmark.Count -gt 1) { 's' }) left to complete benchmark." | Out-Host
+                            # Display benchmarking progress
+                            If ($MinersDeviceGroupNeedingBenchmark) { 
+                                "Benchmarking for device$(If (($MinersDeviceGroup.DeviceNames | Select-Object -Unique).Count -gt 1) { " group" }) '$(($MinersDeviceGroup.DeviceNames | Sort-Object -Unique) -join ',')' in progress: $($MinersDeviceGroupNeedingBenchmark.Count) miner$(If ($MinersDeviceGroupNeedingBenchmark.Count -gt 1) { 's' }) left to complete benchmark." | Out-Host
+                            }
+                            # Display power consumption measurement progress
+                            If ($MinersDeviceGroupNeedingPowerConsumptionMeasurement) { 
+                                "Power consumption measurement for device$(If (($MinersDeviceGroup.DeviceNames | Sort-Object -Unique).Count -gt 1) { " group" }) '$(($MinersDeviceGroup.DeviceNames | Sort-Object -Unique) -join ',')' in progress: $($MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count) miner$(If ($MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count -gt 1) { 's' }) left to complete measuring." | Out-Host
+                            }
                         }
-                        # Display power consumption measurement progress
-                        If ($MinersDeviceGroupNeedingPowerConsumptionMeasurement) { 
-                            "Power consumption measurement for device$(If (($MinersDeviceGroup.DeviceNames | Sort-Object -Unique).Count -gt 1) { " group" }) '$(($MinersDeviceGroup.DeviceNames | Sort-Object -Unique) -join ',')' in progress: $($MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count) miner$(If ($MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count -gt 1) { 's' }) left to complete measuring." | Out-Host
-                        }
-                    }
-                )
-                Remove-Variable Bias, Miner_Table, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
-            }
-
-            If ($Variables.MinersBestPerDeviceCombo) { 
-                Write-Host "`nRunning $(If ($Variables.MinersBestPerDeviceCombo.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBestPerDeviceCombo.Count)" })"
-                [System.Collections.ArrayList]$Miner_Table = @(
-                    @{ Label = "Name"; Expression = { $_.Name } }
-                    If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
-                    @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
-                    @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
-                    @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
-                    @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { "$_" } } } }
-                    @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
-                    @{ Label = "Command"; Expression = { $_.CommandLine } }
-                )
-                $Variables.MinersBestPerDeviceCombo | Sort-Object -Property { $_.DeviceNames } | Format-Table $Miner_Table -Wrap | Out-Host
-                Remove-Variable Miner_Table
-            }
-
-            If ($Variables.UIStyle -eq "full" -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
-                If ($Variables.UIStyle -ne "full") { 
-                    Write-Host "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" -ForegroundColor Yellow
+                    )
+                    Remove-Variable Bias, Miner_Table, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
                 }
 
-                $MinersActivatedLast24Hrs = @($Variables.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now }))
-
-                If ($ProcessesIdle = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Idle" })) { 
-                    Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"
+                If ($Variables.MinersBestPerDeviceCombo) { 
+                    Write-Host "`nRunning $(If ($Variables.MinersBestPerDeviceCombo.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBestPerDeviceCombo.Count)" })"
                     [System.Collections.ArrayList]$Miner_Table = @(
                         @{ Label = "Name"; Expression = { $_.Name } }
-                        If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
-                        @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
-                        @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
-                        @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
-                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
+                        If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
+                        @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
+                        @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
+                        @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
+                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { "$_" } } } }
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
-                    $ProcessesIdle | Sort-Object { $_.EndTime } -Descending | Format-Table $Miner_Table -Wrap | Out-Host
+                    $Variables.MinersBestPerDeviceCombo | Sort-Object -Property { $_.DeviceNames } | Format-Table $Miner_Table -Wrap | Out-Host
                     Remove-Variable Miner_Table
                 }
-                Remove-Variable ProcessesIdle
 
-                If ($ProcessesFailed = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Failed" })) { 
-                    Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed $(If ($ProcessesFailed.Count -eq 1) { "miner" } Else { "miners" }) (past 24 hrs):"
-                    [System.Collections.ArrayList]$Miner_Table = @(
-                        @{ Label = "Name"; Expression = { $_.Name } }
-                        If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
-                        @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
-                        @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
-                        @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
-                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
-                        @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
-                        @{ Label = "Command"; Expression = { $_.CommandLine } }
-                    )
-                    $ProcessesFailed | Sort-Object { If ($_.EndTime) { $_.EndTime } Else { [DateTime]0 } } | Format-Table $Miner_Table -Wrap | Out-Host
-                    Remove-Variable Miner_Table
+                If ($Variables.UIStyle -eq "full" -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
+                    If ($Variables.UIStyle -ne "full") { 
+                        Write-Host "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" -ForegroundColor Yellow
+                    }
+
+                    $MinersActivatedLast24Hrs = @($Variables.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now }))
+
+                    If ($ProcessesIdle = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Idle" })) { 
+                        Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"
+                        [System.Collections.ArrayList]$Miner_Table = @(
+                            @{ Label = "Name"; Expression = { $_.Name } }
+                            If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
+                            @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
+                            @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
+                            @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
+                            @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
+                            @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
+                            @{ Label = "Command"; Expression = { $_.CommandLine } }
+                        )
+                        $ProcessesIdle | Sort-Object { $_.EndTime } -Descending | Format-Table $Miner_Table -Wrap | Out-Host
+                        Remove-Variable Miner_Table
+                    }
+                    Remove-Variable ProcessesIdle
+
+                    If ($ProcessesFailed = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Failed" })) { 
+                        Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed $(If ($ProcessesFailed.Count -eq 1) { "miner" } Else { "miners" }) (past 24 hrs):"
+                        [System.Collections.ArrayList]$Miner_Table = @(
+                            @{ Label = "Name"; Expression = { $_.Name } }
+                            If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power Consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
+                            @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
+                            @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
+                            @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
+                            @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
+                            @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
+                            @{ Label = "Command"; Expression = { $_.CommandLine } }
+                        )
+                        $ProcessesFailed | Sort-Object { If ($_.EndTime) { $_.EndTime } Else { [DateTime]0 } } | Format-Table $Miner_Table -Wrap | Out-Host
+                        Remove-Variable Miner_Table
+                    }
+                    Remove-Variable MinersActivatedLast24Hrs, ProcessesFailed
+
+                    If ($Config.Watchdog) { 
+                        # Display watchdog timers
+                        $Variables.WatchdogTimers.Where({ $_.Kicked -gt $Variables.Timer.AddSeconds(-$Variables.WatchdogReset) }) | Sort-Object -Property MinerName, Kicked | Format-Table -Wrap (
+                            @{Label = "Miner Watchdog Timer"; Expression = { $_.MinerName } }, 
+                            @{Label = "Pool"; Expression = { $_.PoolName } }, 
+                            @{Label = "Algorithm"; Expression = { $_.Algorithm } }, 
+                            @{Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }, 
+                            @{Label = "Last Updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
+                        ) | Out-Host
+                    }
                 }
-                Remove-Variable MinersActivatedLast24Hrs, ProcessesFailed
 
-                If ($Config.Watchdog) { 
-                    # Display watchdog timers
-                    $Variables.WatchdogTimers.Where({ $_.Kicked -gt $Variables.Timer.AddSeconds(-$Variables.WatchdogReset) }) | Sort-Object -Property MinerName, Kicked | Format-Table -Wrap (
-                        @{Label = "Miner Watchdog Timer"; Expression = { $_.MinerName } }, 
-                        @{Label = "Pool"; Expression = { $_.PoolName } }, 
-                        @{Label = "Algorithm"; Expression = { $_.Algorithm } }, 
-                        @{Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }, 
-                        @{Label = "Last Updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
-                    ) | Out-Host
+                If ($Variables.MiningStatus -eq "Running") { 
+                    If ($Variables.Timer) { 
+                        Write-Host ($Variables.Summary -replace '\.\.\.<br>', '... ' -replace '<br>', $nl -replace '&ensp;', ' ' -replace '\s*/\s*', '/' -replace '\s*=\s*', '=')
+                    }
+                    If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
+                        If ($Variables.MiningProfit -lt 0) { 
+                            # Mining causes a loss
+                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and causes a loss of {0} {1:n$($Config.DecimalsMax)} / day (including Base Power Cost)." -f $Config.MainCurrency, (-$Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)))
+                        }
+                        If ($Variables.MiningProfit -lt $Config.ProfitabilityThreshold) { 
+                            # Mining profit is below the configured threshold
+                            Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.MainCurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.ProfitabilityThreshold)
+                        }
+                    }
+
+                    If ($Variables.CycleStarts.Count -gt 1 -or $Variables.Miners) { 
+                        $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString('G')) } Else { 'n/a (Mining is suspended)' })   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnoprstuwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
+                        Write-Host ("-" * $StatusInfo.Length)
+                        Write-Host -ForegroundColor Yellow $StatusInfo
+                        Remove-Variable StatusInfo
+                    }
                 }
             }
-
-            If ($Variables.MiningStatus -eq "Running") { 
-                If ($Variables.Timer) { 
-                    Write-Host ($Variables.Summary -replace '\.\.\.<br>', '... ' -replace '<br>', $nl -replace '&ensp;', ' ' -replace '\s*/\s*', '/' -replace '\s*=\s*', '=')
-                }
-                If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
-                    If ($Variables.MiningProfit -lt 0) { 
-                        # Mining causes a loss
-                        Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and causes a loss of {0} {1:n$($Config.DecimalsMax)} / day (including Base Power Cost)." -f $Config.MainCurrency, (-$Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)))
-                    }
-                    If ($Variables.MiningProfit -lt $Config.ProfitabilityThreshold) { 
-                        # Mining profit is below the configured threshold
-                        Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.MainCurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.ProfitabilityThreshold)
-                    }
-                }
-
-                If ($Variables.CycleStarts.Count -gt 1 -or $Variables.Miners) { 
-                    $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString('G'))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString('G')) } Else { 'n/a (Mining is suspended)' })   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[abcefimnoprstuwy]" } Else { "[abefimnpsvwy]" })   |   Press 'h' for help"
-                    Write-Host ("-" * $StatusInfo.Length)
-                    Write-Host -ForegroundColor Yellow $StatusInfo
-                    Remove-Variable StatusInfo
-                }
+            Else { 
+                Write-Host -ForegroundColor Red "$((Get-Date).ToString('G')): $($Variables.Summary)"
             }
         }
         $Error.Clear()

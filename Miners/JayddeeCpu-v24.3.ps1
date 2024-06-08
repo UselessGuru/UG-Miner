@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.7
-Version date:   2024/04/18
+Version:        6.2.8
+Version date:   2024/06/08
 #>
 
 If (-not ($AvailableMiner_Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v23.15/cpuminer-opt-23.15-windows.zip"
+$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v24.3/cpuminer-opt-24.3-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\cpuminer-aes-sse42.exe" # Intel
 

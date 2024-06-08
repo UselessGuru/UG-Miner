@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.7
-Version date:   2024/04/18
+Version:        6.2.8
+Version date:   2024/06/08
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"11.6") }))) { Return }
 
-$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.23/TeamBlackMiner_2_23_cuda_12_2.7z"
+$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.25/TeamBlackMiner_2_25_cuda_12_2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\TBMiner.exe"
 
@@ -47,6 +47,10 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EthashB3", "VertHash"); Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = ""; WarmupTimes = @(120, 30); ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo ethb3+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" } # 120 Seconds; https://github.com/sp-hash/TeamBlackMiner/issues/427
     [PSCustomObject]@{ Algorithms = @("FiroPow");              Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 1; Tuning = ""; WarmupTimes = @(90, 15);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo firopow" }
     [PSCustomObject]@{ Algorithms = @("KawPow");               Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = ""; WarmupTimes = @(90, 15);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow");              Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = ""; WarmupTimes = @(90, 15);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo meowpow" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow", "FiroPow");   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = ""; WarmupTimes = @(90, 30);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo meow+firo" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow", "KawPow");    Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(90, 45);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo meow+rvn" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow", "VertHash");  Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = ""; WarmupTimes = @(120, 30); ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo meow+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" } # 120 Seconds; https://github.com/sp-hash/TeamBlackMiner/issues/427
     [PSCustomObject]@{ Algorithms = @("VertHash");             Type = "AMD"; Fee = @(0.005);        MinMemGiB = 3.0;  MinerSet = 1; Tuning = ""; WarmupTimes = @(30, 0);   ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @()); Arguments = " --algo verthash --verthash-data ..\.$($Variables.VerthashDatPath)" }
  
     [PSCustomObject]@{ Algorithms = @("EtcHash");              Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo etchash" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
@@ -65,6 +69,10 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EthashB3", "VertHash"); Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo ethb3+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" }
     [PSCustomObject]@{ Algorithms = @("FiroPow");              Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 30); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo firopow" }
     [PSCustomObject]@{ Algorithms = @("KawPow");               Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 30); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow");              Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 30); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo meowpow" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow", "FiroPow");   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 45); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo meow+firo" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow", "KawPow");    Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 20); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo meow+rvn" }
+    [PSCustomObject]@{ Algorithms = @("MeowPow", "VertHash");  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 20); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo meow+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" }
     [PSCustomObject]@{ Algorithms = @("VertHash");             Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 3.0;  MinerSet = 0; Tuning = " --tweak 2"; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @()); Arguments = " --algo verthash --verthash-data ..\.$($Variables.VerthashDatPath)" }
 )
 

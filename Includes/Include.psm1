@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.7
-Version date:   2024/04/18
+Version:        6.2.8
+Version date:   2024/06/08
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -324,7 +324,7 @@ Class Miner {
 
         If ($this.Status -eq [MinerStatus]::DryRun) { 
             $this.StatusInfo = "Dry run '$($this.Info)'"
-            $this.SubStatus = "Idle"
+            $this.SubStatus = "idle"
             Write-Message -Level Info "Dry run for miner '$($this.Info)'..."
             $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
         }
@@ -369,7 +369,7 @@ Class Miner {
                 If ($this.ProcessId = ($this.ProcessJob | Receive-Job | Select-Object -ExpandProperty ProcessId)) { 
                     $this.DataSampleTimestamp = [DateTime]0
                     $this.Status = [MinerStatus]::Running
-                    $this.SubStatus = "Starting"
+                    $this.SubStatus = "starting"
                     $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
                     $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                     $this.StartDataReader()
@@ -761,7 +761,6 @@ Function Start-Core {
         $Global:CoreRunspace = @{}
 
         $Variables.LastDonated = [DateTime]::Now.AddDays(-1).AddHours(1)
-        # $Variables.Pools = [Pool[]]@()
         $Variables.Miners = [Miner[]]@()
         $Variables.MinersBestPerDeviceCombo = [Miner[]]@()
 
@@ -791,8 +790,14 @@ Function Start-Core {
 
 Function Stop-Core { 
 
-    If ($Global:CoreRunspace) { 
+    # Stop all running miners
+    ForEach ($Miner in $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) { 
+        $Miner.SetStatus([MinerStatus]::Idle)
+        $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+    }
+    Remove-Variable Miner -ErrorAction Ignore
 
+    If ($Global:CoreRunspace) { 
         $Global:CoreRunspace.PowerShell.Stop() | Out-Null
         $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.AsyncObject) | Out-Null
 
@@ -810,13 +815,6 @@ Function Stop-Core {
         $Variables.FailedMiners = [Miner[]]@()
         $Variables.RunningMiners = [Miner[]]@()
 
-        # Stop all running miners
-        ForEach ($Miner in $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) { 
-            $Miner.SetStatus([MinerStatus]::Idle)
-            $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-        }
-        Remove-Variable Miner -ErrorAction Ignore
-
         $Variables.Remove("EndCycleTime")
 
         # Must close runspace after miners were stopped, otherwise methods don't work any longer
@@ -825,9 +823,8 @@ Function Stop-Core {
 
         $Global:CoreRunspace.Remove("PowerShell")
         Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
-
-        [System.GC]::Collect()
     }
+    [System.GC]::Collect()
 }
 
 Function Start-Brain { 
@@ -967,14 +964,6 @@ Function Stop-BalancesTracker {
         $Variables.Summary += "<br>Balances Tracker background process stopped."
         Write-Message -Level Info "Balances Tracker background process stopped."
     }
-}
-
-Function Get-DefaultAlgorithm { 
-
-    If ($PoolsAlgos = Get-Content ".\Data\PoolsConfig-Recommended.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore) { 
-        Return ($PoolsAlgos.PSObject.Properties.Name.Where({ $_ -in (Get-PoolBaseName $Config.PoolName) }).ForEach({ $PoolsAlgos.$_.Algorithm })) | Sort-Object -Unique
-    }
-    Return
 }
 
 Function Get-Rate { 

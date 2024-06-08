@@ -8,11 +8,18 @@
     // If '+' is used, then only the explicitly enabled algorithms are used; if '-' is used, then all algorithms are used except the disabled ones
     "Algorithm": [
       "-Equihash1445",
+      "-Ethash(7GiB)",
       "-Neoscrypt"
+    ],
+    // Currency: '+[Currency]' to enable currency; '-[Currency]' to disable currency.
+    // If '+' is used, then only the explicitly enabled currencies are used; if '-' is used, then all currencies are used except the disabled ones
+    "Currency": [
+      "-GRLC",
+      "-DYN"
     ],
     // Exclude region: One or more of 'Asia', 'Europe', 'HongKong', 'Japan', 'Russia', 'USA East', 'USA West'
     "ExcludeRegion": [ 
-	"Asia",
+	    "Asia",
       "Europe"
     ],
     // EarningsAdjustmentFactor: Default factor with which UG-Miner multiplies the prices reported by the pool. Value between 0.01 & 10.00

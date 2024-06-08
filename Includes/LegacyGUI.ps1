@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.7
+Version:        6.2.8
 Version date:   2024/04/07
 #>
 
@@ -883,15 +883,15 @@ $ContextMenuStrip.Add_ItemClicked(
                             Remove-Stat -Name "$($_.Name)_PowerConsumption"
                             $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
                             If ($_.Status -eq [MinerStatus]::Idle) { 
-                                $_.SubStatus = "Idle"
+                                $_.SubStatus = "idle"
                             }
                             ElseIf ($_.Status -eq [MinerStatus]::Failed) { 
                                 $_.Status = "Idle"
-                                $_.SubStatus = "Idle"
+                                $_.SubStatus = "idle"
                             }
                             ElseIf ($_.Status -eq [MinerStatus]::Unavailable) { 
                                 $_.Status = "Idle"
-                                $_.SubStatus = "Idle"
+                                $_.SubStatus = "idle"
                             }
                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
@@ -950,7 +950,7 @@ $ContextMenuStrip.Add_ItemClicked(
                             $_.Disabled = $false
                             If ($_.GetStatus() -eq [MinerStatus]::Running) { $_.SetStatus([MinerStatus]::Idle) }
                             $_.Status = "Idle"
-                            $_.SubStatus = "Failed"
+                            $_.SubStatus = "failed"
                             $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
                             If ($_.Reasons -notcontains "0 H/s stat file" ) { $_.Reasons.Add("0 H/s stat file") }
                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)

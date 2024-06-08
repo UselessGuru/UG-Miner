@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.7
-Version date:   2024/04/18
+Version:        6.2.8
+Version date:   2024/06/08
 #>
 
 # Return 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.15.1/rigel-1.15.1-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.17.4/rigel-1.17.4-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -68,7 +68,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("FishHash", "SHA512256d");           Fee = @(0.01, 0.01);   MinMemGiB = 6.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @("ZPool")); Arguments = " --algorithm fishhash+sha512256d" }
     [PSCustomObject]@{ Algorithms = @("HeavyHashKarlsen");                 Fee = @(0.007);        MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm karlsenhash" }
     [PSCustomObject]@{ Algorithms = @("HeavyHashPyrin");                   Fee = @(0.01);         MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm pyrinhash" }
-    [PSCustomObject]@{ Algorithms = @("KawPow");                           Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(90, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm ravencoin" }
+    [PSCustomObject]@{ Algorithms = @("KawPow");                           Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(90, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm kawpow" }
     [PSCustomObject]@{ Algorithms = @("NexaPow");                          Fee = @(0.02);         MinMemGiB = 3.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm nexapow" }
     [PSCustomObject]@{ Algorithms = @("Octopus");                          Fee = @(0.02);         MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm octopus" }
     [PSCustomObject]@{ Algorithms = @("Octopus", "Blake3");                Fee = @(0.02, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm octopus+alephium" }
@@ -77,6 +77,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("Octopus", "SHA512256d");            Fee = @(0.02, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm octopus+sha512256d" }
     [PSCustomObject]@{ Algorithms = @("PowBlocks");                        Fee = @(0.007);        MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm powblocks" }
     [PSCustomObject]@{ Algorithms = @("SHA512256d");                       Fee = @(0.01);         MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@("ZPool"), @()); Arguments = " --algorithm sha512256d" }
+#   [PSCustomObject]@{ Algorithms = @("XelisHash");                        Fee = @(0.03);         MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm xelishash" } # No supported pools yet
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -108,7 +109,7 @@ If ($Algorithms) {
                                         $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                         $Arguments = $_.Arguments
-                                        If ($Pool0.Currency -in @("AIPG", "CLORE", "ETHW", "NEOX", "OCTA", "RVN", "XNA", "XPB")) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
+                                        If ($Pool0.Currency -in @("ABEL","AIPG","ALPH","CFX","CLORE","ERGO","ETC.ETHW","GRAM","HYP","IRON","KLS","NEOX","NEXA","NX","OCTA","PYI","RXD","XEL","XNA","XPB","ZIL")) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
 
                                         $Index = 1
                                         ForEach ($Pool in $Pools) { 

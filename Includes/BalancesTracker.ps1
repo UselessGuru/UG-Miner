@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.7
-Version date:   2024/04/18
+Version:        6.2.8
+Version date:   2024/06/08
 #>
 
 using module .\Include.psm1
@@ -416,8 +416,8 @@ Do {
 
         $Error.Clear()
 
-        # Sleep until next update (at least 1 minute, maximum 60 minutes)
-        While ([DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum))) { Start-Sleep -Seconds 5 }
+        # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
+        While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum))) { Start-Sleep -Seconds 5 }
     }
 
     If ($Now) { Write-Message -Level Info "Balances Tracker stopped." }

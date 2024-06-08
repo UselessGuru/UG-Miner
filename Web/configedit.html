@@ -230,9 +230,8 @@
           <div style="padding-top: 0.3rem" title="List of miners to be excluded&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the full miner name (incl. version information)&#10;"> Exclude miners
             <input type="text" id="ExcludeMinerName" name="ExcludeMinerName" size=47>
           </div>
-          <div style="padding-top: 0.2rem" title="'+[Algorithm]' to enable algorithm&#10;'-[Algorithm]' to disable algorithm&#10;Values must be sparated by commas&#10;e.g. '-Ethash,-EtcHash'&#10;&#10;Leave empty to use ALL available algorithms (not recommended as it may cause more switching)&#10;If '+' is used, then only the explicitly enabled algorithms are used&#10;If '-' is used, then all algorithms are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude algorithms
+          <div style="padding-top: 0.2rem" title="'+[Algorithm]' to enable algorithm&#10;'-[Algorithm]' to disable algorithm&#10;Values must be sparated by commas&#10;e.g. '-Ethash,-EtcHash'&#10;&#10;Leave empty to use ALL available algorithms&#10;If '+' is used, then only the explicitly enabled algorithms are used&#10;If '-' is used, then all algorithms are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude algorithms
             <input type="text" id="Algorithm" name="Algorithm" size=30>
-            <button type="button" class="btn btn-light btn-sm" id="btn-defaultalgorithms" name="btn-defaultalgorithms" title="Load the default algorithm list&#10;for the selected pools">Load default algorithms</button>
           </div>
           <div style="padding-top: 0.2rem" title="'+[Currency]' to enable currency&#10;'-[Currency]' to disable currency&#10;Values must be sparated by commas&#10;e.g. '-SATOX,-PAPRY'&#10;&#10;Leave empty to use ALL available currencies&#10;If '+' is used, then only the explicitly enabled currencies are used&#10;If '-' is used, then all currencies are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude currencies
             <input type="text" id="Currency" name="Currency" size=30>
@@ -876,17 +875,6 @@
     else document.getElementById('MinerSet').value = 2;
     if (config.ExcludeMinerName) document.getElementById('ExcludeMinerName').value = (config.ExcludeMinerName).toString().trim();
     if (config.Algorithm) document.getElementById('Algorithm').value = (config.Algorithm).toString().trim();
-    // Load default Algorithm list
-    $('#btn-defaultalgorithms').click(function () {
-      $.ajax({
-        async: false,
-        dataType: 'json',
-        url: '/defaultAlgorithm',
-        success: function (result) {
-          Algorithm.value = result.sort().join(',');
-        }
-      });
-    });
     if (config.DisableMinersWithFee) document.getElementById('DisableMinersWithFee').checked = true;
     if (config.DisableDualAlgoMining) document.getElementById('DisableDualAlgoMining').checked = true;
     if (config.DisableSingleAlgoMining) document.getElementById('DisableSingleAlgoMining').checked = true;

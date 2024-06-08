@@ -2,6 +2,27 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+ChangeLog UG-Miner 6.2.8 2024/06/08
+===================================
+
+Fixes:
+- Core: Includes.psm1 / Restarting core loop when internet connection is lost
+- Core / Includes.psm1: Not stopping running miners when exiting UG-Miner
+
+Improvements:
+- Core: Suspend balances tracker und brains when internet connection is lost
+
+Miner changes:
+- BzMiner-v21.2.0
+- JayddeeCpu-v24.3
+- OneZeroMiner-v1.3.4
+- Rigel-v1.17.4
+- SRBMinerMulti-v2.5.6
+- TeamBlackMiner-v2.25
+- TeamRedMiner-v0.10.21
+- TTMiner-v2024.2.0
+
+
 ChangeLog UG-Miner 6.2.7 2024/04/18
 ===================================
 
