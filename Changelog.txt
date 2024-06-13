@@ -17,7 +17,7 @@ Fixes:
 
 Miner changes:
 - lolMiner-v1.88
-- MeorPowMiner-v2.0.0
+- MeowPowMiner-v2.0.0
 - XmRig-v6.21.3.15
 
 
