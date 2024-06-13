@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.8
-Version date:   2024/06/08
+Version:        6.2.9
+Version date:   2024/06/13
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -314,7 +314,6 @@ Class Miner {
         # Stat just got removed (Miner.Activated < 1, set by API)
         If ($this.Activated -le 0) { $this.Activated = 0 }
 
-        $this.Activated ++
         $this.ContinousCycle = 0
         $this.DataSampleTimestamp = [DateTime]0
         $this.ValidDataSampleTimestamp = [DateTime]0
@@ -367,6 +366,7 @@ Class Miner {
             $Loops = 100
             Do { 
                 If ($this.ProcessId = ($this.ProcessJob | Receive-Job | Select-Object -ExpandProperty ProcessId)) { 
+                    $this.Activated ++
                     $this.DataSampleTimestamp = [DateTime]0
                     $this.Status = [MinerStatus]::Running
                     $this.SubStatus = "starting"
@@ -381,7 +381,6 @@ Class Miner {
             Remove-Variable Loops
         }
         $this.WorkersRunning = $this.Workers
-
     }
 
     hidden [Void]StopMining() { 
@@ -536,7 +535,7 @@ Class Miner {
         $Hashrate_Samples = @($this.Data.Where({ $_.Hashrate.$Algorithm })) # Do not use 0 valued samples
 
         $Hashrate_Average = ($Hashrate_Samples.Hashrate.$Algorithm | Measure-Object -Average | Select-Object -ExpandProperty Average)
-        $Hashrate_Variance = $Hashrate_Samples.Hashrate.$Algorithm | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
+        $Hashrate_Variance = ($Hashrate_Samples.Hashrate.$Algorithm | Measure-Object -Average -Minimum -Maximum).ForEach({ If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } })
 
         If ($Safe) { 
             If ($Hashrate_Samples.Count -lt 10 -or $Hashrate_Variance -gt 0.1) { 
@@ -559,7 +558,7 @@ Class Miner {
         $PowerConsumption_Samples = @($this.Data.Where({ $_.PowerConsumption})) # Do not use 0 valued samples
 
         $PowerConsumption_Average = ($PowerConsumption_Samples.PowerConsumption | Measure-Object -Average | Select-Object -ExpandProperty Average)
-        $PowerConsumption_Variance = $PowerConsumption_Samples.PowerUsage | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
+        $PowerConsumption_Variance = ($PowerConsumption_Samples.PowerUsage | Measure-Object -Average -Minimum -Maximum).ForEach({ If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } })
 
         If ($Safe) { 
             If ($PowerConsumption_Samples.Count -lt 10 -or $PowerConsumption_Variance -gt 0.1) { 
@@ -870,7 +869,7 @@ Function Start-Brain {
             }
         )
 
-        If ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for '$($BrainsStarted -join ", ")' started." }
+        If ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ', ' -replace ',([^,]*)$', ' &$1') started." }
     }
     Else {
         Write-Message -Level Error "Failed to start Pool brain backgound jobs. Directory '.\Brains' is missing."
@@ -900,7 +899,7 @@ Function Stop-Brain {
                 $BrainsStopped += $_
             }
         )
-        If ($BrainsStopped.Count -gt 0) { Write-Message -Level Info  "Pool brain backgound job$(If ($BrainsStopped.Count -gt 1) { "s" }) for '$(($BrainsStopped | Sort-Object) -join ", ")' stopped." }
+        If ($BrainsStopped.Count -gt 0) { Write-Message -Level Info  "Pool brain backgound job$(If ($BrainsStopped.Count -gt 1) { "s" }) for $(($BrainsStopped | Sort-Object) -join ', ' -replace ',([^,]*)$', ' &$1') stopped." }
 
         [System.GC]::Collect()
     }
@@ -914,7 +913,7 @@ Function Start-BalancesTracker {
             Try { 
                 $Global:BalancesTrackerRunspace = @{}
 
-                $Variables.Summary = "Starting Balances Tracker background process..."
+                $Variables.Summary = "Starting Balances tracker background process..."
                 Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
 
                 $Runspace = [RunspaceFactory]::CreateRunspace()
@@ -938,11 +937,11 @@ Function Start-BalancesTracker {
                 $Global:BalancesTrackerRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
             }
             Catch { 
-                Write-Message -Level Error "Failed to start Balances Tracker [$Error[0]]."
+                Write-Message -Level Error "Failed to start Balances tracker [$Error[0]]."
             }
         }
         Else { 
-            Write-Message -Level Error "Failed to start Balances Tracker. Directory '.\Balances' is missing."
+            Write-Message -Level Error "Failed to start Balances tracker. Directory '.\Balances' is missing."
         }
     }
 }
@@ -961,8 +960,8 @@ Function Stop-BalancesTracker {
 
         [System.GC]::Collect()
 
-        $Variables.Summary += "<br>Balances Tracker background process stopped."
-        Write-Message -Level Info "Balances Tracker background process stopped."
+        $Variables.Summary += "<br>Balances tracker background process stopped."
+        Write-Message -Level Info "Balances tracker background process stopped."
     }
 }
 
@@ -971,7 +970,7 @@ Function Get-Rate {
     $RatesCacheFileName = "$($Variables.MainPath)\Cache\Rates.json"
 
     # Use stored currencies from last run
-    If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = $Variables.Rates.PSObject.Properties.Name | Where-Object { $_ -eq  ($_ -replace '^m') } }
+    If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = $Variables.Rates.PSObject.Properties.Name.Where({ $_ -eq  ($_ -replace '^m') }) }
 
     $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
 
@@ -1046,7 +1045,7 @@ Function Get-Rate {
                         }
                     )
                 }
-                Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for '$($Variables.RatesMissingCurrencies -join ', ')'." })"
+                Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ', ' -replace ',([^,]*)$', ' &$1')." })"
                 $Variables.Rates = $Rates
                 $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
 
@@ -1363,7 +1362,7 @@ Function Read-Config {
                     If (-not $PoolConfig.WorkerName) { $PoolConfig.WorkerName = $ConfigFromFile.WorkerName }
                     If (-not $PoolConfig.BalancesKeepAlive) { $PoolConfig.BalancesKeepAlive = $PoolData.$PoolName.BalancesKeepAlive }
 
-                    $PoolConfig.Region = $PoolConfig.Region | Where-Object { (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) }
+                    $PoolConfig.Region = $PoolConfig.Region.Where({ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) })
 
                     Switch ($PoolName) { 
                         "Hiveon" { 
@@ -1593,11 +1592,11 @@ Function Edit-File {
         }
     }
 
-    If (-not ($NotepadProcess = (Get-CimInstance CIM_Process | Where-Object CommandLine -Like "*\Notepad.exe* $($FileName)"))) { 
+    If (-not ($NotepadProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -Like "*\Notepad.exe* $($FileName)" }))) { 
         $NotepadProcess = Start-Process -FilePath Notepad.exe -ArgumentList $FileName -PassThru
     }
     # Check if the window is not already in foreground
-    While ($NotepadProcess = (Get-CimInstance CIM_Process | Where-Object CommandLine -Like "*\Notepad.exe* $($FileName)")) { 
+    While ($NotepadProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -Like "*\Notepad.exe* $($FileName)" })) { 
         Try { 
             $FGWindowPid  = [IntPtr]::Zero
             [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid) | Out-Null
@@ -2350,110 +2349,113 @@ Function Get-Device {
 
         # Get OpenCL data
         Try { 
-            [OpenCl.Platform]::GetPlatformIDs() | ForEach-Object { 
-                [OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All) | ForEach-Object { $_ | ConvertTo-Json -WarningAction SilentlyContinue } | Select-Object -Unique | ForEach-Object { 
-                    $Device_OpenCL = $_ | ConvertFrom-Json
+            [OpenCl.Platform]::GetPlatformIDs().ForEach(
+                { 
+                    ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).ForEach({ $_ | ConvertTo-Json -WarningAction SilentlyContinue }) | Select-Object -Unique).ForEach(
+                        { 
+                            $Device_OpenCL = $_ | ConvertFrom-Json
 
-                    # Add normalised values
-                    $Device = [PSCustomObject]@{ 
-                        Name   = $null
-                        Model  = $Device_OpenCL.Name
-                        Type   = $(
-                            Switch -Regex ([String]$Device_OpenCL.Type) { 
-                                "CPU" { "CPU" }
-                                "GPU" { "GPU" }
-                                Default { [String]$Device_OpenCL.Type -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9]' }
+                            # Add normalised values
+                            $Device = [PSCustomObject]@{ 
+                                Name   = $null
+                                Model  = $Device_OpenCL.Name
+                                Type   = $(
+                                    Switch -Regex ([String]$Device_OpenCL.Type) { 
+                                        "CPU" { "CPU" }
+                                        "GPU" { "GPU" }
+                                        Default { [String]$Device_OpenCL.Type -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9]' }
+                                    }
+                                )
+                                Bus    = $(
+                                    If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
+                                        [Int64]$Device_OpenCL.PCIBus
+                                    }
+                                )
+                                Vendor = $(
+                                    Switch -Regex ([String]$Device_OpenCL.Vendor) { 
+                                        "Advanced Micro Devices" { "AMD" }
+                                        "Intel" { "INTEL" }
+                                        "NVIDIA" { "NVIDIA" }
+                                        "AMD" { "AMD" }
+                                        Default { [String]$Device_OpenCL.Vendor -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9]' }
+                                    }
+                                )
+                                Memory = [UInt64]$Device_OpenCL.GlobalMemSize
+                                MemoryGiB = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
                             }
-                        )
-                        Bus    = $(
-                            If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
-                                [Int64]$Device_OpenCL.PCIBus
+
+                            $Device | Add-Member @{ 
+                                Id             = [Int]$Id
+                                Type_Id        = [Int]$Type_Id.($Device.Type)
+                                Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
+                                Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
                             }
-                        )
-                        Vendor = $(
-                            Switch -Regex ([String]$Device_OpenCL.Vendor) { 
-                                "Advanced Micro Devices" { "AMD" }
-                                "Intel" { "INTEL" }
-                                "NVIDIA" { "NVIDIA" }
-                                "AMD" { "AMD" }
-                                Default { [String]$Device_OpenCL.Vendor -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9]' }
+                            #Unsupported devices get DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
+                            If ($Device.Vendor -in $Variables."Supported$($Device.Type)DeviceVendors") { 
+                                $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
                             }
-                        )
-                        Memory = [UInt64]$Device_OpenCL.GlobalMemSize
-                        MemoryGiB = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
-                    }
+                            ElseIf ($Device.Type -eq "CPU") { 
+                                $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)"
+                            }
+                            Else { 
+                                $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)"
+                            }
+                            $Device.Model = ((($Device.Model -split ' ' -replace 'Processor', 'CPU' -replace 'Graphics', 'GPU') -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB") -join ' ' -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9 ]'
 
-                    $Device | Add-Member @{ 
-                        Id             = [Int]$Id
-                        Type_Id        = [Int]$Type_Id.($Device.Type)
-                        Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
-                        Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
-                    }
-                    #Unsupported devices get DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
-                    If ($Device.Vendor -in $Variables."Supported$($Device.Type)DeviceVendors") { 
-                        $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
-                    }
-                    ElseIf ($Device.Type -eq "CPU") { 
-                        $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)"
-                    }
-                    Else { 
-                        $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)"
-                    }
-                    $Device.Model = ((($Device.Model -split ' ' -replace 'Processor', 'CPU' -replace 'Graphics', 'GPU') -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB") -join ' ' -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9 ]'
+                            If (-not $Type_Vendor_Id.($Device.Type)) { 
+                                $Type_Vendor_Id.($Device.Type) = @{ }
+                            }
 
-                    If (-not $Type_Vendor_Id.($Device.Type)) { 
-                        $Type_Vendor_Id.($Device.Type) = @{ }
-                    }
+                            If ($Variables.Devices.Where({ $_.Type -eq $Device.Type }).Where({ $_.Bus -eq $Device.Bus })) { 
+                                $Device = $Variables.Devices.Where({ $_.Type -eq $Device.Type }).Where({ $_.Bus -eq $Device.Bus })
+                            }
+                            ElseIf ($Device.Type -eq "GPU" -and ($Device.Vendor -in @("AMD", "INTEL", "NVIDIA"))) { 
+                                $Variables.Devices += $Device
 
-                    If ($Variables.Devices | Where-Object Type -EQ $Device.Type | Where-Object Bus -EQ $Device.Bus) { 
-                        $Device = $Variables.Devices | Where-Object Type -EQ $Device.Type | Where-Object Bus -EQ $Device.Bus
-                    }
-                    ElseIf ($Device.Type -eq "GPU" -and ($Device.Vendor -eq "AMD" -or $Device.Vendor -eq "NVIDIA")) { 
-                        $Variables.Devices += $Device
+                                If (-not $Type_Vendor_Index.($Device.Type)) { 
+                                    $Type_Vendor_Index.($Device.Type) = @{ }
+                                }
 
-                        If (-not $Type_Vendor_Index.($Device.Type)) { 
-                            $Type_Vendor_Index.($Device.Type) = @{ }
+                                $Id ++
+                                $Vendor_Id.($Device.Vendor) ++
+                                $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
+                                $Type_Id.($Device.Type) ++
+                            }
+
+                            # Add OpenCL specific data
+                            $Device | Add-Member @{ 
+                                Index                 = [Int]$Index
+                                Type_Index            = [Int]$Type_Index.($Device.Type)
+                                Vendor_Index          = [Int]$Vendor_Index.($Device.Vendor)
+                                Type_Vendor_Index     = [Int]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
+                                PlatformId            = [Int]$PlatformId
+                                PlatformId_Index      = [Int]$PlatformId_Index.($PlatformId)
+                                Type_PlatformId_Index = [Int]$Type_PlatformId_Index.($Device.Type).($PlatformId)
+                            } -Force
+
+                            # Add raw data
+                            $Device | Add-Member @{ 
+                                OpenCL = $Device_OpenCL
+                            } -Force
+
+                            If (-not $Type_Vendor_Index.($Device.Type)) { 
+                                $Type_Vendor_Index.($Device.Type) = @{ }
+                            }
+                            If (-not $Type_PlatformId_Index.($Device.Type)) { 
+                                $Type_PlatformId_Index.($Device.Type) = @{ }
+                            }
+
+                            $Index ++
+                            $Type_Index.($Device.Type) ++
+                            $Vendor_Index.($Device.Vendor) ++
+                            $Type_Vendor_Index.($Device.Type).($Device.Vendor) ++
+                            $PlatformId_Index.($PlatformId) ++
+                            $Type_PlatformId_Index.($Device.Type).($PlatformId) ++
                         }
-
-                        $Id ++
-                        $Vendor_Id.($Device.Vendor) ++
-                        $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
-                        $Type_Id.($Device.Type) ++
-                    }
-
-                    # Add OpenCL specific data
-                    $Device | Add-Member @{ 
-                        Index                 = [Int]$Index
-                        Type_Index            = [Int]$Type_Index.($Device.Type)
-                        Vendor_Index          = [Int]$Vendor_Index.($Device.Vendor)
-                        Type_Vendor_Index     = [Int]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
-                        PlatformId            = [Int]$PlatformId
-                        PlatformId_Index      = [Int]$PlatformId_Index.($PlatformId)
-                        Type_PlatformId_Index = [Int]$Type_PlatformId_Index.($Device.Type).($PlatformId)
-                    } -Force
-
-                    # Add raw data
-                    $Device | Add-Member @{ 
-                        OpenCL = $Device_OpenCL
-                    } -Force
-
-                    If (-not $Type_Vendor_Index.($Device.Type)) { 
-                        $Type_Vendor_Index.($Device.Type) = @{ }
-                    }
-                    If (-not $Type_PlatformId_Index.($Device.Type)) { 
-                        $Type_PlatformId_Index.($Device.Type) = @{ }
-                    }
-
-                    $Index ++
-                    $Type_Index.($Device.Type) ++
-                    $Vendor_Index.($Device.Vendor) ++
-                    $Type_Vendor_Index.($Device.Type).($Device.Vendor) ++
-                    $PlatformId_Index.($PlatformId) ++
-                    $Type_PlatformId_Index.($Device.Type).($PlatformId) ++
+                    )
+                    $PlatformId ++
                 }
-
-                $PlatformId ++
-            }
+            )
 
             ($Variables.Devices.Where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -Is [Int64] }) | Sort-Object -Property Bus).ForEach(
                 { 
@@ -2498,12 +2500,12 @@ Function Get-Device {
             $Device = $_
 
             $Device.Bus_Index = @($Variables.Devices.Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Type_Index = @(($Variables.Devices | Where-Object Type -EQ $Device.Type).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Vendor_Index = @(($Variables.Devices | Where-Object Vendor -EQ $Device.Vendor).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Platform_Index = @(($Variables.Devices | Where-Object Platform -EQ $Device.Platform).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Type_Index = @($Variables.Devices.Where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Vendor_Index = @($Variables.Devices.Where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Platform_Index = @($Variables.Devices.Where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
 
-            If (-not $Name -or ($Name_Devices | Where-Object { ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) })) { 
-                If (-not $ExcludeName -or -not ($ExcludeName_Devices | Where-Object { ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) })) { 
+            If (-not $Name -or ($Name_Devices.Where({ ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) }))) { 
+                If (-not $ExcludeName -or -not ($ExcludeName_Devices.Where({ ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) }))) { 
                     $Device
                 }
             }
@@ -2565,7 +2567,7 @@ Function Get-Combination {
 
         While ($X -le [Math]::Pow(2, $Value.Count) - 1) { 
             [PSCustomObject]@{ 
-                Combination = ($Combination_Keys | Where-Object { $_ -band $X }).ForEach({ $Combination.$_ })
+                Combination = ($Combination_Keys.Where({ $_ -band $X })).ForEach({ $Combination.$_ })
             }
             $Smallest = ($X -band - $X)
             $Ripple = $X + $Smallest
@@ -2718,7 +2720,7 @@ Function Expand-WebRequest {
     If (Test-Path -LiteralPath $FileName -PathType Leaf) { Remove-Item $FileName }
     Invoke-WebRequest -Uri $Uri -OutFile $FileName -TimeoutSec 5
 
-    If (".msi", ".exe" -contains ([IO.FileInfo](Split-Path $Uri -Leaf)).Extension) { 
+    If (([IO.FileInfo](Split-Path $Uri -Leaf)).Extension -in @(".msi", ".exe")) { 
         Start-Process $FileName "-qb" -Wait | Out-Null
     }
     Else { 
@@ -2731,7 +2733,7 @@ Function Expand-WebRequest {
         If (Test-Path -LiteralPath $Path_New -PathType Container) { Remove-Item $Path_New -Recurse -Force }
 
         # use first (topmost) directory, some miners, e.g. ClaymoreDual_v11.9, contain multiple miner binaries for different driver versions in various sub dirs
-        $Path_Old = (Get-ChildItem -Path $Path_Old -File -Recurse | Where-Object { $_.Name -eq $(Split-Path $Path -Leaf) }).Directory | Select-Object -First 1
+        $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).Where({ $_.Name -eq $(Split-Path $Path -Leaf) })).Directory | Select-Object -First 1
 
         If ($Path_Old) { 
             (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = Get-Date })
@@ -2962,7 +2964,7 @@ Function Start-LogReader {
     If ((Test-Path -LiteralPath $Config.LogViewerExe -PathType Leaf) -and (Test-Path -LiteralPath $Config.LogViewerConfig -PathType Leaf)) { 
         $Variables.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Config.LogViewerConfig)
         $Variables.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Config.LogViewerExe)
-        If ($SnaketailProcess = (Get-CimInstance CIM_Process | Where-Object CommandLine -EQ """$($Variables.LogViewerExe)"" $($Variables.LogViewerConfig)")) { 
+        If ($SnaketailProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -EQ """$($Variables.LogViewerExe)"" $($Variables.LogViewerConfig)" })) { 
             # Activate existing Snaketail window
             $LogViewerMainWindowHandle = (Get-Process -Id $SnaketailProcess.ProcessId).MainWindowHandle
             If (@($LogViewerMainWindowHandle).Count -eq 1) { 
@@ -2984,7 +2986,7 @@ Function Get-ObsoleteMinerStats {
     $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_HashRate.txt", "*_PowerConsumption.txt").BaseName
     $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
 
-    Return @($StatFiles | Where-Object { (($_ -split '-')[0, 1] -join '-') -notin $MinerNames})
+    Return @($StatFiles.Where({ (($_ -split '-')[0, 1] -join '-') -notin $MinerNames}))
 }
 
 Function Test-Prime { 
@@ -3055,7 +3057,7 @@ Function Update-DAGdata {
         Try { 
             $DAGdataResponse = Invoke-WebRequest -Uri $Url -TimeoutSec 5 # PWSH 6+ no longer supports basic parsing -> parse text
             If ($DAGdataResponse.statuscode -eq 200) {
-                ($DAGdataResponse.Content -split '\n' -replace '"', "'" | Where-Object { $_ -like "<div class='block' title='Current block height of *" }).ForEach(
+                (($DAGdataResponse.Content -split '\n' -replace '"', "'").Where({ $_ -like "<div class='block' title='Current block height of *" })).ForEach(
                     { 
                         $Currency = $_ -replace "^<div class='block' title='Current block height of " -replace "'>.*$"
                         If ($Currency -notin @("ETF")) { # ETF has invalid DAG data of 444GiB
@@ -3193,7 +3195,7 @@ Function Update-DAGdata {
                     DAGsize     = [Int64]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
                     Epoch       = [Int]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
                 }) -Force
-                $Variables.DAGdata.Algorithm.$Algorithm | Add-Member CoinName ($DAGdataKeys | Where-Object { $Variables.DAGdata.Currency.$_.DAGsize -eq $Variables.DAGdata.Algorithm.$Algorithm.DAGsize -and $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }) -Force
+                $Variables.DAGdata.Algorithm.$Algorithm | Add-Member CoinName ($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.DAGsize -eq $Variables.DAGdata.Algorithm.$Algorithm.DAGsize -and $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
             }
             Catch { 
                 Start-Sleep 0

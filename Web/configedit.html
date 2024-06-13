@@ -576,7 +576,7 @@
       $('<div>', { id: 'newwallet' }).appendTo(walletscontainer);
         $('<input type="text" title="Enter crypto currency" id="newwalletcurrency" size=2 minlength=1 maxlength=10>').appendTo(newwallet);
         $('<input type="text" title="Enter wallet address" id="newwalletaddress" size=64 minlength=2 maxlength=100 style=margin-left:6px>').appendTo(newwallet);
-        $('<button/>', { text: 'Done', title: 'Add currency to wallet list', type: 'button', class: 'btn btn-light btn-sm addnewwalletbutton', id: 'btn-addnewwallet', style: 'margin-left:6px; height:28px; ' }).appendTo(newwallet);
+        $('<button/>', { text: 'Add', title: 'Add currency to wallet list', type: 'button', class: 'btn btn-light btn-sm addnewwalletbutton', id: 'btn-addnewwallet', style: 'margin-left:6px; height:28px; ' }).appendTo(newwallet);
         $('<button/>', { text: 'Cancel', title: '', type: 'button', class: 'btn btn-light btn-sm cancelnewwalletbutton', id: 'btn-cancelnewwallet', style: 'margin-left:6px; height:28px; ' }).appendTo(newwallet);
       $('<div/>').appendTo(walletscontainer);
       document.getElementById('btn-addwallet').disabled = true;

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.2.8
-Version date:   2024/06/08
+Version:        6.2.9
+Version date:   2024/06/13
 #>
 
 Class TeamBlackMiner : Miner { 
@@ -47,25 +47,27 @@ Class TeamBlackMiner : Miner {
         $Shares_Invalid = [Int64]0
 
         ForEach ($Algorithm in $this.Algorithms) { 
-            $Data.pool.PSObject.Properties.Name | ForEach-Object { 
-                If ($Data.pool.$_.Algo -eq $Algorithm) { 
-                    $HashRate_Name = [String]$Algorithm
-                    $HashRate_Value = [Double]($Data.pool.$_.total_hashrate)
-                    $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+            $Data.pool.PSObject.Properties.Name.ForEach(
+                { 
+                    If ($Data.pool.$_.Algo -eq $Algorithm) { 
+                        $HashRate_Name = [String]$Algorithm
+                        $HashRate_Value = [Double]($Data.pool.$_.total_hashrate)
+                        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
 
-                    $Shares_Accepted = [Int64]($Data.pool.$_.total_accepted)
-                    $Shares_Rejected = [Int64]($Data.pool.$_.total_rejected)
-                    $Shares_Invalid =  [Int64]($Data.pool.$_.total_stale)
-                    $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+                        $Shares_Accepted = [Int64]($Data.pool.$_.total_accepted)
+                        $Shares_Rejected = [Int64]($Data.pool.$_.total_rejected)
+                        $Shares_Invalid =  [Int64]($Data.pool.$_.total_stale)
+                        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+                    }
                 }
-            }
+            )
         }
 
         $PowerConsumption = [Double]0
 
         If ($HashRate.PSObject.Properties.Value -gt 0) { 
             If ($this.ReadPowerConsumption) { 
-                $Data.Devices | ForEach-Object { $PowerConsumption += [Double]$_.PSObject.Properties.Value.watt }
+                $Data.Devices.ForEach({ $PowerConsumption += [Double]$_.PSObject.Properties.Value.watt })
                 $PowerConsumption = [Double]($Data.result | Measure-Object gpu_power_usage -Sum | Select-Object -ExpandProperty Sum)
                 If (-not $PowerConsumption) { 
                     $PowerConsumption = $this.GetPowerConsumption()

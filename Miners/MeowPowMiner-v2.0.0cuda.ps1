@@ -23,13 +23,13 @@ Version date:   2024/06/13
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/KawpowMiner/kawpowminer-windows-cuda11-1.2.4.zip"
+$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MeowPowMiner/MeowPowMiner-windows-2.0.0-cuda12-2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\kawpowminer.exe"
+$Path = "$PWD\Bin\$Name\meowpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "KawPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
+    [PSCustomObject]@{ Algorithm = "MeowPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -76,7 +76,7 @@ If ($Algorithms) {
                                         Path        = $Path
                                         Port        = $MinerAPIPort
                                         Type        = "NVIDIA"
-                                        URI         = $Uri
+                                        URI         = $URI
                                         WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                         Workers     = @(@{ Pool = $Pool })
                                     }

@@ -16,15 +16,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 Product:        UG-Miner
 File:           API.psm1
-Version:        6.2.8
-version date:   2024/06/08
+Version:        6.2.9
+version date:   2024/06/13
 -->
 
 
 <html>
 
 <body>
-  <h1>UG-Miner API (version 0.5.4.8)</h1>
+  <h1>UG-Miner API (version 0.5.4.10)</h1>
 
   API data is available at http://localhost:[API port]/&lt;resource&gt.<br>
   The default API port is 3999.
@@ -184,6 +184,9 @@ version date:   2024/06/08
   <b><a href="http://localhost:3999/pools/available">/pools/available</a></b>
   <p>Shows the available pool entries.</p>
   <br>
+  <b><a href="http://localhost:3999/pools/expired">/pools/expired</a></b>
+  <p>Shows the expired pool entries.</p>
+  <br>
   <b><a href="http://localhost:3999/pools/best">/pools/best</a></b>
   <p>Shows the best pool entries.</p>
   <br>
@@ -303,15 +306,15 @@ version date:   2024/06/08
   <br>Returns: Mining status (Idle / Paused / Running)
   <br>
   <br><b>/functions/mining/pause</b>
-  <br>Pause mining (Balances Tracker & Brainjobs running, Miners stopped)
+  <br>Pause mining (Balances tracker & brainjobs running, Miners stopped)
   <br>Parameters: none
   <br>
   <br><b>/functions/mining/start</b>
-  <br>Start mining (Balances Tracker & Brainjobs running, Miners running)
+  <br>Start mining (Balances tracker & brainjobs running, Miners running)
   <br>Parameters: none
   <br>
   <br><b>/functions/mining/stop</b>
-  <br>Stop mining (Balances Tracker & Brainjobs stopped, Miners stopped)
+  <br>Stop mining (Balances tracker & brainjobs stopped, Miners stopped)
   <br>Parameters: none
   <br>
   <br><b>/functions/querypoolapi/b></b>

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.2.8
-Version date:   2024/06/08
+Version:        6.2.9
+Version date:   2024/06/13
 #>
 
 Class EthMiner : Miner { 
@@ -45,6 +45,7 @@ Class EthMiner : Miner {
         If ($Data.result[0] -notmatch "^TT-Miner") { 
             If ($HashRate_Name -eq "EtcHash")          { $HashRate_Value *= 1000 }
             ElseIf ($HashRate_Name -eq "Ethash")       { $HashRate_Value *= 1000 }
+            ElseIf ($HashRate_Name -eq "MeowPow")      { $HashRate_Value *= 1000 }
             ElseIf ($HashRate_Name -eq "UbqHash")      { $HashRate_Value *= 1000 }
         }
         If ($HashRate_Name -eq "Neoscrypt")           { $HashRate_Value *= 1000 }

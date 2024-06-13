@@ -2,6 +2,25 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+ChangeLog UG-Miner 6.2.9 2024/06/13
+===================================
+
+Enhancements:
+- API: Add '/pools/expired' data
+- Core: Minor code optimizations when reading miner objects
+- Miners: Comment out obsolete code for better speed
+
+Fixes:
+- Core: Do not count dry run miner launches as miner activation
+- TTMiner-v2024.2.0: Incorrect command line (double -p)
+- Web GUI: Right mouse button context actions for miners broken
+
+Miner changes:
+- lolMiner-v1.88
+- MeorPowMiner-v2.0.0
+- XmRig-v6.21.3.15
+
+
 ChangeLog UG-Miner 6.2.8 2024/06/08
 ===================================
 
@@ -261,7 +280,7 @@ ChangeLog UG-Miner 6.1.8 2024/02/10
 ===================================
 
 Changes:
-- API: Renamed 'minersmostprofitable' to 'minersoptimal'
+- API: Renamed '/miners/mostprofitable' to 'miner/optimal'
 - Legacy & Web GUI: Rename 'Most profitable miners' to 'Optimal miners'
 
 Fixes:

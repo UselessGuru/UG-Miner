@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.8
+Version:        6.2.9
 Version date:   2024/04/07
 #>
 
@@ -38,7 +38,7 @@ $null = [ProcessDPI]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 $Colors = @{ }
-$Colors["benchmarking"]                   = [System.Drawing.Color]::FromArgb(253, 235, 220)
+$Colors["benchmarking"]                   = [System.Drawing.Color]::FromArgb(241, 255, 229)
 $Colors["disabled"]                       = [System.Drawing.Color]::FromArgb(255, 243, 231)
 $Colors["failed"]                         = [System.Drawing.Color]::FromArgb(255, 230, 230)
 $Colors["idle"] = $Colors["stopped"]      = [System.Drawing.Color]::FromArgb(230, 248, 252)
@@ -56,8 +56,8 @@ Function Set-TableColor {
     )
     If ($Config.UseColorForMinerStatus) { 
         ForEach ($Row in $DataGridView.Rows) { 
-            If ($Colors[$Row.DataBoundItem.Status]) { 
-                $Row.DefaultCellStyle.Backcolor = $Colors[$Row.DataBoundItem.Status]
+            If ($Colors[$Row.DataBoundItem.SubStatus]) { 
+                $Row.DefaultCellStyle.Backcolor = $Colors[$Row.DataBoundItem.SubStatus]
             } 
         }
     }
@@ -84,7 +84,7 @@ Function CheckBoxSwitching_Click {
     $SwitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $SwitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
-        $SwitchingDGV.DataSource = (Get-Content ".\Logs\SwitchingLog.csv" | ConvertFrom-Csv).Where({ $_.Type -in $SwitchingDisplayTypes }) | Select-Object -Last 1000 | ForEach-Object { $_.Datetime = (Get-Date $_.DateTime); $_ } | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
+        $SwitchingDGV.DataSource = ((Get-Content ".\Logs\SwitchingLog.csv" | ConvertFrom-Csv).Where({ $_.Type -in $SwitchingDisplayTypes }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
         If ($SwitchingDGV.Columns) { 
             $SwitchingDGV.Columns[0].FillWeight = 50
             $SwitchingDGV.Columns[1].FillWeight = 50
@@ -157,7 +157,8 @@ Function Update-TabControl {
                 $ActiveMinersDGV.BeginInit()
                 $ActiveMinersDGV.ClearSelection()
                 $ActiveMinersDGV.DataSource = $Variables.MinersBestPerDeviceCombo | Select-Object @(
-                    @{ Name = "Info"; Expression = { $_.Info } }
+                    @{ Name = "Info"; Expression = { $_.info } }
+                    @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join '; ' } }
                     @{ Name = "Miner"; Expression = { $_.Name } }
                     @{ Name = "Status"; Expression = { $_.Status } }, 
@@ -175,18 +176,19 @@ Function Update-TabControl {
 
                 If ($ActiveMinersDGV.Columns) { 
                     $ActiveMinersDGV.Columns[0].Visible = $false
-                    $ActiveMinersDGV.Columns[1].FillWeight = 30 + ($Variables.MinersBestPerDeviceCombo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
-                    $ActiveMinersDGV.Columns[2].FillWeight = 160
-                    $ActiveMinersDGV.Columns[3].FillWeight = 60
-                    $ActiveMinersDGV.Columns[4].FillWeight = 55; $ActiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                    $ActiveMinersDGV.Columns[5].FillWeight = 55; $ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
+                    $ActiveMinersDGV.Columns[1].Visible = $false
+                    $ActiveMinersDGV.Columns[2].FillWeight = 30 + ($Variables.MinersBestPerDeviceCombo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
+                    $ActiveMinersDGV.Columns[3].FillWeight = 160
+                    $ActiveMinersDGV.Columns[4].FillWeight = 60
+                    $ActiveMinersDGV.Columns[5].FillWeight = 55; $ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[6].FillWeight = 55; $ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[7].FillWeight = 55; $ActiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
-                    $ActiveMinersDGV.Columns[8].FillWeight = 70 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
-                    $ActiveMinersDGV.Columns[9].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
-                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                    $ActiveMinersDGV.Columns[11].FillWeight = 65; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
-                    $ActiveMinersDGV.Columns[12].FillWeight = 65; $ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[8].FillWeight = 55; $ActiveMinersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
+                    $ActiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
+                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
+                    $ActiveMinersDGV.Columns[11].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[12].FillWeight = 65; $ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[13].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[13].FillWeight = 65; $ActiveMinersDGV.Columns[13].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[14].HeaderCell.Style.Alignment = "MiddleRight"
                 }
                 Set-TableColor -DataGridView $ActiveMinersDGV
                 Form-Resize # To fully show lauched miners gridview
@@ -365,6 +367,8 @@ Function Update-TabControl {
                 $MinersDGV.BeginInit()
                 $MinersDGV.ClearSelection()
                 $MinersDGV.DataSource = $DataSource | Select-Object @(
+                    @{ Name = "Info"; Expression = { $_.Info } },
+                    @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
                     @{ Name = "Best"; Expression = { $_.Best } }, 
                     @{ Name = "Miner"; Expression = { $_.Name } }, 
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ', ' } }, 
@@ -381,16 +385,18 @@ Function Update-TabControl {
 
                 If ($MinersDGV.Columns) { 
                     $MinersDGV.Columns[0].Visible = $false
-                    $MinersDGV.Columns[1].FillWeight = 160
-                    $MinersDGV.Columns[2].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
-                    $MinersDGV.Columns[3].Visible = -not $RadioButtonMinersUnavailable.checked; $MinersDGV.Columns[3].FillWeight = 50
-                    $MinersDGV.Columns[4].FillWeight = 55; $MinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                    $MinersDGV.Columns[5].FillWeight = 60; $MinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
-                    $MinersDGV.Columns[6].FillWeight = 55; $MinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
-                    $MinersDGV.Columns[7].FillWeight = 55; $MinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
-                    $MinersDGV.Columns[8].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
-                    $MinersDGV.Columns[9].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
-                    $MinersDGV.Columns[19].FillWeight = 50 + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $MinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                    $MinersDGV.Columns[1].Visible = $false
+                    $MinersDGV.Columns[2].Visible = $false
+                    $MinersDGV.Columns[3].FillWeight = 160
+                    $MinersDGV.Columns[4].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
+                    $MinersDGV.Columns[5].Visible = -not $RadioButtonMinersUnavailable.checked; $MinersDGV.Columns[5].FillWeight = 50
+                    $MinersDGV.Columns[6].FillWeight = 55; $MinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
+                    $MinersDGV.Columns[7].FillWeight = 60; $MinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
+                    $MinersDGV.Columns[8].FillWeight = 55; $MinersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
+                    $MinersDGV.Columns[9].FillWeight = 55; $MinersDGV.Columns[9].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[9].Visible = $Variables.CalculatePowerCost
+                    $MinersDGV.Columns[10].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
+                    $MinersDGV.Columns[11].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
+                    $MinersDGV.Columns[12].FillWeight = 50 + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $MinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
                 }
                 Set-TableColor -DataGridView $MinersDGV
                 $MinersDGV.EndInit()
@@ -429,7 +435,7 @@ Function Update-TabControl {
 
                 $PoolsDGV.BeginInit()
                 $PoolsDGV.ClearSelection()
-                $PoolsDGV.DataSource = $DataSource | Select-Object @(
+                $PoolsDGV.DataSource = $DataSource | Sort-Object -Property AlgorithmVariant, Currency, Name | Select-Object @(
                     @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } }
                     @{ Name = "Currency"; Expression = { $_.Currency } }
                     @{ Name = "Coin name"; Expression = { $_.CoinName } }
@@ -442,7 +448,7 @@ Function Update-TabControl {
                     @{ Name = "Earnings`radjustment`rfactor"; Expression = { $_.EarningsAdjustmentFactor } }
                     @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
                     If ($RadioButtonPoolsUnavailable.checked -or $RadioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
-                ) | Sort-Object -Property Algorithm | Out-DataTable
+                ) | Out-DataTable
                 If ($PoolsDGV.Columns) { 
                     $PoolsDGV.Columns[0].FillWeight = 80
                     $PoolsDGV.Columns[1].FillWeight = 40
@@ -691,7 +697,7 @@ Function Update-GUIstatus {
 $Tooltip = New-Object System.Windows.Forms.ToolTip
 
 $LegacyGUIForm = New-Object System.Windows.Forms.Form
-#--- For High DPI, First Call SuspendLayout(),After that, Set AutoScaleDimensions, AutoScaleMode ---
+#--- For High DPI, First Call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode ---
 # SuspendLayout() is Very important to correctly size and position all controls!
 $LegacyGUIForm.SuspendLayout()
 $LegacyGUIForm.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96)
@@ -919,9 +925,9 @@ $ContextMenuStrip.Add_ItemClicked(
                                 $_.Activated = 0 # To allow 3 attempts
                             }
                             $_.PowerConsumption = [Double]::NaN
-                            $Stat_Name = $_.Name
-                            $Data += "$Stat_Name"
-                            Remove-Stat -Name "$($Stat_Name)_PowerConsumption"
+                            $StatName = $_.Name
+                            $Data += "$StatName"
+                            Remove-Stat -Name "$($StatName)_PowerConsumption"
                             $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
                             If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                         }
@@ -978,7 +984,7 @@ $ContextMenuStrip.Add_ItemClicked(
                             If ($_.GetStatus() -eq [MinerStatus]::Running) { $_.SetStatus([MinerStatus]::Idle) }
                             $_.Disabled = $true
                             $_.Reasons += "Disabled by user"
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Where-Object { $_ -ne "Disabled by user" } | Sort-Object -Unique)
+                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
                         }
                     )
                     $ContextMenuStrip.Visible = $false
@@ -1000,7 +1006,7 @@ $ContextMenuStrip.Add_ItemClicked(
                             }
                             Remove-Variable Worker
                             $_.Disabled = $false
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Where-Object { $_ -ne "Disabled by user" } | Sort-Object -Unique)
+                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
                             If (-not $_.Reasons) { $_.Available = $true }
                         }
                     )
@@ -1016,7 +1022,7 @@ $ContextMenuStrip.Add_ItemClicked(
                 "Remove watchdog timer" { 
                     $This.SourceControl.SelectedRows.ForEach(
                         { 
-                            $SelectedMinerName = $_.Cells[2].Value
+                            $SelectedMinerName = $_.Cells[0].Value
                             # Update miner
                             $Variables.Miners.Where({ $_.Name -eq $SelectedMinerName }).ForEach(
                                 { 
@@ -1055,9 +1061,9 @@ $ContextMenuStrip.Add_ItemClicked(
                             $SelectedPoolAlgorithm = $_.Cells[0].Value
                             $Variables.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).ForEach(
                                 { 
-                                    $Stat_Name = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
-                                    $Data += $Stat_Name
-                                    Remove-Stat -Name "$($Stat_Name)_Profit"
+                                    $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
+                                    $Data += $StatName
+                                    Remove-Stat -Name "$($StatName)_Profit"
                                     $_.Reasons = [System.Collections.Generic.List[String]]@()
                                     $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
                                     $_.Available = $true
@@ -1414,7 +1420,7 @@ $WorkersDGV.Location = [System.Drawing.Point]::new(6, ($WorkersLabel.Height + 8)
 $WorkersDGV.ReadOnly = $true
 $WorkersDGV.RowHeadersVisible = $false
 $WorkersDGV.Add_Sorted(
-    { Set-TableColor -DataGridView $WorkersDGV }
+    { Set-WorkerColor -DataGridView $WorkersDGV }
 )
 Set-DataGridViewDoubleBuffer -Grid $WorkersDGV -Enabled $true
 $RigMonitorPageControls += $WorkersDGV
@@ -1623,7 +1629,9 @@ $TabControl.Controls.AddRange(@($StatusPage, $EarningsPage, $MinersPage, $PoolsP
 $TabControl.Add_Click({ Update-TabControl })
 
 $LegacyGUIForm.Controls.Add($TabControl)
+$LegacyGUIForm.KeyPreview = $true
 $LegacyGUIForm.ResumeLayout()
+
 $LegacyGUIForm.Add_Load(
     { 
          If (Test-Path -LiteralPath ".\Config\WindowSettings.json" -PathType Leaf) { 
@@ -1636,15 +1644,7 @@ $LegacyGUIForm.Add_Load(
         }
 
         $Global:LegacyGUIFormWindowState = If ($Config.LegacyGUIStartMinimized) { [System.Windows.Forms.FormWindowState]::Minimized } Else { [System.Windows.Forms.FormWindowState]::Normal }
-        $LegacyGUIForm.Add_ResizeEnd({ Form-Resize })
-        $LegacyGUIForm.Add_SizeChanged(
-            { 
-                If ($this.WindowState -ne $Global:LegacyGUIFormWindowState) { 
-                    $Global:LegacyGUIFormWindowState = $this.WindowState
-                    Form-Resize
-                }
-            }
-        )
+
         Form-Resize
 
         Update-GUIstatus
@@ -1686,7 +1686,7 @@ $LegacyGUIForm.Add_FormClosing(
             $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Variables.Branding.ProductLabel)?", "$($Variables.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
         }
         Else { 
-            $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Closing legacy GUI.`nDo you also want to shut down $($Variables.Branding.ProductLabel)?", "$($Variables.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNoCancel, 32, "Button3")
+            $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you also want to shut down $($Variables.Branding.ProductLabel)?", "$($Variables.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNoCancel, 32, "Button3")
         }
         If ($MsgBoxInput -eq "Yes") { 
             $TimerUI.Stop()
@@ -1698,11 +1698,6 @@ $LegacyGUIForm.Add_FormClosing(
             Stop-Brain
             Stop-BalancesTracker
 
-            If ($LegacyGUIForm.DesktopBounds.Width -ge 0) { 
-                # Save window settings
-                $LegacyGUIForm.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore
-            }
-
             Write-Message -Level Info "$($Variables.Branding.ProductLabel) has shut down."
             Start-Sleep -Seconds 2
             Stop-Process $PID -Force
@@ -1710,12 +1705,28 @@ $LegacyGUIForm.Add_FormClosing(
         If ($Config.LegacyGUI -or $MsgBoxInput -eq "Cancel") { 
             $_.Cancel = $true
         }
+        Else { 
+            If ($LegacyGUIForm.DesktopBounds.Width -ge 0) { 
+                # Save window settings
+                $LegacyGUIForm.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore
+            }
+        }
     }
 )
 
-$LegacyGUIForm.KeyPreview = $true
 $LegacyGUIForm.Add_KeyDown(
     {
         If ($PSItem.KeyCode -eq "F5") { Update-TabControl }
+    }
+)
+
+$LegacyGUIForm.Add_ResizeEnd({ Form-Resize })
+
+$LegacyGUIForm.Add_SizeChanged(
+    { 
+        If ($this.WindowState -ne $Global:LegacyGUIFormWindowState) { 
+            $Global:LegacyGUIFormWindowState = $this.WindowState
+            Form-Resize
+        }
     }
 )
