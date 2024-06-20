@@ -38,7 +38,6 @@
     "PoolAPITimeout": 30,
     "PoolCurrenciesUri": "",
     "PoolStatusUri": "https://hashcryptos.com/api/status",
-    "PoolDebug": false,
     "Region": [
       "n/a"
     ],
@@ -88,7 +87,6 @@
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIRetryInterval": 3,
     "PoolAPITimeout": 20,
-    "PoolDebug": false,
     "PoolStatusUri": "https://Hiveon.net/api/v1/stats/pool",
     "SSL": "prefer",
     "Variant": {
@@ -117,7 +115,6 @@
     "PoolAPITimeout": 3,
     "PoolCurrenciesUri": "",
     "PoolStatusUri": "https://www.mining-dutch.nl/api/status",
-    "PoolDebug": false,
     "Region": [
       "americas",
       "europe",
@@ -186,7 +183,6 @@
       "ZEC",
       "ZEN"
     ],
-    "PoolDebug": false,
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIRetryInterval": 3,
     "PoolAPITimeout": 20,    "Region": [
@@ -210,7 +206,6 @@
     "Region": [
       "n/a (Anycast)"
     ],
-    "PoolDebug": false,
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIRetryInterval": 3,
     "PoolAPITimeout": 20,
@@ -251,7 +246,6 @@
     "PoolAPITimeout": 20,
     "PoolCurrenciesUri": "https://prohashing.com/api/v1/currencies",
     "PoolStatusUri": "https://prohashing.com/api/v1/status",
-    "PoolDebug": false,
     "Region": [
       "ASIA",
       "EU",
@@ -313,7 +307,6 @@
     "PoolAPITimeout": 30,
     "PoolCurrenciesUri": "https://zergpool.com/api/currencies",
     "PoolStatusUri": "https://zergpool.com/api/status",
-    "PoolDebug": false,
     "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
     "Region": [
       "asia",
@@ -377,7 +370,6 @@
     "PoolAPITimeout": 30,
     "PoolCurrenciesUri": "https://www.zpool.ca/api/currencies",
     "PoolStatusUri": "https://www.zpool.ca/api/status",
-    "PoolDebug": false,
     "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
     "Region": [
       "eu",

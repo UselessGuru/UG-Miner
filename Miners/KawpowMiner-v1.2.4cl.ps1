@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.9
-Version date:    2024/06/13
+Version:        6.2.10
+Version date:     2024/06/20
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { Return }
@@ -26,7 +26,7 @@ If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/KawpowMiner/kawpowminer-windows-1.2.4-opencl.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\kawpowminer.exe"
-$DeviceEnumerator = "Type_Vendor_Index"
+$DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "KawPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }

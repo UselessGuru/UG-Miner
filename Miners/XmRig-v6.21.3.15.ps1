@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.9
-Version date:   2024/06/13
+Version:        6.2.10
+Version date:    2024/06/20
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -in @("AMD", "CPU", "INTEL") -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }

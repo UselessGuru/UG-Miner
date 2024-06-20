@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.9
-Version date:   2024/06/13
+Version:        6.2.10
+Version date:    2024/06/20
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = ".\Bin\$()$Name)\cpuminer.exe"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Blake256R8"; MinerSet = 3; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blake256r8" } # FPGA
+    [PSCustomObject]@{ Algorithm = "Blakecoin";  MinerSet = 3; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blakecoin" } # FPGA
 #   [PSCustomObject]@{ Algorithm = "CpuPower";   MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @(); Arguments = " --algo cpupower" } # ASIC
     [PSCustomObject]@{ Algorithm = "Yespower2b"; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo power2b" }
 )
@@ -36,6 +36,7 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 # $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].Name -notin $_.ExcludePools })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 If ($Algorithms) { 
 
@@ -51,7 +52,7 @@ If ($Algorithms) {
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"
-                    Arguments   = "$($_.Arguments) --url $(If ($Pool.PoolPorts[1]) { "stratum+ssl" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --cpu-affinity AAAA --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -1) --api-bind=$($MinerAPIPort)"
+                    Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --cpu-affinity AAAA --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -1) --api-bind=$($MinerAPIPort)"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @(0) # Dev fee
                     MinerSet    = $_.MinerSet

@@ -1,5 +1,22 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
+- UG-Miner has issues with new Windows Terminal when default terminal application is set to 'Letwindows decide' or 'Windows Terminal'. -> It is recommeded to set it to 'Windows Console Host'
+
+ChangeLog UG-Miner 6.2.10 2024/06/20
+====================================
+
+Fixes:
+- Core: Fix compatibility with WindowsTerminal
+- Core: Miner would get suspended even when it succeeded benchmarking on the 3rd attempt
+- Core: '$MinerInstancePerDeviceModel' not detected on fresh config
+- Includes.psm1 / Get-DAGdata & Update-DAGdata: Add support fpr StakeCube coin (SSC) DaG calculation
+- Miners: Change algorithm for Blakecoin to Blake2s
+- RrkzCpu-v4.2: Disable mining using an SSL pool connection (not supported by miner)
+- Wildrig-v0.40.5: Invalid device selection in mixed GPU scenarios
+
+Miner updates:
+- MiniZ-v2.4d
+- SRBMinerMulti-v2.5.7
 
 
 ChangeLog UG-Miner 6.2.9 2024/06/13

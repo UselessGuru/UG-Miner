@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.2.9
-Version date:   2024/06/13
+Version date:    2024/06/20
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"452.39.00") }))) { Return }
@@ -26,7 +26,7 @@ If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $
 $URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.40.5/wildrig-multi-windows-0.40.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\wildrig.exe"
-$DeviceEnumerator = "Type_Slot"
+$DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Aergo";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUArchitecture = "^GCN1$";  ExcludePools = @();           Arguments = " --algo aergo" }
@@ -282,7 +282,7 @@ If ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API         = "XmRig"
-                                        Arguments   = "$($_.Arguments) --api-port $MinerAPIPort --url $(If ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --multiple-instance --opencl-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                        Arguments   = "$($_.Arguments) --api-port $MinerAPIPort --url $(If ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --multiple-instance --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                         DeviceNames = $AvailableMinerDevices.Name
                                         Fee         = $_.Fee # Dev fee
                                         MinerSet    = $_.MinerSet

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.9
-Version date:   2024/06/13
+Version:        6.2.10
+Version date:   2024/06/20
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -529,47 +529,47 @@ Class Miner {
 
     [Double[]]CollectHashrate([String]$Algorithm = [String]$this.Algorithm, [Boolean]$Safe = $this.Benchmark) { 
         # Returns an array of two values (safe, unsafe)
-        $Hashrate_Average = [Double]0
-        $Hashrate_Variance = [Double]0
+        $HashrateAverage = [Double]0
+        $HashrateVariance = [Double]0
 
-        $Hashrate_Samples = @($this.Data.Where({ $_.Hashrate.$Algorithm })) # Do not use 0 valued samples
+        $HashrateSamples = @($this.Data.Where({ $_.Hashrate.$Algorithm })) # Do not use 0 valued samples
 
-        $Hashrate_Average = ($Hashrate_Samples.Hashrate.$Algorithm | Measure-Object -Average | Select-Object -ExpandProperty Average)
-        $Hashrate_Variance = ($Hashrate_Samples.Hashrate.$Algorithm | Measure-Object -Average -Minimum -Maximum).ForEach({ If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } })
+        $HashrateAverage = ($HashrateSamples.Hashrate.$Algorithm | Measure-Object -Average | Select-Object -ExpandProperty Average)
+        $HashrateVariance = $HashrateSamples.Hashrate.$Algorithm | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
 
         If ($Safe) { 
-            If ($Hashrate_Samples.Count -lt 10 -or $Hashrate_Variance -gt 0.1) { 
-                Return @(0, $Hashrate_Average)
+            If ($HashrateSamples.Count -lt 10 -or $HashrateVariance -gt 0.1) { 
+                Return 0, $HashrateAverage
             }
             Else { 
-                Return @(($Hashrate_Average * (1 + $Hashrate_Variance / 2)), $Hashrate_Average)
+                Return ($HashrateAverage * (1 + $HashrateVariance / 2)), $HashrateAverage
             }
         }
         Else { 
-            Return @($Hashrate_Average, $Hashrate_Average)
+            Return $HashrateAverage, $HashrateAverage
         }
     }
 
     [Double[]]CollectPowerConsumption([Boolean]$Safe = $this.MeasurePowerConsumption) { 
         # Returns an array of two values (safe, unsafe)
-        $PowerConsumption_Average = [Double]0
-        $PowerConsumption_Variance = [Double]0
+        $PowerConsumptionAverage = [Double]0
+        $PowerConsumptionVariance = [Double]0
 
-        $PowerConsumption_Samples = @($this.Data.Where({ $_.PowerConsumption})) # Do not use 0 valued samples
+        $PowerConsumptionSamples = @($this.Data.Where({ $_.PowerConsumption})) # Do not use 0 valued samples
 
-        $PowerConsumption_Average = ($PowerConsumption_Samples.PowerConsumption | Measure-Object -Average | Select-Object -ExpandProperty Average)
-        $PowerConsumption_Variance = ($PowerConsumption_Samples.PowerUsage | Measure-Object -Average -Minimum -Maximum).ForEach({ If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } })
+        $PowerConsumptionAverage = ($PowerConsumptionSamples.PowerConsumption | Measure-Object -Average | Select-Object -ExpandProperty Average)
+        $PowerConsumptionVariance = $PowerConsumptionSamples.PowerUsage | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
 
         If ($Safe) { 
-            If ($PowerConsumption_Samples.Count -lt 10 -or $PowerConsumption_Variance -gt 0.1) { 
-                Return @(0, $PowerConsumption_Average)
+            If ($PowerConsumptionSamples.Count -lt 10 -or $PowerConsumptionVariance -gt 0.1) { 
+                Return 0, $PowerConsumptionAverage
             }
             Else { 
-                Return @(($PowerConsumption_Average * (1 + $PowerConsumption_Variance / 2)), $PowerConsumption_Average)
+                Return ($PowerConsumptionAverage * (1 + $PowerConsumptionVariance / 2)), $PowerConsumptionAverage
             }
         }
         Else { 
-            Return @($PowerConsumption_Average, $PowerConsumption_Average)
+            Return $PowerConsumptionAverage, $PowerConsumptionAverage
         }
     }
 
@@ -761,7 +761,7 @@ Function Start-Core {
 
         $Variables.LastDonated = [DateTime]::Now.AddDays(-1).AddHours(1)
         $Variables.Miners = [Miner[]]@()
-        $Variables.MinersBestPerDeviceCombo = [Miner[]]@()
+        $Variables.MinersBest = [Miner[]]@()
 
         $Variables.CycleStarts = @()
 
@@ -788,13 +788,14 @@ Function Start-Core {
 }
 
 Function Stop-Core { 
-
-    # Stop all running miners
-    ForEach ($Miner in $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) { 
-        $Miner.SetStatus([MinerStatus]::Idle)
-        $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+    
+    # Allow up to 30 seconds for all miners to get stopped
+    $Counter = 0
+    While ($Counter -lt 30 -and $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) {
+        Start-Sleep -Seconds 1
+        $Counter ++
     }
-    Remove-Variable Miner -ErrorAction Ignore
+    Remove-Variable Counter
 
     If ($Global:CoreRunspace) { 
         $Global:CoreRunspace.PowerShell.Stop() | Out-Null
@@ -803,13 +804,13 @@ Function Stop-Core {
         If ($Variables.NewMiningStatus -eq "Idle") { 
             $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
             $Variables.PoolsCount = 0
-            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBestPerDeviceCombos = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
+            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBests = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
             $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
             $Variables.CycleStarts = @()
             $Variables.Timer = $null
         }
 
-        $Variables.MinersBestPerDeviceCombo = [Miner[]]@()
+        $Variables.MinersBest = [Miner[]]@()
         $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
         $Variables.FailedMiners = [Miner[]]@()
         $Variables.RunningMiners = [Miner[]]@()
@@ -950,12 +951,14 @@ Function Stop-BalancesTracker {
 
     If ($BalancesTrackerRunspace) { 
 
-        $Variables.BalancesTrackerRunning = $false
-        $BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
-        $BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
-        $BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
-        $BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
-
+        Try { 
+            $Variables.BalancesTrackerRunning = $false
+            $BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
+            $BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
+            $BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
+            $BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
+        }
+        Catch { }
         Remove-Variable BalancesTrackerRunspace -Scope Global -ErrorAction Ignore
 
         [System.GC]::Collect()
@@ -1092,7 +1095,7 @@ Function Write-Message {
 
     $Message = "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $($Level.ToUpper()): $Message"
 
-    If (-not $Config.Keys -or $Level -in $Config.LogToScreen) { 
+    If (-not $Config.Keys.Count -or $Level -in $Config.LogToScreen) { 
         # Ignore error when legacy GUI gets closed
         Try { 
             # Update status text box in legacy GUI, scroll to end if no text is selected
@@ -1111,7 +1114,7 @@ Function Write-Message {
         Catch { }
     }
 
-    If (-not $Config.Keys -or $Level -in $Config.LogToFile) { 
+    If (-not $Config.Keys.Count -or $Level -in $Config.LogToFile) { 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
 
@@ -1307,12 +1310,6 @@ Function Read-Config {
         $DefaultConfig.ConfigFileVersion = $Variables.Branding.Version.ToString()
         $Variables.FreshConfig = $true
 
-        # Add default enabled pools
-        If (Test-Path -LiteralPath ".\Data\PoolsConfig-Recommended.json" -PathType Leaf) { 
-            $Temp = (Get-Content ".\Data\PoolsConfig-Recommended.json" | ConvertFrom-Json)
-            $DefaultConfig.PoolName = $Temp.PSObject.Properties.Name.Where({ $_ -ne "Default" }).ForEach({ $Temp.$_.Variant.PSObject.Properties.Name })
-        }
-
         # Add default config items
         $Variables.AllCommandLineParameters.psBase.Keys.Where({ $_ -notin $DefaultConfig.psBase.Keys }).ForEach(
             { 
@@ -1321,8 +1318,13 @@ Function Read-Config {
                 $DefaultConfig.$_ = $Value
             }
         )
-        # MinerInstancePerDeviceModel: Default to $true if more than one device model per vendor
-        $DefaultConfig.MinerInstancePerDeviceModel = (($Variables.Devices | Group-Object Vendor).ForEach({ ($_.Group.Model | Sort-Object -Unique).Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) -gt 1
+
+        $RandomDonationData = $Variables.DonationData | Get-Random
+        $DefaultConfig.MiningDutchUserName = $RandomDonationData.MiningDutchUserName
+        $DefaultConfig.MiningPoolHubUserName = $RandomDonationData.MiningPoolHubUserName
+        $DefaultConfig.NiceHashWallet = $RandomDonationData.Wallets.BTC
+        $DefaultConfig.ProHashingUserName = $RandomDonationData.ProHashingUserName
+        $DefaultConfig.Wallets.BTC = $RandomDonationData.Wallets.BTC
 
         Return $DefaultConfig
     }
@@ -1384,11 +1386,11 @@ Function Read-Config {
                         }
                         "NiceHash" { 
                             If (-not $PoolConfig.Variant."Nicehash Internal".Wallets.BTC) { 
-                                If ($ConfigFromFile.NiceHashWallet -and $ConfigFromFile.NiceHashWalletIsInternal) { $PoolConfig.Variant."NiceHash Internal".Wallets = @{ "BTC" = $ConfigFromFile.NiceHashWallet } }
+                                If ($ConfigFromFile.NiceHashWallet -and $ConfigFromFile.NiceHashWalletIsInternal) { $PoolConfig.Variant."NiceHash Internal".Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.NiceHashWallet } }
                             }
                             If (-not $PoolConfig.Variant."Nicehash External".Wallets.BTC) { 
-                                If ($ConfigFromFile.NiceHashWallet -and -not $ConfigFromFile.NiceHashWalletIsInternal) { $PoolConfig.Variant."NiceHash External".Wallets = @{ "BTC" = $ConfigFromFile.NiceHashWallet } }
-                                ElseIf ($ConfigFromFile.Wallets.BTC) { $PoolConfig.Variant."NiceHash External".Wallets = @{ "BTC" = $ConfigFromFile.Wallets.BTC } }
+                                If ($ConfigFromFile.NiceHashWallet -and -not $ConfigFromFile.NiceHashWalletIsInternal) { $PoolConfig.Variant."NiceHash External".Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.NiceHashWallet } }
+                                ElseIf ($ConfigFromFile.Wallets.BTC) { $PoolConfig.Variant."NiceHash External".Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.Wallets.BTC } }
                             }
                             Break
                         }
@@ -1421,11 +1423,11 @@ Function Read-Config {
             $Message = "Configuration file '$ConfigFile' is corrupt and was renamed to '$CorruptConfigFile'."
             Write-Message -Level Warn $Message
             $ConfigFromFile = Get-DefaultConfig
-            $Variables.FreshConfigText = "$Message`n`nUse the configuration editor ('http://127.0.0.1:$($ConfigFromFile.APIPort)') to change your settings and apply the configuration.`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!"
         }
         Else { 
             $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
-            ($Variables.AllCommandLineParameters.psBase.Keys | Sort-Object).ForEach({ 
+            ($Variables.AllCommandLineParameters.psBase.Keys | Sort-Object).ForEach(
+                { 
                     If ($_ -in $ConfigFromFile.psBase.Keys) { 
                         # Upper / lower case conversion of variable keys (Web GUI is case sensitive)
                         $Value = $ConfigFromFile.$_
@@ -1455,8 +1457,6 @@ Function Read-Config {
         }
     }
     Else { 
-        Write-Message -Level Warn "No valid configuration file '$ConfigFile' found."
-        $Variables.FreshConfigText = "This is the first time you have started $($Variables.Branding.ProductLabel).`n`nUse the configuration editor to change your settings and apply the configuration.`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!"
         $ConfigFromFile = Get-DefaultConfig
     }
 
@@ -1640,7 +1640,7 @@ Function Get-SortedObject {
                     }
                 )
             }
-            "Hashtable|OrderedDictionary|SyncHashtable" {  
+            "Hashtable|OrderedDictionary|SyncHashtable" { 
                 $SortedObject = [Ordered]@{ }
                 ($Object.GetEnumerator().Name | Sort-Object).ForEach(
                     { 
@@ -1889,7 +1889,7 @@ Function Get-Stat {
                 }
 
                 Try { 
-                    $Stat = [System.IO.File]::ReadAllLines("Stats\$StatName.txt") | ConvertFrom-Json -ErrorAction Stop
+                    $Stat = [System.IO.File]::ReadAllLines("$PWD\Stats\$StatName.txt") | ConvertFrom-Json -ErrorAction Stop
                     $Global:Stats[$StatName] = @{ 
                         Name                  = [String]$StatName
                         Live                  = [Double]$Stat.Live
@@ -1912,7 +1912,7 @@ Function Get-Stat {
                     }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Stat file ($StatName) is corrupt and will be reset."
+                    Write-Message -Level Warn "Stat file '$StatName' is corrupt and will be reset."
                     Remove-Stat $StatName
                 }
             }
@@ -2344,8 +2344,9 @@ Function Get-Device {
             )
         }
         Catch { 
-            Write-Message -Level Warn "WDDM device detection has failed. "
+            Write-Message -Level Warn "WDDM device detection has failed."
         }
+        Remove-Variable Device, Device_CIM, Device_Reg, Device_PNP -ErrorAction Ignore
 
         # Get OpenCL data
         Try { 
@@ -2366,7 +2367,7 @@ Function Get-Device {
                                         Default { [String]$Device_OpenCL.Type -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9]' }
                                     }
                                 )
-                                Bus    = $(
+                                Bus = $(
                                     If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
                                         [Int64]$Device_OpenCL.PCIBus
                                     }
@@ -2490,7 +2491,7 @@ Function Get-Device {
             )
         }
         Catch { 
-            Write-Message -Level Warn "OpenCL device detection has failed. "
+            Write-Message -Level Warn "OpenCL device detection has failed."
         }
     }
 
@@ -2688,7 +2689,7 @@ public static class Kernel32
         $Process.Handle | Out-Null
 
         Do { 
-            If ($ControllerProcess.WaitForExit(15000)) { 
+            If ($ControllerProcess.WaitForExit(1000)) { 
                 [Void]$Process.CloseMainWindow()
                 [Void]$Process.WaitForExit()
                 [Void]$Process.Close()
@@ -2983,7 +2984,7 @@ Function Start-LogReader {
 
 Function Get-ObsoleteMinerStats { 
 
-    $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_HashRate.txt", "*_PowerConsumption.txt").BaseName
+    $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_Hashrate.txt", "*_PowerConsumption.txt").BaseName
     $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
 
     Return @($StatFiles.Where({ (($_ -split '-')[0, 1] -join '-') -notin $MinerNames}))
@@ -3130,11 +3131,40 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
+    $Currency = "SCC"
+    $Url = "https://www.coinexplorer.net/api/v1/SCC/getblockcount"
+    If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        # Get block data from StakeCube block explorer
+        Try { 
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
+                If ($DAGdata.Epoch) {
+                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                    $DAGdata | Add-Member Url $Url -Force
+                    $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                    $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                    Write-Message -Level Info "Loaded DAG data from '$Url'."
+                }
+                Else { 
+                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                }
+            }
+        }
+        Catch { 
+            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+        }
+    }
+
+    # Faster shutdown
+    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
+
+
     If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
         # ZergPool (Coins) also supplies EVR DAG data
         $Currency = "EVR"
         $Url = "https://evr.cryptoscope.io/api/getblockcount"
-        If (-not $Variables.DAGdata.Currency.EVR.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from EVR block explorer
             Try { 
                 $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
@@ -3200,17 +3230,6 @@ Function Update-DAGdata {
             Catch { 
                 Start-Sleep 0
             }
-        }
-
-        # SCC firo variant
-        If ($Variables.DAGdata.Algorithm."FiroPow") { 
-            $Variables.DAGdata.Algorithm | Add-Member "FiroPowSCC" $Variables.DAGdata.Algorithm.FiroPow.PSObject.Copy() -Force
-        }
-        # SCC firo variant
-        If ($Variables.DAGdata.Currency."FIRO") { 
-            $Variables.DAGdata.Currency | Add-Member "SCC" $Variables.DAGdata.Currency."FIRO".PSObject.Copy() -Force
-            $Variables.DAGdata.Currency."SCC" | Add-Member Algorithm "FiroPowSCC" -Force
-            $Variables.DAGdata.Currency."SCC" | Add-Member CoinName "StakeCubeCoin" -Force
         }
 
         # Add default '*' (equal to highest)
@@ -3327,6 +3346,7 @@ Function Get-EpochLength {
         "EthashSHA256" { Return 4000 }
         "EvrProgPow"   { Return 12000 }
         "FiroPow"      { Return 1300 }
+        "FiroPowSCC"   { Return 3240 } # https://github.com/stakecube/sccminer/commit/16bdfcaccf9cba555f87c05f6b351e1318bd53aa#diff-200991710fe4ce846f543388b9b276e959e53b9bf5c7b7a8154b439ae8c066aeR32
         "KawPow"       { Return 7500 }
         "MeowPow"      { Return 7500 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L32
         "Octopus"      { Return 524288 }
@@ -3414,18 +3434,21 @@ Function Get-Median {
 
 Function Hide-Console {
     # https://stackoverflow.com/questions/3571627/show-hide-the-console-window-of-a-c-sharp-console-application
-    If ($Variables.ConsoleWindowHandle = [Console.Window]::GetConsoleWindow()) { 
-        # 0 = SW_HIDE
-        [Console.Window]::ShowWindow($Variables.ConsoleWindowHandle, 0)
+    If ($host.Name -eq "ConsoleHost") { 
+        If ($ConsoleHandle = [Console.Window]::GetConsoleWindow()) { 
+            # 0 = SW_HIDE
+            [Console.Window]::ShowWindow($ConsoleWindowHandle, 0) | Out-Null
+        }
     }
 }
 
 Function Show-Console {
     # https://stackoverflow.com/questions/3571627/show-hide-the-console-window-of-a-c-sharp-console-application
-    If ($Variables.ConsoleWindowHandle) { 
-        # 2 = SW_SHOWMINIMIZED
-        [Console.Window]::ShowWindow($Variables.ConsoleWindowHandle, 2)
-        $Variables.Remove("ConsoleWindowHandle")
+    If ($host.Name -eq "ConsoleHost") { 
+        If ($ConsoleHandle = [Console.Window]::GetConsoleWindow()) { 
+            # 5 = SW_SHOW
+            [Console.Window]::ShowWindow($ConsoleWindowHandle, 5) | Out-Null
+        }
     }
 }
 
@@ -3584,7 +3607,7 @@ Function Initialize-Environment {
     }
     Else { Write-Host "Loaded AMD GPU architecture table." }
 
-    $Variables.BalancesCurrencies = @($variables.Balances.PSObject.Properties.Name.ForEach({ $Variables.Balances.$_.Currency }))
+    $Variables.BalancesCurrencies = @($Variables.Balances.PSObject.Properties.Name.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
 
     Write-Host ""
 }

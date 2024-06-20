@@ -1025,30 +1025,29 @@ Do {
                     $MinerCombinations = @(
                         $Variables.MinerDeviceNamesCombinations.ForEach(
                             { 
-                                $MinerDeviceNamesCombination = $_.Combination
+                                $MinerDeviceNames = $_.Combination
                                 [PSCustomObject]@{ 
-                                    Combination = $MinerDeviceNamesCombination.ForEach(
+                                    Combination = $MinerDeviceNames.ForEach(
                                         { 
-                                            $DeviceNames = [String]$_.DeviceNames
-                                            $Variables.MinersBestPerDevice.Where({ [String]$_.DeviceNames -eq $DeviceNames })
+                                            $MinerDeviceNameCount = $_.DeviceNames.Count
+                                            [Regex]$MinerDeviceRegex = "^(" + (($_.DeviceNames.ForEach({ [Regex]::Escape($_) })) -join '|') + ")$"
+                                            $Variables.MinersBestPerDevice.Where({ ([Array]$_.DeviceNames -notmatch $MinerDeviceRegex).Count -eq 0 -and ([Array]$_.DeviceNames -match $MinerDeviceRegex).Count -eq $MinerDeviceNameCount })
                                         }
                                     )
                                 }
                             }
                         )
                     )
-                    Remove-Variable DeviceNames, MinerDeviceNamesCombinations -ErrorAction Ignore
-
                     # Get smallest $Bias
-                    # Hack: Temporarily make all bias -ge 0 by adding smallest bias, following produces wrong sort order when some profits are negative
                     $SmallestBias = $Variables.MinersBestPerDevice.$Bias | Sort-Object -Top 1
+                    # Hack: temporarily make all bias positive, following produces wrong sort order when some profits are negative
                     $MinerCombinations.ForEach({ $_.Combination.ForEach({ $_.$Bias += $SmallestBias }) })
                     $MinersBest = @(($MinerCombinations | Sort-Object -Descending { @($_.Combination.Where({ [Double]::IsNaN($_.$Bias) })).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination)
                     $MinerCombinations.ForEach({ $_.Combination.ForEach({ $_.$Bias -= $SmallestBias }) })
 
                     # Revert running miner bonus
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias /= $RunningMinerBonusFactor })
-                    Remove-Variable Bias, MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
+                    Remove-Variable Bias,  MinerDeviceCount, MinerDeviceRegex, MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
                 }
 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum | Select-Object -ExpandProperty Sum)), 0 | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
@@ -1061,7 +1060,7 @@ Do {
             Else { 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
                 $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency))
-                $Variables.MinersOptimal = $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinations = $MinersBest = [Miner[]]@()
+                $Variables.MinersOptimal = $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinationsss = $MinersBest = [Miner[]]@()
                 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
             }
         }
@@ -1465,9 +1464,9 @@ Do {
 
                 $Variables.RunningMiners = @($Variables.RunningMiners.Where({ $_ -notin $Variables.FailedMiners }))
                 $Variables.BenchmarkingOrMeasuringMiners = @($Variables.RunningMiners.Where({ $_.Activated -gt 0 -and ($_.Benchmark -or $_.MeasurePowerConsumption) }))
-                
-                If ($Variables.FailedMiners) { 
-                    # A miner crashed , exit loop immediately
+
+                If ($Variables.FailedMiners -and -not $Variables.BenchmarkingOrMeasuringMiners) { 
+                    # A miner crashed and we're not benchmarking, exit loop immediately
                     $Variables.EndCycleMessage = " prematurely (miner failed)"
                 }
                 ElseIf ($Variables.BenchmarkingOrMeasuringMiners.Where({ $_.Data.Count -ge $_.MinDataSample })) { 
@@ -1486,10 +1485,10 @@ Do {
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
             # Exit loop when
-            # - a miner crashed
-            # - a benchmarking miner has collected enough samples
+            # - a miner crashed and no other miners are benchmarking or measuring power consumption
+            # - a benchmarking miner haa collected enough samples
             # - WarmupTimes[0] is reached and no readout from miner
-            # - when not benchmnarking: Interval time is over
+            # - Interval time is over
         } While ($Variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and ([DateTime]::Now.ToUniversalTime() -le $Variables.EndCycleTime -or $Variables.BenchmarkingOrMeasuringMiners))
 
         Get-Job -State "Completed" | Receive-Job | Out-Null

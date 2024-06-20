@@ -19,7 +19,7 @@
     ],
     // Exclude region: One or more of 'Asia', 'Europe', 'HongKong', 'Japan', 'Russia', 'USA East', 'USA West'
     "ExcludeRegion": [ 
-	    "Asia",
+      "Asia",
       "Europe"
     ],
     // EarningsAdjustmentFactor: Default factor with which UG-Miner multiplies the prices reported by the pool. Value between 0.01 & 10.00

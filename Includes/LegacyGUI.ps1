@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.9
-Version date:   2024/04/07
+Version:        6.2.10
+Version date:   2024/06/20
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -150,13 +150,13 @@ Function Update-TabControl {
             $ContextMenuStripItem6.Enabled = $false
             $ContextMenuStripItem6.Visible = $false
 
-            $ActiveMinersLabel.Text = If ($Variables.MinersBestPerDeviceCombo) { "Active miners updated $([DateTime]::Now.ToString())" } Else { "No miners running." }
+            $ActiveMinersLabel.Text = If ($Variables.MinersBest) { "Active miners updated $([DateTime]::Now.ToString())" } Else { "No miners running." }
 
             If (-not ($ContextMenuStrip.Visible -and $ContextMenuStrip.Enabled)) { 
 
                 $ActiveMinersDGV.BeginInit()
                 $ActiveMinersDGV.ClearSelection()
-                $ActiveMinersDGV.DataSource = $Variables.MinersBestPerDeviceCombo | Select-Object @(
+                $ActiveMinersDGV.DataSource = $Variables.MinersBest | Select-Object @(
                     @{ Name = "Info"; Expression = { $_.info } }
                     @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join '; ' } }
@@ -177,16 +177,16 @@ Function Update-TabControl {
                 If ($ActiveMinersDGV.Columns) { 
                     $ActiveMinersDGV.Columns[0].Visible = $false
                     $ActiveMinersDGV.Columns[1].Visible = $false
-                    $ActiveMinersDGV.Columns[2].FillWeight = 30 + ($Variables.MinersBestPerDeviceCombo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
+                    $ActiveMinersDGV.Columns[2].FillWeight = 30 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
                     $ActiveMinersDGV.Columns[3].FillWeight = 160
                     $ActiveMinersDGV.Columns[4].FillWeight = 60
                     $ActiveMinersDGV.Columns[5].FillWeight = 55; $ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[6].FillWeight = 55; $ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[7].FillWeight = 55; $ActiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[8].FillWeight = 55; $ActiveMinersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
-                    $ActiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
-                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
-                    $ActiveMinersDGV.Columns[11].FillWeight = 50 + ($Variables.MinersBestPerDeviceCombo.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBest.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
+                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
+                    $ActiveMinersDGV.Columns[11].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[12].FillWeight = 65; $ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[13].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[13].FillWeight = 65; $ActiveMinersDGV.Columns[13].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[14].HeaderCell.Style.Alignment = "MiddleRight"
                 }
@@ -1653,7 +1653,7 @@ $LegacyGUIForm.Add_Load(
         $MiningSummaryLabel.SendToBack()
         (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $MiningSummaryLabel.Text += "`r`n$_" })
         $MiningSummaryLabel.Text += "`r`n "
-        If (-not $Variables.MinersBestPerDeviceCombo) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+        If (-not $Variables.MinersBest) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
         ElseIf ($Variables.MiningProfit -ge 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
         ElseIf ($Variables.MiningProfit -lt 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
 

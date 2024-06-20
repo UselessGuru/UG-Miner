@@ -32,7 +32,7 @@
       <ColumnFilterActive>false</ColumnFilterActive>
       <KeywordHighlight>
         <Keyword>
-          <Keyword>Benchmark.+for .+ in progress|Power consumption measurement for.+ in progress</Keyword>
+          <Keyword>(benchmark|power consumption).+for .+ in progress</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -42,7 +42,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>Benchmark done|Power consumption measurement done</Keyword>
+          <Keyword>Saved (power consumption|hashrate).+for .+ \[.+ done\]</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>

@@ -51,6 +51,7 @@
                 <th data-switchable="false" data-field="SubStatus" data-class="hidden statuscolor"></th>
                 <th data-field="state" data-checkbox="true"></th>
                 <th data-field="Name" data-sortable="true" data-filter-control="input">Name</th>
+                <th data-field="Info" data-sortable="true" data-filter-control="input" data-visible="false">Info</th>
                 <th data-field="BaseName" data-sortable="true" data-filter-control="select" data-visible="false">Miner</th>
                 <th data-field="Version" data-sortable="true" data-filter-control="select" data-visible="false">Version</th>
                 <th data-field="CommandLine" data-sortable="true" data-filter-control="input" data-visible="false">Command line</th>
@@ -58,7 +59,7 @@
                 <th data-field="Type" data-sortable="true" data-filter-control="select" data-visible="false">Type</th>
                 <th data-field="Status" data-sortable="true" data-filter-control="select">Status</th>
                 <th data-field="StatusInfo" data-sortable="true" data-filter-control="select" data-visible="false">Status Info</th>
-                <th data-field="Reasons" data-sortable="true" data-filter-control="select" data-visible="false">Reasons</th>
+                <th data-field="Reasons" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Reasons</th>
                 <th data-field="Earning_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning (biased)</th>
                 <th data-field="Earning" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning</th>
                 <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Power cost</th>
@@ -138,7 +139,7 @@
               }
             });
 
-            $('#miners').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function (e) {
+            $('#miners').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
               $(".addlocalcurrency").each(function () {
                 if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
               });

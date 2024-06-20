@@ -52,7 +52,7 @@
           <legend class=h6 title="You must have a registered account with NiceHash">NiceHash
             <a id="RegisterNiceHash" href="https://www.nicehash.com/my/register" target="_blank" hidden style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
-          <div style="padding-top: 0.2rem" title="Your NiceHash Bitcoin wallet address (must be between 26 and 35 chars long)&#10;configure only if different from main Bitcoin wallet address">
+          <div style="padding-top: 0.2rem" title="Your NiceHash Bitcoin wallet address (must be between 26 and 35 chars long)">
             <label for="NiceHashWallet">NiceHash Bitcoin wallet address</label>
             <input type="text" id="NiceHashWallet" name="NiceHashWallet" minlenght=26 maxlength=35 size=40>
           </div>
@@ -395,13 +395,13 @@
             <div style="padding-top: 0.5rem" title="Show the 'Profit' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 't' in the console window while waiting for the next cycle&#10;">
               <input type="checkbox" class="toggle-switch" id="ShowProfit" name="ShowProfit"> Show profit column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'Profit Bias' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'r' in the console window while waiting for the next cycle&#10;">
+            <div style="padding-top: 0.5rem" title="Show the 'ProfitBias' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'r' in the console window while waiting for the next cycle&#10;">
               <input type="checkbox" class="toggle-switch" id="ShowProfitBias" name="ShowProfitBias"> Show profit bias column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Earning' column in the console window&#10;&#10;Can be toggled by pressing 'e' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowEarning" name="ShowEarning"> Show earning column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'Earning Bias' column in the console window&#10;&#10;Can be toggled by pressing 'i' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem" title="Show the 'EarningBias' column in the console window&#10;&#10;Can be toggled by pressing 'i' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowEarningBias" name="ShowEarningBias"> Show earning bias column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Accuracy' column in the console window&#10;&#10;Can be toggled by pressing 'a' in the console window while waiting for the next cycle">
@@ -419,15 +419,15 @@
             <div style="padding-top: 0.5rem" title="Show the 'Pool' column in the console window&#10;&#10;Can be toggled by pressing 'p' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowPool" name="ShowPool"> Show pool column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'Pool fee' column in the console window&#10;&#10;Can be toggled by pressing 'f' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem" title="Show the pool 'Fee' column in the console window&#10;&#10;Can be toggled by pressing 'f' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowPoolFee" name="ShowPoolFee"> Show pool fee column
             </div>
             <br>
 
-            <div title="When disabled only the best 5 miners per device are shown&#10;except while not benchmarking or measuring power consumption&#10;&#10;Can be toggled by pressing 'v' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowAllMiners" name="ShowAllMiners"> Show all miners
+            <div title="When disabled only the best 5 miners per device are shown&#10;except while not benchmarking or measuring power consumption&#10;&#10;Can be toggled by pressing 'o' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowAllMiners" name="ShowAllMiners"> Show all optimal miners
             </div>
-            <div style="padding-top: 0.5rem" title="Show the Pool Balances in the console window&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;Can be toggled by pressing 'b' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem" title="Show the Pool balances in the console window&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;Can be toggled by pressing 'b' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowPoolBalances" name="ShowPoolBalances" > Show pool balances
             </div>
             <br>
@@ -786,7 +786,7 @@
       if (poolname == 'pool-miningpoolhub') {
         if (document.getElementById(poolname).checked) {
           $('.modal-title').text("Warning!");
-          $('.modal-body').html("MiningPoolHub is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
+          $('.modal-body').html("You have enabled mining to MiningPoolHub.&#10;The pool is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
           $('#myModal').modal({ 
             show: true
           });
@@ -811,7 +811,7 @@
       if (document.getElementById(('pool-' + value).toString().toLowerCase())) document.getElementById(('pool-' + value).toString().toLowerCase()).checked = true;
       if (value === "MiningPoolHub") {
           $('.modal-title').text("Warning!");
-          $('.modal-body').html("MiningPoolHub is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
+          $('.modal-body').html("You have enabled mining to MiningPoolHub.&#10;The pool is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
           $('#myModal').modal({ 
             show: true
           });
@@ -1043,6 +1043,20 @@
     if (config.BackupOnAutoUpdate) document.getElementById('BackupOnAutoUpdate').checked = true;
 
     document.body.style.cursor = 'default';
+
+    $.ajax({
+      async: false,
+      dataType: 'json',
+      timeout: 10,
+      url: '/functions/mining/getstatus',
+      success: function(result) {
+        if (result == 'FreshConfig') {
+          $('.modal-title').text('UG-Miner has no saved configuration');
+          $(".modal-body").html("Edit your settings and save the configuration.&#10;&#10;Start making money by clicking 'Start mining'.&#10;&#10;Happy mining!"); 
+          $('#myModal').modal({show:true});
+        };
+      }
+    });
 
     // Error reading configuration
     if (config && configfile && poolvariants && regions && devices) {
@@ -1480,7 +1494,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if (config.MainCurrency && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount ) {
+        if (config.MainCurrency && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount && !(config.NiceHashWalletIsInternal && (!config.NiceHashWallet || config.NiceHashWallet == config.Wallets.BTC))) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1498,6 +1512,12 @@
           // No mining device selected
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must select at least one mining device.');
+          document.body.style.cursor = 'default';
+          $('#myModal').modal({ show: true });
+        } else if (config.NiceHashWalletIsInternal && (!config.NiceHashWallet || config.NiceHashWallet == config.Wallets.BTC)) {
+          // Nicehash External but no wallet
+          $('.modal-title').html('Error: Invalid configuration');
+          $('.modal-body').html('Cannot save configuration - Internal NiceHash address must be different from your normal BTC wallet.');
           document.body.style.cursor = 'default';
           $('#myModal').modal({ show: true });
         } else {

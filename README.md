@@ -2,7 +2,7 @@
 
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 
-Updated 2024/06/13
+Updated  2024/06/18
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -162,7 +162,7 @@ Easy configuration, easy start:
       The prerun scripts can be used to set per miner/algorithm OC via nvidiaInspector or OverdriveNTool.
       Before starting a miner executable UG-Miner is trying to launch one of the following 3 prerun scripts (in this order):
       1. <MinerName>_<Algorithm>.bat
-         Simply create a file named <MinerName>_<AlgorithmName>.bat in prerun folder, e.g. 'MiniZ-v2.3c-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat'
+         Simply create a file named <MinerName>_<AlgorithmName>.bat in prerun folder, e.g. 'MiniZ-v2.4.d-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat'
       2. <Algorithm>.bat
          Simply create a file named <AlgorithmName>.bat in prerun folder, e.g. 'Ethash.bat'
       3. default.bat
@@ -283,11 +283,11 @@ PowerShell Version 7.x is required:
 
 UG-Miner works best with the latest PWSH version 7.2.x. Versions 7.3.x and later have a memory leak and are therefore not recommended.
 
-[Download Installer for version 7.2.19](https://github.com/PowerShell/PowerShell/releases/download/v7.2.19/PowerShell-7.2.19-win-x64.msi)
+[Download Installer for version 7.2.21](https://github.com/PowerShell/PowerShell/releases/download/v7.2.19/PowerShell-7.2.21-win-x64.msi)
 
 **Some miners may need 'Visual C+ RunTimes download/extract, run install_all.bat file**
 
-[Visual C+ RunTimes](https://github.com/UselessGuru/Visual-C-Runtimes-All-in-One-Sep-2019/releases/download/sep2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)
+[Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)
 
 **Virtual memory settings**
 

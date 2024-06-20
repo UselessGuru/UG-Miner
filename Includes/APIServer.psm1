@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
 Version:        6.2.5
-Version date:   2024/06/13
+Version date:   2024/06/20
 #>
 
 Function Start-APIServer { 
@@ -279,6 +279,7 @@ Function Start-APIServer {
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @($Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
                                             Write-Config -ConfigFile $Variables.ConfigFile -Config $Config
+                                            $Variables.FreshConfig = $false
                                             $Data = "Device configuration changed`n`nOld values:"
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ', ')]'"
                                             $Data += "`n`nNew values:"
@@ -324,6 +325,7 @@ Function Start-APIServer {
                                         }
                                     )
                                     $Variables.RestartCycle = $true
+                                    $Variables.FreshConfig = $false
                                     Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
                                     $Data = "Configuration saved to '$($Variables.ConfigFile)'.`nIt will become fully active in the next cycle."
                                 }
@@ -347,7 +349,12 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/mining/getstatus" { 
-                                $Data = $Variables.NewMiningStatus | ConvertTo-Json
+                                If ($Variables.FreshConfig) { 
+                                    $Data = "FreshConfig" | ConvertTo-Json
+                                }
+                                Else { 
+                                    $Data = $Variables.NewMiningStatus | ConvertTo-Json
+                                }
                                 Break
                             }
                             "/functions/mining/pause" { 
@@ -736,10 +743,6 @@ Function Start-APIServer {
                                 $Data = ConvertTo-Json -Depth 2 ($Variables.BrainData | Get-SortedObject)
                                 Break
                             }
-                            "/brainjobs" { 
-                                $Data = ConvertTo-Json -Depth 2 ($Variables.BrainJobs | Select-Object)
-                                Break
-                            }
                             "/coinnames" { 
                                 $Data = Get-Content -Path ".\Data\CoinNames.json"
                                 Break
@@ -829,12 +832,8 @@ Function Start-APIServer {
                                 $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersBestPerDevice | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty WorkersRunning | Sort-Object -Property DeviceName)
                                 Break
                             }
-                            "/miners/bestcombo" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDeviceCombo | Sort-Object DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
-                                Break
-                            }
-                            "/miners/bestcombos" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBestPerDeviceCombos | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
+                            "/miners/best" { 
+                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBest | Sort-Object DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
                                 Break
                             }
                             "/miners/disabled" { 
@@ -846,7 +845,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners/launched" { 
-                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersBestPerDeviceCombo | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersBest | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/optimal" { 
