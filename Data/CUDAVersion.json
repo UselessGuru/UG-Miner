@@ -1,4 +1,4 @@
-// https://docs.nvidia.com/cuda/parallel-thread-execution/#release-notes
+// https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#id4
 {
   "195": "3.0", 
   "256": "3.1", 
@@ -26,7 +26,12 @@
   "470": "11.4",
   "495": "11.5",
   "510": "11.6",
-  "520": "11.7",
+  "515": "11.7",
   "520": "11.8",
-  "525": "12.0"
+  "525": "12.0",
+  "531": "12.1",
+  "536": "12.2",
+  "545": "12.3",
+  "551": "12.4",
+  "555": "12.5"
 }

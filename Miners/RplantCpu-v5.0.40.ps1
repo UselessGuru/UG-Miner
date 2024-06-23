@@ -23,7 +23,7 @@ Version date:   2024/06/23
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.34/cpuminer-opt-win.zip"
+$URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.40/cpuminer-opt-win-5.0.40.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 If ($AvailableMinerDevices.CpuFeatures -match 'avx512')   { $Path = "$PWD\Bin\$Name\cpuminer-Avx512.exe" }
@@ -50,9 +50,10 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Circcash";      MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo circcash" }
 #   [PSCustomObject]@{ Algorithm = "CpuPower";      MinerSet = 3; WarmupTimes = @(60, 60);  ExcludePools = @();        Arguments = " --algo cpupower" } # ASIC
     [PSCustomObject]@{ Algorithm = "CryptoVantaA";  MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @();        Arguments = " --algo cryptovantaa" }
-#   [PSCustomObject]@{ Algorithm = "CurveHash";     MinerSet = 2; WarmupTimes = @(90, 15);  ExcludePools = @();        Arguments = " --algo curvehash" } # reported hashrates too high (https://github.com/rplant8/cpuminer-opt-rplant/issues/21)
+#   [PSCustomObject]@{ Algorithm = "CurveHash";     MinerSet = 2; WarmupTimes = @(90, 15);  ExcludePools = @();        Arguments = " --algo curvehash" } # Not profitable with CPU
 #   [PSCustomObject]@{ Algorithm = "Decred";        MinerSet = 3; WarmupTimes = @(60, 60);  ExcludePools = @();        Arguments = " --algo Decred" } # ASIC, No hashrate in time, algo is now using Blake3d
 #   [PSCustomObject]@{ Algorithm = "DMDGr";         MinerSet = 3; WarmupTimes = @(60, 60);  ExcludePools = @();        Arguments = " --algo dmd-gr" } # ASIC
+    [PSCustomObject]@{ Algorithm = "DPowHash";      MinerSet = 3; WarmupTimes = @(60, 60);  ExcludePools = @();        Arguments = " --algo dpowhash" } # ASIC
     [PSCustomObject]@{ Algorithm = "Ghostrider";    MinerSet = 0; WarmupTimes = @(180, 60); ExcludePools = @();        Arguments = " --algo gr" }
 #   [PSCustomObject]@{ Algorithm = "Groestl";       MinerSet = 3; WarmupTimes = @(90, 15);  ExcludePools = @();        Arguments = " --algo groestl" } # ASIC
     [PSCustomObject]@{ Algorithm = "HeavyHash";     MinerSet = 0; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo heavyhash" } # FPGA

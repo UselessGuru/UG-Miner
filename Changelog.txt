@@ -15,6 +15,9 @@ Fixes:
 - Legacy GUI: Not saving windows size and position (regression from 6.2.9)
 - ZergPool balances tracker not working
 
+Miner updates:
+- RplantCpu-v5.0.40
+
 
 ChangeLog UG-Miner 6.2.10 2024/06/20
 ====================================
