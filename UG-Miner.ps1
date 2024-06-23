@@ -365,6 +365,8 @@ Write-Host ""
 
 # Update config file to include all new config items
 If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
+    If ($ConfigLogToFile ) { $Config.LogToFile = $ConfigLogToFile }
+    If ($ConfigLogToScreen) { $Config.LogToScreen = $ConfigLogToScreen }
     Update-ConfigFile -ConfigFile $Variables.ConfigFile
 }
 
