@@ -6,10 +6,12 @@ ChangeLog UG-Miner 6.2.11 2024/06/23
 ====================================
 
 Enhancements:
-- Core: Minor code optimisations
+- Core: Minor code optimizations
 - Core: Faster watchdog processing, only one watchdog reason per pool or miner
+- Core / Includes.psm1: 'Get-Device' Ignore devices with negative PCIbus
 
 Fixes:
+- AutoUpdater: Do not add 'Debug' to '$LogToFile' & '$LogToScreen' configuration items if not set in current config
 - Legacy GUI: Not saving windows size and position (regression from 6.2.9)
 - ZergPool balances tracker not working
 
@@ -21,7 +23,7 @@ Fixes:
 - Core: Fix compatibility with WindowsTerminal
 - Core: Miner would get suspended even when it succeeded benchmarking on the 3rd attempt
 - Core: '$MinerInstancePerDeviceModel' not detected on fresh config
-- Core / Includes.psm1: 'Get-DAGdata' &' Update-DAGdata' add support for StakeCube coin (SSC) DaG calculation
+- Core / Includes.psm1: 'Get-DAGdata' &' Update-DAGdata' add support for StakeCube coin (SCC) DAG calculation
 - Miners: Change algorithm for Blakecoin to Blake2s
 - RrkzCpu-v4.2: Disable mining using an SSL pool connection (not supported by miner)
 - Wildrig-v0.40.5: Invalid device selection in mixed GPU scenarios

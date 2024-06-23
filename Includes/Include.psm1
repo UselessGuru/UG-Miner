@@ -2352,7 +2352,8 @@ Function Get-Device {
         Try { 
             [OpenCl.Platform]::GetPlatformIDs().ForEach(
                 { 
-                    ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).ForEach({ $_ | ConvertTo-Json -WarningAction SilentlyContinue }) | Select-Object -Unique).ForEach(
+                    # Skip devices with negative PCIbus 
+                    ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).Where({ $_.PCIbus -ge 0 }).ForEach({ $_ | ConvertTo-Json -WarningAction SilentlyContinue }) | Select-Object -Unique).ForEach(
                         { 
                             $Device_OpenCL = $_ | ConvertFrom-Json
 
@@ -2906,15 +2907,15 @@ Function Get-Version {
         If ($Variables.Branding.ProductLabel -and [Version]$UpdateVersion.Version -gt $Variables.Branding.Version) { 
             If ($UpdateVersion.AutoUpdate) { 
                 If ($Config.AutoUpdate) { 
-                    Write-Message -Level Verbose "Version checker: New Version $($UpdateVersion.Version) found. Starting update..."
+                    Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Starting update..."
                     Initialize-Autoupdate -UpdateVersion $UpdateVersion
                 }
                 Else { 
-                    Write-Message -Level Verbose "Version checker: New Version $($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
+                    Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
                 }
             }
             Else { 
-                Write-Message -Level Verbose "Version checker: New Version is available. $($UpdateVersion.Version) does not support auto-update. You must update manually."
+                Write-Message -Level Verbose "Version checker: New version is available. $($UpdateVersion.Version) does not support auto-update. You must update manually."
             }
             If ($Config.ShowChangeLog) { 
                 Start-Process "https://github.com/UselessGuru/UG-Miner/releases/tag/v$($UpdateVersion.Version)"
