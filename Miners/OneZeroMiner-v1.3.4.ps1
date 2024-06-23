@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.10
-Version date:    2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [Version]"450.80.02" }))) { Return }
@@ -46,9 +46,9 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludeArchitecture = $_.ExcludeArchitecture
+                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
                         $MinMemGiB = $_.MinMemGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
+                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 

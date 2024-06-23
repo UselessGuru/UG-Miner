@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.2.10
-Version date:    2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -60,7 +60,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
                                 Pending         = [Double]$APIResponse.unconfirmed
                                 Balance         = [Double]$APIResponse.confirmed
                                 Unpaid          = [Double]$APIResponse.confirmed + [Double]$APIResponse.unconfirmed
-                                Url             = "https://www.mining-dutch.nl//index.php?page=earnings"
+                                Url             = "https://www.mining-dutch.nl/index.php?page=earnings"
                             }
                         }
                     }

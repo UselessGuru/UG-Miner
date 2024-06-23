@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.10
-Version date:    2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Vendor -ne "CPU" -or $_.CUDAVersion -ge [Version]"10.2" }))) { Return }
@@ -68,10 +68,10 @@ If ($Algorithms) {
 
                                 $BlockSize = $_.BlockSize
                                 # 1 GB memory reserve, then 1 thread per 4GB
-                                $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach({ ($_.MemoryGiB - 1) / 4 }) | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum))
+                                $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach({ ($_.MemoryGiB - 1) / 4 }) | Measure-Object -Minimum).Minimum)
 
                                 # Reserve 250KB for AMD driver, for NVIDIA
-                                $GPUmemory = ($AvailableMinerDevices.ForEach({ $_.MemoryGiB }) | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
+                                $GPUmemory = ($AvailableMinerDevices.ForEach({ $_.MemoryGiB }) | Measure-Object -Minimum).Minimum
                                 If ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } Else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
                                 $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
 

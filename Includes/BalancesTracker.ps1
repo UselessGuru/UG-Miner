@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.10
-Version date:    2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 using module .\Include.psm1
@@ -234,7 +234,7 @@ Do {
                         }
                     }
                     $PoolBalanceObject | Add-Member Payout ([Double]$Payout) -Force
-                    $PoolBalanceObject | Add-Member Paid ([Double](($PoolBalanceObjects.Paid | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) + $Payout)) -Force
+                    $PoolBalanceObject | Add-Member Paid ([Double](($PoolBalanceObjects.Paid | Measure-Object -Maximum).Maximum + $Payout)) -Force
                     $PoolBalanceObject | Add-Member Delta ([Double]$Delta) -Force
 
                     If ((($Now - $PoolBalanceObjects[0].DateTime).TotalHours) -lt 1) { 
@@ -288,8 +288,8 @@ Do {
                         AvgDailyGrowth          = [Double]$AvgDailyGrowth
                         AvgWeeklyGrowth         = [Double]$AvgWeeklyGrowth
                         ProjectedEndDayGrowth   = If (($Now - $PoolBalanceObjects[0].DateTime).TotalHours -ge 1) { [Double]($AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) } Else { [Double]($Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) }
-                        ProjectedPayDate        = If ($PayoutThreshold) { If ([Double]$PoolBalanceObject.Balance -lt $PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency)) { If (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) -gt 1E-7) { [DateTime]$Now.AddDays(($PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency) - $PoolBalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)) } Else { "Unknown" } } Else { If ($PoolBalanceObject.NextPayout) { $PoolBalanceObject.NextPayout } Else { "Next pool payout" } } } Else { "Unknown" }
-                        TrustLevel              = [Double]((($Now - $PoolBalanceObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
+                        ProjectedPayDate        = If ($PayoutThreshold) { If ([Double]$PoolBalanceObject.Balance -lt $PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency)) { If (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-7) { [DateTime]$Now.AddDays(($PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency) - $PoolBalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } Else { "Unknown" } } Else { If ($PoolBalanceObject.NextPayout) { $PoolBalanceObject.NextPayout } Else { "Next pool payout" } } } Else { "Unknown" }
+                        TrustLevel              = [Double]((($Now - $PoolBalanceObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum).Minimum
                         TotalHours              = [Double]($Now - $PoolBalanceObjects[0].DateTime).TotalHours
                         PayoutThreshold         = [Double]$PayoutThreshold
                         PayoutThresholdCurrency = $PayoutThresholdCurrency
@@ -342,7 +342,7 @@ Do {
             { 
                 $Variables.Balances.Remove($_)
                 $Variables.Balances.$_ = $Balances.$_
-                $Variables.PoolsLastEarnings.($_ -replace ' \(.+') = ($Balances.$_.LastEarnings | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                $Variables.PoolsLastEarnings.($_ -replace ' \(.+') = ($Balances.$_.LastEarnings | Measure-Object -Maximum).Maximum
             }
         )
         $Variables.BalancesCurrencies = @($Variables.Balances.psBase.Keys.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
@@ -426,7 +426,7 @@ Do {
         $Error.Clear()
 
         # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
-        While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum))) { Start-Sleep -Seconds 5 }
+        While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
     }
 
     If ($Now) { Write-Message -Level Info "Balances tracker stopped." }

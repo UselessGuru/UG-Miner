@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.10
-Version date:   2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 using module .\Include.psm1
@@ -111,10 +111,10 @@ Do {
                 $Variables.EndCycleTime = $Variables.Timer.AddSeconds($Config.Interval)
 
                 $Variables.CycleStarts += $Variables.Timer
-                $Variables.CycleStarts = @($Variables.CycleStarts | Sort-Object -Bottom (3, ($Config.SyncWindow + 1) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum))
+                $Variables.CycleStarts = @($Variables.CycleStarts | Sort-Object -Bottom (3, ($Config.SyncWindow + 1) | Measure-Object -Maximum).Maximum)
 
                 # Set minimum Watchdog count 3
-                $Variables.WatchdogCount = (3, $Config.WatchdogCount | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                $Variables.WatchdogCount = (3, $Config.WatchdogCount | Measure-Object -Maximum).Maximum
                 $Variables.WatchdogReset = $Variables.WatchdogCount * $Variables.WatchdogCount * $Variables.WatchdogCount * $Variables.WatchdogCount * $Config.Interval
 
                 # Expire watchdog timers
@@ -122,7 +122,7 @@ Do {
                 Else { $Variables.WatchdogTimers = [PSCustomObject[]]@() }
 
                 # Check for new version
-                If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { Get-NMVersion }
+                If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { Get-Version }
 
                 # Load unprofitable algorithms
                 Try { 
@@ -148,7 +148,7 @@ Do {
 
                     If ($Variables.DonationStart -and [DateTime]::Now -ge $Variables.DonationStart) { 
                         If (-not $Variables.DonationEnd) { 
-                            $Variables.DonationStart = Get-Date
+                            $Variables.DonationStart = [DateTime]::Now
                             # Add pool config to config (in-memory only)
                             $Variables.DonationRandomPoolsConfig = Get-RandomDonationPoolsConfig
                             # Ensure full donation period
@@ -338,23 +338,14 @@ Do {
                         }
                     ).ForEach(
                         { 
-                            # $Pool = $_
-                            # Try { 
-                                $Pool = [Pool]$_
-                                $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
-                                $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
-                                $Pool.Price *= $Factor
-                                $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
-                                $Pool.StablePrice *= $Factor
-                                $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
-                                $Pool
-                            # }
-                            # Catch { 
-                                # Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
-                                # "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-                                # $_.Exception | Format-List -Force >> $ErrorLogFile
-                                # $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
-                            # }
+                            $Pool = [Pool]$_
+                            $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
+                            $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
+                            $Pool.Price *= $Factor
+                            $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
+                            $Pool.StablePrice *= $Factor
+                            $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
+                            $Pool
                         }
                     )
                     Remove-Variable Factor, Pool, PoolDataCollectedTimeStamp, PoolName -ErrorAction Ignore
@@ -366,8 +357,10 @@ Do {
                     $Variables.PoolDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
 
                     # Expire pools that have not been updated for 1 day
-                    $Variables.PoolsExpired = @($Variables.Pools.Where({ $_.Updated -lt [DateTime]::Now.ToUniversalTime().AddDays(-1) }))
-                    $Variables.Pools = @($Variables.Pools.Where({ $_.Updated -ge [DateTime]::Now.ToUniversalTime().AddDays(-1) }))
+                    $Timestamp = [DateTime]::Now.ToUniversalTime().AddHours(-24)
+                    $Variables.PoolsExpired = @($Variables.Pools.Where({ $_.Updated -lt $Timestamp }))
+                    $Variables.Pools = @($Variables.Pools.Where({ $_.Updated -ge $Timestamp }))
+                    Remove-Variable Timestamp
 
                     # Remove de-configured pools
                     $PoolsDeconfiguredCount = @($Variables.Pools.Where({ $_.Variant -notin $Variables.PoolName })).Count
@@ -421,7 +414,7 @@ Do {
                         # Pool disabled by stat file
                         $Pools.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled (by Stat file)") })
                         # Min accuracy not reached
-                        $Pools.Where({ $_.Accuracy -LT $Config.MinAccuracy }).ForEach({ $_.Reasons.Add("MinAccuracy ($($Config.MinAccuracy * 100)%) not reached") })
+                        $Pools.Where({ $_.Accuracy -lt $Config.MinAccuracy }).ForEach({ $_.Reasons.Add("MinAccuracy ($($Config.MinAccuracy * 100)%) not reached") })
                         # Filter unavailable algorithms
                         If ($Config.MinerSet -lt 3) { $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq "*" }).ForEach({ $_.Reasons.Add("Unprofitable Algorithm") }) }
                         # Pool price 0
@@ -433,7 +426,7 @@ Do {
                         If ($Config.UnrealPoolPriceFactor -gt 1 -and ($Pools.Name | Sort-Object -Unique).Count -gt 1) { 
                             ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm, Currency).Where({ $_.Count -ge 2 }).ForEach(
                                 { 
-                                    If ($PriceThreshold = ($_.Group.Price_Bias | Measure-Object -Average | Select-Object -ExpandProperty Average) * $Config.UnrealPoolPriceFactor) { 
+                                    If ($PriceThreshold = ($_.Group.Price_Bias | Measure-Object -Average).Average * $Config.UnrealPoolPriceFactor) { 
                                         $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") -and $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than average price)") })
                                     }
                                 }
@@ -479,40 +472,41 @@ Do {
                             # We assume that miner is up and running, so watchdog timer is not relevant
                             If ($RelevantWatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -notin $Variables.RunningMiners })) { 
                                 # Only pools with a corresponding watchdog timer object are of interest
-                                $RelevantPools = $Pools.Where({ $_.Name -in @($RelevantWatchdogTimers.PoolName) })
+                                If ($RelevantPools = $Pools.Where({ -not $_.Name -in @($RelevantWatchdogTimers.PoolName) })) { 
 
-                                # Add miner reason "Pool suspended by watchdog 'all algorithms'"
-                                ($RelevantWatchdogTimers | Group-Object -Property PoolName).ForEach(
-                                    {
-                                        If ($_.Count -ge 3 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
-                                            $Group = $_.Group
-                                            If ($PoolsToSuspend = $RelevantPools.Where({ -not $_.Reasons }).Where({ $_.Name -eq $Group[0].PoolName })) { 
-                                                $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") })
-                                                $Message = "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
-                                                Write-Message -Level Warn $Message
-                                                $PoolWatchdogMessages += $Message
+                                    # Add miner reason "Pool suspended by watchdog 'all algorithms'"
+                                    ($RelevantWatchdogTimers | Group-Object -Property PoolName).ForEach(
+                                        {
+                                            If ($_.Count -ge 3 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
+                                                $Group = $_.Group
+                                                If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName })) { 
+                                                    $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") })
+                                                    Write-Message -Level Warn "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                                }
                                             }
                                         }
-                                    }
-                                )
-                                Remove-Variable Algorithms, Group, PoolsToSuspend -ErrorAction Ignore
+                                    )
+                                    Remove-Variable Group, PoolsToSuspend -ErrorAction Ignore
 
-                                # Add miner reason "Pool suspended by watchdog 'Algorithm [Algorithm]'"
-                                ($RelevantWatchdogTimers | Group-Object -Property PoolName, Algorithm).ForEach(
-                                    {
-                                        If ($_.Count -ge 2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
-                                            $Group = $_.Group
-                                            If ($PoolsToSuspend = $RelevantPools.Where({ -not $_.Reasons }).Where({ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm })) { 
-                                                $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") })
-                                                $Message = "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
-                                                Write-Message -Level Warn $Message
-                                                $PoolWatchdogMessages += $Message
+                                    If ($RelevantPools = $RelevantPools.Where({ -not ($_.Reasons -match "Pool suspended .+") })) { 
+                                        # Add miner reason "Pool suspended by watchdog 'Algorithm [Algorithm]'"
+                                        ($RelevantWatchdogTimers | Group-Object -Property PoolName, Algorithm).ForEach(
+                                            {
+                                                If ($_.Count -ge 2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
+                                                    $Group = $_.Group
+                                                    If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm })) { 
+                                                        $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") })
+                                                        Write-Message -Level Warn "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                                    }
+                                                }
                                             }
-                                        }
+                                        )
+                                        Remove-Variable Group, PoolsToSuspend -ErrorAction Ignore
                                     }
-                                )
-                                Remove-Variable Algorithms, Group, PoolsToSuspend, RelevantPools, RelevantWatchdogTimers -ErrorAction Ignore
+                                }
+                                Remove-Variable RelevantPools
                             }
+                            Remove-Variable RelevantWatchdogTimers
                         }
 
                         # Make pools unavailable
@@ -523,7 +517,6 @@ Do {
                             $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 1 }).ForEach({ $_.Reasons.Add("Unprofitable primary algorithm") })
                             $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 2 }).ForEach({ $_.Reasons.Add("Unprofitable secondary algorithm") })
                         }
-                        $Pools.Where({ $_.Reasons }).ForEach({ $_.Reasons = $_.Reasons | Sort-Object -Unique })
 
                         If ($Variables.Pools.Count -gt 0) { 
                             Write-Message -Level Info "Had $($Variables.PoolsCount) pool$(If ($Variables.PoolsCount -ne 1) { "s" })$(If ($Variables.PoolsExpired.Count) { ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" })$(If ($PoolsDeconfiguredCount) { ", removed $PoolsDeconfiguredCount deconfigured pool$(If ($PoolsDeconfiguredCount -gt 1) { "s" })" })$(If ($Variables.PoolsAdded.Count) { ", found $($Variables.PoolsAdded.Count) new pool$(If ($Variables.PoolsAdded.Count -ne 1) { "s" })" }), updated $($Variables.PoolsUpdated.Count) pool$(If ($Variables.PoolsUpdated.Count -ne 1) { "s" })$(If ($Pools.Where({ -not $_.Available })) { ", filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }). $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
@@ -546,12 +539,13 @@ Do {
                             If ($Variables.PoolNamesToKeepBalancesAlive) { 
                                 $Pools.ForEach(
                                     { 
-                                        If ($_.Name -in $Variables.PoolNamesToKeepBalancesAlive) { $_.Available = $true; $_.Prioritize = $true; $_.Reasons = [System.Collections.Generic.List[String]]@("Prioritized by BalancesKeepAlive") }
+                                        If ($_.Name -in $Variables.PoolNamesToKeepBalancesAlive) { $_.Available = $true; $_.Prioritize = $true }
                                         Else { $_.Reasons.Add("BalancesKeepAlive prioritizes other pools") }
                                     }
                                 )
                             }
                         }
+                        $Pools.Where({ $_.Reasons }).ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique) })
 
                         # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
                         ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
@@ -575,8 +569,8 @@ Do {
                 $Variables.PoolsBest = $Variables.Pools.Where({ $_.Best }) | Sort-Object -Property Algorithm
             }
             Else { 
-                Write-Message -Level Info "Using $($Variables.Pools.Count) pool$(If ($Variables.Pools.Count -ne 1) { "s" }) from previous cycle."
-                $PoolWatchdogMessages.ForEach({ Write-Message -Level Warn  $_ })
+                Write-Message -Level Info "Using $($Variables.Pools.Count) pool$(If ($Variables.Pools.Count -ne 1) { "s" }) from previous cycle$(If ($Variables.Pools.Where({ -not $_.Available })) { ", filtered out $(@($Variables.Pools.Where({ -not $_.Available })).Count) pool$(If (@($Variables.Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }). $(@($Variables.Pools.Where({ $_.Available })).Count) available pool$(If (@($Variables.Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Variables.Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
+                ($Variables.Pools.Reasons.Where({ $_ -match "Pool suspended by watchdog .+" }) | Sort-Object -Unique).ForEach({ Write-Message -Level Warn  $_ })
                 $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime().AddSeconds([Math]::Floor($Config.Interval / 2))
             }
 
@@ -859,8 +853,8 @@ Do {
             If ($Config.UnrealMinerEarningFactor -gt 1) { 
                 ($Miners.Where({ -not $_.Reasons }) | Group-Object { [String]$_.DeviceNames }).ForEach(
                     { 
-                        If ($ReasonableEarning = [Double]($_.Group | Sort-Object -Descending -Property Earning_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) | Measure-Object Earning -Average).Average * $Config.UnrealMinerEarningFactor) { 
-                            ($_.Group.Where({ $_.Earning -GT $ReasonableEarning })).ForEach(
+                        If ($ReasonableEarning = [Double]($_.Group | Sort-Object -Descending -Property Earning_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earning -Average).Average * $Config.UnrealMinerEarningFactor) { 
+                            ($_.Group.Where({ $_.Earning -gt $ReasonableEarning })).ForEach(
                                 { $_.Reasons.Add("Unreal profit data (-gt $($Config.UnrealMinerEarningFactor)x higher than the next best miners available miners)") }
                             )
                         }
@@ -903,66 +897,74 @@ Do {
                 # We assume that miner is up and running, so watchdog timer is not relevant
                 If ($RelevantWatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -notin $Variables.RunningMiners.Name })) { 
                     # Only miners with a corresponding watchdog timer object are of interest
-                    $RelevantMiners = $Variables.Miners.Where({ -not $_.Reasons -and $_.BaseName -in @($Variables.WatchdogTimers.MinerBaseName) -and $_.Version -in @($Variables.WatchdogTimers.MinerVersion) })
+                    If ($RelevantMiners = $Variables.Miners.Where({$_.BaseName -in @($Variables.WatchdogTimers.MinerBaseName) -and $_.Version -in @($Variables.WatchdogTimers.MinerVersion) })) { 
+                        # Add miner reason 'Miner suspended by watchdog [all algorithms & all devices]'
+                        ($RelevantWatchdogTimers | Group-Object { ($_.MinerName -split '-')[0..1] -join '-' }).ForEach(
+                            { 
+                                If ($_.Count -gt 2 * $Variables.WatchdogCount * (($_.Group[0].MinerName -split '-')[3] -split '&').Count * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
+                                    $Group = $_.Group
+                                    If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..1] -join '-') -eq (($Group[0].MinerName -split '-')[0..1] -join '-') })) { 
+                                        $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [all algorithms & all devices]") })
+                                        Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..1] -join '-') [all algorithms & all devices]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                    }
+                                }
+                            }
+                        )
+                        Remove-Variable Group, MinersToSuspend  -ErrorAction Ignore
 
-                    # Add miner reason 'Miner suspended by watchdog [all algorithms]'
-                    ($RelevantWatchdogTimers | Group-Object { "$(($_.MinerName -split '-')[0..1] -join '-')" }).ForEach(
-                        { 
-                            If ($_.Count -gt 2 * $Variables.WatchdogCount * (($_.Group[0].MinerName -split '-')[3] -split '&').Count * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
-                                $Group = $_.Group
-                                If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..1] -join '-') -eq (($Group[0].MinerName -split '-')[0..1] -join '-') })) { 
-                                    $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [all algorithms & all devices]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..1] -join '-') [all algorithms & all devices]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                        If ($RelevantMiners = $RelevantMiners.Where({ -not ($_.Reasons -match "Miner suspended by watchdog .+") })) { 
+                            # Add miner reason 'Miner suspended by watchdog [all algorithms]'
+                            ($RelevantWatchdogTimers | Group-Object { ($_.MinerName -split '-')[0..2] -join '-' }).ForEach(
+                                { 
+                                    If ($_.Count -ge 2 * $Variables.WatchdogCount * (($_.Group[0].MinerName -split '-')[3] -split '&').Count) { 
+                                        $Group = $_.Group
+                                        If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') })) { 
+                                            $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [all algorithms]") })
+                                            Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                        }
+                                    }
+                                }
+                            )
+                            Remove-Variable Group, MinersToSuspend -ErrorAction Ignore
+
+                            If ($RelevantMiners = $RelevantMiners.Where({ -not ($_.Reasons -match "Miner suspended by watchdog .+") })) { 
+                                # Add miner reason 'Miner suspended by watchdog [Algorithm [Algorithm]]'
+                                ($RelevantWatchdogTimers.Where({ $_.Algorithm -eq $_.AlgorithmVariant }) | Group-Object -Property MinerName, Algorithm).ForEach(
+                                    { 
+                                        If ($_.Count -ge $Variables.WatchdogCount) { 
+                                            $Group = $_.Group
+                                            If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') -and [String]$_.Algorithms -eq [String](($Group[0].MinerName -split '-')[3] -split '&' -replace '\(.*') })) { 
+                                                $Algorithms = $MinersToSuspend[0].Workers.Pool.Algorithm -join '&'
+                                                $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [Algorithm $Algorithms]") })
+                                                Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [$Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                            }
+                                        }
+                                    }
+                                )
+                                Remove-Variable Algorithms, Group, MinersToSuspend -ErrorAction Ignore
+
+                                If ($RelevantMiners = $RelevantMiners.Where({ -not ($_.Reasons -match "Miner suspended by watchdog .+") })) { 
+                                    # Add miner reason 'Miner suspended by watchdog [Algorithm variant [AlgorithmVariant]]'
+                                    ($RelevantWatchdogTimers.Where({ $_.Algorithm -ne $_.AlgorithmVariant }) | Group-Object -Property MinerName, AlgorithmVariant).ForEach(
+                                        { 
+                                            If ($_.Count -ge $Variables.WatchdogCount) { 
+                                                $Group = $_.Group
+                                                If ($MinersToSuspend = $RelevantMiners.Where({ $_.Name -eq $Group[0].MinerName })) { 
+                                                    $Algorithms = $MinersToSuspend[0].Workers.Pool.AlgorithmVariant -join '&'
+                                                    $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [Algorithm variant $Algorithms]") })
+                                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [$Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                                }
+                                            }
+                                        }
+                                    )
+                                    Remove-Variable Algorithms, Group, MinersToSuspend -ErrorAction Ignore
                                 }
                             }
                         }
-                    )
-                    Remove-Variable Algorithms, Group, MinersToSuspend  -ErrorAction Ignore
-
-                    # Add miner reason 'Miner suspended by watchdog [Algorithm [Algorithm]]'
-                    ($RelevantWatchdogTimers | Group-Object { "$(($_.MinerName -split '-')[0..2] -join '-')" }).ForEach(
-                        { 
-                            If ($_.Count -ge 2 * $Variables.WatchdogCount * (($_.Group[0].MinerName -split '-')[3] -split '&').Count) { 
-                                $Group = $_.Group
-                                If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') })) { 
-                                    $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [all algorithms]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
-                                }
-                            }
-                        }
-                    )
-                    Remove-Variable Algorithms, Group, MinersToSuspend -ErrorAction Ignore
-
-                    # Add miner reason 'Miner suspended by watchdog [Algorithm [Algorithm]]'
-                    ($RelevantWatchdogTimers.Where({ $_.Algorithm -eq $_.AlgorithmVariant }) | Group-Object -Property MinerName, Algorithm).ForEach(
-                        { 
-                            If ($_.Count -ge $Variables.WatchdogCount) { 
-                                $Group = $_.Group
-                                If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') }).Where({ [String]$_.Algorithms -eq [String](($Group[0].MinerName -split '-')[3] -split '&' -replace '\(.*')})) { 
-                                    $Algorithms = $MinersToSuspend[0].Workers.Pool.Algorithm -join '&'
-                                    $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [Algorithm $Algorithms]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [$Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
-                                }
-                            }
-                        }
-                    )
-                    Remove-Variable Algorithms, Group, MinersToSuspend -ErrorAction Ignore
-
-                    # Add miner reason 'Miner suspended by watchdog [Algorithm variant [AlgorithmVariant]'
-                    ($RelevantWatchdogTimers.Where({ $_.Algorithm -ne $_.AlgorithmVariant }) | Group-Object -Property MinerName, AlgorithmVariant).ForEach(
-                        { 
-                            If ($_.Count -ge $Variables.WatchdogCount) { 
-                                $Group = $_.Group
-                                If ($MinersToSuspend = $RelevantMiners.Where({ $_.Name -eq $Group[0].MinerName })) { 
-                                    $Algorithms = $MinersToSuspend[0].Workers.Pool.AlgorithmVariant -join '&'
-                                    $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [Algorithm variant $Algorithms]") })
-                                    Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [$Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
-                                }
-                            }
-                        }
-                    )
-                    Remove-Variable Algorithms, Group, MinersToSuspend, RelevantMiners, RelevantWatchdogTimers -ErrorAction Ignore
+                    }
+                    Remove-Variable RelevantMiners -ErrorAction Ignore
                 }
+                Remove-Variable RelevantWatchdogTimers -ErrorAction Ignore
             }
 
             $Miners.ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique); $_.Available = -not [Boolean]$_.Reasons })
@@ -1016,7 +1018,7 @@ Do {
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias *= $RunningMinerBonusFactor })
 
                     # Get the optimal miners per algorithm and device
-                    $Variables.MinersOptimal = @(($Miners.Where({ $_.Available -and -not $_.Benchmark -and -not $_.MeasurePowerConsumption }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) }))
+                    $Variables.MinersOptimal = @(($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) }))
                     # Get the best miners per device
                     $Variables.MinersBestPerDevice = @(($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true } -Top 1 }))
                     $Variables.MinerDeviceNamesCombinations = @((Get-Combination @($Variables.MinersBestPerDevice | Select-Object DeviceNames -Unique)).Where({ (Compare-Object ($_.Combination | Select-Object -ExpandProperty DeviceNames -Unique) ($_.Combination | Select-Object -ExpandProperty DeviceNames) | Measure-Object).Count -eq 0 }))
@@ -1051,7 +1053,7 @@ Do {
                     Remove-Variable Bias, MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
                 }
 
-                $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum | Select-Object -ExpandProperty Sum)), 0 | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum | Select-Object -ExpandProperty Sum)), 0 | Measure-Object -Maximum).Maximum
                 $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency))
                 $Variables.MiningEarning = [Double]($MinersBest | Measure-Object Earning_Bias -Sum | Select-Object -ExpandProperty Sum)
                 $Variables.MiningPowerCost = [Double]($MinersBest | Measure-Object PowerCost -Sum | Select-Object -ExpandProperty Sum)
@@ -1059,7 +1061,7 @@ Do {
                 $Variables.MiningProfit = [Double](($MinersBest | Measure-Object Profit_Bias -Sum | Select-Object -ExpandProperty Sum) - $Variables.BasePowerCost)
             }
             Else { 
-                $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum).Maximum
                 $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency))
                 $Variables.MinersOptimal = $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinations = $MinersBest = [Miner[]]@()
                 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
@@ -1446,8 +1448,8 @@ Do {
                                 $Variables.FailedMiners += $Miner
                             }
                             # Miner stuck - no sample received in last few data collect intervals
-                            ElseIf ($Miner.ValidDataSampleTimestamp -gt [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.DataSampleTimestamp.AddSeconds((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * $Miner.Algorithms.Count)) { 
-                                $Miner.StatusInfo = "'$($Miner.Info)' has not updated data for more than $((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * $Miner.Algorithms.Count) seconds"
+                            ElseIf ($Miner.ValidDataSampleTimestamp -gt [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.DataSampleTimestamp.AddSeconds((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count)) { 
+                                $Miner.StatusInfo = "'$($Miner.Info)' has not updated data for more than $((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count) seconds"
                                 $Miner.SetStatus([MinerStatus]::Failed)
                                 $Variables.FailedMiners += $Miner
                             }

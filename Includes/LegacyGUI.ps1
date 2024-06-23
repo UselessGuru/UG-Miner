@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.10
-Version date:   2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -50,7 +50,7 @@ $Colors["warmingup"]                      = [System.Drawing.Color]::FromArgb(231
 
 Function Set-TableColor { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         $DataGridView
     )
@@ -89,12 +89,12 @@ Function CheckBoxSwitching_Click {
             $SwitchingDGV.Columns[0].FillWeight = 50
             $SwitchingDGV.Columns[1].FillWeight = 50
             $SwitchingDGV.Columns[2].FillWeight = 90; $SwitchingDGV.Columns[2].HeaderText = "Miner"
-            $SwitchingDGV.Columns[3].FillWeight = 60 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 40; $SwitchingDGV.Columns[3].HeaderText = "Pool"
-            $SwitchingDGV.Columns[4].FillWeight = 50 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $SwitchingDGV.Columns[4].HeaderText = "Algorithm (variant)"
-            $SwitchingDGV.Columns[5].FillWeight = 90 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 50; $SwitchingDGV.Columns[5].HeaderText = "Account"
+            $SwitchingDGV.Columns[3].FillWeight = 60 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum).Maximum * 40; $SwitchingDGV.Columns[3].HeaderText = "Pool"
+            $SwitchingDGV.Columns[4].FillWeight = 50 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum).Maximum * 25; $SwitchingDGV.Columns[4].HeaderText = "Algorithm (variant)"
+            $SwitchingDGV.Columns[5].FillWeight = 90 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum).Maximum * 50; $SwitchingDGV.Columns[5].HeaderText = "Account"
             $SwitchingDGV.Columns[6].FillWeight = 30; $SwitchingDGV.Columns[6].HeaderText = "Cycles"; $SwitchingDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $SwitchingDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
             $SwitchingDGV.Columns[7].FillWeight = 35; $SwitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $SwitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
-            $SwitchingDGV.Columns[8].FillWeight = 30 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 15; $SwitchingDGV.Columns[8].HeaderText = "Device"
+            $SwitchingDGV.Columns[8].FillWeight = 30 + ($SwitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $SwitchingDGV.Columns[8].HeaderText = "Device"
             $SwitchingDGV.Columns[9].FillWeight = 30
         }       If ($Config.UseColorForMinerStatus) { 
             ForEach ($Row in $SwitchingDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $Colors[$Row.DataBoundItem.Action] }
@@ -162,31 +162,31 @@ Function Update-TabControl {
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join '; ' } }
                     @{ Name = "Miner"; Expression = { $_.Name } }
                     @{ Name = "Status"; Expression = { $_.Status } }, 
-                    @{ Name = "Earning (biased)`r$($Config.MainCurrency)/day"; Expression = { If (-not [Double]::IsNaN($_.Earning)) {"{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }
-                    @{ Name = "Power cost`r$($Config.MainCurrency)/day"; Expression = { If ($Variables.CalculatePowerCost -and -not [Double]::IsNaN($_.PowerCost)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }
-                    @{ Name = "Profit (biased)`r$($Config.MainCurrency)/day"; Expression = { If ($Variables.CalculatePowerCost -and -not [Double]::IsNaN($_.Profit)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }
-                    @{ Name = "Power consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } } }
+                    @{ Name = "Earning (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
+                    @{ Name = "Power cost $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
+                    @{ Name = "Profit (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
+                    @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
                     @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join ' & '} }, 
                     @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join ' & ' } }
-                    @{ Name = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } } }
-                    @{ Name = "Running time`r(hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
-                    @{ Name = "Total active`r(hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
+                    @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } } }
+                    @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
+                    @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     If ($RadioButtonPoolsUnavailable.checked) { @{ Name = "Reason"; Expression = { $_.Reasons -join ', ' } } }
                 ) | Sort-Object -Property "Device(s)" | Out-DataTable
 
                 If ($ActiveMinersDGV.Columns) { 
                     $ActiveMinersDGV.Columns[0].Visible = $false
                     $ActiveMinersDGV.Columns[1].Visible = $false
-                    $ActiveMinersDGV.Columns[2].FillWeight = 30 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
+                    $ActiveMinersDGV.Columns[2].FillWeight = 30 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                     $ActiveMinersDGV.Columns[3].FillWeight = 160
                     $ActiveMinersDGV.Columns[4].FillWeight = 60
                     $ActiveMinersDGV.Columns[5].FillWeight = 55; $ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[6].FillWeight = 55; $ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[7].FillWeight = 55; $ActiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                     $ActiveMinersDGV.Columns[8].FillWeight = 55; $ActiveMinersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
-                    $ActiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBest.({ $_.Workers.Count })| Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 35
-                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
-                    $ActiveMinersDGV.Columns[11].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                    $ActiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBest.({ $_.Workers.Count })| Measure-Object -Maximum).Maximum * 35
+                    $ActiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
+                    $ActiveMinersDGV.Columns[11].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[12].FillWeight = 65; $ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[13].HeaderCell.Style.Alignment = "MiddleRight"
                     $ActiveMinersDGV.Columns[13].FillWeight = 65; $ActiveMinersDGV.Columns[13].DefaultCellStyle.Alignment = "MiddleRight";  $ActiveMinersDGV.Columns[14].HeaderCell.Style.Alignment = "MiddleRight"
                 }
@@ -199,7 +199,7 @@ Function Update-TabControl {
         "Earnings" { 
 
             Function Get-NextColor { 
-                Param(
+                Param (
                     [Parameter(Mandatory = $true)]
                     [Byte[]]$Color, 
                     [Parameter(Mandatory = $true)]
@@ -232,7 +232,7 @@ Function Update-TabControl {
                     $ChartArea.AxisX.Minimum = 0
                     $ChartArea.AxisX.IsMarginVisible = $false
                     $ChartArea.AxisX.MajorGrid.Enabled = $false
-                    $ChartArea.AxisY.Interval = [Math]::Ceiling(($Datasource.DaySum | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) / 4)
+                    $ChartArea.AxisY.Interval = [Math]::Ceiling(($Datasource.DaySum | Measure-Object -Maximum).Maximum / 4)
                     $ChartArea.AxisY.LabelAutoFitStyle = $ChartArea.AxisY.labelAutoFitStyle - 4
                     $ChartArea.AxisY.MajorGrid.Enabled = $true
                     $ChartArea.AxisY.MajorGrid.LineColor = [System.Drawing.Color]::FromArgb(255, 255, 255, 255) #"#FFFFFF"
@@ -288,7 +288,7 @@ Function Update-TabControl {
                             $I ++
                         }
                     )
-                    $ChartArea.AxisY.Maximum = ($DaySum | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 1.05
+                    $ChartArea.AxisY.Maximum = ($DaySum | Measure-Object -Maximum).Maximum * 1.05
                 }
                 Catch {}
             }
@@ -373,13 +373,13 @@ Function Update-TabControl {
                     @{ Name = "Miner"; Expression = { $_.Name } }, 
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ', ' } }, 
                     @{ Name = "Status"; Expression = { $_.Status } }, 
-                    @{ Name = "Earning (biased)`r$($Config.MainCurrency)/day"; Expression = { If (-not [Double]::IsNaN($_.Earning_Bias)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }, 
-                    @{ Name = "Power cost`r$($Config.MainCurrency)/day"; Expression = { If (-not [Double]::IsNaN($_.PowerCost)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }, 
-                    @{ Name = "Profit (biased)`r$($Config.MainCurrency)/day"; Expression = { If ($Variables.CalculatePowerCost -and -not [Double]::IsNaN($_.Profit_Bias)) { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } Else { "n/a" } } }, 
-                    @{ Name = "Power consumption"; Expression = { If (-not $_.MeasurePowerConsumption) { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } Else { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } } }
+                    @{ Name = "Earning (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } } }, 
+                    @{ Name = "Power cost $($Config.MainCurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } } }, 
+                    @{ Name = "Profit (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost ) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } } }, 
+                    @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
                     @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join ' & '} }, 
                     @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join ' & ' } }, 
-                    @{ Name = "Hashrate"; Expression = { If (-not $_.Benchmark) { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } Else { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } } }
+                    @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } } }
                     If ($RadioButtonMinersUnavailable.checked -or $RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
                 ) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, "Device(s)", Name | Out-DataTable
 
@@ -388,15 +388,15 @@ Function Update-TabControl {
                     $MinersDGV.Columns[1].Visible = $false
                     $MinersDGV.Columns[2].Visible = $false
                     $MinersDGV.Columns[3].FillWeight = 160
-                    $MinersDGV.Columns[4].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25
+                    $MinersDGV.Columns[4].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 25
                     $MinersDGV.Columns[5].Visible = -not $RadioButtonMinersUnavailable.checked; $MinersDGV.Columns[5].FillWeight = 50
                     $MinersDGV.Columns[6].FillWeight = 55; $MinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
                     $MinersDGV.Columns[7].FillWeight = 60; $MinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                     $MinersDGV.Columns[8].FillWeight = 55; $MinersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
                     $MinersDGV.Columns[9].FillWeight = 55; $MinersDGV.Columns[9].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"; $MinersDGV.Columns[9].Visible = $Variables.CalculatePowerCost
-                    $MinersDGV.Columns[10].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
-                    $MinersDGV.Columns[11].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 30
-                    $MinersDGV.Columns[12].FillWeight = 50 + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 25; $MinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
+                    $MinersDGV.Columns[10].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
+                    $MinersDGV.Columns[11].FillWeight = 60  + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
+                    $MinersDGV.Columns[12].FillWeight = 50 + ($DataSource.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $MinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight"; $MinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
                 }
                 Set-TableColor -DataGridView $MinersDGV
                 $MinersDGV.EndInit()
@@ -439,13 +439,13 @@ Function Update-TabControl {
                     @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } }
                     @{ Name = "Currency"; Expression = { $_.Currency } }
                     @{ Name = "Coin name"; Expression = { $_.CoinName } }
-                    @{ Name = "$Unit/GH/Day`r(biased)"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Price_Bias * [Math]::Pow(1024, 3) * $Factor) } }
+                    @{ Name = "$Unit/GH/Day (biased)"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Price_Bias * [Math]::Pow(1024, 3) * $Factor) } }
                     @{ Name = "Accuracy"; Expression = { "{0:p2}" -f $_.Accuracy } }
                     @{ Name = "Pool name"; Expression = { $_.Name } }
                     @{ Name = "Host"; Expression = { $_.Host } }
                     @{ Name = "Port"; Expression = { "$(If ($_.Port) { $_.Port } Else { "-" })" } }
                     @{ Name = "SSL port"; Expression = { "$(If ($_.PortSSL) { $_.PortSSL } Else { "-" })" } }
-                    @{ Name = "Earnings`radjustment`rfactor"; Expression = { $_.EarningsAdjustmentFactor } }
+                    @{ Name = "Earnings adjustment factor"; Expression = { $_.EarningsAdjustmentFactor } }
                     @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
                     If ($RadioButtonPoolsUnavailable.checked -or $RadioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
                 ) | Out-DataTable
@@ -530,12 +530,12 @@ Function Update-TabControl {
             $CheckShowSwitchingCPU.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "CPU" }))
             $CheckShowSwitchingAMD.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }))
             $CheckShowSwitchingINTEL.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }))
-            $CheckShowSwitchingNVIDIA.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -NE [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
+            $CheckShowSwitchingNVIDIA.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
 
-            If (-not $CheckShowSwitchingCPU.Enabled) { $CheckShowSwitchingCPU.Checked = $false }
-            If (-not $CheckShowSwitchingAMD.Enabled) { $CheckShowSwitchingAMD.Checked = $false }
-            If (-not $CheckShowSwitchingINTEL.Enabled) { $CheckShowSwitchingINTEL.Checked = $false }
-            If (-not $CheckShowSwitchingNVIDIA.Enabled) { $CheckShowSwitchingNVIDIA.Checked = $false }
+            $CheckShowSwitchingCPU.Checked = $CheckShowSwitchingCPU.Enabled
+            $CheckShowSwitchingAMD.Checked = $CheckShowSwitchingAMD.Enabled
+            $CheckShowSwitchingINTEL.Checked = $CheckShowSwitchingINTEL.Enabled
+            $CheckShowSwitchingNVIDIA.Checked = $CheckShowSwitchingNVIDIA.Enabled
 
             CheckBoxSwitching_Click
             Break
@@ -563,7 +563,7 @@ Function Update-TabControl {
                         $WatchdogTimersDGV.Columns[1].FillWeight = 100
                         $WatchdogTimersDGV.Columns[2].FillWeight = 100
                         $WatchdogTimersDGV.Columns[3].FillWeight = 60
-                        $WatchdogTimersDGV.Columns[4].FillWeight = 30 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum) * 20
+                        $WatchdogTimersDGV.Columns[4].FillWeight = 30 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                         $WatchdogTimersDGV.Columns[5].FillWeight = 100
                     }
                     $WatchdogTimersDGV.EndInit()
@@ -973,7 +973,7 @@ $ContextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Disable" { 
-                    $Variables.Miners.Where({ -not $_.Disabled }).Where({ $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ -not $_.Disabled -and $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             $Data += $_.Name
                             ForEach ($Worker in $_.Workers) { 
@@ -997,7 +997,7 @@ $ContextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Enable" { 
-                    $Variables.Miners.Where({ $_.Disabled }).Where({ $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ $_.Disabled -and $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             $Data += $_.Name
                             ForEach ($Worker in $_.Workers) { 
@@ -1473,7 +1473,6 @@ $Tooltip.SetToolTip($SwitchingLogClearButton, "This will clear the switching log
 
 $CheckShowSwitchingCPU = New-Object System.Windows.Forms.CheckBox
 $CheckShowSwitchingCPU.AutoSize = $false
-$CheckShowSwitchingCPU.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Name -Like "CPU#*" }))
 $CheckShowSwitchingCPU.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CheckShowSwitchingCPU.Height = 20
 $CheckShowSwitchingCPU.Location = [System.Drawing.Point]::new(($SwitchingLogClearButton.Width + 40), ($SwitchingLogLabel.Height + 10))
@@ -1485,7 +1484,6 @@ $CheckShowSwitchingCPU.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }
 
 $CheckShowSwitchingAMD = New-Object System.Windows.Forms.CheckBox
 $CheckShowSwitchingAMD.AutoSize = $false
-$CheckShowSwitchingAMD.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName.Where({ $_.Name -like "GPU#*" -and $_.Vendor -eq "AMD" }) }))
 $CheckShowSwitchingAMD.Height = 20
 $CheckShowSwitchingAMD.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CheckShowSwitchingAMD.Location = [System.Drawing.Point]::new(($SwitchingLogClearButton.Width + 40 + $CheckShowSwitchingCPU.Width), ($SwitchingLogLabel.Height + 10))
@@ -1497,7 +1495,6 @@ $CheckShowSwitchingAMD.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }
 
 $CheckShowSwitchingINTEL = New-Object System.Windows.Forms.CheckBox
 $CheckShowSwitchingINTEL.AutoSize = $false
-$CheckShowSwitchingINTEL.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName  -and $_.Name -Like "GPU#*" -and $_.Vendor -eq "INTEL" }))
 $CheckShowSwitchingINTEL.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CheckShowSwitchingINTEL.Height = 20
 $CheckShowSwitchingINTEL.Location = [System.Drawing.Point]::new(($SwitchingLogClearButton.Width + 40 + $CheckShowSwitchingCPU.Width + $CheckShowSwitchingAMD.Width), ($SwitchingLogLabel.Height + 10))
@@ -1509,7 +1506,6 @@ $CheckShowSwitchingINTEL.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this)
 
 $CheckShowSwitchingNVIDIA = New-Object System.Windows.Forms.CheckBox
 $CheckShowSwitchingNVIDIA.AutoSize = $false
-$CheckShowSwitchingNVIDIA.Checked = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Name -Like "GPU#*" -and $_.Vendor -eq "NVIDIA" }))
 $CheckShowSwitchingNVIDIA.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $CheckShowSwitchingNVIDIA.Height = 20
 $CheckShowSwitchingNVIDIA.Location = [System.Drawing.Point]::new(($SwitchingLogClearButton.Width + 40 + $CheckShowSwitchingCPU.Width + $CheckShowSwitchingAMD.Width + $CheckShowSwitchingINTEL.Width), ($SwitchingLogLabel.Height + 10))
@@ -1698,18 +1694,17 @@ $LegacyGUIForm.Add_FormClosing(
             Stop-Brain
             Stop-BalancesTracker
 
+            If ($LegacyGUIForm.DesktopBounds.Width -ge 0) { 
+                # Save window settings
+                $LegacyGUIForm.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore
+            }
+
             Write-Message -Level Info "$($Variables.Branding.ProductLabel) has shut down."
             Start-Sleep -Seconds 2
             Stop-Process $PID -Force
         }
         If ($Config.LegacyGUI -or $MsgBoxInput -eq "Cancel") { 
             $_.Cancel = $true
-        }
-        Else { 
-            If ($LegacyGUIForm.DesktopBounds.Width -ge 0) { 
-                # Save window settings
-                $LegacyGUIForm.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore
-            }
         }
     }
 )

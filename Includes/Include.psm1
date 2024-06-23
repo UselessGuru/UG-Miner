@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.10
-Version date:   2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -194,9 +194,9 @@ Class Miner {
     [String[]]$DeviceNames = @() # derived from devices
     [PSCustomObject[]]$Devices
     [Boolean]$Disabled = $false
-    [Double]$Earning # derived from pool and stats
-    [Double]$Earning_Bias # derived from pool and stats
-    [Double]$Earning_Accuracy # derived from pool and stats
+    [Double]$Earning = [Double]::NaN # derived from pool and stats
+    [Double]$Earning_Bias = [Double]::NaN # derived from pool and stats
+    [Double]$Earning_Accuracy = 0 # derived from pool and stats
     [DateTime]$EndTime # UniversalTime
     [String[]]$EnvVars = @()
     [Double[]]$Hashrates_Live = @()
@@ -534,7 +534,7 @@ Class Miner {
 
         $HashrateSamples = @($this.Data.Where({ $_.Hashrate.$Algorithm })) # Do not use 0 valued samples
 
-        $HashrateAverage = ($HashrateSamples.Hashrate.$Algorithm | Measure-Object -Average | Select-Object -ExpandProperty Average)
+        $HashrateAverage = ($HashrateSamples.Hashrate.$Algorithm | Measure-Object -Average).Average
         $HashrateVariance = $HashrateSamples.Hashrate.$Algorithm | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
 
         If ($Safe) { 
@@ -557,7 +557,7 @@ Class Miner {
 
         $PowerConsumptionSamples = @($this.Data.Where({ $_.PowerConsumption})) # Do not use 0 valued samples
 
-        $PowerConsumptionAverage = ($PowerConsumptionSamples.PowerConsumption | Measure-Object -Average | Select-Object -ExpandProperty Average)
+        $PowerConsumptionAverage = ($PowerConsumptionSamples.PowerConsumption | Measure-Object -Average).Average
         $PowerConsumptionVariance = $PowerConsumptionSamples.PowerUsage | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
 
         If ($Safe) { 
@@ -580,8 +580,8 @@ Class Miner {
         $this.ProcessPriority = If ($this.Type -eq "CPU") { $Config.CPUMinerProcessPriority } Else { $Config.GPUMinerProcessPriority }
         $this.Reasons = [System.Collections.Generic.List[String]]@()
         $this.ReadPowerConsumption = [Boolean]($this.Devices.ReadPowerConsumption -notcontains $false)
-        $this.Updated = $this.Workers.Updated | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
-        $this.TotalMiningDuration = $this.Workers.TotalMiningDuration | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
+        $this.Updated = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
+        $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
 
         $this.Workers.ForEach(
             { 
@@ -610,8 +610,8 @@ Class Miner {
             $this.Earning_Accuracy = [Double]::NaN
         }
         Else { 
-            $this.Earning = $this.Workers.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-            $this.Earning_Bias = $this.Workers.Earning_Bias | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            $this.Earning = ($this.Workers.Earning | Measure-Object -Sum).Sum
+            $this.Earning_Bias = ($this.Workers.Earning_Bias | Measure-Object -Sum).Sum
             $this.Earning_Accuracy = 0
             If ($this.Earning) { $this.Workers.ForEach({ $this.Earning_Accuracy += $_.Earning_Accuracy * $_.Earning / $this.Earning }) }
         }
@@ -829,7 +829,7 @@ Function Stop-Core {
 
 Function Start-Brain { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String[]]$Brains
     )
@@ -879,7 +879,7 @@ Function Start-Brain {
 
 Function Stop-Brain { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String[]]$Brains = $Variables.Brains.psBase.Keys
     )
@@ -977,7 +977,7 @@ Function Get-Rate {
 
     $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
 
-    If (-not $Variables.Rates.BTC.($Config.MainCurrency) -or (Compare-Object @(@($Variables.Rates.PSObject.Properties.Name | Select-Object) + @($Variables.RatesMissingCurrencies | Select-Object)) @($Variables.AllCurrencies | Select-Object) | Where-Object SideIndicator -eq "=>") -or ($Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)))) { 
+    If (-not $Variables.Rates.BTC.($Config.MainCurrency) -or (Compare-Object @(@($Variables.Rates.PSObject.Properties.Name | Select-Object) + @($Variables.RatesMissingCurrencies | Select-Object)) @($Variables.AllCurrencies | Select-Object) | Where-Object SideIndicator -eq "=>") -or ($Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum).Minimum | Measure-Object -Maximum).Maximum))) { 
         Try { 
             $TSymBatches = @()
             $TSyms = "BTC"
@@ -1072,7 +1072,7 @@ Function Get-Rate {
 
 Function Write-Message { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [String]$Message, 
         [Parameter(Mandatory = $false)]
@@ -1212,7 +1212,7 @@ Function Read-MonitoringData {
 Function Get-TimeSince { 
     # Show friendly time since in days, hours, minutes and seconds
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [DateTime]$TimeStamp
     )
@@ -1231,7 +1231,7 @@ Function Get-TimeSince {
 
 Function Merge-Hashtable { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Hashtable]$HT1, 
         [Parameter(Mandatory = $true)]
@@ -1298,7 +1298,7 @@ Function Get-RandomDonationPoolsConfig {
 
 Function Read-Config { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$ConfigFile
     )
@@ -1497,7 +1497,7 @@ Function Read-Config {
 
 Function Update-ConfigFile { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$ConfigFile
     )
@@ -1534,7 +1534,7 @@ Function Update-ConfigFile {
 
 Function Write-Config { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$ConfigFile, 
         [Parameter(Mandatory = $true)]
@@ -1580,7 +1580,7 @@ Function Write-Config {
 Function Edit-File { 
     # Opens file in notepad. Notepad will remain in foreground until closed.
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String]$FileName
     )
@@ -1664,7 +1664,7 @@ Function Get-SortedObject {
 
 Function Enable-Stat { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Name
     )
@@ -1697,7 +1697,7 @@ Function Enable-Stat {
 
 Function Disable-Stat { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Name
     )
@@ -1729,7 +1729,7 @@ Function Disable-Stat {
 
 Function Set-Stat { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Name, 
         [Parameter(Mandatory = $true)]
@@ -1873,7 +1873,7 @@ Function Set-Stat {
 
 Function Get-Stat { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String[]]$Name
     )
@@ -1924,7 +1924,7 @@ Function Get-Stat {
 
 Function Remove-Stat { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String[]]$Name
     )
@@ -1939,7 +1939,7 @@ Function Remove-Stat {
 
 Function Invoke-TcpRequest { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Server, 
         [Parameter(Mandatory = $true)]
@@ -2108,7 +2108,7 @@ Function Get-CpuId {
 
 Function Get-GPUArchitectureAMD { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Model,
         [Parameter(Mandatory = $false)]
@@ -2128,7 +2128,7 @@ Function Get-GPUArchitectureAMD {
 
 Function Get-GPUArchitectureNvidia { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Model,
         [Parameter(Mandatory = $false)]
@@ -2154,7 +2154,7 @@ Function Get-GPUArchitectureNvidia {
 
 Function Get-Device { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String[]]$Name = @(), 
         [Parameter(Mandatory = $false)]
@@ -2279,7 +2279,7 @@ Function Get-Device {
                     $Device_CIM = $_ | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json
 
                     $Device_PNP = [PSCustomObject]@{ }
-                    (Get-PnpDevice $Device_CIM.PNPDeviceID | Get-PnpDeviceProperty).ForEach({ $Device_PNP | Add-Member $_.KeyName $_.Data })
+                    (Get-PnpDevice $Device_CIM.PNPDeviceID | Get-PnpDeviceProperty).ForEach({  $Device_PNP | Add-Member $_.KeyName $_.Data })
                     $Device_PNP = $Device_PNP | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json
 
                     $Device_Reg = Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)" | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json
@@ -2303,8 +2303,8 @@ Function Get-Device {
                                 Default { $Device_CIM.AdapterCompatibility -replace '\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel' -replace '[^A-Z0-9]' }
                             }
                         )
-                        Memory = [Math]::Max(([UInt64]$Device_CIM.AdapterRAM), ([uInt64]$Device_Reg.'HardwareInformation.qwMemorySize'))
-                        MemoryGiB = [Double]([Math]::Round([Math]::Max(([UInt64]$Device_CIM.AdapterRAM), ([uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')) / 0.05GB) / 20) # Round to nearest 50MB
+                        Memory = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
+                        MemoryGiB = [Double]([Math]::Round([Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize') / 0.05GB) / 20) # Round to nearest 50MB
                     }
 
                     $Device | Add-Member @{ 
@@ -2346,7 +2346,7 @@ Function Get-Device {
         Catch { 
             Write-Message -Level Warn "WDDM device detection has failed."
         }
-        Remove-Variable Device, Device_CIM, Device_Reg, Device_PNP -ErrorAction Ignore
+        Remove-Variable Device, Device_CIM, Device_PNP, Device_Reg -ErrorAction Ignore
 
         # Get OpenCL data
         Try { 
@@ -2407,8 +2407,8 @@ Function Get-Device {
                                 $Type_Vendor_Id.($Device.Type) = @{ }
                             }
 
-                            If ($Variables.Devices.Where({ $_.Type -eq $Device.Type }).Where({ $_.Bus -eq $Device.Bus })) { 
-                                $Device = $Variables.Devices.Where({ $_.Type -eq $Device.Type }).Where({ $_.Bus -eq $Device.Bus })
+                            If ($Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })) { 
+                                $Device = $Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })
                             }
                             ElseIf ($Device.Type -eq "GPU" -and ($Device.Vendor -in @("AMD", "INTEL", "NVIDIA"))) { 
                                 $Variables.Devices += $Device
@@ -2498,7 +2498,6 @@ Function Get-Device {
     $Variables.Devices.ForEach(
         { 
             [Device]$Device = $_
-            $Device = $_
 
             $Device.Bus_Index = @($Variables.Devices.Bus | Sort-Object).IndexOf([Int]$Device.Bus)
             $Device.Bus_Type_Index = @($Variables.Devices.Where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
@@ -2531,7 +2530,7 @@ Function Get-DecimalsFromValue {
     # The larger the value, the less decimal digits are returned
     # Maximal $DecimalsMax decimals are returned
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Double]$Value, 
         [Parameter(Mandatory = $true)]
@@ -2546,7 +2545,7 @@ Function Get-DecimalsFromValue {
 
 Function Get-Combination { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Array]$Value, 
         [Parameter(Mandatory = $false)]
@@ -2603,10 +2602,9 @@ Function Invoke-CreateProcess {
         [String]$LogFile
     )
 
-    # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and running mines remain
+    # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and miners remain running
     $Job = Start-Job -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
-    # $Job = Start-ThreadJob -Name $JobName -StreamingHost $null -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
-        Param($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID)
+        Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID)
 
         $ControllerProcess = Get-Process -Id $ControllerProcessID
         If ($null -eq $ControllerProcess) { Return }
@@ -2704,7 +2702,7 @@ public static class Kernel32
 
 Function Expand-WebRequest { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Uri, 
         [Parameter(Mandatory = $false)]
@@ -2737,7 +2735,7 @@ Function Expand-WebRequest {
         $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).Where({ $_.Name -eq $(Split-Path $Path -Leaf) })).Directory | Select-Object -First 1
 
         If ($Path_Old) { 
-            (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = Get-Date })
+            (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = [DateTime]::Now })
             $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
             If (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item -Path $Path_Old -Recurse -Force }
         }
@@ -2749,7 +2747,7 @@ Function Expand-WebRequest {
 
 Function Get-Algorithm { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String]$Algorithm
     )
@@ -2762,7 +2760,7 @@ Function Get-Algorithm {
 
 Function Get-Region { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Region,
         [Parameter(Mandatory = $false)]
@@ -2776,7 +2774,7 @@ Function Get-Region {
 
 Function Add-CoinName { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$Algorithm,
         [Parameter(Mandatory = $true)]
@@ -2809,7 +2807,7 @@ Function Add-CoinName {
 
 Function Get-AlgorithmFromCurrency { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String]$Currency
     )
@@ -2835,7 +2833,7 @@ Function Get-AlgorithmFromCurrency {
 
 Function Get-CurrencyFromAlgorithm { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String]$Algorithm
     )
@@ -2860,7 +2858,7 @@ Function Get-CurrencyFromAlgorithm {
 
 Function Get-EquihashCoinPers {
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String]$Command = "",
         [Parameter(Mandatory = $false)]
@@ -2886,7 +2884,7 @@ Function Get-EquihashCoinPers {
 
 Function Get-PoolBaseName { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $false)]
         [String[]]$PoolNames
     )
@@ -2894,7 +2892,7 @@ Function Get-PoolBaseName {
     Return ($PoolNames -replace '24hr$|coins$|coins24hr$|coinsplus$|plus$')
 }
 
-Function Get-NMVersion { 
+Function Get-Version { 
     # Updater always logs all messages
     $ConfigLogToFile = $Config.LogToFile
     $ConfigLogToScreen = $Config.LogToScreen
@@ -2903,7 +2901,7 @@ Function Get-NMVersion {
     Try { 
         $UpdateVersion = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/UselessGuru/UG-Miner/main/Version.txt" -TimeoutSec 15 -SkipCertificateCheck -Headers @{ "Cache-Control" = "no-cache" }).Content | ConvertFrom-Json
 
-        $Variables.CheckedForUpdate = Get-Date
+        $Variables.CheckedForUpdate = [DateTime]::Now
 
         If ($Variables.Branding.ProductLabel -and [Version]$UpdateVersion.Version -gt $Variables.Branding.Version) { 
             If ($UpdateVersion.AutoUpdate) { 
@@ -2935,7 +2933,7 @@ Function Get-NMVersion {
 
 Function Initialize-Autoupdate { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [PSCustomObject]$UpdateVersion
     )
@@ -2992,24 +2990,24 @@ Function Get-ObsoleteMinerStats {
 
 Function Test-Prime { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Double]$Number
     )
 
-    For ([Int64]$i = 2; $i -lt [Int64][Math]::Pow($Number, 0.5); $i ++) { If ($Number % $i -eq 0) { Return $false } }
+    For ([Int64]$I = 2; $I -lt [Int64][Math]::Pow($Number, 0.5); $I ++) { If ($Number % $I -eq 0) { Return $false } }
 
     Return $true
 }
 
 Function Update-DAGdata { 
 
-    # Update on script start, once every 24hrs or if unable to get data from all sources
     If (-not $Variables.DAGdata) { $Variables.DAGdata = [PSCustomObject]@{ } }
     If (-not $Variables.DAGdata."Algorithm") { $Variables.DAGdata | Add-Member "Algorithm" ([PSCustomObject]@{ }) }
     If (-not $Variables.DAGdata."Currency") { $Variables.DAGdata | Add-Member "Currency" ([PSCustomObject]@{ }) }
     If (-not $Variables.DAGdata."Updated") { $Variables.DAGdata | Add-Member "Updated" ([PSCustomObject]@{ }) }
 
+    # Update on script start, once every 24hrs or if unable to get data from source
     $Url = "https://whattomine.com/coins.json"
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
@@ -3052,6 +3050,7 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
+    # Update on script start, once every 24hrs or if unable to get data from source
     $Url = "https://minerstat.com/dag-size-calculator"
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from Minerstat
@@ -3092,6 +3091,7 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
+    # Update on script start, once every 24hrs or if unable to get data from source
     $Url = "https://prohashing.com/api/v1/currencies"
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from ProHashing
@@ -3131,6 +3131,7 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
+    # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "SCC"
     $Url = "https://www.coinexplorer.net/api/v1/SCC/getblockcount"
     If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3160,6 +3161,7 @@ Function Update-DAGdata {
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
 
+    # Update on script start, once every 24hrs or if unable to get data from source
     If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
         # ZergPool (Coins) also supplies EVR DAG data
         $Currency = "EVR"
@@ -3221,9 +3223,9 @@ Function Update-DAGdata {
         ForEach ($Algorithm in @($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.Algorithm }) | Select-Object -Unique)) { 
             Try { 
                 $Variables.DAGdata.Algorithm | Add-Member $Algorithm ([PSCustomObject]@{ 
-                    BlockHeight = [Int]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
-                    DAGsize     = [Int64]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
-                    Epoch       = [Int]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                    BlockHeight = [Int]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
+                    DAGsize     = [Int64]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
+                    Epoch       = [Int]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
                 }) -Force
                 $Variables.DAGdata.Algorithm.$Algorithm | Add-Member CoinName ($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.DAGsize -eq $Variables.DAGdata.Algorithm.$Algorithm.DAGsize -and $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
             }
@@ -3234,10 +3236,10 @@ Function Update-DAGdata {
 
         # Add default '*' (equal to highest)
         $Variables.DAGdata.Currency | Add-Member "*" ([PSCustomObject]@{ 
-            BlockHeight = [Int]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+            BlockHeight = [Int]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
             CoinName    = "*"
-            DAGsize     = [Int64]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
-            Epoch       = [Int]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+            DAGsize     = [Int64]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
+            Epoch       = [Int]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
         }) -Force
 
         $Variables.DAGdata = $Variables.DAGdata | Get-SortedObject
@@ -3249,7 +3251,7 @@ Function Update-DAGdata {
 
 Function Get-DAGsize { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Double]$Epoch,
         [Parameter(Mandatory = $true)]
@@ -3258,12 +3260,12 @@ Function Get-DAGsize {
 
     Switch ($Currency) { 
         "CFX" { 
-            $Dataset_Bytes_Init = 4294967296
-            $Dataset_Bytes_Growth = 16777216
-            $Mix_Bytes = 256
-            $Size = ($Dataset_Bytes_Init + $Dataset_Bytes_Growth * $Epoch) - $Mix_Bytes
-            While (-not (Test-Prime ($Size / $Mix_Bytes))) { 
-                $Size -= 2 * $Mix_Bytes
+            $DatasetBytesInit = 4294967296
+            $DatasetBytesGrowth = 16777216
+            $MixBytes = 256
+            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            While (-not (Test-Prime ($Size / $MixBytes))) { 
+                $Size -= 2 * $MixBytes
             }
             Break
         }
@@ -3281,32 +3283,32 @@ Function Get-DAGsize {
             Break
         }
         "EVR" { 
-            $Dataset_Bytes_Init = 3 * [Math]::Pow(2, 30) # 3GB
-            $Dataset_Bytes_Growth = [Math]::Pow(2, 23) # 8MB
-            $Mix_Bytes = 128
-            $Size = ($Dataset_Bytes_Init + $Dataset_Bytes_Growth * $Epoch) - $Mix_Bytes
-            While (-not (Test-Prime ($Size / $Mix_Bytes))) { 
-                $Size -= 2 * $Mix_Bytes
+            $DatasetBytesInit = 3 * [Math]::Pow(2, 30) # 3GB
+            $DatasetBytesGrowth = [Math]::Pow(2, 23) # 8MB
+            $MixBytes = 128
+            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            While (-not (Test-Prime ($Size / $MixBytes))) { 
+                $Size -= 2 * $MixBytes
             }
             Break
         }
         "MEWC" { 
             If ($Epoch -ge 110) { $Epoch *= 4 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L48 & https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.cpp#L249C1-L254C6
-            $Dataset_Bytes_Init = [Math]::Pow(2, 30) # 1GB
-            $Dataset_Bytes_Growth = [Math]::Pow(2, 23) # 8MB
-            $Mix_Bytes = 128
-            $Size = ($Dataset_Bytes_Init + $Dataset_Bytes_Growth * $Epoch) - $Mix_Bytes
-            While (-not (Test-Prime ($Size / $Mix_Bytes))) { 
-                $Size -= 2 * $Mix_Bytes
+            $DatasetBytesInit = [Math]::Pow(2, 30) # 1GB
+            $DatasetBytesGrowth = [Math]::Pow(2, 23) # 8MB
+            $MixBytes = 128
+            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            While (-not (Test-Prime ($Size / $MixBytes))) { 
+                $Size -= 2 * $MixBytes
             }
         }
         Default { 
-            $Dataset_Bytes_Init = [Math]::Pow(2, 30) # 1GB
-            $Dataset_Bytes_Growth = [Math]::Pow(2, 23) # 8MB
-            $Mix_Bytes = 128
-            $Size = ($Dataset_Bytes_Init + $Dataset_Bytes_Growth * $Epoch) - $Mix_Bytes
-            While (-not (Test-Prime ($Size / $Mix_Bytes))) { 
-                $Size -= 2 * $Mix_Bytes
+            $DatasetBytesInit = [Math]::Pow(2, 30) # 1GB
+            $DatasetBytesGrowth = [Math]::Pow(2, 23) # 8MB
+            $MixBytes = 128
+            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            While (-not (Test-Prime ($Size / $MixBytes))) { 
+                $Size -= 2 * $MixBytes
             }
         }
     }
@@ -3316,7 +3318,7 @@ Function Get-DAGsize {
 
 Function Get-Epoch { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Double]$BlockHeight,
         [Parameter(Mandatory = $true)]
@@ -3333,7 +3335,7 @@ Function Get-Epoch {
 
 Function Get-EpochLength { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Double]$BlockHeight,
         [Parameter(Mandatory = $true)]
@@ -3356,7 +3358,7 @@ Function Get-EpochLength {
 
 Function Get-DAGdata { 
 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [Double]$BlockHeight,
         [Parameter(Mandatory = $true)]
@@ -3383,7 +3385,7 @@ Function Out-DataTable {
     # based on http://thepowershellguy.com/blogs/posh/archive/2007/01/21/powershell-gui-scripblock-monitor-script.aspx
 
     [CmdletBinding()]
-    Param(
+    Param (
         [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
         [PSObject[]]$InputObject
     )
@@ -3414,7 +3416,7 @@ Function Out-DataTable {
 
 Function Get-Median { 
 
-    param (
+    Param (
       [Parameter(Mandatory = $true)]
       [Double[]]$Numbers
     )

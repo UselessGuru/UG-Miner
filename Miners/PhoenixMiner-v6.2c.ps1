@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.10
-Version date:    2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -123,7 +123,7 @@ If ($Algorithms) {
                                             }
 
                                             # kernel 3 does not support dual mining
-                                            If (($AvailableMinerDevices.Memory | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum) / 1GB -ge 2 * $MinMemGiB -and -not $_.Algorithms[1]) { # Faster kernels require twice as much VRAM
+                                            If (($AvailableMinerDevices.Memory | Measure-Object -Minimum).Minimum / 1GB -ge 2 * $MinMemGiB -and -not $_.Algorithms[1]) { # Faster kernels require twice as much VRAM
                                                 If ($AvailableMinerDevices.Vendor -eq "AMD") { $Arguments += " -clkernel 3" }
                                                 ElseIf ($AvailableMinerDevices.Vendor -eq "NVIDIA") { $Arguments += " -nvkernel 3" }
                                             }

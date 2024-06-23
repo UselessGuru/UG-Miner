@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningPoolHub.ps1
-Version:        6.2.10
-Version date:    2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -103,10 +103,7 @@ While (-not $UserAllBalances -and $RetryCount -gt 0 -and $Config.MiningPoolHubAP
                             }
                         }
 
-                        If (-not $Currency) { 
-                            Write-Message -Level Warn "$($Name): Cannot determine balance for currency '$(If ($_) { $_ } Else { "unknown" })' - cannot convert some balances to BTC or other currencies."
-                        }
-                        Else { 
+                        If ($Currency) { 
                             # Prefer custom payout threshold
                             $PayoutThreshold = $Config.PoolsConfig.$Name.PayoutThreshold.$Currency
 
@@ -125,6 +122,9 @@ While (-not $UserAllBalances -and $RetryCount -gt 0 -and $Config.MiningPoolHubAP
                                 PayoutThreshold = [Double]$PayoutThreshold
                                 Url             = "https://$($_).miningpoolhub.com/index.php?page=account&action=pooledit"
                             }
+                        }
+                        Else { 
+                            Write-Message -Level Warn "$($Name): Cannot determine balance for currency '$(If ($_) { $_ } Else { "unknown" })' - cannot convert some balances to BTC or other currencies."
                         }
                     }
                 }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash Internal.ps1
-Version:        6.2.10
-Version date:    2024/06/20
+Version:        6.2.11
+Version date:   2024/06/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -34,7 +34,7 @@ $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
 $RetryInterval = $PoolConfig.PoolAPIRetryInterval
 
 Function Get-NiceHashRequest { 
-    Param(
+    Param (
         [Parameter(Mandatory = $true)]
         [String]$EndPoint, 
         [Parameter(Mandatory = $true)]
