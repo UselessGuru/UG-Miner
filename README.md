@@ -2,7 +2,7 @@
 
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 
-Updated  2024/06/18
+Updated  2024/06/23
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -181,12 +181,13 @@ Easy configuration, easy start:
       You can set specific options per pool. For example, you can mine NiceHash on the internal wallet and other pools on a valid wallet. See 'PoolsConfig-Template.json' for some pool specific configuration options.
 
       Available options:
-         - Wallets[Currency] = Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
-         - UserName = your MPH or ProHashing user name
-         - WorkerName = your worker name
-         - PricePenaltyFactor = See explanation below
-         - Algorithm = List of included or excluded algorithms per pool
-         - PayoutThreshold[Currency] = pool will allow payout if this amount is reached
+         - Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
+         - UserName: your MPH or ProHashing user name
+         - WorkerName: your worker name
+         - EarningsAdjustmentFactor: See explanation below
+         - Algorithm: List of included or excluded algorithms per pool
+         - Corrency: List of included or excluded currencies per pool
+         - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
 
       Usage:
          - Edit 'Config\PoolsConfig.json'
@@ -201,7 +202,7 @@ Easy configuration, easy start:
       When using advanced per pool configuration, it is possible to add an earnings adjustment factor for a specific pool. This simply adds a multiplicator on estimations presented by the pool.
 
       Example scenario:
-         - You feel like a pool is exaggerating its estimations by 10% - Set EarningsAdjustmentFactor to 0.9
+         - You feel that a pool is exaggerating its estimations by 10% - Set EarningsAdjustmentFactor to 0.9
 
    Pool Variants
 
@@ -210,7 +211,7 @@ Easy configuration, easy start:
       Use calculations based on 24hr prices to get a more stable estimate.
       NOT sensible to spikes.
       They show less switching than following current or plus price estimate.
-      lower profitability in exchange for less switching.
+      lower estimated profitability in exchange for less switching.
 
    Poolnames ending in *Plus
 
@@ -218,7 +219,7 @@ Easy configuration, easy start:
       Include some trust index based on past 1hr current estimate variation from 24hr.
       AND are NOT sensible to spikes.
       They show less switching than following current estimate and more switching than following the 24hr actual.
-      Better profitability.
+      Better estimated profitability.
 
    Balances Tracking
 
@@ -241,7 +242,7 @@ Easy configuration, easy start:
 
       **Experimental**
       More than one instance of UG-Miner can run on the same rig
-      Each instance must be placed in its own directory
+      Each instance must be placed in its own directory and must use non-overlapping port ranges (configuration item '$APIport')
       Miner has to be started prior the launch of the next instance
       Do not use the same miner devices in more than one instance as this will give invalid hash rate
       & power usage readings causing incorrect best miner selection.
