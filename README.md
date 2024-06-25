@@ -122,24 +122,24 @@ Easy configuration, easy start:
       normal - uses current price data in pool API to calculate profit (no estimates or advanced calculations)
 
 
-   Developer/Contributors Donation
+   Developer Donation
 
-      Donation Fee is approx. 1% (15 minutes per day)
-      which can be increased or decreased in the configuration editor.
+      Donation fee is approx. 1% (15 minutes per day) anf can be increased or decreased in the configuration editor.
       Please help support the great team behind UG-Miner by leaving mining donations turned on.
       We want to stay completely transparent on the way fees are managed in the product.
       Donation cycle occurs only once in 24hrs (or once until midnight if UG-Miner has been running less than 24hrs).
-      Donation start time is randomized each time.
+      Donation start time is randomized each day.
       It will then mine for UselessGuru for the configured duration.
 
       Example for default parameters (15 minutes):
       - UG-Miner was started at 10:00h
-      - First donation cycle starts somewhen between 10:01h and 23:47h and will then donate for 15 minutes, then mine for you again until the next donation run.
-      - After 00:00h the donation start time is randomized again. 
+      - First donation cycle starts somewhen between 10:01h and 23:45h and will then donate for 15 minutes, then mine for you again until the next donation run.
+      - After 00:00h the donation start time is randomized again.
       - When donation start time is reached it will then donate for 15 minutes, then mine for you again until the next donation run.
-      All donation time and addresses are recorded in the logs files.
 
-      The list and wallets is stored in [UG-Miner Directory]\Data\DonationData.json
+      The donation data is stored in '[UG-Miner directory]\Data\DonationData.json'.
+      All donation time and addresses are recorded in the domation log file '[UG-Miner directory]\Log\DonateLog.json'.
+
 
    Web & Legacy GUI
 
@@ -152,7 +152,7 @@ Easy configuration, easy start:
 
    Pause mining
 
-      Ability to pause miners while keeping other jobs running (pause button). This will stop mining activity
+      Ability to pause miners while keeping other jobs running (pause button). This will stop mining activity.
       Brains will still run in the background avoiding the learning phase on resume.
       BalancesTracker will still run in the background to keep the pool balances up to date.
 
@@ -208,18 +208,18 @@ Easy configuration, easy start:
 
    Poolnames ending in *24hr
 
-      Use calculations based on 24hr prices to get a more stable estimate.
-      NOT sensible to spikes.
-      They show less switching than following current or plus price estimate.
-      lower estimated profitability in exchange for less switching.
+      * use calculations based on 24hr prices to get a more stable estimate
+      * are NOT sensible to spikes
+      * show less switching than following current or plus price estimate
+      * lower estimated profitability in exchange for less switching
 
    Poolnames ending in *Plus
 
-      Use calculations based on 24hr actual and current estimate prices to get a more realistic estimate.
-      Include some trust index based on past 1hr current estimate variation from 24hr.
-      AND are NOT sensible to spikes.
-      They show less switching than following current estimate and more switching than following the 24hr actual.
-      Better estimated profitability.
+      * use calculations based on 24hr actual and current estimate prices to get a more realistic estimate
+      * include some trust index based on past 1hr current estimate variation from 24hr
+      * are NOT sensible to spikes
+      * show less switching than following current estimate and more switching than following the 24hr actual
+      * better estimated profitability
 
    Balances Tracking
 
@@ -242,10 +242,10 @@ Easy configuration, easy start:
 
       **Experimental**
       More than one instance of UG-Miner can run on the same rig
-      Each instance must be placed in its own directory and must use non-overlapping port ranges (configuration item '$APIport')
-      Miner has to be started prior the launch of the next instance
-      Do not use the same miner devices in more than one instance as this will give invalid hash rate
-      & power usage readings causing incorrect best miner selection.
+      Each instance must be placed in its own directory
+      Must use non-overlapping port ranges (configuration item '$APIport')
+      Do not use the same miner devices in more than one instance (this will give invalid hash rate
+      & power consumption readings causing incorrect best miner selection)
 
    Miner Switching Log
 
@@ -259,7 +259,7 @@ Easy configuration, easy start:
       UIStyle automatically switches to full during benchmarking.
       Press key 's' in the console window to switch UIStyle.
 
-   In session console the following hot keys are supported
+   In session console the following hot keys are supported:
  
       1: Toggle Listing pool balances (currently off)
       2: Toggle Listing all optimal miners (currently off)
