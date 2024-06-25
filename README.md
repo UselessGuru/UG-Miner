@@ -249,7 +249,7 @@ Easy configuration, easy start:
 
    Miner Switching Log
 
-      Simple miner switching log in csv format (\SwitchingLog.csv file found in Logs folder).
+      A simple miner switching log in csv format  is writte to '[UG-Miner directory]\Logs\SwitchingLog.csv'.
 
    Console Display Options
 
@@ -257,9 +257,8 @@ Easy configuration, easy start:
          Full = Usual display (Default)
          Light = Show only current mining info
       UIStyle automatically switches to full during benchmarking.
-      Press key 's' in the console window to switch UIStyle.
 
-   In session console the following hot keys are supported:
+      In session console the following hot keys are supported:
  
       1: Toggle Listing pool balances (currently off)
       2: Toggle Listing all optimal miners (currently off)
