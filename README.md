@@ -261,22 +261,23 @@ Easy configuration, easy start:
 
    In session console the following hot keys are supported
  
-      a: Toggle Accuracy column visibility
-      b: Toggle Listing Pool Balances
-      c: Toggle Power Cost column visibility
-      e: Toggle Earnings column visibility
-      f: Toggle Pool fees column visibility
-      i: Toggle Earning Bias column visibility
-      m: Toggle Miner Fees column visibility
-      n: Toggle CoinName column visibility
-      o: Toggle Listing all optimal miners
-      p: Toggle Pool column visibility
-      r: Toggle Profit Bias column visibility
-      s: Toggle UI Style [full or light]
-      t: Toggle Profit column visibility
-      u: Toggle User column visibility
-      w: Toggle Power usage column visibility
-      y: Toggle Currency column visibility
+      1: Toggle Listing pool balances (currently off)
+      2: Toggle Listing all optimal miners (currently off)
+      3: Toggle UI style [full or light] (currently light)
+
+      a: Toggle 'Accuracy' column visibility (currently on)
+      c: Toggle 'PowerCost' column visibility (currently on)
+      e: Toggle 'Earnings' column visibility (currently off)
+      f: Toggle Pool 'Fees' column visibility (currently on)
+      i: Toggle 'EarningBias' column visibility (currently on)
+      m: Toggle Miner 'Fees' column visibility (currently on)
+      n: Toggle 'CoinName' column visibility (currently on)
+      p: Toggle 'Pool' column visibility (currently on)
+      r: Toggle 'ProfitBias' column visibility (currently on)
+      t: Toggle 'Profit' column visibility (currently off)
+      u: Toggle 'User' column visibility (currently on)
+      w: Toggle 'PowerConsumption' column visibility (currently on)
+      y: Toggle 'Currency' column visibility (currently on)
 
 ***Requirements***
 
