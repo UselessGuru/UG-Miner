@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -in @("AMD", "INTEL") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
@@ -103,14 +103,14 @@ If ($Algorithms) {
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
                         $ExcludeGPUModel = $_.ExcludeGPUModel
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ (-not $ExcludeGPUModel -or $_.Model -notmatch $ExcludeGPUModel) -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        If ($SupportedMinerDevices = $MinerDevices.Where({ (-not $ExcludeGPUModel -or $_.Model -notmatch $ExcludeGPUModel) -and $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $ExcludePools = $_.ExcludePools
                             ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) })) { 
                                 ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) })) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMinerDevices = $AvailableMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 

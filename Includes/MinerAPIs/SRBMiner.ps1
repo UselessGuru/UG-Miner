@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\SRBminer.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 Class SRBMiner : Miner { 
@@ -65,7 +65,7 @@ Class SRBMiner : Miner {
 
         If ($HashRate.PSObject.Properties.Value -gt 0) { 
             If ($this.ReadPowerConsumption) { 
-                $PowerConsumption = [Double]($Data.gpu_devices | Measure-Object asic_power -Sum | Select-Object -ExpandProperty Sum)
+                $PowerConsumption = [Double]($Data.gpu_devices | Measure-Object asic_power -Sum).Sum
                 If (-not $PowerConsumption) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }

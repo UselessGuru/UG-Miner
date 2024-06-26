@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
@@ -104,7 +104,7 @@ If ($Algorithms) {
                 $Algorithms.ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                                 $PrerequisitePath = $Variables.VerthashDatPath
@@ -120,7 +120,7 @@ If ($Algorithms) {
                                 ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) })) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMinerDevices = $AvailableMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 

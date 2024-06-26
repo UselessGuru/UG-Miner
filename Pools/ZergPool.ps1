@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 Param(
@@ -95,7 +95,7 @@ If ($DivisorMultiplier -and $Regions) {
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Request.$Pool.Fees / 100
-                    Host                     = $PoolHost
+                    Host                     = $PoolHost.toLower()
                     Key                      = $Key
                     MiningCurrency           = If ($Currency) { $Currency } Else { "" }
                     Name                     = $Name

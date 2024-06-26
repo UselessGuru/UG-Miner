@@ -24,7 +24,6 @@
             data-detail-view="true"
             data-disable-control-when-search="true"
             data-filter-control="true"
-            data-group-by="true"
             data-group-by-collapsed-groups=""
             data-group-by-field="Name"
             data-group-by-show-toggle-icon="true"
@@ -120,13 +119,16 @@
               async: 'true',
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 26,
-
+              groupBy: !config.MinerUseBestPoolsOnly,
               onPostBody: function () {
+                // $table.bootstrapTable({ groupBy: false})
                 if (this.data.length > 0) {
-                  $("td.bs-checkbox").each(function () {
-                    this.disabled = 'true';
-                    this.style.opacity = 0;
-                  });
+                  if (!config.MinerUseBestPoolsOnly) {
+                    $("td.bs-checkbox").each(function () {
+                      this.disabled = 'true';
+                      this.style.opacity = 0;
+                    });
+                  };
                   if (config.UseColorForMinerStatus == true) {
                     $(".statuscolor").each(function () {
                       if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());

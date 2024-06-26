@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"455.23") }))) { Return }
@@ -100,7 +100,7 @@ If ($Algorithms) {
                 ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             $ExcludePools = $_.ExcludePools
                             ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count })) { 
@@ -108,7 +108,7 @@ If ($Algorithms) {
                                     $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMinerDevices = $AvailableMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -ge $MinMemGiB })) { 
+                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 

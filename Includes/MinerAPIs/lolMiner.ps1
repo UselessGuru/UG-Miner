@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 Class lolMiner : Miner { 
@@ -86,7 +86,7 @@ Class lolMiner : Miner {
 
         If ($HashRate.PSObject.Properties.Value -gt 0) { 
             If ($this.ReadPowerConsumption) { 
-                $PowerConsumption = [Double]($Data.Workers | Measure-Object Power -Sum | Select-Object -ExpandProperty Sum)
+                $PowerConsumption = [Double]($Data.Workers | Measure-Object Power -Sum).Sum
                 If (-not $PowerConsumption) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }

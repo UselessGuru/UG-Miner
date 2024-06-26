@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 using module .\Include.psm1
@@ -618,16 +618,16 @@ Do {
                             Remove-Variable WatchdogTimer, Worker -ErrorAction Ignore
                         }
                         If ($Config.BadShareRatioThreshold -gt 0) { 
-                            If ($LatestMinerSharesData = ($Miner.Data | Select-Object -Last 1).Shares) { 
+                            If ($MinerData = ($Miner.Data | Select-Object -Last 1).Shares) { 
                                 ForEach ($Algorithm in $Miner.Algorithms) { 
-                                    If ($LatestMinerSharesData.$Algorithm -and $LatestMinerSharesData.$Algorithm[1] -gt 0 -and $LatestMinerSharesData.$Algorithm[3] -gt [Math]::Floor(1 / $Config.BadShareRatioThreshold) -and $LatestMinerSharesData.$Algorithm[1] / $LatestMinerSharesData.$Algorithm[3] -gt $Config.BadShareRatioThreshold) { 
-                                        $Miner.StatusInfo = "'$($Miner.Info)' stopped. Too many bad shares (Shares Total = $($LatestMinerSharesData.$Algorithm[3]), Rejected = $($LatestMinerSharesData.$Algorithm[1]))"
+                                    If ($MinerData.$Algorithm -and $MinerData.$Algorithm[1] -gt 0 -and $MinerData.$Algorithm[3] -gt [Math]::Floor(1 / $Config.BadShareRatioThreshold) -and $MinerData.$Algorithm[1] / $MinerData.$Algorithm[3] -gt $Config.BadShareRatioThreshold) { 
+                                        $Miner.StatusInfo = "'$($Miner.Info)' stopped. Too many bad shares (Shares Total = $($MinerData.$Algorithm[3]), Rejected = $($MinerData.$Algorithm[1]))"
                                         $Miner.SetStatus([MinerStatus]::Failed)
                                         $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                     }
                                 }
                             }
-                            Remove-Variable Algorithm, LatestMinerSharesData -ErrorAction Ignore
+                            Remove-Variable Algorithm, MinerData -ErrorAction Ignore
                         }
                     }
                     Else { 
@@ -663,9 +663,9 @@ Do {
 
                         ForEach ($Worker in $Miner.Workers) { 
                             $Algorithm = $Worker.Pool.Algorithm
-                            $LatestMinerSharesData = ($Miner.Data[-1]).Shares
-                            If ($Miner.Data.Count -gt $Miner.MinDataSample -and -not $Miner.Benchmark -and $Config.SubtractBadShares -and $LatestMinerSharesData.$Algorithm -gt 0) { # Need $Miner.MinDataSample shares before adjusting hashrate
-                                $Factor = (1 - $LatestMinerSharesData.$Algorithm[1] / $LatestMinerSharesData.$Algorithm[3])
+                            $MinerData = ($Miner.Data[-1]).Shares
+                            If ($Miner.Data.Count -gt $Miner.MinDataSample -and -not $Miner.Benchmark -and $Config.SubtractBadShares -and $MinerData.$Algorithm -gt 0) { # Need $Miner.MinDataSample shares before adjusting hashrate
+                                $Factor = (1 - $MinerData.$Algorithm[1] / $MinerData.$Algorithm[3])
                                 $MinerHashrates.$Algorithm *= $Factor
                             } 
                             Else { 
@@ -674,7 +674,7 @@ Do {
                             $StatName = "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                             $Stat = Set-Stat -Name $StatName -Value $MinerHashrates.$Algorithm -Duration $Stat_Span -FaultDetection ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Variables.WatchdogCount) -ToleranceExceeded ($Variables.WatchdogCount + 1)
                             If ($Stat.Updated -gt $Miner.StatStart) { 
-                                Write-Message -Level Info "Saved hashrate for '$($StatName -replace '_Hashrate$')': $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace ' ')$(If ($Factor -le 0.999) { " (adjusted by factor $($Factor.ToString('N3')) [Shares total: $($LatestMinerSharesData.$Algorithm[2]), rejected: $($LatestMinerSharesData.$Algorithm[1])])" })$(If ($Miner.Benchmark) { " [Benchmark done] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))" })."
+                                Write-Message -Level Info "Saved hashrate for '$($StatName -replace '_Hashrate$')': $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace ' ')$(If ($Factor -le 0.999) { " (adjusted by factor $($Factor.ToString('N3')) [Shares total: $($MinerData.$Algorithm[2]), rejected: $($MinerData.$Algorithm[1])])" })$(If ($Miner.Benchmark) { " [Benchmark done] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))" })."
                                 $Miner.StatStart = $Miner.StatEnd
                                 $Variables.AlgorithmsLastUsed.($Worker.Pool.Algorithm) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; MinerName = $Miner.Name }
                                 $Variables.PoolsLastUsed.($Worker.Pool.Name) = $Stat.Updated # most likely this will count at the pool to keep balances alive
@@ -705,7 +705,7 @@ Do {
                             }
                         }
                     }
-                    Remove-Variable Algorithm, CollectedHashrateFactor, CollectedPowerConsumption, LatestMinerSharesData, Miner_Hashrates, Miner_PowerConsumption, Stat, Stat_Name, Stat_Span, Worker -ErrorAction Ignore
+                    Remove-Variable Algorithm, CollectedHashrateFactor, CollectedPowerConsumption, MinerData, MinerHashrates, MinerPowerConsumption, Stat, StatName, StatSpan, Worker -ErrorAction Ignore
                 }
             }
             Remove-Variable Miner -ErrorAction Ignore
@@ -860,6 +860,7 @@ Do {
                         }
                     }
                 )
+                Remove-Variable ReasonableEarning -ErrorAction Ignore
             }
 
             $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
@@ -978,13 +979,13 @@ Do {
                 If ($Variables.Downloader.State -ne "Running") { 
                     # Download miner binaries
                     Write-Message -Level Info "Some miners binaries are missing ($($DownloadList.Count) item$(If ($DownloadList.Count -ne 1) { "s" })), starting downloader..."
-                    $Downloader_Parameters = @{ 
+                    $DownloaderParameters = @{ 
                         Config = $Config
                         DownloadList = $DownloadList
                         Variables = $Variables
                     }
-                    $Variables.Downloader = Start-ThreadJob -Name Downloader -StreamingHost $null -FilePath ".\Includes\Downloader.ps1" -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Variables.MainPath)'")) -ArgumentList $Downloader_Parameters -ThrottleLimit (2 * $Variables.Devices.Count + 2)
-                    Remove-Variable Downloader_Parameters
+                    $Variables.Downloader = Start-ThreadJob -Name Downloader -StreamingHost $null -FilePath ".\Includes\Downloader.ps1" -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Variables.MainPath)'")) -ArgumentList $DownloaderParameters -ThrottleLimit (2 * $Variables.Devices.Count + 2)
+                    Remove-Variable DownloaderParameters
                 }
                 ElseIf (-not $Miners.Where({ $_.Available })) { 
                     Write-Message -Level Info "Waiting 30 seconds for downloader to install binaries..."
@@ -1042,7 +1043,7 @@ Do {
                     Remove-Variable DeviceNames, MinerDeviceNamesCombinations -ErrorAction Ignore
 
                     # Get smallest $Bias
-                    # Hack: Temporarily make all bias -ge 0 by adding smallest bias, following produces wrong sort order when some profits are negative
+                    # Hack: Temporarily make all bias -ge 0 by adding smallest bias, MinerBest produces wrong sort order when some profits are negative
                     $SmallestBias = $Variables.MinersBestPerDevice.$Bias | Sort-Object -Top 1
                     $MinerCombinations.ForEach({ $_.Combination.ForEach({ $_.$Bias += $SmallestBias }) })
                     $MinersBest = @(($MinerCombinations | Sort-Object -Descending { @($_.Combination.Where({ [Double]::IsNaN($_.$Bias) })).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination)
@@ -1050,15 +1051,15 @@ Do {
 
                     # Revert running miner bonus
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias /= $RunningMinerBonusFactor })
-                    Remove-Variable Bias, MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
+                    Remove-Variable MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
                 }
 
-                $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum | Select-Object -ExpandProperty Sum)), 0 | Measure-Object -Maximum).Maximum
+                $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
                 $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency))
-                $Variables.MiningEarning = [Double]($MinersBest | Measure-Object Earning_Bias -Sum | Select-Object -ExpandProperty Sum)
-                $Variables.MiningPowerCost = [Double]($MinersBest | Measure-Object PowerCost -Sum | Select-Object -ExpandProperty Sum)
-                $Variables.MiningPowerConsumption = [Double]($MinersBest | Measure-Object PowerConsumption -Sum | Select-Object -ExpandProperty Sum)
-                $Variables.MiningProfit = [Double](($MinersBest | Measure-Object Profit_Bias -Sum | Select-Object -ExpandProperty Sum) - $Variables.BasePowerCost)
+                $Variables.MiningEarning = [Double]($MinersBest | Measure-Object Earning_Bias -Sum).Sum
+                $Variables.MiningPowerCost = [Double]($MinersBest | Measure-Object PowerCost -Sum).Sum
+                $Variables.MiningPowerConsumption = [Double]($MinersBest | Measure-Object PowerConsumption -Sum).Sum
+                $Variables.MiningProfit = [Double](($MinersBest | Measure-Object Profit_Bias -Sum).Sum - $Variables.BasePowerCost)
             }
             Else { 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum).Maximum
@@ -1066,6 +1067,7 @@ Do {
                 $Variables.MinersOptimal = $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinations = $MinersBest = [Miner[]]@()
                 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
             }
+            Remove-Variable Bias -ErrorAction Ignore
         }
 
         $Variables.MinersNeedingBenchmark = @($Miners.Where({ $_.Available -and $_.Benchmark }) | Sort-Object -Property Name -Unique)
@@ -1145,7 +1147,7 @@ Do {
             }
         }
 
-        If (-not $MinersBest -and $Miners) { $Miners.ForEach({ $_.Best = $false }) }
+        If (-not $MinersBest) { $Miners.ForEach({ $_.Best = $false }) }
 
         # Stop running miners
         ForEach ($Miner in @($Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) }) | Sort-Object { [String]$_.DeviceNames })) { 
@@ -1166,8 +1168,8 @@ Do {
                             $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
                         }
                     }
-                    Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
                     $Miner.SetStatus([MinerStatus]::Idle)
+                    Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
                 }
             }
             $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
@@ -1494,13 +1496,6 @@ Do {
             # - when not benchmnarking: Interval time is over
         } While ($Variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and ([DateTime]::Now.ToUniversalTime() -le $Variables.EndCycleTime -or $Variables.BenchmarkingOrMeasuringMiners))
 
-        Get-Job -State "Completed" | Receive-Job | Out-Null
-        Get-Job -State "Completed" | Remove-Job -Force -ErrorAction Ignore | Out-Null
-        Get-Job -State "Failed" | Receive-Job | Out-Null
-        Get-Job -State "Failed" | Remove-Job -Force -ErrorAction Ignore | Out-Null
-        Get-Job -State "Stopped" | Receive-Job | Out-Null
-        Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
-
         # Expire brains loop to collect data
         If ($Variables.EndCycleMessage) { 
             $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
@@ -1538,12 +1533,5 @@ ForEach ($Miner in $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryR
     $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
 }
 Remove-Variable Miner -ErrorAction Ignore
-
-Get-Job -State "Completed" | Receive-Job | Out-Null
-Get-Job -State "Completed" | Remove-Job -Force -ErrorAction Ignore | Out-Null
-Get-Job -State "Failed" | Receive-Job | Out-Null
-Get-Job -State "Failed" | Remove-Job -Force -ErrorAction Ignore | Out-Null
-Get-Job -State "Stopped" | Receive-Job | Out-Null
-Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
 
 If ($Variables.IdleDetectionRunspace.MiningStatus -ne "Suspended") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }

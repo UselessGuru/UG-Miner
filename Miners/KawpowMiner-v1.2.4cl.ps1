@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.11
-Version date:     2024/06/23
+Version:        6.2.12
+Version date:     2024/06/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { Return }
@@ -34,27 +34,27 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].Name -notin $_.ExcludePools })
+# $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].Name -notin $_.ExcludePools })
 
 If ($Algorithms) { 
 
     ($Devices | Select-Object Model -Unique).ForEach(
         { 
-            If ($Miner_Devices = $Devices | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($Miner_Devices.Id | Sort-Object -Top 1) + 1
+            If ($MinerDevices = $Devices | Where-Object Model -EQ $_.Model) { 
+                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
                 $Algorithms.ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($AvailableMiner_Devices = $Miner_Devices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
-                            $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
-
+                            # $ExcludePools = $_.ExcludePools
+                            # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
+                            ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
                                 $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
-                                If ($AvailableMiner_Devices = $AvailableMiner_Devices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                    $Miner_Name = "$Name-$($AvailableMiner_Devices.Count)x$($AvailableMiner_Devices.Model | Select-Object -Unique)-$($Pool.AlgorithmVariant)"
+                                    $Miner_Name = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool.AlgorithmVariant)"
 
                                     $Protocol = Switch ($Pool.Protocol) { 
                                         "ethproxy"     { "stratum1" }
@@ -66,8 +66,8 @@ If ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API         = "EthMiner"
-                                        Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode("$($Pool.User)")):$([System.Web.HttpUtility]::UrlEncode($($Pool.Pass)))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:$($MinerAPIPort) --cl-devices $(($AvailableMiner_Devices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                        DeviceNames = $AvailableMiner_Devices.Name
+                                        Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode("$($Pool.User)")):$([System.Web.HttpUtility]::UrlEncode($($Pool.Pass)))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:$($MinerAPIPort) --cl-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                        DeviceNames = $AvailableMinerDevices.Name
                                         EnvVars     = @("SSL_NOVERIFY=TRUE")
                                         Fee         = @(0) # Dev fee
                                         MinerSet    = $_.MinerSet

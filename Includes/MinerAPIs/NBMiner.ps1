@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NBMiner.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 Class NBMiner : Miner { 
@@ -62,7 +62,7 @@ Class NBMiner : Miner {
 
         If ($HashRate.PSObject.Properties.Value -gt 0) { 
             If ($this.ReadPowerConsumption) { 
-                $PowerConsumption = [Double]($Data.miner | Measure-Object total_power_consume -Sum | Select-Object -ExpandProperty Sum)
+                $PowerConsumption = [Double]($Data.miner | Measure-Object total_power_consume -Sum).Sum
                 If (-not $PowerConsumption) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }

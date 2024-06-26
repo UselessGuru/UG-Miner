@@ -2,6 +2,18 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 - UG-Miner has issues with new Windows Terminal when default terminal application is set to 'Let windows decide' or 'Windows Terminal'. -> It is recommeded to set it to 'Windows Console Host'
 
+
+ChangeLog UG-Miner 6.2.12 2024/06/26
+====================================
+
+Enhancements:
+- Core: Minor code optimizations
+
+Fixes:
+- TeamBlackMiner-v2.25: Invalid command line for dual mining with EvrProgPow
+- Various miners: Not creating all possible miner objects (no available devices enumerated)
+
+
 ChangeLog UG-Miner 6.2.11 2024/06/23
 ====================================
 

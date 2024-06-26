@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^RX5[5|6]0$" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -102,51 +102,51 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("YescryptR32");                    Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 0);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm yescryptr32") }
     [PSCustomObject]@{ Algorithms = @("XelisHash");                      Type = "AMD"; Fee = @(0.02);           MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(0, 20);  ExcludeGPUArchitecture = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm xelishash") }
 
-    [PSCustomObject]@{ Algorithms = @("Argon2d16000");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2d_16000") }
-    [PSCustomObject]@{ Algorithms = @("Argon2d500");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2d_dynamic") }
-    [PSCustomObject]@{ Algorithms = @("Argon2Chukwa");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2id_chukwa") }
-    [PSCustomObject]@{ Algorithms = @("Argon2Chukwa2");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2id_chukwa2") }
-    [PSCustomObject]@{ Algorithms = @("Aurum");                Type = "CPU"; Fee = @(0.02);   MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm aurum") }
-#   [PSCustomObject]@{ Algorithms = @("CryptonightGpu");       Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(120, 30); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_gpu --cpu-threads-intensity 2") } # Not profitable with CPU
-#   [PSCustomObject]@{ Algorithms = @("CryptonightHeavyxXhv"); Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_xhv --cpu-threads-intensity 2") } # Not profitable with CPU
-#   [PSCustomObject]@{ Algorithms = @("CryptonightTurtle");    Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_turtle --cpu-threads-intensity 2") } # Not profitable with CPU
-#   [PSCustomObject]@{ Algorithms = @("CryptonightUpx");       Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_upx --cpu-threads-intensity 2") } # Not profitable with CPU
-    [PSCustomObject]@{ Algorithms = @("CpuPower");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cpupower") }
-#   [PSCustomObject]@{ Algorithms = @("CurveHash");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm curvehash") } # Not profitable with CPU
-    [PSCustomObject]@{ Algorithms = @("Ghostrider");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(180, 60); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm ghostrider") }
-    [PSCustomObject]@{ Algorithms = @("Lyra2v2Webchain");      Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm lyra2v2_webchain") }
-    [PSCustomObject]@{ Algorithms = @("MemeHash");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 30);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm memehash") }
-#   [PSCustomObject]@{ Algorithms = @("Mike");                 Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 60);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm mike") } # No results in time
-    [PSCustomObject]@{ Algorithms = @("MinotaurX");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(40, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm minotaurx") }
-    [PSCustomObject]@{ Algorithms = @("Panthera");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm panthera") }
-    [PSCustomObject]@{ Algorithms = @("Pufferfish2BMB");       Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm pufferfish2bmb") }
-    [PSCustomObject]@{ Algorithms = @("RandomGrft");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomgrft --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomL");              Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randoml --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomSfx");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomsfx --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomNevo");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomnevo --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomTuske");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomtuske --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomxArq");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
-    [PSCustomObject]@{ Algorithms = @("RandomxEpic");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomepic --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomxKeva");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomkeva --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomxScash");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomscash --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomXeq");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomxeq --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("RandomYada");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomyada --Randomx-use-1gb-pages") }
-    [PSCustomObject]@{ Algorithms = @("SHA3d");                Type = "CPU"; Fee = @(0.02);   MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm flex") }
-    [PSCustomObject]@{ Algorithms = @("VerusHash");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm verushash") }
-    [PSCustomObject]@{ Algorithms = @("YescryptR16");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescryptr16") }
-    [PSCustomObject]@{ Algorithms = @("YescryptR32");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 45);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescryptr32") }
-    [PSCustomObject]@{ Algorithms = @("YescryptR8");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescryptr8") }
-    [PSCustomObject]@{ Algorithms = @("Yespower");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 40);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespower") }
-    [PSCustomObject]@{ Algorithms = @("Yespower2b");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespower2b") }
-    [PSCustomObject]@{ Algorithms = @("YespowerIc");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespoweric") }
-    [PSCustomObject]@{ Algorithms = @("YespowerLtncg");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerltncg") }
-    [PSCustomObject]@{ Algorithms = @("YespowerMgpc");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowermgpc") }
-    [PSCustomObject]@{ Algorithms = @("YespowerR16");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerr16") }
-    [PSCustomObject]@{ Algorithms = @("YespowerSugar");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowersugar") }
-    [PSCustomObject]@{ Algorithms = @("YespowerTide");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowertide") }
-    [PSCustomObject]@{ Algorithms = @("YespowerUrx");          Type = "CPU"; Fee = @(0);      MinerSet = 1; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerurx") }
-    [PSCustomObject]@{ Algorithms = @("Yescrypt");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescrypt") }
-    [PSCustomObject]@{ Algorithms = @("XelisHash");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm xelishash") }
+#     [PSCustomObject]@{ Algorithms = @("Argon2d16000");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2d_16000") }
+#     [PSCustomObject]@{ Algorithms = @("Argon2d500");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2d_dynamic") }
+#     [PSCustomObject]@{ Algorithms = @("Argon2Chukwa");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2id_chukwa") }
+#     [PSCustomObject]@{ Algorithms = @("Argon2Chukwa2");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2id_chukwa2") }
+#     [PSCustomObject]@{ Algorithms = @("Aurum");                Type = "CPU"; Fee = @(0.02);   MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm aurum") }
+# #   [PSCustomObject]@{ Algorithms = @("CryptonightGpu");       Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(120, 30); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_gpu --cpu-threads-intensity 2") } # Not profitable with CPU
+# #   [PSCustomObject]@{ Algorithms = @("CryptonightHeavyxXhv"); Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_xhv --cpu-threads-intensity 2") } # Not profitable with CPU
+# #   [PSCustomObject]@{ Algorithms = @("CryptonightTurtle");    Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_turtle --cpu-threads-intensity 2") } # Not profitable with CPU
+# #   [PSCustomObject]@{ Algorithms = @("CryptonightUpx");       Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cryptonight_upx --cpu-threads-intensity 2") } # Not profitable with CPU
+#     [PSCustomObject]@{ Algorithms = @("CpuPower");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm cpupower") }
+# #   [PSCustomObject]@{ Algorithms = @("CurveHash");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm curvehash") } # Not profitable with CPU
+#     [PSCustomObject]@{ Algorithms = @("Ghostrider");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(180, 60); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm ghostrider") }
+#     [PSCustomObject]@{ Algorithms = @("Lyra2v2Webchain");      Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm lyra2v2_webchain") }
+#     [PSCustomObject]@{ Algorithms = @("MemeHash");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 30);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm memehash") }
+# #   [PSCustomObject]@{ Algorithms = @("Mike");                 Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 60);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm mike") } # No results in time
+#     [PSCustomObject]@{ Algorithms = @("MinotaurX");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(40, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm minotaurx") }
+#     [PSCustomObject]@{ Algorithms = @("Panthera");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm panthera") }
+#     [PSCustomObject]@{ Algorithms = @("Pufferfish2BMB");       Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm pufferfish2bmb") }
+#     [PSCustomObject]@{ Algorithms = @("RandomGrft");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomgrft --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomL");              Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randoml --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomSfx");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomsfx --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomNevo");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomnevo --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomTuske");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomtuske --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomxArq");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
+#     [PSCustomObject]@{ Algorithms = @("RandomxEpic");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomepic --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomxKeva");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomkeva --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomxScash");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomscash --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomXeq");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomxeq --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("RandomYada");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomyada --Randomx-use-1gb-pages") }
+#     [PSCustomObject]@{ Algorithms = @("SHA3d");                Type = "CPU"; Fee = @(0.02);   MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm flex") }
+# #   [PSCustomObject]@{ Algorithms = @("VerusHash");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm verushash") } # https://github.com/RainbowMiner/RainbowMiner/issues/2816
+#     [PSCustomObject]@{ Algorithms = @("YescryptR16");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescryptr16") }
+#     [PSCustomObject]@{ Algorithms = @("YescryptR32");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 45);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescryptr32") }
+#     [PSCustomObject]@{ Algorithms = @("YescryptR8");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescryptr8") }
+#     [PSCustomObject]@{ Algorithms = @("Yespower");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 40);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespower") }
+#     [PSCustomObject]@{ Algorithms = @("Yespower2b");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespower2b") }
+#     [PSCustomObject]@{ Algorithms = @("YespowerIc");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespoweric") }
+#     [PSCustomObject]@{ Algorithms = @("YespowerLtncg");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerltncg") }
+#     [PSCustomObject]@{ Algorithms = @("YespowerMgpc");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowermgpc") }
+#     [PSCustomObject]@{ Algorithms = @("YespowerR16");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerr16") }
+#     [PSCustomObject]@{ Algorithms = @("YespowerSugar");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowersugar") }
+#     [PSCustomObject]@{ Algorithms = @("YespowerTide");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowertide") }
+#     [PSCustomObject]@{ Algorithms = @("YespowerUrx");          Type = "CPU"; Fee = @(0);      MinerSet = 1; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerurx") }
+#     [PSCustomObject]@{ Algorithms = @("Yescrypt");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescrypt") }
+#     [PSCustomObject]@{ Algorithms = @("XelisHash");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm xelishash") }
 
     [PSCustomObject]@{ Algorithms = @("Autolykos2");                     Type = "INTEL"; Fee = @(0.01);           MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 30); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm autolykos2") }
     [PSCustomObject]@{ Algorithms = @("Autolykos2", "Blake3");           Type = "INTEL"; Fee = @(0.01, 0.0085);   MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm autolykos2", " --algorithm blake3_alephium") }
@@ -285,7 +285,7 @@ If ($Algorithms) {
                 ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             If ($_.Algorithms[0] -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                                 $PrerequisitePath = $Variables.VerthashDatPath
@@ -302,7 +302,7 @@ If ($Algorithms) {
                                     $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMinerDevices = $AvailableMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -gt $MinMemGiB })) { 
+                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -gt $MinMemGiB })) { 
 
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.GpuDualMaxLoss) { "-$($_.GpuDualMaxLoss)" })"
 

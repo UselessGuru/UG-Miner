@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -66,7 +66,7 @@ If ($Algorithms) {
                 $Algorithms.ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             # $ExcludePools = $_.ExcludePools
                             # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
@@ -74,7 +74,7 @@ If ($Algorithms) {
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                                 If ($_.Algorithm -eq "KawPow" -and $MinMemGB -lt 2) { $MinMemGiB = 4 } # No hash rates in time for GPUs with 2GB
-                                If ($AvailableMinerDevices = $AvailableMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool.AlgorithmVariant)"
 

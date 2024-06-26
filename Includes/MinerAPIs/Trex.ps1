@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 Class Trex : Miner { 
@@ -64,7 +64,7 @@ Class Trex : Miner {
 
         If ($HashRate.PSObject.Properties.Value -gt 0) { 
             If ($this.ReadPowerConsumption) { 
-                $PowerConsumption = [Double]($Data.gpus | Measure-Object power -Sum | Select-Object -ExpandProperty Sum)
+                $PowerConsumption = [Double]($Data.gpus | Measure-Object power -Sum).Sum
                 If (-not $PowerConsumption) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }

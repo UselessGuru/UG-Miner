@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 using module .\Include.psm1
@@ -371,7 +371,7 @@ Do {
         }
         Remove-Variable PoolEarnings, PoolTodaysEarning -ErrorAction Ignore
 
-        $EarningsChartData = [PSCustomObject]@{ 
+        $LegacyGUIearningsChartData = [PSCustomObject]@{ 
             Labels = @(
                 ($ChartData.Group.Date | Sort-Object -Unique).ForEach(
                     { 
@@ -385,7 +385,7 @@ Do {
         Remove-Variable PoolChartData -ErrorAction Ignore
 
         $Variables.Remove("EarningsChartData")
-        $Variables.EarningsChartData = $EarningsChartData.PSObject.Copy()
+        $Variables.EarningsChartData = $LegacyGUIearningsChartData.PSObject.Copy()
         $Variables.EarningsChartData | ConvertTo-Json | Out-File -LiteralPath ".\Data\EarningsChartData.json" -Force -ErrorAction Ignore
 
         # Keep earnings for max. 1 year

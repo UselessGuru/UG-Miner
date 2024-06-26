@@ -132,7 +132,7 @@ function formatTime(seconds) {
 }
 
 function formatDuration(value) {
-  return formatTime(parseInt(value.split(':')[0] * 60 * 60) + parseInt(value.split(':')[1]  * 60) + parseInt(value.split(':')[2]))
+  return formatTime(parseInt(value.split(':')[0] * 3600) + parseInt(value.split(':')[1] * 60) + parseInt(value.split(':')[2]))
 }
 
 function formatHashrateValue(value) {

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 using module .\Includes\Include.psm1
@@ -296,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.11"
+    Version      = [System.Version]"6.2.12"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -350,7 +350,7 @@ $Variables.AllCommandLineParameters = [Ordered]@{ }
 )
 
 $Variables.MutexAddCoinName = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
-$Variables.MutexWriteMessage = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_WriteMessage")
+$Variables.MutexWriteMessage = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
 
 Write-Host "$($Variables.Branding.ProductLabel) is getting ready. Please wait..."
 
@@ -558,7 +558,7 @@ Function MainLoop {
                             $Variables.Summary = "Resuming mining.<br>System has been idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                             Write-Message -Level Verbose ($Variables.Summary -replace '<br>', ' ')
                             Write-Host ($Variables.Summary -replace '<br>', ' ')
-                            $MiningSummaryLabel.Text = ($Variables.Summary -replace '<br>', ' ')
+                            $LegacyGUIminingSummaryLabel.Text = ($Variables.Summary -replace '<br>', ' ')
                         }
                         If ($LegacyGUIform) { Update-GUIstatus }
                         Start-Core
@@ -589,7 +589,7 @@ Function MainLoop {
     }
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
-    If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $MiningSummaryLabel.Text)) { 
+    If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIminingSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
 
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
@@ -860,24 +860,24 @@ Function MainLoop {
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
         $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan]([DateTime]::Now.ToUniversalTime() - $Variables.ScriptStartTime)
-        If ($LegacyGUIForm) { 
-            $LegacyGUIForm.Text = $host.UI.RawUI.WindowTitle 
+        If ($LegacyGUIform) { 
+            $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle 
 
             # Refresh selected tab
             Update-TabControl
             If ($Variables.MyIP) { 
-                $MiningSummaryLabel.Text = ""
-                $MiningSummaryLabel.SendToBack()
-                (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $MiningSummaryLabel.Text += "`r`n$_" })
-                $MiningSummaryLabel.Text += "`r`n "
-                If ($Variables.MiningProfit -ge 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
-                ElseIf ($Variables.MiningProfit -lt 0) { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
-                Else { $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+                $LegacyGUIminingSummaryLabel.Text = ""
+                $LegacyGUIminingSummaryLabel.SendToBack()
+                (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
+                $LegacyGUIminingSummaryLabel.Text += "`r`n "
+                If ($Variables.MiningProfit -ge 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
+                ElseIf ($Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
+                Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
             }
             Else { 
                 Write-Message -Level Error $Variables.Message
-                $MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Red
-                $MiningSummaryLabel.Text = "Error: $($Variables.Summary)"
+                $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red
+                $LegacyGUIminingSummaryLabel.Text = "Error: $($Variables.Summary)"
             }
         }
 
@@ -907,7 +907,7 @@ Function MainLoop {
                         Write-Host "Projected payment date: $(If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } Else { $_.ProjectedPayDate })`n"
                     }
                 )
-                Remove-Variable Currency -ErrorAction Ignore
+                Remove-Variable Currency, mBTCfactor -ErrorAction Ignore
             }
 
             If ($Variables.MyIP) { 
@@ -917,10 +917,10 @@ Function MainLoop {
                         @{ Label = "Miner"; Expression = { $_.Name } }
                         If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "PowerCost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.MiningPowerCost -and $Variables.ShowProfitBias) { @{ Label = "ProfitBias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.MiningPowerCost -and $Variables.ShowProfit) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "PowerConsumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } }; Align = "right" } }
-                        If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "PowerCost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.Pool.Accuracy.ForEach({ "{0:P0}" -f [Double]$_ }) }; Align = "right" } }
                         @{ Label = "Algorithm"; Expression = { $_.Workers.Pool.Algorithm -join ' & ' } }
                         If ($Variables.ShowMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
@@ -1072,7 +1072,6 @@ While ($true) {
     If ($Config.LegacyGUI) { 
         If (-not $LegacyGUIform.CanSelect) { 
             . .\Includes\LegacyGUI.ps1
-            Form-Resize
         }
         # Show legacy GUI
         $LegacyGUIform.ShowDialog() | Out-Null

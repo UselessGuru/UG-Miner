@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.11
-Version date:   2024/06/23
+Version:        6.2.12
+Version date:   2024/06/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -83,7 +83,7 @@ If ($Algorithms) {
                 ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
 
                             # $ExcludePools = $_.ExcludePools
                             # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 })) { 
@@ -92,7 +92,7 @@ If ($Algorithms) {
                                 ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMinerDevices = $AvailableMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
                                         If ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
                                             If ($Pool0.DAGSizeGiB -ge 4) { Return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
                                             $AvailableMinerDevices = $AvailableMinerDevices.Where({ [Version]$_.CIM.DriverVersion -le [Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)

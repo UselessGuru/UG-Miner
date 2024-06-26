@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
 Version:        6.2.5
-Version date:   2024/06/23
+Version date:   2024/06/26
 #>
 
 Function Start-APIServer { 
@@ -775,7 +775,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/devices" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.Devices | Select-Object | Sort-Object -Property Name)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.Devices | Sort-Object -Property Name)
                                 Break
                             }
                             "/devices/enabled" { 
@@ -891,27 +891,27 @@ Function Start-APIServer {
                                 Break
                             }
                             "/pools" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.Pools | Select-Object | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.Pools | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/pools/added" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsAdded | Select-Object | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsAdded | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/pools/available" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.Pools.Where({ $_.Available }) | Select-Object | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.Pools.Where({ $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/pools/best" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsBest | Select-Object | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsBest | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/pools/expired" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsExpired | Select-Object | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsExpired | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/pools/new" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsNew | Select-Object | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsNew | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/pools/minersprimaryalgorithm" { 
@@ -935,7 +935,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/pools/updated" { 
-                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsUpdated | Select-Object | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.PoolsUpdated | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/poolreasons" { 
@@ -1007,7 +1007,7 @@ Function Start-APIServer {
                                         @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split ',' -join ' & ' })) -join '<br>' } }, 
                                         @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { "-" } })) -join ' & ' })) -join '<br>' } }, 
                                         @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } }, 
-                                        @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum) * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } }, 
+                                        @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } }, 
                                         @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } }, 
                                         @{ Name = "LastSeen"; Expression = { "$($_.date)" } }, 
                                         @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { '-' } })) -join ' & ' })) -join '<br>' } }, 
