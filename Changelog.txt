@@ -1,8 +1,8 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
-- UG-Miner has issues with new Windows Terminal when default terminal application is set to 'Let windows decide' or 'Windows Terminal'. -> It is recommeded to set it to 'Windows Console Host'
+- UG-Miner has issues with new Windows Terminal when default terminal application is set to 'Let windows decide' or 'Windows Terminal'. -> It is recommended to set it to 'Windows Console Host'
 
-ChangeLog UG-Miner 6.2.13 2024/06/30
+Changelog UG-Miner 6.2.13 2024/06/30
 ====================================
 
 Enhancements:
@@ -10,7 +10,7 @@ Enhancements:
 
 Fixes
 - Core / Includes.psm1: Functions 'Show-Console' & 'Hide-Console' broken (regression from 6.2.10)
-- Core / Includes.psm1: Function 'Write-Config' temporaily removed 'PoolsConfig' property 
+- Core / Includes.psm1: Function 'Write-Config' temporarily removed 'PoolsConfig' property 
 - Legacy GUI: 'Miners' tab sort order incorrect
 
 Miner updates:
@@ -18,7 +18,7 @@ Miner updates:
 - ZealotEnemy-v2.6.2 (removed - would only work with Nvidia drivers older than 445.*)
 
 
-ChangeLog UG-Miner 6.2.12 2024/06/26
+Changelog UG-Miner 6.2.12 2024/06/26
 ====================================
 
 Enhancements:
@@ -29,7 +29,7 @@ Fixes:
 - Various miners: Not creating all possible miner objects (no available devices enumerated)
 
 
-ChangeLog UG-Miner 6.2.11 2024/06/23
+Changelog UG-Miner 6.2.11 2024/06/23
 ====================================
 
 Enhancements:
@@ -46,7 +46,7 @@ Miner updates:
 - RplantCpu-v5.0.40
 
 
-ChangeLog UG-Miner 6.2.10 2024/06/20
+Changelog UG-Miner 6.2.10 2024/06/20
 ====================================
 
 Fixes:
@@ -63,7 +63,7 @@ Miner updates:
 - SRBMinerMulti-v2.5.7
 
 
-ChangeLog UG-Miner 6.2.9 2024/06/13
+Changelog UG-Miner 6.2.9 2024/06/13
 ===================================
 
 Enhancements:
@@ -82,7 +82,7 @@ Miner changes:
 - XmRig-v6.21.3.15
 
 
-ChangeLog UG-Miner 6.2.8 2024/06/08
+Changelog UG-Miner 6.2.8 2024/06/08
 ===================================
 
 Fixes:
@@ -103,7 +103,7 @@ Miner changes:
 - TTMiner-v2024.2.0
 
 
-ChangeLog UG-Miner 6.2.7 2024/04/18
+Changelog UG-Miner 6.2.7 2024/04/18
 ===================================
 
 Fixes:
@@ -118,7 +118,7 @@ Miner changes:
 - TeamRedMiner-v0.10.20
 
 
-ChangeLog UG-Miner 6.2.6 2024/04/14
+Changelog UG-Miner 6.2.6 2024/04/14
 ===================================
 
 Enhancements:
@@ -136,7 +136,7 @@ Miner updates:
 - BzMiner-v21.1.1
 
 
-ChangeLog UG-Miner 6.2.5 2024/04/07
+Changelog UG-Miner 6.2.5 2024/04/07
 ===================================
 
 Fixes:
@@ -152,7 +152,7 @@ Miner updates:
 - TeamRedMiner-v0.10.19
 
 
-ChangeLog UG-Miner 6.2.4 2024/04/03
+Changelog UG-Miner 6.2.4 2024/04/03
 ===================================
 
 Changes:
@@ -167,7 +167,7 @@ Miner changes:
 - TeamBlackMiner-v2.22
 
 
-ChangeLog UG-Miner 6.2.3 2024/04/02
+Changelog UG-Miner 6.2.3 2024/04/02
 ===================================
 
 Enhancements:
@@ -188,7 +188,7 @@ Miner changes:
 - SRBMinerMulti-v2.5.0
 
 
-ChangeLog UG-Miner 6.2.2 2024/03/28
+Changelog UG-Miner 6.2.2 2024/03/28
 ====================================
 
 Fixes:
@@ -200,7 +200,7 @@ Miner Updates:
 - TTMiner-v2024.1.8
 
 
-ChangeLog UG-Miner 6.2.1 2024/03/24
+Changelog UG-Miner 6.2.1 2024/03/24
 ====================================
 
 Enhancements:
@@ -220,7 +220,7 @@ Miner updates:
 - TTMiner-v2024.1.7
 
 
-ChangeLog UG-Miner 6.2.0 2024/03/19
+Changelog UG-Miner 6.2.0 2024/03/19
 ====================================
 
 Changes:
@@ -246,7 +246,7 @@ Miner updates
 - TTMiner-v2024.1.6
 
 
-ChangeLog UG-Miner 6.1.15 2024/03/16
+Changelog UG-Miner 6.1.15 2024/03/16
 ====================================
 
 Fixes:
@@ -265,7 +265,7 @@ Miner updates:
 - SRBMinerMulti-v2.4.8
 
 
-ChangeLog UG-Miner 6.1.14 2024/03/06
+Changelog UG-Miner 6.1.14 2024/03/06
 ====================================
 
 Fixes:
@@ -276,7 +276,7 @@ Improvements:
 - UG-Miner.ps1: Remove obsolete code; improve performance
 
 
-ChangeLog UG-Miner 6.1.13 2024/02/28
+Changelog UG-Miner 6.1.13 2024/02/28
 ====================================
 
 Changes:
@@ -286,7 +286,7 @@ Miner changes:
 - TeamBlackMiner-v2.20
 
 
-ChangeLog UG-Miner 6.1.12 2024/02/25
+Changelog UG-Miner 6.1.12 2024/02/25
 ====================================
 
 Improvements:
@@ -297,7 +297,7 @@ Miner updates:
 - TeamBlackMiner-v2.19
 
 
-ChangeLog UG-Miner 6.1.11 2024/02/20
+Changelog UG-Miner 6.1.11 2024/02/20
 ====================================
 
 Miner updates:
@@ -305,7 +305,7 @@ Miner updates:
 - TTMiner-v2024.1.3
 
 
-ChangeLog UG-Miner 6.1.10 2024/02/15
+Changelog UG-Miner 6.1.10 2024/02/15
 ====================================
 
 Brains:
@@ -325,7 +325,7 @@ Pool changes:
 - HiveOn, MiningPoolHub & NiceHash: Reduce pool timeout wait time
 
 
-ChangeLog UG-Miner 6.1.9 2024/02/11
+Changelog UG-Miner 6.1.9 2024/02/11
 ===================================
 
 Fixes:
@@ -337,7 +337,7 @@ Miner changes:
 - TeamRedMiner-v2.4.7: Creating duplicate miner objects
 
 
-ChangeLog UG-Miner 6.1.8 2024/02/10
+Changelog UG-Miner 6.1.8 2024/02/10
 ===================================
 
 Changes:
@@ -357,7 +357,7 @@ Miner updates:
 - SRBMinerMulti-v2.4.7
 
 
-ChangeLog UG-Miner 6.1.7 2024/02/08
+Changelog UG-Miner 6.1.7 2024/02/08
 ===================================
 
 Enhancements:
@@ -369,7 +369,7 @@ Fixes:
 - TeamBlackMiner-v2-17: Error invalid parameter 'System.Collections.Hashtable [1]' (regression from 6.1.6)
 
 
-ChangeLog UG-Miner 6.1.6 2024/02/03
+Changelog UG-Miner 6.1.6 2024/02/03
 ===================================
 
 Fixes:
@@ -383,7 +383,7 @@ Miner updates:
 - OneZeroMiner-v1.2.9
 
 
-ChangeLog UG-Miner 6.1.5 2024/02/01
+Changelog UG-Miner 6.1.5 2024/02/01
 ===================================
 
 Miner changes:
@@ -393,7 +393,7 @@ Miner changes:
 - TeamRedMiner-v0.10.17
 
 
-ChangeLog UG-Miner 6.1.4 2024/01/28
+Changelog UG-Miner 6.1.4 2024/01/28
 ===================================
 
 Enhancements:
@@ -409,7 +409,7 @@ Miner changes:
 - Rigel-v1.14.1
 
 
-ChangeLog UG-Miner 6.1.3 2024/01/26
+Changelog UG-Miner 6.1.3 2024/01/26
 ===================================
 
 Fixes:
@@ -430,7 +430,7 @@ Pool & Brain changes:
 - ZPool: Prefer currencies that can be converted
 
 
-ChangeLog UG-Miner 6.1.2 2024/01/20
+Changelog UG-Miner 6.1.2 2024/01/20
 ===================================
 
 Fixes:
@@ -447,7 +447,7 @@ Miner updates:
 - Rigel-v1.13.2
 
 
-ChangeLog UG-Miner 6.1.1 2024/01/17
+Changelog UG-Miner 6.1.1 2024/01/17
 ===================================
 
 Changes:
@@ -458,7 +458,7 @@ Miner changes:
 - Rigel-v1.13.1
 
 
-ChangeLog UG-Miner 6.1.0 2024/01/15
+Changelog UG-Miner 6.1.0 2024/01/15
 ===================================
 
 Changes:
@@ -475,7 +475,7 @@ Miner changes:
 - Rigel-v1.13.0
 
 
-ChangeLog UG-Miner 6.0.4 2024/01/10
+Changelog UG-Miner 6.0.4 2024/01/10
 ===================================
 
 Fixes:
@@ -485,7 +485,7 @@ Fixes:
 - Main text window: Invalid best miner listed when '$IgnorePowerCost -eq $true'
 
 
-ChangeLog UG-Miner 6.0.3 2024/01/08
+Changelog UG-Miner 6.0.3 2024/01/08
 ===================================
 
 Fixes:
@@ -499,7 +499,7 @@ Miner changes:
 - MiniZ-v2.2c: Disable 'Equihash1927' for RX 7900
 
 
-ChangeLog UG-Miner 6.0.2 2024/01/07
+Changelog UG-Miner 6.0.2 2024/01/07
 ===================================
 
 Fixes:
@@ -510,7 +510,7 @@ Miner changes:
 - SRBMinerMulti-v2.4.5
 
 
-ChangeLog UG-Miner 6.0.1 2024/01/05
+Changelog UG-Miner 6.0.1 2024/01/05
 ===================================
 
 Changes:
@@ -534,7 +534,7 @@ Web GUI:
 - Fix 'm' not added to culumn headers
 
 
-ChangeLog UG-Miner 6.0.0 2024/01/01
+Changelog UG-Miner 6.0.0 2024/01/01
 ===================================
 
 Initial release.
