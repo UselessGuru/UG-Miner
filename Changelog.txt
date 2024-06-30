@@ -10,7 +10,7 @@ Enhancements:
 
 Fixes
 - Core / Includes.psm1: Functions 'Show-Console' & 'Hide-Console' broken (regression from 6.2.10)
-- Core / Includes.psm1: Function 'Write-Config' temporaily removed 'PoosConfig' property 
+- Core / Includes.psm1: Function 'Write-Config' temporaily removed 'PoolsConfig' property 
 - Legacy GUI: 'Miners' tab sort order incorrect
 
 Miner updates:
