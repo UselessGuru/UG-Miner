@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Param(
@@ -48,17 +48,18 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
             $Request = $Variables.BrainData.$Name
         }
         Else { 
-            $Request = Get-Content $BrainDataFile -ErrorAction Stop | ConvertFrom-Json
+            $Request = $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
         }
     }
     Catch { Return }
 
     If (-not $Request.PSObject.Properties.Name) { Return }
 
-    $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.Brains.$Name."Updated" }).ForEach(
+    
+    $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp }).ForEach(
         { 
             $Algorithm = $Request.$_.name
-            $Algorithm_Norm = Get-Algorithm $Algorithm
+            $AlgorithmNorm = Get-Algorithm $Algorithm
             $Currency = [String]$Request.$_.currency
             $Divisor = $DivisorMultiplier * [Double]$Request.$_.mbtc_mh_factor
             $Fee = If ($Currency) { $Request.$_."$($PoolConfig.MiningMode)_fee" } Else { $Request.$_."pps_fee" }
@@ -66,10 +67,10 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
 
             # Add coin name
             If ($Request.$_.CoinName -and $Currency) { 
-                [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $Request.$_.CoinName)
+                [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Request.$_.CoinName)
             }
 
-            $Key = "$($PoolVariant)_$($Algorithm_Norm)$(If ($Currency) { "-$Currency" })"
+            $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$_.$PriceField / $Divisor) -FaultDetection $false
 
             $Reasons = [System.Collections.Generic.List[String]]@()
@@ -80,7 +81,7 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
 
                     [PSCustomObject]@{ 
                         Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                        Algorithm                = $Algorithm_Norm
+                        Algorithm                = $AlgorithmNorm
                         Currency                 = $Currency
                         Disabled                 = $Stat.Disabled
                         EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
@@ -93,7 +94,7 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
                         Port                     = [UInt16]$Request.$_.port
                         PortSSL                  = 0
                         Price                    = $Stat.Live
-                        Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                        Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                         Reasons                  = $Reasons
                         Region                   = $Region_Norm
                         SendHashrate             = $false

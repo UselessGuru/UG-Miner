@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Rigel.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class Rigel : Miner { 
@@ -38,23 +38,23 @@ Class Rigel : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = ""
-        $Hashrate_Value = [Double]0
+        $HashRateName = ""
+        $HashRateValue = [Double]0
         $Algorithms = [String[]]@($Data.algorithm -split "\+")
         $Algorithm = $Algorithms[0]
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = $Shares_Rejected = $Shares_Invalid = [Int64]0
+        $SharesAccepted = $SharesRejected = $SharesInvalid = [Int64]0
 
         ForEach ($Algorithm in $Algorithms) { 
-            $HashRate_Name = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
-            $HashRate_Value = [Double]$Data.hashrate.$Algorithm
-            $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+            $HashRateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
+            $HashRateValue = [Double]$Data.hashrate.$Algorithm
+            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
-            $Shares_Accepted = [Int64]$Data.solution_stat.$Algorithm.accepted
-            $Shares_Rejected = [Int64]$Data.solution_stat.$Algorithm.rejected
-            $Shares_Invalid = [Int64]$Data.solution_stat.$Algorithm.invalid
-            $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+            $SharesAccepted = [Int64]$Data.solution_stat.$Algorithm.accepted
+            $SharesRejected = [Int64]$Data.solution_stat.$Algorithm.rejected
+            $SharesInvalid = [Int64]$Data.solution_stat.$Algorithm.invalid
+            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0

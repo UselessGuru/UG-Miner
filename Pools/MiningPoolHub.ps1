@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Param(
@@ -59,18 +59,18 @@ If ($PoolConfig.UserName) {
     $Divisor = 1000000000
 
     ForEach ($Pool in $Request.return) { 
-        $Algorithm_Norm = Get-Algorithm $Pool.algo
+        $AlgorithmNorm = Get-Algorithm $Pool.algo
         $Currency = "$($Pool.symbol)" -replace ' \s+'
 
         # Add coin name
         If ($Pool.coin_name -and $Currency) { 
-            [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $Pool.coin_name)
+            [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.coin_name)
         }
 
         # Temp fix
         $Regions = If ($Pool.host_list.split(";").count -eq 1) { @("n/a") } Else { $PoolConfig.Region }
 
-        $Key = "$($PoolVariant)_$($Algorithm_Norm)-$($Currency)"
+        $Key = "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Pool.profit / $Divisor) -FaultDetection $false
 
         $Reasons = [System.Collections.Generic.List[String]]@()
@@ -85,7 +85,7 @@ If ($PoolConfig.UserName) {
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - $Stat.Week_Fluctuation
-                    Algorithm                = $Algorithm_Norm
+                    Algorithm                = $AlgorithmNorm
                     Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
@@ -99,7 +99,7 @@ If ($PoolConfig.UserName) {
                     PortSSL                  = 0
                     PoolUri                  = "https://$($Pool.coin_name).miningpoolhub.com"
                     Price                    = $Stat.Live * (1 - [Math]::Min($Stat.Day_Fluctuation, 1)) + $Stat.Day * [Math]::Min($Stat.Day_Fluctuation, 1)
-                    Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false

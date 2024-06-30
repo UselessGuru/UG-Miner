@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class OneZero : Miner { 
@@ -38,15 +38,15 @@ Class OneZero : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = [String]$this.Algorithms[0]
-        $HashRate_Value = [Double]$Data.algos[0].total_hashrate
-        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        $HashRateName = [String]$this.Algorithms[0]
+        $HashRateValue = [Double]$Data.algos[0].total_hashrate
+        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]$Data.algos[0].total_accepted_shares
-        $Shares_Rejected = [Int64]$Data.algos[0].total_rejected_shares
-        $Shares_Invalid = [Int64]0
-        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+        $SharesAccepted = [Int64]$Data.algos[0].total_accepted_shares
+        $SharesRejected = [Int64]$Data.algos[0].total_rejected_shares
+        $SharesInvalid = [Int64]0
+        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         $PowerConsumption = [Double]0
 

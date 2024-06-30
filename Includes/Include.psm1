@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -203,7 +203,7 @@ Class Miner {
     [String]$Info
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
     [String]$LogFile
-    [Boolean]$MeasurePowerConsumption = $False
+    [Boolean]$MeasurePowerConsumption = $false
     [Int]$MinDataSample # for safe hashrate values
     [Int]$MinerSet
     [String]$MinerUri
@@ -831,14 +831,14 @@ Function Start-Brain {
 
     Param (
         [Parameter(Mandatory = $false)]
-        [String[]]$Brains
+        [String[]]$Name
     )
 
     If (Test-Path -LiteralPath ".\Brains" -PathType Container) { 
 
         # Starts Brains if necessary
         $BrainsStarted = @()
-        $Brains.ForEach(
+        $Name.ForEach(
             { 
                 If ($Config.PoolsConfig.$_.BrainConfig -and -not $Variables.Brains.$_) { 
                     $BrainScript = ".\Brains\$($_).ps1"
@@ -881,14 +881,14 @@ Function Stop-Brain {
 
     Param (
         [Parameter(Mandatory = $false)]
-        [String[]]$Brains = $Variables.Brains.psBase.Keys
+        [String[]]$Name = $Variables.Brains.psBase.Keys
     )
 
-    If ($Brains) { 
+    If ($Name) { 
 
         $BrainsStopped = @()
 
-        $Brains.Where({ $Variables.Brains.$_ }).ForEach(
+        $Name.Where({ $Variables.Brains.$_ }).ForEach(
             { 
                 # Stop Brains
                 $Variables.Brains[$_].PowerShell.Stop() | Out-Null
@@ -908,7 +908,7 @@ Function Stop-Brain {
 
 Function Start-BalancesTracker { 
 
-    If (-not $BalancesTrackerRunspace) { 
+    If (-not $Global:BalancesTrackerRunspace) { 
 
         If (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
             Try { 
@@ -949,14 +949,14 @@ Function Start-BalancesTracker {
 
 Function Stop-BalancesTracker { 
 
-    If ($BalancesTrackerRunspace) { 
+    If ($Global:BalancesTrackerRunspace) { 
 
         Try { 
             $Variables.BalancesTrackerRunning = $false
-            $BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
-            $BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
-            $BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
-            $BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
+            $Global:BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
+            $Global:BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
+            $Global:BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
+            $Global:BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
         }
         Catch { }
         Remove-Variable BalancesTrackerRunspace -Scope Global -ErrorAction Ignore
@@ -1057,7 +1057,7 @@ Function Get-Rate {
         }
         Catch { 
             # Read exchange rates from min-api.cryptocompare.com, use stored data as fallback
-            $RatesCache = (Get-Content -Path $RatesCacheFileName -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore)
+            $RatesCache = ([System.IO.File]::ReadAllLines("$PWD\Stats\$StatName.txt") | ConvertFrom-Json -ErrorAction Ignore)
             If ($RatesCache.PSObject.Properties.Name) { 
                 $Variables.Rates = $RatesCache
                 $Variables.RatesUpdated = "FromFile: $((Get-Item -Path $RatesCacheFileName).CreationTime.ToUniversalTime())"
@@ -1333,7 +1333,7 @@ Function Read-Config {
 
         # Load pool data
         If (-not $Variables.PoolData) { 
-            $Variables.PoolData = Get-Content -Path ".\Data\PoolData.json" | ConvertFrom-Json -AsHashtable | Get-SortedObject
+            $Variables.PoolData = [System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
             $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys -replace ' External$| Internal$' })) | Sort-Object -Unique)
             If (-not $Variables.PoolVariants) { 
                 Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
@@ -1416,7 +1416,7 @@ Function Read-Config {
     # Load the configuration
     $ConfigFromFile = @{ }
     If (Test-Path -LiteralPath $ConfigFile -PathType Leaf) { 
-        $ConfigFromFile = Get-Content -Path $ConfigFile | ConvertFrom-Json -AsHashtable | Get-SortedObject
+        $ConfigFromFile = [System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject
         If ($ConfigFromFile.psBase.Keys.Count -eq 0) { 
             $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
             Move-Item -Path $ConfigFile $CorruptConfigFile -Force
@@ -1463,12 +1463,12 @@ Function Read-Config {
     # Build custom pools configuration, create case insensitive hashtable (https://stackoverflow.com/questions/24054147/powershell-hash-tables-double-key-error-a-and-a)
     If ($Variables.PoolsConfigFile -and (Test-Path -LiteralPath $Variables.PoolsConfigFile -PathType Leaf)) { 
         Try { 
-            $Variables.PoolsConfigData = Get-Content $Variables.PoolsConfigFile | ConvertFrom-Json -AsHashTable | Get-SortedObject
+            $Variables.PoolsConfigData = [System.IO.File]::ReadAllLines($Variables.PoolsConfigFile) | ConvertFrom-Json -AsHashTable | Get-SortedObject
             $Variables.PoolsConfigFileTimestamp = (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime
         }
         Catch { 
             $Variables.PoolsConfigData = [Ordered]@{ }
-            Write-Message -Level Warn "Pools configuration file '$($Variables.PoolsConfigFile)' is corrupt and will be ignored."
+            Write-Message -Level Warn "Pools configuration file '$($Variables.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt and will be ignored."
         }
     }
 
@@ -1507,7 +1507,7 @@ Function Update-ConfigFile {
         { 
             Switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
-                Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
+                Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
             }
         }
     )
@@ -1550,13 +1550,12 @@ Function Write-Config {
         Get-ChildItem -Path "$($ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
     }
 
-    $PoolsConfig = $Config["PoolsConfig"]
-    $Config.Remove("ConfigFile")
-    $Config.Remove("PoolsConfig")
+    $NewConfig = $Config.Clone()
 
-    "$Header$($Config | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $ConfigFile -Force
+    $NewConfig.Remove("ConfigFile")
+    $NewConfig.Remove("PoolsConfig")
 
-    $Config["PoolsConfig"] = $PoolsConfig
+    "$Header$($NewConfig | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $ConfigFile -Force
 
     $Variables.ShowAccuracy = $Config.ShowAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
@@ -2164,7 +2163,7 @@ Function Get-Device {
     )
 
     If ($Name) { 
-        $DeviceList = Get-Content ".\Data\Devices.json" | ConvertFrom-Json
+        $DeviceList = [System.IO.File]::ReadAllLines("$PWD\Data\Devices.json") | ConvertFrom-Json
         $Name_Devices = $Name.ForEach(
             { 
                 $Name_Split = $_ -split '#'
@@ -2180,7 +2179,7 @@ Function Get-Device {
     }
 
     If ($ExcludeName) { 
-        If (-not $DeviceList) { $DeviceList = Get-Content -Path ".\Data\Devices.json" | ConvertFrom-Json }
+        If (-not $DeviceList) { $DeviceList = [System.IO.File]::ReadAllLines("$PWD\Data\Devices.json") | ConvertFrom-Json }
         $ExcludeName_Devices = $ExcludeName.ForEach(
             { 
                 $ExcludeName_Split = $_ -split '#'
@@ -2821,7 +2820,7 @@ Function Get-AlgorithmFromCurrency {
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
         If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
-            ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+            (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
             [Void]$Variables.MutexAddCoinName.ReleaseMutex()
         }
 
@@ -2846,7 +2845,7 @@ Function Get-CurrencyFromAlgorithm {
 
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
         If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
-            ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+            (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
             [Void]$Variables.MutexAddCoinName.ReleaseMutex()
         }
 
@@ -2874,7 +2873,7 @@ Function Get-EquihashCoinPers {
         }
 
         $Variables.EquihashCoinPers = [Ordered]@{ } # as case insensitive hash table
-        ((Get-Content -Path ".\Data\EquihashCoinPers.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value })
+        (([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value })
 
         If ($Variables.EquihashCoinPers[$Currency]) { 
             Return "$($Command)$($Variables.EquihashCoinPers[$Currency])"
@@ -3244,7 +3243,7 @@ Function Update-DAGdata {
         }) -Force
 
         $Variables.DAGdata = $Variables.DAGdata | Get-SortedObject
-        $Variables.DAGdata | ConvertTo-Json | Out-File -LiteralPath ".\Data\DAGdata.json" -Force
+        $Variables.DAGdata | ConvertTo-Json -Depth 5 | Out-File -LiteralPath ".\Data\DAGdata.json" -Force
 
         Remove-Variable Algorithm, BlockHeight, Currency, DAGdata, DAGdataKeys, DAGdataResponse, DAGsize, Epoch, Url -ErrorAction Ignore
     }
@@ -3438,7 +3437,7 @@ Function Get-Median {
 Function Hide-Console {
     # https://stackoverflow.com/questions/3571627/show-hide-the-console-window-of-a-c-sharp-console-application
     If ($host.Name -eq "ConsoleHost") { 
-        If ($ConsoleHandle = [Console.Window]::GetConsoleWindow()) { 
+        If ($ConsoleWindowHandle = [Console.Window]::GetConsoleWindow()) { 
             # 0 = SW_HIDE
             [Console.Window]::ShowWindow($ConsoleWindowHandle, 0) | Out-Null
         }
@@ -3448,7 +3447,7 @@ Function Hide-Console {
 Function Show-Console {
     # https://stackoverflow.com/questions/3571627/show-hide-the-console-window-of-a-c-sharp-console-application
     If ($host.Name -eq "ConsoleHost") { 
-        If ($ConsoleHandle = [Console.Window]::GetConsoleWindow()) { 
+        If ($ConsoleWindowHandle = [Console.Window]::GetConsoleWindow()) { 
             # 5 = SW_SHOW
             [Console.Window]::ShowWindow($ConsoleWindowHandle, 5) | Out-Null
         }
@@ -3479,7 +3478,7 @@ Function Get-MemoryUsage {
 Function Initialize-Environment { 
 
     # Verify donation data
-    $Variables.DonationData = Get-Content -Path ".\Data\DonationData.json" -ErrorAction Ignore | ConvertFrom-Json -NoEnumerate
+    $Variables.DonationData = [System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -NoEnumerate
     If (-not $Variables.DonationData) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3488,13 +3487,13 @@ Function Initialize-Environment {
     Write-Host "Loaded donation data."
 
     # Load donation log
-    $Variables.DonationLog = Get-Content -Path ".\Logs\DonateLog.json" -ErrorAction Ignore | ConvertFrom-Json -NoEnumerate
+    $Variables.DonationLog = [System.IO.File]::ReadAllLines("$PWD\Logs\DonateLog.json") | ConvertFrom-Json -NoEnumerate
     If (-not $Variables.DonationLog) { $Variables.DonationLog = @() }
     Else { Write-Host "Loaded donation log." }
 
     # Load algorithm list
     $Variables.Algorithms = [Ordered]@{ } # as case insensitive hash table
-    ((Get-Content -Path ".\Data\Algorithms.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Algorithms[$_.Name] = $_.Value })
+    (([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Algorithms[$_.Name] = $_.Value })
     If (-not $Variables.Algorithms.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3503,7 +3502,7 @@ Function Initialize-Environment {
 
     # Load coin names
     $Variables.CoinNames = [Ordered]@{ } # as case insensitive hash table
-    ((Get-Content -Path ".\Data\CoinNames.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CoinNames[$_.Name] = $_.Value })
+    (([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CoinNames[$_.Name] = $_.Value })
     If (-not $Variables.CoinNames.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3513,7 +3512,7 @@ Function Initialize-Environment {
     # Load currency algorithm data
     $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
     If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
-        ((Get-Content -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+        (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
         [Void]$Variables.MutexAddCoinName.ReleaseMutex()
     }
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
@@ -3525,7 +3524,7 @@ Function Initialize-Environment {
 
     # Load EquihashCoinPers data
     $Variables.EquihashCoinPers = [Ordered]@{ } # as case insensitive hash table
-    ((Get-Content -Path ".\Data\EquihashCoinPers.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value })
+    (([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value })
     If (-not $Variables.EquihashCoinPers) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3535,7 +3534,7 @@ Function Initialize-Environment {
 
     # Load regions list
     $Variables.Regions = [Ordered]@{ } # as case insensitive hash table
-    ((Get-Content -Path ".\Data\Regions.json" -ErrorAction Stop | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Regions[$_.Name] = @($_.Value) })
+    (([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Regions[$_.Name] = @($_.Value) })
     If (-not $Variables.Regions.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3544,7 +3543,7 @@ Function Initialize-Environment {
     Write-Host "Loaded regions database."
 
     # Load FIAT currencies list
-    $Variables.FIATcurrencies = Get-Content -Path ".\Data\FIATcurrencies.json" | ConvertFrom-Json -AsHashtable | Get-SortedObject
+    $Variables.FIATcurrencies = [System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
     If (-not $Variables.FIATcurrencies) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3553,7 +3552,7 @@ Function Initialize-Environment {
     Write-Host "Loaded fiat currencies database."
 
     # Load unprofitable algorithms
-    $Variables.UnprofitableAlgorithms = Get-Content -Path ".\Data\UnprofitableAlgorithms.json" | ConvertFrom-Json -ErrorAction Stop -AsHashtable | Get-SortedObject
+    $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Stop -AsHashtable | Get-SortedObject
     If (-not $Variables.UnprofitableAlgorithms.Count) { 
         Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3562,29 +3561,29 @@ Function Initialize-Environment {
     Write-Host "Loaded list of unprofitable algorithms."
 
     # Load DAG data, if not available it will get recreated
-    $Variables.DAGdata = Get-Content ".\Data\DAGdata.json" -ErrorAction Ignore | ConvertFrom-Json | Get-SortedObject
+    $Variables.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json | Get-SortedObject
     If ($Variables.DAGdata) { Write-Host "Loaded DAG database." }
 
     # Load PoolsLastUsed data
-    $Variables.PoolsLastUsed = Get-Content -Path ".\Data\PoolsLastUsed.json" -ErrorAction Ignore | ConvertFrom-Json -AsHashtable
+    $Variables.PoolsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable
     If (-not $Variables.PoolsLastUsed.psBase.Keys) { $Variables.PoolsLastUsed = @{ } }
     Else { Write-Host "Loaded pools last used data." }
 
     # Load AlgorithmsLastUsed data
-    $Variables.AlgorithmsLastUsed = Get-Content -Path ".\Data\AlgorithmsLastUsed.json" -ErrorAction Ignore | ConvertFrom-Json -AsHashtable
+    $Variables.AlgorithmsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastUsed.json") | ConvertFrom-Json -AsHashtable
     If (-not $Variables.AlgorithmsLastUsed.psBase.Keys) { $Variables.AlgorithmsLastUsed = @{ } }
     Else { Write-Host "Loaded algorithm last used data." }
 
     # Load EarningsChart data to make it available early in GUI
-    If (Test-Path -LiteralPath ".\Data\EarningsChartData.json" -PathType Leaf) { $Variables.EarningsChartData = Get-Content ".\Data\EarningsChartData.json" | ConvertFrom-Json }
+    If (Test-Path -LiteralPath ".\Data\EarningsChartData.json" -PathType Leaf) { $Variables.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Data\EarningsChartData.json") | ConvertFrom-Json }
     Else { Write-Host "Loaded earnings chart data." }
 
     # Load Balances data to make it available early in GUI
-    If (Test-Path -LiteralPath ".\Data\Balances.json" -PathType Leaf) { $Variables.Balances = Get-Content ".\Data\Balances.json" | ConvertFrom-Json }
+    If (Test-Path -LiteralPath ".\Data\Balances.json" -PathType Leaf) { $Variables.Balances = [System.IO.File]::ReadAllLines("$PWD\Data\Balances.json") | ConvertFrom-Json }
     Else { Write-Host "Loaded balances data." }
 
     # Load CUDA version table
-    $Variables.CUDAVersionTable = Get-Content -Path ".\Data\CUDAVersion.json" | ConvertFrom-Json -AsHashtable | Get-SortedObject
+    $Variables.CUDAVersionTable = [System.IO.File]::ReadAllLines("$PWD\Data\CUDAVersion.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
     If (-not $Variables.CUDAVersionTable) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\CUDAVersion.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\CUDAVersion.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3593,7 +3592,7 @@ Function Initialize-Environment {
     Else { Write-Host "Loaded CUDA version table." }
 
     # Load NVidia GPU architecture table
-    $Variables.GPUArchitectureDbNvidia = Get-Content "Data\GPUArchitectureNvidia.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore
+    $Variables.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore
     If (-not $Variables.GPUArchitectureDbNvidia) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3602,7 +3601,7 @@ Function Initialize-Environment {
     Else { Write-Host "Loaded NVidia GPU architecture table." }
 
     # Load AMD GPU architecture table
-    $Variables.GPUArchitectureDbAMD = Get-Content "Data\GPUArchitectureAMD.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore
+    $Variables.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore
     If (-not $Variables.GPUArchitectureDbAMD) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null

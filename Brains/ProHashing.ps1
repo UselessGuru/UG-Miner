@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ProHashing.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -76,7 +76,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $CurrenciesData = $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.enabled }).ForEach({ $CurrenciesData.$_ })
 
             ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
-                $Algorithm_Norm = Get-Algorithm $Algo
+                $AlgorithmNorm = Get-Algorithm $Algo
                 $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
                 $Currencies = @($CurrenciesData.Where({ $_.algo -eq $Algo }).abbreviation)
                 $Currency = If ($Currencies.Count -eq 1) { $($Currencies[0] -replace '-.+' -replace ' \s+' -replace ' $') } Else { "" }
@@ -85,7 +85,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
                 If ($PoolVariant) { 
                     # Reset history when stat file got removed
-                    $StatName = If ($Currency) { "$($PoolVariant)_$Algorithm_Norm-$($Currency)_Profit" } Else { "$($PoolVariant)_$($Algorithm_Norm)_Profit" }
+                    $StatName = If ($Currency) { "$($PoolVariant)_$AlgorithmNorm-$($Currency)_Profit" } Else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }
                     If (-not (Get-Stat -Name $StatName)) { 
                         $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
                         Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit')"
@@ -125,7 +125,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
                 # Reset history if PlusPrice is not within +/- 1000% of LastPrice
                 If ($LastPrice -gt 0 -and ($PlusPrice -lt $LastPrice * 0.1 -or $PlustPrice -gt $LastPrice * 10)) { 
-                    $StatName = If ($Currency) { "$($PoolVariant)_$Algorithm_Norm-$($Currency)_Profit" } Else { "$($PoolVariant)_$($Algorithm_Norm)_Profit" }
+                    $StatName = If ($Currency) { "$($PoolVariant)_$AlgorithmNorm-$($Currency)_Profit" } Else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }
                     Remove-Stat -Name $StatName
                     $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
                     $PlusPrice = $LastPrice
@@ -147,7 +147,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
     }
     Catch { 
-        Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
+        Write-Message -Level Error "Error in file 'Brains\$BrainName.ps1' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting brain..."
         "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Brain_$($BrainName)_Error.txt"
         $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
         $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
@@ -155,7 +155,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     Remove-Variable AlgoData, CurrenciesData -ErrorAction Ignore
 
     $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
-    $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum ).Minimum
+    $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum).Minimum
     $Durations = @($Durations | Select-Object -Last 20)
     $DurationsAvg = ($Durations | Measure-Object -Average).Average
 
@@ -168,3 +168,6 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     $Error.Clear()
     [System.GC]::Collect()
 }
+
+$Variables.Brains.Remove($BrainName)
+$Variables.BrainData.Remove($BrainName)

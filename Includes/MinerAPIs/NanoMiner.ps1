@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class NanoMiner : Miner { 
@@ -54,24 +54,24 @@ Class NanoMiner : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = ""
-        $HashRate_Value = [Double]0
+        $HashRateName = ""
+        $HashRateValue = [Double]0
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]0
-        $Shares_Rejected = [Int64]0
+        $SharesAccepted = [Int64]0
+        $SharesRejected = [Int64]0
 
         $Algorithms = @($Data.Algorithms.ForEach({ ($_ | Get-Member -MemberType NoteProperty).Name }) | Select-Object -Unique)
 
         ForEach ($Algorithm in $Algorithms) { 
-            $HashRate_Name = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
-            $HashRate_Value = [Double]($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+            $HashRateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
+            $HashRateValue = [Double]($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
-            $Shares_Accepted = [Int64]($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $Shares_Rejected = [Int64]($Data.Algorithms.$Algorithm.Total.Denied | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $Shares_Invalid = [Int64]0
-            $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+            $SharesAccepted = [Int64]($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $SharesRejected = [Int64]($Data.Algorithms.$Algorithm.Total.Denied | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $SharesInvalid = [Int64]0
+            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Param(
@@ -51,20 +51,20 @@ If ($DivisorMultiplier -and $Regions) {
             $Request = $Variables.BrainData.$Name
         }
         Else { 
-            $Request = Get-Content $BrainDataFile -ErrorAction Stop | ConvertFrom-Json
+            $Request = $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
         }
     }
     Catch { Return }
 
     If (-not $Request.PSObject.Properties.Name) { Return }
 
-    ForEach ($Pool in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.Brains.$Name."Updated" })) { 
+    ForEach ($Pool in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
         $Algorithm = $Request.$Pool.algo
-        $Algorithm_Norm = Get-Algorithm $Algorithm
+        $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = [String]$Request.$Pool.Currency
         $Divisor = $DivisorMultiplier * [Double]$Request.$Pool.mbtc_mh_factor
 
-        $Key = "$($PoolVariant)_$($Algorithm_Norm)$(If ($Currency) { "-$($Currency)" })"
+        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Pool.$PriceField / $Divisor) -FaultDetection $false
 
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Pool -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
@@ -76,6 +76,9 @@ If ($DivisorMultiplier -and $Regions) {
         $Reasons = [System.Collections.Generic.List[String]]@()
         If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Pool] configured") }
         If ($Request.$Pool.hashrate_shared -eq 0) { $Reasons.Add("No hashrate at pool") }
+
+        # Temp fix. SSL fpr Ethashb* not working
+        If ($AlgorithmNorm -eq "EthashB3") { $Request.$Pool.tls_port = $null }
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $Region_Norm })) { 
@@ -90,7 +93,7 @@ If ($DivisorMultiplier -and $Regions) {
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                    Algorithm                = $Algorithm_Norm
+                    Algorithm                = $AlgorithmNorm
                     Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
@@ -104,7 +107,7 @@ If ($DivisorMultiplier -and $Regions) {
                     PortSSL                  = [UInt16]$Request.$Pool.tls_port
                     PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"
                     Price                    = $Stat.Live
-                    Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false

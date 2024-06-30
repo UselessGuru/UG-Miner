@@ -17,11 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
-
-using module ..\Includes\Include.psm1
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
@@ -38,7 +36,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Equihash2109";     Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUArchitecture = @("RDNA1");                         ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=210,9 --smart-pers" }
     [PSCustomObject]@{ Algorithm = "EtcHash";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3");          ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=etcHash --dag-fix" }
     [PSCustomObject]@{ Algorithm = "Ethash";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3");          ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=ethash --dag-fix" }
-    [PSCustomObject]@{ Algorithm = "EthashB3";         Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();                                ExcludePools = @("ZergPool"); AutoCoinPers = "";             Arguments = " --amd --par=ethashb3 --dag-fix" }
+    [PSCustomObject]@{ Algorithm = "EthashB3";         Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();                                ExcludePools = @( );          AutoCoinPers = "";             Arguments = " --amd --par=ethashb3 --dag-fix" }
     [PSCustomObject]@{ Algorithm = "EvrProgPow";       Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1"); ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" }
     [PSCustomObject]@{ Algorithm = "FiroPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(55, 45); ExcludeGPUArchitecture = @("GCN1", "GCN2", "GCN3", "RDNA1"); ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=firo" }
     [PSCustomObject]@{ Algorithm = "HeavyHashKarlsen"; Type = "AMD"; Fee = @(0.008);  MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @("Other");                         ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=kls" }
@@ -58,7 +56,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Equihash965";      Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUArchitecture = @();        ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=96,5 --smart-pers" }
     [PSCustomObject]@{ Algorithm = "EtcHash";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=etcHash --dag-fix" }
     [PSCustomObject]@{ Algorithm = "Ethash";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=ethash --dag-fix" }
-    [PSCustomObject]@{ Algorithm = "EthashB3";         Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @("ZergPool"); AutoCoinPers = "";             Arguments = " --nvidia --par=ethashb3 --dag-fix" }
+    [PSCustomObject]@{ Algorithm = "EthashB3";         Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=ethashb3 --dag-fix" }
     [PSCustomObject]@{ Algorithm = "EvrProgPow";       Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" }
     [PSCustomObject]@{ Algorithm = "FiroPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(55, 45); ExcludeGPUArchitecture = @();        ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=firo" }
     [PSCustomObject]@{ Algorithm = "HeavyHashKarlsen"; Type = "NVIDIA"; Fee = @(0.008);  MinMemGiB = 2.0;  MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 10); ExcludeGPUArchitecture = @("Other"); ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=kls" }

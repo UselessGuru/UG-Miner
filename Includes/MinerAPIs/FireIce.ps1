@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class Fireice : Miner { 
@@ -54,7 +54,7 @@ Class Fireice : Miner {
                     If ($this.ProcessId = ($this.ProcessJob | Receive-Job | Select-Object -ExpandProperty ProcessId)) { 
                         If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
                             # Read hw config created by miner
-                            $ThreadsConfig = (Get-Content -Path $PlatformThreadsConfigFile) -replace '^\s*//.*' | Out-String
+                            $ThreadsConfig = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) -replace '^\s*//.*' | Out-String
                             # Set bfactor to 11 (default is 6 which makes PC unusable)
                             $ThreadsConfig = $ThreadsConfig -replace '"bfactor"\s*:\s*\d,', '"bfactor" : 11,'
                             # Reformat to proper json
@@ -89,7 +89,7 @@ Class Fireice : Miner {
             }
             If (-not (Test-Path $MinerThreadsConfigFile -PathType Leaf)) { 
                 # Retrieve hw config from platform config file
-                $ThreadsConfigJson = Get-Content -Path $PlatformThreadsConfigFile | ConvertFrom-Json -ErrorAction Ignore
+                $ThreadsConfigJson = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore
                 # Filter index for current cards and apply threads
                 $ThreadsConfigJson | Add-Member gpu_threads_conf ([Array]($ThreadsConfigJson.gpu_threads_conf.Where({ $Parameters.Devices -contains $_.Index })) * $Parameters.Threads) -Force
                 # Create correct numer of CPU threads
@@ -119,17 +119,17 @@ Class Fireice : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = [String]$this.Algorithms[0]
-        $HashRate_Value = [Double]$Data.hashrate.total[0]
-        If (-not $HashRate_Value) { $HashRate_Value = [Double]$Data.hashrate.total[1] } #fix
-        If (-not $HashRate_Value) { $HashRate_Value = [Double]$Data.hashrate.total[2] } #fix
-        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        $HashRateName = [String]$this.Algorithms[0]
+        $HashRateValue = [Double]$Data.hashrate.total[0]
+        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[1] } #fix
+        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[2] } #fix
+        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]$Data.results.shares_good
-        $Shares_Rejected = [Int64]($Data.results.shares_total - $Data.results.shares_good)
-        $Shares_Invalid = [Int64]0
-        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+        $SharesAccepted = [Int64]$Data.results.shares_good
+        $SharesRejected = [Int64]($Data.results.shares_total - $Data.results.shares_good)
+        $SharesInvalid = [Int64]0
+        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         $PowerConsumption = [Double]0
 

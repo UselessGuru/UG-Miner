@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class TeamBlackMiner : Miner { 
@@ -38,26 +38,26 @@ Class TeamBlackMiner : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = [String]""
-        $HashRate_Value = [Double]0
+        $HashRateName = [String]""
+        $HashRateValue = [Double]0
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]0
-        $Shares_Rejected = [Int64]0
-        $Shares_Invalid = [Int64]0
+        $SharesAccepted = [Int64]0
+        $SharesRejected = [Int64]0
+        $SharesInvalid = [Int64]0
 
         ForEach ($Algorithm in $this.Algorithms) { 
             $Data.pool.PSObject.Properties.Name.ForEach(
                 { 
                     If ($Data.pool.$_.Algo -eq $Algorithm) { 
-                        $HashRate_Name = [String]$Algorithm
-                        $HashRate_Value = [Double]($Data.pool.$_.total_hashrate)
-                        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+                        $HashRateName = [String]$Algorithm
+                        $HashRateValue = [Double]($Data.pool.$_.total_hashrate)
+                        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
-                        $Shares_Accepted = [Int64]($Data.pool.$_.total_accepted)
-                        $Shares_Rejected = [Int64]($Data.pool.$_.total_rejected)
-                        $Shares_Invalid =  [Int64]($Data.pool.$_.total_stale)
-                        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+                        $SharesAccepted = [Int64]($Data.pool.$_.total_accepted)
+                        $SharesRejected = [Int64]($Data.pool.$_.total_rejected)
+                        $SharesInvalid =  [Int64]($Data.pool.$_.total_stale)
+                        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
                     }
                 }
             )

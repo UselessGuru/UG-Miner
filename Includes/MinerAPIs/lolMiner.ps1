@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class lolMiner : Miner { 
@@ -38,7 +38,7 @@ Class lolMiner : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = [String]$this.Algorithms[0]
+        $HashRateName = [String]$this.Algorithms[0]
         $HashRate_Unit = [Int64]1
         Switch ($Data.Algorithms[0].Performance_Unit) { 
             "kh/s"  { $HashRate_Unit = [Math]::Pow(10,3) }
@@ -51,16 +51,16 @@ Class lolMiner : Miner {
             "YH/s"  { $HashRate_Unit = [Math]::Pow(10,24) }
             Default { $HashRate_Unit = 1 }
         }
-        $HashRate_Value = [Double]($Data.Algorithms[0].Total_Performance * $HashRate_Unit)
-        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        $HashRateValue = [Double]($Data.Algorithms[0].Total_Performance * $HashRate_Unit)
+        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]$Data.Algorithms[0].Total_Accepted
-        $Shares_Rejected = [Int64]$Data.Algorithms[0].Total_Rejected
-        $Shares_Invalid = [Int64]$Data.Algorithms[0].Total_Stales
-        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+        $SharesAccepted = [Int64]$Data.Algorithms[0].Total_Accepted
+        $SharesRejected = [Int64]$Data.Algorithms[0].Total_Rejected
+        $SharesInvalid = [Int64]$Data.Algorithms[0].Total_Stales
+        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRate_Name = [String]($this.Algorithms -ne $HashRate_Name)) { 
+        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
             $HashRate_Unit = [Int64]1
             Switch ($Data.Algorithms[1].Performance_Unit) { 
                 "kh/s"  { $HashRate_Unit = [Math]::Pow(10,3) }
@@ -73,13 +73,13 @@ Class lolMiner : Miner {
                 "YH/s"  { $HashRate_Unit = [Math]::Pow(10,24) }
                 Default { $HashRate_Unit = 1 }
             }
-            $HashRate_Value = [Double]($Data.Algorithms[1].Total_Performance * $HashRate_Unit)
-            $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+            $HashRateValue = [Double]($Data.Algorithms[1].Total_Performance * $HashRate_Unit)
+            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
-            $Shares_Accepted = [Int64]$Data.Algorithms[1].Total_Accepted
-            $Shares_Rejected = [Int64]$Data.Algorithms[1].Total_Rejected
-            $Shares_Invalid = [Int64]$Data.Algorithms[1].Total_Stales
-            $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+            $SharesAccepted = [Int64]$Data.Algorithms[1].Total_Accepted
+            $SharesRejected = [Int64]$Data.Algorithms[1].Total_Rejected
+            $SharesInvalid = [Int64]$Data.Algorithms[1].Total_Stales
+            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0

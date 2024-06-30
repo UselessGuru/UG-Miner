@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class XmRig : Miner { 
@@ -38,7 +38,7 @@ Class XmRig : Miner {
             }
             Else { 
                 #Check if we have a valid hw file for all installed hardware. If hardware / device order has changed we need to re-create the config files. 
-                $ThreadsConfig = Get-Content $ThreadsConfigFile -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore
+                $ThreadsConfig = [System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore
                 If ($ThreadsConfig.Count -lt 1) { 
                     If (Test-Path -LiteralPath "$(Split-Path $this.Path)\$($this.Algorithms[0] | Select-Object -First 1)-*.json" -PathType Leaf) { 
                         #Remove old config files, thread info is no longer valid
@@ -52,7 +52,7 @@ Class XmRig : Miner {
                     If ($this.Process) { 
                         $this.ProcessId = [Int32](((Get-CIMInstance CIM_Process).Where({ $_.ExecutablePath -eq $this.Path -and $_.CommandLine -like "*$($this.Path)*$($Parameters.HwDetectArguments)*" })).ProcessId)
                         For ($WaitForThreadsConfig = 0; $WaitForThreadsConfig -le 60; $WaitForThreadsConfig ++) { 
-                            If ($ThreadsConfig = @(Get-Content $ThreadsConfigFile -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore).threads) { 
+                            If ($ThreadsConfig = @([System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads) { 
                                 If ($this.Type -contains "CPU") { 
                                     ConvertTo-Json -InputObject @($ThreadsConfig | Select-Object -Unique) -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -Encoding -ErrorAction Ignore
                                 }
@@ -72,9 +72,9 @@ Class XmRig : Miner {
                     }
                 }
 
-                If (-not ((Get-Content $ConfigFile -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore).threads)) { 
+                If (-not (([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads)) { 
                     #Threads config in config file is invalid, retrieve from threads config file
-                    $ThreadsConfig = Get-Content $ThreadsConfigFile | ConvertFrom-Json
+                    $ThreadsConfig = [System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json
                     If ($ThreadsConfig.Count -ge 1) { 
                         #Write config files. Overwrite because we need to add thread info
                         If ($this.Type -contains "CPU") { 
@@ -115,17 +115,17 @@ Class XmRig : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = [String]$this.Algorithms[0]
-        $HashRate_Value = [Double]$Data.hashrate.total[0]
-        If (-not $HashRate_Value) { $HashRate_Value = [Double]$Data.hashrate.total[1] } #fix
-        If (-not $HashRate_Value) { $HashRate_Value = [Double]$Data.hashrate.total[2] } #fix
-        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        $HashRateName = [String]$this.Algorithms[0]
+        $HashRateValue = [Double]$Data.hashrate.total[0]
+        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[1] } #fix
+        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[2] } #fix
+        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]$Data.results.shares_good
-        $Shares_Rejected = [Int64]($Data.results.shares_total - $Data.results.shares_good)
-        $Shares_Invalid = [Int64]0
-        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+        $SharesAccepted = [Int64]$Data.results.shares_good
+        $SharesRejected = [Int64]($Data.results.shares_total - $Data.results.shares_good)
+        $SharesInvalid = [Int64]0
+        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         $PowerConsumption = [Double]0
 

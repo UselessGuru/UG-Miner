@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 using module .\Includes\Include.psm1
@@ -296,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.12"
+    Version      = [System.Version]"6.2.13"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -337,8 +337,8 @@ If (-not (Test-Path -LiteralPath ".\Stats" -PathType Container)) { New-Item "Sta
 
 # Expand paths
 $Variables.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
-$Variables.ConfigFile = "$($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigFile))".Replace("$(Convert-Path ".\")\", ".\")
-$Variables.PoolsConfigFile = "$($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile))".Replace("$(Convert-Path ".\")\", ".\")
+$Variables.ConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigFile)
+$Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile)
 
 $Variables.AllCommandLineParameters = [Ordered]@{ }
 ($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
@@ -395,7 +395,7 @@ If ($PrerequisitesMissing = @($Prerequisites.Where({ -not (Test-Path -LiteralPat
     $WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
-Remove-Variable Prerequisites
+Remove-Variable Prerequisites, PrerequisitesMissing
 
 If ([System.Environment]::OSVersion.Version -lt [Version]"10.0.0.0" -and -not (Get-Command Get-PnpDevice)) { 
     Write-Message -Level Error "Windows Management Framework 5.1 is missing."
@@ -514,7 +514,7 @@ If ($Variables.DriverVersion.OpenCL.NVIDIA) {
 }
 
 # Driver version changed
-If ((Get-Content -Path ".\Cache\DriverVersion.json" | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Variables.DriverVersion | ConvertTo-Json -Compress)) { 
+If (([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Variables.DriverVersion | ConvertTo-Json -Compress)) { 
     If (Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) { Write-Message -Level Warn "Graphis card driver version data changed. It is recommended to re-benchmark all miners." }
     $Variables.DriverVersion | ConvertTo-Json | Out-File -LiteralPath ".\Cache\DriverVersion.json" -Force
 }
@@ -592,7 +592,6 @@ Function MainLoop {
     If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIminingSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
 
-        If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus -or ($Variables.PoolName -and (Compare-Object $Config.PoolName $Variables.PoolName))) { 
 
             # Keep only the last 10 files
@@ -682,7 +681,7 @@ Function MainLoop {
             $host.UI.RawUI.FlushInputBuffer()
 
             If ($KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Alt><Crl>#>) { 
-                If (-not $CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
+                If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
                     # Core is complete / gone. Cycle cannot be suspended anymore
                     $Variables.SuspendCycle = $false
                 } 
@@ -913,7 +912,7 @@ Function MainLoop {
             If ($Variables.MyIP) { 
                 If ($Variables.MiningStatus -eq "Running" -and $Variables.Miners.Where({ $_.Available })) { 
                     # Miner list format
-                    [System.Collections.ArrayList]$Miner_Table = @(
+                    [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Miner"; Expression = { $_.Name } }
                         If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
@@ -946,7 +945,7 @@ Function MainLoop {
                                     $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
                                 } 
                             ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
-                            Format-Table $Miner_Table -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ',') [$(($Variables.EnabledDevices.Where({ $_.Name -In $MinersDeviceGroup[0].DeviceNames })).Model -join ', ')]" } } -AutoSize | Out-Host
+                            Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ',') [$(($Variables.EnabledDevices.Where({ $_.Name -In $MinersDeviceGroup[0].DeviceNames })).Model -join ', ')]" } } -AutoSize | Out-Host
 
                             # Display benchmarking progress
                             If ($MinersDeviceGroupNeedingBenchmark) { 
@@ -958,12 +957,12 @@ Function MainLoop {
                             }
                         }
                     )
-                    Remove-Variable Bias, Miner_Table, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
+                    Remove-Variable Bias, MinerTable, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
                 }
 
                 If ($Variables.MinersBest) { 
                     Write-Host "`nRunning $(If ($Variables.MinersBest.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBest.Count)" })"
-                    [System.Collections.ArrayList]$Miner_Table = @(
+                    [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Name"; Expression = { $_.Name } }
                         If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "PowerConsumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
                         @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }; Align = "right" }
@@ -973,8 +972,8 @@ Function MainLoop {
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
-                    $Variables.MinersBest | Sort-Object -Property { $_.DeviceNames } | Format-Table $Miner_Table -Wrap | Out-Host
-                    Remove-Variable Miner_Table
+                    $Variables.MinersBest | Sort-Object -Property { $_.DeviceNames } | Format-Table $MinerTable -Wrap | Out-Host
+                    Remove-Variable MinerTable
                 }
 
                 If ($Variables.UIStyle -eq "full" -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
@@ -986,7 +985,7 @@ Function MainLoop {
 
                     If ($ProcessesIdle = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Idle" })) { 
                         Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"
-                        [System.Collections.ArrayList]$Miner_Table = @(
+                        [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
                             If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "PowerConsumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
                             @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
@@ -996,14 +995,14 @@ Function MainLoop {
                             @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                             @{ Label = "Command"; Expression = { $_.CommandLine } }
                         )
-                        $ProcessesIdle | Sort-Object { $_.EndTime } -Descending | Format-Table $Miner_Table -Wrap | Out-Host
-                        Remove-Variable Miner_Table
+                        $ProcessesIdle | Sort-Object { $_.EndTime } -Descending | Format-Table $MinerTable -Wrap | Out-Host
+                        Remove-Variable MinerTable
                     }
                     Remove-Variable ProcessesIdle
 
                     If ($ProcessesFailed = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Failed" })) { 
                         Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed $(If ($ProcessesFailed.Count -eq 1) { "miner" } Else { "miners" }) (past 24 hrs):"
-                        [System.Collections.ArrayList]$Miner_Table = @(
+                        [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
                             If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "PowerConsumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
                             @{ Label = "Hashrate"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join ' & ' }; Align = "right" }
@@ -1013,8 +1012,8 @@ Function MainLoop {
                             @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join ',' } }
                             @{ Label = "Command"; Expression = { $_.CommandLine } }
                         )
-                        $ProcessesFailed | Sort-Object { If ($_.EndTime) { $_.EndTime } Else { [DateTime]0 } } | Format-Table $Miner_Table -Wrap | Out-Host
-                        Remove-Variable Miner_Table
+                        $ProcessesFailed | Sort-Object { If ($_.EndTime) { $_.EndTime } Else { [DateTime]0 } } | Format-Table $MinerTable -Wrap | Out-Host
+                        Remove-Variable MinerTable
                     }
                     Remove-Variable MinersActivatedLast24Hrs, ProcessesFailed
 

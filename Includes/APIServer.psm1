@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
 Version:        6.2.5
-Version date:   2024/06/26
+Version date:   2024/06/30
 #>
 
 Function Start-APIServer { 
@@ -145,6 +145,7 @@ Function Start-APIServer {
                                     }
                                 }
                             )
+                            Remove-Variable Body
                         }
 
                         # Create a new response and the defaults for associated settings
@@ -160,7 +161,7 @@ Function Start-APIServer {
                                 $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
                                 $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
                                 If ($Pools = @($Variables.Pools.Where({ $_.Name -in $PoolNames -and $_.Algorithm -in $Algorithms }))) { 
-                                    $PoolsConfig = Get-Content -Path $Config.PoolsConfigFile | ConvertFrom-Json
+                                    $PoolsConfig = [System.IO.File]::ReadAllLines($Config.PoolsConfigFile) | ConvertFrom-Json
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)" | Sort-Object -Unique)
@@ -189,7 +190,7 @@ Function Start-APIServer {
                                 $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
                                 $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
                                 If ($Pools = @($Variables.Pools.Where({ $_.Name -in $PoolNames -and $_.Algorithm -in $Algorithms }))) { 
-                                    $PoolsConfig = Get-Content -Path $Config.PoolsConfigFile | ConvertFrom-Json
+                                    $PoolsConfig = [System.IO.File]::ReadAllLines($Config.PoolsConfigFile) | ConvertFrom-Json
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
@@ -245,7 +246,7 @@ Function Start-APIServer {
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ', ')]'"
                                             $Data += "`n`nNew values:"
                                             $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ', ')]'"
-                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile)'.`nIt will become active in next cycle."
+                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
                                             ForEach ($DeviceName in $Values) { 
                                                 $Variables.Devices.Where({ $_.Name -eq $DeviceName }).ForEach(
                                                     { 
@@ -262,7 +263,7 @@ Function Start-APIServer {
                                             Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' disabled. Configuration file '$($Variables.ConfigFile)' updated."
                                         }
                                         Catch { 
-                                            $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]"
+                                            $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
                                         }
                                     }
                                     Else { 
@@ -284,7 +285,7 @@ Function Start-APIServer {
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ', ')]'"
                                             $Data += "`n`nNew values:"
                                             $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ', ')]'"
-                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile)'.`nIt will become active in next cycle."
+                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
                                             $Variables.Devices.Where({ $_.Name -in $Values }).ForEach(
                                                 { 
                                                     $_.State = [DeviceState]::Enabled
@@ -295,7 +296,7 @@ Function Start-APIServer {
                                             Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' enabled. Configuration file '$($Variables.ConfigFile)' updated."
                                         }
                                         Catch { 
-                                            $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]."
+                                            $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
                                         }
                                     }
                                     Else {
@@ -307,9 +308,10 @@ Function Start-APIServer {
                             }
                             "/functions/config/set" { 
                                 Try { 
-                                    Write-Config -ConfigFile $Variables.ConfigFile -Config ($Key | ConvertFrom-Json -AsHashtable)
                                     $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
+                                    Write-Config -ConfigFile $Variables.ConfigFile -Config $TempConfig
                                     $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
+                                    Remove-Variable TempConfig
 
                                     $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                                         { 
@@ -327,10 +329,10 @@ Function Start-APIServer {
                                     $Variables.RestartCycle = $true
                                     $Variables.FreshConfig = $false
                                     Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
-                                    $Data = "Configuration saved to '$($Variables.ConfigFile)'.`nIt will become fully active in the next cycle."
+                                    $Data = "Configuration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become fully active in the next cycle."
                                 }
                                 Catch { 
-                                    $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]."
+                                    $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
                                 }
                                 Break
                             }
@@ -744,18 +746,18 @@ Function Start-APIServer {
                                 Break
                             }
                             "/coinnames" { 
-                                $Data = Get-Content -Path ".\Data\CoinNames.json"
+                                $Data = [System.IO.File]::ReadAllLines(".\Data\CoinNames.json")
                                 Break
                             }
                             "/config" {
-                                $Data = ConvertTo-Json -Depth 10 (Get-Content -Path $Variables.ConfigFile | ConvertFrom-Json -Depth 10 | Get-SortedObject)
+                                $Data = ConvertTo-Json -Depth 10 ([System.IO.File]::ReadAllLines($Variables.ConfigFile) | ConvertFrom-Json -Depth 10 | Get-SortedObject)
                                 If (-not ($Data | ConvertFrom-Json).ConfigFileVersion) { 
                                     $Data = ConvertTo-Json -Depth 10 ($Config | Select-Object -ExcludeProperty PoolsConfig)
                                 }
                                 Break
                             }
                             "/configfile" { 
-                                $Data = $Variables.ConfigFile
+                                $Data = $Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\")
                                 break
                             }
                             "/configrunning" {
@@ -767,7 +769,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/currencyalgorithm" { 
-                                $Data = Get-Content -Path ".\Data\CurrencyAlgorithm.json"
+                                $Data = [System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json")
                                 Break
                             }
                             "/dagdata" { 
@@ -807,7 +809,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/equihashcoinpers" { 
-                                $Data = Get-Content -Path ".\Data\EquihashCoinPers.json"
+                                $Data = [System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json")
                                 Break
                             }
                             "/extracurrencies" { 
@@ -887,7 +889,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/poolsconfigfile" { 
-                                $Data = $Config.PoolsConfigFile
+                                $Data = $Config.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\")
                                 Break
                             }
                             "/pools" { 
@@ -975,7 +977,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/switchinglog" { 
-                                $Data = ConvertTo-Json -Depth 10 @(Get-Content ".\Logs\switchinglog.csv" | ConvertFrom-Csv | Select-Object -Last 1000 | Sort-Object -Property DateTime -Descending)
+                                $Data = ConvertTo-Json -Depth 10 @([System.IO.File]::ReadAllLines("$PWD\Logs\switchinglog.csv") | ConvertFrom-Csv | Select-Object -Last 1000 | Sort-Object -Property DateTime -Descending)
                                 Break
                             }
                             "/unprofitablealgorithms" { 
@@ -1094,6 +1096,7 @@ Function Start-APIServer {
                     # Only gets here if something is wrong and the server couldn't start or stops listening
                     $Server.Stop()
                     $Server.Close()
+                    $Server.Dispose()
                 }
             ) # End of $APIServer
 

@@ -8,6 +8,8 @@ if ERRORLEVEL 1 (
   pause
 
 ) else (
+  pushd "%CD%"
+  CD /D "%~dp0"
 
   if not "%GPU_FORCE_64BIT_PTR%"=="1" (setx GPU_FORCE_64BIT_PTR 1) > nul
   if not "%GPU_MAX_HEAP_SIZE%"=="100" (setx GPU_MAX_HEAP_SIZE 100) > nul
@@ -20,11 +22,11 @@ if ERRORLEVEL 1 (
 
   if ERRORLEVEL 1 (
 
-    PWSH -executionpolicy bypass -windowstyle maximized -command "%~dp0UG-Miner.ps1" -ConfigFile "%~dp0Config\config.json"
+    PWSH -WorkingDirectory "%~dp0" -ExecutionPolicy bypass -WindowStyle maximized -Command "%~dp0UG-Miner.ps1" -ConfigFile "%~dp0Config\config.json"
 
   ) else (
 
-    WT --maximized --profile "PowerShell 7" PWSH "%~dp0UG-Miner.ps1" -ConfigFile "%~dp0Config\config.json"
+    conhost.exe PWSH -ExecutionPolicy bypass -WindowStyle maximized -Command "%~dp0UG-Miner.ps1" -ConfigFile "%~dp0Config\config.json"
 
   )
 )

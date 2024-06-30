@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Xgminer.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class XgMiner : Miner { 
@@ -42,8 +42,8 @@ Class XgMiner : Miner {
         $HashRate = [PSCustomObject]@{ }
 
         $DataSummary = If ($this.Algorithms[1]) { $Data.summary.SUMMARY[0] } Else { $Data.SUMMARY }
-        $HashRate_Name = [String]$this.Algorithms[0]
-        $HashRate_Value = If ($DataSummary.HS_5s) { [Double]$DataSummary.HS_5s * [Math]::Pow(1000, 0) }
+        $HashRateName = [String]$this.Algorithms[0]
+        $HashRateValue = If ($DataSummary.HS_5s) { [Double]$DataSummary.HS_5s * [Math]::Pow(1000, 0) }
         ElseIf ($DataSummary.KHS_5s) { [Double]$DataSummary.KHS_5s * [Math]::Pow(1000, 1) }
         ElseIf ($DataSummary.MHS_5s) { [Double]$DataSummary.MHS_5s * [Math]::Pow(1000, 2) }
         ElseIf ($DataSummary.GHS_5s) { [Double]$DataSummary.GHS_5s * [Math]::Pow(1000, 3) }
@@ -60,17 +60,17 @@ Class XgMiner : Miner {
         ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
         ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
         ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
-        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]$DataSummary.accepted
-        $Shares_Rejected = [Int64]$DataSummary.rejected
-        $Shares_Invalid = [Int64]$DataSummary.stale
-        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+        $SharesAccepted = [Int64]$DataSummary.accepted
+        $SharesRejected = [Int64]$DataSummary.rejected
+        $SharesInvalid = [Int64]$DataSummary.stale
+        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRate_Name = [String]($this.Algorithms -ne $HashRate_Name)) {
+        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) {
             $DataSummary = $Data.summary2.SUMMARY[0]
-            $HashRate_Value = If ($DataSummary.HS_5s) { [Double]$DataSummary.HS_5s * [Math]::Pow(1000, 0) }
+            $HashRateValue = If ($DataSummary.HS_5s) { [Double]$DataSummary.HS_5s * [Math]::Pow(1000, 0) }
             ElseIf ($DataSummary.KHS_5s) { [Double]$DataSummary.KHS_5s * [Math]::Pow(1000, 1) }
             ElseIf ($DataSummary.MHS_5s) { [Double]$DataSummary.MHS_5s * [Math]::Pow(1000, 2) }
             ElseIf ($DataSummary.GHS_5s) { [Double]$DataSummary.GHS_5s * [Math]::Pow(1000, 3) }
@@ -87,12 +87,12 @@ Class XgMiner : Miner {
             ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
             ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
             ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
-            $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
-            $Shares_Accepted = [Int64]$DataSummary.accepted
-            $Shares_Rejected = [Int64]$DataSummary.rejected
-            $Shares_Invalid = [Int64]$DataSummary.stale
-            $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+            $SharesAccepted = [Int64]$DataSummary.accepted
+            $SharesRejected = [Int64]$DataSummary.rejected
+            $SharesInvalid = [Int64]$DataSummary.stale
+            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0

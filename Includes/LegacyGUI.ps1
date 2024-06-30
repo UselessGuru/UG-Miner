@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -84,7 +84,7 @@ Function CheckBoxSwitching_Click {
     $LegacyGUIswitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIswitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
-        $LegacyGUIswitchingDGV.DataSource = ((Get-Content ".\Logs\SwitchingLog.csv" | ConvertFrom-Csv).Where({ $_.Type -in $SwitchingDisplayTypes }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
+        $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $_.Type -in $SwitchingDisplayTypes }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
         If ($LegacyGUIswitchingDGV.Columns) { 
             $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50
             $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
@@ -187,8 +187,8 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBest.({ $_.Workers.Count })| Measure-Object -Maximum).Maximum * 35
                     $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
                     $LegacyGUIactiveMinersDGV.Columns[11].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[12].FillWeight = 65; $LegacyGUIactiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[13].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[13].FillWeight = 65; $LegacyGUIactiveMinersDGV.Columns[13].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[14].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIactiveMinersDGV.Columns[12].FillWeight = 65; $LegacyGUIactiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIactiveMinersDGV.Columns[13].FillWeight = 65; $LegacyGUIactiveMinersDGV.Columns[13].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[13].HeaderCell.Style.Alignment = "MiddleRight"
                 }
                 Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
                 Form-Resize # To fully show lauched miners gridview
@@ -213,7 +213,7 @@ Function Update-TabControl {
 
             If (Test-Path -LiteralPath ".\Data\EarningsChartData.json" -PathType Leaf) { 
                 Try { 
-                    $Datasource = Get-Content -Path ".\Data\EarningsChartData.json" -ErrorAction Ignore | ConvertFrom-Json -ErrorAction Ignore
+                    $Datasource = [System.IO.File]::ReadAllLines("$PWD\Data\EarningsChartData.json") | ConvertFrom-Json -ErrorAction Ignore
 
                     $ChartTitle = New-Object System.Windows.Forms.DataVisualization.Charting.Title
                     $ChartTitle.Alignment = "TopCenter"
@@ -381,7 +381,7 @@ Function Update-TabControl {
                     @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join ' & ' } }, 
                     @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } } }
                     If ($LegacyGUIradioButtonMinersUnavailable.checked -or $LegacyGUIradioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
-                ) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, "Device(s)", Name | Out-DataTable
+                ) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, "Device(s)", Info | Out-DataTable
 
                 If ($LegacyGUIminersDGV.Columns) { 
                     $LegacyGUIminersDGV.Columns[0].Visible = $false
@@ -1631,7 +1631,7 @@ $LegacyGUIform.ResumeLayout()
 $LegacyGUIform.Add_Load(
     { 
          If (Test-Path -LiteralPath ".\Config\WindowSettings.json" -PathType Leaf) { 
-            $WindowSettings = Get-Content -Path ".\Config\WindowSettings.json" | ConvertFrom-Json -AsHashtable
+            $WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable
             # Restore window size
             If ($WindowSettings.Width -gt $LegacyGUIform.MinimumSize.Width) { $LegacyGUIform.Width = $WindowSettings.Width }
             If ($WindowSettings.Height -gt $LegacyGUIform.MinimumSize.Height) { $LegacyGUIform.Height = $WindowSettings.Height }
@@ -1664,7 +1664,7 @@ $LegacyGUIform.Add_Load(
                     }
                     ElseIf ($LegacyGUIeditConfigLink.Tag -ne "Edit-File") { 
                         $LegacyGUIeditConfigLink.Tag = "Edit-File"
-                        $LegacyGUIeditConfigLink.Text = "Edit configuration file '$($Variables.ConfigFile)' in notepad"
+                        $LegacyGUIeditConfigLink.Text = "Edit configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
                     }
                     [Void](MainLoop)
                 }

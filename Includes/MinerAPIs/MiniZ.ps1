@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class MiniZ : Miner { 
@@ -40,16 +40,16 @@ Class MiniZ : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = [String]$this.Algorithms[0]
-        $HashRate_Value = [Double]($Data.result.speed_sps | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        If (-not $HashRate_Value) { $HashRate_Value = [Double]($Data.result.sol_ps | Measure-Object -Sum | Select-Object -ExpandProperty Sum) } #fix
-        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        $HashRateName = [String]$this.Algorithms[0]
+        $HashRateValue = [Double]($Data.result.speed_sps | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        If (-not $HashRateValue) { $HashRateValue = [Double]($Data.result.sol_ps | Measure-Object -Sum | Select-Object -ExpandProperty Sum) } #fix
+        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]($Data.result.accepted_shares | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $Shares_Rejected = [Int64]($Data.result.rejected_shares | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $Shares_Invalid = [Int64]0
-        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+        $SharesAccepted = [Int64]($Data.result.accepted_shares | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $SharesRejected = [Int64]($Data.result.rejected_shares | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $SharesInvalid = [Int64]0
+        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         $PowerConsumption = [Double]0
 

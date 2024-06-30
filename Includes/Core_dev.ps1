@@ -25,13 +25,15 @@ Version date:   2024/06/30
 
 using module .\Include.psm1
 
-$ErrorLogFile = "Logs\Error.txt"
+$ErrorLogFile = "Logs\Error_Dev.txt"
 
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
 (Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
 
-Do { 
+Do {
+    If ($LegacyGUIform) { $LegacyGUIform.Text = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan]([DateTime]::Now.ToUniversalTime() - $Variables.ScriptStartTime) }
+
     Try { 
         $Variables.EndCycleMessage = ""
 
@@ -39,9 +41,11 @@ Do {
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
         # Internet connection must be available
+        $Global:DebugPreference = "SilentlyContinue"
         If ($NetRoute = ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) | Get-NetIPInterface).Where({ $_.ConnectionState -eq "Connected" })) { 
             $MyIP = ((Get-NetIPAddress -InterfaceIndex $NetRoute.ifIndex -AddressFamily IPV4).IPAddress)
         }
+        $Global:DebugPreference = "Continue"
         If ($MyIP) { 
             $Variables.MyIP = $MyIP
             Remove-Variable MyIp, NetRoute -ErrorAction Ignore
@@ -143,6 +147,7 @@ Do {
                             If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                                 $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                             }
+                            # $Variables.DonationStart = [DateTime]::Now
                         }
                     }
 
@@ -338,14 +343,23 @@ Do {
                         }
                     ).ForEach(
                         { 
-                            $Pool = [Pool]$_
-                            $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
-                            $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
-                            $Pool.Price *= $Factor
-                            $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
-                            $Pool.StablePrice *= $Factor
-                            $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
-                            $Pool
+                            $Pool = $_
+                            Try { 
+                                $Pool = [Pool]$_
+                                $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
+                                $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
+                                $Pool.Price *= $Factor
+                                $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
+                                $Pool.StablePrice *= $Factor
+                                $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
+                                $Pool
+                            }
+                            Catch { 
+                                Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                $_.Exception | Format-List -Force >> $ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            }
                         }
                     )
                     Remove-Variable Factor, Pool, PoolDataCollectedTimeStamp, PoolName -ErrorAction Ignore
@@ -1229,7 +1243,7 @@ Do {
 
         $Variables.Miners.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
 
-        If (-not ($Variables.EnabledDevices -and $Variables.Miners.Where({ $_.Available }))) { 
+        If (-not ($Variables.EnabledDevices -and $Variables.Miners.Where({ $_.Available }))) {
             $Variables.Miners = [Miner[]]@()
             $Variables.RefreshNeeded = $true
             If (-not $Variables.EnabledDevices) { 
@@ -1271,7 +1285,7 @@ Do {
         # Optional delay to avoid blue screens
         Start-Sleep -Seconds $Config.Delay
 
-        ForEach ($Miner in $Variables.MinersBest | Sort-Object { [String]$_.DeviceNames }) { 
+        ForEach ($Miner in $Variables.MinersBest | Sort-Object  { [String]$_.DeviceNames }) { 
             If ($Miner.Status -ne [MinerStatus]::DryRun -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
                 If ($Miner.Status -ne [MinerStatus]::DryRun) { 
                     # Launch prerun if exists
@@ -1394,11 +1408,14 @@ Do {
         $Variables.RefreshNeeded = $true
 
         Write-Message -Level Info "Collecting miner data while waiting for next cycle..."
-            
+
         Do { 
             Start-Sleep -Milliseconds 500
             Try { 
                 ForEach ($Miner in $Variables.RunningMiners.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
+                    If ($DebugMinerGetData) { 
+                        [Void]$Miner.GetMinerData()
+                    }
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
                         $Miner.StatusInfo = "'$($Miner.Info)' exited unexpectedly"

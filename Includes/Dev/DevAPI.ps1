@@ -129,7 +129,7 @@ Switch ($Path) {
                     $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ', ')]'"
                     $Data += "`n`nNew values:"
                     $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ', ')]'"
-                    $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile)'.`nIt will become active in next cycle."
+                    $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
                     ForEach ($DeviceName in $Values) { 
                         $Variables.Devices.Where({ $_.Name -eq $DeviceName }).ForEach(
                             { 
@@ -146,7 +146,7 @@ Switch ($Path) {
                     Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' disabled. Configuration file '$($Variables.ConfigFile)' updated."
                 }
                 Catch { 
-                    $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]"
+                    $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
                 }
             }
             Else { 
@@ -168,7 +168,7 @@ Switch ($Path) {
                     $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ', ')]'"
                     $Data += "`n`nNew values:"
                     $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ', ')]'"
-                    $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile)'.`nIt will become active in next cycle."
+                    $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
                     $Variables.Devices.Where({ $_.Name -in $Values }).ForEach(
                         { 
                             $_.State = [DeviceState]::Enabled
@@ -179,7 +179,7 @@ Switch ($Path) {
                     Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' enabled. Configuration file '$($Variables.ConfigFile)' updated."
                 }
                 Catch { 
-                    $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]."
+                    $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
                 }
             }
             Else {
@@ -191,9 +191,10 @@ Switch ($Path) {
     }
     "/functions/config/set" { 
         Try { 
-            Write-Config -ConfigFile $Variables.ConfigFile -Config ($Key | ConvertFrom-Json -AsHashtable)
             $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
+            Write-Config -ConfigFile $Variables.ConfigFile -Config $TempConfig
             $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
+            Remove-Variable TempConfig
 
             $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                 { 
@@ -211,10 +212,10 @@ Switch ($Path) {
             $Variables.RestartCycle = $true
             $Variables.FreshConfig = $false
             Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
-            $Data = "Configuration saved to '$($Variables.ConfigFile)'.`nIt will become fully active in the next cycle."
+            $Data = "Configuration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become fully active in the next cycle."
         }
         Catch { 
-            $Data = "Error saving configuration file '$($Variables.ConfigFile)'.`n`n[ $($_) ]."
+            $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
         }
         Break
     }

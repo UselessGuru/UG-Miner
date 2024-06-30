@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Class GMiner : Miner { 
@@ -38,24 +38,24 @@ Class GMiner : Miner {
         If (-not $Data) { Return $null }
 
         $HashRate = [PSCustomObject]@{ }
-        $HashRate_Name = [String]$this.Algorithms[0]
-        $HashRate_Value = [Double]($Data.devices.speed | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        $HashRateName = [String]$this.Algorithms[0]
+        $HashRateValue = [Double]($Data.devices.speed | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $Shares_Accepted = [Int64]$Data.total_accepted_shares
-        $Shares_Rejected = [Int64]$Data.total_rejected_shares
-        $Shares_Invalid = [Int64]$Data.total_invalid_shares
-        $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+        $SharesAccepted = [Int64]$Data.total_accepted_shares
+        $SharesRejected = [Int64]$Data.total_rejected_shares
+        $SharesInvalid = [Int64]$Data.total_invalid_shares
+        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRate_Name = [String]($this.Algorithms -ne $HashRate_Name)) {
-            $HashRate_Value = [Double]($Data.devices.speed2 | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $HashRate | Add-Member @{ $HashRate_Name = [Double]$HashRate_Value }
+        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) {
+            $HashRateValue = [Double]($Data.devices.speed2 | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
-            $Shares_Accepted = [Int64]$Data.total_accepted_shares2
-            $Shares_Rejected = [Int64]$Data.total_rejected_shares2
-            $Shares_Invalid = [Int64]$Data.total_invalid_shares2
-            $Shares | Add-Member @{ $HashRate_Name = @($Shares_Accepted, $Shares_Rejected, $Shares_Invalid, ($Shares_Accepted + $Shares_Rejected + $Shares_Invalid)) }
+            $SharesAccepted = [Int64]$Data.total_accepted_shares2
+            $SharesRejected = [Int64]$Data.total_rejected_shares2
+            $SharesInvalid = [Int64]$Data.total_invalid_shares2
+            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0

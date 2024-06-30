@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 using module .\Include.psm1
@@ -37,12 +37,12 @@ Do {
     $Earnings = @()
 
     # Get pools last earnings
-    $Variables.PoolsLastEarnings = If (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { Get-Content ".\Data\PoolsLastEarnings.json" -ErrorAction Ignore | ConvertFrom-Json | Get-SortedObject }
+    $Variables.PoolsLastEarnings = If (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
     If (-not $Variables.PoolsLastEarnings.Keys) { $Variables.PoolsLastEarnings = @{ } }
 
     # Read existing earning data, use data from last file
     ForEach ($Filename in (Get-ChildItem ".\Data\BalancesTrackerData*.json" | Sort-Object -Descending)) { 
-        $Variables.BalancesData = (Get-Content $Filename -ErrorAction Ignore | ConvertFrom-Json)
+        $Variables.BalancesData = ([System.IO.File]::ReadAllLines($Filename) | ConvertFrom-Json)
         If ($Variables.BalancesData.Count -gt ($Variables.PoolData.Count / 2)) { Break }
     }
 

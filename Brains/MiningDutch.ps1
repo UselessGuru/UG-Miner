@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -71,14 +71,14 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         If ($AlgoData) { 
             ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
-                $Algorithm_Norm = Get-Algorithm $Algo
+                $AlgorithmNorm = Get-Algorithm $Algo
                 $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
 
                 $AlgoData.$Algo | Add-Member Updated $Timestamp -Force
 
                 If ($PoolVariant) { 
                     # Reset history when stat file got removed
-                    $StatName = "$($PoolVariant)_$($Algorithm_Norm)_Profit"
+                    $StatName = "$($PoolVariant)_$($AlgorithmNorm)_Profit"
                     If (-not (Get-Stat -Name $StatName)) { 
                         $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
                         Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit')"
@@ -117,7 +117,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
                 # Reset history if PlusPrice is not within +/- 1000% of LastPrice
                 If ($LastPrice -gt 0 -and ($PlusPrice -lt $LastPrice * 0.1 -or $PlustPrice -gt $LastPrice * 10)) { 
-                    Remove-Stat -Name "$($PoolVariant)_$($Algorithm_Norm)_Profit"
+                    Remove-Stat -Name "$($PoolVariant)_$($AlgorithmNorm)_Profit"
                     $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
                     $PlusPrice = $LastPrice
                     Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $Poolname (LastPrice: $LastPrice vs. PlusPrice: $PlusPrice)"
@@ -159,3 +159,6 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     $Error.Clear()
     [System.GC]::Collect()
 }
+
+$Variables.Brains.Remove($BrainName)
+$Variables.BrainData.Remove($BrainName)

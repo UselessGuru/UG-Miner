@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Param(
@@ -48,20 +48,20 @@ If ($PriceField) {
             $Request = $Variables.BrainData.$Name
         }
         Else { 
-            $Request = Get-Content $BrainDataFile -ErrorAction Stop | ConvertFrom-Json
+            $Request = $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
         }
     }
     Catch { Return }
 
     If (-not $Request.PSObject.Properties.Name) { Return }
 
-    ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.Brains.$Name."Updated" })) { 
-        $Algorithm_Norm = Get-Algorithm $Algorithm
+    ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
+        $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = [String]$Request.$Algorithm.currency
         $Divisor = $DivisorMultiplier * [Double]$Request.$Algorithm.mbtc_mh_factor
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Currency -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
 
-        $Key = "$($PoolVariant)_$($Algorithm_Norm)$(If ($Currency) { "-$Currency" })"
+        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
 
         $Reasons = [System.Collections.Generic.List[String]]@()
@@ -74,7 +74,7 @@ If ($PriceField) {
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                    Algorithm                = $Algorithm_Norm
+                    Algorithm                = $AlgorithmNorm
                     Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
@@ -88,7 +88,7 @@ If ($PriceField) {
                     PortSSL                  = [UInt16]("5$([String]$Request.$Algorithm.port)")
                     PoolUri                  = "https://zpool.ca/algo/$($Algorithm)"
                     Price                    = $Stat.Live
-                    Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethproxy" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethproxy" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false

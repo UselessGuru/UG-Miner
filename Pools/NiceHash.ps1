@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Param(
@@ -71,13 +71,13 @@ If ($Wallet) {
         $Request.miningAlgorithms.ForEach(
             { 
                 $Algorithm = $_.Algorithm
-                $Algorithm_Norm = Get-Algorithm $Algorithm
-                $Currencies = Get-CurrencyFromAlgorithm $Algorithm_Norm
+                $AlgorithmNorm = Get-Algorithm $Algorithm
+                $Currencies = Get-CurrencyFromAlgorithm $AlgorithmNorm
                 $Currency = If ($Currencies.Count -eq 1) { [String]$Currencies } Else { "" }
 
                 $Divisor = 100000000
 
-                $Key = "$($Name)_$($Algorithm_Norm)"
+                $Key = "$($Name)_$($AlgorithmNorm)"
                 $Stat = Set-Stat -Name "$($Key)_Profit" -Value ([Double]$_.paying / $Divisor) -FaultDetection $false
 
                 $Reasons = [System.Collections.Generic.List[String]]@()
@@ -86,7 +86,7 @@ If ($Wallet) {
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Minute_5_Fluctuation), 1) # Use short timespan to counter price spikes
-                    Algorithm                = $Algorithm_Norm
+                    Algorithm                = $AlgorithmNorm
                     Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
@@ -100,7 +100,7 @@ If ($Wallet) {
                     PortSSL                  = 443
                     PoolUri                  = "https://www.nicehash.com/algorithm/$($_.Algorithm.ToLower())"
                     Price                    = $Stat.Live
-                    Protocol                 = If ($Algorithm_Norm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($Algorithm_Norm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Region                   = [String]$PoolConfig.Region
                     Reasons                  = $Reasons
                     SendHashrate             = $false

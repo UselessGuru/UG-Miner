@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.2.12
-Version date:   2024/06/26
+Version:        6.2.13
+Version date:   2024/06/30
 #>
 
 Param(
@@ -55,15 +55,15 @@ If ($PoolConfig.Wallets) {
 
     ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
         $Currency = $Pool.name -replace ' \s+'
-        If ($Algorithm_Norm = Get-AlgorithmFromCurrency $Currency) { 
+        If ($AlgorithmNorm = Get-AlgorithmFromCurrency $Currency) { 
             $Divisor = [Double]$Pool.profitPerPower
 
             # Add coin name
             If ($Pool.title -and $Currency) { 
-                [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $Pool.title)
+                [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title)
             }
 
-            $Key = "$($PoolVariant)_$($Algorithm_Norm)$(If ($Currency) { "-$Currency" })"
+            $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
 
             $Reasons = [System.Collections.Generic.List[String]]@()
@@ -72,7 +72,7 @@ If ($PoolConfig.Wallets) {
 
             [PSCustomObject]@{ 
                 Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                Algorithm                = $Algorithm_Norm
+                Algorithm                = $AlgorithmNorm
                 Currency                 = $Currency
                 Disabled                 = $Stat.Disabled
                 EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
