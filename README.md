@@ -15,9 +15,12 @@ Updated & maintained by UselessGuru
 
 UG-Miner code is partly based on
 
-- MultiPoolMiner which can be found here: https://github.com/MultiPoolMiner/MultiPoolMiner (Project is no longer maintained)
-- NPlusMiner which can be found here: https://github.com/MrPlusGH/NPlusMiner (Project is no longer maintained)
-- NemosMiner which can be found here: https://github.com/Minerx117/NemosMiner (Project is no longer maintained)
+- MultiPoolMiner which can be found here: https://github.com/MultiPoolMiner/MultiPoolMiner
+  (Project is no longer maintained)
+- NPlusMiner which can be found here: https://github.com/MrPlusGH/NPlusMiner
+  (Project is no longer maintained)
+- NemosMiner which can be found here: https://github.com/Minerx117/NemosMiner
+  (Project is no longer maintained)
 
 *****
 
@@ -180,20 +183,20 @@ Easy configuration, easy start:
 
       You can set specific options per pool. For example, you can mine NiceHash on the internal wallet and other pools on a valid wallet. See 'PoolsConfig-Template.json' for some pool specific configuration options.
 
-      Available options:
-         - Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
-         - UserName: your MPH or ProHashing user name
-         - WorkerName: your worker name
-         - EarningsAdjustmentFactor: See explanation below
-         - Algorithm: List of included or excluded algorithms per pool
-         - Corrency: List of included or excluded currencies per pool
-         - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
+         Available options:
+            - Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
+            - UserName: your MPH or ProHashing user name
+            - WorkerName: your worker name
+            - EarningsAdjustmentFactor: See explanation below
+            - Algorithm: List of included or excluded algorithms per pool
+            - Corrency: List of included or excluded currencies per pool
+            - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
 
-      Usage:
-         - Edit 'Config\PoolsConfig.json'
-         - Add an entry for the pool you want to customize
-            - The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
-            - (**careful with json formatting ;)**
+         Usage:
+            - Edit 'Config\PoolsConfig.json'
+            - Add an entry for the pool you want to customize
+               - The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
+               - (**careful with json formatting ;)**
 
       Note that the GUI only updates default values (valid for ALL pools unless there is pool specific configuration setting defined in 'Config\PoolConfig.json'). Any other changes need to be done manually.
 
@@ -202,7 +205,7 @@ Easy configuration, easy start:
       When using advanced per pool configuration, it is possible to add an earnings adjustment factor for a specific pool. This simply adds a multiplicator on estimations presented by the pool.
 
       Example scenario:
-         - You feel that a pool is exaggerating its estimations by 10% - Set EarningsAdjustmentFactor to 0.9
+         - You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9
 
    Pool Variants
 
