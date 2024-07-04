@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.13
-Version date:   2024/06/30
+Version:        6.2.14
+Version date:   2024/07/04
 #>
 
 Param(
@@ -107,7 +107,7 @@ If ($DivisorMultiplier -and $Regions) {
                     PortSSL                  = [UInt16]$Request.$Pool.tls_port
                     PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"
                     Price                    = $Stat.Live
-                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                    Protocol                 = $(If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" })
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false

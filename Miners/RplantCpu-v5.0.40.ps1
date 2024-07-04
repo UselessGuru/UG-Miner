@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.13
-Version date:   2024/06/30
+Version:        6.2.14
+Version date:   2024/07/04
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -108,7 +108,7 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "YespowerRes";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerRes" }
     [PSCustomObject]@{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     [PSCustomObject]@{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerTIDE" }
-    [PSCustomObject]@{ Algorithm = "YespowerUrx";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();        Arguments = " --algo yespowerURX" } # JayddeeCpu-v24.3 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
+    [PSCustomObject]@{ Algorithm = "YespowerUrx";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();        Arguments = " --algo yespowerURX" } # JayddeeCpu-v24.4 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.13
-Version date:   2024/06/30
+Version:        6.2.14
+Version date:   2024/07/04
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -208,7 +208,7 @@ Class Miner {
     [Int]$MinerSet
     [String]$MinerUri
     [String]$Name
-    [Bool]$Optimal
+    [Bool]$Optimal= $false
     [String]$Path
     [String]$PrerequisitePath
     [String]$PrerequisiteURI
@@ -1057,7 +1057,7 @@ Function Get-Rate {
         }
         Catch { 
             # Read exchange rates from min-api.cryptocompare.com, use stored data as fallback
-            $RatesCache = ([System.IO.File]::ReadAllLines("$PWD\Stats\$StatName.txt") | ConvertFrom-Json -ErrorAction Ignore)
+            $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -ErrorAction Ignore)
             If ($RatesCache.PSObject.Properties.Name) { 
                 $Variables.Rates = $RatesCache
                 $Variables.RatesUpdated = "FromFile: $((Get-Item -Path $RatesCacheFileName).CreationTime.ToUniversalTime())"
@@ -2786,7 +2786,6 @@ Function Add-CoinName {
     If (-not ($Variables.CoinNames[$Currency] -and $Variables.CurrencyAlgorithm[$Currency])) { 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        # $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
         If ($Variables.MutexAddCoinName.WaitOne(1000)) { 
@@ -2800,8 +2799,8 @@ Function Add-CoinName {
                     $Variables.CoinNames | Get-SortedObject | ConvertTo-Json | Out-File -Path ".\Data\CoinNames.json" -ErrorAction Ignore -Force
                 }
             }
-            [Void]$Variables.MutexAddCoinName.ReleaseMutex()
         }
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
     }
 }
 
@@ -2819,10 +2818,10 @@ Function Get-AlgorithmFromCurrency {
 
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
-        If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
+        If ($Variables.MutexAddCoinName.WaitOne(1000)) { 
             (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
-            [Void]$Variables.MutexAddCoinName.ReleaseMutex()
         }
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
 
         If ($Variables.CurrencyAlgorithm[$Currency]) { 
             Return $Variables.CurrencyAlgorithm[$Currency]
@@ -2844,10 +2843,11 @@ Function Get-CurrencyFromAlgorithm {
         }
 
         $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
-        If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
+        # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
+        If ($Variables.MutexAddCoinName.WaitOne(1000)) { 
             (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
-            [Void]$Variables.MutexAddCoinName.ReleaseMutex()
         }
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
 
         If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm }))) { 
             Return $Currencies

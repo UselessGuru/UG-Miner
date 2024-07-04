@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.13
-Version date:   2024/06/30
+Version:        6.2.14
+Version date:   2024/07/04
 #>
 
 using module .\Include.psm1
@@ -943,11 +943,11 @@ Do {
 
                             If ($RelevantMiners = $RelevantMiners.Where({ -not ($_.Reasons -match "Miner suspended by watchdog .+") })) { 
                                 # Add miner reason 'Miner suspended by watchdog [Algorithm [Algorithm]]'
-                                ($RelevantWatchdogTimers.Where({ $_.Algorithm -eq $_.Algorithm}) | Group-Object -Property MinerName, Algorithm).ForEach(
+                                ($RelevantWatchdogTimers.Where({ $_.Algorithm -eq $_.AlgorithmVariant}) | Group-Object -Property MinerName).ForEach(
                                     { 
-                                        If ($_.Count -ge $Variables.WatchdogCount) { 
+                                        If ($_.Count / (($_.Group[0].MinerName -split '-')[3] -split '&').Count -ge $Variables.WatchdogCount) { 
                                             $Group = $_.Group
-                                            If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') -and [String]$_.Algorithms -eq [String](($Group[0].MinerName -split '-')[3] -split '&' -replace '\(.*') })) { 
+                                            If ($MinersToSuspend = $RelevantMiners.Where({ (($_.Name -split '-')[0..2] -join '-') -eq (($Group[0].MinerName -split '-')[0..2] -join '-') -and [String]$_.Algorithms -eq (($Group[0].MinerName -split '-')[3] -split '&' -replace '\(.*') })) { 
                                                 $Algorithms = $MinersToSuspend[0].Workers.Pool.Algorithm -join '&'
                                                 $MinersToSuspend.ForEach({ $_.Reasons.Add("Miner suspended by watchdog [Algorithm $Algorithms]") })
                                                 Write-Message -Level Warn "Miner '$(($Group[0].MinerName -split '-')[0..2] -join '-') [$Algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
@@ -959,9 +959,9 @@ Do {
 
                                 If ($RelevantMiners = $RelevantMiners.Where({ -not ($_.Reasons -match "Miner suspended by watchdog .+") })) { 
                                     # Add miner reason 'Miner suspended by watchdog [Algorithm variant [AlgorithmVariant]]'
-                                    ($RelevantWatchdogTimers.Where({ $_.AlgorithmVariant -eq $_.AlgorithmVariant }) | Group-Object -Property MinerName, AlgorithmVariant).ForEach(
+                                    ($RelevantWatchdogTimers.Where({ $_.Algorithm -ne $_.AlgorithmVariant}) | Group-Object -Property MinerName).ForEach(
                                         { 
-                                            If ($_.Count -ge $Variables.WatchdogCount) { 
+                                            If ($_.Count / (($_.Group[0].MinerName -split '-')[3] -split '&').Count -ge $Variables.WatchdogCount ) { 
                                                 $Group = $_.Group
                                                 If ($MinersToSuspend = $RelevantMiners.Where({ $_.Name -eq $Group[0].MinerName })) { 
                                                     $Algorithms = $MinersToSuspend[0].Workers.Pool.AlgorithmVariant -join '&'

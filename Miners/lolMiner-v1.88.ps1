@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.13
-Version date:   2024/06/30
+Version:        6.2.14
+Version date:   2024/07/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
@@ -102,10 +102,10 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithms = @("EthashB3", "HeavyHashKarlsen"); Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90); ExcludeGPUArchitecture = " ";                ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode KARLSENDUAL --maxdualimpact *" }
     [PSCustomObject]@{ Algorithms = @("EthashB3", "SHA512256d");       Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = " ";                ExcludePools = @(@(), @()); Arguments = " --algo ETHASHB3 --dualmode RXDDUAL --maxdualimpact *" }
     [PSCustomObject]@{ Algorithms = @("FishHash");                     Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 6.0;  MinerSet = 1; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH" }
-    [PSCustomObject]@{ Algorithms = @("FishHash", "Blake3");           Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode ALEPHDUAL --maxdualimpact *" }
-    [PSCustomObject]@{ Algorithms = @("FishHash", "HeavyHashPyrin");   Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode PYRINDUAL --maxdualimpact *" }
-    [PSCustomObject]@{ Algorithms = @("FishHash", "HeavyHashKarlsen"); Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode KARLSENDUAL --maxdualimpact *" }
-    [PSCustomObject]@{ Algorithms = @("FishHash", "SHA512256d");       Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(60, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode RXDDUAL --maxdualimpact *" }
+    [PSCustomObject]@{ Algorithms = @("FishHash", "Blake3");           Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(75, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode ALEPHDUAL --maxdualimpact *" }
+    [PSCustomObject]@{ Algorithms = @("FishHash", "HeavyHashPyrin");   Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(75, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode PYRINDUAL --maxdualimpact *" }
+    [PSCustomObject]@{ Algorithms = @("FishHash", "HeavyHashKarlsen"); Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(75, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode KARLSENDUAL --maxdualimpact *" }
+    [PSCustomObject]@{ Algorithms = @("FishHash", "SHA512256d");       Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(75, 90); ExcludeGPUArchitecture = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = " --algo FISHHASH --dualmode RXDDUAL --maxdualimpact *" }
     [PSCustomObject]@{ Algorithms = @("HeavyHashKarlsen");             Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = " ";                ExcludePools = @(@(), @()); Arguments = " --algo KARLSEN" }
     [PSCustomObject]@{ Algorithms = @("HeavyHashPyrin");               Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = " ";                ExcludePools = @(@(), @()); Arguments = " --algo PYRIN" }
     [PSCustomObject]@{ Algorithms = @("IronFish");                     Type = "NVIDIA"; Fee = @(0.0075);     MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = " ";                ExcludePools = @(@(), @()); Arguments = " --algo IRONFISH" }

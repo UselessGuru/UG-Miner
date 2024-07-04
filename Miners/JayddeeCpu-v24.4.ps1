@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.13
-Version date:   2024/06/30
+Version:        6.2.14
+Version date:   2024/07/04
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v24.3/cpuminer-opt-24.3-windows.zip"
+$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v24.4/cpuminer-opt-24.4-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\cpuminer-aes-sse42.exe" # Intel
 
@@ -43,11 +43,11 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Argon2d250";    MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d250" }
     [PSCustomObject]@{ Algorithm = "Argon2d500";    MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d500" }
     [PSCustomObject]@{ Algorithm = "Argon2d5096";   MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d5096" }
-    [PSCustomObject]@{ Algorithm = "Blake2b";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo blake2b" } # FPGA
-    [PSCustomObject]@{ Algorithm = "Blake2s";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo blake2s" } # ASIC
+#   [PSCustomObject]@{ Algorithm = "Blake2b";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo blake2b" } # FPGA
+#   [PSCustomObject]@{ Algorithm = "Blake2s";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo blake2s" } # ASIC
     [PSCustomObject]@{ Algorithm = "Bastiom";       MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo bastion" }
     [PSCustomObject]@{ Algorithm = "BMW";           MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --algo bmw" }
-    [PSCustomObject]@{ Algorithm = "HMQ1725";       MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo hmq1725" } # GPU
+#   [PSCustomObject]@{ Algorithm = "HMQ1725";       MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo hmq1725" } # GPU
     [PSCustomObject]@{ Algorithm = "Jha";           MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo jha" }
     [PSCustomObject]@{ Algorithm = "Lyra2z330";     MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo lyra2z330" }
     [PSCustomObject]@{ Algorithm = "Lyra2RE3";      MinerSet = 3; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = " --algo lyra2rev3" }
@@ -55,8 +55,8 @@ $Algorithms = @(
     [PSCustomObject]@{ Algorithm = "Minotaur";      MinerSet = 1; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo minotaur" }
     [PSCustomObject]@{ Algorithm = "Minotaurx";     MinerSet = 1; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo minotaurx" }
     [PSCustomObject]@{ Algorithm = "power2b";       MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = ' --algo power2b --param-n 2048 --param-r 32 --param-key "Now I am become Death, the destroyer of worlds"' } # FPGA
-    [PSCustomObject]@{ Algorithm = "SHA3d";         MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo SHA3d" } # FPGA
-    [PSCustomObject]@{ Algorithm = "ScryptN11";     MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo scrypt(N,1,1)" } # GPU
+#   [PSCustomObject]@{ Algorithm = "SHA3d";         MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo SHA3d" } # FPGA
+#   [PSCustomObject]@{ Algorithm = "ScryptN11";     MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo scrypt(N,1,1)" } # GPU
     [PSCustomObject]@{ Algorithm = "ScryptN2";      MinerSet = 1; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " --algo scrypt --param-n 1048576" }
     [PSCustomObject]@{ Algorithm = "VertHash";      MinerSet = 0; WarmupTimes = @(45, 50); ExcludePools = @(); Arguments = " --algo verthash --data-file ..\.$($Variables.VerthashDatPath)" }
     [PSCustomObject]@{ Algorithm = "Yescrypt";      MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescrypt" }
