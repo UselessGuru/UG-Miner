@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -184,7 +184,7 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.Columns[6].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                     $LegacyGUIactiveMinersDGV.Columns[7].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                     $LegacyGUIactiveMinersDGV.Columns[8].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
-                    $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBest.({ $_.Workers.Count })| Measure-Object -Maximum).Maximum * 35
+                    $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 70 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 35
                     $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
                     $LegacyGUIactiveMinersDGV.Columns[11].FillWeight = 50 + ($Variables.MinersBest.({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
                     $LegacyGUIactiveMinersDGV.Columns[12].FillWeight = 65; $LegacyGUIactiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
@@ -449,6 +449,7 @@ Function Update-TabControl {
                     @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
                     If ($LegacyGUIradioButtonPoolsUnavailable.checked -or $LegacyGUIradioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
                 ) | Out-DataTable
+
                 If ($LegacyGUIpoolsDGV.Columns) { 
                     $LegacyGUIpoolsDGV.Columns[0].FillWeight = 80
                     $LegacyGUIpoolsDGV.Columns[1].FillWeight = 40
@@ -589,7 +590,7 @@ Function Form-Resize {
 
         $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 60), 6)
         $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 50), 6)
-        $LegacyGUIbuttonStop.Location =  [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - 40), 6)
+        $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - 40), 6)
 
         $LegacyGUIminingSummaryLabel.Width = $Variables.TextBoxSystemLog.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIworkersDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.Width - 26
 
@@ -1044,7 +1045,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         $Data = "$($Data -join "`n")`n`n$Message"
                     }
                     Else { 
-                        $Data = "No matching watchdog timers found."
+                        $Data = "No matching watchdog timer found."
                     }
                     Break
                 }
@@ -1088,7 +1089,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $SelectedPoolName = $_.Cells[5].Value
                             $SelectedPoolAlgorithm = $_.Cells[0].Value
                             # Update pool
-                            $Variables.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).ForEach(
+                            $Variables.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm -and $_.Reason -like "Pool suspended by watchdog *" }).ForEach(
                                 { 
                                     $Data += "$($_.Key) ($($_.Region))"
                                     $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
@@ -1108,7 +1109,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         $Data = "$($Data -join "`n")`n`n$Message"
                     }
                     Else { 
-                        $Data = "No matching watchdog timers found."
+                        $Data = "No matching watchdog timer found."
                     }
                     Break
                 }
@@ -1211,6 +1212,7 @@ $LegacyGUIbalancesDGV.AllowUserToResizeColumns = $true
 $LegacyGUIbalancesDGV.AllowUserToResizeRows = $false
 $LegacyGUIbalancesDGV.AutoSizeColumnsMode = "Fill"
 $LegacyGUIbalancesDGV.ColumnHeadersDefaultCellStyle.BackColor = [System.Drawing.SystemColors]::MenuBar
+$LegacyGUIbalancesDGV.ColumnHeadersDefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIbalancesDGV.ColumnHeadersHeightSizeMode = "AutoSize"
 $LegacyGUIbalancesDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIbalancesDGV.EnableHeadersVisualStyles = $false
@@ -1221,6 +1223,7 @@ $LegacyGUIbalancesDGV.Name = "EarningsDGV"
 $LegacyGUIbalancesDGV.ReadOnly = $true
 $LegacyGUIbalancesDGV.RowHeadersVisible = $false
 $LegacyGUIbalancesDGV.ScrollBars = "None"
+$LegacyGUIbalancesDGV.SelectionMode = "FullRowSelect"
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIbalancesDGV -Enabled $true
 $LegacyGUIearningsPageControls += $LegacyGUIbalancesDGV
 
@@ -1301,9 +1304,7 @@ $LegacyGUIminersDGV.Add_MouseUP(
         }
     }
 )
-$LegacyGUIminersDGV.Add_Sorted(
-    { Set-TableColor -DataGridView $LegacyGUIminersDGV }
-)
+$LegacyGUIminersDGV.Add_Sorted({ Set-TableColor -DataGridView $LegacyGUIminersDGV })
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIminersDGV -Enabled $true
 $LegacyGUIminersPageControls += $LegacyGUIminersDGV
 
@@ -1409,6 +1410,7 @@ $LegacyGUIworkersDGV.AllowUserToResizeRows = $false
 $LegacyGUIworkersDGV.AutoSizeColumnsMode = "Fill"
 $LegacyGUIworkersDGV.AutoSizeRowsMode = "AllCells"
 $LegacyGUIworkersDGV.ColumnHeadersDefaultCellStyle.BackColor = [System.Drawing.SystemColors]::MenuBar
+$LegacyGUIworkersDGV.ColumnHeadersDefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIworkersDGV.ColumnHeadersHeightSizeMode = "AutoSize"
 $LegacyGUIworkersDGV.ColumnHeadersVisible = $true
 $LegacyGUIworkersDGV.DataBindings.DefaultDataSourceUpdateMode = 0
@@ -1419,9 +1421,9 @@ $LegacyGUIworkersDGV.Height = 3
 $LegacyGUIworkersDGV.Location = [System.Drawing.Point]::new(6, ($LegacyGUIworkersLabel.Height + 8))
 $LegacyGUIworkersDGV.ReadOnly = $true
 $LegacyGUIworkersDGV.RowHeadersVisible = $false
-$LegacyGUIworkersDGV.Add_Sorted(
-    { Set-WorkerColor -DataGridView $LegacyGUIworkersDGV }
-)
+$LegacyGUIworkersDGV.SelectionMode = "FullRowSelect"
+
+$LegacyGUIworkersDGV.Add_Sorted({ Set-WorkerColor -DataGridView $LegacyGUIworkersDGV })
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIworkersDGV -Enabled $true
 $LegacyGUIrigMonitorPageControls += $LegacyGUIworkersDGV
 
@@ -1522,6 +1524,7 @@ $LegacyGUIswitchingDGV.AllowUserToResizeColumns = $true
 $LegacyGUIswitchingDGV.AllowUserToResizeRows = $false
 $LegacyGUIswitchingDGV.AutoSizeColumnsMode = "Fill"
 $LegacyGUIswitchingDGV.ColumnHeadersDefaultCellStyle.BackColor = [System.Drawing.SystemColors]::MenuBar
+$LegacyGUIswitchingDGV.ColumnHeadersDefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIswitchingDGV.ColumnHeadersHeightSizeMode = "AutoSize"
 $LegacyGUIswitchingDGV.ColumnHeadersVisible = $true
 $LegacyGUIswitchingDGV.DataBindings.DefaultDataSourceUpdateMode = 0
@@ -1532,6 +1535,8 @@ $LegacyGUIswitchingDGV.Location = [System.Drawing.Point]::new(6, ($LegacyGUIswit
 $LegacyGUIswitchingDGV.Name = "SwitchingDGV"
 $LegacyGUIswitchingDGV.ReadOnly = $true
 $LegacyGUIswitchingDGV.RowHeadersVisible = $false
+$LegacyGUIswitchingDGV.SelectionMode = "FullRowSelect"
+
 $LegacyGUIswitchingDGV.Add_Sorted(
     {
         If ($Config.UseColorForMinerStatus) { 
@@ -1591,6 +1596,7 @@ $LegacyGUIwatchdogTimersDGV.AllowUserToResizeColumns = $true
 $LegacyGUIwatchdogTimersDGV.AllowUserToResizeRows = $false
 $LegacyGUIwatchdogTimersDGV.AutoSizeColumnsMode = "Fill"
 $LegacyGUIwatchdogTimersDGV.ColumnHeadersDefaultCellStyle.BackColor = [System.Drawing.SystemColors]::MenuBar
+$LegacyGUIwatchdogTimersDGV.ColumnHeadersDefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIwatchdogTimersDGV.ColumnHeadersHeightSizeMode = "AutoSize"
 $LegacyGUIwatchdogTimersDGV.ColumnHeadersVisible = $true
 $LegacyGUIwatchdogTimersDGV.DataBindings.DefaultDataSourceUpdateMode = 0
@@ -1601,6 +1607,8 @@ $LegacyGUIwatchdogTimersDGV.Location = [System.Drawing.Point]::new(6, ($LegacyGU
 $LegacyGUIwatchdogTimersDGV.Name = "WatchdogTimersDGV"
 $LegacyGUIwatchdogTimersDGV.ReadOnly = $true
 $LegacyGUIwatchdogTimersDGV.RowHeadersVisible = $false
+$LegacyGUIwatchdogTimersDGV.SelectionMode = "FullRowSelect"
+
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIwatchdogTimersDGV -Enabled $true
 $LegacyGUIwatchdogTimersPageControls += $LegacyGUIwatchdogTimersDGV
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\cpuminer-aes-sse42.exe" # Intel
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Ghostrider"; MinerSet = 1; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo gr" }
+    @{ Algorithm = "Ghostrider"; MinerSet = 1; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo gr" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

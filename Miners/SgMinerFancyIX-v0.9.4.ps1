@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { Return }
@@ -29,11 +29,11 @@ $Path = "$PWD\Bin\$Name\sgminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "0x10";          MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 30); ExcludePools = @();           ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel chainox" }
-    [PSCustomObject]@{ Algorithm = "HeavyHash";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 30); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @("RDNA1"); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 23 --kernel heavyhash" } # FPGA
-    [PSCustomObject]@{ Algorithm = "Neoscrypt";     MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt" } # FPGA
-    [PSCustomObject]@{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt-xaya" }
-    [PSCustomObject]@{ Algorithm = "YescryptR16";   MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @();           ExcludeGPUArchitecture = @("GCN4");  Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 20 --pool-nfactor 100 --kernel yescryptr16" }
+    @{ Algorithm = "0x10";          MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 30); ExcludePools = @();           ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel chainox" }
+    @{ Algorithm = "HeavyHash";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 30); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @("RDNA1"); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 23 --kernel heavyhash" } # FPGA
+    @{ Algorithm = "Neoscrypt";     MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt" } # FPGA
+    @{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @("ZergPool"); ExcludeGPUArchitecture = @();        Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt-xaya" }
+    @{ Algorithm = "YescryptR16";   MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @();           ExcludeGPUArchitecture = @("GCN4");  Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 20 --pool-nfactor 100 --kernel yescryptr16" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -51,7 +51,7 @@ If ($Algorithms) {
                 $Algorithms.ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        $MinMemGiB  = $_.MinMemGiB
+                        $MinMemGiB = $_.MinMemGiB
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"

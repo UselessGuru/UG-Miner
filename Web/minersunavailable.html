@@ -118,6 +118,7 @@
             $table.bootstrapTable({
               async: 'true',
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
+              groupBy: !(config.MinerUseBestPoolsOnly || config.UseAllPoolAlgorithmCombinations),
               height: $(window).height() - $table.offset().top + 26,
 
               // onExpandRow: function(index, row, $detail) {
@@ -138,10 +139,12 @@
 
               onPostBody: function () {
                 if (this.data.length > 0) {
-                  $("td.bs-checkbox").each(function () {
-                    this.disabled = 'true';
-                    this.style.opacity = 0;
-                  });
+                  if (!(config.MinerUseBestPoolsOnly || config.UseAllPoolAlgorithmCombinations)) {
+                    $("td.bs-checkbox").each(function () {
+                      this.disabled = 'true';
+                      this.style.opacity = 0;
+                    });
+                  };
                   if (config.UseColorForMinerStatus == true) {
                     $(".statuscolor").each(function () {
                       if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());

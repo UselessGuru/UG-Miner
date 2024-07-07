@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge [Version]"6.0" }))) { Return }
@@ -35,18 +35,18 @@ $Path = "$PWD\Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Blakecoin";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blakecoin --intensity 22" } # FPGA
-    [PSCustomObject]@{ Algorithm = "C11";           MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo c11 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
-#   [PSCustomObject]@{ Algorithm = "Keccak";        MinMemGiB = 2; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
-#   [PSCustomObject]@{ Algorithm = "Lyra2RE2";      MinMemGiB = 2; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
-    [PSCustomObject]@{ Algorithm = "Neoscrypt";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 15.5" } # FPGA
-    [PSCustomObject]@{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo neoscrypt-xaya --intensity 15.5" } # CryptoDredge-v0.27.0 is fastest
-#   [PSCustomObject]@{ Algorithm = "Skein";         MinMemGiB = 0; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo skein" } # ASIC
-    [PSCustomObject]@{ Algorithm = "Veltor";        MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
-#   [PSCustomObject]@{ Algorithm = "Whirlpool";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirl" } # Cuda error in func 'whirlpool512_cpu_finalhash_64' at line 1795 : invalid argument.
-#   [PSCustomObject]@{ Algorithm = "Whirlpool";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirlpoolx" }
-    [PSCustomObject]@{ Algorithm = "X11evo";        MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
-    [PSCustomObject]@{ Algorithm = "X17";           MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo x17 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
+    @{ Algorithm = "Blakecoin";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blakecoin --intensity 22" } # FPGA
+    @{ Algorithm = "C11";           MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo c11 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
+#   @{ Algorithm = "Keccak";        MinMemGiB = 2; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
+#   @{ Algorithm = "Lyra2RE2";      MinMemGiB = 2; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
+    @{ Algorithm = "Neoscrypt";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 15.5" } # FPGA
+    @{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo neoscrypt-xaya --intensity 15.5" } # CryptoDredge-v0.27.0 is fastest
+#   @{ Algorithm = "Skein";         MinMemGiB = 0; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo skein" } # ASIC
+    @{ Algorithm = "Veltor";        MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
+#   @{ Algorithm = "Whirlpool";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirl" } # Cuda error in func 'whirlpool512_cpu_finalhash_64' at line 1795 : invalid argument.
+#   @{ Algorithm = "Whirlpool";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirlpoolx" }
+    @{ Algorithm = "X11evo";        MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
+    @{ Algorithm = "X17";           MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo x17 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

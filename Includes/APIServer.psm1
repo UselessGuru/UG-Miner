@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
 Version:        6.2.5
-Version date:   2024/07/04
+Version date:   2024/07/07
 #>
 
 Function Start-APIServer { 
@@ -687,7 +687,7 @@ Function Start-APIServer {
                                     $Data = "$($Data -join "`n")`n`n$Message"
                                 }
                                 Else { 
-                                    $Data = "No matching watchdog timers found."
+                                    $Data = "No matching watchdog timer found."
                                 }
                                 Break
                             }
@@ -793,11 +793,11 @@ Function Start-APIServer {
                                 Break
                             }
                             "/donationdata" { 
-                                $Data =  ConvertTo-Json $Variables.DonationData
+                                $Data = ConvertTo-Json $Variables.DonationData
                                 Break
                             }
                             "/donationlog" { 
-                                $Data =  ConvertTo-Json $Variables.DonationLog
+                                $Data = ConvertTo-Json $Variables.DonationLog
                                 Break
                             }
                             "/driverversion" { 
@@ -805,7 +805,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/earningschartdata" { 
-                                $Data =  ConvertTo-Json $Variables.EarningsChartData
+                                $Data = ConvertTo-Json $Variables.EarningsChartData
                                 Break
                             }
                             "/equihashcoinpers" { 

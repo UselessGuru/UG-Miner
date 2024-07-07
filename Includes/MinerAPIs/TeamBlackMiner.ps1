@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 Class TeamBlackMiner : Miner { 
@@ -56,7 +56,7 @@ Class TeamBlackMiner : Miner {
 
                         $SharesAccepted = [Int64]($Data.pool.$_.total_accepted)
                         $SharesRejected = [Int64]($Data.pool.$_.total_rejected)
-                        $SharesInvalid =  [Int64]($Data.pool.$_.total_stale)
+                        $SharesInvalid  = [Int64]($Data.pool.$_.total_stale)
                         $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
                     }
                 }

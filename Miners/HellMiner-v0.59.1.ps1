@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -32,7 +32,7 @@ $Path = "$PWD\Bin\$Name\hellminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "VerusHash"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(45, 90); ExcludePools = @(); Arguments = "" }
+    @{ Algorithm = "VerusHash"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(45, 90); ExcludePools = @(); Arguments = "" }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

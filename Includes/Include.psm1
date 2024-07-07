@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -132,7 +132,6 @@ Class Pool {
     [String]$Host
     # [String[]]$Hosts # To be implemented for pool failover
     [String]$Key
-    [String]$MiningCurrency
     [String]$Name
     [String]$Pass
     $PoolPorts = @() # Cannot define nullable array
@@ -1627,35 +1626,30 @@ Function Get-SortedObject {
         [Object]$Object
     )
 
-    Try { 
-        Switch -Regex ($Object.GetType().Name) { 
-            "PSCustomObject" { 
-                $SortedObject = [PSCustomObject]@{ }
-                ($Object.PSObject.Properties.Name | Sort-Object).ForEach(
-                    { 
-                        If ($Object.$_ -is [Hashtable] -or $Object.$_ -is [PSCustomObject]) { $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_) }
-                        ElseIf ($Object.$_ -is [Array]) { $SortedObject | Add-Member $_ @($Object.$_ | Sort-Object) }
-                        Else { $SortedObject | Add-Member $_ ($Object.$_) }
-                    }
-                )
-            }
-            "Hashtable|OrderedDictionary|SyncHashtable" { 
-                $SortedObject = [Ordered]@{ }
-                ($Object.GetEnumerator().Name | Sort-Object).ForEach(
-                    { 
-                        If ($Object[$_] -is [Hashtable] -or $Object[$_] -is [PSCustomObject]) { $SortedObject[$_] = Get-SortedObject $Object[$_] }
-                        ElseIf ($Object.$_ -is [Array]) { $SortedObject[$_] = @($Object[$_] | Sort-Object) }
-                        Else { $SortedObject[$_] = $Object[$_] }
-                    }
-                )
-            }
-            Default { 
-                $SortedObject = $Object
-            }
+    Switch -Regex ($Object.GetType().Name) { 
+        "PSCustomObject" { 
+            $SortedObject = [PSCustomObject]@{ }
+            ($Object.PSObject.Properties.Name | Sort-Object).ForEach(
+                { 
+                    If ($Object.$_ -is [Hashtable] -or $Object.$_ -is [PSCustomObject]) { $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_) }
+                    ElseIf ($Object.$_ -is [Array]) { $SortedObject | Add-Member $_ @($Object.$_ | Sort-Object) }
+                    Else { $SortedObject | Add-Member $_ $Object.$_ }
+                }
+            )
         }
-    }
-    Catch {
-        $Error
+        "Hashtable|OrderedDictionary|SyncHashtable" { 
+            $SortedObject = [Ordered]@{ }
+            ($Object.GetEnumerator().Name | Sort-Object).ForEach(
+                { 
+                    If ($Object[$_] -is [Hashtable] -or $Object[$_] -is [PSCustomObject]) { $SortedObject[$_] = Get-SortedObject $Object[$_] }
+                    ElseIf ($Object.$_ -is [Array]) { $SortedObject[$_] = @($Object[$_] | Sort-Object) }
+                    Else { $SortedObject[$_] = $Object[$_] }
+                }
+            )
+        }
+        Default { 
+            $SortedObject = $Object
+        }
     }
 
     Return $SortedObject
@@ -1825,7 +1819,7 @@ Function Set-Stat {
         If (-not $Duration) { $Duration = [TimeSpan]::FromMinutes(1) }
 
         $Global:Stats[$Name] = $Stat = @{ 
-            Name                  = [String]$Name
+            Name                  = $Name
             Live                  = [Double]$Value
             Minute                = [Double]$Value
             Minute_Fluctuation    = [Double]0
@@ -1848,7 +1842,7 @@ Function Set-Stat {
     }
 
     @{ 
-        Name                  = [String]$Name
+        Name                  = $Name
         Live                  = [Double]$Stat.Live
         Minute                = [Double]$Stat.Minute
         Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
@@ -1874,23 +1868,23 @@ Function Get-Stat {
 
     Param (
         [Parameter(Mandatory = $true)]
-        [String[]]$Name
+        [String[]]$Names
     )
 
-    $Name.ForEach(
+    $Names.ForEach(
         { 
-            $StatName = $_
+            $Name = $_
 
-            If ($Global:Stats[$StatName] -isnot [Hashtable]) { 
+            If ($Global:Stats[$Name] -isnot [Hashtable]) { 
                 # Reduce number of errors
-                If (-not (Test-Path -LiteralPath "Stats\$StatName.txt" -PathType Leaf)) { 
+                If (-not (Test-Path -LiteralPath "Stats\$Name.txt" -PathType Leaf)) { 
                     Return
                 }
 
                 Try { 
-                    $Stat = [System.IO.File]::ReadAllLines("$PWD\Stats\$StatName.txt") | ConvertFrom-Json -ErrorAction Stop
-                    $Global:Stats[$StatName] = @{ 
-                        Name                  = [String]$StatName
+                    $Stat = [System.IO.File]::ReadAllLines("$PWD\Stats\$Name.txt") | ConvertFrom-Json -ErrorAction Stop
+                    $Global:Stats[$Name] = @{ 
+                        Name                  = $Name
                         Live                  = [Double]$Stat.Live
                         Minute                = [Double]$Stat.Minute
                         Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
@@ -1911,12 +1905,12 @@ Function Get-Stat {
                     }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Stat file '$StatName' is corrupt and will be reset."
-                    Remove-Stat $StatName
+                    Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
+                    Remove-Stat $Name
                 }
             }
 
-            Return $Global:Stats[$StatName]
+            Return $Global:Stats[$Name]
         }
     )
 }
@@ -1925,10 +1919,10 @@ Function Remove-Stat {
 
     Param (
         [Parameter(Mandatory = $true)]
-        [String[]]$Name
+        [String[]]$Names
     )
 
-    $Name.ForEach(
+    $Names.ForEach(
         { 
             Remove-Item -LiteralPath "Stats\$_.txt" -Force -Confirm:$false -ErrorAction Ignore
             $Global:Stats.Remove($_)
@@ -2560,19 +2554,19 @@ Function Get-Combination {
         $Combination | Add-Member @{ [Math]::Pow(2, $I) = $Value[$I] }
     }
 
-    $Combination_Keys = ($Combination | Get-Member -MemberType NoteProperty).Name
+    $CombinationKeys = ($Combination | Get-Member -MemberType NoteProperty).Name
 
     For ($I = $SizeMin; $I -le $SizeMax; $I ++) { 
         $X = [Math]::Pow(2, $I) - 1
 
         While ($X -le [Math]::Pow(2, $Value.Count) - 1) { 
             [PSCustomObject]@{ 
-                Combination = ($Combination_Keys.Where({ $_ -band $X })).ForEach({ $Combination.$_ })
+                Combination = ($CombinationKeys.Where({ $_ -band $X })).ForEach({ $Combination.$_ })
             }
             $Smallest = ($X -band - $X)
             $Ripple = $X + $Smallest
-            $New_Smallest = ($Ripple -band - $Ripple)
-            $Ones = (($New_Smallest / $Smallest) -shr 1) - 1
+            $NewSmallest = ($Ripple -band - $Ripple)
+            $Ones = (($NewSmallest / $Smallest) -shr 1) - 1
             $X = $Ripple -bor $Ones
         }
     }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 using module .\Includes\Include.psm1
@@ -58,6 +58,8 @@ Param(
     [Switch]$BalancesTrackerLog = $false, # If true will store all balance tracker data in .\Logs\EarningTrackerLog.csv
     [Parameter(Mandatory = $false)]
     [UInt16]$BalancesTrackerPollInterval = 5, # minutes, Interval duration to trigger background task to collect pool balances & earnings data; set to 0 to disable
+    [Parameter(Mandatory = $false)]
+    [Switch]$BenchmarkAllPoolAlgorithmCombinations,
     [Parameter(Mandatory = $false)]
     [Switch]$CalculatePowerCost = $true, # If true power consumption will be read from miners and calculate power cost, required for true profit calculation
     [Parameter(Mandatory = $false)]
@@ -261,8 +263,6 @@ Param(
     [Parameter(Mandatory = $false)]
     [Double]$UnrealMinerEarningFactor = 5, # Ignore miner if resulting profit is more than $Config.UnrealPoolPriceFactor higher than average price of all other miners with same algo
     [Parameter(Mandatory = $false)]
-    [Switch]$UseAllPoolAlgorithmCombinations,
-    [Parameter(Mandatory = $false)]
     [Switch]$UseAnycast = $true, # If true pools (currently ZergPool only) will use anycast for best network performance and ping times
     [Parameter(Mandatory = $false)]
     [Hashtable]$Wallets = @{ "BTC" = "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF" }, 
@@ -296,7 +296,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.14"
+    Version      = [System.Version]"6.2.15"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -479,18 +479,18 @@ $Variables.GPUArchitectureDbAMD.PSObject.Properties.ForEach({ $_.Value = $_.Valu
 
 $Variables.Devices = Get-Device
 
+$Variables.VerthashDatPath = ".\Cache\VertHash.dat"
+If (Test-Path -LiteralPath $Variables.VerthashDatPath -PathType Leaf) { 
+    Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VerthashDatPath)'..."
+}
+# Alwas run thread job after Get-Device to set throttle limit
+$VertHashDatCheckJob = Start-ThreadJob -ScriptBlock { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } -StreamingHost $null -ThrottleLimit (2 * $Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).Count + 2)
+
 $Variables.Devices.Where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Variables.SupportedCPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
 $Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Variables.SupportedGPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
 $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
 
 $Variables.Devices.Where({ $_.Name -in $Config.ExcludeDeviceName -and $_.State -ne [DeviceState]::Unsupported }).ForEach({ $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" })
-
-$Variables.VerthashDatPath = ".\Cache\VertHash.dat"
-If (Test-Path -LiteralPath $Variables.VerthashDatPath -PathType Leaf) { 
-    Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VerthashDatPath)'..."
-}
-# Alwas run thread job to set throttle limit
-$VertHashDatCheckJob = Start-ThreadJob -ScriptBlock { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } -StreamingHost $null -ThrottleLimit (2 * $Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).Count + 2)
 
 If ($Variables.FreshConfig) { 
     # MinerInstancePerDeviceModel: Default to $true if more than one device model per vendor

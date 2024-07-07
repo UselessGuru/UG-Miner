@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -38,7 +38,7 @@ ElseIf ((Compare-Object $AvailableMinerDevices.CpuFeatures @("sse2")            
 Else { Return }
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Aurum"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludePools = @(); Arguments = " -a aurum" }
+    @{ Algorithm = "Aurum"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludePools = @(); Arguments = " -a aurum" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

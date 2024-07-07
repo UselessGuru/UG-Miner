@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"9.1") }))) { Return }
@@ -36,9 +36,9 @@ $DeviceEnumerator = "Type_Vendor_Slot"
 # NVIDIA Enable Hardware-Accelerated GPU Scheduling
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Ethash"; Type = "AMD"; MinMemGiB = 0.87; MinerSet = 0; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --opencl --devices" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
+    @{ Algorithm = "Ethash"; Type = "AMD"; MinMemGiB = 0.87; MinerSet = 0; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --opencl --devices" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
 
-    [PSCustomObject]@{ Algorithm = "Ethash"; Type = "NVIDIA"; MinMemGiB = 0.87; MinerSet = 0; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --cuda --devices" } # PhoenixMiner-v6.2c is fastest but has dev fee
+    @{ Algorithm = "Ethash"; Type = "NVIDIA"; MinMemGiB = 0.87; MinerSet = 0; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --cuda --devices" } # PhoenixMiner-v6.2c is fastest but has dev fee
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

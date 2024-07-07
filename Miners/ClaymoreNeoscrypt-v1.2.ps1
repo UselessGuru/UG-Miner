@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -lt [Version]"26.20.15011.10003" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\NeoScryptMiner.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Neoscrypt"; MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @("RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(); Arguments = "" } # FPGA
+    @{ Algorithm = "Neoscrypt"; MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @("RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(); Arguments = "" } # FPGA
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -48,7 +48,7 @@ If ($Algorithms) {
                 $Algorithms.ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        $MinMemGiB  = $_.MinMemGiB 
+                        $MinMemGiB = $_.MinMemGiB 
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"

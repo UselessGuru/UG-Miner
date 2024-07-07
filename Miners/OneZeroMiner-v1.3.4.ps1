@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [Version]"450.80.02" }))) { Return }
@@ -29,8 +29,8 @@ $Path = "$PWD\Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @( 
-    [PSCustomObject]@{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
-    [PSCustomObject]@{ Algorithm = "XelisHash";  Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
+    @{ Algorithm = "XelisHash";  Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

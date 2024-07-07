@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -33,14 +33,14 @@ $Path = "$PWD\Bin\$Name\CryptoDredge.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Allium";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(); Arguments = " --algo allium --intensity 8" } # FPGA
-    [PSCustomObject]@{ Algorithm = "Exosis";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo exosis --intensity 8" }
-    [PSCustomObject]@{ Algorithm = "Dedal";     Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo dedal --intensity 8" }
-    [PSCustomObject]@{ Algorithm = "HMQ1725";   Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo hmq1725 --intensity 8" } # CryptoDredge v0.26.0 is fastest
-    [PSCustomObject]@{ Algorithm = "Neoscrypt"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 6" } # FPGA
-#   [PSCustomObject]@{ Algorithm = "Phi";       Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi --intensity 8" } # ASIC
-    [PSCustomObject]@{ Algorithm = "Phi2";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi2 --intensity 8" }
-    [PSCustomObject]@{ Algorithm = "Pipe";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo pipe --intensity 8" }
+    @{ Algorithm = "Allium";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @("Other"); ExcludePools = @(); Arguments = " --algo allium --intensity 8" } # FPGA
+    @{ Algorithm = "Exosis";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo exosis --intensity 8" }
+    @{ Algorithm = "Dedal";     Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo dedal --intensity 8" }
+    @{ Algorithm = "HMQ1725";   Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo hmq1725 --intensity 8" } # CryptoDredge v0.26.0 is fastest
+    @{ Algorithm = "Neoscrypt"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 6" } # FPGA
+#   @{ Algorithm = "Phi";       Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(45, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi --intensity 8" } # ASIC
+    @{ Algorithm = "Phi2";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo phi2 --intensity 8" }
+    @{ Algorithm = "Pipe";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludeGPUArchitecture = @();        ExcludePools = @(); Arguments = " --algo pipe --intensity 8" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -58,7 +58,7 @@ If ($Algorithms) {
                 $Algorithms.ForEach(
                     { 
                         $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        $MinMemGiB  = $_.MinMemGiB 
+                        $MinMemGiB = $_.MinMemGiB 
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return } # Cuda error in func 'argon2d_hash_cuda' at line 89 : an illegal instruction was encountered on GTX 750
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "Argon2d500"; MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo argon2d" }
+    @{ Algorithm = "Argon2d500"; MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo argon2d" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

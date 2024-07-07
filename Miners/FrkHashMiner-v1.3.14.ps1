@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"9.1" }))) { Return }
@@ -30,7 +30,7 @@ $DeviceEnumerator = "Type_Vendor_Index"
 
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "FrkHash"; Type = "NVIDIA"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --cuda" }
+    @{ Algorithm = "FrkHash"; Type = "NVIDIA"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --cuda" }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

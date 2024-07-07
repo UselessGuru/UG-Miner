@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 using module .\Include.psm1
@@ -85,7 +85,18 @@ Do {
 
         Write-Message -Level Info "Started new cycle."
 
+        # Must clear all existing miners due to different miner names
+        If ($Config.BenchmarkAllPoolAlgorithmCombinations -ne $Variables.BenchmarkAllPoolAlgorithmCombinations) { 
+            # Stop all running miners
+            ForEach ($Miner in $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) { 
+                $Miner.SetStatus([MinerStatus]::Idle)
+                $Variables.Devices.Where({ $_.Name -in $Miner.DeviceNames }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+            }
+            $Variables.Miners = [Miner[]]@()
+        }
+
         # Use values from config
+        $Variables.BenchmarkAllPoolAlgorithmCombinations = $Config.BenchmarkAllPoolAlgorithmCombinations
         $Variables.PoolName = $Config.PoolName
         $Variables.NiceHashWalletIsInternal = $Config.NiceHashWalletIsInternal
         $Variables.PoolTimeout = [Math]::Floor($Config.PoolTimeout)
@@ -755,7 +766,7 @@ Do {
                             }
                             $Miner.PSObject.Properties.Remove("Fee")
                             $Miner | Add-Member Info "$(($Miner.Name -split '-')[0..2] -join '-') {$($Miner.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })", $_.Pool.Name -join '@' }) -join ' & ')}$(If (($Miner.Name -split '-')[4]) { " (Dual Intensity $(($Miner.Name -split '-')[4]))" })"
-                            If ($Config.UseAllPoolAlgorithmCombinations) { $Miner.Name = $Miner.Info -replace "\{", "(" -replace "\}", ")" -replace " " }
+                            If ($Config.BenchmarkAllPoolAlgorithmCombinations) { $Miner.Name = $Miner.Info -replace "\{", "(" -replace "\}", ")" -replace " " }
                             $Miner -as $_.API
                         }
                         Catch { 
@@ -785,7 +796,8 @@ Do {
                             { 
                                 Try { 
                                     $Miner = $_
-                                    If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and ($Variables.DonationRunning -or $_.ContinousCycle -lt $Config.MinCycle)) { # Minimum numbers of full cycles not yet reached
+                                    If ($_.KeepRunning = $_.Status -in @([MinerStatus]::Running, [MinerStatus]::DryRun) -and ($Variables.DonationRunning -or $_.ContinousCycle -lt $Config.MinCycle)) { 
+                                        # Minimum numbers of full cycles not yet reached
                                         $_.Restart = $false
                                     }
                                     Else { 
@@ -862,8 +874,7 @@ Do {
                 Remove-Variable ReasonableEarning -ErrorAction Ignore
             }
 
-            $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
-            If ($Config.UseAllPoolAlgorithmCombinations) { 
+            If ($Config.BenchmarkAllPoolAlgorithmCombinations) { 
                 # Add reason 'Not best miner in algorithm family'
                 ($Miners.Where({ -not $_.Reasons }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Workers.Pool.Name }, { [String]$_.Workers.Pool.Algorithm }).ForEach(
                     {
@@ -972,7 +983,7 @@ Do {
             # Gone miners are no longer available
             $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false}) 
 
-            Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { 's' }), filtered out $($Miners.Where({ $_.Reasons }).Count) miner$(If ($Miners.Where({ $_.Reasons }).Count -ne 1) { 's' }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { 's' }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { 's' })."
+            Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { 's' }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { 's' }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { 's' }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { 's' })."
 
             If ($DownloadList = @($Variables.MinersMissingPrerequisite | Select-Object @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }) + @($Variables.MinersMissingBinary | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }) | Select-Object * -Unique) { 
                 If ($Variables.Downloader.State -ne "Running") { 
@@ -1007,12 +1018,13 @@ Do {
             }
 
             If ($Miners.Where({ $_.Available })) { 
-                Write-Message -Level Info "Selecting best miner$(If (($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(If ($Variables.CalculatePowerCost) { " profit (power cost $($Config.MainCurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earning" })..."
+                Write-Message -Level Info "Selecting best miner$(If (($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { " profit (power cost $($Config.MainCurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earnings" })..."
 
                 If ($Miners.Where({ $_.Available }).Count -eq 1) { 
                     $MinersBest = $Variables.MinersBestPerDevice = $Variables.MinersOptimal = $Miners.Where({ $_.Available })
                 }
                 Else { 
+                    $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
                     # Add running miner bonus
                     $RunningMinerBonusFactor = 1 + $Config.MinerSwitchingThreshold / 100
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias *= $RunningMinerBonusFactor })
@@ -1048,7 +1060,7 @@ Do {
 
                     # Revert running miner bonus
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias /= $RunningMinerBonusFactor })
-                    Remove-Variable MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
+                    Remove-Variable Bias, MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
                 }
 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
@@ -1309,8 +1321,6 @@ Do {
                 }
 
                 If ($Miner.Workers.Pool.DAGSizeGiB) { 
-                    # Add extra time to build larger DAGs
-                    # $_.WarmupTimes[0] += ($Miner.Workers.Pool.DAGSizeGiB | Measure-Object -Sum).Sum * 5
                     # Add extra time when CPU mining and miner requires DAG creation
                     If ($Variables.MinersBest.Type -contains "CPU" -and -not $Config.DryRun) { $Miner.WarmupTimes[0] += 15 <# seconds #>}
                     # Add extra time when notebook runs on battery

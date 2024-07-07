@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -le [Version]"20.45.01.28") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return } # Only supports AMD drivers until 20.12.1
@@ -29,9 +29,9 @@ $Path = "$PWD\Bin\$Name\EthDcrMiner64.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @( 
-    [PSCustomObject]@{ Algorithm = "Ethash"; Type = "AMD"; Fee = @(0.006); MinMemGiB = 0.77; MinerSet = 2; Tuning = " -rxboost 1"; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " -platform 1" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
+    @{ Algorithm = "Ethash"; Type = "AMD"; Fee = @(0.006); MinMemGiB = 0.77; MinerSet = 2; Tuning = " -rxboost 1"; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " -platform 1" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
 
-    [PSCustomObject]@{ Algorithm = "Ethash"; Type = "NVIDIA"; Fee = @(0.006); MinMemGiB = 0.77; MinerSet = 2; Tuning = " -strap 1"; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " -platform 2" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
+    @{ Algorithm = "Ethash"; Type = "NVIDIA"; Fee = @(0.006); MinMemGiB = 0.77; MinerSet = 2; Tuning = " -strap 1"; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " -platform 2" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

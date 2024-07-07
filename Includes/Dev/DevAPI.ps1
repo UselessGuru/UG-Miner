@@ -676,11 +676,11 @@ Switch ($Path) {
         Break
     }
     "/donationdata" { 
-        $Data =  ConvertTo-Json $Variables.DonationData
+        $Data = ConvertTo-Json $Variables.DonationData
         Break
     }
     "/donationlog" { 
-        $Data =  ConvertTo-Json $Variables.DonationLog
+        $Data = ConvertTo-Json $Variables.DonationLog
         Break
     }
     "/driverversion" { 
@@ -688,7 +688,7 @@ Switch ($Path) {
         Break
     }
     "/earningschartdata" { 
-        $Data =  ConvertTo-Json $Variables.EarningsChartData
+        $Data = ConvertTo-Json $Variables.EarningsChartData
         Break
     }
     "/equihashcoinpers" { 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "7.5" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    [PSCustomObject]@{ Algorithm = "VerusHash"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(30, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus --intensity 23" }
+    @{ Algorithm = "VerusHash"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(30, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus --intensity 23" }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

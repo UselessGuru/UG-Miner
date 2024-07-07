@@ -1,6 +1,29 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
-- UG-Miner has issues with new Windows Terminal when default terminal application is set to 'Let windows decide' or 'Windows Terminal'. -> It is recommended to set it to 'Windows Console Host'
+- UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'. -> It is recommended to set it to 'Windows Console Host'
+
+Changelog UG-Miner 6.2.15 2024/07/07
+====================================
+
+Enhancements:
+- Core: Minor code optimizations
+- Legacy GUI: Always select full table rows
+
+Fixes:
+- Legacy GUI: Incorrect watchdog count message when no corresponding pool watchdog exists
+- Web GUI / 'Earnings and Balances': Zergpool balances wallet link incorrect
+
+
+Changelog UG-Miner 6.2.14 2024/07/04
+====================================
+
+Fixes:
+- Core: Double watchdog expiration messages (regression from 6.2.9)
+- Core / Includes.psm1: Function 'Get-Rate' could not read cache file
+
+Miner changes:
+- JayddeeCpu-v24.4
+
 
 Changelog UG-Miner 6.2.13 2024/06/30
 ====================================

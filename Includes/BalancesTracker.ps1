@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.14
-Version date:   2024/07/04
+Version:        6.2.15
+Version date:   2024/07/07
 #>
 
 using module .\Include.psm1
@@ -245,16 +245,16 @@ Do {
                     }
                     Else { 
                         # Only calculate if current balance data
-                        If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) }))   { $Growth1 =   [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) }))   { $Growth6 =   [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) }))  { $Growth24 =  [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) })  | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) }))   { $Growth1   = [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) }))   { $Growth6   = [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) }))  { $Growth24  = [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) })  | Sort-Object -Property DateTime -Top 1).Earnings) }
                         If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) })) { $Growth168 = [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
                         If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) })) { $Growth720 = [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
                     }
 
 
                     $AvgHourlyGrowth = If ($PoolBalanceObjects.Where({ $_.DateTime -lt $Now.AddHours(-1) })) { [Double](($PoolBalanceObject.Earnings - $PoolBalanceObjects[0].Earnings) / ($Now - $PoolBalanceObjects[0].DateTime).TotalHours) }    Else { $Growth1 }
-                    $AvgDailyGrowth =  If ($PoolBalanceObjects.Where({ $_.DateTime -lt $Now.AddDays(-1) }))  { [Double](($PoolBalanceObject.Earnings - $PoolBalanceObjects[0].Earnings) / ($Now - $PoolBalanceObjects[0].DateTime).TotalDays) }     Else { $Growth24 }
+                    $AvgDailyGrowth  = If ($PoolBalanceObjects.Where({ $_.DateTime -lt $Now.AddDays(-1) }))  { [Double](($PoolBalanceObject.Earnings - $PoolBalanceObjects[0].Earnings) / ($Now - $PoolBalanceObjects[0].DateTime).TotalDays) }     Else { $Growth24 }
                     $AvgWeeklyGrowth = If ($PoolBalanceObjects.Where({ $_.DateTime -lt $Now.AddDays(-7) }))  { [Double](($PoolBalanceObject.Earnings - $PoolBalanceObjects[0].Earnings) / ($Now - $PoolBalanceObjects[0].DateTime).TotalDays * 7) } Else { $Growth168 }
 
                     If ($PoolBalanceObjects.Where({ $_.DateTime.Date -eq $Now.Date })) { 
