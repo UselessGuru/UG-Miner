@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.15
+Version:        6.2.16
 Version date:   2024/07/07
 #>
 
@@ -77,8 +77,10 @@ If ($DivisorMultiplier -and $Regions) {
         If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Pool] configured") }
         If ($Request.$Pool.hashrate_shared -eq 0) { $Reasons.Add("No hashrate at pool") }
 
-        # Temp fix. SSL fpr Ethashb* not working
+        # Temp fix. SSL for EthashB3 not working
         If ($AlgorithmNorm -eq "EthashB3") { $Request.$Pool.tls_port = $null }
+        # Cannot cast negative values to [UInt]
+        If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 } 
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $Region_Norm })) { 
@@ -94,20 +96,19 @@ If ($DivisorMultiplier -and $Regions) {
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
                     Algorithm                = $AlgorithmNorm
-                    Currency                 = $Currency
+                    Currency                 = If ($Currency) { $Currency } Else { "" }
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Request.$Pool.Fees / 100
                     Host                     = $PoolHost.toLower()
                     Key                      = $Key
-                    MiningCurrency           = If ($Currency) { $Currency } Else { "" }
                     Name                     = $Name
                     Pass                     = "c=$PayoutCurrency$(If ($Currency) { ",mc=$Currency" }),ID=$WorkerName$PayoutThresholdParameter" # Pool profit switching breaks Option 2 (static coin), instead it will still send DAG data for any coin
                     Port                     = [UInt16]$Request.$Pool.port
                     PortSSL                  = [UInt16]$Request.$Pool.tls_port
                     PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"
                     Price                    = $Stat.Live
-                    Protocol                 = $(If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" })
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false

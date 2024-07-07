@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.2.15
+Version:        6.2.16
 Version date:   2024/07/07
 #>
 
@@ -93,14 +93,13 @@ If ($Wallet) {
                     Fee                      = $Fee
                     Host                     = "$Algorithm.$PoolHost".ToLower()
                     Key                      = $Key
-                    MiningCurrency           = ""
                     Name                     = $Name
                     Pass                     = "x"
                     Port                     = 9200
                     PortSSL                  = 443
                     PoolUri                  = "https://www.nicehash.com/algorithm/$($_.Algorithm.ToLower())"
                     Price                    = $Stat.Live
-                    Protocol                 = $(If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" })
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Region                   = [String]$PoolConfig.Region
                     Reasons                  = $Reasons
                     SendHashrate             = $false

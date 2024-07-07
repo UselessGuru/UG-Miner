@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.2.15
+Version:        6.2.16
 Version date:   2024/07/07
 #>
 
@@ -82,14 +82,13 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
             Fee                      = $Request.$Algorithm.Fees / 100
             Host                     = $HostSuffix
             Key                      = $Key
-            MiningCurrency           = ""
             Name                     = $Name
             Pass                     = "x"
             Port                     = [UInt16]($Request.$Algorithm.port -split ' ')[0]
             PortSSL                  = If (($Request.$Algorithm.port -split ' ')[2]) { ($Request.$Algorithm.port -split ' ')[2] } Else { $null }
             PoolUri                  = ""
             Price                    = $Stat.Live
-            Protocol                 = $(If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" })
+            Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
             Reasons                  = $Reasons
             Region                   = [String]$PoolConfig.Region
             SendHashrate             = $false

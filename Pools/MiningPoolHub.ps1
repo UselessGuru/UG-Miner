@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.2.15
+Version:        6.2.16
 Version date:   2024/07/07
 #>
 
@@ -92,14 +92,13 @@ If ($PoolConfig.UserName) {
                     Fee                      = $Pool.Fee / 100
                     Host                     = [String]($Pool.host_list.split(";") | Sort-Object -Descending { $_ -ilike "$Region*" } | Select-Object -First 1)
                     Key                      = $Key
-                    MiningCurrency           = ""
                     Name                     = $Name
                     Pass                     = "x"
                     Port                     = [UInt16]$Pool.port
                     PortSSL                  = 0
                     PoolUri                  = "https://$($Pool.coin_name).miningpoolhub.com"
                     Price                    = $Stat.Live * (1 - [Math]::Min($Stat.Day_Fluctuation, 1)) + $Stat.Day * [Math]::Min($Stat.Day_Fluctuation, 1)
-                    Protocol                 = $(If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" })
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false

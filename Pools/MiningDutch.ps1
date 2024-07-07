@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.2.15
+Version:        6.2.16
 Version date:   2024/07/07
 #>
 
@@ -88,14 +88,13 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
                     Fee                      = $Request.$Algorithm.Fees / 100
                     Host                     = "$($Region).$($HostSuffix)"
                     Key                      = $Key
-                    MiningCurrency           = ""
                     Name                     = $Name
                     Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency"
                     Port                     = [UInt16]$Request.$Algorithm.port
                     PortSSL                  = 0
                     PoolUri                  = "https://www.mining-dutch.nl/?page=pools"
                     Price                    = $Stat.Live
-                    Protocol                 = $(If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" })
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false

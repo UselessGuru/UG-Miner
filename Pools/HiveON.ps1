@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.2.15
+Version:        6.2.16
 Version date:   2024/07/07
 #>
 
@@ -79,7 +79,6 @@ If ($PoolConfig.Wallets) {
                 Fee                      = 0.03
                 Host                     = [String]$Pool.servers[0].host
                 Key                      = $Key
-                MiningCurrency           = ""
                 Name                     = $Name
                 Pass                     = "x"
                 Port                     = [UInt16]$Pool.servers[0].ports[0]

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.2.15
+Version:        6.2.16
 Version date:   2024/07/07
 #>
 
@@ -66,7 +66,6 @@ If ($PriceField) {
 
         $Reasons = [System.Collections.Generic.List[String]]@()
         If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
-        # If ($Request.$Algorithm.error) { $Reasons.Add($Request.$Algorithm.error) }
         If ($Request.$Algorithm.hashrate_last24h -eq 0) { $Reasons.Add("No hashrate at pool") }
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
@@ -75,20 +74,19 @@ If ($PriceField) {
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
                     Algorithm                = $AlgorithmNorm
-                    Currency                 = $Currency
+                    Currency                 = If ($Currency) { $Currency } Else { "" }
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Request.$Algorithm.Fees / 100
                     Host                     = "$($Algorithm).$($Region).$($HostSuffix)"
                     Key                      = $Key
-                    MiningCurrency           = If ($Currency -eq $PayoutCurrency) { $Currency } Else { "" }
                     Name                     = $Name
                     Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(If ($Currency -eq $PayoutCurrency) { ",zap=$Currency" })"
                     Port                     = [UInt16]$Request.$Algorithm.port
                     PortSSL                  = [UInt16]("5$([String]$Request.$Algorithm.port)")
                     PoolUri                  = "https://zpool.ca/algo/$($Algorithm)"
                     Price                    = $Stat.Live
-                    Protocol                 = $(If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethproxy" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" })
+                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethproxy" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false
