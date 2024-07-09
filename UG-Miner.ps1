@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.15
-Version date:   2024/07/07
+Version:        6.2.16
+Version date:   2024/07/09
 #>
 
 using module .\Includes\Include.psm1
@@ -64,6 +64,8 @@ Param(
     [Switch]$CalculatePowerCost = $true, # If true power consumption will be read from miners and calculate power cost, required for true profit calculation
     [Parameter(Mandatory = $false)]
     [String]$ConfigFile = ".\Config\Config.json", # Config file name
+    [Parameter(Mandatory = $false)]
+    [Int]$CPUMiningReserveCPUcore = 1, # Number of CPU cores reserved for main script processing. Helps to get more stable hashrates and faster core loop processing.
     [Parameter(Mandatory = $false)]
     [Int]$CPUMinerProcessPriority = "-2", # Process priority for CPU miners
     [Parameter(Mandatory = $false)]
@@ -296,7 +298,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.15"
+    Version      = [System.Version]"6.2.16"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell

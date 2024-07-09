@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.15
-Version date:   2024/07/07
+Version:        6.2.16
+Version date:   2024/07/09
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")

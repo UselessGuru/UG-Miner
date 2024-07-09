@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.15
-Version date:   2024/07/07
+Version:        6.2.16
+Version date:   2024/07/09
 #>
 
 using module .\Include.psm1
@@ -751,7 +751,7 @@ Do {
                             & $_.FullName
                         }
                         Catch { 
-                            Write-Message -Level Error "Error in miner file 'Miners\$MinerFileName': $_."
+                            Write-Message -Level Error "Miner file 'Miners\$MinerFileName': $_."
                             "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
                             $_.Exception | Format-List -Force >> $ErrorLogFile
                             $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
@@ -766,7 +766,7 @@ Do {
                             }
                             $Miner.PSObject.Properties.Remove("Fee")
                             $Miner | Add-Member Info "$(($Miner.Name -split '-')[0..2] -join '-') {$($Miner.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })", $_.Pool.Name -join '@' }) -join ' & ')}$(If (($Miner.Name -split '-')[4]) { " (Dual Intensity $(($Miner.Name -split '-')[4]))" })"
-                            If ($Config.BenchmarkAllPoolAlgorithmCombinations) { $Miner.Name = $Miner.Info -replace "\{", "(" -replace "\}", ")" -replace " " }
+                            If ($Config.BenchmarkAllPoolAlgorithmCombinations) { $Miner.Name = $Miner.Info }
                             $Miner -as $_.API
                         }
                         Catch { 
@@ -872,19 +872,6 @@ Do {
                     }
                 )
                 Remove-Variable ReasonableEarning -ErrorAction Ignore
-            }
-
-            If ($Config.BenchmarkAllPoolAlgorithmCombinations) { 
-                # Add reason 'Not best miner in algorithm family'
-                ($Miners.Where({ -not $_.Reasons }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Workers.Pool.Name }, { [String]$_.Workers.Pool.Algorithm }).ForEach(
-                    {
-                        ($_.Group | Select-Object -Skip 1).ForEach(
-                            { 
-                                $_.Reasons.Add("Not best miner in algorithm family")
-                            }
-                        )
-                    }
-                )
             }
 
             $Variables.MinersMissingBinary = [Miner[]]@()

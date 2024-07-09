@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
 Version:        6.2.16
-Version date:   2024/07/07
+Version date:   2024/07/09
 #>
 
 Param(

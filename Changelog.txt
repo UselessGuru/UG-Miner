@@ -1,6 +1,21 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
-- UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'. -> It is recommended to set it to 'Windows Console Host'
+- UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
+  -> It is recommended to set it to 'Windows Console Host'
+
+
+Changelog UG-Miner 6.2.16 2024/07/09
+====================================
+
+Enhancements:
+- Core: Added configuration item 'CPUMiningReserveCPUcore' (Number of CPU cores reserved for main script processing. Helps to get more stable hashrates and faster core loop processing.)
+
+Miner changes:
+- BzMiner-v21.3.0
+- Rigel-v1.18.0
+- SRBMinerMulti-v2.5.8
+- TTMiner-v2024.3.1
+
 
 Changelog UG-Miner 6.2.15 2024/07/07
 ====================================
@@ -61,7 +76,7 @@ Enhancements:
 - Core / Includes.psm1: 'Get-Device' Ignore devices with negative PCIbus
 
 Fixes:
-- AutoUpdater: Do not add 'Debug' to '$LogToFile' & '$LogToScreen' configuration items if not set in current config
+- AutoUpdater: Do not add 'Debug' to configuration items 'LogToFile' & 'LogToScreen' if not set in current config
 - Legacy GUI: Not saving windows size and position (regression from 6.2.9)
 - ZergPool balances tracker not working
 
