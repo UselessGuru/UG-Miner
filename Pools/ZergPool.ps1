@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.16
+Version:        6.2.17
 Version date:   2024/07/09
 #>
 
@@ -77,8 +77,6 @@ If ($DivisorMultiplier -and $Regions) {
         If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Pool] configured") }
         If ($Request.$Pool.hashrate_shared -eq 0) { $Reasons.Add("No hashrate at pool") }
 
-        # Temp fix. SSL for EthashB3 not working
-        If ($AlgorithmNorm -eq "EthashB3") { $Request.$Pool.tls_port = $null }
         # Cannot cast negative values to [UInt]
         If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 } 
 
