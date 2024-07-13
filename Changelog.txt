@@ -16,9 +16,10 @@ Enhancements:
 - Core / Includes.psm1: Minor code optimizations
 
 Fixes:
-- CPU Miners broken (regression from 6.2.16)
+- Core: 'Error in file 'Includes\Core.ps1' line 1001 detected. Restarting core...'
 - Core: Watchdog timeout message incorrect (regression from 6.2.5)
-- Core /Includes.psm1: Function 'Get-DAGdata' returning incorrect DAG size for IRON
+- Core / Includes.psm1: Function 'Get-DAGdata' returning incorrect DAG size for IRON
+- CPU Miners broken (regression from 6.2.16)
 
 Fixes:
 - HiveOn balances querying for unsupported BTC balance

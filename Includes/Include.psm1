@@ -2887,11 +2887,6 @@ Function Get-PoolBaseName {
 }
 
 Function Get-Version { 
-    # Updater always logs all messages
-    $ConfigLogToFile = $Config.LogToFile
-    $ConfigLogToScreen = $Config.LogToScreen
-    $Config.LogToFile = $Config.LogToScreen = @("Info", "Warn", "Error", "Verbose", "Debug")
-
     Try { 
         $UpdateVersion = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/UselessGuru/UG-Miner/main/Version.txt" -TimeoutSec 15 -SkipCertificateCheck -Headers @{ "Cache-Control" = "no-cache" }).Content | ConvertFrom-Json
 
@@ -2921,8 +2916,6 @@ Function Get-Version {
     Catch { 
         Write-Message -Level Warn "Version checker could not contact update server."
     }
-    $Config.LogToFile = $ConfigLogToFile
-    $Config.LogToScreen = $ConfigLogToScreen
 }
 
 Function Initialize-Autoupdate { 
