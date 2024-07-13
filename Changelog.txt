@@ -24,7 +24,9 @@ Fixes:
 - HiveOn balances querying for unsupported BTC balance
 
 Miner changes:
+- ClaymoreDualME-v2.7.ps1 (removed - would only work with Nvidia drivers older than 20.12.1)
 - OneZeroMiner-v1.3.6
+- RrkzCpu-v4.2 (Invalid miner binary name)
 - SRBMinerMulti-v2.5.9
 - TTMiner-v2024.3.2
 
