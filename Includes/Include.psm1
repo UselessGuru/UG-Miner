@@ -2999,6 +2999,7 @@ Function Update-DAGdata {
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
         Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
             $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
 
             If ($DAGdataResponse.coins.PSObject.Properties.Name) { 
@@ -3023,7 +3024,6 @@ Function Update-DAGdata {
                     }
                 )
                 $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                Write-Message -Level Info "Loaded DAG data from '$Url'."
             }
             Else { 
                 Write-Message -Level Warn "Failed to load DAG data from '$Url'."
@@ -3042,6 +3042,7 @@ Function Update-DAGdata {
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from Minerstat
         Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
             $DAGdataResponse = Invoke-WebRequest -Uri $Url -TimeoutSec 5 # PWSH 6+ no longer supports basic parsing -> parse text
             If ($DAGdataResponse.statuscode -eq 200) {
                 (($DAGdataResponse.Content -split '\n' -replace '"', "'").Where({ $_ -like "<div class='block' title='Current block height of *" })).ForEach(
@@ -3064,7 +3065,6 @@ Function Update-DAGdata {
                     }
                 )
                 $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                Write-Message -Level Info "Loaded DAG data from '$Url'."
             }
             Else { 
                 Write-Message -Level Warn "Failed to load DAG data from '$Url'."
@@ -3083,6 +3083,7 @@ Function Update-DAGdata {
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from ProHashing
         Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
             $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
 
             If ($DAGdataResponse.code -eq 200) { 
@@ -3104,7 +3105,6 @@ Function Update-DAGdata {
                     }
                 )
                 $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                Write-Message -Level Info "Loaded DAG data from '$Url'."
             }
             Else { 
                 Write-Message -Level Warn "Failed to load DAG data from '$Url'."
@@ -3124,6 +3124,7 @@ Function Update-DAGdata {
     If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from StakeCube block explorer
         Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
             $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
@@ -3132,7 +3133,6 @@ Function Update-DAGdata {
                     $DAGdata | Add-Member Url $Url -Force
                     $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
                     $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                    Write-Message -Level Info "Loaded DAG data from '$Url'."
                 }
                 Else { 
                     Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
@@ -3155,6 +3155,7 @@ Function Update-DAGdata {
         If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from EVR block explorer
             Try { 
+                Write-Message -Level Info "Loading DAG data from '$Url'..."
                 $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
                 If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                     $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
@@ -3163,7 +3164,6 @@ Function Update-DAGdata {
                         $DAGdata | Add-Member Url $Url -Force
                         $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
                         $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                        Write-Message -Level Info "Loaded DAG data from '$Url'."
                     }
                     Else { 
                         Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
@@ -3180,6 +3180,7 @@ Function Update-DAGdata {
         If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from MeowCoin block explorer
             Try { 
+                Write-Message -Level Info "Loading DAG data from '$Url'..."
                 $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
                 If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                     $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
@@ -3188,7 +3189,6 @@ Function Update-DAGdata {
                         $DAGdata | Add-Member Url $Url -Force
                         $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
                         $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                        Write-Message -Level Info "Loaded DAG data from '$Url'."
                     }
                     Else { 
                         Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."

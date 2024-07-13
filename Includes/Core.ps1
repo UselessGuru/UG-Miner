@@ -999,10 +999,12 @@ Do {
                         If (Get-Command "Get-NetFirewallRule") { 
                             If ($MissingMinerFirewallRules = (Compare-Object @(Get-NetFirewallApplicationFilter | Select-Object -ExpandProperty Program -Unique) @($Miners | Select-Object -ExpandProperty Path -Unique) -PassThru).Where({ $_.SideIndicator -eq "=>" })) { 
                                 Try { 
+                                    If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to open inbound firewall rules..." }
                                     Start-Process "pwsh" ("-Command Import-Module NetSecurity; ('$($MissingMinerFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json) | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' }" -replace '"', '\"') -Verb runAs
+                                    Write-Message -Level Info "Added $($MissingMinerFirewallRules.count) inbound firewall rules [Group '$($Variables.Branding.ProductLabel)']."
                                 }
                                 Catch { 
-                                    Write-Message -Level Error "Request to open firewall ports declined by user."
+                                    Write-Message -Level Error "Could not add inbound firewall rules. Some miners will fail."
                                 }
                             }
                             Remove-Variable MissingMinerFirewallRules
