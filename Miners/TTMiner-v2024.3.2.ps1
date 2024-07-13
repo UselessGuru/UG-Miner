@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.16
-Version date:   2024/07/09
+Version:        6.2.17
+Version date:   2024/07/13
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or $_.Type -in @("AMD", "NVIDIA") } ))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.3.1/TT-Miner-2024.3.1.zip" }
+    { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.3.2/TT-Miner-2024.3.2.zip" }
     Default           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -39,7 +39,7 @@ $Algorithms = @(
     @{ Algorithm = "EvrProPow";        Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a EvrProgPow" }
     @{ Algorithm = "FiroPow";          Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a FiroPow" }
     @{ Algorithm = "FiroPowSCC";       Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -c SCC" }
-    @{ Algorithm = "FishHash";         Type = "AMD"; Fee = @(0.01); MinMemGiB = 4;    MinerSet = 2; WarmupTimes = @(30, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Flex" }
+    @{ Algorithm = "FishHash";         Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(30, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a fishhash" }
     @{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(75, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a KawPow" }
 #   @{ Algorithm = "MemeHash";         Type = "AMD"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(120, 30); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Memehash" } # Not yet working
     @{ Algorithm = "MeowPow";          Type = "AMD"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(120, 30); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a meowpow" }
@@ -58,6 +58,7 @@ $Algorithms = @(
     @{ Algorithm = "Ghostrider";       Type = "CPU"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " -a Ghostrider" }
     @{ Algorithm = "Flex";             Type = "CPU"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " -a Flex" }
     @{ Algorithm = "SpectreX";         Type = "CPU"; Fee = @(0.01); MinerSet = 1; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " -a SpectreX" }
+    @{ Algorithm = "XelisHassh";       Type = "CPU"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " -a Xelis" }
 
     @{ Algorithm = "Blake3";           Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Blake3" }
     @{ Algorithm = "EtcHash";          Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a EtcHash" }
@@ -66,7 +67,7 @@ $Algorithms = @(
     @{ Algorithm = "EvrProPow";        Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a EvrProgPow" }
     @{ Algorithm = "FiroPow";          Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a FiroPow" }
     @{ Algorithm = "FiroPowSCC";       Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -c SCC" }
-    @{ Algorithm = "FishHash";         Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 4;    MinerSet = 2; WarmupTimes = @(30, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a FishHash" }
+    @{ Algorithm = "FishHash";         Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(30, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a FishHash" }
     @{ Algorithm = "Ghostrider";       Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(180, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Ghostrider" }
     @{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(75, 0);   ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a KawPow" }
 #   @{ Algorithm = "MemeHash";         Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(120, 30); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -a Memehash" } # Not yet working
@@ -123,9 +124,9 @@ If ($Algorithms) {
                                     If ($Pool.Pass) { $Arguments += " -p $($Pool.Pass)" }
                                     If ($Pool.WorkerName) { $Arguments += " -w $($Pool.WorkerName)" }
 
-                                        # Allow more time to build larger DAGs, must use type cast to keep values from $_
-                                        $WarmupTimes = [Int[]]$_.WarmupTimes
-                                        $WarmupTimes[0] += [Int](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 5)
+                                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                                        $WarmupTimes[0] += [UInt16]($Pool.DAGSizeGiB * 5)
 
                                         [PSCustomObject]@{ 
                                         API         = "EthMiner"

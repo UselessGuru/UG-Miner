@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.16
-Version date:   2024/07/09
+Version:        6.2.17
+Version date:   2024/07/13
 #>
 
 using module .\Include.psm1
@@ -389,19 +389,19 @@ Do {
                                 # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL
                                 $_.PoolPorts = $(If ($Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } Else { $null }), $(If ($Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } Else { $null })
 
-                                If ($_.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 
-                                    $_.AlgorithmVariant = $_.Algorithm
+                                If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { 
+                                    If (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
+                                        $_.BlockHeight      = $Variables.DAGdata.Currency.($_.Currency).BlockHeight
+                                        $_.Epoch            = $Variables.DAGdata.Currency.($_.Currency).Epoch
+                                        $_.DAGSizeGiB       = $Variables.DAGdata.Currency.($_.Currency).DAGsize / 1GB 
+                                    }
+                                    ElseIf ($Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight) { 
+                                        $_.BlockHeight = $Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight
+                                        $_.Epoch       = $Variables.DAGdata.Algorithm.($_.Algorithm).Epoch
+                                        $_.DAGSizeGiB  = $Variables.DAGdata.Algorithm.($_.Algorithm).DAGsize / 1GB
+                                    }
                                 }
-                                ElseIf (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
-                                    $_.BlockHeight      = $Variables.DAGdata.Currency.($_.Currency).BlockHeight
-                                    $_.Epoch            = $Variables.DAGdata.Currency.($_.Currency).Epoch
-                                    $_.DAGSizeGiB       = $Variables.DAGdata.Currency.($_.Currency).DAGsize / 1GB 
-                                    $_.AlgorithmVariant = "$($_.Algorithm)($([Math]::Ceiling($_.DAGSizeGiB))GiB)"
-                                }
-                                ElseIf ($Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight) { 
-                                    $_.BlockHeight = $Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight
-                                    $_.Epoch       = $Variables.DAGdata.Algorithm.($_.Algorithm).Epoch
-                                    $_.DAGSizeGiB  = $Variables.DAGdata.Algorithm.($_.Algorithm).DAGsize / 1GB
+                                If ($_.Algorithm -match $Variables.RegexAlgoHasDynamicDAG -and $_.DAGSizeGiB) { 
                                     $_.AlgorithmVariant = "$($_.Algorithm)($([Math]::Ceiling($_.DAGSizeGiB))GiB)"
                                 }
                                 Else { 
@@ -748,7 +748,9 @@ Do {
                     { 
                         $MinerFileName = $_.Name
                         Try { 
+                            Write-Message -Level Debug "Miner definition file '$MinerFileName': Start building miner objects"
                             & $_.FullName
+                            Write-Message -Level Debug "Miner definition file '$MinerFileName': End building miner objects"
                         }
                         Catch { 
                             Write-Message -Level Error "Miner file 'Miners\$MinerFileName': $_."

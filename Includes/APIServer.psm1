@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
 Version:        6.2.5
-Version date:   2024/07/09
+Version date:   2024/07/13
 #>
 
 Function Start-APIServer { 
@@ -530,7 +530,7 @@ Function Start-APIServer {
                                                 $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
 
                                                 # Remove watchdog
-                                                $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -ne $_.Name
+                                                $Variables.WatchdogTimers = @($Variables.WatchdogTimers | Where-Object MinerName -ne $_.Name)
 
                                                 $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
                                                 $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "0 H/s Stat file" }))

@@ -4,6 +4,31 @@ Known issues:
   -> It is recommended to set it to 'Windows Console Host'
 
 
+Changelog UG-Miner 6.2.17 2024/07/13
+====================================
+
+Changes:
+- ZergPool: Re-enable mining EthashB3 using SSL connection (Issue at pool is fixed)
+
+Enhancements:
+- Core: Add support for algorithms with static DAG size
+- Core: Faster startup
+- Core / Includes.psm1: Minor code optimizations
+
+Fixes:
+- CPU Miners broken (regression from 6.2.16)
+- Core: Watchdog timeout message incorrect (regression from 6.2.5)
+- Core /Includes.psm1: Function 'Get-DAGdata' returning incorrect DAG size for IRON
+
+Fixes:
+- HiveOn balances querying for unsupported BTC balance
+
+Miner changes:
+- OneZeroMiner-v1.3.6
+- SRBMinerMulti-v2.5.9
+- TTMiner-v2024.3.2
+
+
 Changelog UG-Miner 6.2.16 2024/07/09
 ====================================
 

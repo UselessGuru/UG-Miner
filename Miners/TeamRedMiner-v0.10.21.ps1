@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.16
-Version date:   2024/07/09
+Version:        6.2.17
+Version date:   2024/07/13
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
@@ -70,7 +70,7 @@ $Algorithms = @(
     @{ Algorithms = @("EthashSHA256", "HeavyHashPyrin");   Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=abel" }
     @{ Algorithms = @("EthashSHA256", "FishHash");         Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @("NiceHash")); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=abel" }
     @{ Algorithms = @("FiroPow");                          Fee = @(0.02);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @("RDNA3");                           Arguments = " --algo=firopow" } # Wildrig-v0.40.5 is fastest on Polaris
-    @{ Algorithms = @("FishHash");                         Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@("NiceHash"), @()); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ironfish" } # Pools with support at this time are Herominers, Flexpool and Kryptex
+    @{ Algorithms = @("FishHash");                         Fee = @(0.01);       MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15);  ExcludePools = @(@("NiceHash"), @()); ExcludeGPUArchitecture = @();                                  Arguments = " --algo=ironfish" } # Pools with support at this time are Herominers, Flexpool and Kryptex
     @{ Algorithms = @("KawPow");                           Fee = @(0.02);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=kawpow" } # Wildrig-v0.40.5 is fastest on Polaris
     @{ Algorithms = @("HeavyHashKarlsen");                 Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=karlsen" }
 #   @{ Algorithms = @("HeavyHashKaspa");                   Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           ExcludeGPUArchitecture = @();                                  Arguments = " --algo=kas" } # ASIC

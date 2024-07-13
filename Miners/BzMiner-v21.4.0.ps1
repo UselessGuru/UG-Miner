@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.16
-Version date:   2024/07/09
+Version:        6.2.17
+Version date:   2024/07/13
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -in @("AMD", "INTEL") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
@@ -35,7 +35,7 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash");          Type = "AMD"; Fee = @(0.005); MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = @("GCN4");  ExcludeGPUModel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a etchash") } # https://github.com/bzminer/bzminer/issues/264
     @{ Algorithms = @("Ethash");           Type = "AMD"; Fee = @(0.005); MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 20); ExcludeGPUArchitecture = @("GCN4");  ExcludeGPUModel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a ethash") } # https://github.com/bzminer/bzminer/issues/264
     @{ Algorithms = @("EthashB3");         Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @("RDNA1"); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a rethereum") } # https://github.com/bzminer/bzminer/issues/324
-    @{ Algorithms = @("FishHash");         Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = ""; ExcludePools = @(@("NiceHash"), @());               Arguments = @(" -a ironfish") } # https://github.com/bzminer/bzminer/issues/260
+    @{ Algorithms = @("FishHash");         Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = ""; ExcludePools = @(@("NiceHash"), @());               Arguments = @(" -a ironfish") } # https://github.com/bzminer/bzminer/issues/260
     @{ Algorithms = @("HeavyHashKarlsen"); Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludeGPUModel = ""; ExcludePools = @(@("NiceHash", "ZergPool"), @());   Arguments = @(" -a karlsen") }
 #   @{ Algorithms = @("HeavyHashKaspa");   Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludeGPUModel = ""; ExcludePools = @(@("ProHashing"), @());             Arguments = @(" -a kaspa") } # ASIC
     @{ Algorithms = @("JanusHash");        Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a warthog") }
@@ -51,7 +51,7 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash");          Type = "INTEL"; Fee = @(0.005); MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 25); ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a etchash") }
     @{ Algorithms = @("Ethash");           Type = "INTEL"; Fee = @(0.005); MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a ethash") }
     @{ Algorithms = @("EthashB3");         Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a rethereum") }
-    @{ Algorithms = @("FishHash");         Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@("NiceHash", "NiceHash"), @()); Arguments = @(" -a ironfish") } # https://github.com/bzminer/bzminer/issues/260
+    @{ Algorithms = @("FishHash");         Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@("NiceHash", "NiceHash"), @()); Arguments = @(" -a ironfish") } # https://github.com/bzminer/bzminer/issues/260
     @{ Algorithms = @("HeavyHashKarlsen"); Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@("ZergPool"), @());             Arguments = @(" -a karlsen") }
     @{ Algorithms = @("JanusHash");        Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a warthog") }
     @{ Algorithms = @("KawPow");           Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a rvn") }
@@ -73,7 +73,7 @@ $Algorithms = @(
 #   @{ Algorithms = @("Ethash", "HeavyHashKaspa");     Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @("NiceHash"));               Arguments = @(" -a ethash", " --a2 kaspa") } # ASIC
     @{ Algorithms = @("Ethash", "SHA512256d");         Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(90, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());                         Arguments = @(" -a ethash", " --a2 radiant") }
     @{ Algorithms = @("EthashB3");                     Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 20); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@(), @());                         Arguments = @(" -a rethereum") }
-    @{ Algorithms = @("FishHash");                     Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@("NiceHash"), @());               Arguments = @(" -a ironfish") } # https://github.com/bzminer/bzminer/issues/260
+    @{ Algorithms = @("FishHash");                     Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@("NiceHash"), @());               Arguments = @(" -a ironfish") } # https://github.com/bzminer/bzminer/issues/260
     @{ Algorithms = @("HeavyHashKarlsen");             Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@("NiceHash", "ZergPool"), @());   Arguments = @(" -a karlsen") }
 #   @{ Algorithms = @("HeavyHashKaspa");               Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "^MX[1|2]\d+"; ExcludePools = @(@("NiceHash"), @());               Arguments = @(" -a kaspa") } # ASIC
     @{ Algorithms = @("JanusHash");                    Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @();        ExcludeGPUModel = "";            ExcludePools = @(@(), @());                         Arguments = @(" -a warthog") }
@@ -144,9 +144,9 @@ If ($Algorithms) {
                                             $Arguments += " --r2 $($Config.WorkerName)"
                                         }
 
-                                        # Allow more time to build larger DAGs, must use type cast to keep values from $_
-                                        $WarmupTimes = [Int[]]$_.WarmupTimes
-                                        $WarmupTimes[0] += [Int](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 5)
+                                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 5)
 
                                         # Apply tuning parameters
                                         If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }

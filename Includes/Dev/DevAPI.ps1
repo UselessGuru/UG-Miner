@@ -413,7 +413,7 @@ Switch ($Path) {
                         $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
 
                         # Remove watchdog
-                        $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -ne $_.Name
+                        $Variables.WatchdogTimers = @($Variables.WatchdogTimers | Where-Object MinerName -ne $_.Name)
 
                         $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
                         $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "0 H/s Stat file" }))

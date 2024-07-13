@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.16
-Version date:   2024/07/09
+Version:        6.2.17
+Version date:   2024/07/13
 #>
 
 using module .\Includes\Include.psm1
@@ -298,7 +298,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.16"
+    Version      = [System.Version]"6.2.17"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -411,6 +411,12 @@ Write-Message -Level Verbose "Pre-requisites verification OK."
 # Check if new version is available
 Get-Version
 
+$Variables.VerthashDatPath = ".\Cache\VertHash.dat"
+If (Test-Path -LiteralPath $Variables.VerthashDatPath -PathType Leaf) { 
+    Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VerthashDatPath)'..."
+}
+$VertHashDatCheckJob = Start-ThreadJob -ScriptBlock { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
+
 Write-Host "Importing modules..." -ForegroundColor Yellow
 Try { 
     Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Stop
@@ -467,9 +473,11 @@ $Variables.ScriptStartTime = (Get-Process -id $PID).StartTime.ToUniversalTime()
 $Variables.SuspendCycle = $false
 $Variables.WatchdogTimers = [PSCustomObject[]]@()
 
-$Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^UbqHash"
+$Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^FishHash|^UbqHash"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow.*|^KawPow|^MeowPow|^ProgPow"
-$Variables.RegexAlgoHasDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow*|^KawPow|^MeowPow|^Octopus|^ProgPow|^UbqHash"
+$Variables.RegexAlgoHasDynamicDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow*|^KawPow|^MeowPow|^Octopus|^ProgPow|^UbqHash"
+$Variables.RegexAlgoHasStaticDAG = "^FishHash"
+$Variables.RegexAlgoHasDAG = "$($Variables.RegexAlgoHasDynamicDAG)|$($Variables.RegexAlgoHasStaticDAG)"
 
 $Variables.Summary = "Loading miner device information.<br>This may take a while..."
 Write-Message -Level Verbose $Variables.Summary
@@ -480,13 +488,6 @@ $Variables.GPUArchitectureDbNvidia.PSObject.Properties.ForEach({ $_.Value.Model 
 $Variables.GPUArchitectureDbAMD.PSObject.Properties.ForEach({ $_.Value = $_.Value -join '|' })
 
 $Variables.Devices = Get-Device
-
-$Variables.VerthashDatPath = ".\Cache\VertHash.dat"
-If (Test-Path -LiteralPath $Variables.VerthashDatPath -PathType Leaf) { 
-    Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VerthashDatPath)'..."
-}
-# Alwas run thread job after Get-Device to set throttle limit
-$VertHashDatCheckJob = Start-ThreadJob -ScriptBlock { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } -StreamingHost $null -ThrottleLimit (2 * $Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).Count + 2)
 
 $Variables.Devices.Where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Variables.SupportedCPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
 $Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Variables.SupportedGPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })

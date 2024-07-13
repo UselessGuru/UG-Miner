@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.16
-Version date:   2024/07/09
+Version:        6.2.17
+Version date:   2024/07/13
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -127,7 +127,7 @@ Class Pool {
     [Nullable[Double]]$DAGSizeGiB = $null
     [Boolean]$Disabled = $false
     [Double]$EarningsAdjustmentFactor = 1
-    [Nullable[Int]]$Epoch = $null
+    [Nullable[UInt16]]$Epoch = $null
     [Double]$Fee
     [String]$Host
     # [String[]]$Hosts # To be implemented for pool failover
@@ -151,7 +151,7 @@ Class Pool {
     [String]$User
     [String]$Variant
     [String]$WorkerName = ""
-    [Nullable[Int]]$Workers
+    [Nullable[UInt]]$Workers
 }
 
 Class Worker { 
@@ -187,8 +187,8 @@ Class Miner {
     [Boolean]$Benchmark = $false # derived from stats
     [Boolean]$Best = $false
     [String]$CommandLine
-    [Int]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
-    [Int]$DataCollectInterval = 5 # Seconds
+    [UInt]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
+    [UInt16]$DataCollectInterval = 5 # Seconds
     [DateTime]$DataSampleTimestamp = 0 # Newest sample
     [String[]]$DeviceNames = @() # derived from devices
     [PSCustomObject[]]$Devices
@@ -203,8 +203,8 @@ Class Miner {
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
     [String]$LogFile
     [Boolean]$MeasurePowerConsumption = $false
-    [Int]$MinDataSample # for safe hashrate values
-    [Int]$MinerSet
+    [UInt16]$MinDataSample # for safe hashrate values
+    [UInt16]$MinerSet
     [String]$MinerUri
     [String]$Name
     [Bool]$Optimal= $false
@@ -234,7 +234,7 @@ Class Miner {
     [String]$URI
     [DateTime]$ValidDataSampleTimestamp = 0
     [String]$Version
-    [Int[]]$WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+    [UInt16[]]$WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
     [String]$WindowStyle
     [Worker[]]$Workers = @()
     [Worker[]]$WorkersRunning = @()
@@ -3154,7 +3154,6 @@ Function Update-DAGdata {
     # Faster shutdown
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
-
     # Update on script start, once every 24hrs or if unable to get data from source
     If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
         # ZergPool (Coins) also supplies EVR DAG data
@@ -3277,8 +3276,8 @@ Function Get-DAGsize {
             Break
         }
         "EVR" { 
-            $DatasetBytesInit = 3 * [Math]::Pow(2, 30) # 3GB
-            $DatasetBytesGrowth = [Math]::Pow(2, 23) # 8MB
+            $DatasetBytesInit = 3GB
+            $DatasetBytesGrowth = 8MB
             $MixBytes = 128
             $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
@@ -3286,10 +3285,15 @@ Function Get-DAGsize {
             }
             Break
         }
+        "IRON" { 
+            # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
+            $Size = 4608MB
+            Break
+        }
         "MEWC" { 
             If ($Epoch -ge 110) { $Epoch *= 4 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L48 & https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.cpp#L249C1-L254C6
-            $DatasetBytesInit = [Math]::Pow(2, 30) # 1GB
-            $DatasetBytesGrowth = [Math]::Pow(2, 23) # 8MB
+            $DatasetBytesInit = 1GB
+            $DatasetBytesGrowth = 8MB
             $MixBytes = 128
             $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
@@ -3297,8 +3301,8 @@ Function Get-DAGsize {
             }
         }
         Default { 
-            $DatasetBytesInit = [Math]::Pow(2, 30) # 1GB
-            $DatasetBytesGrowth = [Math]::Pow(2, 23) # 8MB
+            $DatasetBytesInit = 1GB
+            $DatasetBytesGrowth = 8MB
             $MixBytes = 128
             $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
@@ -3310,24 +3314,52 @@ Function Get-DAGsize {
     Return [Int64]$Size
 }
 
-Function Get-Epoch { 
+Function Get-DAGdata { 
 
     Param (
         [Parameter(Mandatory = $true)]
         [Double]$BlockHeight,
         [Parameter(Mandatory = $true)]
-        [String]$Algorithm
+        [String]$Currency,
+        [Parameter(Mandatory = $false)]
+        [Int16]$EpochReserve = 0
+    )
+
+    If ($Algorithm = Get-AlgorithmFromCurrency $Currency) { 
+        $Epoch = Get-DAGepoch -BlockHeight $BlockHeight -Algorithm $Algorithm -EpochReserve $EpochReserve
+
+        Return [PSCustomObject]@{ 
+            Algorithm   = $Algorithm
+            BlockHeight = [Int]$BlockHeight
+            CoinName    = [String]$Variables.CoinNames[$Currency]
+            DAGsize     = [Int64](Get-DAGSize -Epoch $Epoch -Currency $Currency)
+            Epoch       = [UInt16]$Epoch
+        }
+    }
+    Return $null
+}
+
+Function Get-DAGepoch { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Double]$BlockHeight,
+        [Parameter(Mandatory = $true)]
+        [String]$Algorithm,
+        [Parameter(Mandatory = $true)]
+        [UInt16]$EpochReserve = 0
     )
 
     Switch ($Algorithm) { 
         "Autolykos2" { $BlockHeight -= 416768 } # Epoch 0 starts @ 417792
+        "FishHash"   { Return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4) 
         Default { }
     }
 
-    Return [Math]::Floor($BlockHeight / (Get-EpochLength -BlockHeight $BlockHeight -Algorithm $Algorithm))
+    Return [Math]::Floor($BlockHeight / (Get-DAGepochLength -BlockHeight $BlockHeight -Algorithm $Algorithm)) + $EpochReserve
 }
 
-Function Get-EpochLength { 
+Function Get-DAGepochLength { 
 
     Param (
         [Parameter(Mandatory = $true)]
@@ -3348,31 +3380,6 @@ Function Get-EpochLength {
         "Octopus"      { Return 524288 }
         Default        { Return 30000 }
     }
-}
-
-Function Get-DAGdata { 
-
-    Param (
-        [Parameter(Mandatory = $true)]
-        [Double]$BlockHeight,
-        [Parameter(Mandatory = $true)]
-        [String]$Currency,
-        [Parameter(Mandatory = $false)]
-        [Int16]$EpochReserve = 0
-    )
-
-    If ($Algorithm = Get-AlgorithmFromCurrency $Currency) { 
-        $Epoch = (Get-Epoch -BlockHeight $BlockHeight -Algorithm $Algorithm) + $EpochReserve
-
-        Return [PSCustomObject]@{ 
-            Algorithm   = $Algorithm
-            BlockHeight = [Int]$BlockHeight
-            CoinName    = [String]$Variables.CoinNames[$Currency]
-            DAGsize     = [Int64](Get-DAGSize -Epoch $Epoch -Currency $Currency)
-            Epoch       = [Int]$Epoch
-        }
-    }
-    Return $null
 }
 
 Function Out-DataTable { 
