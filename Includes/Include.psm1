@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.17
+Version:        6.2.18
 Version date:   2024/07/13
 #>
 
@@ -976,95 +976,93 @@ Function Get-Rate {
 
     $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace 'mBTC', 'BTC' | Sort-Object -Unique)
 
-    If (-not $Variables.Rates.BTC.($Config.MainCurrency) -or (Compare-Object @(@($Variables.Rates.PSObject.Properties.Name | Select-Object) + @($Variables.RatesMissingCurrencies | Select-Object)) @($Variables.AllCurrencies | Select-Object) | Where-Object SideIndicator -eq "=>") -or ($Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum).Minimum | Measure-Object -Maximum).Maximum))) { 
-        Try { 
-            $TSymBatches = @()
-            $TSyms = "BTC"
-            $Variables.AllCurrencies.Where({ $_ -notin @("BTC", "INVALID") }).ForEach(
-                { 
-                    If (($TSyms.Length + $_.Length) -lt 99) {
-                        $TSyms = "$TSyms,$($_)"
-                    }
-                    Else { 
-                        $TSymBatches += $TSyms
-                        $TSyms = $_
-                    }
+    Try { 
+        $TSymBatches = @()
+        $TSyms = "BTC"
+        $Variables.AllCurrencies.Where({ $_ -notin @("BTC", "INVALID") }).ForEach(
+            { 
+                If (($TSyms.Length + $_.Length) -lt 99) {
+                    $TSyms = "$TSyms,$($_)"
                 }
-            )
-            $TSymBatches += $TSyms
+                Else { 
+                    $TSymBatches += $TSyms
+                    $TSyms = $_
+                }
+            }
+        )
+        $TSymBatches += $TSyms
 
-            $Rates = [PSCustomObject]@{ BTC = [PSCustomObject]@{ } }
-            $TSymBatches.ForEach(
-                { 
-                    $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(If ($Config.CryptoCompareAPIKeyParam) { "&api_key=$($Config.CryptoCompareAPIKeyParam)" })&extraParams=$($Variables.Branding.BrandWebSite) Version $($Variables.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
-                    If ($Response.BTC) { 
-                        $Response.BTC.ForEach(
-                            { 
-                                $_.PSObject.Properties.ForEach({ $Rates.BTC | Add-Member @{ "$($_.Name)" = $_.Value } -Force })
-                            }
-                        )
-                    }
-                    Else { 
-                        If ($Response.Message -eq "You are over your rate limit please upgrade your account!") { 
-                            Write-Message -Level Error "min-api.cryptocompare.com API rate exceeded. You need to register an account with cryptocompare.com and add the API key as 'CryptoCompareAPIKeyParam' to the configuration file '$($Variables.ConfigFile)'."
+        $Rates = [PSCustomObject]@{ BTC = [PSCustomObject]@{ } }
+        $TSymBatches.ForEach(
+            { 
+                $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(If ($Config.CryptoCompareAPIKeyParam) { "&api_key=$($Config.CryptoCompareAPIKeyParam)" })&extraParams=$($Variables.Branding.BrandWebSite) Version $($Variables.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
+                If ($Response.BTC) { 
+                    $Response.BTC.ForEach(
+                        { 
+                            $_.PSObject.Properties.ForEach({ $Rates.BTC | Add-Member @{ "$($_.Name)" = $_.Value } -Force })
                         }
+                    )
+                }
+                Else { 
+                    If ($Response.Message -eq "You are over your rate limit please upgrade your account!") { 
+                        Write-Message -Level Error "min-api.cryptocompare.com API rate exceeded. You need to register an account with cryptocompare.com and add the API key as 'CryptoCompareAPIKeyParam' to the configuration file '$($Variables.ConfigFile)'."
                     }
+                }
+            }
+        )
+
+        If ($Currencies = $Rates.BTC.PSObject.Properties.Name) { 
+            $Currencies.Where({ $_ -ne "BTC" }).ForEach(
+                { 
+                    $Currency = $_
+                    $Rates | Add-Member $Currency ($Rates.BTC | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json) -Force
+                    $Rates.$Currency.PSObject.Properties.Name.ForEach(
+                        { 
+                            $Rates.$Currency | Add-Member $_ (($Rates.BTC.$_ / $Rates.BTC.$Currency) -as [Double]) -Force
+                        }
+                    )
                 }
             )
 
-            If ($Currencies = $Rates.BTC.PSObject.Properties.Name) { 
-                $Currencies.Where({ $_ -ne "BTC" }).ForEach(
+            # Add mBTC
+            If ($Config.UsemBTC) { 
+                $Currencies.ForEach(
                     { 
                         $Currency = $_
-                        $Rates | Add-Member $Currency ($Rates.BTC | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json) -Force
-                        $Rates.$Currency.PSObject.Properties.Name.ForEach(
+                        $mCurrency = "m$Currency"
+                        $Rates | Add-Member $mCurrency ($Rates.$Currency | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json) -Force
+                        $Rates.$mCurrency.PSOBject.Properties.Name.ForEach({ $Rates.$mCurrency | Add-Member $_ ([Double]$Rates.$Currency.$_ / 1000) -Force })
+                    }
+                )
+                $Rates.PSOBject.Properties.Name.ForEach(
+                    { 
+                        $Currency = $_
+                        $Rates.PSOBject.Properties.Name.Where({ $_ -in $Currencies }).ForEach(
                             { 
-                                $Rates.$Currency | Add-Member $_ (($Rates.BTC.$_ / $Rates.BTC.$Currency) -as [Double]) -Force
+                                $mCurrency = "m$($_)"
+                                $Rates.$Currency | Add-Member $mCurrency ([Double]$Rates.$Currency.$_ * 1000) -Force
                             }
                         )
                     }
                 )
-
-                # Add mBTC
-                If ($Config.UsemBTC) { 
-                    $Currencies.ForEach(
-                        { 
-                            $Currency = $_
-                            $mCurrency = "m$Currency"
-                            $Rates | Add-Member $mCurrency ($Rates.$Currency | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json) -Force
-                            $Rates.$mCurrency.PSOBject.Properties.Name.ForEach({ $Rates.$mCurrency | Add-Member $_ ([Double]$Rates.$Currency.$_ / 1000) -Force })
-                        }
-                    )
-                    $Rates.PSOBject.Properties.Name.ForEach(
-                        { 
-                            $Currency = $_
-                            $Rates.PSOBject.Properties.Name.Where({ $_ -in $Currencies }).ForEach(
-                                { 
-                                    $mCurrency = "m$($_)"
-                                    $Rates.$Currency | Add-Member $mCurrency ([Double]$Rates.$Currency.$_ * 1000) -Force
-                                }
-                            )
-                        }
-                    )
-                }
-                Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ', ' -replace ',([^,]*)$', ' &$1')." })"
-                $Variables.Rates = $Rates
-                $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
-
-                $Variables.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
             }
+            Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ', ' -replace ',([^,]*)$', ' &$1')." })"
+            $Variables.Rates = $Rates
+            $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
+
+            $Variables.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
         }
-        Catch { 
-            # Read exchange rates from min-api.cryptocompare.com, use stored data as fallback
-            $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -ErrorAction Ignore)
-            If ($RatesCache.PSObject.Properties.Name) { 
-                $Variables.Rates = $RatesCache
-                $Variables.RatesUpdated = "FromFile: $((Get-Item -Path $RatesCacheFileName).CreationTime.ToUniversalTime())"
-                Write-Message -Level Warn "Could not load exchange rates from 'min-api.cryptocompare.com'. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
-            }
-            Else { 
-                Write-Message -Level Warn "Could not load exchange rates from 'min-api.cryptocompare.com'."
-            }
+    }
+    Catch { 
+        # Read exchange rates from min-api.cryptocompare.com, use stored data as fallback
+        $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -ErrorAction Ignore)
+        If ($RatesCache.PSObject.Properties.Name) { 
+            $Variables.Rates = $RatesCache
+            # $Variables.RatesUpdated = "$((Get-Item -Path $RatesCacheFileName).CreationTime.ToUniversalTime()) (Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime))"
+            Write-Message -Level Warn "Could not load exchange rates from 'min-api.cryptocompare.com'. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
+        }
+        Else { 
+            Write-Message -Level Warn "Could not load exchange rates from 'min-api.cryptocompare.com'."
         }
     }
 }

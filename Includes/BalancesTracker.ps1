@@ -56,8 +56,6 @@ Do {
     }
     Remove-Variable FileName -ErrorAction Ignore
 
-    If ($Config.BalancesTrackerPollInterval -gt 0) { Write-Message -Level Info "Balances tracker is running." }
-
     While ($Config.BalancesTrackerPollInterval -gt 0) { 
 
         $Balances = [Ordered]@{ }
@@ -428,8 +426,6 @@ Do {
         # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
         While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
     }
-
-    If ($Now) { Write-Message -Level Info "Balances tracker stopped." }
 
     While ($Config.BalancesTrackerPollInterval -eq 0) { Start-Sleep -Seconds 5 }
 
