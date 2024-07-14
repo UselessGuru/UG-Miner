@@ -3146,11 +3146,11 @@ Function Update-DAGdata {
     If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
     # Update on script start, once every 24hrs or if unable to get data from source
-    If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
-        # ZergPool (Coins) also supplies EVR DAG data
-        $Currency = "EVR"
-        $Url = "https://evr.cryptoscope.io/api/getblockcount"
-        If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    $Currency = "EVR"
+    $Url = "https://evr.cryptoscope.io/api/getblockcount"
+    If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
+            # ZergPool (Coins) also supplies EVR DAG data
             # Get block data from EVR block explorer
             Try { 
                 Write-Message -Level Info "Loading DAG data from '$Url'..."
@@ -3172,10 +3172,16 @@ Function Update-DAGdata {
                 Write-Message -Level Warn "Failed to load DAG data from '$Url'."
             }
         }
-        # ZergPool (Coins) also supplies MEWC DAG data
-        $Currency = "MEWC"
-        $Url = "https://mewc.cryptoscope.io/api/getblockcount"
-        If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    }
+
+    # Faster shutdown
+    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
+
+    $Currency = "MEWC"
+    $Url = "https://mewc.cryptoscope.io/api/getblockcount"
+    If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
+            # ZergPool (Coins) also supplies MEWC DAG data
             # Get block data from MeowCoin block explorer
             Try { 
                 Write-Message -Level Info "Loading DAG data from '$Url'..."
@@ -3197,7 +3203,6 @@ Function Update-DAGdata {
                 Write-Message -Level Warn "Failed to load DAG data from '$Url'."
             }
         }
-        Remove-Variable Currency
     }
 
     If ($Variables.DAGdata.Updated.PSObject.Properties.Name.Where({ $Variables.DAGdata.Updated.$_ -gt $Variables.Timer })) { 
@@ -3228,9 +3233,8 @@ Function Update-DAGdata {
 
         $Variables.DAGdata = $Variables.DAGdata | Get-SortedObject
         $Variables.DAGdata | ConvertTo-Json -Depth 5 | Out-File -LiteralPath ".\Data\DAGdata.json" -Force
-
-        Remove-Variable Algorithm, BlockHeight, Currency, DAGdata, DAGdataKeys, DAGdataResponse, DAGsize, Epoch, Url -ErrorAction Ignore
     }
+    Remove-Variable Algorithm, BlockHeight, Currency, DAGdata, DAGdataKeys, DAGdataResponse, DAGsize, Epoch, Url -ErrorAction Ignore
 }
 
 Function Get-DAGsize { 
