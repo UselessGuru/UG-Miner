@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.17
+Version:        6.2.18
 Version date:   2024/07/13
 #>
 
@@ -221,7 +221,7 @@ Do {
                 Remove-Variable Keys, StatFiles -ErrorAction Ignore
 
                 # Load currency exchange rates
-                [Void](Get-Rate)
+                If ($Config.BalancesTrackerPollInterval -le 0 -and ($Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-(3, ($Config.BalancesTrackerPollInterval, 15 | Measure-Object -Minimum).Minimum | Measure-Object -Maximum).Maximum))) { [Void](Get-Rate) }
 
                 # Get DAG data
                 [Void](Update-DAGdata)
@@ -1001,7 +1001,7 @@ Do {
                                 Try { 
                                     If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to open inbound firewall rules..." }
                                     Start-Process "pwsh" ("-Command Import-Module NetSecurity; ('$($MissingMinerFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json) | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' }" -replace '"', '\"') -Verb runAs
-                                    Write-Message -Level Info "Added $($MissingMinerFirewallRules.count) inbound firewall rules [Group '$($Variables.Branding.ProductLabel)']."
+                                    Write-Message -Level Info "Added $($MissingMinerFirewallRules.Count) inbound firewall rule$(If ($MissingMinerFirewallRules.Count -ne 1) { "s" }) [Windows Defender Inbound Rules Group '$($Variables.Branding.ProductLabel)']."
                                 }
                                 Catch { 
                                     Write-Message -Level Error "Could not add inbound firewall rules. Some miners will fail."

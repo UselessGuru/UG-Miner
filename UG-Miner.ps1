@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.17
+Version:        6.2.18
 Version date:   2024/07/13
 #>
 
@@ -298,7 +298,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.17"
+    Version      = [System.Version]"6.2.18"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -448,6 +448,9 @@ If (Get-Item .\* -Stream Zone.*) {
 
 Write-Message -Level Verbose "Setting variables..."
 $nl = "`n" # Must use variable, cannot join with '`n' with Write-Host
+
+# Getting exchange rates
+[Void](Get-Rate)
 
 # Align CUDA id with nvidia-smi order
 $env:CUDA_DEVICE_ORDER = 'PCI_BUS_ID'
