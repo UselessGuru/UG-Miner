@@ -3149,8 +3149,8 @@ Function Update-DAGdata {
     $Currency = "EVR"
     $Url = "https://evr.cryptoscope.io/api/getblockcount"
     If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
-            # ZergPool (Coins) also supplies EVR DAG data
+        # ZergPool (Coins) also supplies EVR DAG data
+        If (-not ($Variables.PoolName -notmatch "ZergPoolCoins.*")) { 
             # Get block data from EVR block explorer
             Try { 
                 Write-Message -Level Info "Loading DAG data from '$Url'..."
@@ -3180,8 +3180,8 @@ Function Update-DAGdata {
     $Currency = "MEWC"
     $Url = "https://mewc.cryptoscope.io/api/getblockcount"
     If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        If (-not ($Variables.PoolName -match "ZergPoolCoins.*")) { 
-            # ZergPool (Coins) also supplies MEWC DAG data
+        # ZergPool (Coins) also supplies MEWC DAG data
+        If (-not ($Variables.PoolName -notmatch "ZergPoolCoins.*")) { 
             # Get block data from MeowCoin block explorer
             Try { 
                 Write-Message -Level Info "Loading DAG data from '$Url'..."
