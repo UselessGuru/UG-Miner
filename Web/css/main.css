@@ -185,6 +185,8 @@ legend {
 .color-disabled {
   background-color: rgb(255, 243, 231);
 }
+.color-dryrun {
+  background-color: rgb(230, 248, 252);}
 .color-failed {
   background-color: rgb(255, 230, 230);
 }
