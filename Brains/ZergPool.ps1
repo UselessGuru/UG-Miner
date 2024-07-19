@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.2.17
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 using module ..\Includes\Include.psm1
@@ -108,13 +108,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
                 # Keep DAG data up to date
                 If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG -and $APIdata.$PoolName.height -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
-                    If ($Variables.DAGdata.Currency) { 
-                        $DAGdata = (Get-DAGData -BlockHeight $APIdata.$PoolName.height -Currency $PoolName -EpochReserve 2)
-                        $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                        $DAGdata | Add-Member Url $Uri
-                        $Variables.DAGdata.Currency | Add-Member $PoolName $DAGdata -Force
-                        $Variables.DAGdata.Updated | Add-Member $Uri ([DateTime]::Now).ToUniversalTime() -Force
-                    }
+                    $DAGdata = (Get-DAGData -BlockHeight $APIdata.$PoolName.height -Currency $PoolName -EpochReserve 2)
+                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                    $DAGdata | Add-Member Url $Uri
+                    $Variables.DAGdata.Currency | Add-Member $PoolName $DAGdata -Force
+                    $Variables.DAGdata.Updated | Add-Member $Uri ([DateTime]::Now).ToUniversalTime() -Force
                 }
 
                 $APIdata.$PoolName | Add-Member Fees $Config.PoolsConfig.$BrainName.DefaultFee -Force
@@ -141,7 +139,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     Name                = $PoolName
                 }
             }
-            Remove-Variable Algorithm_Norm, BasePrice, Currency, DAGdata, PoolName, StatName -ErrorAction Ignore
+            Remove-Variable AlgorithmNorm, BasePrice, Currency, DAGdata, PoolName, StatName -ErrorAction Ignore
 
             # Created here for performance optimization, minimize # of lookups
             $CurPoolObjects = $PoolObjects.Where({ $_.Date -eq $Timestamp })

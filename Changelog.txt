@@ -3,6 +3,20 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.2.18 2024/07/19
+====================================
+
+Enhancements:
+- Core: Minor code optimizations
+
+Fixes:
+- Web GUI / Configuration editor: Incorrect ProHashing registration link
+- Web GUI / Switching log: Incorrect background color for stopped miners
+
+Improvements:
+- Core: No more unnecessary queries for DAG data when switching to donation run
+- Core: Optimize number of queries for rates update
+
 
 Changelog UG-Miner 6.2.17 2024/07/13
 ====================================
@@ -16,7 +30,7 @@ Enhancements:
 - Core / Includes.psm1: Minor code optimizations
 
 Fixes:
-- Core: 'Error in file 'Includes\Core.ps1' line 1001 detected. Restarting core...'
+- Core: Error when request to pen firewall ports is declined ('Error in file 'Includes\Core.ps1' line 1001 detected. Restarting core...')
 - Core: Watchdog timeout message incorrect (regression from 6.2.5)
 - Core / Includes.psm1: Function 'Get-DAGdata' returning incorrect DAG size for IRON
 - CPU Miners broken (regression from 6.2.16)
@@ -51,10 +65,15 @@ Changelog UG-Miner 6.2.15 2024/07/07
 Enhancements:
 - Core: Minor code optimizations
 - Legacy GUI: Always select full table rows
+- Miners: Remove miners that are incompatible with RTX306012GB
 
 Fixes:
+- Brain 'ZPool' not updating CurrencyAlgorithm list
 - Legacy GUI: Incorrect watchdog count message when no corresponding pool watchdog exists
 - Web GUI / 'Earnings and Balances': Zergpool balances wallet link incorrect
+
+Miner updatwes:
+- OneZeroMiner-v1.3.7
 
 
 Changelog UG-Miner 6.2.14 2024/07/04

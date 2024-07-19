@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           UG-Miner.ps1
 Version:        6.2.18
-Version date:   2024/07/13
+Version date:   2024/07/19
 #>
 
 using module .\Includes\Include.psm1
@@ -351,9 +351,6 @@ $Variables.AllCommandLineParameters = [Ordered]@{ }
     }
 )
 
-$Variables.MutexAddCoinName = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Add-CoinName")
-$Variables.MutexWriteMessage = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
-
 Write-Host "$($Variables.Branding.ProductLabel) is getting ready. Please wait..."
 
 Write-Host "`nPreparing environment and loading data files..."
@@ -575,13 +572,6 @@ Function MainLoop {
             If (-not $Global:CoreRunspace) { Start-Core }
         }
     }
-    
-    If ($Config.ShowConsole) { 
-        Show-Console
-    }
-    Else { 
-        Hide-Console
-    }
 
     # Core watchdog. Sometimes core loop gets stuck
     If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
@@ -673,12 +663,13 @@ Function MainLoop {
                 }
             }
             $Variables.MiningStatus = $Variables.NewMiningStatus
-            If ($LegacyGUIform) { Update-GUIstatus }
         }
+        If ($LegacyGUIform) { Update-GUIstatus }
         If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
     }
 
     If ($Config.ShowConsole) { 
+        Show-Console
         If ($host.UI.RawUI.KeyAvailable) { 
             $KeyPressed = [System.Console]::ReadKey($true)
             Start-Sleep -Milliseconds 300
@@ -855,6 +846,9 @@ Function MainLoop {
             }
             Remove-Variable KeyPressed
         }
+    }
+    Else { 
+        Hide-Console
     }
 
     If ($Variables.RefreshNeeded) { 

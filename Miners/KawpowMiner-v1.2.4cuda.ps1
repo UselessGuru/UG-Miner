@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.17
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "$PWD\Bin\$Name\kawpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "KawPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
+    @{ Algorithm = "KawPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = "" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -45,8 +45,9 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     {
-                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        $ExcludeGPUarchitectures = $_.ExcludeGPUArchitectures
+                        If ($SupportedMinerDevices = $MinerDevices) { 
+                        # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                             # $ExcludePools = $_.ExcludePools
                             # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 

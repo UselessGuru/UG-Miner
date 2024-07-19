@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.5
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 Function Start-APIServer { 
@@ -1127,6 +1127,7 @@ Function Start-APIServer {
 
 Function Stop-APIServer {
     If ($Variables.APIRunspace) { 
+        Write-Message -Level Verbose "Stopping API & Web GUI on port $($Config.APIport)."
         If ($Variables.APIRunspace.APIServer) { 
             If ($Variables.APIRunspace.APIServer.IsListening) { $Variables.APIRunspace.APIServer.Stop() }
             $Variables.APIRunspace.APIServer.Close()

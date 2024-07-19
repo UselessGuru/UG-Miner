@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.17
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -29,16 +29,16 @@ $Path = "$PWD\Bin\$Name\TT-Miner.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-#   @{ Algorithm = "Eaglesong";    MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo EAGLESONG" } # ASIC
-    @{ Algorithm = "Ethash";       MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo ETHASH -intensity 15" }
-    @{ Algorithm = "KawPow";       MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(90, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo KAWPOW" }
-#   @{ Algorithm = "Lyra2RE3";     MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo LYRA2V3" } # ASIC
-    @{ Algorithm = "MTP";          MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
-    @{ Algorithm = "ProgPowEpic";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin EPIC" }
-    @{ Algorithm = "ProgPowSero";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin SERO" }
-    @{ Algorithm = "ProgPowVeil";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin VEIL" }
-    @{ Algorithm = "ProgPowZ";     MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -coin ZANO" }
-    @{ Algorithm = "UbqHash";      MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " -algo UBQHASH -intensity 15" }
+#   @{ Algorithm = "Eaglesong";    MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo EAGLESONG" } # ASIC
+    @{ Algorithm = "Ethash";       MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo ETHASH -intensity 15" }
+    @{ Algorithm = "KawPow";       MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(90, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo KAWPOW" }
+#   @{ Algorithm = "Lyra2RE3";     MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo LYRA2V3" } # ASIC
+    @{ Algorithm = "MTP";          MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
+    @{ Algorithm = "ProgPowEpic";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -coin EPIC" }
+    @{ Algorithm = "ProgPowSero";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -coin SERO" }
+    @{ Algorithm = "ProgPowVeil";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -coin VEIL" }
+    @{ Algorithm = "ProgPowZ";     MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -coin ZANO" }
+    @{ Algorithm = "UbqHash";      MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo UBQHASH -intensity 15" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -57,8 +57,9 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture }) ) { 
+                        # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+                        If ($SupportedMinerDevices = $MinerDevices) { 
+                        # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                             # $ExcludePools = $_.ExcludePools
                             # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools -and $_.Algorithm -notin @("Ethash", "KawPow") -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGSizeGiB -lt 4) })) { 

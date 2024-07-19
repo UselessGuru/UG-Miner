@@ -17,32 +17,32 @@ function formatMiners(data) {
       item.Devices = formatArrayAsSortedString(item.DeviceNames);
 
       // Format the pool and algorithm data
-      item.PrimaryMinerFee = item.Workers[0].Fee;
-      item.PrimaryHashrate = item.Workers[0].Hashrate;
       item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
       item.PrimaryAlgorithmVariant = item.Workers[0].Pool.AlgorithmVariant;
-      item.PrimaryCurrency = item.Workers[0].Pool.Currency;
       item.PrimaryCoinName = item.Workers[0].Pool.CoinName;
+      item.PrimaryCurrency = item.Workers[0].Pool.Currency;
+      item.PrimaryHashrate = item.Workers[0].Hashrate;
+      item.PrimaryMinerFee = item.Workers[0].Fee;
       item.PrimaryPool = item.Workers[0].Pool.Name;
-      item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
       item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
       item.PrimaryPoolUser = item.Workers[0].Pool.User;
+      item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
       if (item.Workers.length > 1) {
-        item.SecondaryMinerFee = item.Workers[1].Fee;
-        item.SecondaryHashrate = item.Workers[1].Hashrate;
         item.SecondaryAlgorithm = item.Workers[1].Pool.Algorithm;
         item.SecondaryAlgorithmVariant = item.Workers[1].Pool.AlgorithmVariant;
-        item.SecondaryCurrency = item.Workers[1].Pool.Currency;
         item.SecondaryCoinName = item.Workers[1].Pool.CoinName;
+        item.SecondaryCurrency = item.Workers[1].Pool.Currency;
+        item.SecondaryHashrate = item.Workers[1].Hashrate;
+        item.SecondaryMinerFee = item.Workers[1].Fee;
         item.SecondaryPool = item.Workers[1].Pool.Name;
-        item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
         item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
         item.SecondaryPoolUser = item.Workers[1].Pool.User;
+        item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
       }
 
       // Format margin of error
-      if (isNaN(item.Earning_Accuracy)) item.EarningAccuracy = 'n/a'; 
-      else item.EarningAccuracy = formatPercent(item.Earning_Accuracy);
+      if (isNaN(item.Earning_Accuracy)) item.Earning_Accuracy = 'n/a'; 
+      else item.Earning_Accuracy = formatPercent(item.Earning_Accuracy);
 
       // Format the live speed(s)
       item.PrimaryHashrateLive = item.Hashrates_Live[0];

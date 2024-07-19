@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.2.17
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 using module ..\Includes\Include.psm1
@@ -70,6 +70,14 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
             $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
 
+            # SCC firo variant
+            If ($AlgoData.firopow) { 
+                $AlgoData | Add-Member firopowscc $AlgoData.firopow -Force
+                $AlgoData.firopowscc.name = "firopowscc"
+                $AlgoData.PSObject.Properties.Remove("firopow")
+            }
+            If ($CurrenciesData.SCC.algo -eq "firopow" ) { $CurrenciesData.SCC.algo = "firopowscc" }
+
             # Add currency and convert to array for easy sorting
             $CurrenciesArray = [PSCustomObject[]]@()
             $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -and $CurrenciesData.$_.name -ne "Hashtap" }).ForEach(
@@ -77,14 +85,16 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     $CurrenciesData.$_ | Add-Member Currency $(If ($CurrenciesData.$_.symbol) { $CurrenciesData.$_.symbol -replace '-.+$' } Else { $_ -replace '-.+$' })
                     $CurrenciesData.$_ | Add-Member CoinName $(If ($CurrenciesData.$_.name) { $CurrenciesData.$_.name } Else { $_ })
                     $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($PoolConfig.Wallets.($CurrenciesData.$_.Currency) -or -not $CurrenciesData.$_.conversion_disabled))
-                    
+
                     $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
                     $CurrenciesData.$_.PSObject.Properties.Remove("name")
                     $CurrenciesArray += $CurrenciesData.$_
-                    If ($CurrenciesData.$_.CoinName -and $CurrenciesData.$_.Currency -and -not $Variables.CoinNames[$CurrenciesData.$_.Currency]) { 
+                    $AlgorithmNorm = $CurrenciesData.$_.algo
+
+                    If ($CurrenciesData.$_.CoinName -and $CurrenciesData.$_.Currency -and -not $Variables.CurrencyAlgorithm[$AlgorithmNorm]) { 
                         Try { 
                             # Add coin name
-                            [Void](Add-CoinName -Algorithm $CurrenciesData.$_.algo -Currency $CurrenciesData.$_.Currency -CoinName $CurrenciesData.$_.CoinName)
+                            [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $CurrenciesData.$_.Currency -CoinName $CurrenciesData.$_.CoinName)
                         }
                         Catch { 
                         }
@@ -104,20 +114,13 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 }
             )
 
-            # SCC firo variant
-            If ($AlgoData.firopow -and $AlgoData.firopow.Currency -eq "SCC") { 
-                $AlgoData | Add-Member firopowscc $AlgoData.firopow -Force
-                $AlgoData.firopowscc.name = "firopowscc"
-                $AlgoData.PSObject.Properties.Remove("firopow")
-            }
-
             ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
                 $AlgorithmNorm = Get-Algorithm $Algo
                 If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h /= 1000 }
                 $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
 
                 If ($Currency = $AlgoData.$Algo.Currency -replace '\s.*') { 
-                    If ($Currency -match $Variables.RegexAlgoHasDAG -and $AlgoData.$Algo.height -gt ($Variables.DAGdata.Currency.$Currency.BlockHeight)) { 
+                    If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG -and $AlgoData.$Algo.height -gt ($Variables.DAGdata.Currency.$Currency.BlockHeight)) { 
                         # Keep DAG data data up to date
                         $DAGdata = (Get-DAGData -BlockHeight $AlgoData.$Algo.height -Currency $Currency -EpochReserve 2)
                         $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
@@ -161,7 +164,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     Name                = $Algo
                 }
             }
-            Remove-Variable Algo, Algorithm_Norm, BasePrice, BestCurrency, CurrenciesArray, CurrenciesData, Currency, DAGdata -ErrorAction Ignore
+            Remove-Variable Algo, AlgorithmNorm, BasePrice, BestCurrency, CurrenciesArray, CurrenciesData, Currency, DAGdata -ErrorAction Ignore
 
             # Created here for performance optimization, minimize # of lookups
             $CurPoolObjects = $PoolObjects.Where({ $_.Date -eq $Timestamp })

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.2.17
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 using module ..\Includes\Include.psm1
@@ -95,7 +95,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     Name                = $Algo
                 }
             }
-            Remove-Variable Algo, Algorithm_Norm, BasePrice, StatName -ErrorAction Ignore
+            Remove-Variable Algo, AlgorithmNorm, BasePrice, StatName -ErrorAction Ignore
 
             # Created here for performance optimization, minimize # of lookups
             $CurPoolObjects = $PoolObjects.Where({ $_.Date -eq $Timestamp })

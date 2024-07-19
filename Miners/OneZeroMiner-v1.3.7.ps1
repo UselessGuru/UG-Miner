@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.2.18
-Version date:   2024/07/13
+Version date:   2024/07/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [Version]"450.80.02" }))) { Return }
@@ -29,8 +29,8 @@ $Path = "$PWD\Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @( 
-    @{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
-    @{ Algorithm = "XelisHash";  Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
+    @{ Algorithm = "XelisHash";  Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -46,9 +46,10 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                        # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                         $MinMemGiB = $_.MinMemGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
+                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        # If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 

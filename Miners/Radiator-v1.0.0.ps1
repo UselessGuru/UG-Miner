@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.17
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -33,8 +33,8 @@ $Path = "$PWD\Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "SHA512256d"; MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo=rad" }
-    @{ Algorithm = "SHA256dt";   MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo=novo" }
+    @{ Algorithm = "SHA512256d"; MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo=rad" }
+    @{ Algorithm = "SHA256dt";   MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo=novo" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -51,9 +51,10 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     {  
-                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
+                        # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                         $MinMemGiB = $_.MinMemGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture -and $_.MemoryGiB -ge $MinMemGiB })) { 
+                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        # If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures -and $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 

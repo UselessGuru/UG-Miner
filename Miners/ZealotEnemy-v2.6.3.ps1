@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.17
-Version date:   2024/07/13
+Version:        6.2.18
+Version date:   2024/07/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -32,24 +32,24 @@ $Path = "$PWD\Bin\$Name\z-enemy.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Aergo";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo aergo --intensity 23 --statsavg 5" }
-#   @{ Algorithm = "BCD";        MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo bcd --statsavg 5" } # ASIC
-#   @{ Algorithm = "Bitcore";    MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo bitcore --intensity 22 --statsavg 5" } # Bitcore is using MegaBtx
-    @{ Algorithm = "C11";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo c11 --intensity 24 --statsavg 5" }
-    @{ Algorithm = "Hex";        MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo hex --intensity 24 --statsavg 5" }
-    @{ Algorithm = "KawPow";     MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo kawpow --intensity 24 --statsavg 1" }
-#   @{ Algorithm = "Phi";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo phi --statsavg 5" } # ASIC
-    @{ Algorithm = "Phi2";       MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo phi2 --statsavg 5" }
-    @{ Algorithm = "Polytimos";  MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo poly --statsavg 5" }
-    @{ Algorithm = "SkunkHash";  MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo skunk --statsavg 1" } # No hashrate in time for old cards
-#   @{ Algorithm = "Sonoa";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo sonoa --statsavg 1" } # No hashrate in time
-    @{ Algorithm = "Timetravel"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo timetravel --statsavg 5" }
-#   @{ Algorithm = "Tribus";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(90, 15); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo tribus --statsavg 1" } # ASIC
-#   @{ Algorithm = "X16r";       MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 60); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16r --statsavg 1" } # ASIC
-    @{ Algorithm = "X16rv2";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(60, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16rv2 --statsavg 5" }
-    @{ Algorithm = "X16s";       MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x16s --statsavg 5" } # FPGA
-    @{ Algorithm = "X17";        MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 0); ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo x17 --statsavg 1" }
-#   @{ Algorithm = "Xevan";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUArchitecture = @(); ExcludePools = @(); Arguments = " --algo xevan --intensity 26 --diff-factor 1 --statsavg 1" } # No hashrate in time
+    @{ Algorithm = "Aergo";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo aergo --intensity 23 --statsavg 5" }
+#   @{ Algorithm = "BCD";        MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo bcd --statsavg 5" } # ASIC
+#   @{ Algorithm = "Bitcore";    MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo bitcore --intensity 22 --statsavg 5" } # Bitcore is using MegaBtx
+    @{ Algorithm = "C11";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo c11 --intensity 24 --statsavg 5" }
+    @{ Algorithm = "Hex";        MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo hex --intensity 24 --statsavg 5" }
+    @{ Algorithm = "KawPow";     MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo kawpow --intensity 24 --statsavg 1" }
+#   @{ Algorithm = "Phi";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo phi --statsavg 5" } # ASIC
+    @{ Algorithm = "Phi2";       MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo phi2 --statsavg 5" }
+    @{ Algorithm = "Polytimos";  MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo poly --statsavg 5" }
+    @{ Algorithm = "SkunkHash";  MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo skunk --statsavg 1" } # No hashrate in time for old cards
+#   @{ Algorithm = "Sonoa";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo sonoa --statsavg 1" } # No hashrate in time
+    @{ Algorithm = "Timetravel"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo timetravel --statsavg 5" }
+#   @{ Algorithm = "Tribus";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(90, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo tribus --statsavg 1" } # ASIC
+#   @{ Algorithm = "X16r";       MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo x16r --statsavg 1" } # ASIC
+    @{ Algorithm = "X16rv2";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo x16rv2 --statsavg 5" }
+    @{ Algorithm = "X16s";       MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo x16s --statsavg 5" } # FPGA
+    @{ Algorithm = "X17";        MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo x17 --statsavg 1" }
+#   @{ Algorithm = "Xevan";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo xevan --intensity 26 --diff-factor 1 --statsavg 1" } # No hashrate in time
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -65,8 +65,9 @@ If ($Algorithms) {
 
                 $Algorithms.ForEach(
                     { 
-                        $ExcludeGPUArchitecture = $_.ExcludeGPUArchitecture
-                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUArchitecture })) { 
+                        # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+                        If ($SupportedMinerDevices = $MinerDevices) { 
+                        # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                             # $ExcludePools = $_.ExcludePools
                             # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 

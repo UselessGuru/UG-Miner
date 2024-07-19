@@ -239,7 +239,7 @@ Class Miner {
     [Worker[]]$Workers = @()
     [Worker[]]$WorkersRunning = @()
 
-    hidden [System.Collections.Generic.List[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
+    hidden [PSCustomObject[]]$Data = $null
     hidden [System.Management.Automation.Job]$DataReaderJob = $null
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [System.Diagnostics.Process]$Process = $null
@@ -296,7 +296,7 @@ Class Miner {
         If ($this.DataReaderJob) { 
             $this.DataReaderJob | Stop-Job
             # Get data before removing read data
-            If ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { $this.Data.Add(($this.DataReaderJob | Receive-Job | Select-Object)) }
+            If ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { $this.Data += @($this.DataReaderJob | Receive-Job | Select-Object) }
             $this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore | Out-Null
             $this.DataReaderJob = $null
         }
@@ -436,7 +436,7 @@ Class Miner {
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join '; '
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
-            Reason                  = If ($this.StatusInfo -and $this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo -replace "'$($this.StatusInfo)' " } Else { "" }
+            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo -replace "'$($this.StatusInfo)' " } Else { "" }
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
@@ -444,7 +444,7 @@ Class Miner {
             $this.StatusInfo = "Idle"
             $this.SubStatus = $this.Status
         }
-        # $this.Data = [System.Collections.Generic.List[PSCustomObject]]@()
+        $this.Data = @()
         $this.WorkersRunning = [Worker[]]@()
     }
 
@@ -1112,18 +1112,16 @@ Function Write-Message {
     }
 
     If (-not $Config.Keys.Count -or $Level -in $Config.LogToFile) { 
+        # Get mutex. Mutexes are shared across all threads and processes.
+        # This lets us ensure only one thread is trying to write to the file at a time.
 
         $LogFile = "$($Variables.MainPath)\Logs\$($Variables.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
         If ($Variables.LogFile -ne $LogFile) { $Variables.LogFile = $LogFIle }
 
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
-        # Get mutex. Mutexes are shared across all threads and processes.
-        # This lets us ensure only one thread is trying to write to the file at a time.
-
         # Attempt to aquire mutex, waiting up to 1 second if necessary
-        If ($Mutex.WaitOne(1000)) { 
+        If ($Variables.MutexWriteMessage.WaitOne(1000)) { 
             $Message | Out-File -LiteralPath $LogFile -Append -ErrorAction Ignore
-            $Mutex.ReleaseMutex()
+            [Void]$Variables.MutexWriteMessage.ReleaseMutex()
         }
     }
 }
@@ -2778,29 +2776,23 @@ Function Add-CoinName {
     )
 
     If (-not ($Variables.CoinNames[$Currency] -and $Variables.CurrencyAlgorithm[$Currency])) { 
-
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_DataFiles")
 
-        If (-not $Variables.CurrencyAlgorithm[$Currency]) { 
-            $Variables.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
-            # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the file and release mutex
-            If ($Mutex.WaitOne(1000)) { 
+        # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
+        If ($Variables.MutexAddCoinName.WaitOne(1000)) { 
+            If (-not $Variables.CurrencyAlgorithm[$Currency]) { 
+                $Variables.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
                 $Variables.CurrencyAlgorithm | Get-SortedObject | ConvertTo-Json | Out-File -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Ignore -Force
-                $Mutex.ReleaseMutex()
             }
-        }
-        If (-not $Variables.CoinNames[$Currency]) { 
-            If ($CoinName = ((Get-Culture).TextInfo.ToTitleCase($CoinName.Trim().ToLower()) -replace '[^A-Z0-9\$\.]' -replace 'coin$', 'Coin' -replace 'bitcoin$', 'Bitcoin')) { 
-                $Variables.CoinNames[$Currency] = $CoinName
-                # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the  file and release mutex
-                If ($Mutex.WaitOne(1000)) { 
+            If (-not $Variables.CoinNames[$Currency]) { 
+                If ($CoinName = ((Get-Culture).TextInfo.ToTitleCase($CoinName.Trim().ToLower()) -replace '[^A-Z0-9\$\.]' -replace 'coin$', 'Coin' -replace 'bitcoin$', 'Bitcoin')) { 
+                    $Variables.CoinNames[$Currency] = $CoinName
                     $Variables.CoinNames | Get-SortedObject | ConvertTo-Json | Out-File -Path ".\Data\CoinNames.json" -ErrorAction Ignore -Force
-                    $Mutex.ReleaseMutex()
                 }
             }
         }
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
     }
 }
 
@@ -2816,16 +2808,12 @@ Function Get-AlgorithmFromCurrency {
             Return $Variables.CurrencyAlgorithm[$Currency]
         }
 
-        # Get mutex. Mutexes are shared across all threads and processes.
-        # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_DataFiles")
-
+        $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
-        If ($Mutex.WaitOne(1000)) { 
-            $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
+        If ($Variables.MutexAddCoinName.WaitOne(1000)) { 
             (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
-            $Mutex.ReleaseMutex()
         }
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
 
         If ($Variables.CurrencyAlgorithm[$Currency]) { 
             Return $Variables.CurrencyAlgorithm[$Currency]
@@ -2842,6 +2830,17 @@ Function Get-CurrencyFromAlgorithm {
     )
 
     If ($Algorithm) { 
+        If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm }))) { 
+            Return $Currencies
+        }
+
+        $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
+        # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
+        If ($Variables.MutexAddCoinName.WaitOne(1000)) { 
+            (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+        }
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
+
         If ($Currencies = @($Variables.CurrencyAlgorithm.psBase.Keys.Where({ $Variables.CurrencyAlgorithm[$_] -eq $Algorithm }))) { 
             Return $Currencies
         }
@@ -3004,10 +3003,10 @@ Function Update-DAGdata {
             If ($DAGdataResponse.coins.PSObject.Properties.Name) { 
                 $DAGdataResponse.coins.PSObject.Properties.Name.Where({ $DAGdataResponse.coins.$_.tag -ne "NICEHASH" }).ForEach(
                     { 
-                        $AlgorithmNorm = Get-Algorithm $DAGdataResponse.coins.$_.algorithm
+                        $Algorithm_Norm = Get-Algorithm $DAGdataResponse.coins.$_.algorithm
                         $Currency = $DAGdataResponse.coins.$_.tag
-                        If (-not $Variables.CoinNames[$Currency]) { [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $_) }
-                        If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG) { 
+                        If (-not $Variables.CoinNames[$Currency]) { [Void](Add-CoinName -Algorithm $Algorithm_Norm -Currency $Currency -CoinName $_) }
+                        If ($Algorithm_Norm -match $Variables.RegexAlgoHasDAG) { 
                             If ($DAGdataResponse.coins.$_.last_block -ge $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
                                 If ($DAGdata.Epoch -and $DAGdata.Algorithm -match $Variables.RegexAlgoHasDAG) { 
@@ -3508,7 +3507,10 @@ Function Initialize-Environment {
 
     # Load currency algorithm data
     $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
-    (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+    If ($Variables.MutexAddCoinName.WaitOne(2000)) { 
+        (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+        [Void]$Variables.MutexAddCoinName.ReleaseMutex()
+    }
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
