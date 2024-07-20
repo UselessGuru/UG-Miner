@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.18
+Version:        6.2.19
 Version date:   2024/07/19
 #>
 
 # Return 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.18.0/rigel-1.18.0-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.18.1/rigel-1.18.1-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -77,7 +77,7 @@ $Algorithms = @(
     @{ Algorithms = @("Octopus", "SHA512256d");            Fee = @(0.02, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm octopus+sha512256d" }
     @{ Algorithms = @("PowBlocks");                        Fee = @(0.007);       MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm powblocks" }
     @{ Algorithms = @("SHA512256d");                       Fee = @(0.01);        MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@("ZPool"), @()); Arguments = " --algorithm sha512256d" }
-    @{ Algorithms = @("XelisHash");                        Fee = @(0.03);        MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm xelishash" } # No supported pools yet
+    @{ Algorithms = @("XelisHash");                        Fee = @(0.03);        MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());        Arguments = " --algorithm xelishash2" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -131,6 +131,10 @@ If ($Algorithms) {
                                         Remove-Variable Pool
 
                                         $Arguments += If ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { " --no-strict-ssl" } # Parameter cannot be used multiple times
+
+                                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
 
                                         # Apply tuning parameters
                                         If ($Variables.UseMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and ($AvailableMinerDevices.Model | Sort-Object -Unique) -notmatch "^MX\d+") { $Arguments += $_.Tuning }
