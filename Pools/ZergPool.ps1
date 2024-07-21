@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 Param(
@@ -110,7 +110,7 @@ If ($DivisorMultiplier -and $Regions) {
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false
-                    SSLSelfSignedCertificate = $false
+                    SSLselfSignedCertificate = $false
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Request.$Pool.Updated
                     User                     = $PoolConfig.Wallets.$PayoutCurrency

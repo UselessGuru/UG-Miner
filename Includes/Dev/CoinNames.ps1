@@ -24,7 +24,7 @@ $CoinDB2 = @{ }
 )
 
 ForEach ($Algorithm in (($CoinDB | Get-Member -MemberType NoteProperty).Name).ForEach({ $CoinDB.$_.Algorithms }) | Sort-Object -Unique) { 
-    
+
     $Currencies = ($CoinDB | Get-Member -MemberType NoteProperty).Name.Where({ $CoinDB.$_.Algorithms -match $Algorithm })
     If ($Currencies.Count -eq 1) { 
         $AlgorithmCurrencies.$Algorithm = $Currencies

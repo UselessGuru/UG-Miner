@@ -285,7 +285,7 @@ Switch ($Path) {
         Break
     }
     "/functions/getminerdetail" { 
-        $Miner = $Variables.Miners.Where({ $_.Info -eq $Key})
+        $Miner = $Variables.Miners.Where({ $_.Info -eq $Key })
         If ($Miner) { 
             $Data = $Miner | ConvertTo-Json -Depth 10
         }
@@ -407,7 +407,7 @@ Switch ($Path) {
                             $Worker.Hashrate = [Double]::NaN
                         }
                         Remove-Variable Worker
-                        
+
                         # Clear power consumption
                         Remove-Stat -Name "$($_.Name)_PowerConsumption"
                         $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN

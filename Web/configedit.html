@@ -184,18 +184,18 @@
             <!-- Network settings -->
             <fieldset title="Note: Region is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
               <legend class=h6><b>Network settings</b></legend>
-              <div style="padding-top: 0.2rem" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
+              <div style="padding-top: 0.2rem" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature">
                 <input type="checkbox" class="toggle-switch" id="UseAnycast" name="UseAnycast"> Use anycast for best network performance and ping times
               </div>
-              <div style="padding-top: 0.5rem" title="This setting definines how miners will connect to the pools">
+              <div style="padding-top: 0.5rem" title="This setting definines how miners will connect to the pools&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json').">
                 <select id="SSL">
-                  <option value="Never" title="Never use SSL/TLS for pool connections">Never use</option>
+                  <option value="Never" title="Never use SSL/TLS for pool connections&#10;Pools that enforce SSL/TLS connections are marked as unavailable.&#10;&#10;This setting might reduce earnings because not all pools may allow Non-SSL connections.">Never use</option>
                   <option value="Prefer" title="Prefer SSL/TLS pool connections">Prefer</option>
-                  <option value="Always" title="Always use SSL/TLS for pool connections&#10;Pools that do not support SSL/TLS connections are ignored&#10;&#10;Note: This setting might reduce earnings because not all pools & miners support SSL connections">Always use</option>
+                  <option value="Always" title="Always use SSL/TLS for pool connections&#10;Pools that do not support SSL/TLS connections are marked as unavailable.&#10;&#10;This setting might reduce earnings because not all pools & miners support SSL connections.">Always use</option>
                 </select>
                 <label for="SSL"> SSL/TLS for pool connections</label>
               </div>
-              <div style="padding-top: 0.4rem" title="Some pools use self signed certificates for SSL and/or TLS encryption&#10;&#10;Note: This is a security issue and allows 'Man in the middle attacks'">
+              <div style="padding-top: 0.4rem" title="Some pools use self signed certificates for SSL and/or TLS encryption.&#10;This is a security issue and allows 'Man in the middle attacks'.&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
                 <input type="checkbox" class="toggle-switch" id="SSLAllowSelfSignedCertificate" name="SSLAllowSelfSignedCertificate"> Allow SSL/TLS connections with self signed certificates
               </div>
             </fieldset>

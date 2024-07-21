@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 Class EthMiner : Miner { 

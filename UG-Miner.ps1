@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 using module .\Includes\Include.psm1
@@ -241,9 +241,9 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$ShowWorkerStatus = $true, # Show worker status from other rigs (data retrieved from monitoring server)
     [Parameter(Mandatory = $false)]
-    [String]$SSL = "Prefer", # SSL pool connections: One of three values: 'Prefer' (use where available), 'Never' or 'Always' (pools that do not allow SSL are ignored)
+    [String]$SSL = "Prefer", # SSL pool connections: One of three values: 'Prefer' (use where available), 'Never' (pools that only allow SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL are marked as unavailable). This is also a per pool setting configurable in 'PoolsConfig.json'
     [Parameter(Mandatory = $false)]
-    [Switch]$SSLAllowSelfSignedCertificate = $false, # If true will allow SSL/TLS connections with self signed certificates (this is a security issue)
+    [Switch]$SSLallowSelfSignedCertificate = $false, # If true will allow SSL/TLS connections with self signed certificates (this is a security issue)
     [Parameter(Mandatory = $false)]
     [String]$StartupMode = "Running", # One of 'Idle', 'Paused' or 'Running'. This is the same as the buttons in the legacy & web GUI
     [Parameter(Mandatory = $false)]
@@ -298,22 +298,16 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.18"
+    Version      = [System.Version]"6.2.19"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "`nUnsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.2.21) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
-    $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.2.21) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Host "`nUnsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
+    $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
-}
-If ($PSVersiontable.PSVersion -lt [System.Version]"7.2.21") { 
-    Write-Host "Outdated PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.21 which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Magenta
-}
-If ($PSVersiontable.PSVersion -ge [System.Version]"7.3.0") { 
-    Write-Host "Suboptimal PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) works best with PWSH version 7.2.21 which can be downloaded from https://github.com/PowerShell/powershell/releases.`nPWSH versions 7.3.x and later have a memory leak and are therefore not recommended.`n`n" -ForegroundColor Magenta
 }
 
 # Internet connection must be available
@@ -600,7 +594,7 @@ Function MainLoop {
 
             # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
             (Get-Process -Id $PID).PriorityClass = "BelowNormal"
-        
+
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 
                     If ($Variables.MiningStatus) { 
@@ -912,6 +906,7 @@ Function MainLoop {
                     # Miner list format
                     [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Miner"; Expression = { $_.Name } }
+                        If ($Variables.ShowMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
                         If ($Variables.ShowEarningBias) { @{ Label = "EarningBias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
                         If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "PowerCost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)) } }; Align = "right" } }
@@ -920,7 +915,6 @@ Function MainLoop {
                         If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "PowerConsumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } }; Align = "right" } }
                         If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.Pool.Accuracy.ForEach({ "{0:P0}" -f [Double]$_ }) }; Align = "right" } }
                         @{ Label = "Algorithm"; Expression = { $_.Workers.Pool.Algorithm -join ' & ' } }
-                        If ($Variables.ShowMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
                         If ($Variables.ShowPool) { @{ Label = "Pool"; Expression = { $_.Workers.Pool.Name -join ' & ' } } }
                         If ($Variables.ShowPoolFee -and ($Variables.Miners.Workers.Pool.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Pool.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
                         @{ Label = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) } }; Align = "right" }

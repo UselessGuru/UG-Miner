@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 Param(
@@ -55,7 +55,7 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
 
     If (-not $Request.PSObject.Properties.Name) { Return }
 
-    
+
     $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp }).ForEach(
         { 
             $Algorithm = $Request.$_.name
@@ -97,7 +97,7 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
                         Reasons                  = $Reasons
                         Region                   = $Region_Norm
                         SendHashrate             = $false
-                        SSLSelfSignedCertificate = $true
+                        SSLselfSignedCertificate = $true
                         StablePrice              = $Stat.Week
                         Updated                  = [DateTime]$Stat.Updated
                         User                     = $PoolConfig.UserName

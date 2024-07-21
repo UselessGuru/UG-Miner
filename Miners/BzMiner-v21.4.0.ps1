@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -in @("AMD", "INTEL") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
@@ -45,7 +45,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA256dt");         Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUModel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a novo") }
     @{ Algorithms = @("SHA3d");            Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUModel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a kylacoin") }
     @{ Algorithms = @("Skein2");           Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUModel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a woodcoin") }
-                
+
     @{ Algorithms = @("Blake3");           Type = "INTEL"; Fee = @(0.005); MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a alph") }
     @{ Algorithms = @("DynexSolve");       Type = "INTEL"; Fee = @(0.005); MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a dynex") }
     @{ Algorithms = @("EtcHash");          Type = "INTEL"; Fee = @(0.005); MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 25); ExcludeGPUarchitectures = @(); ExcludeGPUModel = ""; ExcludePools = @(@(), @());                       Arguments = @(" -a etchash") }
@@ -90,7 +90,7 @@ $Algorithms.Where({ -not $_.Algorithms[1] }).ForEach({ $_.Algorithms += "" })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
 $Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
-$Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLSelfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLSelfSignedCertificate -ne $true)) })
+$Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -ne $true)) })
 
 If ($Algorithms) { 
 
@@ -106,8 +106,8 @@ If ($Algorithms) {
                         If ($SupportedMinerDevices = $MinerDevices.Where({ (-not $ExcludeGPUModel -or $_.Model -notmatch $ExcludeGPUModel) -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                             $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) })) { 
-                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLSelfSignedCertificate -ne $true) })) { 
+                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                     If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
@@ -120,7 +120,7 @@ If ($Algorithms) {
                                             "ethstratum1"  { $Arguments += " -p ethstratum" }
                                             "ethstratum2"  { $Arguments += " -p ethstratum2" }
                                             "ethstratumnh" { $Arguments += " -p ethstratum" }
-                                            Default        { $Arguments += " -p stratum"}
+                                            Default        { $Arguments += " -p stratum" }
                                         }
                                         $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                         $Arguments += "$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
@@ -146,7 +146,7 @@ If ($Algorithms) {
 
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                         $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 5)
+                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
 
                                         # Apply tuning parameters
                                         If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 using module ..\Includes\Include.psm1
@@ -40,7 +40,7 @@ $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
-    $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })  
+    $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
     Try { 
@@ -184,7 +184,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 $Currency = $CurPoolObject.currency
                 $LastPrice = [Double]$CurPoolObject.actual_last24h
                 $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
-                
+
                 # Reset history if PlusPrice is not within +/- 1000% of LastPrice
                 If ($LastPrice -gt 0 -and ($PlusPrice -lt $LastPrice * 0.1 -or $PlustPrice -gt $LastPrice * 10)) { 
                     $StatName = If ($Currency) { "$($PoolVariant)_$AlgorithmNorm-$($Currency)_Profit" } Else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }

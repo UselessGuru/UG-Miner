@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 Function Start-APIServer { 
@@ -524,7 +524,7 @@ Function Start-APIServer {
                                                     $Worker.Hashrate = [Double]::NaN
                                                 }
                                                 Remove-Variable Worker
-                                                
+
                                                 # Clear power consumption
                                                 Remove-Stat -Name "$($_.Name)_PowerConsumption"
                                                 $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN

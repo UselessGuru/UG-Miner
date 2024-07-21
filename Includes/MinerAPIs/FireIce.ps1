@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 Class Fireice : Miner { 
@@ -35,7 +35,7 @@ Class Fireice : Miner {
             # Write pool config file, overwrite every time
             ($Parameters.PoolFile.Content | ConvertTo-Json -Depth 10) -replace '^{' -replace '}$', ',' | Out-File -LiteralPath $PoolFile -Force -ErrorAction Ignore
             # Write config file, keep existing file to preserve user custom config
-            If (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { ($Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10) -replace '^{' -replace '}$' | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore}
+            If (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { ($Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10) -replace '^{' -replace '}$' | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore }
 
             # Check if we have a valid hw file for all installed hardware. If hardware / device order has changed we need to re-create the config files. 
             If (-not (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf)) { 

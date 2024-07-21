@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 Param(
@@ -89,7 +89,7 @@ If ($PoolConfig.Wallets) {
                 Reasons                  = $Reasons
                 Region                   = [String]$PoolConfig.Region
                 SendHashrate             = $false
-                SSLSelfSignedCertificate = $false
+                SSLselfSignedCertificate = $false
                 StablePrice              = $Stat.Week
                 Updated                  = [DateTime]$Stat.Updated
                 User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }

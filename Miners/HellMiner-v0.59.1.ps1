@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 If ($AvailableMinerDevices.CpuFeatures -contains "avx2") { $URI = "https://github.com/hellcatz/hminer/releases/download/v0.59.1/hellminer_win64_avx2.zip" }
 ElseIf ($AvailableMinerDevices.CpuFeatures -contains "avx") { $URI = "https://github.com/hellcatz/hminer/releases/download/v0.59.1/hellminer_win64_avx.zip" }
-Else { $URI = "https://github.com/hellcatz/hminer/releases/download/v0.59.1/hellminer_win64.zip"}
+Else { $URI = "https://github.com/hellcatz/hminer/releases/download/v0.59.1/hellminer_win64.zip" }
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "$PWD\Bin\$Name\hellminer.exe"

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -145,7 +145,7 @@ Class Pool {
     [System.Collections.Generic.List[String]]$Reasons
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
-    [Boolean]$SSLSelfSignedCertificate
+    [Boolean]$SSLselfSignedCertificate
     [Double]$StablePrice
     [DateTime]$Updated = [DateTime]::Now.ToUniversalTime()
     [String]$User
@@ -554,7 +554,7 @@ Class Miner {
         $PowerConsumptionAverage = [Double]0
         $PowerConsumptionVariance = [Double]0
 
-        $PowerConsumptionSamples = @($this.Data.Where({ $_.PowerConsumption})) # Do not use 0 valued samples
+        $PowerConsumptionSamples = @($this.Data.Where({ $_.PowerConsumption })) # Do not use 0 valued samples
 
         $PowerConsumptionAverage = ($PowerConsumptionSamples.PowerConsumption | Measure-Object -Average).Average
         $PowerConsumptionVariance = $PowerConsumptionSamples.PowerUsage | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
@@ -787,7 +787,7 @@ Function Start-Core {
 }
 
 Function Stop-Core { 
-    
+
     # Allow up to 30 seconds for all miners to get stopped
     $Counter = 0
     While ($Counter -lt 30 -and $Variables.Miners.Where({ $_.Status -in @([MinerStatus]::DryRun, [MinerStatus]::Running) })) {
@@ -1807,7 +1807,7 @@ Function Set-Stat {
                 $Stat.Day_Fluctuation = (1 - $Span_Day) * $Stat.Day_Fluctuation + $Span_Day * ([Math]::Abs($Value - $Stat.Day) / [Math]::Max([Math]::Abs($Stat.Day), $SmallestValue))
                 $Stat.Day = (1 - $Span_Day) * $Stat.Day + $Span_Day * $Value
                 $Stat.Week_Fluctuation = (1 - $Span_Week) * $Stat.Week_Fluctuation + $Span_Week * ([Math]::Abs($Value - $Stat.Week) / [Math]::Max([Math]::Abs($Stat.Week), $SmallestValue))
-                $Stat.Week = (1 - $Span_Week) * $Stat.Week + $Span_Week * $Value    
+                $Stat.Week = (1 - $Span_Week) * $Stat.Week + $Span_Week * $Value
                 $Stat.Duration = $Stat.Duration + $Duration
                 $Stat.Updated = $Updated
                 $Stat.Timer = $Timer
@@ -2971,7 +2971,7 @@ Function Get-ObsoleteMinerStats {
     $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_Hashrate.txt", "*_PowerConsumption.txt").BaseName
     $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
 
-    Return @($StatFiles.Where({ (($_ -split '-')[0, 1] -join '-') -notin $MinerNames}))
+    Return @($StatFiles.Where({ (($_ -split '-')[0, 1] -join '-') -notin $MinerNames }))
 }
 
 Function Test-Prime { 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -59,7 +59,7 @@ If ($Algorithms) {
                             ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                                 $Arguments = $_.Arguments
-                                If ($AvailableMinerDevices.Count -gt 1) { $_.Arguments += " --intensity 15"} # Default intensities too high if more than one GPU
+                                If ($AvailableMinerDevices.Count -gt 1) { $_.Arguments += " --intensity 15" } # Default intensities too high if more than one GPU
 
                                 [PSCustomObject]@{ 
                                     API         = "CcMiner"

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -38,15 +38,15 @@ $null = [ProcessDPI]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 $LegacyGUIcolors = @{ }
-$LegacyGUIcolors["benchmarking"]                   = [System.Drawing.Color]::FromArgb(241, 255, 229)
-$LegacyGUIcolors["disabled"]                       = [System.Drawing.Color]::FromArgb(255, 243, 231)
-$LegacyGUIcolors["failed"]                         = [System.Drawing.Color]::FromArgb(255, 230, 230)
-$LegacyGUIcolors["idle"] = $LegacyGUIcolors["stopped"]      = [System.Drawing.Color]::FromArgb(230, 248, 252)
-$LegacyGUIcolors["launched"]                       = [System.Drawing.Color]::FromArgb(229, 255, 229)
-$LegacyGUIcolors["running"]                        = [System.Drawing.Color]::FromArgb(212, 244, 212)
-$LegacyGUIcolors["starting"] = $LegacyGUIcolors["stopping"] = [System.Drawing.Color]::FromArgb(245, 255, 245)
-$LegacyGUIcolors["unavailable"]                    = [System.Drawing.Color]::FromArgb(254, 245, 220)
-$LegacyGUIcolors["warmingup"]                      = [System.Drawing.Color]::FromArgb(231, 255, 230)
+$LegacyGUIcolors["benchmarking"]                                                    = [System.Drawing.Color]::FromArgb(241, 255, 229)
+$LegacyGUIcolors["disabled"]                                                        = [System.Drawing.Color]::FromArgb(255, 243, 231)
+$LegacyGUIcolors["failed"]                                                          = [System.Drawing.Color]::FromArgb(255, 230, 230)
+$LegacyGUIcolors["idle"] = $LegacyGUIcolors["stopped"] = $LegacyGUIcolors["dryrun"] = [System.Drawing.Color]::FromArgb(230, 248, 252)
+$LegacyGUIcolors["launched"]                                                        = [System.Drawing.Color]::FromArgb(229, 255, 229)
+$LegacyGUIcolors["running"]                                                         = [System.Drawing.Color]::FromArgb(212, 244, 212)
+$LegacyGUIcolors["starting"] = $LegacyGUIcolors["stopping"]                         = [System.Drawing.Color]::FromArgb(245, 255, 245)
+$LegacyGUIcolors["unavailable"]                                                     = [System.Drawing.Color]::FromArgb(254, 245, 220)
+$LegacyGUIcolors["warmingup"]                                                       = [System.Drawing.Color]::FromArgb(231, 255, 230)
 
 Function Set-TableColor { 
 
@@ -96,7 +96,8 @@ Function CheckBoxSwitching_Click {
             $LegacyGUIswitchingDGV.Columns[7].FillWeight = 35; $LegacyGUIswitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
             $LegacyGUIswitchingDGV.Columns[8].FillWeight = 30 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIswitchingDGV.Columns[8].HeaderText = "Device"
             $LegacyGUIswitchingDGV.Columns[9].FillWeight = 30
-        }       If ($Config.UseColorForMinerStatus) { 
+        }
+        If ($Config.UseColorForMinerStatus) { 
             ForEach ($Row in $LegacyGUIswitchingDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $LegacyGUIcolors[$Row.DataBoundItem.Action] }
         }
         $LegacyGUIswitchingDGV.ClearSelection()
@@ -403,8 +404,8 @@ Function Update-TabControl {
             }
 
             If ($LegacyGUIminersDGV.Columns) { $LegacyGUIminersLabel.Text = "Miner data updated $([DateTime]::Now.ToString())" }
-            ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIminersLabel.Text = "No data - mining is stopped"}
-            ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIminersLabel.Text = "No data - mining is paused"}
+            ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIminersLabel.Text = "No data - mining is stopped" }
+            ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIminersLabel.Text = "No data - mining is paused" }
             Else { $LegacyGUIminersLabel.Text = "Waiting for data..." }
             Break
         }
@@ -467,8 +468,8 @@ Function Update-TabControl {
             }
 
             If ($LegacyGUIpoolsDGV.Columns) { $LegacyGUIpoolsLabel.Text = "Pool data updated $([DateTime]::Now.ToString())" }
-            ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIpoolsLabel.Text = "No data - mining is stopped"}
-            ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIpoolsLabel.Text = "No data - mining is paused"}
+            ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIpoolsLabel.Text = "No data - mining is stopped" }
+            ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIpoolsLabel.Text = "No data - mining is paused" }
             Else { $LegacyGUIpoolsLabel.Text = "Waiting for data..." }
             Break
         }
@@ -517,8 +518,8 @@ Function Update-TabControl {
         #             $LegacyGUIworkersDGV.EndInit()
         #         }
         #             If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status updated $($Variables.WorkersLastUpdated.ToString())" }
-        #             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped"}
-        #             ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIworkersLabel.Text = "No data - mining is paused"}
+        #             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped" }
+        #             ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
         #             Else  { $LegacyGUIworkersLabel.Text = "Waiting for data..." }
 
         #     }
@@ -1098,7 +1099,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             )
 
                             # Remove Watchdog timers
-                            $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -ne $SelectedPoolName -or $_.Algorithm -ne $SelectedPoolAlgorithm}))
+                            $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -ne $SelectedPoolName -or $_.Algorithm -ne $SelectedPoolAlgorithm }))
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false

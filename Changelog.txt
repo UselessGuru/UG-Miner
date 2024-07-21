@@ -3,6 +3,24 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.2.19 2024/07/21
+====================================
+
+Changes:
+- Remove recommendation for PWSH version 7.2.x (I can no longer see any difference in memory leak with versions 7.3.x / 7.4.x)
+
+Enhancements:
+- Code cleanup: Remove extra spaces
+- Core: Configuration item '$SSL' is now also configurable per pool (edit .'\Config\PoolsConfig.json')
+- Core: Configuration item '$SSLallowSelfSignedCertificate' is now also configurable per pool (edit .'\Config\PoolsConfig.json')
+
+Fixes:
+- Legacy GUI / Switching log: Incorrect background color for stopped miners
+
+Miner updates:
+- Rigel-v1.18.1
+
+
 Changelog UG-Miner 6.2.18 2024/07/19
 ====================================
 
@@ -500,7 +518,7 @@ Changelog UG-Miner 6.1.3 2024/01/26
 Fixes:
 - APIServer: Enable/Disable devices not updating device status colors in Web GUI.
 - BalancesTracker.ps1: DailyEarnings broken (regression from 6.1.1)
-- Includes.psm1/Write-Config: Do not remove 'PoolsConfig' from $Config
+- Includes.psm1/Write-Config: Do not remove 'PoolsConfig' property from $Config
 
 Improvements:
 - Minor code optimizations

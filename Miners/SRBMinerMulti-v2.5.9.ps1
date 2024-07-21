@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^RX5[5|6]0$" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -336,7 +336,7 @@ If ($Algorithms) {
 
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                         $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 5)
+                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
 
                                         # Apply tuning parameters
                                         If ($_.Type -eq "CPU" -and $Variables.UseMinerTweaks) { $Arguments += " --disable-msr-tweaks" }

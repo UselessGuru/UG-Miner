@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -67,7 +67,7 @@ $Algorithms = @(
     @{ Algorithm = "ProgPowVeil";      Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 8.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = @();        ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=veil" }
     @{ Algorithm = "ProgPowVeriblock"; Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 2.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = @();        ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=VeriBlock" }
     @{ Algorithm = "ProgPowZ";         Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 0.80; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=auto" }
-)       
+)
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0].($_.Algorithm) })

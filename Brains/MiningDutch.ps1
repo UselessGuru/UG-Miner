@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 using module ..\Includes\Include.psm1
@@ -43,7 +43,7 @@ $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
-    $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })  
+    $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
     Try { 

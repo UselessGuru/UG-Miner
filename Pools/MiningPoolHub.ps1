@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 Param(
@@ -102,7 +102,7 @@ If ($PoolConfig.UserName) {
                     Reasons                  = $Reasons
                     Region                   = $Region_Norm
                     SendHashrate             = $false
-                    SSLSelfSignedCertificate = $true
+                    SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Stat.Updated
                     User                     = "$($PoolConfig.UserName).$($PoolConfig.WorkerName)"

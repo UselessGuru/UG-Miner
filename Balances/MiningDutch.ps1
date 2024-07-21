@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.2.18
-Version date:   2024/07/19
+Version:        6.2.19
+Version date:   2024/07/21
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -28,7 +28,7 @@ $RetryInterval = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
 $PoolAPITimeout = $Config.PoolsConfig.$Name.PoolAPITimeout
 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
 
-$Headers = @{"Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"}
+$Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
 While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) { 
