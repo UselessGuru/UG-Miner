@@ -46,13 +46,13 @@ If ($PoolConfig.UserName) {
 
     Do {
         Try { 
-            $Request = Invoke-RestMethod -Uri "https://miningpoolhub.com/index.php?page=api&action=getminingandprofitsstatistics" -Headers $Headers -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout # -UserAgent $UserAgent 
+            $Request = Invoke-RestMethod -Uri "https://miningpoolhub.com/index.php?page=api&action=getminingandprofitsstatistics" -Headers $Headers -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout # -UserAgent $UserAgent 
         }
         Catch { 
             $APICallFails ++
-            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)
+            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
         }
-    } While (-not $Request -and $APICallFails -lt 3)
+    } While (-not $Request -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
     If (-not $Request) { Return }
 

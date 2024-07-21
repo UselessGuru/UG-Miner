@@ -181,24 +181,28 @@
             </fieldset>
             <br>
 
-            <!-- Network settings -->
-            <fieldset title="Note: Region is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
-              <legend class=h6><b>Network settings</b></legend>
-              <div style="padding-top: 0.2rem" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature">
-                <input type="checkbox" class="toggle-switch" id="UseAnycast" name="UseAnycast"> Use anycast for best network performance and ping times
-              </div>
-              <div style="padding-top: 0.5rem" title="This setting definines how miners will connect to the pools&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json').">
-                <select id="SSL">
-                  <option value="Never" title="Never use SSL/TLS for pool connections&#10;Pools that enforce SSL/TLS connections are marked as unavailable.&#10;&#10;This setting might reduce earnings because not all pools may allow Non-SSL connections.">Never use</option>
-                  <option value="Prefer" title="Prefer SSL/TLS pool connections">Prefer</option>
-                  <option value="Always" title="Always use SSL/TLS for pool connections&#10;Pools that do not support SSL/TLS connections are marked as unavailable.&#10;&#10;This setting might reduce earnings because not all pools & miners support SSL connections.">Always use</option>
-                </select>
-                <label for="SSL"> SSL/TLS for pool connections</label>
-              </div>
-              <div style="padding-top: 0.4rem" title="Some pools use self signed certificates for SSL and/or TLS encryption.&#10;This is a security issue and allows 'Man in the middle attacks'.&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
-                <input type="checkbox" class="toggle-switch" id="SSLAllowSelfSignedCertificate" name="SSLAllowSelfSignedCertificate"> Allow SSL/TLS connections with self signed certificates
-              </div>
-            </fieldset>
+            <!-- Pool settings -->
+            <legend class=h6><b>Pool settings</b></legend>
+            <div style="padding-top: 0.2rem" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature">
+              <input type="checkbox" class="toggle-switch" id="UseAnycast" name="UseAnycast"> Use anycast for best network performance and ping times
+            </div>
+            <div style="padding-top: 0.5rem" title="This setting definines how miners will connect to the pools&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json').">
+              <select id="SSL">
+                <option value="Never" title="Never use SSL/TLS for pool connections&#10;Pools that enforce SSL/TLS connections are marked as unavailable.&#10;&#10;This setting might reduce earnings because not all pools may allow Non-SSL connections.">Never use</option>
+                <option value="Prefer" title="Prefer SSL/TLS pool connections">Prefer</option>
+                <option value="Always" title="Always use SSL/TLS for pool connections&#10;Pools that do not support SSL/TLS connections are marked as unavailable.&#10;&#10;This setting might reduce earnings because not all pools & miners support SSL connections.">Always use</option>
+              </select>
+              <label for="SSL"> SSL/TLS for pool connections</label>
+            </div>
+            <div style="padding-top: 0.4rem" title="Some pools use self signed certificates for SSL and/or TLS encryption.&#10;This is a security issue and allows 'Man in the middle attacks'.&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
+              <input type="checkbox" class="toggle-switch" id="SSLAllowSelfSignedCertificate" name="SSLAllowSelfSignedCertificate"> Allow SSL/TLS connections with self signed certificates
+            </div>
+            <div style="padding-top: 0.5rem" title="Minimum workers mining the algorithm at the pool&#10;If less miners are mining the algorithm then the pool will be disabled&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')&#10;(min=0, max=99 workers; default=10 workers)&#10;Set to 0 to disable this check"> Minimum
+              <input type="number" step=1 min=0 max=99 value=10 size=3 id="MinWorker" name="MinWorker"> workers at pool
+            </div>
+            <div style="padding-top: 0.4rem" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
+              <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if 0 hashrate@pool
+            </div>
             <br>
 
             <!-- Select the region closest to your Location -->
@@ -319,9 +323,6 @@
           </div>
           <div style="padding-top: 0.5rem" title="UG-Miner will ignore the pool fee for earning & profit calculation">
             <input type="checkbox" class="toggle-switch" id="IgnorePoolFee" name="IgnorePoolFee"> Ignore pool fees
-          </div>
-          <div style="padding-top: 0.5rem" title="Minimum workers mining the algorithm at the pool&#10;If less miners are mining the algorithm then the pool will be disabled&#10;This is also a per pool setting configurable in 'PoolsConfig.json'&#10;(min=0, max=99 workers; default=10 workers)&#10;Set to 0 to disable this check"> Minimum
-            <input type="number" step=1 min=0 max=99 value=10 size=3 id="MinWorker" name="MinWorker"> workers at pool
           </div>
           <div style="padding-top: 0.3rem" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings Adjustment Factor to 0.80&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')&#10;(min=0.00, max=10.00; default=1.00)" for="EarningsAdjustmentFactor"> Earnings adjustment factor
             <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=4>
@@ -838,7 +839,7 @@
       document.getElementById('ProHashingMiningMode').disabled = !(document.getElementById('pool-prohashing').checked || document.getElementById('pool-prohashing24hr').checked || document.getElementById('pool-prohashingplus').checked);
     }
 
-    // Pool Network Settings
+    // Pool Settings
     if (config.UseAnycast) document.getElementById('UseAnycast').checked = true;
     if (config.SSL === 'Never' || config.SSL === 'Prefer' || config.SSL === 'Always') document.getElementById('SSL').value = config.SSL;
     else document.getElementById('SSL').value = 'Prefer';
@@ -846,6 +847,8 @@
     $(document.getElementById('SSL')).click(function (event) {
       document.getElementById('SSLAllowSelfSignedCertificate').disabled = (document.getElementById('SSL').value === 'Never');
     });
+    document.getElementById('MinWorker').value = parseInt(config.MinWorker);
+    if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
 
     // Select the Region closest to your Location
     // Fill region list
@@ -931,7 +934,6 @@
     document.getElementById('UnrealPoolPriceFactor').value = parseFloat(config.UnrealPoolPriceFactor);
     document.getElementById('MinAccuracy').value = parseFloat(config.MinAccuracy) * 100;
     if (config.IgnorePoolFee) document.getElementById('IgnorePoolFee').checked = true;
-    document.getElementById('MinWorker').value = parseInt(config.MinWorker);
     document.getElementById('EarningsAdjustmentFactor').value = parseFloat(config.EarningsAdjustmentFactor);
     document.getElementById('UnrealMinerEarningFactor').value = parseFloat(config.UnrealMinerEarningFactor);
     document.getElementById('MinerSwitchingThreshold').value = parseFloat(config.MinerSwitchingThreshold);
@@ -1381,11 +1383,13 @@
           if (document.getElementById(('pool-' + value.toLowerCase())).checked == true) config.PoolName.push(value);
         });
 
-        // Pool Network Settings
+        // Pool Settings
         config.UseAnycast = document.getElementById('UseAnycast').checked;
         if (document.getElementById('SSL').value.match('Never|Prefer|Always')) config.SSL = document.getElementById('SSL').value;
         else config.SSL = 'Prefer';
         config.SSLAllowSelfSignedCertificate = document.getElementById('SSLAllowSelfSignedCertificate').checked;
+        config.MinWorker = parseInt(document.getElementById('MinWorker').value);
+        config.PoolAllow0Hashrate = document.getElementById('PoolAllow0Hashrate').checked;
 
         // Select the region closest to your location
         $.each(regions, function (key, value) {
@@ -1434,7 +1438,6 @@
         config.UnrealPoolPriceFactor = parseFloat(document.getElementById('UnrealPoolPriceFactor').value);
         config.MinAccuracy = parseFloat(document.getElementById('MinAccuracy').value) / 100;
         config.IgnorePoolFee = document.getElementById('IgnorePoolFee').checked;
-        config.MinWorker = parseInt(document.getElementById('MinWorker').value);
         config.EarningsAdjustmentFactor = parseFloat(document.getElementById('EarningsAdjustmentFactor').value);
         config.UnrealMinerEarningFactor = parseFloat(document.getElementById('UnrealMinerEarningFactor').value);
         config.MinerSwitchingThreshold = parseFloat(document.getElementById('MinerSwitchingThreshold').value);

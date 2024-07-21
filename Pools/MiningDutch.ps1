@@ -72,9 +72,7 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
 
         $Reasons = [System.Collections.Generic.List[String]]@()
         # Sometimes pool returns $null hashrate for all algorithms
-        If ($Request.$Algorithm.hashrate -eq 0 -and $Algorithm.hashrate_last24h -ne $null) { 
-            $Reasons.Add("No hashrate at pool") 
-        }
+        If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$Algorithm.hashrate -eq 0 -and $Algorithm.hashrate_last24h -ne $null) { $Reasons.Add("No hashrate at pool") }
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 

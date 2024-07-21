@@ -171,11 +171,13 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$PayoutCurrency = "BTC", # i.e. BTC, LTC, ZEC, ETH etc., Default PayoutCurrency for all pools that have no other currency configured, PayoutCurrency is also a per pool setting (to be configured in 'PoolsConfig.json')
     [Parameter(Mandatory = $false)]
-    [Int]$PoolAPIAllowedFailureCount = 3, # Max number of pool API request attempts
+    [Switch]$PoolAllow0Hashrate = $true, # Allow mining to the pool even when there is no 0 hasrate reported in the API
     [Parameter(Mandatory = $false)]
-    [Int]$PoolAPIRetryInterval = 3, # Time (in seconds) until pool API request retry. Note: Do not set this value too small to avoid temporary blocking by pool
+    [Int]$PoolAPIallowedFailureCount = 3, # Max number of pool API request attempts
     [Parameter(Mandatory = $false)]
-    [Int]$PoolAPITimeout = 20, # Time (in seconds) until it aborts the pool request (useful if a pool's API is stuck). Note: do not set this value too small or NM will not be able to get any pool data
+    [Int]$PoolAPIretryInterval = 3, # Time (in seconds) until pool API request retry. Note: Do not set this value too small to avoid temporary blocking by pool
+    [Parameter(Mandatory = $false)]
+    [Int]$PoolAPItimeout = 20, # Time (in seconds) until it aborts the pool request (useful if a pool's API is stuck). Note: do not set this value too small or NM will not be able to get any pool data
     [Parameter(Mandatory = $false)]
     [String]$PoolsConfigFile = ".\Config\PoolsConfig.json", # PoolsConfig file name
     [Parameter(Mandatory = $false)]
@@ -298,7 +300,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.19"
+    Version      = [System.Version]"6.2.20"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell

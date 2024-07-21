@@ -48,10 +48,10 @@ If ($Wallet) {
     Do {
         Try { 
             If (-not $Request) { 
-                $Request = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
+                $Request = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
             }
             If (-not $RequestAlgodetails) { 
-                $RequestAlgodetails = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/mining/algorithms/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
+                $RequestAlgodetails = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/mining/algorithms/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
             }
             $Request.miningAlgorithms.ForEach(
                 { 
@@ -62,9 +62,9 @@ If ($Wallet) {
         }
         Catch { 
             $APICallFails ++
-            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)
+            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
         }
-    } While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -lt 3)
+    } While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
     If ($Request.miningAlgorithms) { 
 
@@ -82,7 +82,7 @@ If ($Wallet) {
 
                 $Reasons = [System.Collections.Generic.List[String]]@()
                 If ($_.algodetails.order -eq 0) { $Reasons.Add("No orders at pool") }
-                If ($_.speed -eq 0) { $Reasons.Add("No hashrate at pool") }
+                If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $_.speed -eq 0) { $Reasons.Add("No hashrate at pool") }
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Minute_5_Fluctuation), 1) # Use short timespan to counter price spikes

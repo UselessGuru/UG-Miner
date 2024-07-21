@@ -30,6 +30,8 @@
     },
     // Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be disabled
     "MinWorker": 25,
+    // PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hasrate reported in the API
+    "PoolAllow0Hashrate": false,
     // SSL pool connections: Either 'Prefer' (use SSL pool connections where available), 'Never' (pools that do only support SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL connections are marked as unavailable)
     "SSL": "Always",
     // SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')

@@ -75,7 +75,7 @@ If ($DivisorMultiplier -and $Regions) {
 
         $Reasons = [System.Collections.Generic.List[String]]@()
         If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Pool] configured") }
-        If ($Request.$Pool.hashrate_shared -eq 0) { $Reasons.Add("No hashrate at pool") }
+        If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$Pool.hashrate_shared -eq 0) { $Reasons.Add("No hashrate at pool") }
 
         # Cannot cast negative values to [UInt]
         If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 } 

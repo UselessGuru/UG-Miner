@@ -66,7 +66,7 @@ If ($PriceField) {
 
         $Reasons = [System.Collections.Generic.List[String]]@()
         If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
-        If ($Request.$Algorithm.hashrate_last24h -eq 0) { $Reasons.Add("No hashrate at pool") }
+        If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$Algorithm.hashrate_last24h -eq 0) { $Reasons.Add("No hashrate at pool") }
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 

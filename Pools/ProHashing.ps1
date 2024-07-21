@@ -74,7 +74,7 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$_.$PriceField / $Divisor) -FaultDetection $false
 
             $Reasons = [System.Collections.Generic.List[String]]@()
-            If ($Request.$_.hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
+            If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$_.hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
 
             ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
                 If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 

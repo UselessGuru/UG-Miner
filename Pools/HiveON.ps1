@@ -43,13 +43,13 @@ If ($PoolConfig.Wallets) {
 
     Do {
         Try { 
-            $Request = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
+            $Request = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
         }
         Catch { 
             $APICallFails ++
-            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)
+            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
         }
-    } While (-not $Request -and $APICallFails -lt 3)
+    } While (-not $Request -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
     If (-not $Request) { Return }
 
@@ -67,7 +67,7 @@ If ($PoolConfig.Wallets) {
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
 
             $Reasons = [System.Collections.Generic.List[String]]@()
-            If ($Request.stats.($_.name).hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
+            If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.stats.($_.name).hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
             If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
 
             [PSCustomObject]@{ 

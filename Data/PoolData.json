@@ -34,8 +34,8 @@
       "*": 0.0000075
     },
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 11,
-    "PoolAPITimeout": 30,
+    "PoolAPIretryInterval": 11,
+    "PoolAPItimeout": 30,
     "PoolCurrenciesUri": "",
     "PoolStatusUri": "https://hashcryptos.com/api/status",
     "Region": [
@@ -85,8 +85,8 @@
       "n/a"
     ],
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 3,
-    "PoolAPITimeout": 20,
+    "PoolAPIretryInterval": 3,
+    "PoolAPItimeout": 20,
     "PoolStatusUri": "https://Hiveon.net/api/v1/stats/pool",
     "SSL": "prefer",
     "Variant": {
@@ -111,8 +111,8 @@
       "BTC": 0.001
     },
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 15, // Only 1 request every 10 seconds allowed
-    "PoolAPITimeout": 3,
+    "PoolAPIretryInterval": 15, // Only 1 request every 10 seconds allowed
+    "PoolAPItimeout": 3,
     "PoolCurrenciesUri": "",
     "PoolStatusUri": "https://www.mining-dutch.nl/api/status",
     "Region": [
@@ -184,8 +184,8 @@
       "ZEN"
     ],
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 3,
-    "PoolAPITimeout": 20,    "Region": [
+    "PoolAPIretryInterval": 3,
+    "PoolAPItimeout": 20,    "Region": [
       "asia",
       "europe",
       "us-east"
@@ -207,8 +207,8 @@
       "n/a (Anycast)"
     ],
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 3,
-    "PoolAPITimeout": 20,
+    "PoolAPIretryInterval": 3,
+    "PoolAPItimeout": 20,
     "SSL": "prefer",
     "Variant": {
       "NiceHash External": {
@@ -241,9 +241,9 @@
       "BTC",
       "LTC"
     ],
-    "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 3,
-    "PoolAPITimeout": 20,
+    "PoolAPIallowedFailureCount": 3,
+    "PoolAPIretryInterval": 3,
+    "PoolAPItimeout": 20,
     "PoolCurrenciesUri": "https://prohashing.com/api/v1/currencies",
     "PoolStatusUri": "https://prohashing.com/api/v1/status",
     "Region": [
@@ -302,9 +302,9 @@
     "PayoutThreshold": { // PayoutThreshold is retrieved from API data, but can be set here to override value set by pool (can only set higher)
       // e.g. "mBTC": 5
     },
-    "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 3,
-    "PoolAPITimeout": 30,
+    "PoolAPIallowedFailureCount": 3,
+    "PoolAPIretryInterval": 3,
+    "PoolAPItimeout": 30,
     "PoolCurrenciesUri": "https://zergpool.com/api/currencies",
     "PoolStatusUri": "https://zergpool.com/api/status",
     "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
@@ -366,8 +366,8 @@
       "mBTC": 1.5
     },
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIRetryInterval": 3,
-    "PoolAPITimeout": 30,
+    "PoolAPIretryInterval": 3,
+    "PoolAPItimeout": 30,
     "PoolCurrenciesUri": "https://www.zpool.ca/api/currencies",
     "PoolStatusUri": "https://www.zpool.ca/api/status",
     "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
