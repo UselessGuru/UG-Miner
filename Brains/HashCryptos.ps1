@@ -52,16 +52,16 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Do {
             Try { 
-                $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
+                $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                 $APICallFails = 0
             }
             Catch { 
             }
             If ($AlgoData.PSObject.Properties.Name.Count -lt 2) { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
-                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)))
+                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
             }
-        } While ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -lt 3)
+        } While ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
         $Timestamp = [DateTime]::Now.ToUniversalTime()
 

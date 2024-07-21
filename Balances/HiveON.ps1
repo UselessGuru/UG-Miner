@@ -31,14 +31,14 @@ $PoolConfig.Wallets.psBase.Keys.Where({ $_ -in @("ETC", "RVN") }).ForEach(
         $Currency = $_.ToUpper()
         $Wallet = ($PoolConfig.Wallets.$_ -replace '^0x').ToLower()
         $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
-        $RetryInterval = $PoolConfig.PoolAPIRetryInterval
+        $RetryInterval = $PoolConfig.PoolAPIretryInterval
 
         $Request = "https://Hiveon.net/api/v1/stats/miner/$Wallet/$Currency/billing-acc"
 
         While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
             Try { 
-                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolConfig.PoolAPITimeout -ErrorAction Ignore
+                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolConfig.PoolAPItimeout -ErrorAction Ignore
 
                 If ($Config.LogBalanceAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

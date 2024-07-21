@@ -195,7 +195,7 @@
               <label for="SSL"> SSL/TLS for pool connections</label>
             </div>
             <div style="padding-top: 0.4rem" title="Some pools use self signed certificates for SSL and/or TLS encryption.&#10;This is a security issue and allows 'Man in the middle attacks'.&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">
-              <input type="checkbox" class="toggle-switch" id="SSLAllowSelfSignedCertificate" name="SSLAllowSelfSignedCertificate"> Allow SSL/TLS connections with self signed certificates
+              <input type="checkbox" class="toggle-switch" id="SSLallowSelfSignedCertificate" name="SSLallowSelfSignedCertificate"> Allow SSL/TLS connections with self signed certificates
             </div>
             <div style="padding-top: 0.5rem" title="Minimum workers mining the algorithm at the pool&#10;If less miners are mining the algorithm then the pool will be disabled&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')&#10;(min=0, max=99 workers; default=10 workers)&#10;Set to 0 to disable this check"> Minimum
               <input type="number" step=1 min=0 max=99 value=10 size=3 id="MinWorker" name="MinWorker"> workers at pool
@@ -843,9 +843,9 @@
     if (config.UseAnycast) document.getElementById('UseAnycast').checked = true;
     if (config.SSL === 'Never' || config.SSL === 'Prefer' || config.SSL === 'Always') document.getElementById('SSL').value = config.SSL;
     else document.getElementById('SSL').value = 'Prefer';
-    if (config.SSLAllowSelfSignedCertificate) document.getElementById('SSLAllowSelfSignedCertificate').checked = true;
+    if (config.SSLallowSelfSignedCertificate) document.getElementById('SSLallowSelfSignedCertificate').checked = true;
     $(document.getElementById('SSL')).click(function (event) {
-      document.getElementById('SSLAllowSelfSignedCertificate').disabled = (document.getElementById('SSL').value === 'Never');
+      document.getElementById('SSLallowSelfSignedCertificate').disabled = (document.getElementById('SSL').value === 'Never');
     });
     document.getElementById('MinWorker').value = parseInt(config.MinWorker);
     if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
@@ -1387,7 +1387,7 @@
         config.UseAnycast = document.getElementById('UseAnycast').checked;
         if (document.getElementById('SSL').value.match('Never|Prefer|Always')) config.SSL = document.getElementById('SSL').value;
         else config.SSL = 'Prefer';
-        config.SSLAllowSelfSignedCertificate = document.getElementById('SSLAllowSelfSignedCertificate').checked;
+        config.SSLallowSelfSignedCertificate = document.getElementById('SSLallowSelfSignedCertificate').checked;
         config.MinWorker = parseInt(document.getElementById('MinWorker').value);
         config.PoolAllow0Hashrate = document.getElementById('PoolAllow0Hashrate').checked;
 

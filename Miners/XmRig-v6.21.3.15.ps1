@@ -203,7 +203,7 @@ If ($Algorithms) {
                                 # Optionally disable dev fee mining, requires change in source code
                                 # If ($Config.DisableMinerFee) { 
                                 #     $Arguments += " --donate-level 0"
-                                #     $_.Fee = 0
+                                $_.Fee = 0
                                 # }
 
                                 [PSCustomObject]@{ 

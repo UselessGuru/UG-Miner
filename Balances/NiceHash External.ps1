@@ -27,14 +27,14 @@ $PoolConfig = $Config.PoolsConfig.NiceHash
 $PayoutCurrency = $PoolConfig.Variant.$Name.PayoutCurrency
 $Wallet = $Config.PoolsConfig.NiceHash.Variant.$Name.Wallets.$PayoutCurrency
 $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
-$RetryInterval = $PoolConfig.PoolAPIRetryInterval
+$RetryInterval = $PoolConfig.PoolAPIretryInterval
 
 $Request = "https://api2.nicehash.com/main/api/v2/mining/external/$Wallet/rigs2"
 
 While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
     Try { 
-        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPITimeout -ErrorAction Ignore
+        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore
 
         If ($Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

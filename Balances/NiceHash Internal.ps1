@@ -31,7 +31,7 @@ $OrganizationID = $Config.NiceHashOrganizationID
 $Secret = $Config.NiceHashAPISecret
 
 $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
-$RetryInterval = $PoolConfig.PoolAPIRetryInterval
+$RetryInterval = $PoolConfig.PoolAPIretryInterval
 
 Function Get-NiceHashRequest { 
     Param (
@@ -61,7 +61,7 @@ Function Get-NiceHashRequest {
         "X-Auth"            = "$($Key):$(($Sign -replace '\-').ToLower())"
         "Cache-Control"     = "no-cache"
     }
-    Return Invoke-RestMethod "https://api2.nicehash.com$($EndPoint)?extendedResponse=true" -TimeoutSec $Config.PoolAPITimeout -ErrorAction Stop -Method $Method -Headers $Headers
+    Return Invoke-RestMethod "https://api2.nicehash.com$($EndPoint)?extendedResponse=true" -TimeoutSec $Config.PoolAPItimeout -ErrorAction Stop -Method $Method -Headers $Headers
 }
 
 $Method = "GET"

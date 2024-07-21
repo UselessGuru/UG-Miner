@@ -24,8 +24,8 @@ Version date:   2024/07/21
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
-$PoolAPITimeout = $Config.PoolsConfig.$Name.PoolAPITimeout
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+$PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
 
 $Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
@@ -34,7 +34,7 @@ $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) { 
 
     Try { 
-        (Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Config.MiningDutchUserName)" -UserAgent $Useragent -Headers $Headers -TimeoutSec $PoolAPITimeout -ErrorAction Ignore).result.Where({ $_.tag -notlike "*_*" }).ForEach(
+        (Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Config.MiningDutchUserName)" -UserAgent $Useragent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).result.Where({ $_.tag -notlike "*_*" }).ForEach(
             { 
                 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
                 $Currency = $_.tag
@@ -43,7 +43,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
                 $APIResponse = $null
                 While (-not $APIResponse -and $RetryCount -gt 0) { 
                     Try { 
-                        If ($APIResponse = ((Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($CoinName.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)" -UserAgent $Useragent -Headers $Headers -TimeoutSec $PoolAPITimeout -ErrorAction Ignore).getuserbalance).data) { 
+                        If ($APIResponse = ((Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($CoinName.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)" -UserAgent $Useragent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).getuserbalance).data) { 
                             $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
 
                             If ($Config.LogBalanceAPIResponse) { 
@@ -66,7 +66,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
                     }
                     Catch { 
                         $RetryCount--
-                        Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPIRetryInterval # Pool might not like immediate requests
+                        Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPIretryInterval # Pool might not like immediate requests
                     }
                 }
             }
@@ -74,7 +74,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
     }
     Catch { 
         $RetryCount--
-        Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPIRetryInterval # Pool might not like immediate requests
+        Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPIretryInterval # Pool might not like immediate requests
     }
 
     $RetryCount--

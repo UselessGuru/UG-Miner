@@ -26,7 +26,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PayoutCurrency = $Config.PoolsConfig.$Name.PayoutCurrency
 $Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
 $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 
@@ -36,7 +36,7 @@ $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
     Try { 
-        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPITimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
+        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
 
         If ($Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

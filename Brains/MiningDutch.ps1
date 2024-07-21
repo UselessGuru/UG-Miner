@@ -52,10 +52,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Do {
             Try { 
-                $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
+                $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                 If ($AlgoData.message) { # Only 1 request every 10 seconds allowed
                     $APICallFails ++
-                    Start-Sleep -Seconds $PoolConfig.PoolAPIRetryInterval
+                    Start-Sleep -Seconds $PoolConfig.PoolAPIretryInterval
                 }
                 Else { 
                     $APICallFails = 0
@@ -63,9 +63,9 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             }
             Catch { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
-                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)))
+                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
             }
-        } While ((-not $AlgoData -or $AlgoData.message) -and $APICallFails -lt 3)
+        } While ((-not $AlgoData -or $AlgoData.message) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
         $Timestamp = [DateTime]::Now.ToUniversalTime()
 

@@ -192,7 +192,7 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.Columns[13].FillWeight = 65; $LegacyGUIactiveMinersDGV.Columns[13].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[13].HeaderCell.Style.Alignment = "MiddleRight"
                 }
                 Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
-                Form-Resize # To fully show lauched miners gridview
+                Resize-Form # To fully show lauched miners gridview
                 $LegacyGUIactiveMinersDGV.EndInit()
             }
             Break
@@ -331,7 +331,7 @@ Function Update-TabControl {
                             $_.Cells[6].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[6].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
                         }
                     )
-                    Form-Resize # To fully show lauched miners gridview
+                    Resize-Form # To fully show lauched miners gridview
                     $LegacyGUIbalancesDGV.EndInit()
                 }
                 Else { 
@@ -583,7 +583,7 @@ Function Update-TabControl {
     $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
 
-Function Form-Resize { 
+Function Resize-Form { 
     If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width ) { Return } # Sometimes $LegacyGUIform is smalle than minimum (Why?)
     Try { 
         $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
@@ -1722,13 +1722,13 @@ $LegacyGUIform.Add_KeyDown(
     }
 )
 
-$LegacyGUIform.Add_ResizeEnd({ Form-Resize })
+$LegacyGUIform.Add_ResizeEnd({ Resize-Form })
 
 $LegacyGUIform.Add_SizeChanged(
     { 
         If ($this.WindowState -ne $LegacyGUIformWindowState) { 
             $LegacyGUIformWindowState = $this.WindowState
-            Form-Resize
+            Resize-Form
         }
     }
 )

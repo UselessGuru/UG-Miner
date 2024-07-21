@@ -26,14 +26,14 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Url = "https://prohashing.com/customer/dashboard"
 
 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
 $Request = "https://prohashing.com/api/v1/wallet?apiKey=$($Config.ProHashingAPIKey)"
 
 While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.ProHashingAPIKey) { 
 
     Try { 
-        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPITimeout -ErrorAction Ignore
+        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore
 
         If ($Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

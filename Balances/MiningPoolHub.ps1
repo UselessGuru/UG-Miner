@@ -24,9 +24,9 @@ Version date:   2024/07/21
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
-$PoolAPITimeout = $Config.PoolsConfig.$Name.PoolAPITimeout
-$RetryCount = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+$PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
+$RetryCount = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
 $Headers = @{ "Cache-Control" = "no-cache" }
 $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
@@ -34,7 +34,7 @@ $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 While (-not $UserAllBalances -and $RetryCount -gt 0 -and $Config.MiningPoolHubAPIKey) { 
     Try { 
         $Url = "https://miningpoolhub.com/"
-        $WebResponse = Invoke-WebRequest -Uri $Url -TimeoutSec $PoolAPITimeout -ErrorAction Ignore
+        $WebResponse = Invoke-WebRequest -Uri $Url -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
 
         # PWSH 6+ no longer supports basic parsing -> parse text
         $CoinList = [System.Collections.Generic.List[PSCustomObject]]@()
@@ -57,7 +57,7 @@ While (-not $UserAllBalances -and $RetryCount -gt 0 -and $Config.MiningPoolHubAP
         }
         $CoinList = $CoinList | Sort-Object
 
-        $UserAllBalances = (((Invoke-RestMethod "http://miningpoolhub.com/index.php?page=api&action=getuserallbalances&api_key=$($Config.MiningPoolHubAPIKey)" -Headers $Headers -TimeoutSec $PoolAPITimeout -ErrorAction Ignore).getuserallbalances).data).Where({ $_.confirmed -gt 0 -or $_.unconfirmed -gt 0 })
+        $UserAllBalances = (((Invoke-RestMethod "http://miningpoolhub.com/index.php?page=api&action=getuserallbalances&api_key=$($Config.MiningPoolHubAPIKey)" -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).getuserallbalances).data).Where({ $_.confirmed -gt 0 -or $_.unconfirmed -gt 0 })
 
         If ($Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -69,12 +69,12 @@ While (-not $UserAllBalances -and $RetryCount -gt 0 -and $Config.MiningPoolHubAP
             $CoinList.ForEach(
                 { 
                     $CoinBalance = $null
-                    $RetryCount2 = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
+                    $RetryCount2 = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
                     While (-not ($CoinBalance) -and $RetryCount2 -gt 0) { 
                         $RetryCount2--
                         Try { 
-                            $CoinBalance = ((Invoke-RestMethod "http://$($_).miningpoolhub.com/index.php?page=api&action=getuserbalance&api_key=$($Config.MiningPoolHubAPIKey)" -Headers $Headers -UserAgent $UserAgent -TimeoutSec $PoolAPITimeout -ErrorAction Ignore).getuserbalance).data
+                            $CoinBalance = ((Invoke-RestMethod "http://$($_).miningpoolhub.com/index.php?page=api&action=getuserbalance&api_key=$($Config.MiningPoolHubAPIKey)" -Headers $Headers -UserAgent $UserAgent -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).getuserbalance).data
                             If ($Config.LogBalanceAPIResponse) { 
                                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\CoinBalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                             }
@@ -86,13 +86,13 @@ While (-not $UserAllBalances -and $RetryCount -gt 0 -and $Config.MiningPoolHubAP
 
                     If ($Balance = $UserAllBalances.Where({ $_.confirmed -eq $CoinBalance.confirmed -and $_.unconfirmed -eq $CoinBalance.unconfirmed })) { 
                         $Currency = ""
-                        $RetryCount2 = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
+                        $RetryCount2 = $Config.PoolsConfig.$Name.PoolAPIretryInterval
                         $PoolInfo = $null
 
                         While (-not ($PoolInfo) -and $RetryCount2 -gt 0) { 
                             $RetryCount2--
                             Try { 
-                                $PoolInfo = ((Invoke-RestMethod "http://$($_).miningpoolhub.com/index.php?page=api&action=getpoolinfo&api_key=$($Config.MiningPoolHubAPIKey)" -Headers $Headers -UserAgent $UserAgent -TimeoutSec $PoolAPITimeout -ErrorAction Ignore).getpoolinfo).data
+                                $PoolInfo = ((Invoke-RestMethod "http://$($_).miningpoolhub.com/index.php?page=api&action=getpoolinfo&api_key=$($Config.MiningPoolHubAPIKey)" -Headers $Headers -UserAgent $UserAgent -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).getpoolinfo).data
                                 If ($Config.LogBalanceAPIResponse) { 
                                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                                 }

@@ -53,18 +53,18 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Do {
             Try { 
                 If (-not $AlgoData) { 
-                    $AlgoData = (Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout).data
+                    $AlgoData = (Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout).data
                 }
                 If (-not $CurrenciesData) { 
-                    $CurrenciesData = (Invoke-RestMethod -Uri $PoolConfig.PoolCurrenciesUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout).data
+                    $CurrenciesData = (Invoke-RestMethod -Uri $PoolConfig.PoolCurrenciesUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout).data
                 }
                 $APICallFails = 0
             }
             Catch { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
-                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)))
+                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
             }
-        } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -lt 3)
+        } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
         $Timestamp = [DateTime]::Now.ToUniversalTime()
 

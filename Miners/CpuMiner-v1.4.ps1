@@ -25,8 +25,7 @@ If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq
 
 $URI = "https://github.com/fireworm71/veriumMiner/releases/download/v1.4/cpuminer_1.4_windows_x64_O2_GCC7.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\cpuminer.exe" 
-$DeviceEnumerator = "Type_Vendor_Index"
+$Path = "$PWD\Bin\$Name\cpuminer.exe"
 
 $Algorithms = @(
     @{ Algorithm = "ScryptN2"; MinerSet = 0; WarmupTimes = @(90, 30); ExcludePools = @(); Arguments = "" } # Empty command

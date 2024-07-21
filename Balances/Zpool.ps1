@@ -23,7 +23,7 @@ Version date:   2024/07/21
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIRetryInterval
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
 $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
     { 
@@ -36,7 +36,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
         While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
             Try { 
-                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPITimeout -ErrorAction Ignore
+                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore
 
                 If ($Config.LogBalanceAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

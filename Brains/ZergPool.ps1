@@ -60,15 +60,15 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 Else { 
                     $Uri = $PoolConfig.PoolStatusUri
                 }
-                $APIdata = Invoke-RestMethod -Uri $Uri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPITimeout
+                $APIdata = Invoke-RestMethod -Uri $Uri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
 
                 $APICallFails = 0
             }
             Catch { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
-                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIRetryInterval)))
+                Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
             }
-        } While (-not $APIdata -and $APICallFails -lt 3)
+        } While (-not $APIdata -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
         $Timestamp = [DateTime]::Now.ToUniversalTime()
 
