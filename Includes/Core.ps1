@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.20
+Version:        6.2.21
 Version date:   2024/07/28
 #>
 
@@ -1498,18 +1498,18 @@ Do {
                 $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
             }
 
-            # Wait until 1 second since loop start has passed
-            While ([DateTime]::Now -lt $LoopEnd) { Start-Sleep -Milliseconds 50 }
-
             # Core suspended with <Ctrl><Alt>P in MainLoop
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
+
+            # Wait until 1 second since loop start has passed
+            While ([DateTime]::Now -lt $LoopEnd) { Start-Sleep -Milliseconds 50 }
 
             # Exit loop when
             # - a miner crashed
             # - a benchmarking miner has collected enough samples
             # - WarmupTimes[0] is reached and no readout from miner
             # - when not benchmnarking: Interval time is over
-        } While (-not $Config.DryRun -and $Variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and ([DateTime]::Now.ToUniversalTime() -le $Variables.EndCycleTime -or $Variables.BenchmarkingOrMeasuringMiners))
+        } While ($Variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and ((-not $Config.DryRun -and [DateTime]::Now.ToUniversalTime() -le $Variables.EndCycleTime) -or $Variables.BenchmarkingOrMeasuringMiners))
         Remove-Variable LoopEnd
 
         # Expire brains loop to collect data
