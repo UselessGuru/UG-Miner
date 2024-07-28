@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") }))) { Return }
@@ -34,7 +34,7 @@ $Algorithms = @(
     @{ Algorithm = "Ethash";     Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.20; AdditionalWin10MemGB = 0; MinerSet = 2; WarmupTimes = @(30, 35); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo ethash --platform 2" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
     @{ Algorithm = "KawPow";     Type = "AMD"; Fee = @(0.02); MinMemGiB = 1.20; AdditionalWin10MemGB = 0; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo kawpow --platform 2" } # XmRig-v6.21.3.15 is almost as fast but has no fee
  
-    @{ Algorithm = "BeamV3";     Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3;    AdditionalWin10MemGB = 0; MinComputeCapability = 6.0; MinerSet = 0; Tuning = " -mt 1"; WarmupTimes = @(30, 40); ExcludeGPUarchitectures = @();         ExcludePools = @("NiceHash"); Arguments = " --algo beamv3 --platform 1" }
+    @{ Algorithm = "BeamV3";     Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3;    AdditionalWin10MemGB = 0; MinComputeCapability = 6.0; MinerSet = 0; Tuning = " -mt 1"; WarmupTimes = @(30, 40); ExcludeGPUarchitectures = @("Ampere"); ExcludePools = @("NiceHash"); Arguments = " --algo beamv3 --platform 1" }
     @{ Algorithm = "Cuckoo29";   Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 5;    AdditionalWin10MemGB = 1; MinComputeCapability = 6.0; MinerSet = 1; Tuning = " -mt 1"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = @();         ExcludePools = @();           Arguments = " --algo cuckoo_ae --platform 1" } # GMiner-v3.44 is fastest
     @{ Algorithm = "Autolykos2"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 1.20; AdditionalWin10MemGB = 0; MinComputeCapability = 6.0; MinerSet = 1; Tuning = " -mt 1"; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();         ExcludePools = @();           Arguments = " --algo ergo --platform 1" }
     @{ Algorithm = "EtcHash";    Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.20; AdditionalWin10MemGB = 0; MinComputeCapability = 6.0; MinerSet = 2; Tuning = " -mt 1"; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();         ExcludePools = @();           Arguments = " --algo etchash --platform 1 --enable-dag-cache" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
@@ -45,77 +45,76 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].Name -notin $_.ExcludePools })
 
 If ($Algorithms) { 
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            If ($MinerDevices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $Model = $_.Model
+            $Type = $_.Type
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-                ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
-                    { 
-                        $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                        $MinComputeCapability = $_.MinComputeCapability
-                        If ($SupportedMinerDevices = $MinerDevices.Where({ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+                { 
+                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+                    $MinComputeCapability = $_.MinComputeCapability
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
-                            # $ExcludePools = $_.ExcludePools
-                            # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
-                            ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
-                                # Windows 10 requires more memory on some algos
-                                If ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
-                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                            # Windows 10 requires more memory on some algos
+                            If ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
+                            If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool.AlgorithmVariant)"
+                                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                                    $Arguments = $_.Arguments
-                                    $Arguments += Switch ($Pool.Protocol) { 
-                                        "ethstratum1"  { " --url stratum" }
-                                        "ethstratum2"  { " --url nicehash" }
-                                        "ethstratumnh" { " --url nicehash" }
-                                        Default        { " --url stratum" }
-                                    }
-                                    $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else  { "+tcp://" }
-                                    $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"
-                                    $Arguments += " --password $($Pool.Pass)"
+                                $Arguments = $_.Arguments
+                                $Arguments += Switch ($Pool.Protocol) { 
+                                    "ethstratum1"  { " --url stratum" }
+                                    "ethstratum2"  { " --url nicehash" }
+                                    "ethstratumnh" { " --url nicehash" }
+                                    Default        { " --url stratum" }
+                                }
+                                $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else  { "+tcp://" }
+                                $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"
+                                $Arguments += " --password $($Pool.Pass)"
 
-                                    # Optionally disable dev fee mining
-                                    If ($Config.DisableMinerFee) { 
-                                        $_.Fee = 0
-                                        $Arguments += " --fee 0"
-                                    }
+                                # Optionally disable dev fee mining
+                                If ($Config.DisableMinerFee) { 
+                                    $_.Fee = 0
+                                    $Arguments += " --fee 0"
+                                }
 
-                                    # Allow more time to build larger DAGs, must use type cast to keep values in $_
-                                    $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                    $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
+                                # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                                $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                                $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
 
-                                    # Apply tuning parameters
-                                    If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
+                                # Apply tuning parameters
+                                If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
-                                    [PSCustomObject]@{ 
-                                        API         = "NBMiner"
-                                        Arguments   = "$Arguments --no-watchdog --api 127.0.0.1:$($MinerAPIPort) --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                        DeviceNames = $AvailableMinerDevices.Name
-                                        Fee         = $_.Fee # Dev fee
-                                        MinerSet    = $_.MinerSet
-                                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                        Name        = $MinerName
-                                        Path        = $Path
-                                        Port        = $MinerAPIPort
-                                        Type        = $_.Type
-                                        URI         = $URI
-                                        WarmupTimes = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers     = @(@{ Pool = $Pool })
-                                    }
+                                [PSCustomObject]@{ 
+                                    API         = "NBMiner"
+                                    Arguments   = "$Arguments --no-watchdog --api 127.0.0.1:$($MinerAPIPort) --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    DeviceNames = $AvailableMinerDevices.Name
+                                    Fee         = $_.Fee # Dev fee
+                                    MinerSet    = $_.MinerSet
+                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                                    Name        = $MinerName
+                                    Path        = $Path
+                                    Port        = $MinerAPIPort
+                                    Type        = $_.Type
+                                    URI         = $URI
+                                    WarmupTimes = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    Workers     = @(@{ Pool = $Pool })
                                 }
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

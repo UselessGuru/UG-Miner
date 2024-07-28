@@ -21,27 +21,25 @@ Version:        6.2.20
 Version date:   2024/07/28
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"9.1") }))) { Return }
+Return # Bad shares
+
+If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type } ))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda11.6-windows-vs2019-amd64.zip"; Break }
-    { $_ -ge "10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda10.0-windows-amd64.zip"; Break }
-    Default           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda9.1-windows-amd64.zip" }
+    { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/SCCminer/sccminer-1.1.0-Windows.zip" }
+    Default           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\ethminer.exe"
+$Path = "$PWD\Bin\$Name\sccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# AMD miners may need https://github.com/ethereum-mining/ethminer/issues/2001
-# NVIDIA Enable Hardware-Accelerated GPU Scheduling
-
 $Algorithms = @(
-    @{ Algorithm = "Ethash"; Type = "AMD"; MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --opencl --opencl-devices" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
+    @{ Algorithm = "SCCpow"; Type = "AMD"; MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --opencl --opencl-devices" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
 
-    @{ Algorithm = "Ethash"; Type = "NVIDIA"; MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --cuda --cuda-devices" } # PhoenixMiner-v6.2c is fastest but has dev fee
+    @{ Algorithm = "SCCpow"; Type = "NVIDIA"; MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --cuda --cuda-devices" } # PhoenixMiner-v6.2c is fastest but has dev fee
 )
 
-# $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
@@ -67,7 +65,7 @@ If ($Algorithms) {
                             $Pass = "$($Pool.Pass)"
 
                             $Protocol = Switch ($Pool.Protocol) { 
-                                "ethstratum1"  { "stratum2"; Break }
+                                "ethstratum1"  { "stratum1"; Break }
                                 "ethstratum2"  { "stratum2"; Break }
                                 "ethstratumnh" { "stratum2"; Break }
                                 Default        { "stratum" }

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -55,89 +55,87 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }).ForEach({ $_.Algorithms += "" })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
-# $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
-# $Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 $Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -eq $false -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -ne $true)) })
 
 If ($Algorithms) { 
 
     ($Devices | Select-Object Model -Unique).ForEach(
         { 
-            If ($MinerDevices = $Devices | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $Model = $_.Model
+            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
+            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-                $Algorithms.ForEach(
-                    { 
-                        # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({  $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
-                            # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
+            $Algorithms.ForEach(
+                { 
+                    # $ExcludePools = $_.ExcludePools
+                    # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                    ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({  $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
+                        # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                        ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                            $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                            If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
+                                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                                    If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace ' --intensity [0-9\.]+' }
+                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace ' --intensity [0-9\.]+' }
 
-                                    $Arguments = $_.Arguments
-                                    $Arguments += Switch ($Pool0.Protocol) { 
-                                        "ethstratum1"  { " --url stratum2" }
-                                        "ethstratum2"  { " --url stratum2" }
-                                        "ethstratumnh" { " --url stratum2" }
-                                        Default        { " --url stratum" }
+                                $Arguments = $_.Arguments
+                                $Arguments += Switch ($Pool0.Protocol) { 
+                                    "ethstratum1"  { " --url stratum2" }
+                                    "ethstratum2"  { " --url stratum2" }
+                                    "ethstratumnh" { " --url stratum2" }
+                                    Default        { " --url stratum" }
+                                }
+                                $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
+                                $Arguments += "://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
+                                $Arguments += " --user $($Pool0.User)"
+                                $Arguments += " --pass $($Pool0.Pass)"
+                                If ($Pool0.WorkerName) { $Arguments += " --worker $($Pool0.WorkerName)" }
+
+                                If ("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool0.Currency) { 
+                                    $Arguments += " --coin $($Pool0.Currency)"
+                                }
+
+                                If ($_.Algorithms[1]) { 
+                                    $Arguments += Switch ($Pool1.Protocol) { 
+                                        "ethstratum1"  { " --url2 stratum2" }
+                                        "ethstratum2"  { " --url2 stratum2" }
+                                        "ethstratumnh" { " --url2 stratum2" }
+                                        Default        { " --url2 stratum" }
                                     }
-                                    $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
-                                    $Arguments += "://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " --user $($Pool0.User)"
-                                    $Arguments += " --pass $($Pool0.Pass)"
-                                    If ($Pool0.WorkerName) { $Arguments += " --worker $($Pool0.WorkerName)" }
+                                    $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
+                                    $Arguments += "://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                    $Arguments += " --user2 $($Pool1.User)"
+                                    $Arguments += " --pass2 $($Pool1.Pass)"
+                                    If ($Pool1.WorkerName) { $Arguments += " --worker2 $($Pool1.WorkerName)" }
+                                }
 
-                                    If ($Pool0.Currency -in @("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS")) { 
-                                        $Arguments += " --coin $($Pool0.Currency)"
-                                    }
+                                # Apply tuning parameters
+                                If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
-                                    If ($_.Algorithms[1]) { 
-                                        $Arguments += Switch ($Pool1.Protocol) { 
-                                            "ethstratum1"  { " --url2 stratum2" }
-                                            "ethstratum2"  { " --url2 stratum2" }
-                                            "ethstratumnh" { " --url2 stratum2" }
-                                            Default        { " --url2 stratum" }
-                                        }
-                                        $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
-                                        $Arguments += "://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --user2 $($Pool1.User)"
-                                        $Arguments += " --pass2 $($Pool1.Pass)"
-                                        If ($Pool1.WorkerName) { $Arguments += " --worker2 $($Pool1.WorkerName)" }
-                                    }
+                                If ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
 
-                                    # Apply tuning parameters
-                                    If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
-
-                                    If ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
-
-                                    [PSCustomObject]@{ 
-                                        API         = "Trex"
-                                        Arguments   = "$Arguments --no-strict-ssl --no-watchdog --gpu-report-interval 5 --quiet --retry-pause 1 --timeout 50000 --api-bind-http 127.0.0.1:$($MinerAPIPort) --api-read-only --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                        DeviceNames = $AvailableMinerDevices.Name
-                                        Fee         = $_.Fee # Dev fee
-                                        MinerSet    = $_.MinerSet
-                                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/trex"
-                                        Name        = $MinerName
-                                        Path        = $Path
-                                        Port        = $MinerAPIPort
-                                        Type        = "NVIDIA"
-                                        URI         = $URI
-                                        WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
-                                    }
+                                [PSCustomObject]@{ 
+                                    API         = "Trex"
+                                    Arguments   = "$Arguments --no-strict-ssl --no-watchdog --gpu-report-interval 5 --quiet --retry-pause 1 --timeout 50000 --api-bind-http 127.0.0.1:$($MinerAPIPort) --api-read-only --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    DeviceNames = $AvailableMinerDevices.Name
+                                    Fee         = $_.Fee # Dev fee
+                                    MinerSet    = $_.MinerSet
+                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/trex"
+                                    Name        = $MinerName
+                                    Path        = $Path
+                                    Port        = $MinerAPIPort
+                                    Type        = "NVIDIA"
+                                    URI         = $URI
+                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                 }
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

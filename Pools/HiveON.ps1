@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Param(
@@ -41,7 +41,7 @@ If ($PoolConfig.Wallets) {
 
     $APICallFails = 0
 
-    Do {
+    Do { 
         Try { 
             $Request = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
         }
@@ -63,12 +63,12 @@ If ($PoolConfig.Wallets) {
                 [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title)
             }
 
+            $Reasons = [System.Collections.Generic.List[String]]@()
+            If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
+            If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
+
             $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
-
-            $Reasons = [System.Collections.Generic.List[String]]@()
-            If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.stats.($_.name).hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
-            If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
 
             [PSCustomObject]@{ 
                 Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)

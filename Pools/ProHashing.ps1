@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Param(
@@ -70,11 +70,11 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
                 [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Request.$_.CoinName)
             }
 
+            $Reasons = [System.Collections.Generic.List[String]]@()
+            If ($Request.$_.hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
+
             $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$_.$PriceField / $Divisor) -FaultDetection $false
-
-            $Reasons = [System.Collections.Generic.List[String]]@()
-            If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$_.hashrate -eq 0) { $Reasons.Add("No hashrate at pool") }
 
             ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
                 If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 

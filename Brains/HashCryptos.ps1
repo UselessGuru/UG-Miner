@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 using module ..\Includes\Include.psm1
@@ -50,7 +50,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
-        Do {
+        Do { 
             Try { 
                 $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                 $APICallFails = 0
@@ -107,7 +107,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $GroupMedSampleSizeHalf = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
             $GroupMedSampleSizeNoPercent = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDrift } }
 
-            ForEach ($PoolName in ($PoolObjects.Name | Select-Object -Unique).Where({ $_ -in $AlgoData.PSObject.Properties.Name })) { 
+            ForEach ($PoolName in ($PoolObjects.Name | Select-Object -Unique).Where({ $AlgoData.PSObject.Properties.Name -contains $_ })) { 
                 $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $PoolName + ", Up" })).Count - ($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Name + ", Down" })).Count) / (($GroupMedSampleSizeHalf.Where({ $_.Name -eq $PoolName })).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where({ $_.Name -eq $PoolName })).Median)
                 $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where({ $_.Name -eq $PoolName + ", Up" })).Count - ($GroupAvgSampleSize.Where({ $_.Name -eq $Name + ", Down" })).Count) / (($GroupMedSampleSize.Where({ $_.Name -eq $PoolName })).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where({ $_.Name -eq $PoolName })).Median)
                 $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^RX5[5|6]0$" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -90,6 +90,7 @@ $Algorithms = @(
     @{ Algorithms = @("ProgPowVeriblock");               Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_veriblock") }
     @{ Algorithms = @("ProgPowZ");                       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_zano") }
     @{ Algorithms = @("Pufferfish2BMB");                 Type = "AMD"; Fee = @(0.01);           MinMemGiB = 8;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm pufferfish2bmb") }
+#   @{ Algorithms = @("SCCpow");                         Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm firopow") } # Bad shares
     @{ Algorithms = @("SHA256dt");                       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm sha256dt") }
     @{ Algorithms = @("SHA3d");                          Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm sha3d") } # FPGA
     @{ Algorithms = @("SHA512256d");                     Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm sha512_256d_radiant") }
@@ -195,6 +196,7 @@ $Algorithms = @(
     @{ Algorithms = @("ProgPowVeil");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_veil") }
     @{ Algorithms = @("ProgPowVeriblock");               Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_veriblock") }
     @{ Algorithms = @("ProgPowZ");                       Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_zano") }
+#   @{ Algorithms = @("FiroPow");                        Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm firopow") } # Bad shares
     @{ Algorithms = @("SHA256dt");                       Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm sha256dt") }
     @{ Algorithms = @("SHA3d");                          Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm sha3d") } # FPGA
     @{ Algorithms = @("SHA512256d");                     Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm sha512_256d_radiant") }
@@ -249,6 +251,7 @@ $Algorithms = @(
     @{ Algorithms = @("ProgPowVeil");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_veil") }
     @{ Algorithms = @("ProgPowVeriblock");               Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_veriblock") }
     @{ Algorithms = @("ProgPowZ");                       Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_zano") }
+#   @{ Algorithms = @("SCCpow");                         Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm firopow") } # Bad shares
     @{ Algorithms = @("SHA256dt");                       Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("Other");           ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm sha256dt") }
     @{ Algorithms = @("SHA3d");                          Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @("Other");           ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm sha3d") } # FPGA
     @{ Algorithms = @("SHA512256d");                     Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @("Other");           ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm sha512_256d_radiant") }
@@ -258,8 +261,6 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }).ForEach({ $_.Algorithms += "" })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
-$Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 
 If ($Algorithms) { 
 
@@ -283,88 +284,89 @@ If ($Algorithms) {
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            If ($MinerDevices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $Model = $_.Model
+            $Type = $_.Type
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-                ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
-                    { 
-                        $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+                { 
+                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
-                            If ($_.Algorithms[0] -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                                $PrerequisitePath = $Variables.VerthashDatPath
-                                $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
-                            }
-                            Else { 
-                                $PrerequisitePath = ""
-                                $PrerequisiteURI = ""
-                            }
+                        If ($_.Algorithms[0] -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                            $PrerequisitePath = $Variables.VerthashDatPath
+                            $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+                        }
+                        Else { 
+                            $PrerequisitePath = ""
+                            $PrerequisiteURI = ""
+                        }
 
-                            $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count })) { 
-                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[1][$_.Algorithms[1]].Count })) { 
-                                    $Pools = @(($Pool0, $Pool1).Where({ $_ }))
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[1][$_.Algorithms[1]].Count })) { 
+                                $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
-                                    $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -gt $MinMemGiB })) { 
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -gt $MinMemGiB })) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.GpuDualMaxLoss) { "-$($_.GpuDualMaxLoss)" })"
+                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.GpuDualMaxLoss) { "-$($_.GpuDualMaxLoss)" })"
 
-                                        $Arguments = ""
-                                        ForEach ($Pool in $Pools) { 
-                                            $Arguments += Switch ($Pool.Protocol) { 
-                                                "minerproxy"   { " --esm 0" }
-                                                "ethproxy"     { " --esm 0" }
-                                                "ethstratum1"  { " --esm 1" }
-                                                "ethstratum2"  { " --esm 2" }
-                                                "ethstratumnh" { " --esm 2" }
-                                            }
-                                            $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
-                                            $Arguments += " --password $($Pool.Pass)"
-                                            If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
-                                            $Arguments += If ($Pool.PoolPorts[1]) { " --tls true" } Else { " --tls false" }
-                                            If ($_.GpuDualMaxLoss) { $Arguments += " --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
+                                    $Arguments = ""
+                                    ForEach ($Pool in $Pools) { 
+                                        $Arguments += Switch ($Pool.Protocol) { 
+                                            "minerproxy"   { " --esm 0" }
+                                            "ethproxy"     { " --esm 0" }
+                                            "ethstratum1"  { " --esm 1" }
+                                            "ethstratum2"  { " --esm 2" }
+                                            "ethstratumnh" { " --esm 2" }
                                         }
-                                        Remove-Variable Pool
+                                        $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
+                                        $Arguments += " --password $($Pool.Pass)"
+                                        If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
+                                        $Arguments += If ($Pool.PoolPorts[1]) { " --tls true" } Else { " --tls false" }
+                                        If ($_.GpuDualMaxLoss) { $Arguments += " --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
+                                    }
+                                    Remove-Variable Pool
 
-                                        If ($_.Type -eq "CPU") { 
-                                            $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))"
-                                        }
-                                        Else { 
-                                            $Arguments += " --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                        }
+                                    If ($_.Type -eq "CPU") { 
+                                        $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))"
+                                    }
+                                    Else { 
+                                        $Arguments += " --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    }
 
-                                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
-                                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
+                                    # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                                    $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                                    $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
 
-                                        # Apply tuning parameters
-                                        If ($_.Type -eq "CPU" -and $Variables.UseMinerTweaks) { $Arguments += " --disable-msr-tweaks" }
+                                    # Apply tuning parameters
+                                    If ($_.Type -eq "CPU" -and $Variables.UseMinerTweaks) { $Arguments += " --disable-msr-tweaks" }
 
-                                        [PSCustomObject]@{ 
-                                            API              = "SRBMiner"
-                                            Arguments        = "$Arguments --api-rig-name $($Config.WorkerName) --api-enable --api-port $MinerAPIPort"
-                                            DeviceNames      = $AvailableMinerDevices.Name
-                                            Fee              = $_.Fee # Dev fee
-                                            MinerSet         = $_.MinerSet
-                                            MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/stats"
-                                            Name             = $MinerName
-                                            Path             = $Path
-                                            Port             = $MinerAPIPort
-                                            PrerequisitePath = $PrerequisitePath
-                                            PrerequisiteURI  = $PrerequisiteURI
-                                            Type             = $_.Type
-                                            URI              = $URI
-                                            WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers          = @($Pools.ForEach({ @{ Pool = $_ } }))
-                                        }
+                                    [PSCustomObject]@{ 
+                                        API              = "SRBMiner"
+                                        Arguments        = "$Arguments --api-rig-name $($Config.WorkerName) --api-enable --api-port $MinerAPIPort"
+                                        DeviceNames      = $AvailableMinerDevices.Name
+                                        Fee              = $_.Fee # Dev fee
+                                        MinerSet         = $_.MinerSet
+                                        MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/stats"
+                                        Name             = $MinerName
+                                        Path             = $Path
+                                        Port             = $MinerAPIPort
+                                        PrerequisitePath = $PrerequisitePath
+                                        PrerequisiteURI  = $PrerequisiteURI
+                                        Type             = $_.Type
+                                        URI              = $URI
+                                        WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        Workers          = @($Pools.ForEach({ @{ Pool = $_ } }))
                                     }
                                 }
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

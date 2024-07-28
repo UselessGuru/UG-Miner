@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -ne "NVIDIA" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"455.23") }))) { Return }
@@ -88,88 +88,86 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }).ForEach({ $_.Algorithms += "" })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
-$Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 $Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -ne $true)) })
 
 If ($Algorithms) { 
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            If ($MinerDevices = $Devices | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $Model = $_.Model
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-                ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
-                    { 
-                        $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+                { 
+                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
-                            $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count })) { 
-                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[1][$_.Algorithms[1]].Count })) { 
-                                    $Pools = @(($Pool0, $Pool1).Where({ $_ }))
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[1][$_.Algorithms[1]].Count })) { 
+                                $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
-                                    $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -ge $MinMemGiB })) { 
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
+                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                                        $Arguments = ""
-                                        ForEach ($Pool in $Pools) { 
-                                            $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)])"
-                                            $Arguments += If ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { " -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } Else { " -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
-                                            $Arguments += " -wallet $($Pool.User -replace '\..+')"
-                                            $Arguments += " -rigName $($Pool.User)$(If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Pool.WorkerName })"
-                                            $Arguments += " -rigPassword $($Pool.Pass)"
-                                            $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')"
-                                        }
-                                        Remove-Variable Pool
+                                    $Arguments = ""
+                                    ForEach ($Pool in $Pools) { 
+                                        $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)])"
+                                        $Arguments += If ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { " -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } Else { " -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
+                                        $Arguments += " -wallet $($Pool.User -replace '\..+')"
+                                        $Arguments += " -rigName $($Pool.User)$(If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Pool.WorkerName })"
+                                        $Arguments += " -rigPassword $($Pool.Pass)"
+                                        $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')"
+                                    }
+                                    Remove-Variable Pool
 
-                                        $Arguments += " -mport 0 -webPort $MinerAPIPort -checkForUpdates false -noLog true -watchdog false"
+                                    $Arguments += " -mport 0 -webPort $MinerAPIPort -checkForUpdates false -noLog true -watchdog false"
 
-                                        # Apply tuning parameters
-                                        If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
+                                    # Apply tuning parameters
+                                    If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
-                                        If ($_.Algorithms -contains "VertHash") { 
-                                            If ((Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -eq 1283457024) { 
-                                                If (-not (Get-Item -Path ".\Bin\$Name\VertHash.dat" -ErrorAction Ignore).length -eq 1283457024) { 
-                                                    New-Item -ItemType HardLink -Path ".\Bin\$Name\VertHash.dat" -Target $Variables.VerthashDatPath -Force | Out-Null
-                                                }
-                                            }
-                                            Else { 
-                                                $PrerequisitePath = $Variables.VerthashDatPath
-                                                $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+                                    If ($_.Algorithms -contains "VertHash") { 
+                                        If ((Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -eq 1283457024) { 
+                                            If (-not (Get-Item -Path ".\Bin\$Name\VertHash.dat" -ErrorAction Ignore).length -eq 1283457024) { 
+                                                New-Item -ItemType HardLink -Path ".\Bin\$Name\VertHash.dat" -Target $Variables.VerthashDatPath -Force | Out-Null
                                             }
                                         }
                                         Else { 
-                                            $PrerequisitePath = ""
-                                            $PrerequisiteURI = ""
+                                            $PrerequisitePath = $Variables.VerthashDatPath
+                                            $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                                         }
+                                    }
+                                    Else { 
+                                        $PrerequisitePath = ""
+                                        $PrerequisiteURI = ""
+                                    }
 
-                                        [PSCustomObject]@{ 
-                                            API              = "NanoMiner"
-                                            Arguments        = $Arguments
-                                            DeviceNames      = $AvailableMinerDevices.Name
-                                            Fee              = $_.Fee # Dev fee
-                                            MinerSet         = $_.MinerSet
-                                            MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/#/"
-                                            Name             = $MinerName
-                                            Path             = $Path
-                                            Port             = $MinerAPIPort
-                                            PrerequisitePath = $PrerequisitePath
-                                            PrerequisiteURI  = $PrerequisiteURI
-                                            Type             = $_.Type
-                                            URI              = $URI
-                                            WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers          = @($Pools.ForEach({ @{ Pool = $_ } }))
-                                        }
+                                    [PSCustomObject]@{ 
+                                        API              = "NanoMiner"
+                                        Arguments        = $Arguments
+                                        DeviceNames      = $AvailableMinerDevices.Name
+                                        Fee              = $_.Fee # Dev fee
+                                        MinerSet         = $_.MinerSet
+                                        MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/#/"
+                                        Name             = $MinerName
+                                        Path             = $Path
+                                        Port             = $MinerAPIPort
+                                        PrerequisitePath = $PrerequisitePath
+                                        PrerequisiteURI  = $PrerequisiteURI
+                                        Type             = $_.Type
+                                        URI              = $URI
+                                        WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        Workers          = @($Pools.ForEach({ @{ Pool = $_ } }))
                                     }
                                 }
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

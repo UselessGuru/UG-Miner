@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Param(
@@ -45,7 +45,7 @@ If ($Wallet) {
 
     $APICallFails = 0
 
-    Do {
+    Do { 
         Try { 
             If (-not $Request) { 
                 $Request = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
@@ -53,12 +53,6 @@ If ($Wallet) {
             If (-not $RequestAlgodetails) { 
                 $RequestAlgodetails = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/mining/algorithms/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
             }
-            $Request.miningAlgorithms.ForEach(
-                { 
-                    $Algorithm = $_.Algorithm
-                    $_ | Add-Member -Force @{ algodetails = $RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }) }
-                }
-            )
         }
         Catch { 
             $APICallFails ++
@@ -67,22 +61,20 @@ If ($Wallet) {
     } While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
     If ($Request.miningAlgorithms) { 
-
         $Request.miningAlgorithms.ForEach(
             { 
                 $Algorithm = $_.Algorithm
                 $AlgorithmNorm = Get-Algorithm $Algorithm
                 $Currencies = Get-CurrencyFromAlgorithm $AlgorithmNorm
                 $Currency = If ($Currencies.Count -eq 1) { [String]$Currencies } Else { "" }
-
                 $Divisor = 100000000
+
+                $Reasons = [System.Collections.Generic.List[String]]@()
+                If ($RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }).order -eq 0) { $Reasons.Add("No orders at pool") }
+                If ($_.speed -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
 
                 $Key = "$($Name)_$($AlgorithmNorm)"
                 $Stat = Set-Stat -Name "$($Key)_Profit" -Value ([Double]$_.paying / $Divisor) -FaultDetection $false
-
-                $Reasons = [System.Collections.Generic.List[String]]@()
-                If ($_.algodetails.order -eq 0) { $Reasons.Add("No orders at pool") }
-                If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $_.speed -eq 0) { $Reasons.Add("No hashrate at pool") }
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Minute_5_Fluctuation), 1) # Use short timespan to counter price spikes

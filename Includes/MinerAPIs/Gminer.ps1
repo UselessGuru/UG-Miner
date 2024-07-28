@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful,
+UG-Miner is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Class GMiner : Miner { 
@@ -48,7 +48,7 @@ Class GMiner : Miner {
         $SharesInvalid = [Int64]$Data.total_invalid_shares
         $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) {
+        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
             $HashRateValue = [Double]($Data.devices.speed2 | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
             $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 

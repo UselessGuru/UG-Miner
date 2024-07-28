@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -36,61 +36,61 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-# $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].Name -notin $_.ExcludePools })
 
 If ($Algorithms) { 
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            If ($MinerDevices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $Model = $_.Model
+            $Type = $_.Type
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-                ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
-                    { 
-                        # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+                { 
+                    # $ExcludePools = $_.ExcludePools
+                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
+                    ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
-                            # Windows 10 requires more memory on some algos
-                            If ($_.Algorithm -match 'Cuckaroo.*|Cuckoo.*' -and [System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += 1 }
-                            If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                        # Windows 10 requires more memory on some algos
+                        If ($_.Algorithm -match 'Cuckaroo.*|Cuckoo.*' -and [System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += 1 }
+                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool.AlgorithmVariant)"
+                            $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                                $Arguments = $_.Arguments
-                                $Arguments += " --server $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"
+                            $Arguments = $_.Arguments
+                            $Arguments += " --server $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"
 
-                                If ($Pool.DAGSizeGiB -ne $null -and $Pool.Name -in @("MiningPoolHub", "NiceHash", "ProHashing")) { $Arguments += " --proto stratum" }
-                                If ($Pool.PoolPorts[1]) { $Arguments += " --ssl 1" }
-                                If ($_.AutoCoinPers) { $Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers) }
+                            If ($Pool.DAGSizeGiB -ne $null -and "MiningPoolHub", "NiceHash", "ProHashing" -contains $Pool.Name) { $Arguments += " --proto stratum" }
+                            If ($Pool.PoolPorts[1]) { $Arguments += " --ssl 1" }
+                            If ($_.AutoCoinPers) { $Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers) }
 
-                                # Apply tuning parameters
-                                If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
+                            # Apply tuning parameters
+                            If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
-                                # Contest ETH address (if ETH wallet is specified in config)
-                                # $Arguments += If ($Config.Wallets.ETH) { " --contest_wallet $($Config.Wallets.ETH)" } Else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
+                            # Contest ETH address (if ETH wallet is specified in config)
+                            # $Arguments += If ($Config.Wallets.ETH) { " --contest_wallet $($Config.Wallets.ETH)" } Else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
 
-                                [PSCustomObject]@{ 
-                                    API         = "Gminer"
-                                    Arguments   = "$Arguments --api $MinerAPIPort --watchdog 0 --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ' ')"
-                                    DeviceNames = $AvailableMinerDevices.Name
-                                    Fee         = $_.Fee # Dev fee
-                                    MinerSet    = $_.MinerSet
-                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                    Name        = $MinerName
-                                    Path        = $Path
-                                    Port        = $MinerAPIPort
-                                    Type        = $_.Type
-                                    URI         = $URI
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
-                                }
+                            [PSCustomObject]@{ 
+                                API         = "Gminer"
+                                Arguments   = "$Arguments --api $MinerAPIPort --watchdog 0 --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ' ')"
+                                DeviceNames = $AvailableMinerDevices.Name
+                                Fee         = $_.Fee # Dev fee
+                                MinerSet    = $_.MinerSet
+                                MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                                Name        = $MinerName
+                                Path        = $Path
+                                Port        = $MinerAPIPort
+                                Type        = $_.Type
+                                URI         = $URI
+                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

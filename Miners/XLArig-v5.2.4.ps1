@@ -21,18 +21,16 @@ Version:        6.2.20
 Version date:   2024/07/28
 #>
 
+# https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
+
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-If ($AvailableMinerDevices.CpuFeatures -contains "avx2") { $URI = "https://github.com/hellcatz/hminer/releases/download/v0.59.1/hellminer_win64_avx2.zip" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -contains "avx") { $URI = "https://github.com/hellcatz/hminer/releases/download/v0.59.1/hellminer_win64_avx.zip" }
-Else { $URI = "https://github.com/hellcatz/hminer/releases/download/v0.59.1/hellminer_win64.zip" }
-
+$URI = "https://github.com/scala-network/XLArig/releases/download/v5.2.4/xlarig-v5.2.4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\hellminer.exe"
-$DeviceEnumerator = "Type_Vendor_Index"
+$Path = "$PWD\Bin\$Name\xlarig.exe"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(45, 90); ExcludePools = @(); Arguments = "" }
+    @{ Algorithm = "Panthera"; MinerSet = 0; WarmupTimes = @(15, 0); ExcludePools = @(); Arguments = " --algo=panthera" }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -48,15 +46,15 @@ If ($Algorithms) {
 
             # $ExcludePools = $_.ExcludePools
             # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })) { 
-            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
+            ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                 [PSCustomObject]@{ 
-                    API         = "HellMiner"
-                    Arguments   = " --pool=stratum+$(If ($Pool.PoolPorts[1]) { "ssl" } Else { "tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user=$($Pool.User) --pass=$($Pool.Pass) --api-port=$MinerAPIPort"
+                    API         = "XmRig"
+                    Arguments   = "$($_.Arguments)$(If ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User) --pass=$($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$($Config.WorkerName) --api-id=$($MinerName) --http-port=$MinerAPIPort --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore)) --retry-pause 1 --keepalive"
                     DeviceNames = $AvailableMinerDevices.Name
-                    Fee         = $_.Fee # Dev fee
+                    Fee         = @(0) # Dev fee
                     MinerSet    = $_.MinerSet
-                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                    MinerUri    = "http://workers.xmrig.info/worker?url=$([System.Web.HTTPUtility]::UrlEncode("http://127.0.0.1:$($MinerAPIPort)"))?Authorization=Bearer $([System.Web.HTTPUtility]::UrlEncode($MinerName))"
                     Name        = $MinerName
                     Path        = $Path
                     Port        = $MinerAPIPort

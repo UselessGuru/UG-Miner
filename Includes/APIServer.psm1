@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful,
+UG-Miner is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.10"
+    $APIVersion = "0.5.4.12"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -54,7 +54,7 @@ Function Start-APIServer {
             $Runspace.Name = "APIServer"
             $Runspace.ThreadOptions = "ReuseThread"
             $Runspace.Open()
-            (Get-Variable -Scope Global).Where({ $_.Name -in @("Config", "Stats", "Variables") }).ForEach(
+            (Get-Variable -Scope Global).Where({ "Config", "Stats", "Variables" -contains $_.Name }).ForEach(
                 { 
                     $Runspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
                 }
@@ -110,7 +110,7 @@ Function Start-APIServer {
                             # Parse any parameters in the URL - $Request.Url.Query looks like "+ ?a=b&c=d&message=Hello%20world"
                             # Decode any url escaped characters in the key and value
                             $Parameters = @{ }
-                            ($Request.Url.Query -replace '\?' -split "&").Foreach(
+                            ($Request.Url.Query -replace "\?" -split "&").Foreach(
                                 { 
                                     $Key, $Value = $_ -split "="
                                     # Decode any url escaped characters in the key and value
@@ -160,7 +160,7 @@ Function Start-APIServer {
                                 # Disable algorithm@pool in poolsconfig.json
                                 $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
                                 $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
-                                If ($Pools = @($Variables.Pools.Where({ $_.Name -in $PoolNames -and $_.Algorithm -in $Algorithms }))) { 
+                                If ($Pools = @($Variables.Pools.Where({ $PoolNames-contains $_.Name -and $Algorithms -contains $_.Algorithm}))) { 
                                     $PoolsConfig = [System.IO.File]::ReadAllLines($Config.PoolsConfigFile) | ConvertFrom-Json
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
@@ -189,7 +189,7 @@ Function Start-APIServer {
                                 # Enable algorithm@pool in poolsconfig.json
                                 $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
                                 $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
-                                If ($Pools = @($Variables.Pools.Where({ $_.Name -in $PoolNames -and $_.Algorithm -in $Algorithms }))) { 
+                                If ($Pools = @($Variables.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
                                     $PoolsConfig = [System.IO.File]::ReadAllLines($Config.PoolsConfigFile) | ConvertFrom-Json
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
@@ -236,22 +236,22 @@ Function Start-APIServer {
                                 }
                             }
                             "/functions/config/device/disable" { 
-                                ForEach ($Key in $Parameters.Keys) {
-                                    If ($Values = @(($Parameters.$Key -split ',').Where({ $_ -notin $Config.ExcludeDeviceName }))) { 
+                                ForEach ($Key in $Parameters.Keys) { 
+                                    If ($Values = @(($Parameters.$Key -split ",").Where({ $_ -notin $Config.ExcludeDeviceName }))) { 
                                         Try { 
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @((@($Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
                                             Write-Config -ConfigFile $Variables.ConfigFile -Config $Config
                                             $Data = "Device configuration changed`n`nOld values:"
-                                            $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ', ')]'"
+                                            $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
-                                            $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ', ')]'"
+                                            $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ", ")]'"
                                             $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
                                             ForEach ($DeviceName in $Values) { 
                                                 $Variables.Devices.Where({ $_.Name -eq $DeviceName }).ForEach(
                                                     { 
                                                         $_.State = [DeviceState]::Disabled
-                                                        If ($_.SubStatus -in ("Benchmarking", "Running", "WarmingUp")) { $_.StatusInfo = "$($_.StatusInfo); will get disabled at end of cycle" }
+                                                        If ("Benchmarking", "Running", "WarmingUp" -contains $_.SubStatus) { $_.StatusInfo = "$($_.StatusInfo); will get disabled at end of cycle" }
                                                         Else { 
                                                             $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')"
                                                             $_.Status = "Idle"
@@ -260,7 +260,7 @@ Function Start-APIServer {
                                                 )
                                             }
                                             Remove-Variable DeviceName
-                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' disabled. Configuration file '$($Variables.ConfigFile)' updated."
+                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' disabled. Configuration file '$($Variables.ConfigFile)' updated."
                                         }
                                         Catch { 
                                             $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -274,32 +274,32 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/config/device/enable" { 
-                                ForEach ($Key in $Parameters.Keys) {
-                                    If ($Values = @(($Parameters.$Key -split ',').Where({ $_ -in $Config.ExcludeDeviceName }))) { 
+                                ForEach ($Key in $Parameters.Keys) { 
+                                    If ($Values = @(($Parameters.$Key -split ",").Where({ $Config.ExcludeDeviceName -contains $_ }))) { 
                                         Try { 
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @($Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
                                             Write-Config -ConfigFile $Variables.ConfigFile -Config $Config
                                             $Variables.FreshConfig = $false
                                             $Data = "Device configuration changed`n`nOld values:"
-                                            $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ', ')]'"
+                                            $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
-                                            $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ', ')]'"
+                                            $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ", ")]'"
                                             $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
-                                            $Variables.Devices.Where({ $_.Name -in $Values }).ForEach(
+                                            $Variables.Devices.Where({ $Values -contains $_.Name }).ForEach(
                                                 { 
                                                     $_.State = [DeviceState]::Enabled
-                                                    If ($_.StatusInfo -like "* {*@*}; will get disabled at end of cycle") { $_.StatusInfo = $_.StatusInfo -replace '; will get enabled at end of cycle' }
+                                                    If ($_.StatusInfo -like "* {*@*}; will get disabled at end of cycle") { $_.StatusInfo = $_.StatusInfo -replace "; will get enabled at end of cycle" }
                                                     Else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
                                                 }
                                             )
-                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ', ')' enabled. Configuration file '$($Variables.ConfigFile)' updated."
+                                            Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' enabled. Configuration file '$($Variables.ConfigFile)' updated."
                                         }
                                         Catch { 
                                             $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
                                         }
                                     }
-                                    Else {
+                                    Else { 
                                         $Data = "No configuration change."
                                     }
                                 }
@@ -315,13 +315,13 @@ Function Start-APIServer {
 
                                     $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                                         { 
-                                            If ($_.Name -in $Config.ExcludeDeviceName) { 
+                                            If ($Config.ExcludeDeviceName -contains $_.Name) { 
                                                 $_.State = [DeviceState]::Disabled
                                                 If ($_.Status -like "Mining *}") { $_.Status = "$($_.Status); will get disabled at end of cycle" }
                                             }
                                             Else { 
                                                 $_.State = [DeviceState]::Enabled
-                                                If ($_.Status -like "*; will get disabled at end of cycle") { $_.Status = $_.Status -replace '; will get disabled at end of cycle' } 
+                                                If ($_.Status -like "*; will get disabled at end of cycle") { $_.Status = $_.Status -replace "; will get disabled at end of cycle" } 
                                                 If ($_.Status -like "Disabled *") { $_.Status = "Idle" }
                                             }
                                         }
@@ -336,11 +336,11 @@ Function Start-APIServer {
                                 }
                                 Break
                             }
-                            "/functions/file/edit" {
+                            "/functions/file/edit" { 
                                 $Data = Edit-File $Parameters.FileName
                                 Break
                             }
-                            "/functions/file/showcontent" {
+                            "/functions/file/showcontent" { 
                                 $Data = (Get-Content -Path $Parameters.FileName -Raw)
                                 $ContentType = "text/html"
                                 Break
@@ -387,7 +387,7 @@ Function Start-APIServer {
                                 If (-not $Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type)) { 
                                     $Data = "No pool configuration data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
                                 }
-                                ElseIf (-not ($Data = (Invoke-RestMethod -Uri $Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) {
+                                ElseIf (-not ($Data = (Invoke-RestMethod -Uri $Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
                                     $Data = "No data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
                                 }
                                 break
@@ -470,7 +470,7 @@ Function Start-APIServer {
                                 $TempStats = @(If ($null -ne $Parameters.Value) { @($Stats.psBase.Keys.Where({ $_ -like "*_$($Parameters.Type)" -and $Stats[$_].Live -eq $Parameters.Value }).ForEach({ $Stats[$_] })) } Else { @($Stats) })
                                 If ($TempStats) { 
                                     If ($null -ne $Parameters.Value) { 
-                                       ($TempStats.Name | Sort-Object).ForEach({ $Data += "$($_ -replace '(_Hashrate|_PowerConsumption)$')`n" })
+                                       ($TempStats.Name | Sort-Object).ForEach({ $Data += "$($_ -replace "(_Hashrate|_PowerConsumption)$")`n" })
                                         If ($Parameters.Type -eq "Hashrate") { $Data += "`n$($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)H/s hashrate." }
                                         ElseIf ($Parameters.Type -eq "PowerConsumption") { $Data += "`n$($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)W power consumption." }
                                     }
@@ -584,7 +584,7 @@ Function Start-APIServer {
                                     ($TempStats | Sort-Object -Property Name).ForEach(
                                         { 
                                             Remove-Stat -Name $_.Name
-                                            $Data += $_.Name -replace '(_Hashrate|_PowerConsumption)$'
+                                            $Data += $_.Name -replace "(_Hashrate|_PowerConsumption)$"
                                         }
                                     )
                                     $Data = $Data | Sort-Object -Unique
@@ -602,7 +602,7 @@ Function Start-APIServer {
                             "/functions/stat/set" { 
                                 If ($Parameters.Miners -and $Parameters.Type -eq "Hashrate" -and $null -ne $Parameters.Value) { 
                                     $Data = @()
-                                    If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) {
+                                    If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
                                         $Miners.ForEach(
                                             { 
                                                 If ($Parameters.Value -le 0 -and $Parameters.Type -eq "Hashrate") { $_.Available = $false; $_.Disabled = $true }
@@ -642,7 +642,7 @@ Function Start-APIServer {
                             }
                             "/functions/variables/get" { 
                                 If ($Key) { 
-                                    $Data = $Variables.($Key -replace '\\|/', '.' -split '\.'[-1]) | Get-SortedObject | ConvertTo-Json -Depth 10
+                                    $Data = $Variables.($Key -replace "\\|/", "." -split "\."[-1]) | Get-SortedObject | ConvertTo-Json -Depth 10
                                 }
                                 Else { 
                                     $Data = $Variables.psBase.Keys | Sort-Object | ConvertTo-Json -Depth 1
@@ -749,7 +749,7 @@ Function Start-APIServer {
                                 $Data = [System.IO.File]::ReadAllLines(".\Data\CoinNames.json")
                                 Break
                             }
-                            "/config" {
+                            "/config" { 
                                 $Data = ConvertTo-Json -Depth 10 ([System.IO.File]::ReadAllLines($Variables.ConfigFile) | ConvertFrom-Json -Depth 10 | Get-SortedObject)
                                 If (-not ($Data | ConvertFrom-Json).ConfigFileVersion) { 
                                     $Data = ConvertTo-Json -Depth 10 ($Config | Select-Object -ExcludeProperty PoolsConfig)
@@ -760,7 +760,7 @@ Function Start-APIServer {
                                 $Data = $Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\")
                                 break
                             }
-                            "/configrunning" {
+                            "/configrunning" { 
                                 $Data = ConvertTo-Json -Depth 10 ($Config | Get-SortedObject)
                                 Break
                             }
@@ -848,6 +848,18 @@ Function Start-APIServer {
                             }
                             "/miners/launched" { 
                                 $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersBest | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
+                                Break
+                            }
+                            "/miners/missingbinary" { 
+                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersMissingBinary | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
+                                Break
+                            }
+                            "/miners/missingfirewallrule" { 
+                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersMissingFirewallRule | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
+                                Break
+                            }
+                            "/miners/missingprerequisite" { 
+                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersMissingPrerequisite | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/optimal" { 
@@ -969,7 +981,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/summarytext" { 
-                                $Data = ConvertTo-Json -Depth 10 @((($Variables.Summary -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').trim())
+                                $Data = ConvertTo-Json -Depth 10 @((($Variables.Summary -replace " / ", "/" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").trim())
                                 Break
                             }
                             "/summary" { 
@@ -1006,17 +1018,17 @@ Function Start-APIServer {
                                 }
                                 $Workers = [System.Collections.ArrayList]@(
                                     $Variables.Workers | Select-Object @(
-                                        @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split ',' -join ' & ' })) -join '<br>' } }, 
-                                        @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { "-" } })) -join ' & ' })) -join '<br>' } }, 
-                                        @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } }, 
-                                        @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } }, 
-                                        @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } }, 
-                                        @{ Name = "LastSeen"; Expression = { "$($_.date)" } }, 
-                                        @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { '-' } })) -join ' & ' })) -join '<br>' } }, 
-                                        @{ Name = "Miner"; Expression = { $_.data.name -join '<br/>'} }, 
-                                        @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace 'Internal$', ' (Internal)' -replace 'External', ' (External)' })) -join ' & '})) -join '<br>' } }, 
-                                        @{ Name = "Status"; Expression = { $_.status } }, 
-                                        @{ Name = "Version"; Expression = { $_.version } }, 
+                                        @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split "," -join " & " })) -join "<br>" } },
+                                        @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
+                                        @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
+                                        @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                                        @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                                        @{ Name = "LastSeen"; Expression = { "$($_.date)" } },
+                                        @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
+                                        @{ Name = "Miner"; Expression = { $_.data.name -join "<br>" } },
+                                        @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace "Internal$", " (Internal)" -replace "External", " (External)" })) -join " & "})) -join "<br>" } },
+                                        @{ Name = "Status"; Expression = { $_.status } },
+                                        @{ Name = "Version"; Expression = { $_.version } },
                                         @{ Name = "Worker"; Expression = { $_.worker } }
                                     ) | Sort-Object -Property "Worker"
                                 )
@@ -1046,7 +1058,7 @@ Function Start-APIServer {
                                             $IncludeRegex = [regex]'<!-- *#include *file="(.*)" *-->'
                                             $IncludeRegex.Matches($Data).Foreach(
                                                 { 
-                                                    $IncludeFile = $BasePath + '/' + $_.Groups[1].Value
+                                                    $IncludeFile = $BasePath + "/" + $_.Groups[1].Value
                                                     If (Test-Path -LiteralPath $IncludeFile -PathType Leaf) { 
                                                         $IncludeData = Get-Content $IncludeFile -Raw
                                                         $Data = $Data -replace $_.Value, $IncludeData
@@ -1088,7 +1100,7 @@ Function Start-APIServer {
                         $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
                         $Response.Close()
 
-                        If ($GCStopWatch.Elapsed.TotalSeconds -gt 120) {
+                        If ($GCStopWatch.Elapsed.TotalSeconds -gt 120) { 
                             [System.GC]::Collect()
                             $GCStopWatch.Restart()
                         }
@@ -1100,7 +1112,7 @@ Function Start-APIServer {
                 }
             ) # End of $APIServer
 
-            $Variables.APIRunspace = @{}
+            $Variables.APIRunspace = @{ }
             $Variables.APIRunspace.AsyncObject = $Powershell.BeginInvoke()
             $Variables.APIRunspace.PowerShell  = $PowerShell
             $Variables.APIRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
@@ -1108,7 +1120,7 @@ Function Start-APIServer {
             # Wait for API to get ready
             $RetryCount = 3
             While (-not ($Variables.APIVersion) -and $RetryCount -gt 0) { 
-                Try {
+                Try { 
                     If ($Variables.APIVersion = (Invoke-RestMethod "http://localhost:$($Variables.APIRunspace.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
                         Write-Message -Level Info "Web GUI and API (version $($Variables.APIVersion)) running on http://localhost:$($Variables.APIRunspace.APIport)."
                         # Start Web GUI (show configuration edit if no existing config)
@@ -1125,7 +1137,7 @@ Function Start-APIServer {
     }
 }
 
-Function Stop-APIServer {
+Function Stop-APIServer { 
     If ($Variables.APIRunspace) { 
         Write-Message -Level Verbose "Stopping API & Web GUI on port $($Config.APIport)."
         If ($Variables.APIRunspace.APIServer) { 

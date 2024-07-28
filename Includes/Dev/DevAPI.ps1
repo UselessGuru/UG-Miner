@@ -119,7 +119,7 @@ Switch ($Path) {
         }
     }
     "/functions/config/device/disable" { 
-        ForEach ($Key in $Parameters.Keys) {
+        ForEach ($Key in $Parameters.Keys) { 
             If ($Values = @(($Parameters.$Key -split ',').Where({ $_ -notin $Config.ExcludeDeviceName }))) { 
                 Try { 
                     $ExcludeDeviceName = $Config.ExcludeDeviceName
@@ -157,7 +157,7 @@ Switch ($Path) {
         Break
     }
     "/functions/config/device/enable" { 
-        ForEach ($Key in $Parameters.Keys) {
+        ForEach ($Key in $Parameters.Keys) { 
             If ($Values = @(($Parameters.$Key -split ',').Where({ $_ -in $Config.ExcludeDeviceName }))) { 
                 Try { 
                     $ExcludeDeviceName = $Config.ExcludeDeviceName
@@ -182,7 +182,7 @@ Switch ($Path) {
                     $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
                 }
             }
-            Else {
+            Else { 
                 $Data = "No configuration change."
             }
         }
@@ -219,11 +219,11 @@ Switch ($Path) {
         }
         Break
     }
-    "/functions/file/edit" {
+    "/functions/file/edit" { 
         $Data = Edit-File $Parameters.FileName
         Break
     }
-    "/functions/file/showcontent" {
+    "/functions/file/showcontent" { 
         $Data = (Get-Content -Path $Parameters.FileName -Raw)
         $ContentType = "text/html"
         Break
@@ -270,7 +270,7 @@ Switch ($Path) {
         If (-not $Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type)) { 
             $Data = "No pool configuration data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
         }
-        ElseIf (-not ($Data = (Invoke-RestMethod -Uri $Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) {
+        ElseIf (-not ($Data = (Invoke-RestMethod -Uri $Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
             $Data = "No data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
         }
         break
@@ -485,7 +485,7 @@ Switch ($Path) {
     "/functions/stat/set" { 
         If ($Parameters.Miners -and $Parameters.Type -eq "Hashrate" -and $null -ne $Parameters.Value) { 
             $Data = @()
-            If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) {
+            If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
                 $Miners.ForEach(
                     { 
                         If ($Parameters.Value -le 0 -and $Parameters.Type -eq "Hashrate") { $_.Available = $false; $_.Disabled = $true }
@@ -632,7 +632,7 @@ Switch ($Path) {
         $Data = Get-Content -Path ".\Data\CoinNames.json"
         Break
     }
-    "/config" {
+    "/config" { 
         $Data = ConvertTo-Json -Depth 10 (Get-Content -Path $Variables.ConfigFile | ConvertFrom-Json -Depth 10 | Get-SortedObject)
         If (-not ($Data | ConvertFrom-Json).ConfigFileVersion) { 
             $Data = ConvertTo-Json -Depth 10 ($Config | Select-Object -ExcludeProperty PoolsConfig)
@@ -643,7 +643,7 @@ Switch ($Path) {
         $Data = $Variables.ConfigFile
         break
     }
-    "/configrunning" {
+    "/configrunning" { 
         $Data = ConvertTo-Json -Depth 10 ($Config | Get-SortedObject)
         Break
     }
@@ -889,17 +889,17 @@ Switch ($Path) {
         }
         $Workers = [System.Collections.ArrayList]@(
             $Variables.Workers | Select-Object @(
-                @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split ',' -join ' & ' })) -join '<br>' } }, 
-                @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { "-" } })) -join ' & ' })) -join '<br>' } }, 
-                @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } }, 
-                @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum) * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } }, 
-                @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } }, 
-                @{ Name = "LastSeen"; Expression = { "$($_.date)" } }, 
-                @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { '-' } })) -join ' & ' })) -join '<br>' } }, 
-                @{ Name = "Miner"; Expression = { $_.data.name -join '<br/>'} }, 
-                @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace 'Internal$', ' (Internal)' -replace 'External', ' (External)' })) -join ' & '})) -join '<br>' } }, 
-                @{ Name = "Status"; Expression = { $_.status } }, 
-                @{ Name = "Version"; Expression = { $_.version } }, 
+                @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split ',' -join " & " })) -join '<br>' } },
+                @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { "-" } })) -join " & " })) -join '<br>' } },
+                @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
+                @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum) * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                @{ Name = "LastSeen"; Expression = { "$($_.date)" } },
+                @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { '-' } })) -join " & " })) -join '<br>' } },
+                @{ Name = "Miner"; Expression = { $_.data.name -join '<br/>'} },
+                @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace 'Internal$', ' (Internal)' -replace 'External', ' (External)' })) -join " & "})) -join '<br>' } },
+                @{ Name = "Status"; Expression = { $_.status } },
+                @{ Name = "Version"; Expression = { $_.version } },
                 @{ Name = "Worker"; Expression = { $_.worker } }
             ) | Sort-Object -Property "Worker"
         )

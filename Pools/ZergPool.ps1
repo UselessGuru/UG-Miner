@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Param(
@@ -44,7 +44,7 @@ $WorkerName = $PoolConfig.WorkerName -replace '^ID='
 
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
-If ($DivisorMultiplier -and $Regions) {
+If ($DivisorMultiplier -and $Regions) { 
 
     Try { 
         If ($Variables.BrainData.$Name.PSObject.Properties) { 
@@ -64,9 +64,6 @@ If ($DivisorMultiplier -and $Regions) {
         $Currency = [String]$Request.$Pool.Currency
         $Divisor = $DivisorMultiplier * [Double]$Request.$Pool.mbtc_mh_factor
 
-        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Pool.$PriceField / $Divisor) -FaultDetection $false
-
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Pool -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
         $PayoutThreshold = $PoolConfig.PayoutThreshold.$PayoutCurrency
         If ($PayoutThreshold -gt $Request.$Pool.minpay) { $PayoutThreshold = $Request.$Pool.minpay }
@@ -75,10 +72,13 @@ If ($DivisorMultiplier -and $Regions) {
 
         $Reasons = [System.Collections.Generic.List[String]]@()
         If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Pool] configured") }
-        If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$Pool.hashrate_shared -eq 0) { $Reasons.Add("No hashrate at pool") }
+        If ($Request.$Pool.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
 
         # Cannot cast negative values to [UInt]
         If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 } 
+
+        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
+        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Pool.$PriceField / $Divisor) -FaultDetection $false
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $Region_Norm })) { 

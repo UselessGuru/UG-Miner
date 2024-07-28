@@ -3,6 +3,22 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.2.20 2024/07/28
+====================================
+
+Changes:
+- Rename algorithm 'FiroPowSCC' to 'SCCpow' (https://github.com/stakecube/StakeCubeCoin/blob/develop/README.md)
+
+Enhancements:
+- API: Added urls for '/miners/missingbinary', '/miners/missingfirewallrule' & '/miners/missingpprerequisite'
+- Core: Mark miner as 'unavailable' when firewall rule is missing
+- Core: Minor code optimizations
+
+Miner updates:
+- SCCminer-v1.1.0 (new)
+- XLAarig-v5.2.4 (new)
+
+
 Changelog UG-Miner 6.2.19 2024/07/21
 ====================================
 
@@ -10,7 +26,7 @@ Changes:
 - Remove recommendation for PWSH version 7.2.x (I can no longer see any difference in memory leak with versions 7.3.x / 7.4.x)
 
 Enhancements:
-- Added Configuration item '$PoolAllow0Hashrate'. It is also configurable per pool (edit .'\Config\PoolsConfig.json')
+- Added configuration item '$PoolAllow0Hashrate'. It is also configurable per pool (edit .'\Config\PoolsConfig.json')
 - Code cleanup: Remove extra spaces
 - Core: Configuration item '$SSL' is now also configurable per pool (edit .'\Config\PoolsConfig.json')
 - Core: Configuration item '$SSLallowSelfSignedCertificate' is now also configurable per pool (edit .'\Config\PoolsConfig.json')

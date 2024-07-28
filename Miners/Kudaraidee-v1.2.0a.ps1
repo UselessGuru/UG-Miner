@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Vendor -ne "CPU" -or $_.CUDAVersion -ge [Version]"10.2" }))) { Return }
@@ -45,55 +45,55 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-# $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].Name -notin $_.ExcludePools })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 If ($Algorithms) { 
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            If ($MinerDevices = $Devices | Where-Object Type -EQ $_.Type | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $Model = $_.Model
+            $Type = $_.Type
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-                ($Algorithms | Where-Object Type -eq $_.Type).ForEach(
-                    { 
-                        $MinMemGiB = $_.MinMemGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+                { 
+                    $MinMemGiB = $_.MinMemGiB
+                    If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                            $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
+                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                            # $ExcludePools = $_.ExcludePools
-                            # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })) { 
-                            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
+                        # $ExcludePools = $_.ExcludePools
+                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
-                                $BlockSize = $_.BlockSize
-                                # 1 GB memory reserve, then 1 thread per 4GB
-                                $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach({ ($_.MemoryGiB - 1) / 4 }) | Measure-Object -Minimum).Minimum)
+                            $BlockSize = $_.BlockSize
+                            # 1 GB memory reserve, then 1 thread per 4GB
+                            $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach({ ($_.MemoryGiB - 1) / 4 }) | Measure-Object -Minimum).Minimum)
 
-                                # Reserve 250KB for AMD driver, for NVIDIA
-                                $GPUmemory = ($AvailableMinerDevices.ForEach({ $_.MemoryGiB }) | Measure-Object -Minimum).Minimum
-                                If ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } Else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
-                                $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
+                            # Reserve 250KB for AMD driver, for NVIDIA
+                            $GPUmemory = ($AvailableMinerDevices.ForEach({ $_.MemoryGiB }) | Measure-Object -Minimum).Minimum
+                            If ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } Else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
+                            $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
 
-                                [PSCustomObject]@{ 
-                                    API         = "CcMiner"
-                                    Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach({ '{0:x}' -f ($_ + 1)})) -join ',')"
-                                    DeviceNames = $AvailableMinerDevices.Name
-                                    Fee         = @(0) # Dev fee
-                                    MinerSet    = $_.MinerSet
-                                    Name        = $MinerName
-                                    Path        = $Path
-                                    Port        = $MinerAPIPort
-                                    Type        = $_.Type
-                                    URI         = $URI
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
-                                }
+                            [PSCustomObject]@{ 
+                                API         = "CcMiner"
+                                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach({ '{0:x}' -f ($_ + 1)})) -join ',')"
+                                DeviceNames = $AvailableMinerDevices.Name
+                                Fee         = @(0) # Dev fee
+                                MinerSet    = $_.MinerSet
+                                Name        = $MinerName
+                                Path        = $Path
+                                Port        = $MinerAPIPort
+                                Type        = $_.Type
+                                URI         = $URI
+                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

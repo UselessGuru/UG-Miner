@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Param(
@@ -67,11 +67,11 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
             [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Request.$Algorithm.CoinName)
         }
 
+        $Reasons = [System.Collections.Generic.List[String]]@()
+        If ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
+
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
-
-        $Reasons = [System.Collections.Generic.List[String]]@()
-        If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0) { $Reasons.Add("No hashrate at pool") }
 
         [PSCustomObject]@{ 
             Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
@@ -84,8 +84,8 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
             Key                      = $Key
             Name                     = $Name
             Pass                     = "x"
-            Port                     = [UInt16]($Request.$Algorithm.port -split ' ')[0]
-            PortSSL                  = If (($Request.$Algorithm.port -split ' ')[2]) { ($Request.$Algorithm.port -split ' ')[2] } Else { $null }
+            Port                     = [UInt16]($Request.$Algorithm.port -split " ")[0]
+            PortSSL                  = If (($Request.$Algorithm.port -split " ")[2]) { ($Request.$Algorithm.port -split " ")[2] } Else { $null }
             PoolUri                  = ""
             Price                    = $Stat.Live
             Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }

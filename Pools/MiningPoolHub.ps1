@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Param(
@@ -44,7 +44,7 @@ If ($PoolConfig.UserName) {
 
     $APICallFails = 0
 
-    Do {
+    Do { 
         Try { 
             $Request = Invoke-RestMethod -Uri "https://miningpoolhub.com/index.php?page=api&action=getminingandprofitsstatistics" -Headers $Headers -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout # -UserAgent $UserAgent 
         }
@@ -70,13 +70,12 @@ If ($PoolConfig.UserName) {
         # Temp fix
         $Regions = If ($Pool.host_list.split(";").count -eq 1) { @("n/a") } Else { $PoolConfig.Region }
 
+        $Reasons = [System.Collections.Generic.List[String]]@()
+        If ($Pool.pool_hash -eq "-" -or $_.pool_hash -eq "0" -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
+        If ($Pool.host -eq "hub.miningpoolhub.com") { $Pool.host_list = "hub.miningpoolhub.com" }
+
         $Key = "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Pool.profit / $Divisor) -FaultDetection $false
-
-        $Reasons = [System.Collections.Generic.List[String]]@()
-        If ($Pool.pool_hash -eq "-" -or $_.pool_hash -eq "0") { $Reasons.Add("No hashrate at pool") }
-
-        If ($Pool.host -eq "hub.miningpoolhub.com") { $Pool.host_list = "hub.miningpoolhub.com" }
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $Regions.Where({ $_ -eq "n/a" -or (Get-Region $_) -eq $Region_Norm })) { 
@@ -90,7 +89,7 @@ If ($PoolConfig.UserName) {
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Pool.Fee / 100
-                    Host                     = [String]($Pool.host_list.split(";") | Sort-Object -Descending { $_ -ilike "$Region*" } | Select-Object -First 1)
+                    Host                     = [String]($Pool.host_list.split(";") | Sort-Object -Descending { $_ -ilike "$Region*" } -Top 1)
                     Key                      = $Key
                     Name                     = $Name
                     Pass                     = "x"

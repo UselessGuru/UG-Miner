@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 Param(
@@ -61,12 +61,18 @@ If ($PriceField) {
         $Divisor = $DivisorMultiplier * [Double]$Request.$Algorithm.mbtc_mh_factor
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Currency -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
 
-        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
-
         $Reasons = [System.Collections.Generic.List[String]]@()
         If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
-        If (-not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate) -and $Request.$Algorithm.hashrate_last24h -eq 0) { $Reasons.Add("No hashrate at pool") }
+        If ($Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
+
+        # SCC firo variant
+        If ($Algorithm -eq "firopow") { 
+            $AlgorithmNorm = "SCCpow"
+            $Currency ="SCC"
+        }
+
+        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
+        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
 
         ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 

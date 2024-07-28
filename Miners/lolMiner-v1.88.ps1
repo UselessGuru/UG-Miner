@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
@@ -120,8 +120,6 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms.Where({ -not $_.Algorithms[1] }).ForEach({ $_.Algorithms += "" })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]].Name -notin $_.ExcludePools[0] })
-$Algorithms = $Algorithms.Where({ $MinerPools[1][$_.Algorithms[1]].Name -notin $_.ExcludePools[1] })
 
 If ($Algorithms) { 
 
@@ -145,72 +143,73 @@ If ($Algorithms) {
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 
-            If ($MinerDevices = $Devices | Where-Object Type -eq $_.Type | Where-Object Model -EQ $_.Model) { 
-                $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $Model = $_.Model
+            $Type = $_.Type
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-                ($Algorithms | Where-Object Type -EQ $_.Type).ForEach(
-                    { 
-                        $ExcludeGPUarchitectures = $_.ExcludeGPUArchitectures
-                        If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+                { 
+                    $ExcludeGPUarchitectures = $_.ExcludeGPUArchitectures
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
-                            $ExcludePools = $_.ExcludePools
-                            ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] })) { 
-                                ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] })) { 
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] })) { 
 
-                                    $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
-                                    # Windows 10 requires more memory on some algos
-                                    If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0")) { $MinMemGiB += 1 }
-                                    If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                # Windows 10 requires more memory on some algos
+                                If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0")) { $MinMemGiB += 1 }
+                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.MaxDualImpact -gt 0) { "-$($_.MaxDualImpact)" })"
+                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.MaxDualImpact -gt 0) { "-$($_.MaxDualImpact)" })"
 
-                                        $Arguments = $_.Arguments
-                                        $CoinPers = If ($_.Algorithms[0] -in @("Equihash1445", "Equihash1927")) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" } Else { "" }
-                                        If ($CoinPers) { $Arguments += $CoinPers }
-                                        If ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
-                                            $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
-                                            $Arguments += " --user $($Pool0.User)$(If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
-                                            $Arguments += " --pass $($Pool0.Pass)"
-                                            $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
-                                            $Arguments += Switch ($Pool0.Protocol) { 
-                                                "ethproxy"     { " --ethstratum ETHPROXY" }
-                                                "ethstratum1"  { " --ethstratum ETHV1" }
-                                                "ethstratum2"  { " --ethstratum ETHV1" }
-                                                "ethstratumnh" { " --ethstratum ETHV1" }
-                                                Default        { "" }
-                                            }
+                                    $Arguments = $_.Arguments
+                                    $CoinPers = If ("Equihash1445", "Equihash1927" -contains $_.Algorithms[0]) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" } Else { "" }
+                                    If ($CoinPers) { $Arguments += $CoinPers }
+                                    If ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
+                                        $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
+                                        $Arguments += " --user $($Pool0.User)$(If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
+                                        $Arguments += " --pass $($Pool0.Pass)"
+                                        $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
+                                        $Arguments += Switch ($Pool0.Protocol) { 
+                                            "ethproxy"     { " --ethstratum ETHPROXY" }
+                                            "ethstratum1"  { " --ethstratum ETHV1" }
+                                            "ethstratum2"  { " --ethstratum ETHV1" }
+                                            "ethstratumnh" { " --ethstratum ETHV1" }
+                                            Default        { "" }
+                                        }
 
-                                            If ($_.Algorithms[1]) { 
-                                                $Arguments += " --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                                $Arguments += " --dualuser $($Pool1.User)$(If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
-                                                $Arguments += " --dualpass $($Pool1.Pass)"
-                                                If ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
-                                                $Arguments += If ($Pool1.PoolPorts[1]) { " --dualtls on" } Else { " --dualtls off" }
-                                            }
+                                        If ($_.Algorithms[1]) { 
+                                            $Arguments += " --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                            $Arguments += " --dualuser $($Pool1.User)$(If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
+                                            $Arguments += " --dualpass $($Pool1.Pass)"
+                                            If ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
+                                            $Arguments += If ($Pool1.PoolPorts[1]) { " --dualtls on" } Else { " --dualtls off" }
+                                        }
 
-                                            [PSCustomObject]@{ 
-                                                API         = "lolMiner"
-                                                Arguments   = "$Arguments --log off --apiport $MinerAPIPort --shortstats 1 --longstats 5 --digits 6 --watchdog exit --dns-over-https 1 --devicesbypcie --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0}:0' -f $_ }) -join ',')"
-                                                DeviceNames = $AvailableMinerDevices.Name
-                                                Fee         = $_.Fee # Dev fee
-                                                MinerSet    = $_.MinerSet
-                                                MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                                Name        = $MinerName
-                                                Path        = $Path
-                                                Port        = $MinerAPIPort
-                                                Type        = $_.Type
-                                                URI         = $URI
-                                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                                Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
-                                            }
+                                        [PSCustomObject]@{ 
+                                            API         = "lolMiner"
+                                            Arguments   = "$Arguments --log off --apiport $MinerAPIPort --shortstats 1 --longstats 5 --digits 6 --watchdog exit --dns-over-https 1 --devicesbypcie --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0}:0' -f $_ }) -join ',')"
+                                            DeviceNames = $AvailableMinerDevices.Name
+                                            Fee         = $_.Fee # Dev fee
+                                            MinerSet    = $_.MinerSet
+                                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                                            Name        = $MinerName
+                                            Path        = $Path
+                                            Port        = $MinerAPIPort
+                                            Type        = $_.Type
+                                            URI         = $URI
+                                            WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                            Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

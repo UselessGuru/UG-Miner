@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -29,7 +29,7 @@ Version date:   2024/07/21
 #--- For High DPI, Call SetProcessDPIAware(need P/Invoke) and EnableVisualStyles ---
 Add-Type -TypeDefinition @'
 using System.Runtime.InteropServices;
-public class ProcessDPI {
+public class ProcessDPI { 
     [DllImport("user32.dll", SetLastError=true)]
     public static extern bool SetProcessDPIAware(); 
 }
@@ -84,7 +84,7 @@ Function CheckBoxSwitching_Click {
     $LegacyGUIswitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIswitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
-        $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $_.Type -in $SwitchingDisplayTypes }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
+        $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
         If ($LegacyGUIswitchingDGV.Columns) { 
             $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50
             $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
@@ -110,7 +110,7 @@ Function CheckBoxSwitching_Click {
     $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
 
-Function Set-DataGridViewDoubleBuffer {
+Function Set-DataGridViewDoubleBuffer { 
     Param (
         [Parameter(Mandatory = $true)][System.Windows.Forms.DataGridView]$Grid,
         [Parameter(Mandatory = $true)][Boolean]$Enabled
@@ -160,19 +160,19 @@ Function Update-TabControl {
                 $LegacyGUIactiveMinersDGV.DataSource = $Variables.MinersBest | Select-Object @(
                     @{ Name = "Info"; Expression = { $_.info } }
                     @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
-                    @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join '; ' } }
+                    @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join " " } }
                     @{ Name = "Miner"; Expression = { $_.Name } }
-                    @{ Name = "Status"; Expression = { $_.Status } }, 
+                    @{ Name = "Status"; Expression = { $_.Status } },
                     @{ Name = "Earning (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
                     @{ Name = "Power cost $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
                     @{ Name = "Profit (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
                     @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
-                    @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join ' & '} }, 
-                    @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join ' & ' } }
-                    @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } } }
+                    @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & "} },
+                    @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
+                    @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
                     @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                     @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
-                    If ($LegacyGUIradioButtonPoolsUnavailable.checked) { @{ Name = "Reason"; Expression = { $_.Reasons -join ', ' } } }
+                    If ($LegacyGUIradioButtonPoolsUnavailable.checked) { @{ Name = "Reason"; Expression = { $_.Reasons -join ", " } } }
                 ) | Sort-Object -Property "Device(s)" | Out-DataTable
 
                 If ($LegacyGUIactiveMinersDGV.Columns) { 
@@ -202,7 +202,7 @@ Function Update-TabControl {
             Function Get-NextColor { 
                 Param (
                     [Parameter(Mandatory = $true)]
-                    [Byte[]]$Color, 
+                    [Byte[]]$Color,
                     [Parameter(Mandatory = $true)]
                     [Int[]]$Factors
                 )
@@ -300,14 +300,14 @@ Function Update-TabControl {
                     $LegacyGUIbalancesDGV.BeginInit()
                     $LegacyGUIbalancesDGV.ClearSelection()
                     $LegacyGUIbalancesDGV.DataSource = $Variables.Balances.Values | Select-Object @(
-                        @{ Name = "Currency"; Expression = { $_.Currency } }, 
-                        @{ Name = "Pool [Currency]"; Expression = { "$($_.Pool) [$($_.Currency)]" } }, 
-                        @{ Name = "Balance ($($Config.MainCurrency))"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Balance * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } }, 
-                        @{ Name = "Avg. $($Config.MainCurrency)/day"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } }, 
-                        @{ Name = "$($Config.MainCurrency) in 1h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } }, 
-                        @{ Name = "$($Config.MainCurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } }, 
-                        @{ Name = "$($Config.MainCurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } }, 
-                        @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } }, 
+                        @{ Name = "Currency"; Expression = { $_.Currency } },
+                        @{ Name = "Pool [Currency]"; Expression = { "$($_.Pool) [$($_.Currency)]" } },
+                        @{ Name = "Balance ($($Config.MainCurrency))"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Balance * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                        @{ Name = "Avg. $($Config.MainCurrency)/day"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                        @{ Name = "$($Config.MainCurrency) in 1h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                        @{ Name = "$($Config.MainCurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                        @{ Name = "$($Config.MainCurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                        @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
                         @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), ($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } }
                     ) | Sort-Object -Property Pool | Out-DataTable
 
@@ -370,18 +370,18 @@ Function Update-TabControl {
                 $LegacyGUIminersDGV.DataSource = $DataSource | Select-Object @(
                     @{ Name = "Info"; Expression = { $_.Info } },
                     @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
-                    @{ Name = "Best"; Expression = { $_.Best } }, 
-                    @{ Name = "Miner"; Expression = { $_.Name } }, 
-                    @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ', ' } }, 
-                    @{ Name = "Status"; Expression = { $_.Status } }, 
-                    @{ Name = "Earning (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } } }, 
-                    @{ Name = "Power cost $($Config.MainCurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } } }, 
-                    @{ Name = "Profit (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost ) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } } }, 
+                    @{ Name = "Best"; Expression = { $_.Best } },
+                    @{ Name = "Miner"; Expression = { $_.Name } },
+                    @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
+                    @{ Name = "Status"; Expression = { $_.Status } },
+                    @{ Name = "Earning (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } } },
+                    @{ Name = "Power cost $($Config.MainCurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } } },
+                    @{ Name = "Profit (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost ) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } } },
                     @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
-                    @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join ' & '} }, 
-                    @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join ' & ' } }, 
-                    @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join ' & ' } } }
-                    If ($LegacyGUIradioButtonMinersUnavailable.checked -or $LegacyGUIradioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
+                    @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & "} },
+                    @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } },
+                    @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
+                    If ($LegacyGUIradioButtonMinersUnavailable.checked -or $LegacyGUIradioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", "} } }
                 ) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, "Device(s)", Info | Out-DataTable
 
                 If ($LegacyGUIminersDGV.Columns) { 
@@ -448,7 +448,7 @@ Function Update-TabControl {
                     @{ Name = "SSL port"; Expression = { "$(If ($_.PortSSL) { $_.PortSSL } Else { "-" })" } }
                     @{ Name = "Earnings adjustment factor"; Expression = { $_.EarningsAdjustmentFactor } }
                     @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
-                    If ($LegacyGUIradioButtonPoolsUnavailable.checked -or $LegacyGUIradioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ', '} } }
+                    If ($LegacyGUIradioButtonPoolsUnavailable.checked -or $LegacyGUIradioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", "} } }
                 ) | Out-DataTable
 
                 If ($LegacyGUIpoolsDGV.Columns) { 
@@ -487,18 +487,18 @@ Function Update-TabControl {
         #             $LegacyGUIworkersDGV.BeginInit()
         #             $LegacyGUIworkersDGV.ClearSelection()
         #             $LegacyGUIworkersDGV.DataSource = $Variables.Workers | Select-Object @(
-        #                 @{ Name = "Worker"; Expression = { $_.worker } }, 
-        #                 @{ Name = "Status"; Expression = { $_.status } }, 
-        #                 @{ Name = "Last seen"; Expression = { (Get-TimeSince $_.date) } }, 
-        #                 @{ Name = "Version"; Expression = { $_.version } }, 
-        #                 @{ Name = "Currency"; Expression = { $_.data.Currency | Select-Object -Unique } }, 
-        #                 @{ Name = "Estimated earning/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Config.DecimalsMax)}" -f (($_.Data.Earning.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } }, 
-        #                 @{ Name = "Estimated profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Config.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } }, 
-        #                 @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } }, 
-        #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join ' & ' }) -join $nl } }, 
-        #                 @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join ' & ' }) -join $nl } }, 
-        #                 @{ Name = "Live hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }) -join $nl } }, 
-        #                 @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.EstimatedSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join ' & ' }) -join $nl } }
+        #                 @{ Name = "Worker"; Expression = { $_.worker } },
+        #                 @{ Name = "Status"; Expression = { $_.status } },
+        #                 @{ Name = "Last seen"; Expression = { (Get-TimeSince $_.date) } },
+        #                 @{ Name = "Version"; Expression = { $_.version } },
+        #                 @{ Name = "Currency"; Expression = { $_.data.Currency | Select-Object -Unique } },
+        #                 @{ Name = "Estimated earning/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Config.DecimalsMax)}" -f (($_.Data.Earning.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
+        #                 @{ Name = "Estimated profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Config.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
+        #                 @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } },
+        #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join $nl } },
+        #                 @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join " & " }) -join $nl } },
+        #                 @{ Name = "Live hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } },
+        #                 @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.EstimatedSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } }
         #             ) | Sort-Object -Property "Worker" | Out-DataTable
         #             If ($LegacyGUIworkersDGV.Columns) { 
         #                 $LegacyGUIworkersDGV.Columns[0].FillWeight = 70
@@ -553,11 +553,11 @@ Function Update-TabControl {
                     $LegacyGUIwatchdogTimersDGV.BeginInit()
                     $LegacyGUIwatchdogTimersDGV.ClearSelection()
                     $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
-                        @{ Name = "Name"; Expression = { $_.MinerName } }, 
-                        @{ Name = "Algorithms"; Expression = { $_.Algorithm } }, 
-                        @{ Name = "Pool name"; Expression = { $_.PoolName } }, 
-                        @{ Name = "Region"; Expression = { $_.PoolRegion } }, 
-                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ', ' } }, 
+                        @{ Name = "Name"; Expression = { $_.MinerName } },
+                        @{ Name = "Algorithms"; Expression = { $_.Algorithm } },
+                        @{ Name = "Pool name"; Expression = { $_.PoolName } },
+                        @{ Name = "Region"; Expression = { $_.PoolRegion } },
+                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
                         @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
                     ) | Out-DataTable
                     If ($LegacyGUIwatchdogTimersDGV.Columns) { 
@@ -869,7 +869,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
     { 
         $Data = @()
 
-        If ($This.SourceControl.Name -match 'LaunchedMinersDGV|MinersDGV') { 
+        If ($This.SourceControl.Name -match "LaunchedMinersDGV|MinersDGV") { 
 
             Switch ($_.ClickedItem.Text) { 
                 "Re-benchmark" { 
@@ -1054,7 +1054,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
             If ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Variables.Branding.ProductLabel): $($_.ClickedItem.Text) miners", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
 
         }
-        ElseIf ($This.SourceControl.Name -match 'PoolsDGV') { 
+        ElseIf ($This.SourceControl.Name -match "PoolsDGV") { 
             Switch ($_.ClickedItem.Text) { 
                 "Reset pool stat data" { 
                     $This.SourceControl.SelectedRows.ForEach(
@@ -1539,7 +1539,7 @@ $LegacyGUIswitchingDGV.RowHeadersVisible = $false
 $LegacyGUIswitchingDGV.SelectionMode = "FullRowSelect"
 
 $LegacyGUIswitchingDGV.Add_Sorted(
-    {
+    { 
         If ($Config.UseColorForMinerStatus) { 
             ForEach ($Row in $LegacyGUIswitchingDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $LegacyGUIcolors[$Row.DataBoundItem.Action] }
         }
@@ -1654,7 +1654,7 @@ $LegacyGUIform.Add_Load(
 
         $LegacyGUIminingSummaryLabel.Text = ""
         $LegacyGUIminingSummaryLabel.SendToBack()
-        (($Variables.Summary -replace 'Power Cost', '<br>Power Cost' -replace ' / ', '/' -replace '&ensp;', ' ' -replace '   ', '  ') -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
+        (($Variables.Summary -replace "Power Cost", "<br>Power Cost" -replace " / ", "/" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
         $LegacyGUIminingSummaryLabel.Text += "`r`n "
         If (-not $Variables.MinersBest) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
         ElseIf ($Variables.MiningProfit -ge 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
@@ -1664,7 +1664,7 @@ $LegacyGUIform.Add_Load(
         $TimerUI.Interval = 100
         $TimerUI.Add_Tick(
             { 
-                If ($LegacyGUIform.CanSelect) {
+                If ($LegacyGUIform.CanSelect) { 
                     If ($Variables.APIRunspace) { 
                         If ($LegacyGUIeditConfigLink.Tag -ne "WebGUI") { 
                             $LegacyGUIeditConfigLink.Tag = "WebGUI"
@@ -1684,7 +1684,7 @@ $LegacyGUIform.Add_Load(
 )
 
 $LegacyGUIform.Add_FormClosing(
-    {
+    { 
         If ($Config.LegacyGUI) { 
             $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Variables.Branding.ProductLabel)?", "$($Variables.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
         }
@@ -1717,7 +1717,7 @@ $LegacyGUIform.Add_FormClosing(
 )
 
 $LegacyGUIform.Add_KeyDown(
-    {
+    { 
         If ($PSItem.KeyCode -eq "F5") { Update-TabControl }
     }
 )

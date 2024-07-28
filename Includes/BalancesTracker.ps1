@@ -7,7 +7,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful,
+UG-Miner is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -19,13 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.19
-Version date:   2024/07/21
+Version:        6.2.20
+Version date:   2024/07/28
 #>
 
 using module .\Include.psm1
 
-Do {
+Do { 
     # Start transcript log
     If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" -Append -Force }
 
@@ -264,7 +264,7 @@ Do {
                     $Variables.BalancesData += $PoolBalanceObject
                 }
 
-                Try {
+                Try { 
                     $EarningsObject = [PSCustomObject]@{ 
                         Pool                    = $PoolBalanceObject.Pool
                         Wallet                  = $PoolBalanceObject.Wallet
@@ -297,7 +297,7 @@ Do {
                     }
                     $Balances."$($PoolBalanceObject.Pool) ($($PoolBalanceObject.Currency):$($PoolBalanceObject.Wallet))" = $EarningsObject
                 }
-                Catch {
+                Catch { 
                     Start-Sleep -Seconds 0
                 }
                 If ($Config.BalancesTrackerLog) { 
@@ -350,7 +350,7 @@ Do {
 
         # Build chart data (used in GUI) for last 30 days
         $PoolChartData = [PSCustomObject]@{ }
-        $ChartData = $Earnings.Where({ $_.Pool -in $PoolsToTrack }) | Sort-Object -Property Date | Group-Object -Property Date | Select-Object -Last 30 # days
+        $ChartData = $Earnings.Where({ $PoolsToTrack -contains $_.Pool }) | Sort-Object -Property Date | Group-Object -Property Date | Select-Object -Last 30 # days
 
         # One dataset per pool
         (($ChartData.Group.Where({ $_.DailyEarnings -gt 0 })).Pool | Sort-Object -Unique).ForEach(
