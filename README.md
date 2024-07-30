@@ -289,16 +289,20 @@ UG-Miner works best with the latest PWSH version 7.4.4.
 [Download Installer for version 7.4.4](https://github.com/PowerShell/PowerShell/releases/download/v7.4.4/PowerShell-7.4.4-win-x64.msi)
 
 **Some miners may need 'Visual C+ RunTimes download/extract, run install_all.bat file**
+
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)
 
 **Virtual memory settings**
+
 When running multiple cards its recommended to increase Virtual Memory. 64GB is optimal.
 
 **Recommended/optimal Windows Nvidia driver**
+
 [Windows Nvidia driver 537.42](https://us.download.nvidia.com/Windows/537.42/537.42-desktop-win10-win11-64bit-international-dch-whql.exe)
 If you use older drivers some miners will not be available.
 
 **Recommended/optimal Windows AMD driver**
+
 [Windows 10/11 AMD GPU Driver 7/25/2023](https://www.amd.com/en/support)
 
    UG-Miner is currently tested on the following Rigs: 
