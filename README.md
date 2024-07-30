@@ -318,4 +318,4 @@ Permissions of this strong copyleft license are conditioned on making available 
 Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
 https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 
-Happy Mining
+Happy mining :-)
