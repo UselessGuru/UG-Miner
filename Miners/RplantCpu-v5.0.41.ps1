@@ -17,20 +17,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.40/cpuminer-opt-win-5.0.40.zip"
+$URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.41/cpuminer-opt-win-5.0.41.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-If ($AvailableMinerDevices.CpuFeatures -match 'avx512')   { $Path = "$PWD\Bin\$Name\cpuminer-Avx512.exe" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -match 'avx2') { $Path = "$PWD\Bin\$Name\cpuminer-Avx2.exe" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -match 'avx')  { $Path = "$PWD\Bin\$Name\cpuminer-Avx.exe" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -match 'aes')  { $Path = "$PWD\Bin\$Name\cpuminer-Aes-Sse42.exe" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -match 'sse2') { $Path = "$PWD\Bin\$Name\cpuminer-Sse2.exe" }
+If ($AvailableMinerDevices.CPUfeatures -match "avx512")   { $Path = "$PWD\Bin\$Name\cpuminer-Avx512.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx2") { $Path = "$PWD\Bin\$Name\cpuminer-Avx2.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx")  { $Path = "$PWD\Bin\$Name\cpuminer-Avx.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "aes")  { $Path = "$PWD\Bin\$Name\cpuminer-Aes-Sse42.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "sse2") { $Path = "$PWD\Bin\$Name\cpuminer-Sse2.exe" }
 Else { Return }
 
 $Algorithms = @(
@@ -56,7 +56,7 @@ $Algorithms = @(
     @{ Algorithm = "DPowHash";      MinerSet = 3; WarmupTimes = @(60, 60);  ExcludePools = @();        Arguments = " --algo dpowhash" } # ASIC
     @{ Algorithm = "Ghostrider";    MinerSet = 0; WarmupTimes = @(180, 60); ExcludePools = @();        Arguments = " --algo gr" }
 #   @{ Algorithm = "Groestl";       MinerSet = 3; WarmupTimes = @(90, 15);  ExcludePools = @();        Arguments = " --algo groestl" } # ASIC
-    @{ Algorithm = "HeavyHash";     MinerSet = 0; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo heavyhash" } # FPGA
+    @{ Algorithm = "HeavyHash";     MinerSet = 0; WarmupTimes = @(30, 5);   ExcludePools = @();        Arguments = " --algo heavyhash" } # FPGA
     @{ Algorithm = "Hex";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo hex" } # GPU
     @{ Algorithm = "HMQ1725";       MinerSet = 3; WarmupTimes = @(30, 0);   ExcludePools = @();        Arguments = " --algo hmq1725" } # GPU
     @{ Algorithm = "Hodl";          MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo hodl" }
@@ -72,11 +72,11 @@ $Algorithms = @(
 #   @{ Algorithm = "Lyra2Z";        MinerSet = 0; WarmupTimes = @(90, 0);   ExcludePools = @();        Arguments = " --algo lyra2z" } # ASIC
 #   @{ Algorithm = "Lyra2z330";     MinerSet = 3; WarmupTimes = @(90, 25);  ExcludePools = @();        Arguments = " --algo lyra2z330" } # Algorithm is dead
     @{ Algorithm = "MemeHash";      MinerSet = 0; WarmupTimes = @(90, 35);  ExcludePools = @();        Arguments = " --algo memehashv2" }
-    @{ Algorithm = "Mike";          MinerSet = 3; WarmupTimes = @(90, 60);  ExcludePools = @();        Arguments = " --algo mike" } # GPU
+    @{ Algorithm = "Mike";          MinerSet = 3; WarmupTimes = @(90, 20);  ExcludePools = @();        Arguments = " --algo mike" } # GPU
     @{ Algorithm = "Minotaur";      MinerSet = 2; WarmupTimes = @(90, 15);  ExcludePools = @();        Arguments = " --algo minotaur" }
     @{ Algorithm = "MinotaurX";     MinerSet = 0; WarmupTimes = @(90, 0);   ExcludePools = @();        Arguments = " --algo minotaurx" }
 #   @{ Algorithm = "MyriadGroestl"; MinerSet = 3; WarmupTimes = @(90, 15);  ExcludePools = @();        Arguments = " --algo myr-gr" } # ASIC
-    @{ Algorithm = "Neoscrypt";     MinerSet = 3; WarmupTimes = @(90, 20);  ExcludePools = @();        Arguments = " --algo neoscrypt" } # FPGA
+    @{ Algorithm = "Neoscrypt";     MinerSet = 3; WarmupTimes = @(90, 25);  ExcludePools = @();        Arguments = " --algo neoscrypt" } # FPGA
 #   @{ Algorithm = "Nist5";         MinerSet = 3; WarmupTimes = @(90, 15);  ExcludePools = @();        Arguments = " --algo nist5" } # ASIC
     @{ Algorithm = "Pentablake";    MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo pentablake" } # GPU
     @{ Algorithm = "Phi2";          MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo phi2" } # GPU
@@ -91,12 +91,12 @@ $Algorithms = @(
     @{ Algorithm = "Qureno";        MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo qureno" } # GPU
 #   @{ Algorithm = "X11";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Srguments = " --algo x11" } # ASIC, algorithm not supported
     @{ Algorithm = "X22";           MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo x22" } 
-    @{ Algorithm = "Yescrypt";      MinerSet = 0; WarmupTimes = @(45, 10);  ExcludePools = @();        Arguments = " --algo yescrypt" }
+    @{ Algorithm = "Yescrypt";      MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();        Arguments = " --algo yescrypt" }
     @{ Algorithm = "YescryptR16";   MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yescryptr16" } # CcminerLyraYesscrypt-v8.21r18v5 is faster
     @{ Algorithm = "YescryptR8";    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yescryptr8" } # CcminerLyraYesscrypt-v8.21r18v5 is faster
     @{ Algorithm = "YescryptR8g";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yescryptr8g" }
-    @{ Algorithm = "YescryptR32";   MinerSet = 0; WarmupTimes = @(45, 15);  ExcludePools = @();        Arguments = " --algo yescryptr32" } # SRBMminerMulti is fastest, but has 0.85% miner fee
-    @{ Algorithm = "Yespower";      MinerSet = 0; WarmupTimes = @(45, 15);  ExcludePools = @();        Arguments = " --algo yespower" }
+    @{ Algorithm = "YescryptR32";   MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yescryptr32" } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "Yespower";      MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespower" }
     @{ Algorithm = "Yespower2b";    MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo power2b" }
     @{ Algorithm = "YespowerARWN";  MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerarwn" }
     @{ Algorithm = "YespowerIc";    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerIC" }
@@ -104,10 +104,10 @@ $Algorithms = @(
     @{ Algorithm = "YespowerItc";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerITC" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerLitb";  MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerLITB" }
     @{ Algorithm = "YespowerLtncg"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerLTNCG" }
-    @{ Algorithm = "YespowerR16";   MinerSet = 2; WarmupTimes = @(60, 10);  ExcludePools = @();        Arguments = " --algo yespowerr16" } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerR16";   MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @();        Arguments = " --algo yespowerr16" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerRes";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerRes" }
-    @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
-    @{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yespowerTIDE" }
+    @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 15);  ExcludePools = @();        Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();        Arguments = " --algo yespowerTIDE" }
     @{ Algorithm = "YespowerUrx";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();        Arguments = " --algo yespowerURX" } # JayddeeCpu-v24.4 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\CCminer.ps1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 Class CcMiner : Miner { 

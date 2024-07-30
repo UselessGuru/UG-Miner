@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 Param(
@@ -80,12 +80,12 @@ If ($DivisorMultiplier -and $Regions) {
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Pool.$PriceField / $Divisor) -FaultDetection $false
 
-        ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
-            If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $Region_Norm })) { 
+        ForEach ($RegionNorm in $Variables.Regions[$Config.Region]) { 
+            If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $RegionNorm })) { 
 
                 If ($Region -eq "n/a (Anycast)") { 
                     $PoolHost = "$Algorithm.$HostSuffix"
-                    $Region_Norm = $Region
+                    $RegionNorm = $Region
                 }
                 Else { 
                     $PoolHost = "$Algorithm.$Region.$HostSuffix"
@@ -108,7 +108,7 @@ If ($DivisorMultiplier -and $Regions) {
                     Price                    = $Stat.Live
                     Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
-                    Region                   = $Region_Norm
+                    Region                   = $RegionNorm
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $false
                     StablePrice              = $Stat.Week

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -142,7 +142,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             Remove-Variable AlgorithmNorm, BasePrice, Currency, DAGdata, PoolName, StatName -ErrorAction Ignore
 
             # Created here for performance optimization, minimize # of lookups
-            $CurPoolObjects = $PoolObjects.Where({ $_.Date -eq $Timestamp })
+            $CurrentPoolObjects = $PoolObjects.Where({ $_.Date -eq $Timestamp })
             $SampleSizets = New-TimeSpan -Minutes $PoolConfig.BrainConfig.SampleSizeMinutes
             $SampleSizeHalfts = New-TimeSpan -Minutes ($PoolConfig.BrainConfig.SampleSizeMinutes / 2)
             $GroupAvgSampleSize = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
@@ -155,7 +155,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $PoolName + ", Up" })).Count - ($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Name + ", Down" })).Count) / (($GroupMedSampleSizeHalf.Where({ $_.Name -eq $PoolName })).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where({ $_.Name -eq $PoolName })).Median)
                 $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where({ $_.Name -eq $PoolName + ", Up" })).Count - ($GroupAvgSampleSize.Where({ $_.Name -eq $Name + ", Down" })).Count) / (($GroupMedSampleSize.Where({ $_.Name -eq $PoolName })).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where({ $_.Name -eq $PoolName })).Median)
                 $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)
-                $CurPoolObject = $CurPoolObjects.Where({ $_.Name -eq $PoolName })
+                $CurPoolObject = $CurrentPoolObjects.Where({ $_.Name -eq $PoolName })
                 $Currency = $CurPoolObject.currency
                 $LastPrice = [Double]$CurPoolObject.actual_last24h
                 $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
@@ -166,11 +166,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     Remove-Stat -Name $StatName
                     $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
                     $PlusPrice = $LastPrice
-                    Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $Poolname (LastPrice: $LastPrice vs. PlusPrice: $PlusPrice)"
+                    Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for '$Poolname' (LastPrice: $LastPrice vs. PlusPrice: $PlusPrice)"
                 }
                 $APIdata.$PoolName | Add-Member PlusPrice $PlusPrice -Force
             }
-            Remove-Variable CurPoolObject, CurPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizets, SampleSizeHalfts, StatName -ErrorAction Ignore
+            Remove-Variable CurPoolObject, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizets, SampleSizeHalfts, StatName -ErrorAction Ignore
 
             If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
                 ($APIdata | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
@@ -202,8 +202,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Start-Sleep -Seconds 1
     }
 
-    $Error.Clear()
-    [System.GC]::Collect()
+    # $Error.Clear()
+    # [System.GC]::Collect()
 }
 
 $Variables.Brains.Remove($BrainName)

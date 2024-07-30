@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 using module .\Includes\Include.psm1
@@ -300,7 +300,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.20"
+    Version      = [System.Version]"6.2.21"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -380,6 +380,12 @@ $Prerequisites = @(
     "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
 )
 
+If ([System.Environment]::OSVersion.Version -lt [Version]"10.0.0.0") { 
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
+    $WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Exit
+}
+
 If ($PrerequisitesMissing = @($Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) }))) { 
     $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "$_ is missing." })
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
@@ -390,7 +396,7 @@ If ($PrerequisitesMissing = @($Prerequisites.Where({ -not (Test-Path -LiteralPat
 }
 Remove-Variable Prerequisites, PrerequisitesMissing
 
-If ([System.Environment]::OSVersion.Version -lt [Version]"10.0.0.0" -and -not (Get-Command Get-PnpDevice)) { 
+If ( -not (Get-Command Get-PnpDevice)) { 
     Write-Message -Level Error "Windows Management Framework 5.1 is missing."
     Write-Message -Level Error "Please install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616"
     $WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -457,13 +463,14 @@ $env:GPU_MAX_WORKGROUP_SIZE = 256
 
 $Variables.BrainData = @{ }
 $Variables.Brains = @{ }
+$Variables.CPUfeatures = (Get-CpuId).Features | Sort-Object
 $Variables.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")
 $Variables.Miners = [Miner[]]@()
 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
 $Variables.NewMiningStatus = If ($Config.StartupMode -match "Paused|Running") { $Config.StartupMode } Else { "Idle" }
 $Variables.RestartCycle = $true
 $Variables.Pools = [Pool[]]@()
-$Variables.ScriptStartTime = (Get-Process -id $PID).StartTime.ToUniversalTime()
+$Variables.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 $Variables.SuspendCycle = $false
 $Variables.WatchdogTimers = [PSCustomObject[]]@()
 
@@ -939,7 +946,7 @@ Function MainLoop {
                                     $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
                                 } 
                             ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
-                            Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ",") [$(($Variables.EnabledDevices.Where({ $MinersDeviceGroup[0].DeviceNames -contains $_.Name})).Model -join ", ")]" } } -AutoSize | Out-Host
+                                Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ",") [$(($Variables.EnabledDevices.Where({ $MinersDeviceGroup[0].DeviceNames -contains $_.Name})).Model -join ", ")]" } } -AutoSize | Out-Host
 
                             # Display benchmarking progress
                             If ($MinersDeviceGroupNeedingBenchmark) { 

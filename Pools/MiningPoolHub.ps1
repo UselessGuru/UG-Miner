@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 Param(
@@ -77,10 +77,10 @@ If ($PoolConfig.UserName) {
         $Key = "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Pool.profit / $Divisor) -FaultDetection $false
 
-        ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
-            If ($Region = $Regions.Where({ $_ -eq "n/a" -or (Get-Region $_) -eq $Region_Norm })) { 
+        ForEach ($RegionNorm in $Variables.Regions[$Config.Region]) { 
+            If ($Region = $Regions.Where({ $_ -eq "n/a" -or (Get-Region $_) -eq $RegionNorm })) { 
 
-                If ($Region -eq "n/a") { $Region_Norm = $Region }
+                If ($Region -eq "n/a") { $RegionNorm = $Region }
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - $Stat.Week_Fluctuation
@@ -99,7 +99,7 @@ If ($PoolConfig.UserName) {
                     Price                    = $Stat.Live * (1 - [Math]::Min($Stat.Day_Fluctuation, 1)) + $Stat.Day * [Math]::Min($Stat.Day_Fluctuation, 1)
                     Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
-                    Region                   = $Region_Norm
+                    Region                   = $RegionNorm
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week

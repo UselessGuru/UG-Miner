@@ -17,18 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 $URI = "https://github.com/patrykwnosuch/cpuminer-nosuch/releases/download/3.8.8.1-nosuch-m4/cpu-nosuch-m4-win64.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-If ($AvailableMinerDevices.CpuFeatures -match 'sha')      { $Path = "$PWD\Bin\$Name\cpuminer-avx2-sha.exe" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -match 'avx2') { $Path = "$PWD\Bin\$Name\cpuminer-avx2.exe" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -match 'aes')  { $Path = "$PWD\Bin\$Name\cpuminer-aes-sse2.exe" }
-ElseIf ($AvailableMinerDevices.CpuFeatures -match 'sse2') { $Path = "$PWD\Bin\$Name\cpuminer-sse2.exe" }
+If ($AvailableMinerDevices.CPUfeatures -match 'sha')      { $Path = "$PWD\Bin\$Name\cpuminer-avx2-sha.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match 'avx2') { $Path = "$PWD\Bin\$Name\cpuminer-avx2.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match 'aes')  { $Path = "$PWD\Bin\$Name\cpuminer-aes-sse2.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match 'sse2') { $Path = "$PWD\Bin\$Name\cpuminer-sse2.exe" }
 Else { Return }
 
 $Algorithms = @(

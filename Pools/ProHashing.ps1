@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 Param(
@@ -76,8 +76,8 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
             $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$_.$PriceField / $Divisor) -FaultDetection $false
 
-            ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
-                If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 
+            ForEach ($RegionNorm in $Variables.Regions[$Config.Region]) { 
+                If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $RegionNorm })) { 
 
                     [PSCustomObject]@{ 
                         Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
@@ -95,7 +95,7 @@ If ($DivisorMultiplier -and $PriceField -and $PoolConfig.UserName) {
                         Price                    = $Stat.Live
                         Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                         Reasons                  = $Reasons
-                        Region                   = $Region_Norm
+                        Region                   = $RegionNorm
                         SendHashrate             = $false
                         SSLselfSignedCertificate = $true
                         StablePrice              = $Stat.Week

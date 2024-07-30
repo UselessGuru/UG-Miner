@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 Param(
@@ -68,14 +68,14 @@ If ($PriceField) {
         # SCC firo variant
         If ($Algorithm -eq "firopow") { 
             $AlgorithmNorm = "SCCpow"
-            $Currency ="SCC"
+            $Currency = "SCC"
         }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
 
-        ForEach ($Region_Norm in $Variables.Regions[$Config.Region]) { 
-            If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $Region_Norm })) { 
+        ForEach ($RegionNorm in $Variables.Regions[$Config.Region]) { 
+            If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $RegionNorm })) { 
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
@@ -94,7 +94,7 @@ If ($PriceField) {
                     Price                    = $Stat.Live
                     Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethproxy" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
-                    Region                   = $Region_Norm
+                    Region                   = $RegionNorm
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week

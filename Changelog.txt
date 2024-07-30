@@ -3,6 +3,27 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+
+Changelog UG-Miner 6.2.21 2024/07/30
+====================================
+
+Changes:
+- Core: Simplify miner data sample printout (removed double power usage data)
+
+Enhancements:
+- API: Added url for '/cpufeatures'
+- Core: Minor code optimizations
+
+Fixes:
+- Core: Not starting benchmarking when triggered through GUI (regression from 6.2.20)
+
+Miner changes:
+- ClaymoreNeoscrypt-v1.2 (fix download link)
+- Kudaraidee-v1.2.0a (fix download link)
+- RplantCpu-v5.0.41
+- Wildrig-v0.40.6
+
+
 Changelog UG-Miner 6.2.20 2024/07/28
 ====================================
 

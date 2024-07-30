@@ -283,7 +283,7 @@ Easy configuration, easy start:
 
 ***Requirements***
 
-PowerShell Version 7.x is required:
+Windows 10.x and PowerShell Version 7.x is required.
 
 UG-Miner works best with the latest PWSH version 7.2.x. Versions 7.3.x and later have a memory leak and are therefore not recommended.
 

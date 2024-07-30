@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.20
-Version date:   2024/07/28
+Version:        6.2.21
+Version date:   2024/07/30
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.12"
+    $APIVersion = "0.5.4.14"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -46,7 +46,7 @@ Function Start-APIServer {
             [Void]$TCPclient.Dispose()
 
             # Start API server
-            If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API ($APIVersion) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore}
+            If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API ($APIVersion) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore }
 
             # Setup runspace to launch the API server in a separate thread
             $Runspace = [RunspaceFactory]::CreateRunspace()
@@ -54,11 +54,12 @@ Function Start-APIServer {
             $Runspace.Name = "APIServer"
             $Runspace.ThreadOptions = "ReuseThread"
             $Runspace.Open()
-            (Get-Variable -Scope Global).Where({ "Config", "Stats", "Variables" -contains $_.Name }).ForEach(
-                { 
-                    $Runspace.SessionStateProxy.SetVariable($_.Name, $_.Value)
-                }
-            )
+
+            $Runspace.SessionStateProxy.SetVariable("Config", $Config)
+            $Runspace.SessionStateProxy.SetVariable("Stats", $Stats)
+            $Runspace.SessionStateProxy.SetVariable("Variables", $Variables)
+            [Void]$Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
+
             $Runspace.SessionStateProxy.SetVariable("APIVersion", $APIVersion)
             $Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
@@ -126,7 +127,7 @@ Function Start-APIServer {
                         }
                         ElseIf ($Request.HttpMethod -eq "POST") { 
                             $Length = $Request.contentlength64
-                            $Buffer = New-object "byte[]" $Length
+                            $Buffer = New-Object "byte[]" $Length
 
                             [Void]$Request.inputstream.read($Buffer, 0, $Length)
                             $Body = [System.Text.Encoding]::ascii.getstring($Buffer)
@@ -160,7 +161,7 @@ Function Start-APIServer {
                                 # Disable algorithm@pool in poolsconfig.json
                                 $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
                                 $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
-                                If ($Pools = @($Variables.Pools.Where({ $PoolNames-contains $_.Name -and $Algorithms -contains $_.Algorithm}))) { 
+                                If ($Pools = @($Variables.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
                                     $PoolsConfig = [System.IO.File]::ReadAllLines($Config.PoolsConfigFile) | ConvertFrom-Json
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
@@ -224,7 +225,7 @@ Function Start-APIServer {
                                     $Variables.BalancesData = @((Compare-Object $Variables.BalancesData @($Parameters.Data | ConvertFrom-Json -ErrorAction Ignore) -PassThru -Property DateTime, Pool, Currency, Wallet).Where({ $_.SideIndicator -eq "<=" }) | Select-Object -ExcludeProperty SideIndicator)
                                     $Variables.BalancesData | ConvertTo-Json | Out-File ".\Data\BalancesTrackerData.json"
                                     $RemovedEntriesCount = $BalanceDataEntries.Count - $Variables.BalancesData.Count
-                                    If ($RemovedEntriesCount-gt 0) { 
+                                    If ($RemovedEntriesCount -gt 0) { 
                                         $Message = "$RemovedEntriesCount $(If ($RemovedEntriesCount -eq 1) { "balance data entry" } Else { "balance data entries" }) removed."
                                         Write-Message -Level Verbose "Web GUI: $Message"
                                         $Data = $Message
@@ -402,7 +403,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/getminerdetail" { 
-                                $Miner = $Variables.Miners.Where({ $_.Info -eq $Key})
+                                $Miner = $Variables.Miners.Where({ $_.Info -eq $Key })
                                 If ($Miner) { 
                                     $Data = $Miner | ConvertTo-Json -Depth 10
                                 }
@@ -530,7 +531,7 @@ Function Start-APIServer {
                                                 $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
 
                                                 # Remove watchdog
-                                                $Variables.WatchdogTimers = @($Variables.WatchdogTimers | Where-Object MinerName -ne $_.Name)
+                                                $Variables.WatchdogTimers = @($Variables.WatchdogTimers | Where-Object MinerName -NE $_.Name)
 
                                                 $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
                                                 $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "0 H/s Stat file" }))
@@ -577,7 +578,7 @@ Function Start-APIServer {
                                     }
                                     Break
                                 }
-                                If ($Parameters.Value) { $TempStats = @($Stats.psBase.Keys.Where({ $_ -like "*_$($Parameters.Type)" -and  $Stats[$_].Live -eq $Parameters.Value }).ForEach({ $Stats[$_] })) }
+                                If ($Parameters.Value) { $TempStats = @($Stats.psBase.Keys.Where({ $_ -like "*_$($Parameters.Type)" -and $Stats[$_].Live -eq $Parameters.Value }).ForEach({ $Stats[$_] })) }
                                 Else { $TempStats = @( (Get-ChildItem -Path ".\Stats\*_$($Parameters.Type).txt").BaseName.ForEach({ $Stats[$_] })) }
                                 If ($TempStats) { 
                                     $Data = @()
@@ -609,7 +610,8 @@ Function Start-APIServer {
                                                 $Data += $_.Name
                                                 ForEach ($Algorithm in $_.Algorithms) { 
                                                     $StatName = "$($_.Name)_$($Algorithm)_$($Parameters.Type)"
-                                                    If ($Parameters.Value -eq 0) { # Miner failed
+                                                    If ($Parameters.Value -eq 0) {
+                                                        # Miner failed
                                                         Remove-Stat -Name $StatName
                                                         Set-Stat -Name $StatName -Value $Parameters.Value -FaultDetection $false | Out-Null
                                                         $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
@@ -762,6 +764,10 @@ Function Start-APIServer {
                             }
                             "/configrunning" { 
                                 $Data = ConvertTo-Json -Depth 10 ($Config | Get-SortedObject)
+                                Break
+                            }
+                            "/cpufeatures" { 
+                                $Data = ConvertTo-Json $Variables.CPUfeatures
                                 Break
                             }
                             "/currency" { 
@@ -945,7 +951,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/pools/unavailable" { 
-                                $Data = ConvertTo-Json -Depth 10  @($Variables.Pools.Where({ -not $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
+                                $Data = ConvertTo-Json -Depth 10 @($Variables.Pools.Where({ -not $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
                                 Break
                             }
                             "/pools/updated" { 
@@ -1026,7 +1032,7 @@ Function Start-APIServer {
                                         @{ Name = "LastSeen"; Expression = { "$($_.date)" } },
                                         @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
                                         @{ Name = "Miner"; Expression = { $_.data.name -join "<br>" } },
-                                        @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace "Internal$", " (Internal)" -replace "External", " (External)" })) -join " & "})) -join "<br>" } },
+                                        @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace "Internal$", " (Internal)" -replace "External", " (External)" })) -join " & " })) -join "<br>" } },
                                         @{ Name = "Status"; Expression = { $_.status } },
                                         @{ Name = "Version"; Expression = { $_.version } },
                                         @{ Name = "Worker"; Expression = { $_.worker } }
