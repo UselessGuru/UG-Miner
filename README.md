@@ -286,6 +286,7 @@ Easy configuration, easy start:
 Windows 10.x and PowerShell Version 7.x is required.
 
 UG-Miner works best with the latest PWSH version 7.4.4.
+
 [Download Installer for version 7.4.4](https://github.com/PowerShell/PowerShell/releases/download/v7.4.4/PowerShell-7.4.4-win-x64.msi)
 
 **Some miners may need 'Visual C+ RunTimes download/extract, run install_all.bat file**
