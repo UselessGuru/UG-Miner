@@ -143,7 +143,7 @@ Will mine anything
 
 UG-Miner can be controlled & configured through the Web GUI.  
 For most scenarios there is no need to edit configration files manually.  
-Some settings can be configured per [Advanced pool configuration](<https://github.com/UselessGuru/UG-Miner/edit/main/README.md#per-pool-config-advanced-edit-datapoolsconfig-templatejson-manually>).
+Some settings can be configured per advanced pool configuration](<https://github.com/UselessGuru/UG-Miner/blob/main/README.md#advanced-per-pool-configuration>)
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
 
