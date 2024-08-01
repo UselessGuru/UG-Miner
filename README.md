@@ -49,7 +49,7 @@ UG-Miner code is partly based on
 
 *****
 
-Easy configuration, easy start:
+**Easy configuration, easy start:**
 
       Run UG-Miner.bat
       1. Edit configuration (http://localhost:3999/configedit.html)
@@ -125,9 +125,9 @@ Easy configuration, easy start:
       normal - uses current price data in pool API to calculate profit (no estimates or advanced calculations)
 
 
-   Developer Donation
+**Developer Donation**
 
-      Donation fee is approx. 1% (15 minutes per day) anf can be increased or decreased in the configuration editor.
+      Donation fee is approx. 1% (15 minutes per day) and can be increased or decreased in the configuration editor.
       Please help support the great team behind UG-Miner by leaving mining donations turned on.
       We want to stay completely transparent on the way fees are managed in the product.
       Donation cycle occurs only once in 24hrs (or once until midnight if UG-Miner has been running less than 24hrs).
@@ -144,7 +144,7 @@ Easy configuration, easy start:
       All donation time and addresses are recorded in the domation log file '[UG-Miner directory]\Log\DonateLog.json'.
 
 
-   Web & Legacy GUI
+**Web & Legacy GUI**
 
       UG-Miner relies on config files. There is no need to edit bat files. Simply run UG-Miner.bat
       Set the config in the Web GUI (http://localhost:3999/configedit.html), apply & start mining.
@@ -153,13 +153,13 @@ Easy configuration, easy start:
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
 
 
-   Pause mining
+**Pause mining**
 
       Ability to pause miners while keeping other jobs running (pause button). This will stop mining activity.
       Brains will still run in the background avoiding the learning phase on resume.
       BalancesTracker will still run in the background to keep the pool balances up to date.
 
-   PreRun
+**PreRun**
 
       Ability to run a batch prior switching to a specific miner and/or algorithm.
       The prerun scripts can be used to set per miner/algorithm OC via nvidiaInspector or OverdriveNTool.
@@ -172,7 +172,7 @@ Easy configuration, easy start:
          If neither of the two above exist, UG-Miner will try to launch 'prerun\default.bat'
       Use overclock with caution
 
-   Per pool config (Advanced, see 'Data\PoolsConfig-Template.json')
+**Per pool config (Advanced, see 'Data\PoolsConfig-Template.json')**
 
       **This is for advanced users. Do not use if you do not know what you are doing.**
 
@@ -207,7 +207,7 @@ Easy configuration, easy start:
       Example scenario:
          - You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9
 
-   Pool Variants
+**Pool Variants**
 
    Poolnames ending in *24hr
 
@@ -224,7 +224,7 @@ Easy configuration, easy start:
       * show less switching than following current estimate and more switching than following the 24hr actual
       * better estimated profitability
 
-   Balances Tracking
+**Balances Tracking**
 
       Displays available balances and an estimation of when the pool payment threshold will be reached.
       Supported pools:
@@ -243,7 +243,8 @@ Easy configuration, easy start:
 
    Support for running multiple instances (not recommended)
 
-      **Experimental**
+**Experimental**
+
       More than one instance of UG-Miner can run on the same rig
       Each instance must be placed in its own directory
       Must use non-overlapping port ranges (configuration item '$APIport')
@@ -254,7 +255,7 @@ Easy configuration, easy start:
 
       A simple miner switching log in csv format  is writte to '[UG-Miner directory]\Logs\SwitchingLog.csv'.
 
-   Console Display Options
+**Console Display Options**
 
       Use -UIStyle light or -UIStyle full in config.json
          Full = Usual display (Default)
@@ -281,7 +282,7 @@ Easy configuration, easy start:
       w: Toggle 'PowerConsumption' column visibility (currently on)
       y: Toggle 'Currency' column visibility (currently on)
 
-***Requirements***
+**Requirements**
 
 Windows 10.x and PowerShell Version 7.x is required.
 
