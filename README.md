@@ -57,7 +57,7 @@ UG-Miner code is partly based on
 
    Run UG-Miner.bat
    1. Edit configuration (http://localhost:3999/configedit.html)
-   2. Set your Wallet address(es) and Username(s)
+   2. Set your wallet address(es) and username(s)
    3. Select your pool(s)
    4. Save configuration
    5. Start mining
