@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" }))) { Return } # Cuda error in func 'neoscrypt_hash_k4' at line 1518 : an illegal instruction was encountered on GTX 750
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerNeoscryptXaya/neoscryptxayaV02.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\ccminer.exe"
+$Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(

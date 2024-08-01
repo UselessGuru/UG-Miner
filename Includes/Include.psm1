@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -391,7 +391,7 @@ Class Miner {
 
         If ($this.Status -ne [MinerStatus]::DryRun) { 
 
-            $this.ProcessJob = Invoke-CreateProcess -BinaryPath $this.Path -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path $this.Path) -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile
+            $this.ProcessJob = Invoke-CreateProcess -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile
 
             # Sometimes the process cannot be found instantly
             $Loops = 100
@@ -2485,7 +2485,7 @@ Function Get-Device {
                     If ($_.Type -eq "GPU") { 
                         If ($_.Vendor -eq "NVIDIA") { 
                             $_ | Add-Member "Architecture" (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability)
-                        } 
+                        }
                         ElseIf ($_.Vendor -eq "AMD") { 
                             $_ | Add-Member "Architecture" (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture)
                         }
@@ -2696,7 +2696,7 @@ public static class Kernel32
         $ProcessInfo = New-Object PROCESS_INFORMATION
 
         # Call CreateProcess
-        [Void][Kernel32]::CreateProcess($BinaryPath, "$BinaryPath $ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
+        [Void][Kernel32]::CreateProcess($BinaryPath, "$BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
         $Process = Get-Process -Id $ProcessInfo.dwProcessId
         If ($null -eq $Process) { 
             [PSCustomObject]@{ ProcessId = $null }
@@ -3010,7 +3010,7 @@ Function Test-Prime {
     )
 
     If ($Number -lt 2) { Return $false }
-    If ($Number -eq 2) { Return $true } 
+    If ($Number -eq 2) { Return $true }
 
     $PowNumber = [Int64][Math]::Pow($Number, 0.5)
     For ([Int64]$I = 3; $I -lt $PowNumber; $I += 2) { If ($Number % $I -eq 0) { Return $false } }

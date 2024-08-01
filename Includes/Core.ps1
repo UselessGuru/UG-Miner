@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 using module .\Include.psm1
@@ -683,7 +683,7 @@ Do {
                                 # Need $Miner.MinDataSample shares before adjusting hashrate
                                 $Factor = (1 - $MinerData.$Algorithm[1] / $MinerData.$Algorithm[3])
                                 $MinerHashrates.$Algorithm *= $Factor
-                            } 
+                            }
                             Else { 
                                 $Factor = 1
                             }
@@ -811,7 +811,7 @@ Do {
                                     }
                                     Else { 
                                         If ($_.SideIndicator -eq "=>") { 
-                                            $_.CommandLine = $_.GetCommandLine().Replace("$PWD\", "")
+                                            $_.CommandLine = $_.GetCommandLine()
                                             # These properties need to be set only once because they are not dependent on any config or pool information
                                             $_.BaseName, $_.Version = ($_.Name -split "-")[0, 1]
                                             $_.Algorithms = $_.Workers.Pool.Algorithm
@@ -822,7 +822,7 @@ Do {
                                             # Update existing miners
                                             If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
                                                 $_.Arguments = $Miner.Arguments
-                                                $_.CommandLine = $Miner.GetCommandLine().Replace("$PWD\", "")
+                                                $_.CommandLine = $Miner.GetCommandLine()
                                                 $_.Port = $Miner.Port
                                             }
                                             $_.PrerequisitePath = $Miner.PrerequisitePath
@@ -917,7 +917,7 @@ Do {
                 If (Get-Command Get-MpPreference) { 
                     If ((Get-Command Get-MpComputerStatus) -and (Get-MpComputerStatus)) { 
                         If (Get-Command Get-NetFirewallRule) { 
-                            If ($MissingFirewallRules = (Compare-Object @(Get-NetFirewallApplicationFilter | Select-Object -ExpandProperty Program -Unique) @($Miners | Select-Object -ExpandProperty Path -Unique) -PassThru).Where({ $_.SideIndicator -eq "=>" })) { 
+                            If ($MissingFirewallRules = (Compare-Object @(Get-NetFirewallApplicationFilter | Select-Object -ExpandProperty Program -Unique) @(($Miners | Select-Object -ExpandProperty Path -Unique).ForEach({ "$PWD\$($_)" })) -PassThru).Where({ $_.SideIndicator -eq "=>" })) { 
                                 Try { 
                                     If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to add $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" })..." }
                                     Start-Process "pwsh" ("-Command Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json) | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' }" -replace '"', '\"') -Verb runAs
@@ -1398,7 +1398,7 @@ Do {
         }
 
         $Variables.RunningMiners = $Variables.MinersBest | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption
-        $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
+        $Variables.BenchmarkingOrMeasuringMiners = $Variables.RunningMiners.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
         $Variables.FailedMiners = [Miner[]]@()
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
@@ -1484,7 +1484,7 @@ Do {
                 Remove-Variable Miner, Sample, Samples -ErrorAction Ignore
 
                 $Variables.RunningMiners = $Variables.RunningMiners.Where({ $_ -notin $Variables.FailedMiners })
-                $Variables.BenchmarkingOrMeasuringMiners = $Variables.RunningMiners.Where({ $_.Activated -gt 0 -and ($_.Benchmark -or $_.MeasurePowerConsumption) })
+                $Variables.BenchmarkingOrMeasuringMiners = $Variables.RunningMiners.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
 
                 If ($Variables.FailedMiners) { 
                     # A miner crashed , exit loop immediately
@@ -1537,7 +1537,6 @@ Do {
     Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
 
     $Error.Clear()
-    [System.GC]::Collect()
 
     $Variables.RestartCycle = $true
 

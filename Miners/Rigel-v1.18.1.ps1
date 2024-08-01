@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 # Return 
@@ -26,7 +26,7 @@ If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapabili
 
 $URI = "https://github.com/rigelminer/rigel/releases/download/1.18.1/rigel-1.18.1-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\Rigel.exe"
+$Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
  
 $Algorithms = @(

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 Param(
@@ -75,7 +75,7 @@ If ($DivisorMultiplier -and $Regions) {
         If ($Request.$Pool.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
 
         # Cannot cast negative values to [UInt]
-        If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 } 
+        If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Pool.$PriceField / $Divisor) -FaultDetection $false

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -58,7 +58,7 @@ Function Set-TableColor {
         ForEach ($Row in $DataGridView.Rows) { 
             If ($LegacyGUIcolors[$Row.DataBoundItem.SubStatus]) { 
                 $Row.DefaultCellStyle.Backcolor = $LegacyGUIcolors[$Row.DataBoundItem.SubStatus]
-            } 
+            }
         }
     }
 }
@@ -428,8 +428,8 @@ Function Update-TabControl {
                 If ($Config.UsemBTC) { 
                     $Factor = 1000
                     $Unit = "mBTC"
-                    }
-                    Else { 
+                }
+                Else { 
                     $Factor = 1
                     $Unit = "BTC"
                 }
@@ -678,20 +678,18 @@ Function Update-GUIstatus {
                 $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is suspended"
                 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 $LegacyGUIminingSummaryLabel.Text = "Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
-                $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::blue
+                $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
             }
             Else { 
                 $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is running"
                 $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Green
             }
-            $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
             If (-not $LegacyGUIminingSummaryLabel.Text) { $LegacyGUIminingSummaryLabel.Text = "Starting mining processes..." }
             $LegacyGUIbuttonPause.Enabled = $true
             $LegacyGUIbuttonStart.Enabled = $false
             $LegacyGUIbuttonStop.Enabled = $true
         }
     }
-    Update-TabControl
 
     $Variables.TextBoxSystemLog.ScrollToCaret()
 }
@@ -771,8 +769,6 @@ $LegacyGUIbuttonPause.Width = 100
 $LegacyGUIbuttonPause.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Paused") { 
-            # $Variables.Summary = "'Pause mining' button pressed.<br>Pausing $($Variables.Branding.ProductLabel)..."
-            # Write-Message -Level Info "'Pause mining' button pressed. Pausing $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Paused"
             $Variables.RestartCycle = $true
         }
@@ -791,8 +787,6 @@ $LegacyGUIbuttonStart.Width = 100
 $LegacyGUIbuttonStart.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace -eq "Idle") { 
-            # $Variables.Summary = "Start mining' button clicked.<br>Starting $($Variables.Branding.ProductLabel)..."
-            # Write-Message -Level Info "'Start mining' button clicked. Starting $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Running"
             $Variables.RestartCycle = $true
         }
@@ -811,8 +805,6 @@ $LegacyGUIbuttonStop.Width = 100
 $LegacyGUIbuttonStop.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Idle") { 
-            # $Variables.Summary = "'Stop mining' button clicked.<br>Stopping $($Variables.Branding.ProductLabel)..."
-            # Write-Message -Level Info "'Stop mining' button clicked. Stopping $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"
             $Variables.RestartCycle = $true
         }
@@ -1656,9 +1648,6 @@ $LegacyGUIform.Add_Load(
         $LegacyGUIminingSummaryLabel.SendToBack()
         (($Variables.Summary -replace "Power Cost", "<br>Power Cost" -replace " / ", "/" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
         $LegacyGUIminingSummaryLabel.Text += "`r`n "
-        If (-not $Variables.MinersBest) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
-        ElseIf ($Variables.MiningProfit -ge 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
-        ElseIf ($Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
 
         $TimerUI = New-Object System.Windows.Forms.Timer
         $TimerUI.Interval = 100

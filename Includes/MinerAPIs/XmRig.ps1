@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 Class XmRig : Miner { 
@@ -47,29 +47,28 @@ Class XmRig : Miner {
                     }
                     #Temporarily start miner with pre-config file (without threads config). Miner will then update hw config file with threads info
                     $Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -ErrorAction Ignore
-                    $this.Process = Invoke-CreateProcess -BinaryPath $this.Path -ArgumentList $Parameters.HwDetectArguments -WorkingDirectory (Split-Path $this.Path) -MinerWindowStyle $this.MinerWindowStyle -Priority $this.ProcessPriority -EnvBlock $this.Environment -JobName $this.Info -LogFile $this.LogFile
+                    $this.ProcessJob = Invoke-CreateProcess -BinaryPath "$PWD\$($this.Path)" -ArgumentList $Parameters.HwDetectArguments -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -MinerWindowStyle $this.MinerWindowStyle -Priority $this.ProcessPriority -EnvBlock $this.Environment -JobName $this.Info -LogFile $this.LogFile
 
-                    If ($this.Process) { 
-                        $this.ProcessId = [Int32](((Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -eq $this.Path -and $_.CommandLine -like "*$($this.Path)*$($Parameters.HwDetectArguments)*" })).ProcessId)
-                        For ($WaitForThreadsConfig = 0; $WaitForThreadsConfig -le 60; $WaitForThreadsConfig ++) { 
-                            If ($ThreadsConfig = @([System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads) { 
-                                If ($this.Type -contains "CPU") { 
-                                    ConvertTo-Json -InputObject @($ThreadsConfig | Select-Object -Unique) -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -Encoding -ErrorAction Ignore
+                    # Sometimes the process cannot be found instantly
+                    $Loops = 100
+                    Do { 
+                        If ($this.ProcessId = ($this.ProcessJob | Receive-Job -Keep | Select-Object -ExpandProperty ProcessId)) { 
+                            If (Test-Path -LiteralPath $ThreadsConfigFile -PathType Leaf) { 
+                                If ($ThreadsConfig = @([System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads) { 
+                                    If ($this.Type -contains "CPU") { 
+                                        ConvertTo-Json -InputObject @($ThreadsConfig | Select-Object -Unique) -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -Encoding -ErrorAction Ignore
+                                    }
+                                    Else { 
+                                        ConvertTo-Json -InputObject @($ThreadsConfig | Sort-Object -Property Index -Unique) -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -ErrorAction Ignore
+                                    }
+                                    Break
                                 }
-                                Else { 
-                                    ConvertTo-Json -InputObject @($ThreadsConfig | Sort-Object -Property Index -Unique) -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -ErrorAction Ignore
-                                }
-                                Break
                             }
-                            Start-Sleep -Milliseconds 500
                         }
-                        Stop-Process -Id $this.ProcessId -Force
-                        $this.Process = $null
-                    }
-                    Else { 
-                        Write-Message -Level Error "Running temporary miner failed - cannot create threads config files for '$($this.Info)' [Error: '$($Error | Select-Object -First 1)']."
-                        Return
-                    }
+                        $Loops --
+                        Start-Sleep -Milliseconds 50
+                    } While ($Loops -gt 0)
+                    Remove-Variable Loops
                 }
 
                 If (-not (([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads)) { 

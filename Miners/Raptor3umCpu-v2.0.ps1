@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 $URI = "https://github.com/Raptor3um/cpuminer-opt/releases/download/v2.0/cpuminer-take2-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\cpuminer-aes-sse42.exe" # Intel
+$Path = "Bin\$Name\cpuminer-aes-sse42.exe" # Intel
 
 $Algorithms = @(
     @{ Algorithm = "Ghostrider"; MinerSet = 1; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo gr" }
@@ -37,10 +37,10 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 If ($Algorithms) { 
 
-    If ($AvailableMinerDevices.CPUfeatures -match 'avx2')     { $Path = "$PWD\Bin\$Name\cpuminer-avx2.exe" }
-    ElseIf ($AvailableMinerDevices.CPUfeatures -match 'avx')  { $Path = "$PWD\Bin\$Name\cpuminer-avx.exe" }
-    ElseIf ($AvailableMinerDevices.CPUfeatures -match 'aes')  { $Path = "$PWD\Bin\$Name\cpuminer-aes-sse42.exe" }
-    ElseIf ($AvailableMinerDevices.CPUfeatures -match 'sse2') { $Path = "$PWD\Bin\$Name\cpuminer-sse2.exe" }
+    If ($AvailableMinerDevices.CPUfeatures -match 'avx2')     { $Path = "Bin\$Name\cpuminer-avx2.exe" }
+    ElseIf ($AvailableMinerDevices.CPUfeatures -match 'avx')  { $Path = "Bin\$Name\cpuminer-avx.exe" }
+    ElseIf ($AvailableMinerDevices.CPUfeatures -match 'aes')  { $Path = "Bin\$Name\cpuminer-aes-sse42.exe" }
+    ElseIf ($AvailableMinerDevices.CPUfeatures -match 'sse2') { $Path = "Bin\$Name\cpuminer-sse2.exe" }
     Else { Return }
 
     $MinerAPIPort = $Config.APIPort + ($AvailableMinerDevices.Id | Sort-Object -Top 1) + 1

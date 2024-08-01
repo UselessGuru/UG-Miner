@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 Class Fireice : Miner { 
@@ -46,12 +46,12 @@ Class Fireice : Miner {
                 }
 
                 # Temporarily start miner with empty thread conf file. The miner will then create a hw config file with default threads info for all platform hardware
-                $this.ProcessJob = Invoke-CreateProcess -BinaryPath $this.Path -ArgumentList $Parameters.HwDetectArguments -WorkingDirectory (Split-Path $this.Path) -WindowStyle $this.WindowStyle -EnvBlock $this.Environment -JobName $this.Info -LogFile $this.LogFile
+                $this.ProcessJob = Invoke-CreateProcess -BinaryPath "$PWD\$($this.Path)" -ArgumentList $Parameters.HwDetectArguments -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Info -LogFile $this.LogFile
 
                 # Sometimes the process cannot be found instantly
                 $Loops = 100
                 Do { 
-                    If ($this.ProcessId = ($this.ProcessJob | Receive-Job | Select-Object -ExpandProperty ProcessId)) { 
+                    If ($this.ProcessId = ($this.ProcessJob | Receive-Job -Keep | Select-Object -ExpandProperty ProcessId)) { 
                         If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
                             # Read hw config created by miner
                             $ThreadsConfig = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) -replace '^\s*//.*' | Out-String
@@ -72,14 +72,14 @@ Class Fireice : Miner {
                 Remove-Variable Loops
 
                 If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
-                    If ($this.Process) { 
-                        $this.Process.CloseMainWindow()
-                        $this.Process = $null
+                    If ($this.ProcessId) { 
+                        If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore | Out-Null }
+                        $this.ProcessId = $null
                     }
 
-                    If ($this.ProcessId) { 
-                        If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore }
-                        $this.ProcessId = $null
+                    If ($this.Process) { 
+                        [Void]$this.Process.CloseMainWindow()
+                        $this.Process = $null
                     }
                 }
                 Else { 

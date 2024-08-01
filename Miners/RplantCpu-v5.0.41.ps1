@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -26,11 +26,11 @@ If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq
 $URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.41/cpuminer-opt-win-5.0.41.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-If ($AvailableMinerDevices.CPUfeatures -match "avx512")   { $Path = "$PWD\Bin\$Name\cpuminer-Avx512.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx2") { $Path = "$PWD\Bin\$Name\cpuminer-Avx2.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx")  { $Path = "$PWD\Bin\$Name\cpuminer-Avx.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "aes")  { $Path = "$PWD\Bin\$Name\cpuminer-Aes-Sse42.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "sse2") { $Path = "$PWD\Bin\$Name\cpuminer-Sse2.exe" }
+If ($AvailableMinerDevices.CPUfeatures -match "avx512")   { $Path = "Bin\$Name\cpuminer-Avx512.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx2") { $Path = "Bin\$Name\cpuminer-Avx2.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx")  { $Path = "Bin\$Name\cpuminer-Avx.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "aes")  { $Path = "Bin\$Name\cpuminer-Aes-Sse42.exe" }
+ElseIf ($AvailableMinerDevices.CPUfeatures -match "sse2") { $Path = "Bin\$Name\cpuminer-Sse2.exe" }
 Else { Return }
 
 $Algorithms = @(
@@ -90,7 +90,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Qubit";         MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo qubit" } # ASIC
     @{ Algorithm = "Qureno";        MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo qureno" } # GPU
 #   @{ Algorithm = "X11";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();        Srguments = " --algo x11" } # ASIC, algorithm not supported
-    @{ Algorithm = "X22";           MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo x22" } 
+    @{ Algorithm = "X22";           MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();        Arguments = " --algo x22" }
     @{ Algorithm = "Yescrypt";      MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();        Arguments = " --algo yescrypt" }
     @{ Algorithm = "YescryptR16";   MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yescryptr16" } # CcminerLyraYesscrypt-v8.21r18v5 is faster
     @{ Algorithm = "YescryptR8";    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();        Arguments = " --algo yescryptr8" } # CcminerLyraYesscrypt-v8.21r18v5 is faster

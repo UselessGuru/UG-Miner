@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 Function Start-APIServer { 
@@ -322,7 +322,7 @@ Function Start-APIServer {
                                             }
                                             Else { 
                                                 $_.State = [DeviceState]::Enabled
-                                                If ($_.Status -like "*; will get disabled at end of cycle") { $_.Status = $_.Status -replace "; will get disabled at end of cycle" } 
+                                                If ($_.Status -like "*; will get disabled at end of cycle") { $_.Status = $_.Status -replace "; will get disabled at end of cycle" }
                                                 If ($_.Status -like "Disabled *") { $_.Status = "Idle" }
                                             }
                                         }

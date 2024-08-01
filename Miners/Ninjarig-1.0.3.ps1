@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.21
-Version date:   2024/07/30
+Version:        6.2.22
+Version date:   2024/08/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
 $URI = "https://github.com/UselessGuru/miner-binaries/releases/download/v1.0.3/ninjarig_v1.0.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "$PWD\Bin\$Name\ninjarig.exe"
+$Path = "Bin\$Name\ninjarig.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
@@ -51,7 +51,7 @@ If ($Algorithms) {
                     # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                        If ("MiningPoolHub", "NiceHash", "ProHashing" -contains $Pool.Name) { $Arguments += " --nicehash" } 
+                        If ("MiningPoolHub", "NiceHash", "ProHashing" -contains $Pool.Name) { $Arguments += " --nicehash" }
                         If ($Pool.PoolPorts[1]) { $Arguments += " --tls" }
 
                         [PSCustomObject]@{ 

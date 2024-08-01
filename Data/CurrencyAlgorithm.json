@@ -304,6 +304,7 @@
   "RXD": "SHA512256d",
   "RYO": "CryptonightGpu",
   "SAFE": "Equihash1927",
+  "SAL": "RandomX",
   "SATOX": "KawPow",
   "SCASH": "RandomxScash",
   "SCC": "SCCpow",
