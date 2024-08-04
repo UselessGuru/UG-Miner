@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 Return # Bad shares
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type } ))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
     { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/SCCminer/sccminer-1.1.0-Windows.zip" }
@@ -54,7 +54,7 @@ If ($Algorithms) {
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
+                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB

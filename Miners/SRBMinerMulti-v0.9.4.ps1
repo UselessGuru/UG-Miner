@@ -17,11 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.Architecture -eq "Other" }))) { Return }
+# Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.Architecture -match "GCN[1-3]" }))) { Return }
 
 $URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/0.9.4/SRBMiner-Multi-0-9-4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -89,7 +90,7 @@ If ($Algorithms) {
                     }
 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
+                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 Function Start-APIServer { 

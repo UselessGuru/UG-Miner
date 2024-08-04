@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") }))) { Return }
@@ -60,9 +60,11 @@ If ($Algorithms) {
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $MinComputeCapability = $_.MinComputeCapability
                     If ($SupportedMinerDevices = $MinerDevices.Where({ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+                        # Apply tuning parameters
+                        If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                             # Windows 10 requires more memory on some algos
@@ -91,9 +93,6 @@ If ($Algorithms) {
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes
                                 $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
-
-                                # Apply tuning parameters
-                                If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "NBMiner"

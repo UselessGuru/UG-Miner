@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -33,7 +33,7 @@ $Algorithms = @(
     @{ Algorithm = "Ethash";       MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo ETHASH -intensity 15" }
     @{ Algorithm = "KawPow";       MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(90, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo KAWPOW" }
 #   @{ Algorithm = "Lyra2RE3";     MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo LYRA2V3" } # ASIC
-    @{ Algorithm = "MTP";          MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
+#   @{ Algorithm = "MTP";          MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
     @{ Algorithm = "ProgPowEpic";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -coin EPIC" }
     @{ Algorithm = "ProgPowSero";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -coin SERO" }
     @{ Algorithm = "ProgPowVeil";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -coin VEIL" }
@@ -62,11 +62,11 @@ If ($Algorithms) {
                     # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools -and $_.Algorithm -notin @("Ethash", "KawPow") -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGSizeGiB -lt 4) })) { 
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Algorithm -notin @("Ethash", "KawPow") -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGSizeGiB -lt 4) })) { 
+                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name -and $_.Algorithm -notin @("Ethash", "KawPow") -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGSizeGiB -lt 4) })) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and "Ethash", "KawPow" -notcontains $_.Algorithm -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGSizeGiB -lt 4) })) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
-                            If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB }) ) { 
+                            If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
@@ -74,7 +74,7 @@ If ($Algorithms) {
                                 If ("CLO", "ETC", "ETH", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZANO", "ZCOIN", "ZELS" -contains $Pool.Currency) { 
                                     $Arguments = " -coin $($Pool.Currency)$($_.Arguments -replace ' -algo \w+')"
                                 }
-                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace ' -intensity [0-9\.]+' }
+                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9\.]+" }
 
                                 $Arguments += If ($Pool.Protocol -like "ethproxy*" -or $_.Algorithm -eq "ProgPowZ") { " -pool stratum1+tcp://" } Else { " -pool stratum+tcp://" }
                                 $Arguments += "$($Pool.Host):$($Pool.PoolPorts[0]) -user $($Pool.User)"

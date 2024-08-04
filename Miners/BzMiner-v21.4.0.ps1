@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
@@ -106,8 +106,8 @@ If ($Algorithms) {
                     If ($SupportedMinerDevices = $MinerDevices.Where({ (-not $ExcludeGPUmodel -or $_.Model -notmatch $ExcludeGPUmodel) -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
@@ -149,7 +149,7 @@ If ($Algorithms) {
                                     $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
 
                                     # Apply tuning parameters
-                                    If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
+                                    If ($Variables.ApplyMinerTweaks) { $Arguments += $_.Tuning }
 
                                     [PSCustomObject]@{ 
                                         API              = "BzMiner"

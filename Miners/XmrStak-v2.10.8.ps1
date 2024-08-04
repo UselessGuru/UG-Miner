@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -114,7 +114,7 @@ If ($Algorithms) {
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
+                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm] | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
 
                             # Note: For fine tuning directly edit the config files in the miner binary directory

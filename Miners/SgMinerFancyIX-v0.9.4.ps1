@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { Return }
@@ -53,12 +53,12 @@ If ($Algorithms) {
                     # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $MinMemGiB = $_.MinMemGiB
                     If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
-                    # If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notin $ExcludeGPUarchitectures } )) { 
+                    # If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
 
                             [PSCustomObject]@{ 
                                 API         = "Xgminer"

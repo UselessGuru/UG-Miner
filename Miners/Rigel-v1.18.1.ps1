@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 # Return 
@@ -99,8 +99,8 @@ If ($Algorithms) {
                     # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] })) { 
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
                                 $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB
@@ -109,7 +109,7 @@ If ($Algorithms) {
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                     $Arguments = $_.Arguments
-                                    If ("ABEL","AIPG","ALPH","CFX","CLORE","ERGO","ETC.ETHW","GRAM","HYP","IRON","KLS","NEOX","NEXA","NX","OCTA","PYI","RXD","XEL","XNA","XPB","ZIL" -contains $Pool0.Currency) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
+                                    If ("ABEL", "AIPG", "ALPH", "CFX", "CLORE", "ERGO", "ETC", "ETHW", "GRAM", "HYP", "IRON", "KLS", "NEOX", "NEXA", "NX", "OCTA", "PYI", "RXD", "XEL", "XNA", "XPB", "ZIL" -contains $Pool0.Currency) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
 
                                     $Index = 1
                                     ForEach ($Pool in $Pools) { 
@@ -136,7 +136,7 @@ If ($Algorithms) {
                                     $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
 
                                     # Apply tuning parameters
-                                    If ($Variables.UseMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments += $_.Tuning }
+                                    If ($Variables.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments += $_.Tuning }
 
                                     [PSCustomObject]@{ 
                                         API         = "Rigel"

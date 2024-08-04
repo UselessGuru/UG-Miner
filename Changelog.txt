@@ -3,6 +3,24 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.2.23 2024/08/04
+====================================
+
+Changes:
+- Rework 'README.md'
+
+Enhancements:
+- Core: Remove obsolete code & minor code optimizations
+- Miners: Minor code optimizations when reading miner objects
+
+Fixes:
+- Core: Miners not getting stopped when idle detection stops mining
+- Web GUI: Watchdog timer table not getting cleared when no watchdog timers exist
+
+Miner changes:
+- SRBMinerMulti-v2.6.0
+
+
 Changelog UG-Miner 6.2.22 2024/08/01
 ====================================
 

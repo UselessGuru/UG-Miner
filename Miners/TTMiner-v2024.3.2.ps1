@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
 If (($Variables.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { Return }
-If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type } ))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
     { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.3.2/TT-Miner-2024.3.2.zip" }
@@ -105,7 +105,7 @@ If ($Algorithms) {
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })) { 
+                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
@@ -119,17 +119,17 @@ If ($Algorithms) {
                                 Else { 
                                     $Arguments = $_.Arguments
                                 }
-                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace ' -intensity [0-9\.]+' }
+                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9\.]+" }
                                 $Arguments += " -o $(If ($_.Algorithm -match "^Ethash") { "stratum+" })$(If ($Pool.PoolPorts[1]) { "ssl://" } Else { "tcp://" })$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
                                 $Arguments += " -u $($Pool.User)"
                                 If ($Pool.Pass) { $Arguments += " -p $($Pool.Pass)" }
                                 If ($Pool.WorkerName) { $Arguments += " -w $($Pool.WorkerName)" }
 
-                                    # Allow more time to build larger DAGs, must use type cast to keep values in $_
-                                    $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                    $WarmupTimes[0] += [UInt16]($Pool.DAGSizeGiB * 5)
+                                # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                                $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                                $WarmupTimes[0] += [UInt16]($Pool.DAGSizeGiB * 5)
 
-                                    [PSCustomObject]@{ 
+                                [PSCustomObject]@{ 
                                     API         = "EthMiner"
                                     Arguments   = "$Arguments -report-average 5 -report-interval 5$(If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(If ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))" } Else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" })"
                                     DeviceNames = $AvailableMinerDevices.Name

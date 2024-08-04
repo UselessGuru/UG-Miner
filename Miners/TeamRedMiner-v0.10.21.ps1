@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
@@ -77,7 +77,7 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashPyrin");                   Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=pyrin" }
 #   @{ Algorithms = @("Lyra2Z");                           Fee = @(0.03);       MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=lyra2z" } # ASIC
 #   @{ Algorithms = @("Lyra2RE3");                         Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=lyra2rev3" } # ASIC
-    @{ Algorithms = @("MTP");                              Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = @("GCN1", "RDNA3");                   ExcludePools = @(@(), @());           Arguments = " --algo=mtp" } # Algorithm is dead
+#   @{ Algorithms = @("MTP");                              Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = @("GCN1", "RDNA3");                   ExcludePools = @(@(), @());           Arguments = " --algo=mtp" } # Algorithm is dead
     @{ Algorithms = @("Nimiq");                            Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA3");                   ExcludePools = @(@(), @());           Arguments = " --algo=nimiq" }
     @{ Algorithms = @("Phi2");                             Fee = @(0.03);       MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=phi2" }
     @{ Algorithms = @("VertHash");                         Fee = @(0.02);       MinMemGiB = 4.0;  MinerSet = 1; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = @("GCN1");                            ExcludePools = @(@(), @());           Arguments = " --algo=verthash --verthash_file=..\.$($Variables.VerthashDatPath)" }
@@ -115,8 +115,8 @@ If ($Algorithms) {
                         }
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 

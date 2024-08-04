@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 using module .\Include.psm1
@@ -81,7 +81,7 @@ Do {
         $Variables.PoolsConfig = $Config.PoolsConfig.Clone()
 
         # Tuning parameters require local admin rights
-        $Variables.UseMinerTweaks = $Variables.IsLocalAdmin -and $Config.UseMinerTweaks
+        $Variables.ApplyMinerTweaks = $Variables.IsLocalAdmin -and $Config.UseMinerTweaks
 
         Write-Message -Level Info "Started new cycle."
 
@@ -592,7 +592,7 @@ Do {
             # Ensure we get the hashrate for running miners prior looking for best miner
             ForEach ($Miner in $Variables.MinersBest | Sort-Object { [String]$_.DeviceNames }) { 
                 If ($Miner.DataReaderJob.HasMoreData -and $Miner.Status -ne [MinerStatus]::DryRun) { 
-                    If ($Samples = @($Miner.DataReaderJob | Receive-Job | Select-Object)) { 
+                    If ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.Date })) { 
                         $Sample = $Samples[-1]
                         If ([Math]::Floor(($Sample.Date - $Miner.ValidDataSampleTimestamp).TotalSeconds) -ge 0) { $Samples.ForEach({ $Miner.Data.Add($_) }) }
                         $Miner.Hashrates_Live = $Sample.Hashrate.PSObject.Properties.Value
@@ -1427,7 +1427,7 @@ Do {
                     }
                     Else { 
                         If ($Miner.DataReaderJob.HasMoreData) { 
-                            If ($Samples = @($Miner.DataReaderJob | Receive-Job | Select-Object)) { 
+                            If ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.Date })) { 
                                 $Sample = $Samples[-1]
                                 $Miner.Hashrates_Live = $Sample.Hashrate.PSObject.Properties.Value
                                 $Miner.DataSampleTimestamp = $Sample.Date

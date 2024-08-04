@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; MinerSet = 1; WarmupTimes = @(90, 300); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v2.5.9 is fastest, but has 0.85% miner fee
+    @{ Algorithm = "VerusHash"; MinerSet = 1; WarmupTimes = @(90, 300); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v2.6.0 is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -45,7 +45,7 @@ If ($Algorithms) {
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $_.Name -notin $ExcludePools })) { 
+            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"

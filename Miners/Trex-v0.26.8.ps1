@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -41,7 +41,7 @@ $Algorithms = @(
     @{ Algorithms = @("Ethash", "Octopus");    Fee = @(0.01, 0.02); MinMemGiB = 8;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo octopus --lhr-tune -1" }
     @{ Algorithms = @("FiroPow");              Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow --intensity 25" }
     @{ Algorithms = @("KawPow");               Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.21.3.15 is almost as fast but has no fee
-    @{ Algorithms = @("MTP");                  Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
+#   @{ Algorithms = @("MTP");                  Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
     @{ Algorithms = @("MTPTcr");               Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp-tcr --intensity 21" }
     @{ Algorithms = @("Multi");                Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo multi --intensity 25" }
     @{ Algorithms = @("Octopus");              Fee = @(0.02);       MinMemGiB = 1.08; MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo octopus" } # 6GB is not enough
@@ -67,10 +67,13 @@ If ($Algorithms) {
 
             $Algorithms.ForEach(
                 { 
+                    # Apply tuning parameters
+                    If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                    # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
                     ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({  $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
-                        # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                        # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
                         ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
@@ -78,7 +81,7 @@ If ($Algorithms) {
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace ' --intensity [0-9\.]+' }
+                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity [0-9\.]+" }
 
                                 $Arguments = $_.Arguments
                                 $Arguments += Switch ($Pool0.Protocol) { 
@@ -110,9 +113,6 @@ If ($Algorithms) {
                                     $Arguments += " --pass2 $($Pool1.Pass)"
                                     If ($Pool1.WorkerName) { $Arguments += " --worker2 $($Pool1.WorkerName)" }
                                 }
-
-                                # Apply tuning parameters
-                                If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
                                 If ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
 

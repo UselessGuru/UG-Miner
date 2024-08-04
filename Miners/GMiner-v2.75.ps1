@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -48,8 +48,11 @@ If ($Algorithms) {
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
+                    # Apply tuning parameters
+                    If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools })) { 
+                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
@@ -65,9 +68,6 @@ If ($Algorithms) {
                             If ($Pool.DAGSizeGiB -ne $null -and "MiningPoolHub", "NiceHash", "ProHashing" -contains $Pool.Name) { $Arguments += " --proto stratum" }
                             If ($Pool.PoolPorts[1]) { $Arguments += " --ssl 1" }
                             If ($_.AutoCoinPers) { $Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers) }
-
-                            # Apply tuning parameters
-                            If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
                             # Contest ETH address (if ETH wallet is specified in config)
                             # $Arguments += If ($Config.Wallets.ETH) { " --contest_wallet $($Config.Wallets.ETH)" } Else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }

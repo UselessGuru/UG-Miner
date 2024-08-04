@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"11.6") }))) { Return }
@@ -101,6 +101,8 @@ If ($Algorithms) {
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUArchitectures
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+                        # Apply tuning parameters
+                        If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                         If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                             $PrerequisitePath = $Variables.VerthashDatPath
@@ -112,8 +114,8 @@ If ($Algorithms) {
                         }
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Name -notin $ExcludePools[0] })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $_.Name -notin $ExcludePools[1] })) { 
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
                                 # Dual algorithm mining: Both pools must support same protocol (SSL or non-SSL) :-(
                                 If (-not $_.Algorithms[1] -or ($Pool0.PoolPorts[0] -and $Pool1.PoolPorts[0]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { 
@@ -147,9 +149,6 @@ If ($Algorithms) {
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                         $WarmupTimes = [UInt16[]]$_.WarmupTimes
                                         $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 5)
-
-                                        # Apply tuning parameters
-                                        If ($Variables.UseMinerTweaks) { $Arguments += $_.Tuning }
 
                                         [PSCustomObject]@{ 
                                             API              = "TeamBlackMiner"

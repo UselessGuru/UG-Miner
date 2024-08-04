@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -476,7 +476,6 @@ Class Miner {
             $this.StatusInfo = "Idle"
             $this.SubStatus = $this.Status
         }
-        # $this.Data = [System.Collections.Generic.List[PSCustomObject]]@()
         $this.WorkersRunning = [Worker[]]@()
     }
 
@@ -817,26 +816,9 @@ Function Start-Core {
 
 Function Stop-Core { 
 
-    # Allow up to 30 seconds for all miners to get stopped
-    $Counter = 0
-    While ($Counter -lt 30 -and $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
-        Start-Sleep -Seconds 1
-        $Counter ++
-    }
-    Remove-Variable Counter
-
     If ($Global:CoreRunspace) { 
         $Global:CoreRunspace.PowerShell.Stop() | Out-Null
         $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.AsyncObject) | Out-Null
-
-        If ($Variables.NewMiningStatus -eq "Idle") { 
-            $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
-            $Variables.PoolsCount = 0
-            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBests = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
-            $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
-            $Variables.CycleStarts = @()
-            $Variables.Timer = $null
-        }
 
         $Variables.MinersBest = [Miner[]]@()
         $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
@@ -851,7 +833,89 @@ Function Stop-Core {
 
         $Global:CoreRunspace.Remove("PowerShell")
         Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
+
+        # Stop all running miners
+        ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
+            # $Miner.SetStatus([MinerStatus]::Idle) #  does not work here (still investigating)
+            $Miner.StatusInfo = "Stopping miner '$($Miner.Info)'..."
+            Write-Message -Level Info $Miner.StatusInfo
+
+            ForEach ($Worker in $Miner.WorkersRunning) { 
+                If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
+                    # Remove Watchdog timers
+                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
+                }
+            }
+            $Miner.SetStatus([MinerStatus]::Idle)
+            Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
+
+            $Miner.StopDataReader()
+
+            $Miner.EndTime = [DateTime]::Now.ToUniversalTime()
+
+            If ($Miner.ProcessId) { 
+                If (Get-Process -Id $Miner.ProcessId -ErrorAction Ignore) { Stop-Process -Id $Miner.ProcessId -Force -ErrorAction Ignore | Out-Null }
+                $Miner.ProcessId = $null
+            }
+
+            If ($Miner.Process) { 
+                [Void]$Miner.Process.CloseMainWindow()
+                $Miner.Process = $null
+            }
+
+            If ($Miner.ProcessJob) { 
+                Try { $Miner.Active += $Miner.ProcessJob.PSEndTime - $Miner.ProcessJob.PSBeginTime } Catch { }
+                $Miner.ProcessJob = $null
+            }
+
+            $Miner.Status = If ([MinerStatus]::Running, [MinerStatus]::DryRun -contains $Miner.Status) { [MinerStatus]::Idle } Else { [MinerStatus]::Failed }
+
+            # Log switching information to .\Logs\SwitchingLog
+            [PSCustomObject]@{ 
+                DateTime                = (Get-Date -Format o)
+                Action                  = If ($Miner.Status -eq [MinerStatus]::Idle) { "Stopped" } Else { "Failed" }
+                Name                    = $Miner.Name
+                Activated               = $Miner.Activated
+                Accounts                = $Miner.WorkersRunning.Pool.User -join " "
+                Algorithms              = $Miner.WorkersRunning.Pool.AlgorithmVariant -join " "
+                Benchmark               = $Miner.Benchmark
+                CommandLine             = $Miner.CommandLine
+                Cycle                   = $Miner.ContinousCycle
+                DeviceNames             = $Miner.DeviceNames -join " "
+                Duration                = "{0:hh\:mm\:ss}" -f ($Miner.EndTime - $Miner.BeginTime)
+                Earning                 = $Miner.Earning
+                Earning_Bias            = $Miner.Earning_Bias
+                LastDataSample          = $Miner.Data | Select-Object -Last 1 | ConvertTo-Json -Compress
+                MeasurePowerConsumption = $Miner.MeasurePowerConsumption
+                Pools                   = ($Miner.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
+                Profit                  = $Miner.Profit
+                Profit_Bias             = $Miner.Profit_Bias
+                Reason                  = If ($Miner.StatusInfo -and $Miner.Status -eq [MinerStatus]::Failed) { $Miner.StatusInfo -replace "'$($Miner.StatusInfo)' " } Else { "" }
+                Type                    = $Miner.Type
+            } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
+
+            If ($Miner.Status -eq [MinerStatus]::Idle) { 
+                $Miner.StatusInfo = "Idle"
+                $Miner.SubStatus = $Miner.Status
+            }
+            $Miner.WorkersRunning = [Worker[]]@()
+
+            $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+        }
+
+        If ($Variables.NewMiningStatus -eq "Idle") { 
+            $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
+            $Variables.PoolsCount = 0
+            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBests = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
+            $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
+            $Variables.CycleStarts = @()
+            $Variables.Timer = $null
+        }
+
+        # Refresh selected tab
+        If ($LegacyGUIform) { Update-TabControl }
     }
+
     [System.GC]::Collect()
 }
 
@@ -3065,9 +3129,6 @@ Function Update-DAGdata {
         }
     }
 
-    # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
-
     # Update on script start, once every 24hrs or if unable to get data from source
     $Url = "https://minerstat.com/dag-size-calculator"
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3107,9 +3168,6 @@ Function Update-DAGdata {
         }
     }
 
-    # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
-
     # Update on script start, once every 24hrs or if unable to get data from source
     $Url = "https://prohashing.com/api/v1/currencies"
     If ($Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3147,9 +3205,6 @@ Function Update-DAGdata {
         }
     }
 
-    # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
-
     # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "SCC"
     $Url = "https://www.coinexplorer.net/api/v1/SCC/getblockcount"
@@ -3175,9 +3230,6 @@ Function Update-DAGdata {
             Write-Message -Level Warn "Failed to load DAG data from '$Url'."
         }
     }
-
-    # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
     # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "EVR"
@@ -3207,9 +3259,6 @@ Function Update-DAGdata {
             }
         }
     }
-
-    # Faster shutdown
-    If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace.MiningStatus -eq "Idle") { Continue }
 
     $Currency = "MEWC"
     $Url = "https://mewc.cryptoscope.io/api/getblockcount"

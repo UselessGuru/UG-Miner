@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -296,47 +296,47 @@ Function Update-TabControl {
             If ($Config.BalancesTrackerPollInterval -gt 0) { 
                 If ($Variables.Balances) { 
                     $LegacyGUIbalancesLabel.Text = "Balances data updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())"
-
-                    $LegacyGUIbalancesDGV.BeginInit()
-                    $LegacyGUIbalancesDGV.ClearSelection()
-                    $LegacyGUIbalancesDGV.DataSource = $Variables.Balances.Values | Select-Object @(
-                        @{ Name = "Currency"; Expression = { $_.Currency } },
-                        @{ Name = "Pool [Currency]"; Expression = { "$($_.Pool) [$($_.Currency)]" } },
-                        @{ Name = "Balance ($($Config.MainCurrency))"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Balance * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                        @{ Name = "Avg. $($Config.MainCurrency)/day"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                        @{ Name = "$($Config.MainCurrency) in 1h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                        @{ Name = "$($Config.MainCurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                        @{ Name = "$($Config.MainCurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                        @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
-                        @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), ($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } }
-                    ) | Sort-Object -Property Pool | Out-DataTable
-
-                    If ($LegacyGUIbalancesDGV.Columns) { 
-                        $LegacyGUIbalancesDGV.Columns[0].Visible = $false
-                        $LegacyGUIbalancesDGV.Columns[1].FillWeight = 140 
-                        $LegacyGUIbalancesDGV.Columns[2].FillWeight = 90; $LegacyGUIbalancesDGV.Columns[2].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIbalancesDGV.Columns[3].FillWeight = 90; $LegacyGUIbalancesDGV.Columns[3].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIbalancesDGV.Columns[4].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIbalancesDGV.Columns[5].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIbalancesDGV.Columns[6].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIbalancesDGV.Columns[7].FillWeight = 80
-                        $LegacyGUIbalancesDGV.Columns[8].FillWeight = 100
-                    }
-                    $LegacyGUIbalancesDGV.Rows.ForEach(
-                        { 
-                            $_.Cells[2].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[2].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                            $_.Cells[3].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[3].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                            $_.Cells[4].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[4].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                            $_.Cells[5].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[5].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                            $_.Cells[6].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[6].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                        }
-                    )
-                    Resize-Form # To fully show lauched miners gridview
-                    $LegacyGUIbalancesDGV.EndInit()
                 }
                 Else { 
                     $LegacyGUIbalancesLabel.Text = "Waiting for balances data..."
                 }
+
+                $LegacyGUIbalancesDGV.BeginInit()
+                $LegacyGUIbalancesDGV.ClearSelection()
+                $LegacyGUIbalancesDGV.DataSource = $Variables.Balances.Values | Select-Object @(
+                    @{ Name = "Currency"; Expression = { $_.Currency } },
+                    @{ Name = "Pool [Currency]"; Expression = { "$($_.Pool) [$($_.Currency)]" } },
+                    @{ Name = "Balance ($($Config.MainCurrency))"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Balance * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                    @{ Name = "Avg. $($Config.MainCurrency)/day"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                    @{ Name = "$($Config.MainCurrency) in 1h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                    @{ Name = "$($Config.MainCurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                    @{ Name = "$($Config.MainCurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                    @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
+                    @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), ($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } }
+                ) | Sort-Object -Property Pool | Out-DataTable
+
+                If ($LegacyGUIbalancesDGV.Columns) { 
+                    $LegacyGUIbalancesDGV.Columns[0].Visible = $false
+                    $LegacyGUIbalancesDGV.Columns[1].FillWeight = 140 
+                    $LegacyGUIbalancesDGV.Columns[2].FillWeight = 90; $LegacyGUIbalancesDGV.Columns[2].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIbalancesDGV.Columns[3].FillWeight = 90; $LegacyGUIbalancesDGV.Columns[3].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIbalancesDGV.Columns[4].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIbalancesDGV.Columns[5].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIbalancesDGV.Columns[6].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIbalancesDGV.Columns[7].FillWeight = 80
+                    $LegacyGUIbalancesDGV.Columns[8].FillWeight = 100
+                }
+                $LegacyGUIbalancesDGV.Rows.ForEach(
+                    { 
+                        $_.Cells[2].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[2].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
+                        $_.Cells[3].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[3].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
+                        $_.Cells[4].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[4].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
+                        $_.Cells[5].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[5].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
+                        $_.Cells[6].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[6].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
+                    }
+                )
+                Resize-Form # To fully show lauched miners gridview
+                $LegacyGUIbalancesDGV.EndInit()
             }
             Else { 
                 $LegacyGUIbalancesLabel.Text = "BalanceTracker is disabled (Configuration item 'BalancesTrackerPollInterval' -eq 0)"
@@ -481,47 +481,45 @@ Function Update-TabControl {
 
         #         Read-MonitoringData | Out-Null
 
-        #         If ($Variables.Workers) { 
-        #             $nl = "`n" # Must use variable, cannot join with '`n' directly
+        #         If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status updated $($Variables.WorkersLastUpdated.ToString())" }
+        #         ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped" }
+        #         ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
+        #         Else  { $LegacyGUIworkersLabel.Text = "Waiting for data..." }
 
-        #             $LegacyGUIworkersDGV.BeginInit()
-        #             $LegacyGUIworkersDGV.ClearSelection()
-        #             $LegacyGUIworkersDGV.DataSource = $Variables.Workers | Select-Object @(
-        #                 @{ Name = "Worker"; Expression = { $_.worker } },
-        #                 @{ Name = "Status"; Expression = { $_.status } },
-        #                 @{ Name = "Last seen"; Expression = { (Get-TimeSince $_.date) } },
-        #                 @{ Name = "Version"; Expression = { $_.version } },
-        #                 @{ Name = "Currency"; Expression = { $_.data.Currency | Select-Object -Unique } },
-        #                 @{ Name = "Estimated earning/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Config.DecimalsMax)}" -f (($_.Data.Earning.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
-        #                 @{ Name = "Estimated profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Config.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
-        #                 @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } },
-        #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join $nl } },
-        #                 @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join " & " }) -join $nl } },
-        #                 @{ Name = "Live hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } },
-        #                 @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.EstimatedSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } }
-        #             ) | Sort-Object -Property "Worker" | Out-DataTable
-        #             If ($LegacyGUIworkersDGV.Columns) { 
-        #                 $LegacyGUIworkersDGV.Columns[0].FillWeight = 70
-        #                 $LegacyGUIworkersDGV.Columns[1].FillWeight = 60
-        #                 $LegacyGUIworkersDGV.Columns[2].FillWeight = 80
-        #                 $LegacyGUIworkersDGV.Columns[3].FillWeight = 70
-        #                 $LegacyGUIworkersDGV.Columns[4].FillWeight = 40
-        #                 $LegacyGUIworkersDGV.Columns[5].FillWeight = 65; $LegacyGUIworkersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
-        #                 $LegacyGUIworkersDGV.Columns[6].FillWeight = 65; $LegacyGUIworkersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
-        #                 $LegacyGUIworkersDGV.Columns[7].FillWeight = 150
-        #                 $LegacyGUIworkersDGV.Columns[8].FillWeight = 95
-        #                 $LegacyGUIworkersDGV.Columns[9].FillWeight = 75
-        #                 $LegacyGUIworkersDGV.Columns[10].FillWeight = 65; $LegacyGUIworkersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-        #                 $LegacyGUIworkersDGV.Columns[11].FillWeight = 65; $LegacyGUIworkersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
-        #             }
-        #             Set-WorkerColor
-        #             $LegacyGUIworkersDGV.EndInit()
+        #         $nl = "`n" # Must use variable, cannot join with '`n' directly
+
+        #         $LegacyGUIworkersDGV.BeginInit()
+        #         $LegacyGUIworkersDGV.ClearSelection()
+        #         $LegacyGUIworkersDGV.DataSource = $Variables.Workers | Select-Object @(
+        #             @{ Name = "Worker"; Expression = { $_.worker } },
+        #             @{ Name = "Status"; Expression = { $_.status } },
+        #             @{ Name = "Last seen"; Expression = { (Get-TimeSince $_.date) } },
+        #             @{ Name = "Version"; Expression = { $_.version } },
+        #             @{ Name = "Currency"; Expression = { $_.data.Currency | Select-Object -Unique } },
+        #             @{ Name = "Estimated earning/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Config.DecimalsMax)}" -f (($_.Data.Earning.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
+        #             @{ Name = "Estimated profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Config.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
+        #             @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } },
+        #             @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join $nl } },
+        #             @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join " & " }) -join $nl } },
+        #             @{ Name = "Live hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } },
+        #             @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.EstimatedSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } }
+        #         ) | Sort-Object -Property "Worker" | Out-DataTable
+        #         If ($LegacyGUIworkersDGV.Columns) { 
+        #             $LegacyGUIworkersDGV.Columns[0].FillWeight = 70
+        #             $LegacyGUIworkersDGV.Columns[1].FillWeight = 60
+        #             $LegacyGUIworkersDGV.Columns[2].FillWeight = 80
+        #             $LegacyGUIworkersDGV.Columns[3].FillWeight = 70
+        #             $LegacyGUIworkersDGV.Columns[4].FillWeight = 40
+        #             $LegacyGUIworkersDGV.Columns[5].FillWeight = 65; $LegacyGUIworkersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
+        #             $LegacyGUIworkersDGV.Columns[6].FillWeight = 65; $LegacyGUIworkersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
+        #             $LegacyGUIworkersDGV.Columns[7].FillWeight = 150
+        #             $LegacyGUIworkersDGV.Columns[8].FillWeight = 95
+        #             $LegacyGUIworkersDGV.Columns[9].FillWeight = 75
+        #             $LegacyGUIworkersDGV.Columns[10].FillWeight = 65; $LegacyGUIworkersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+        #             $LegacyGUIworkersDGV.Columns[11].FillWeight = 65; $LegacyGUIworkersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
         #         }
-        #             If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status updated $($Variables.WorkersLastUpdated.ToString())" }
-        #             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped" }
-        #             ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
-        #             Else  { $LegacyGUIworkersLabel.Text = "Waiting for data..." }
-
+        #         Set-WorkerColor
+        #         $LegacyGUIworkersDGV.EndInit()
         #     }
         #     Else { 
         #         $LegacyGUIworkersLabel.Text = "Worker status reporting is disabled$(If (-not $Variables.APIRunspace) { " (Configuration item 'ShowWorkerStatus' -eq `$false)" })."
@@ -549,28 +547,28 @@ Function Update-TabControl {
             If ($Config.Watchdog) { 
                 If ($Variables.WatchdogTimers) { 
                     $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers updated $([DateTime]::Now.ToString())"
-
-                    $LegacyGUIwatchdogTimersDGV.BeginInit()
-                    $LegacyGUIwatchdogTimersDGV.ClearSelection()
-                    $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
-                        @{ Name = "Name"; Expression = { $_.MinerName } },
-                        @{ Name = "Algorithms"; Expression = { $_.Algorithm } },
-                        @{ Name = "Pool name"; Expression = { $_.PoolName } },
-                        @{ Name = "Region"; Expression = { $_.PoolRegion } },
-                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
-                        @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
-                    ) | Out-DataTable
-                    If ($LegacyGUIwatchdogTimersDGV.Columns) { 
-                        $LegacyGUIwatchdogTimersDGV.Columns[0].FillWeight = 120
-                        $LegacyGUIwatchdogTimersDGV.Columns[1].FillWeight = 100
-                        $LegacyGUIwatchdogTimersDGV.Columns[2].FillWeight = 100
-                        $LegacyGUIwatchdogTimersDGV.Columns[3].FillWeight = 60
-                        $LegacyGUIwatchdogTimersDGV.Columns[4].FillWeight = 30 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
-                        $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 100
-                    }
-                    $LegacyGUIwatchdogTimersDGV.EndInit()
                 }
                 Else { $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers - no data" }
+
+                $LegacyGUIwatchdogTimersDGV.BeginInit()
+                $LegacyGUIwatchdogTimersDGV.ClearSelection()
+                $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
+                    @{ Name = "Name"; Expression = { $_.MinerName } },
+                    @{ Name = "Algorithms"; Expression = { $_.Algorithm } },
+                    @{ Name = "Pool name"; Expression = { $_.PoolName } },
+                    @{ Name = "Region"; Expression = { $_.PoolRegion } },
+                    @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
+                    @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
+                ) | Out-DataTable
+                If ($LegacyGUIwatchdogTimersDGV.Columns) { 
+                    $LegacyGUIwatchdogTimersDGV.Columns[0].FillWeight = 120
+                    $LegacyGUIwatchdogTimersDGV.Columns[1].FillWeight = 100
+                    $LegacyGUIwatchdogTimersDGV.Columns[2].FillWeight = 100
+                    $LegacyGUIwatchdogTimersDGV.Columns[3].FillWeight = 60
+                    $LegacyGUIwatchdogTimersDGV.Columns[4].FillWeight = 30 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
+                    $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 100
+                }
+                $LegacyGUIwatchdogTimersDGV.EndInit()
             }
             Else { 
                 $LegacyGUIwatchdogTimersLabel.Text = "Watchdog is disabled (Configuration item 'Watchdog' -eq `$false)"
@@ -690,6 +688,7 @@ Function Update-GUIstatus {
             $LegacyGUIbuttonStop.Enabled = $true
         }
     }
+    Update-TabControl
 
     $Variables.TextBoxSystemLog.ScrollToCaret()
 }

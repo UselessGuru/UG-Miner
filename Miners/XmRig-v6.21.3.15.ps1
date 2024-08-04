@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.22
-Version date:   2024/08/01
+Version:        6.2.23
+Version date:   2024/08/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -190,7 +190,7 @@ If ($Algorithms) {
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.Name -notin $ExcludePools }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
+                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm] | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
@@ -200,7 +200,7 @@ If ($Algorithms) {
 
                             $Arguments = $_.Arguments
                             If ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))" }
-                            ElseIF ("AMD", "INTEL" -contains $_.Type) { $Arguments += " --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
+                            ElseIf ("AMD", "INTEL" -contains $_.Type) { $Arguments += " --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             Else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
 
                             If ("Flex", "RandomXeq" -contains $_.Algorithm) { $Path = $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } # https://github.com/RainbowMiner/RainbowMiner/issues/2800

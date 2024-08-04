@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Updated  2024/08/01
+Updated  2024/08/04
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -53,11 +53,7 @@ UG-Miner code is partly based on
 (2) MiningPoolHub is no longer trustworthy.  
     Outstanding balances will not get paid and support will not respond. Use at your own risk!
 
-<<<<<<< HEAD
-**Easy configuration, easy start:**
-=======
 ## Easy configuration, easy start
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
    Run UG-Miner.bat
    1. Edit configuration (http://localhost:3999/configedit.html)
@@ -143,33 +139,7 @@ Will mine only EVR and KIIRO
 Currency list blank  
 Will mine anything
 
-<<<<<<< HEAD
-**Developer Donation**
-
-      Donation fee is approx. 1% (15 minutes per day) and can be increased or decreased in the configuration editor.
-      Please help support the great team behind UG-Miner by leaving mining donations turned on.
-      We want to stay completely transparent on the way fees are managed in the product.
-      Donation cycle occurs only once in 24hrs (or once until midnight if UG-Miner has been running less than 24hrs).
-      Donation start time is randomized each day.
-      It will then mine for UselessGuru for the configured duration.
-
-      Example for default parameters (15 minutes):
-      - UG-Miner was started at 10:00h
-      - First donation cycle starts somewhen between 10:01h and 23:45h and will then donate for 15 minutes, then mine for you again until the next donation run.
-      - After 00:00h the donation start time is randomized again.
-      - When donation start time is reached it will then donate for 15 minutes, then mine for you again until the next donation run.
-
-      The donation data is stored in '[UG-Miner directory]\Data\DonationData.json'.
-      All donation time and addresses are recorded in the domation log file '[UG-Miner directory]\Log\DonateLog.json'.
-
-
-**Web & Legacy GUI**
-
-      UG-Miner relies on config files. There is no need to edit bat files. Simply run UG-Miner.bat
-      Set the config in the Web GUI (http://localhost:3999/configedit.html), apply & start mining.
-=======
 ## Web & legacy GUI
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 UG-Miner can be controlled & configured through the Web GUI.  
 For most scenarios there is no need to edit configration files manually.  
@@ -179,27 +149,15 @@ Some settings can be configured per [advanced pool configuration](<https://githu
 
 ## Pause mining
 
-<<<<<<< HEAD
-**Pause mining**
-=======
 Ability to pause miners while keeping other jobs running (pause button). This will stop mining activity.
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 Brains will still run in the background avoiding the learning phase on resume.
 
-<<<<<<< HEAD
-**PreRun**
-=======
 BalancesTracker will still run in the background to keep the pool balances up to date.
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 ## PreRun
 
-<<<<<<< HEAD
-**Per pool config (Advanced, see 'Data\PoolsConfig-Template.json')**
-=======
 Ability to run a batch script prior switching to a specific miner and/or algorithm.
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 The prerun scripts can be used to apply per miner/algorithm overclocking settings via nvidiaInspector or OverdriveNTool.  
 
@@ -227,11 +185,7 @@ A separate section can be added for each pool. If a pool is listed in this file,
 the specific settings will be taken into account. If not, the built in default values will be used.
 See 'Data\PoolData.json' for the basic structure of the file 'Config\PoolsConfig.json'
 
-<<<<<<< HEAD
-**Pool Variants**
-=======
 You can set specific options per pool. For example, you can mine NiceHash on the internal wallet and other pools on a valid wallet. See 'Data\PoolsConfig-Template.json' for some pool specific configuration options.
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 **Available options:**
 
@@ -250,12 +204,8 @@ You can set specific options per pool. For example, you can mine NiceHash on the
 - Add an entry for the pool you want to customize  
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
 
-<<<<<<< HEAD
-**Balances Tracking**
-=======
 Note that the GUI only updates default values (valid for ALL pools unless there is pool specific configuration setting defined in 'Config\PoolConfig.json').  
 Any other changes need to be done manually.
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 ## Balances tracking
 
@@ -263,15 +213,6 @@ Displays available balances and an estimation of when the pool payment threshold
 
 Supported pools:
 
-<<<<<<< HEAD
-**Experimental**
-
-      More than one instance of UG-Miner can run on the same rig
-      Each instance must be placed in its own directory
-      Must use non-overlapping port ranges (configuration item '$APIport')
-      Do not use the same miner devices in more than one instance (this will give invalid hash rate
-      & power consumption readings causing incorrect best miner selection)
-=======
  - HashCryptos
  - Hiveon (1)
  - MiningDutch
@@ -282,18 +223,13 @@ Supported pools:
  - Zpool
    
 (1) Pool does not support auto-exchange to other currencies. You need to configure  a wallet address for each currency you want to mine.
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 UG-Miner shows stats for all supported pools.  
 Press key 'e' in the console window to show/hide earnings.
 
 ## Miner switching log
 
-<<<<<<< HEAD
-**Console Display Options**
-=======
 A simple miner switching log in csv format is written to '[UG-Miner directory]\Logs\SwitchingLog.csv'.
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 ## Console display options
 
@@ -302,9 +238,6 @@ UI style can be set to 'light' or 'full':
 - Light (default)  
   Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be not be shown
 
-<<<<<<< HEAD
-**Requirements**
-=======
 - Full  
   Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be shown
 
@@ -331,7 +264,6 @@ In the main text window (session console) the following hot keys are supported:
   y:  Toggle 'Currency' column visibility (currently on)  
 
 ## Requirements
->>>>>>> 276e906e63ab9ff43d00e598f4e210b02f8d8167
 
 Windows 10.x and PowerShell Version 7.x is required.
 
