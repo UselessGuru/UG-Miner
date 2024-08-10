@@ -319,10 +319,14 @@ $Variables.ConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProvide
 $Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile)
 
 If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
-    # Another incance is already running
-    Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
-    $WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-    Exit
+    # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
+    Write-Host "Verifing that no other instance of $($Variables.Branding.ProductLabel) is running..."
+    Start-Sleep 15
+    If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
+        Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
+        $WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
 }
 
 # Internet connection must be available
