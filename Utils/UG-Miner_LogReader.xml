@@ -15,7 +15,7 @@
       <BookmarkTextColor>Yellow</BookmarkTextColor>
       <BookmarkBackColor>DarkGreen</BookmarkBackColor>
       <Modeless>false</Modeless>
-      <Title>UG-Miner_2024-02-27.log</Title>
+      <Title>UG-Miner_2024-08-09.log</Title>
       <WindowState>Maximized</WindowState>
       <WindowSize>
         <Width>1886</Width>
@@ -102,7 +102,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>Starting idle detection|Mining is suspended until system is idle|Resuming mining\. System has been idle for|Stopped idle detection</Keyword>
+          <Keyword>System activity detected. Mining will be suspended until system is idle for|System has been idle for .*Resuming mining.</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>

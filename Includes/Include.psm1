@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.23
-Version date:   2024/08/04
+Version:        6.2.24
+Version date:   2024/08/10
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -31,6 +31,51 @@ $Global:VerbosePreference = "SilentlyContinue"
 
 # Fix TLS Version erroring
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+
+# No native way to check how long the system has been idle in PowerShell. Have to use .NET code.
+Add-Type -TypeDefinition @'
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+namespace PInvoke.Win32 { 
+
+    public static class UserInput { 
+
+        [DllImport("user32.dll", SetLastError=false)]
+        private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct LASTINPUTINFO { 
+            public uint cbSize;
+            public int dwTime;
+        }
+
+        public static DateTime LastInput { 
+            get { 
+                DateTime bootTime = DateTime.UtcNow.AddMilliseconds(-Environment.TickCount);
+                DateTime lastInput = bootTime.AddMilliseconds(LastInputTicks);
+                return lastInput;
+            }
+        }
+
+        public static TimeSpan IdleTime { 
+            get { 
+                return DateTime.UtcNow.Subtract(LastInput);
+            }
+        }
+
+        public static int LastInputTicks { 
+            get { 
+                LASTINPUTINFO lii = new LASTINPUTINFO();
+                lii.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
+                GetLastInputInfo(ref lii);
+                return lii.dwTime;
+            }
+        }
+    }
+}
+'@
 
 # Registry key info
 $RegData = Add-Type -Name GetRegData -Namespace RegQueryInfoKey -Using System.Text -PassThru -MemberDefinition '
@@ -328,7 +373,7 @@ Class Miner {
         If ($this.DataReaderJob) { 
             $this.DataReaderJob | Stop-Job
             # Get data before removing read data
-            If ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { $this.Data.Add(($this.DataReaderJob | Receive-Job | Select-Object)) }
+            If ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).Where({ $_.Date }).ForEach({ $this.Data.Add($_) }) }
             $this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore | Out-Null
             $this.DataReaderJob = $null
         }
@@ -441,8 +486,6 @@ Class Miner {
         If ($this.ProcessJob) { 
             Try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } Catch { }
             # Jobs are getting removed in core loop (stopping immediately after stopping process here may take several seconds)
-            # $this.ProcessJob | Get-Job -ErrorAction Ignore | Stop-Job -ErrorAction Ignore | Receive-Job -ErrorAction Ignore | Out-Null
-            # $this.ProcessJob | Remove-Job -ErrorAction Ignore -Force | Out-Null
             $this.ProcessJob = $null
         }
 
@@ -463,7 +506,7 @@ Class Miner {
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
             Earning                 = $this.Earning
             Earning_Bias            = $this.Earning_Bias
-            LastDataSample          = $this.Data | Select-Object -Last 1 | ConvertTo-Json -Compress
+            LastDataSample          = If ($this.Data.Count -ge 1) { $this.Data.Item($this.Data.Count - 1 ) | ConvertTo-Json -Compress } Else { "" }
             MeasurePowerConsumption = $this.MeasurePowerConsumption
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
             Profit                  = $this.Profit
@@ -665,131 +708,15 @@ Class Miner {
     }
 }
 
-Function Start-IdleDetection { 
-
-    If (-not $Variables.IdleDetectionRunspace) { 
-
-        $Variables.IdleDetectionRunspace = @{ }
-
-        # Function tracks how long the system has been idle and controls the paused state
-        $Runspace = [RunspaceFactory]::CreateRunspace()
-        $Runspace.ApartmentState = "STA"
-        $Runspace.Name = "IdleDetectionRunspace"
-        $Runspace.ThreadOptions = "ReuseThread"
-        $Runspace.Open()
-
-        $Runspace.SessionStateProxy.SetVariable("Config", $Config)
-        $Runspace.SessionStateProxy.SetVariable("Variables", $Variables)
-        [Void]$Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
-
-        $PowerShell = [PowerShell]::Create()
-        $PowerShell.Runspace = $Runspace
-        [Void]$Powershell.AddScript(
-            { 
-                # Set the starting directory
-                Set-Location (Split-Path $MyInvocation.MyCommand.Path)
-
-                $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
-
-                # No native way to check how long the system has been idle in PowerShell. Have to use .NET code.
-                Add-Type -TypeDefinition @'
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-
-namespace PInvoke.Win32 { 
-
-    public static class UserInput { 
-
-        [DllImport("user32.dll", SetLastError=false)]
-        private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct LASTINPUTINFO { 
-            public uint cbSize;
-            public int dwTime;
-        }
-
-        public static DateTime LastInput { 
-            get { 
-                DateTime bootTime = DateTime.UtcNow.AddMilliseconds(-Environment.TickCount);
-                DateTime lastInput = bootTime.AddMilliseconds(LastInputTicks);
-                return lastInput;
-            }
-        }
-
-        public static TimeSpan IdleTime { 
-            get { 
-                return DateTime.UtcNow.Subtract(LastInput);
-            }
-        }
-
-        public static int LastInputTicks { 
-            get { 
-                LASTINPUTINFO lii = new LASTINPUTINFO();
-                lii.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
-                GetLastInputInfo(ref lii);
-                return lii.dwTime;
-            }
-        }
-    }
-}
-'@
-
-                $ProgressPreference = "SilentlyContinue"
-
-                Write-Message -Level Verbose "Starting idle detection..."
-
-                While ($true) { 
-                    $IdleSeconds = [Math]::Round(([PInvoke.Win32.UserInput]::IdleTime).TotalSeconds)
-
-                    # Activity detected, pause mining
-                    If ($IdleSeconds -lt $Config.IdleSec -and $Variables.IdleDetectionRunspace.MiningStatus -ne "Suspended") { 
-                        $Variables.IdleDetectionRunspace.MiningStatus = "Suspended"
-                    }
-
-                    # System has been idle long enough, start mining
-                    If ($IdleSeconds -gt $Config.IdleSec -and $Variables.IdleDetectionRunspace.MiningStatus -ne "Running") { 
-                        $Variables.IdleDetectionRunspace.MiningStatus = "Running"
-                    }
-
-                    Start-Sleep -Milliseconds 500
-                }
-            }
-        )
-
-        $Variables.IdleDetectionRunspace.AsyncObject = $Powershell.BeginInvoke()
-        $Variables.IdleDetectionRunspace.PowerShell  = $PowerShell
-        $Variables.IdleDetectionRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
-    }
-}
-
-Function Stop-IdleDetection { 
-
-    If ($Variables.IdleDetectionRunspace) { 
-
-        $Variables.IdleDetectionRunspace.PowerShell.Stop() | Out-Null
-        $Variables.IdleDetectionRunspace.PowerShell.EndInvoke($Global:CoreRunspace.AsyncObject) | Out-Null
-        $Variables.IdleDetectionRunspace.PowerShell.Runspace.Close() | Out-Null
-        $Variables.IdleDetectionRunspace.PowerShell.Dispose() | Out-Null
-
-        $Variables.Remove("IdleDetectionRunspace")
-
-        Write-Message -Level Verbose "Stopped idle detection."
-
-        [System.GC]::Collect()
-    }
-}
-
 Function Start-Core { 
 
-    If (-not $Global:CoreRunspace) { 
+    If (-not $Variables.CoreRunspace) { 
 
-        $Global:CoreRunspace = @{ }
+        $Variables.CoreRunspace = @{ }
 
         $Variables.LastDonated = [DateTime]::Now.AddDays(-1).AddHours(1)
-        $Variables.Miners = [Miner[]]@()
-        $Variables.MinersBest = [Miner[]]@()
+
+        $Variables.Remove("EndCycleTime")
 
         $Variables.CycleStarts = @()
 
@@ -806,117 +733,56 @@ Function Start-Core {
 
         $PowerShell = [PowerShell]::Create()
         $PowerShell.Runspace = $Runspace
-        [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
-
-        $Global:CoreRunspace.AsyncObject = $Powershell.BeginInvoke()
-        $Global:CoreRunspace.PowerShell  = $PowerShell
-        $Global:CoreRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
+        $Variables.CoreRunspace.Job = $Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1").BeginInvoke()
+        $Variables.CoreRunspace.PowerShell = $PowerShell
+        $Variables.CoreRunspace.StartTime = [DateTime]::Now.ToUniversalTime()
     }
 }
 
 Function Stop-Core { 
 
-    If ($Global:CoreRunspace) { 
-        $Global:CoreRunspace.PowerShell.Stop() | Out-Null
-        $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.AsyncObject) | Out-Null
+    If ($Variables.CoreRunspace) { 
 
-        $Variables.MinersBest = [Miner[]]@()
-        $Variables.BenchmarkingOrMeasuringMiners = [Miner[]]@()
-        $Variables.FailedMiners = [Miner[]]@()
-        $Variables.RunningMiners = [Miner[]]@()
+        $Variables.CoreRunspace.PowerShell.Stop() | Out-Null
 
-        $Variables.Remove("EndCycleTime")
+        $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
 
-        # Must close runspace after miners were stopped, otherwise methods don't work any longer
-        $Global:CoreRunspace.PowerShell.Runspace.Dispose() | Out-Null
-        $Global:CoreRunspace.PowerShell.Dispose() | Out-Null
-
-        $Global:CoreRunspace.Remove("PowerShell")
-        Remove-Variable CoreRunspace -Scope Global -ErrorAction Ignore
-
-        # Stop all running miners
         ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
-            # $Miner.SetStatus([MinerStatus]::Idle) #  does not work here (still investigating)
-            $Miner.StatusInfo = "Stopping miner '$($Miner.Info)'..."
-            Write-Message -Level Info $Miner.StatusInfo
-
             ForEach ($Worker in $Miner.WorkersRunning) { 
                 If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
                     # Remove Watchdog timers
                     $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
                 }
             }
-            $Miner.SetStatus([MinerStatus]::Idle)
             Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
-
-            $Miner.StopDataReader()
-
-            $Miner.EndTime = [DateTime]::Now.ToUniversalTime()
-
-            If ($Miner.ProcessId) { 
-                If (Get-Process -Id $Miner.ProcessId -ErrorAction Ignore) { Stop-Process -Id $Miner.ProcessId -Force -ErrorAction Ignore | Out-Null }
-                $Miner.ProcessId = $null
-            }
-
-            If ($Miner.Process) { 
-                [Void]$Miner.Process.CloseMainWindow()
-                $Miner.Process = $null
-            }
-
-            If ($Miner.ProcessJob) { 
-                Try { $Miner.Active += $Miner.ProcessJob.PSEndTime - $Miner.ProcessJob.PSBeginTime } Catch { }
-                $Miner.ProcessJob = $null
-            }
-
-            $Miner.Status = If ([MinerStatus]::Running, [MinerStatus]::DryRun -contains $Miner.Status) { [MinerStatus]::Idle } Else { [MinerStatus]::Failed }
-
-            # Log switching information to .\Logs\SwitchingLog
-            [PSCustomObject]@{ 
-                DateTime                = (Get-Date -Format o)
-                Action                  = If ($Miner.Status -eq [MinerStatus]::Idle) { "Stopped" } Else { "Failed" }
-                Name                    = $Miner.Name
-                Activated               = $Miner.Activated
-                Accounts                = $Miner.WorkersRunning.Pool.User -join " "
-                Algorithms              = $Miner.WorkersRunning.Pool.AlgorithmVariant -join " "
-                Benchmark               = $Miner.Benchmark
-                CommandLine             = $Miner.CommandLine
-                Cycle                   = $Miner.ContinousCycle
-                DeviceNames             = $Miner.DeviceNames -join " "
-                Duration                = "{0:hh\:mm\:ss}" -f ($Miner.EndTime - $Miner.BeginTime)
-                Earning                 = $Miner.Earning
-                Earning_Bias            = $Miner.Earning_Bias
-                LastDataSample          = $Miner.Data | Select-Object -Last 1 | ConvertTo-Json -Compress
-                MeasurePowerConsumption = $Miner.MeasurePowerConsumption
-                Pools                   = ($Miner.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
-                Profit                  = $Miner.Profit
-                Profit_Bias             = $Miner.Profit_Bias
-                Reason                  = If ($Miner.StatusInfo -and $Miner.Status -eq [MinerStatus]::Failed) { $Miner.StatusInfo -replace "'$($Miner.StatusInfo)' " } Else { "" }
-                Type                    = $Miner.Type
-            } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
-
-            If ($Miner.Status -eq [MinerStatus]::Idle) { 
-                $Miner.StatusInfo = "Idle"
-                $Miner.SubStatus = $Miner.Status
-            }
-            $Miner.WorkersRunning = [Worker[]]@()
-
-            $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+            $Miner.SetStatus([MinerStatus]::Idle)
         }
+        Remove-Variable $Miner
 
-        If ($Variables.NewMiningStatus -eq "Idle") { 
-            $Variables.Pools = $Variables.PoolsBest = $Variables.PoolsNew = [Pool[]]@()
-            $Variables.PoolsCount = 0
-            $Variables.Miners = $Variables.MinersBestPerDevice = $Variables.MinersBests = $Variables.MinersOptimal = $Variables.RunningMiners = [Miner[]]@()
-            $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
-            $Variables.CycleStarts = @()
-            $Variables.Timer = $null
-        }
+        $Variables.Miners = [Miner[]]@()
+        $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
+        $Variables.MinersBest = [Miner[]]@()
+        $Variables.MinersBestPerDevice = [Miner[]]@()
+        $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
+        $Variables.MinersFailed = [Miner[]]@()
+        $Variables.MinersMissingBinary = [Miner[]]@()
+        $Variables.MissingMinerFirewallRule = [Miner[]]@()
+        $Variables.MinersMissingPrerequisite = [Miner[]]@()
+        $Variables.MinersOptimal = [Miner[]]@()
+        $Variables.MinersRunning = [Miner[]]@()
 
-        # Refresh selected tab
-        If ($LegacyGUIform) { Update-TabControl }
+        # Must close runspace after miners were stopped, otherwise methods don't work any longer
+        $Variables.CoreRunspace.PowerShell.EndInvoke($Variables.CoreRunspace.Job) | Out-Null
+        $Variables.CoreRunspace.PowerShell.Runspace.Dispose() | Out-Null
+        $Variables.CoreRunspace.PowerShell.Dispose() | Out-Null
+        $Variables.CoreRunspace.Close() | Out-Null
+        $Variables.CoreRunspace.Dispose() | Out-Null
+
+        $Variables.CoreRunspace.Remove("PowerShell")
+        $Variables.Remove("CoreRunspace")
+
+        [System.GC]::Collect()
     }
-
-    [System.GC]::Collect()
 }
 
 Function Start-Brain { 
@@ -950,11 +816,9 @@ Function Start-Brain {
 
                         $PowerShell = [PowerShell]::Create()
                         $PowerShell.Runspace = $Runspace
-                        $Powershell.AddScript($BrainScript)
-
-                        $Variables.Brains.$_.AsyncObject = $PowerShell.BeginInvoke()
-                        $Variables.Brains.$_.PowerShell  = $PowerShell
-                        $Variables.Brains.$_.StartTime   = [DateTime]::Now.ToUniversalTime()
+                        $Variables.Brains.$_.Job = $Powershell.AddScript($BrainScript).BeginInvoke()
+                        $Variables.Brains.$_.PowerShell = $PowerShell
+                        $Variables.Brains.$_.StartTime = [DateTime]::Now.ToUniversalTime()
 
                         $BrainsStarted += $_
                     }
@@ -983,7 +847,7 @@ Function Stop-Brain {
             { 
                 # Stop Brains
                 $Variables.Brains[$_].PowerShell.Stop() | Out-Null
-                If (-not $Variables.Brains[$_].AsyncObject.IsCompleted) { $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].AsyncObject) | Out-Null }
+                If (-not $Variables.Brains[$_].Job.IsCompleted) { $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].Job) | Out-Null }
                 $Variables.Brains[$_].PowerShell.Runspace.Close() | Out-Null
                 $Variables.Brains[$_].PowerShell.Dispose() | Out-Null
                 $Variables.Brains.Remove($_)
@@ -1021,11 +885,9 @@ Function Start-BalancesTracker {
 
                 $PowerShell = [PowerShell]::Create()
                 $PowerShell.Runspace = $Runspace
-                [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1")
-
-                $Global:BalancesTrackerRunspace.AsyncObject = $Powershell.BeginInvoke()
-                $Global:BalancesTrackerRunspace.PowerShell  = $PowerShell
-                $Global:BalancesTrackerRunspace.StartTime   = [DateTime]::Now.ToUniversalTime()
+                $Global:BalancesTrackerRunspace.Job = $Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1").BeginInvoke()
+                $Global:BalancesTrackerRunspace.PowerShell = $PowerShell
+                $Global:BalancesTrackerRunspace.StartTime = [DateTime]::Now.ToUniversalTime()
             }
             Catch { 
                 Write-Message -Level Error "Failed to start Balances tracker [$Error[0]]."
@@ -1041,21 +903,21 @@ Function Stop-BalancesTracker {
 
     If ($Global:BalancesTrackerRunspace) { 
 
-        Try { 
-            $Variables.BalancesTrackerRunning = $false
-            $Global:BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
-            $Global:BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
-            $Global:BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
-            $Global:BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
-        }
-        Catch { }
-        Remove-Variable BalancesTrackerRunspace -Scope Global -ErrorAction Ignore
+        $Variables.BalancesTrackerRunning = $false
+        $Global:BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
+        $Global:BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
+        $Global:BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
+        $Global:BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
+        $Global:BalancesTrackerRunspace.Close() | Out-Null
+        $Global:BalancesTrackerRunspace.Dispose() | Out-Null
 
-        [System.GC]::Collect()
+        $Variables.Remove("BalancesTrackerRunspace")
 
         $Variables.Summary += "<br>Balances tracker background process stopped."
         Write-Message -Level Info "Balances tracker background process stopped."
     }
+
+    [System.GC]::Collect()
 }
 
 Function Get-Rate { 
@@ -1172,11 +1034,12 @@ Function Write-Message {
     If ($Host.Name -eq "ConsoleHost" -and (-not $Config.Keys -or $Config.LogToScreen -contains $Level)) { 
         # Write to console
         Switch ($Level) { 
-            "Error"   { Write-Host $Message -ForegroundColor "Red" }
-            "Warn"    { Write-Host $Message -ForegroundColor "Magenta" }
-            "Info"    { Write-Host $Message -ForegroundColor "White" }
-            "Verbose" { Write-Host $Message -ForegroundColor "Yello" }
-            "Debug"   { Write-Host $Message -ForegroundColor "Blue" }
+            "Debug"    { Write-Host $Message -ForegroundColor "Blue" }
+            "Error"    { Write-Host $Message -ForegroundColor "Red" }
+            "Info"     { Write-Host $Message -ForegroundColor "White" }
+            "MemDebug" { Write-Host $Message -ForegroundColor "Cyan" }
+            "Verbose"  { Write-Host $Message -ForegroundColor "Yello" }
+            "Warn"     { Write-Host $Message -ForegroundColor "Magenta" }
         }
     }
 
@@ -1185,16 +1048,23 @@ Function Write-Message {
     If (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level ) { 
         # Ignore error when legacy GUI gets closed
         Try { 
-            # Update status text box in legacy GUI, scroll to end if no text is selected
-            If ($Variables.TextBoxSystemLog.AppendText) { 
-                If ($Variables.TextBoxSystemLog.SelectionLength) { 
-                    $Variables.TextBoxSystemLog.Lines += $Message
-                    $Variables.TextBoxSystemLog.Select($Variables.TextBoxSystemLog.SelectionStart, $Variables.TextBoxSystemLog.SelectionLength)
-                    $Variables.TextBoxSystemLog.ScrollToCaret()
-                }
-                Else { 
-                    $Variables.TextBoxSystemLog.AppendText("`r`n$Message")
-                }
+            $SelectionLength = $Variables.TextBoxSystemLog.SelectionLength
+            $SelectionStart = $Variables.TextBoxSystemLog.SelectionStart
+            $TextLength = $Variables.TextBoxSystemLog.TextLength
+
+            If ($Variables.TextBoxSystemLog.Lines.Count -gt 100) { 
+                # Keep only 100 lines, more lines impact performance
+                $Variables.TextBoxSystemLog.Lines = $Variables.TextBoxSystemLog.Lines | Select-Object -Last 100
+            }
+
+            $SelectionStart = $SelectionStart + ($Variables.TextBoxSystemLog.TextLength - $TextLength)
+            If ($SelectionLength -and $SelectionStart -gt 0) { 
+                $Variables.TextBoxSystemLog.Lines += $Message
+                $Variables.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
+                $Variables.TextBoxSystemLog.ScrollToCaret()
+            }
+            Else { 
+                $Variables.TextBoxSystemLog.AppendText("`r`n$Message")
             }
         }
         Catch { }
@@ -2689,7 +2559,7 @@ Function Invoke-CreateProcess {
     )
 
     # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and miners remain running
-    $Job = Start-Job -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
+    Start-Job -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
         Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID)
 
         $ControllerProcess = Get-Process -Id $ControllerProcessID
@@ -2761,29 +2631,28 @@ public static class Kernel32
 
         # Call CreateProcess
         [Void][Kernel32]::CreateProcess($BinaryPath, "$BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
-        $Process = Get-Process -Id $ProcessInfo.dwProcessId
-        If ($null -eq $Process) { 
+        $Proc = Get-Process -Id $ProcessInfo.dwProcessId
+        If ($null -eq $Proc) { 
             [PSCustomObject]@{ ProcessId = $null }
             Return 
         }
 
-        [PSCustomObject]@{ProcessId = $Process.Id }
+        [PSCustomObject]@{ProcessId = $Proc.Id }
 
         $ControllerProcess.Handle | Out-Null
-        $Process.Handle | Out-Null
+        $Proc.Handle | Out-Null
 
         Do { 
             If ($ControllerProcess.WaitForExit(1000)) { 
-                [Void]$Process.CloseMainWindow()
-                [Void]$Process.WaitForExit()
-                [Void]$Process.Close()
+                [Void]$Proc.CloseMainWindow()
+                [Void]$Proc.WaitForExit()
+                [Void]$Proc.Close()
             }
-        } While ($Process.HasExited -eq $false)
+        } While ($Proc.HasExited -eq $false)
 
-        Remove-Variable ControllerProcess, Process -ErrorAction Ignore
+        Remove-Variable ArgumentList, BinaryPath, ControllerProcess, ControllerProcessID, CreationFlags, EnvBlock, Proc, ProcessInfo, SecAttr, ShowWindow, StartF, StartupInfo, WindowStyle, WorkingDirectory
+        [System.GC]::Collect()
     }
-
-    $Job
 }
 
 Function Expand-WebRequest { 
@@ -3041,7 +2910,7 @@ Function Start-LogReader {
     If ((Test-Path -LiteralPath $Config.LogViewerExe -PathType Leaf) -and (Test-Path -LiteralPath $Config.LogViewerConfig -PathType Leaf)) { 
         $Variables.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Config.LogViewerConfig)
         $Variables.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Config.LogViewerExe)
-        If ($SnaketailProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -EQ """$($Variables.LogViewerExe)"" $($Variables.LogViewerConfig)" })) { 
+        If ($SnaketailProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Variables.LogViewerExe)"" $($Variables.LogViewerConfig)" })) { 
             # Activate existing Snaketail window
             $LogViewerMainWindowHandle = (Get-Process -Id $SnaketailProcess.ProcessId).MainWindowHandle
             If (@($LogViewerMainWindowHandle).Count -eq 1) { 

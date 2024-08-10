@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.23
-Version date:   2024/08/04
+Version:        6.2.24
+Version date:   2024/08/10
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/2.6.0/SRBMiner-Multi-2-6-0-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/2.6.1/SRBMiner-Multi-2-6-1-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -83,9 +83,10 @@ $Algorithms = @(
     @{ Algorithms = @("KawPow");                         Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludePools = @(@("ProHashing"), @());  Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm kawpow") }
     @{ Algorithms = @("Lyra2v2Webchain");                Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm lyra2v2_webchain") }
     @{ Algorithms = @("MemeHash");                       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm memehash") }
-    @{ Algorithms = @("ProgPowEpic");                    Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_epic") }
     @{ Algorithms = @("MeowPow");                        Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm meowpow") }
+    @{ Algorithms = @("ProgPowEpic");                    Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_epic") }
     @{ Algorithms = @("ProgPowSero");                    Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_sero") }
+    @{ Algorithms = @("ProgPowTelestai");                Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_telestai") }
     @{ Algorithms = @("ProgPowVeil");                    Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_veil") }
     @{ Algorithms = @("ProgPowVeriblock");               Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_veriblock") }
     @{ Algorithms = @("ProgPowZ");                       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());              Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_zano") }
@@ -193,6 +194,7 @@ $Algorithms = @(
     @{ Algorithms = @("MeowPow");                        Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@("ProHashing"), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm meowpow") }
     @{ Algorithms = @("ProgPowEpic");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_epic") }
     @{ Algorithms = @("ProgPowSero");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_sero") }
+    @{ Algorithms = @("ProgPowTelestai");                Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_telestai") }
     @{ Algorithms = @("ProgPowVeil");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_veil") }
     @{ Algorithms = @("ProgPowVeriblock");               Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_veriblock") }
     @{ Algorithms = @("ProgPowZ");                       Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_zano") }
@@ -249,6 +251,7 @@ $Algorithms = @(
     @{ Algorithms = @("MeowPow");                        Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();                  ExcludePools = @(@("ProHashing"), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm meowpow") }
     @{ Algorithms = @("ProgPowEpic");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_epic") }
     @{ Algorithms = @("ProgPowSero");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_sero") }
+    @{ Algorithms = @("ProgPowTelestai");                Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_telestai") }
     @{ Algorithms = @("ProgPowVeil");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_veil") }
     @{ Algorithms = @("ProgPowVeriblock");               Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_veriblock") }
     @{ Algorithms = @("ProgPowZ");                       Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();                  ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_zano") }
@@ -311,7 +314,6 @@ If ($Algorithms) {
                         ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools -notcontains $_.Name }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithms[0]].Count })) { 
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools -notcontains $_.Name }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[1][$_.Algorithms[1]].Count })) { 
                                 $Pools = @(($Pool0, $Pool1).Where({ $_ }))
-
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -gt $MinMemGiB })) { 
 

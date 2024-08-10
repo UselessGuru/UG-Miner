@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.23
-Version date:   2024/08/04
+Version:        6.2.24
+Version date:   2024/08/10
 #>
 
 Function Start-APIServer { 
@@ -493,10 +493,10 @@ Function Start-APIServer {
                                                 $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
                                                 $Data += $StatName
                                                 Remove-Stat -Name "$($StatName)_Profit"
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@()
-                                                $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
                                                 $_.Available = $true
                                                 $_.Disabled = $false
+                                                $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
+                                                $_.Reasons = [System.Collections.Generic.List[String]]@()
                                             }
                                         )
                                         $Data = $Data | Sort-Object -Unique
@@ -517,8 +517,9 @@ Function Start-APIServer {
                                                 $_.Activated = 0 # To allow 3 attempts
                                                 $_.Available = $true
                                                 $_.Benchmark = $true
-                                                $_.Earning_Accuracy = [Double]::NaN
+                                                $_.Data = New-Object System.Collections.Generic.List[PSCustomObject]
                                                 $_.Disabled = $false
+                                                $_.Earning_Accuracy = [Double]::NaN
                                                 $Data += $_.Name
                                                 ForEach ($Worker in $_.Workers) { 
                                                     Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.23
-Version date:   2024/08/04
+Version:        6.2.24
+Version date:   2024/08/10
 #>
 
 using module .\Includes\Include.psm1
@@ -115,9 +115,9 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$LogBalanceAPIResponse = $false, # If true will log the pool balance API data
     [Parameter(Mandatory = $false)]
-    [String[]]$LogToFile = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of @("Error", "Warn", "Info", "Verbose", "Debug")
+    [String[]]$LogToFile = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of "Debug", "Error", "Info", "MemDebug", "Verbose", "Warn"
     [Parameter(Mandatory = $false)]
-    [String[]]$LogToScreen = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to screen, see Write-Message function; any of @("Error", "Warn", "Info", "Verbose", "Debug")
+    [String[]]$LogToScreen = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to screen, see Write-Message function; any of "Debug", "Error", "Info", "MemDebug", "Verbose", "Warn"
     [Parameter(Mandatory = $false)]
     [String]$LogViewerConfig = ".\Utils\UG-Miner_LogReader.xml", # Path to external log viewer config file
     [Parameter(Mandatory = $false)]
@@ -281,6 +281,7 @@ Param(
 )
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
+$ProcessName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 @"
 UG-Miner
@@ -300,7 +301,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.23"
+    Version      = [System.Version]"6.2.24"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -309,6 +310,18 @@ $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.B
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
     Write-Host "`nUnsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
     $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Exit
+}
+
+# Expand paths
+$Variables.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
+$Variables.ConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigFile)
+$Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile)
+
+If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
+    # Another incance is already running
+    Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
+    $WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 
@@ -332,11 +345,6 @@ If (-not (Test-Path -LiteralPath ".\Cache" -PathType Container)) { New-Item -Pat
 If (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { New-Item -Path . -Name "Config" -ItemType Directory | Out-Null }
 If (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { New-Item -Path . -Name "Logs" -ItemType Directory | Out-Null }
 If (-not (Test-Path -LiteralPath ".\Stats" -PathType Container)) { New-Item "Stats" -ItemType Directory -Force | Out-Null }
-
-# Expand paths
-$Variables.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
-$Variables.ConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigFile)
-$Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile)
 
 $Variables.AllCommandLineParameters = [Ordered]@{ }
 ($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
@@ -465,11 +473,9 @@ $Variables.BrainData = @{ }
 $Variables.Brains = @{ }
 $Variables.CPUfeatures = (Get-CpuId).Features | Sort-Object
 $Variables.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")
-$Variables.Miners = [Miner[]]@()
 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
 $Variables.NewMiningStatus = If ($Config.StartupMode -match "Paused|Running") { $Config.StartupMode } Else { "Idle" }
 $Variables.RestartCycle = $true
-$Variables.Pools = [Pool[]]@()
 $Variables.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 $Variables.SuspendCycle = $false
 $Variables.WatchdogTimers = [PSCustomObject[]]@()
@@ -542,45 +548,10 @@ If ($Config.WebGUI) { Start-APIServer }
 
 Function MainLoop { 
 
-    If ($Variables.NewMiningStatus -eq "Running") { 
-        If ($Config.IdleDetection) { 
-            Start-IdleDetection
-            If ($Variables.IdleDetectionRunspace) { 
-                If ($Variables.IdleDetectionRunspace.MiningStatus -eq "Suspended") { 
-                    If ($Global:CoreRunspace) { 
-                        Write-Message -Level Info "Ending cycle (System activity detected)."
-                        Stop-Core
-                        $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
-                        Write-Host "System activity detected. Mining is suspended."
-                        $Variables.Summary = "Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
-                        Write-Message -Level Verbose $Variables.Summary
-                        If ($LegacyGUIform) { Update-GUIstatus }
-                    }
-                }
-                If ($Variables.IdleDetectionRunspace.MiningStatus -eq "Running") { 
-                    If (-not $Global:CoreRunspace) { 
-                        If ($Variables.Timer) { 
-                            $Variables.Summary = "Resuming mining.<br>System has been idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
-                            Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
-                            $LegacyGUIminingSummaryLabel.Text = ($Variables.Summary -replace "<br>", " ")
-                        }
-                        If ($LegacyGUIform) { Update-GUIstatus }
-                        Start-Core
-                    }
-                }
-            }
-        }
-        Else { 
-            Stop-IdleDetection
-            If (-not $Global:CoreRunspace) { Start-Core }
-        }
-    }
-
     # Core watchdog. Sometimes core loop gets stuck
-    If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
+    If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Variables.CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
         Write-Message -Level Warn "Core cycle is stuck - restarting..."
         Stop-Core
-        $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
         $Variables.MiningStatus = $Variables.NewMiningStatus
         Start-Core
     }
@@ -612,7 +583,6 @@ Function MainLoop {
                         Write-Message -Level Info $Variables.Summary
 
                         Stop-Core
-                        Stop-IdleDetection
                         Stop-Brain
                         Stop-BalancesTracker
                         # If ($Config.ReportToServer) { Write-MonitoringData }
@@ -633,16 +603,8 @@ Function MainLoop {
                     $Variables.Summary = "'Pause Mining' button clicked."
                     Write-Host "`n"
                     Write-Message -Level Info $Variables.Summary
-                    # Allow up to 30 seconds for all miners to get stopped
-                    $Counter = 30
-                    While ($Counter -gt 30 -and $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
-                        Start-Sleep -Seconds 1
-                        $Counter --
-                    }
-                    Remove-Variable Counter
 
                     Stop-Core
-                    Stop-IdleDetection
                     Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
                     If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
@@ -654,13 +616,15 @@ Function MainLoop {
                     Break
                 }
                 "Running" { 
-                    If ($Variables.MiningStatus -and $Variables.NewMiningStatus) { 
+                    If ($Variables.Timer) { 
                         $Variables.Summary = "'Start Mining' button clicked."
                         Write-Host "`n"
                         Write-Message -Level Info $Variables.Summary
                     }
+                    $Variables.Remove("Timer")
+
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
-                    If (-not $Config.IdleDetection -and -not $Global:CoreRunspace) { Start-Core }
+
                     If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     Break
                 }
@@ -671,6 +635,39 @@ Function MainLoop {
         If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
     }
 
+    If ($Variables.MiningStatus -eq "Running") { 
+        If ($Config.IdleDetection) { 
+            # System has been idle long enough, start mining
+            If (-not $Variables.Timer -or [Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
+                If (-not $Variables.CoreRunspace) { 
+                    If ($Variables.Timer) { 
+                        $Variables.Summary = "System has been idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
+                        Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
+                    }
+                    Start-Core
+                    If ($LegacyGUIform) { Update-GUIstatus }
+                }
+            }
+            # Activity detected, pause mining
+            ElseIf ($Variables.CoreRunspace) { 
+                $Variables.Summary = "System activity detected.<br>Mining will be suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+                Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
+                Stop-Core
+                If ($LegacyGUIform) { Update-GUIstatus }
+            }
+        }
+        ElseIf (-not $Variables.CoreRunspace) { 
+            Start-Core
+            If ($LegacyGUIform) { Update-GUIstatus }
+        }
+    }
+    ElseIf ((Test-Path -Path $Variables.PoolsConfigFile) -and (Test-Path -Path $Variables.ConfigFile)) { 
+        If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
+            [Void](Read-Config -ConfigFile $Variables.ConfigFile)
+            Write-Message -Level Verbose "Activated changed configuration."
+        }
+    }
+
     If ($Config.ShowConsole) { 
         Show-Console
         If ($host.UI.RawUI.KeyAvailable) { 
@@ -679,7 +676,7 @@ Function MainLoop {
             $host.UI.RawUI.FlushInputBuffer()
 
             If ($KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Alt><Ctrl>#>) { 
-                If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
+                If (-not $Variables.CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
                     # Core is complete / gone. Cycle cannot be suspended anymore
                     $Variables.SuspendCycle = $false
                 }
@@ -863,13 +860,13 @@ Function MainLoop {
             $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle 
 
             If ($Variables.MyIP) { 
-                If ($Variables.BenchmarkingOrMeasuringMiners -or -not $Variables.MinersBest) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+                If ($Variables.MinersBenchmarkingOrMeasuring -or -not $Variables.MinersBest) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
                 ElseIf ($Variables.MiningProfit -ge 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
                 ElseIf ($Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
 
                 $LegacyGUIminingSummaryLabel.Text = ""
-                $LegacyGUIminingSummaryLabel.SendToBack()
-                (($Variables.Summary -replace "Power Cost", "<br>Power Cost" -replace " / ", "/" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
+                # $LegacyGUIminingSummaryLabel.SendToBack()
+                (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
                 $LegacyGUIminingSummaryLabel.Text += "`r`n "
             }
             Else { 
@@ -1040,7 +1037,7 @@ Function MainLoop {
                     If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                         If ($Variables.MiningProfit -lt 0) { 
                             # Mining causes a loss
-                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and causes a loss of {0} {1:n$($Config.DecimalsMax)} / day (including Base Power Cost)." -f $Config.MainCurrency, (-$Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)))
+                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and causes a loss of {0} {1:n$($Config.DecimalsMax)} / day (including Base Power cost)." -f $Config.MainCurrency, (-$Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)))
                         }
                         If ($Variables.MiningProfit -lt $Config.ProfitabilityThreshold) { 
                             # Mining profit is below the configured threshold
@@ -1062,6 +1059,8 @@ Function MainLoop {
         }
         $Error.Clear()
         [System.GC]::Collect()
+        $Proc = Get-Process -Id $PID
+        Write-Message -Level MemDebug "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
     }
 }
 
@@ -1083,6 +1082,4 @@ While ($true) {
         [Void](MainLoop)
         Start-Sleep -Milliseconds 50
     }
-
-    $Error.Clear()
 }

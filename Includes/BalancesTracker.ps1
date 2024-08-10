@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.2.23
-Version date:   2024/08/04
+Version:        6.2.24
+Version date:   2024/08/10
 #>
 
 using module .\Include.psm1
@@ -422,6 +422,9 @@ Do {
         If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')." }
 
         $Error.Clear()
+        [System.GC]::Collect()
+        $Proc = Get-Process -Id $PID
+        Write-Message -Level MemDebug "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
 
         # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
         While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
@@ -435,6 +438,3 @@ Do {
 } While ($true)
 
 $Variables.BalancesTrackerRunning = $false
-
-$Error.Clear()
-[System.GC]::Collect()

@@ -2,6 +2,22 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
+- Idle detection has a big memory leak on each core stop (still investigating)
+
+Changelog UG-Miner 6.2.24 2024/08/10
+====================================
+
+Changes:
+- Core: Simplify idle detection handling
+
+Enhancements:
+- Core: Check if there is already another instance running and show error message
+- Core: Remove obsolete code & minor code optimizations
+
+Miner changes:
+- SRBMinerMulti-v2.6.1
+- Wildrig-v0.40.8
+
 
 Changelog UG-Miner 6.2.23 2024/08/04
 ====================================
