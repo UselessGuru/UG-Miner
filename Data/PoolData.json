@@ -106,7 +106,7 @@
     "ExcludeRegion": [],
     "PayoutThreshold": {
       "*": {
-         "mBTC": 0.00000025
+         "mBTC": 0.00025
       },
       "BTC": 0.001
     },
