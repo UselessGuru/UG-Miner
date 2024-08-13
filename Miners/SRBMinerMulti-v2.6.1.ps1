@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.24
-Version date:   2024/08/10
+Version:        6.2.25
+Version date:   2024/08/13
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -127,7 +127,7 @@ $Algorithms = @(
     @{ Algorithms = @("RandomSfx");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomsfx --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomNevo");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomnevo --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomTuske");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomtuske --Randomx-use-1gb-pages") }
-    @{ Algorithms = @("RandomxArq");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
+#   @{ Algorithms = @("RandomxArq");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
     @{ Algorithms = @("RandomxEpic");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomepic --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomxKeva");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomkeva --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomxScash");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomscash --Randomx-use-1gb-pages") }

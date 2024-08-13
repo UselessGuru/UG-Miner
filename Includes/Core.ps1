@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.24
-Version date:   2024/08/10
+Version:        6.2.25
+Version date:   2024/08/13
 #>
 
 using module .\Include.psm1
@@ -60,20 +60,20 @@ Do {
                 $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
             }
             Remove-Variable Miner -ErrorAction Ignore
-            
+
             $Variables.Remove("EndCycleTime")
 
-            $Variables.Remove("Miners")
-            $Variables.Remove("MinersBenchmarkingOrMeasuring")
-            $Variables.Remove("MinersBest")
-            $Variables.Remove("MinersBestPerDevice")
-            $Variables.Remove("MinerDeviceNamesCombinations")
-            $Variables.Remove("MinersFailed")
-            $Variables.Remove("MinersMissingBinary")
-            $Variables.Remove("MissingMinerFirewallRule")
-            $Variables.Remove("MinersMissingPrerequisite")
-            $Variables.Remove("MinersOptimal")
-            $Variables.Remove("MinersRunning")
+            $Variables.Miners = [Miner[]]@()
+            $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
+            $Variables.MinersBest = [Miner[]]@()
+            $Variables.MinersBestPerDevice = [Miner[]]@()
+            $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
+            $Variables.MinersFailed = [Miner[]]@()
+            $Variables.MinersMissingBinary = [Miner[]]@()
+            $Variables.MissingMinerFirewallRule = [Miner[]]@()
+            $Variables.MinersMissingPrerequisite = [Miner[]]@()
+            $Variables.MinersOptimal = [Miner[]]@()
+            $Variables.MinersRunning = [Miner[]]@()
 
             $Variables.Miners = [Miner[]]@()
 
@@ -1555,14 +1555,5 @@ Do {
 
     $Variables.RestartCycle = $true
 
-    If ($Variables.NewMiningStatus -eq "Running" -and $Variables.IdleDetectionRunspace.MiningStatus -ne "Suspended") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
+    If ($Variables.NewMiningStatus -eq "Running") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
 } While ($Variables.NewMiningStatus -eq "Running")
-
-# Stop all running miners
-ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
-    $Miner.SetStatus([MinerStatus]::Idle)
-    $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-}
-Remove-Variable Miner -ErrorAction Ignore
-
-If ($Variables.IdleDetectionRunspace.MiningStatus -ne "Suspended") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }

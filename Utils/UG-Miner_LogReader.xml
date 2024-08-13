@@ -15,7 +15,7 @@
       <BookmarkTextColor>Yellow</BookmarkTextColor>
       <BookmarkBackColor>DarkGreen</BookmarkBackColor>
       <Modeless>false</Modeless>
-      <Title>UG-Miner_2024-08-09.log</Title>
+      <Title>UG-Miner_2024-08-12.log</Title>
       <WindowState>Maximized</WindowState>
       <WindowSize>
         <Width>1886</Width>
@@ -102,7 +102,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>System activity detected. Mining will be suspended until system is idle for|System has been idle for .*Resuming mining.</Keyword>
+          <Keyword>System activity detected. Mining is suspended until system is idle for|System was idle for .*Resuming mining.</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -211,8 +211,8 @@
     <Height>1163</Height>
   </WindowSize>
   <WindowPosition>
-    <X>40</X>
-    <Y>32</Y>
+    <X>78</X>
+    <Y>48</Y>
   </WindowPosition>
   <MinimizedToTray>false</MinimizedToTray>
   <AlwaysOnTop>false</AlwaysOnTop>

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.24
-Version date:   2024/08/10
+Version:        6.2.25
+Version date:   2024/08/13
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -78,6 +78,7 @@ namespace PInvoke.Win32 {
 '@
 
 # Registry key info
+# Based on https://community.nexthink.com/s/question/0D52p00008n4ORKCA2/get-the-timestamp-of-any-path-or-key-in-the-registry
 $RegData = Add-Type -Name GetRegData -Namespace RegQueryInfoKey -Using System.Text -PassThru -MemberDefinition '
 [DllImport("advapi32.dll", CharSet = CharSet.Auto)]
 
@@ -710,9 +711,7 @@ Class Miner {
 
 Function Start-Core { 
 
-    If (-not $Variables.CoreRunspace) { 
-
-        $Variables.CoreRunspace = @{ }
+    If (-not $Global:CoreRunspace) { 
 
         $Variables.LastDonated = [DateTime]::Now.AddDays(-1).AddHours(1)
 
@@ -720,30 +719,32 @@ Function Start-Core {
 
         $Variables.CycleStarts = @()
 
-        $Runspace = [RunspaceFactory]::CreateRunspace()
-        $Runspace.ApartmentState = "STA"
-        $Runspace.Name = "Core"
-        $Runspace.ThreadOptions = "ReuseThread"
-        $Runspace.Open()
+        $Global:CoreRunspace = [RunspaceFactory]::CreateRunspace()
+        $Global:CoreRunspace.ApartmentState = "STA"
+        $Global:CoreRunspace.Name = "Core"
+        $Global:CoreRunspace.ThreadOptions = "ReuseThread"
+        $Global:CoreRunspace.Open()
 
-        $Runspace.SessionStateProxy.SetVariable("Config", $Config)
-        $Runspace.SessionStateProxy.SetVariable("Stats", $Stats)
-        $Runspace.SessionStateProxy.SetVariable("Variables", $Variables)
-        [Void]$Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
+        $Global:CoreRunspace.SessionStateProxy.SetVariable("Config", $Config)
+        $Global:CoreRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+        $Global:CoreRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
+        [Void]$Global:CoreRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
         $PowerShell = [PowerShell]::Create()
-        $PowerShell.Runspace = $Runspace
-        $Variables.CoreRunspace.Job = $Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1").BeginInvoke()
-        $Variables.CoreRunspace.PowerShell = $PowerShell
-        $Variables.CoreRunspace.StartTime = [DateTime]::Now.ToUniversalTime()
+        $PowerShell.Runspace = $Global:CoreRunspace
+        $Global:CoreRunspace | Add-Member Job ($Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1").BeginInvoke())
+        $Global:CoreRunspace | Add-Member PowerShell $PowerShell
+        $Global:CoreRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
     }
 }
 
 Function Stop-Core { 
 
-    If ($Variables.CoreRunspace) { 
+    If ($Global:CoreRunspace) { 
 
-        $Variables.CoreRunspace.PowerShell.Stop() | Out-Null
+        $Global:CoreRunspace.PowerShell.Stop()
+
+        Write-Message -Level Info "Ending cycle."
 
         $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
 
@@ -771,15 +772,14 @@ Function Stop-Core {
         $Variables.MinersOptimal = [Miner[]]@()
         $Variables.MinersRunning = [Miner[]]@()
 
-        # Must close runspace after miners were stopped, otherwise methods don't work any longer
-        $Variables.CoreRunspace.PowerShell.EndInvoke($Variables.CoreRunspace.Job) | Out-Null
-        $Variables.CoreRunspace.PowerShell.Runspace.Dispose() | Out-Null
-        $Variables.CoreRunspace.PowerShell.Dispose() | Out-Null
-        $Variables.CoreRunspace.Close() | Out-Null
-        $Variables.CoreRunspace.Dispose() | Out-Null
+        # # Must close runspace after miners were stopped, otherwise methods don't work any longer
+        $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.Job)
+        $Global:CoreRunspace.PowerShell.Runspace.Dispose($true)
+        $Global:CoreRunspace.PowerShell.Dispose($true)
+        $Global:CoreRunspace.Close()
+        $Global:CoreRunspace.Dispose($true)
 
-        $Variables.CoreRunspace.Remove("PowerShell")
-        $Variables.Remove("CoreRunspace")
+        Remove-Variable CoreRunspace -Scope global
 
         [System.GC]::Collect()
     }
@@ -846,10 +846,13 @@ Function Stop-Brain {
         $Name.Where({ $Variables.Brains.$_ }).ForEach(
             { 
                 # Stop Brains
-                $Variables.Brains[$_].PowerShell.Stop() | Out-Null
-                If (-not $Variables.Brains[$_].Job.IsCompleted) { $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].Job) | Out-Null }
-                $Variables.Brains[$_].PowerShell.Runspace.Close() | Out-Null
-                $Variables.Brains[$_].PowerShell.Dispose() | Out-Null
+                $Variables.Brains[$_].PowerShell.Stop()
+                If (-not $Variables.Brains[$_].Job.IsCompleted) { $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].Job) }
+                $Variables.Brains[$_].PowerShell.Runspace.Dispose($true)
+                $Variables.Brains[$_].PowerShell.Close()
+                $Variables.Brains[$_].PowerShell.Dispose($true)
+                $Variables.Brains[$_].Close()
+                $Variables.Brains[$_].Dispose($true)
                 $Variables.Brains.Remove($_)
                 $Variables.BrainData.Remove($_)
                 $BrainsStopped += $_
@@ -867,27 +870,25 @@ Function Start-BalancesTracker {
 
         If (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
             Try { 
-                $Global:BalancesTrackerRunspace = @{ }
-
                 $Variables.Summary = "Starting Balances tracker background process..."
                 Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
 
-                $Runspace = [RunspaceFactory]::CreateRunspace()
-                $Runspace.ApartmentState = "STA"
-                $Runspace.Name = "BalancesTracker"
-                $Runspace.ThreadOptions = "ReuseThread"
-                $Runspace.Open()
+                $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
+                $Global:BalancesTrackerRunspace.ApartmentState = "STA"
+                $Global:BalancesTrackerRunspace.Name = "BalancesTracker"
+                $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
+                $Global:BalancesTrackerRunspace.Open()
 
-                $Runspace.SessionStateProxy.SetVariable("Config", $Config)
-                $Runspace.SessionStateProxy.SetVariable("Stats", $Stats)
-                $Runspace.SessionStateProxy.SetVariable("Variables", $Variables)
-                [Void]$Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
+                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Config", $Config)
+                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
+                [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
                 $PowerShell = [PowerShell]::Create()
-                $PowerShell.Runspace = $Runspace
-                $Global:BalancesTrackerRunspace.Job = $Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1").BeginInvoke()
-                $Global:BalancesTrackerRunspace.PowerShell = $PowerShell
-                $Global:BalancesTrackerRunspace.StartTime = [DateTime]::Now.ToUniversalTime()
+                $PowerShell.Runspace = $Global:BalancesTrackerRunspace
+                $Global:BalancesTrackerRunspace | Add-Member Job ($Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1").BeginInvoke())
+                $Global:BalancesTrackerRunspace | Add-Member PowerShell $PowerShell
+                $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
             }
             Catch { 
                 Write-Message -Level Error "Failed to start Balances tracker [$Error[0]]."
@@ -903,15 +904,17 @@ Function Stop-BalancesTracker {
 
     If ($Global:BalancesTrackerRunspace) { 
 
-        $Variables.BalancesTrackerRunning = $false
-        $Global:BalancesTrackerRunspace.PowerShell.Stop() | Out-Null
-        $Global:BalancesTrackerRunspace.PowerShell.EndInvoke() | Out-Null
-        $Global:BalancesTrackerRunspace.PowerShell.Runspace.Close() | Out-Null
-        $Global:BalancesTrackerRunspace.PowerShell.Dispose() | Out-Null
-        $Global:BalancesTrackerRunspace.Close() | Out-Null
-        $Global:BalancesTrackerRunspace.Dispose() | Out-Null
+        $Global:BalancesTrackerRunspace.PowerShell.Stop()
 
-        $Variables.Remove("BalancesTrackerRunspace")
+        $Variables.BalancesTrackerRunning = $false
+
+        $Global:BalancesTrackerRunspace.PowerShell.EndInvoke($Global:BalancesTrackerRunspace.Job)
+        $Global:BalancesTrackerRunspace.PowerShell.Runspace.Dispose($true)
+        $Global:BalancesTrackerRunspace.PowerShell.Dispose($true)
+        $Global:BalancesTrackerRunspace.Close()
+        $Global:BalancesTrackerRunspace.Dispose($true)
+
+        Remove-Variable BalancesTrackerRunspace -Scope global
 
         $Variables.Summary += "<br>Balances tracker background process stopped."
         Write-Message -Level Info "Balances tracker background process stopped."

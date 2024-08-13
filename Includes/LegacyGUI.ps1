@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.24
-Version date:   2024/08/10
+Version:        6.2.25
+Version date:   2024/08/13
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -395,7 +395,7 @@ Function Update-TabControl {
             If ($LegacyGUIminersDGV.Columns) { $LegacyGUIminersLabel.Text = "Miner data updated $([DateTime]::Now.ToString())" }
             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIminersLabel.Text = "No data - mining is stopped" }
             ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIminersLabel.Text = "No data - mining is paused" }
-            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Variables.CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
+            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
             Else { $LegacyGUIminersLabel.Text = "Waiting for data..." }
             Break
         }
@@ -460,7 +460,7 @@ Function Update-TabControl {
             If ($LegacyGUIpoolsDGV.Columns) { $LegacyGUIpoolsLabel.Text = "Pool data updated $([DateTime]::Now.ToString())" }
             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIpoolsLabel.Text = "No data - mining is stopped" }
             ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIpoolsLabel.Text = "No data - mining is paused" }
-            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Variables.CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
+            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
             Else { $LegacyGUIpoolsLabel.Text = "Waiting for data..." }
             Break
         }
@@ -475,7 +475,7 @@ Function Update-TabControl {
         #         If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status updated $($Variables.WorkersLastUpdated.ToString())" }
         #         ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped" }
         #         ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
-        #         ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Variables.CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
+        #         ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
         #         Else  { $LegacyGUIworkersLabel.Text = "Waiting for data..." }
 
         #         $nl = "`n" # Must use variable, cannot join with '`n' directly
@@ -665,7 +665,7 @@ Function Update-GUIstatus {
             $LegacyGUIbuttonStop.Enabled = $true
         }
         "Running" { 
-            If (-not $Variables.CoreRunspace) { 
+            If (-not $Global:CoreRunspace) { 
                 $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
                 $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is suspended"
                 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
@@ -780,7 +780,7 @@ $LegacyGUIbuttonStart.Visible = $true
 $LegacyGUIbuttonStart.Width = 100
 $LegacyGUIbuttonStart.Add_Click(
     { 
-        If ($Variables.NewMiningStatus -ne "Running" -or $Variables.IdleDetectionRunspace -eq "Idle") { 
+        If ($Variables.NewMiningStatus -ne "Running") { 
             $Variables.NewMiningStatus = "Running"
             $Variables.RestartCycle = $true
         }

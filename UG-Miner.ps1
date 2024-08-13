@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.24
-Version date:   2024/08/10
+Version:        6.2.25
+Version date:   2024/08/13
 #>
 
 using module .\Includes\Include.psm1
@@ -301,7 +301,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.24"
+    Version      = [System.Version]"6.2.25"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -321,7 +321,7 @@ $Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedPr
 If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
     Write-Host "Verifing that no other instance of $($Variables.Branding.ProductLabel) is running..."
-    Start-Sleep 15
+    Start-Sleep 20
     If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
         Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
         $WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -553,7 +553,7 @@ If ($Config.WebGUI) { Start-APIServer }
 Function MainLoop { 
 
     # Core watchdog. Sometimes core loop gets stuck
-    If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Variables.CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
+    If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
         Write-Message -Level Warn "Core cycle is stuck - restarting..."
         Stop-Core
         $Variables.MiningStatus = $Variables.NewMiningStatus
@@ -634,34 +634,40 @@ Function MainLoop {
                 }
             }
             $Variables.MiningStatus = $Variables.NewMiningStatus
-        }
+        }6
         If ($LegacyGUIform) { Update-GUIstatus }
         If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
     }
 
     If ($Variables.MiningStatus -eq "Running") { 
         If ($Config.IdleDetection) { 
-            # System has been idle long enough, start mining
-            If (-not $Variables.Timer -or [Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
-                If (-not $Variables.CoreRunspace) { 
+            # System was idle long enough, start mining
+            If ([Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
+                If (-not $Global:CoreRunspace) { 
                     If ($Variables.Timer) { 
-                        $Variables.Summary = "System has been idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
+                        $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
                         Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
                     }
                     Start-Core
+                    $Proc = Get-Process -Id $PID
+                    Write-Message -Level Info "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
                     If ($LegacyGUIform) { Update-GUIstatus }
                 }
             }
             # Activity detected, pause mining
-            ElseIf ($Variables.CoreRunspace) { 
-                $Variables.Summary = "System activity detected.<br>Mining will be suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+            ElseIf ($Global:CoreRunspace) { 
+                $Variables.Summary = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                 Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
                 Stop-Core
+                $Proc = Get-Process -Id $PID
+                Write-Message -Level Info "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
                 If ($LegacyGUIform) { Update-GUIstatus }
             }
         }
-        ElseIf (-not $Variables.CoreRunspace) { 
+        ElseIf (-not $Global:CoreRunspace) { 
             Start-Core
+            $Proc = Get-Process -Id $PID
+            Write-Message -Level Info "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
             If ($LegacyGUIform) { Update-GUIstatus }
         }
     }
@@ -680,7 +686,7 @@ Function MainLoop {
             $host.UI.RawUI.FlushInputBuffer()
 
             If ($KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Alt><Ctrl>#>) { 
-                If (-not $Variables.CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
+                If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
                     # Core is complete / gone. Cycle cannot be suspended anymore
                     $Variables.SuspendCycle = $false
                 }
