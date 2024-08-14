@@ -39,18 +39,18 @@ UG-Miner code is partly based on
 - Miner switching log
 - Supports these pools: 
    - [HashCryptos](<https://hashcryptos.com/>)
-   - [Hiveon](<https://hiveon.net/>) (1)
+   - [Hiveon](<https://hiveon.net/>)<sup>(1)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
-   - [MiningPoolHub](<https://miningpoolhub.com/>) (2)
+   - [MiningPoolHub](<https://miningpoolhub.com/>)<sup>(2)</sup>
    - [NiceHash](<https://www.nicehash.com/>)
    - [ProHashing](<https://prohashing.com/>)
    - [ZergPool](<https://zergpool.com/>)
    - [ZPool](<https://zpool.ca/>)
 
-(1) Pool does not support auto-exchange to other currencies.  
+<sup>(1)</sup> Pool does not support auto-exchange to other currencies.  
     You need to configure a wallet address for each currency you want to mine.
     
-(2) MiningPoolHub is no longer trustworthy.  
+<sup>(2)</sup> MiningPoolHub is no longer trustworthy.  
     Outstanding balances will not get paid and support will not respond. Use at your own risk!
 
 ## Easy configuration, easy start
@@ -220,7 +220,7 @@ Displays available balances and an estimation of when the pool payment threshold
 Supported pools:
 
  - HashCryptos
- - Hiveon (1)
+ - Hiveon <sup>(1)</sup>
  - MiningDutch
  - MiningPoolHub
  - NiceHash (internal & external wallet)
@@ -228,7 +228,7 @@ Supported pools:
  - ZergPool
  - Zpool
    
-(1) Pool does not support auto-exchange to other currencies. You need to configure  a wallet address for each currency you want to mine.
+<sup>(1)</sup> Pool does not support auto-exchange to other currencies. You need to configure  a wallet address for each currency you want to mine.
 
 UG-Miner shows stats for all supported pools.  
 Press key 'e' in the console window to show/hide earnings.
