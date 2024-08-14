@@ -150,7 +150,6 @@ Some settings can be configured per [advanced pool configuration](<https://githu
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_LegacyGUI.png "UG-Miner Legacy GUI")
 
-
 ## Pause mining
 
 Ability to pause miners while keeping other jobs running (pause button). This will stop mining activity.
@@ -191,7 +190,7 @@ See 'Data\PoolData.json' for the basic structure of the file 'Config\PoolsConfig
 
 You can set specific options per pool. For example, you can mine NiceHash on the internal wallet and other pools on a valid wallet. See 'Data\PoolsConfig-Template.json' for some pool specific configuration options.
 
-**Available options:**
+**Available options**
 
 - Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
 - UserName: your MPH or ProHashing user name
@@ -202,7 +201,7 @@ You can set specific options per pool. For example, you can mine NiceHash on the
 - Currency: List of included or excluded currencies per pool
 - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
 
-**Usage:**
+**Usage**
 
 - Edit 'Config\PoolsConfig.json' (**careful with json formatting ;)**
 - Add an entry for the pool you want to customize  
@@ -314,7 +313,8 @@ Example for default parameters (15 minutes):
 The donation data is stored in 'Data\DonationData.json'.  
 All donation time and addresses are recorded in the donation log file 'Log\DonateLog.json'.
 
-## Known issues:
+## Known issues
+
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
