@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Updated  2024/08/10
+Updated  2024/08/14
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -146,6 +146,10 @@ For most scenarios there is no need to edit configration files manually.
 Some settings can be configured per [advanced pool configuration](<https://github.com/UselessGuru/UG-Miner?tab=readme-ov-file#advanced-per-pool-configuration>).
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
+
+
+![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_LegacyGUI.png "UG-Miner Legacy GUI")
+
 
 ## Pause mining
 
@@ -310,12 +314,17 @@ Example for default parameters (15 minutes):
 The donation data is stored in 'Data\DonationData.json'.  
 All donation time and addresses are recorded in the donation log file 'Log\DonateLog.json'.
 
+## Known issues:
+- Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
+- UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
+  -> It is recommended to set it to 'Windows Console Host'
+- Idle detection has a big memory leak on each core stop (still investigating)
+
 ## Experimental support for running multiple instances (not recommended)
 
 More than one instance of UG-Miner can run on the same rig. Each instance must be placed in its own directory.  
-Must use non-overlapping port ranges (configuration item '$APIport').  
-Do not use the same miner devices in more than one instance (this will give invalid hash rate  
-& power consumption readings causing incorrect best miner selection).
+You must use non-overlapping port ranges (configuration item '$APIport').  
+Do not use the same miner devices in more than one instance (this will give invalid hash rate & power consumption readings causing incorrect best miner selection).
 
 ## Copyright & licenses
 
