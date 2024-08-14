@@ -8,7 +8,6 @@
       "SampleSizeMinutes": 45,
       "UseTransferFile": false
     },
-    "ExcludeAlgorithm": [],
     "GuaranteedPayoutCurrencies": [
       "BCH",
       "BSV",
@@ -61,7 +60,6 @@
     "Algorithm": [],
     "AutoExchange": false,
     "BalancesKeepAlive": 90, // No expiration communicated by pool, use 90 days just to be sure
-    "ExcludeAlgorithm": [],
     "ExcludeRegion": [],
     "GuaranteedPayoutCurrencies": [
       "BTC",
@@ -102,7 +100,6 @@
       "SampleSizeMinutes": 45,
       "UseTransferFile": false
     },
-    "ExcludeAlgorithm": [],
     "ExcludeRegion": [],
     "PayoutThreshold": {
       "*": {
@@ -147,7 +144,6 @@
     "AutoExchange": true,
     "BalancesKeepAlive": 90, // No expiration communicated by pool
     "EarningsAdjustmentFactor": 0.1, // Lower projected earnings until pool resolves its payout issues (https://bitcointalk.org/index.php?topic=472510.msg61523969#msg61523969)
-    "ExcludeAlgorithm": [],
     "Fee": 0.009,
     "GuaranteedPayoutCurrencies": [
       "ADZ",
@@ -199,7 +195,6 @@
     "AutoExchange": true,
     "BalancesKeepAlive": 180, // Your NiceHash Account may be deactivated due to your inactivity
     "EarningsAdjustmentFactor": 1.0, // NiceHash earnings estimates are always correct
-    "ExcludeAlgorithm": [],
     "GuaranteedPayoutCurrencies": [
       "BTC" // Required here for donation
     ],
@@ -236,7 +231,6 @@
       "SampleSizeMinutes": 45,
       "UseTransferFile": false
     },
-    "ExcludeAlgorithm": [],
     "GuaranteedPayoutCurrencies": [
       "BTC",
       "LTC"
@@ -277,7 +271,6 @@
     },
     "Currency": [],
     "DefaultFee": 0.5,
-    "ExcludeAlgorithm": [],
     "GuaranteedPayoutCurrencies": [
       "BCH",
       "BNB",
@@ -351,7 +344,6 @@
       "SampleSizeMinutes": 45,
       "UseTransferFile": false
     },
-    "ExcludeAlgorithm": [],
     "GuaranteedPayoutCurrencies": [
       "BTC",
       "DASH",
