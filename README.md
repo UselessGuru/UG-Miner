@@ -145,8 +145,11 @@ UG-Miner can be controlled & configured through the Web GUI.
 For most scenarios there is no need to edit configration files manually.  
 Some settings can be configured per [advanced pool configuration](<https://github.com/UselessGuru/UG-Miner?tab=readme-ov-file#advanced-per-pool-configuration>).
 
+### Web GUI
+
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
 
+### Legacy GUI
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_LegacyGUI.png "UG-Miner Legacy GUI")
 
