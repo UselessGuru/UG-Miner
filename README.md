@@ -57,12 +57,12 @@ UG-Miner code is partly based on
 
    Run UG-Miner.bat
    1. Edit configuration (http://localhost:3999/configedit.html)
-   2. Set your wallet address(es) and username(s)<sup>(*)</sup>
+   2. Set your wallet address(es) and username(s) <sup>(*)</sup>
    3. Select your pool(s)
    4. Save configuration
    5. Start mining
 
-   <sup>(*)</sup>You only need to change the username if you are using MiningDutch, MiningPoolhub or ProHashing
+   <sup>(*)</sup> You only need to change the username if you are using MiningDutch, MiningPoolhub or ProHashing
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
