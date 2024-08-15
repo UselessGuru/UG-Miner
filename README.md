@@ -57,12 +57,12 @@ UG-Miner code is partly based on
 
    Run UG-Miner.bat
    1. Edit configuration (http://localhost:3999/configedit.html)
-   2. Set your wallet address(es) and username(s)
+   2. Set your wallet address(es) and username(s)<sup>(*)</sup>
    3. Select your pool(s)
    4. Save configuration
    5. Start mining
 
-   Note: 2. you only need to change the username if you are using MiningDutch, MiningPoolhub or ProHashing
+   <sup>(*)</sup>You only need to change the username if you are using MiningDutch, MiningPoolhub or ProHashing
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
@@ -220,7 +220,7 @@ Displays available balances and an estimation of when the pool payment threshold
 Supported pools:
 
  - HashCryptos
- - Hiveon <sup>(1)</sup>
+ - Hiveon <sup>(*)</sup>
  - MiningDutch
  - MiningPoolHub
  - NiceHash (internal & external wallet)
@@ -228,7 +228,7 @@ Supported pools:
  - ZergPool
  - Zpool
    
-<sup>(1)</sup> Pool does not support auto-exchange to other currencies. You need to configure  a wallet address for each currency you want to mine.
+<sup>(*)</sup> Pool does not support auto-exchange to other currencies. You need to configure  a wallet address for each currency you want to mine.
 
 UG-Miner shows stats for all supported pools.  
 Press key 'e' in the console window to show/hide earnings.
