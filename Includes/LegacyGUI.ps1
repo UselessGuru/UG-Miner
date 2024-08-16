@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.25
-Version date:   2024/08/13
+Version:        6.2.26
+Version date:   2024/08/16
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -152,9 +152,9 @@ Function Update-TabControl {
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join " " } }
                     @{ Name = "Miner"; Expression = { $_.Name } }
                     @{ Name = "Status"; Expression = { $_.Status } },
-                    @{ Name = "Earning (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
-                    @{ Name = "Power cost $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
-                    @{ Name = "Profit (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } } }
+                    @{ Name = "Earning (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
+                    @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
+                    @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                     @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
                     @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & "} },
                     @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
@@ -226,7 +226,7 @@ Function Update-TabControl {
                     $ChartArea.AxisY.LabelAutoFitStyle = $ChartArea.AxisY.labelAutoFitStyle - 4
                     $ChartArea.AxisY.MajorGrid.Enabled = $true
                     $ChartArea.AxisY.MajorGrid.LineColor = [System.Drawing.Color]::FromArgb(255, 255, 255, 255) #"#FFFFFF"
-                    $ChartArea.AxisY.Title = $Config.MainCurrency
+                    $ChartArea.AxisY.Title = $Config.FIATcurrency
                     $ChartArea.AxisY.ToolTip = "Total earnings per day"
                     $ChartArea.BackColor = [System.Drawing.Color]::FromArgb(255, 255, 255, 255) #"#2B3232" 
                     $ChartArea.BackGradientStyle = 3
@@ -253,11 +253,11 @@ Function Update-TabControl {
                         $I = 0
                         $Datasource.Earnings.$Pool.ForEach(
                             { 
-                                $_ *= $Variables.Rates.BTC.($Config.MainCurrency)
+                                $_ *= $Variables.Rates.BTC.($Config.FIATcurrency)
                                 $LegacyGUIearningsChart.Series[$Pool].Points.addxy(0, $_) | Out-Null
                                 $Daysum[$I] += $_
                                 If ($_) { 
-                                    $LegacyGUItooltipText[$I] = "$($LegacyGUItooltipText[$I])`r$($Pool): {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $_
+                                    $LegacyGUItooltipText[$I] = "$($LegacyGUItooltipText[$I])`r$($Pool): {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $_
                                 }
                                 $I ++
                             }
@@ -269,10 +269,10 @@ Function Update-TabControl {
                     $DataSource.Labels.ForEach(
                         { 
                             $ChartArea.AxisX.CustomLabels.Add($I +0.5, $I + 1.5, " $_ ")
-                            $ChartArea.AxisX.CustomLabels[$I].ToolTip = "$($LegacyGUItooltipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $Daysum[$I]
+                            $ChartArea.AxisX.CustomLabels[$I].ToolTip = "$($LegacyGUItooltipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $Daysum[$I]
                             ForEach ($Pool in $DataSource.Earnings.PSObject.Properties.Name) { 
                                 If ($Datasource.Earnings.$Pool[$I]) { 
-                                    $LegacyGUIearningsChart.Series[$Pool].Points[$I].ToolTip = "$($LegacyGUItooltipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.MainCurrency)" -f $Daysum[$I]
+                                    $LegacyGUIearningsChart.Series[$Pool].Points[$I].ToolTip = "$($LegacyGUItooltipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $Daysum[$I]
                                 }
                             }
                             $I ++
@@ -295,11 +295,11 @@ Function Update-TabControl {
                 $LegacyGUIbalancesDGV.DataSource = $Variables.Balances.Values | Select-Object @(
                     @{ Name = "Currency"; Expression = { $_.Currency } },
                     @{ Name = "Pool [Currency]"; Expression = { "$($_.Pool) [$($_.Currency)]" } },
-                    @{ Name = "Balance ($($Config.MainCurrency))"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Balance * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                    @{ Name = "Avg. $($Config.MainCurrency)/day"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                    @{ Name = "$($Config.MainCurrency) in 1h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                    @{ Name = "$($Config.MainCurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
-                    @{ Name = "$($Config.MainCurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.MainCurrency)) } },
+                    @{ Name = "Balance ($($Config.FIATcurrency))"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Balance * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                    @{ Name = "Avg. $($Config.FIATcurrency)/day"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                    @{ Name = "$($Config.FIATcurrency) in 1h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                    @{ Name = "$($Config.FIATcurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                    @{ Name = "$($Config.FIATcurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
                     @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
                     @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), ($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } }
                 ) | Sort-Object -Property Pool | Out-DataTable
@@ -317,11 +317,11 @@ Function Update-TabControl {
                 }
                 $LegacyGUIbalancesDGV.Rows.ForEach(
                     { 
-                        $_.Cells[2].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[2].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                        $_.Cells[3].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[3].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                        $_.Cells[4].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[4].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                        $_.Cells[5].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[5].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
-                        $_.Cells[6].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[6].Value * $Variables.Rates.($Config.MainCurrency).($_.Cells[0].Value))
+                        $_.Cells[2].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[2].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
+                        $_.Cells[3].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[3].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
+                        $_.Cells[4].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[4].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
+                        $_.Cells[5].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[5].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
+                        $_.Cells[6].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[6].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
                     }
                 )
                 Resize-Form # To fully show lauched miners gridview
@@ -363,9 +363,9 @@ Function Update-TabControl {
                     @{ Name = "Miner"; Expression = { $_.Name } },
                     @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
                     @{ Name = "Status"; Expression = { $_.Status } },
-                    @{ Name = "Earning (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.MainCurrency)) } } },
-                    @{ Name = "Power cost $($Config.MainCurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.MainCurrency)) } } },
-                    @{ Name = "Profit (biased) $($Config.MainCurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost ) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.MainCurrency)) } } },
+                    @{ Name = "Earning (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
+                    @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
+                    @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost ) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                     @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
                     @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & "} },
                     @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } },

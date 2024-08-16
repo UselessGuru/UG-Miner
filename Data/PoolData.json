@@ -201,6 +201,7 @@
     "Region": [
       "n/a (Anycast)"
     ],
+    "PayoutCurrency": "BTC", // Only BTC is supported
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
@@ -208,14 +209,12 @@
     "Variant": {
       "NiceHash External": {
         "Fee": 0.05,
-        "PayoutCurrency": "BTC", // Only BTC is supported
         "PayoutThreshold": {
           "mBTC": 1
         }
       },
       "NiceHash Internal": {
         "Fee": 0.02,
-        "PayoutCurrency": "BTC", // Only BTC is supported
         "PayoutThreshold": {
           "mBTC": 0.5
         }

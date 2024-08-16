@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.25
-Version date:   2024/08/13
+Version:        6.2.26
+Version date:   2024/08/16
 #>
 
 Function Start-APIServer { 
@@ -737,7 +737,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/btc" { 
-                                $Data = $Variables.Rates.BTC.($Config.MainCurrency)
+                                $Data = $Variables.Rates.BTC.($Config.FIATcurrency)
                                 Break
                             }
                             "/balancescurrencies" { 
@@ -772,7 +772,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/currency" { 
-                                $Data = $Config.MainCurrency
+                                $Data = $Config.FIATcurrency
                                 Break
                             }
                             "/currencyalgorithm" { 

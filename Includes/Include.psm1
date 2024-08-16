@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.25
-Version date:   2024/08/13
+Version:        6.2.26
+Version date:   2024/08/16
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -713,11 +713,9 @@ Function Start-Core {
 
     If (-not $Global:CoreRunspace) { 
 
-        $Variables.LastDonated = [DateTime]::Now.AddDays(-1).AddHours(1)
+        $Variables.LastDonated = [DateTime]::Now.AddDays( -1 ).AddHours(1)
 
         $Variables.Remove("EndCycleTime")
-
-        $Variables.CycleStarts = @()
 
         $Global:CoreRunspace = [RunspaceFactory]::CreateRunspace()
         $Global:CoreRunspace.ApartmentState = "STA"
@@ -760,6 +758,13 @@ Function Stop-Core {
         }
         Remove-Variable $Miner
 
+        # Must close runspace after miners were stopped, otherwise methods don't work any longer
+        $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.Job)
+        $Global:CoreRunspace.PowerShell.Dispose()
+        $Global:CoreRunspace.PowerShell = $null
+        $Global:CoreRunspace.Close()
+        $Global:CoreRunspace.Dispose()
+
         $Variables.Miners = [Miner[]]@()
         $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
         $Variables.MinersBest = [Miner[]]@()
@@ -771,13 +776,6 @@ Function Stop-Core {
         $Variables.MinersMissingPrerequisite = [Miner[]]@()
         $Variables.MinersOptimal = [Miner[]]@()
         $Variables.MinersRunning = [Miner[]]@()
-
-        # # Must close runspace after miners were stopped, otherwise methods don't work any longer
-        $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.Job)
-        $Global:CoreRunspace.PowerShell.Runspace.Dispose($true)
-        $Global:CoreRunspace.PowerShell.Dispose($true)
-        $Global:CoreRunspace.Close()
-        $Global:CoreRunspace.Dispose($true)
 
         Remove-Variable CoreRunspace -Scope global
 
@@ -848,11 +846,11 @@ Function Stop-Brain {
                 # Stop Brains
                 $Variables.Brains[$_].PowerShell.Stop()
                 If (-not $Variables.Brains[$_].Job.IsCompleted) { $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].Job) }
-                $Variables.Brains[$_].PowerShell.Runspace.Dispose($true)
-                $Variables.Brains[$_].PowerShell.Close()
-                $Variables.Brains[$_].PowerShell.Dispose($true)
+                $Variables.Brains[$_].PowerShell.Runspace.Dispose()
+                $Variables.Brains[$_].PowerShell.Dispose()
+                $Variables.Brains[$_].PowerShell = $null
                 $Variables.Brains[$_].Close()
-                $Variables.Brains[$_].Dispose($true)
+                $Variables.Brains[$_].Dispose()
                 $Variables.Brains.Remove($_)
                 $Variables.BrainData.Remove($_)
                 $BrainsStopped += $_
@@ -909,18 +907,18 @@ Function Stop-BalancesTracker {
         $Variables.BalancesTrackerRunning = $false
 
         $Global:BalancesTrackerRunspace.PowerShell.EndInvoke($Global:BalancesTrackerRunspace.Job)
-        $Global:BalancesTrackerRunspace.PowerShell.Runspace.Dispose($true)
         $Global:BalancesTrackerRunspace.PowerShell.Dispose($true)
+        $Global:BalancesTrackerRunspace.PowerShell = $null
         $Global:BalancesTrackerRunspace.Close()
-        $Global:BalancesTrackerRunspace.Dispose($true)
+        $Global:BalancesTrackerRunspace.Dispose()
 
         Remove-Variable BalancesTrackerRunspace -Scope global
 
         $Variables.Summary += "<br>Balances tracker background process stopped."
         Write-Message -Level Info "Balances tracker background process stopped."
-    }
 
-    [System.GC]::Collect()
+        [System.GC]::Collect()
+    }
 }
 
 Function Get-Rate { 
@@ -930,7 +928,7 @@ Function Get-Rate {
     # Use stored currencies from last run
     If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = $Variables.Rates.PSObject.Properties.Name -creplace "^m" }
 
-    $Variables.AllCurrencies = @(@(@($Config.MainCurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace "mBTC", "BTC" | Sort-Object -Unique)
+    $Variables.AllCurrencies = @(@(@($Config.FIATcurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace "mBTC", "BTC" | Sort-Object -Unique)
 
     Try { 
         $TSymBatches = @()
@@ -1105,7 +1103,7 @@ Function Write-MonitoringData {
             { 
                 [PSCustomObject]@{ 
                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
-                    Currency       = $Config.MainCurrency
+                    Currency       = $Config.FIATcurrency
                     CurrentSpeed   = $_.Hashrates_Live
                     Earning        = ($_.WorkersRunning.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
                     EstimatedSpeed = $_.WorkersRunning.Hashrate
@@ -1337,7 +1335,6 @@ Function Read-Config {
                         "MiningDutch" { 
                             If ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
                             If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.MiningDutchUserName }
-                            If (-not $PoolConfig.Wallets) { $PoolConfig.Wallets = @{ "$($PoolConfig.PayoutCurrency)" = $($ConfigFromFile.Wallets.($PoolConfig.PayoutCurrency)) } }
                             Break
                         }
                         "MiningPoolHub" { 
@@ -1345,13 +1342,7 @@ Function Read-Config {
                             Break
                         }
                         "NiceHash" { 
-                            If (-not $PoolConfig.Variant."Nicehash Internal".Wallets.BTC) { 
-                                If ($ConfigFromFile.NiceHashWallet -and $ConfigFromFile.NiceHashWalletIsInternal) { $PoolConfig.Variant."NiceHash Internal".Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.NiceHashWallet } }
-                            }
-                            If (-not $PoolConfig.Variant."Nicehash External".Wallets.BTC) { 
-                                If ($ConfigFromFile.NiceHashWallet -and -not $ConfigFromFile.NiceHashWalletIsInternal) { $PoolConfig.Variant."NiceHash External".Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.NiceHashWallet } }
-                                ElseIf ($ConfigFromFile.Wallets.BTC) { $PoolConfig.Variant."NiceHash External".Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.Wallets.BTC } }
-                            }
+                            If ($ConfigFromFile.NiceHashWallet) { $PoolConfig.Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.NiceHashWallet } }
                             Break
                         }
                         "ProHashing" { 
@@ -1467,6 +1458,8 @@ Function Update-ConfigFile {
         { 
             Switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
+                "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_) }
+                "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_) }
                 Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
             }
         }

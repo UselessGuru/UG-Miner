@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash Internal.ps1
-Version:        6.2.25
-Version date:   2024/08/13
+Version:        6.2.26
+Version date:   2024/08/16
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

@@ -4,6 +4,31 @@ Known issues:
   -> It is recommended to set it to 'Windows Console Host'
 - Idle detection has a big memory leak on each core stop (still investigating)
 
+Changelog UG-Miner 6.2.26 2024/08/16
+====================================
+
+Changes:
+- Renamed configuration item 'BalancesShowInMainCurrency' to 'BalancesShowInFIATcurrency'. Configuration file will get automatically during update.
+- Renamed configuration item 'MainCurrency' to 'FIATcurrency'. Configuration file will get automatically during update.
+- Web GUI / Configuration editor: Change pool selection logic. Can only select pool when prerequisites are met
+
+Enhancements:
+- Core: Remove obsolete code & minor code optimizations
+
+Fixes:
+- Core: 'Error in file 'Includes\Core.ps1' line 291' (Regression from 6.2.25)
+
+
+Changelog UG-Miner 6.2.25 2024/08/13
+====================================
+
+Enhancements:
+- Core: Remove obsolete code & minor code optimizations
+
+Fixed:
+- Pool 'Miningdutch': Payout threshold 1000x too low
+
+
 Changelog UG-Miner 6.2.24 2024/08/10
 ====================================
 

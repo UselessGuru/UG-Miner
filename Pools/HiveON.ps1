@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.2.25
-Version date:   2024/08/13
+Version:        6.2.26
+Version date:   2024/08/16
 #>
 
 Param(
@@ -37,66 +37,64 @@ $PoolConfig = $Variables.PoolsConfig.$Name
 
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
-If ($PoolConfig.Wallets) { 
+$APICallFails = 0
 
-    $APICallFails = 0
+Do { 
+    Try { 
+        $Request = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+    }
+    Catch { 
+        $APICallFails ++
+        Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
+    }
+} While (-not $Request -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
-    Do { 
-        Try { 
-            $Request = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+If (-not $Request) { Return }
+
+ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
+    $Currency = $Pool.name -replace ' \s+'
+    If ($AlgorithmNorm = Get-AlgorithmFromCurrency $Currency) { 
+        $Divisor = [Double]$Pool.profitPerPower
+
+        # Add coin name
+        If ($Pool.title -and $Currency) { 
+            [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title)
         }
-        Catch { 
-            $APICallFails ++
-            Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
-        }
-    } While (-not $Request -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
-    If (-not $Request) { Return }
+        $Reasons = [System.Collections.Generic.List[String]]@()
+        If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet for [$($Currency)]") }
+        If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
+        If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
 
-    ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
-        $Currency = $Pool.name -replace ' \s+'
-        If ($AlgorithmNorm = Get-AlgorithmFromCurrency $Currency) { 
-            $Divisor = [Double]$Pool.profitPerPower
+        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
+        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
 
-            # Add coin name
-            If ($Pool.title -and $Currency) { 
-                [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title)
-            }
-
-            $Reasons = [System.Collections.Generic.List[String]]@()
-            If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
-            If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
-
-            $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
-            $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
-
-            [PSCustomObject]@{ 
-                Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                Algorithm                = $AlgorithmNorm
-                Currency                 = $Currency
-                Disabled                 = $Stat.Disabled
-                EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-                Fee                      = 0.03
-                Host                     = [String]$Pool.servers[0].host
-                Key                      = $Key
-                Name                     = $Name
-                Pass                     = "x"
-                Port                     = [UInt16]$Pool.servers[0].ports[0]
-                PortSSL                  = [UInt16]$Pool.servers[0].ssl_ports[0]
-                PoolUri                  = "https://hiveon.net/$($Currency.ToLower())"
-                Price                    = $Stat.Live
-                Protocol                 = "ethproxy"
-                Reasons                  = $Reasons
-                Region                   = [String]$PoolConfig.Region
-                SendHashrate             = $false
-                SSLselfSignedCertificate = $false
-                StablePrice              = $Stat.Week
-                Updated                  = [DateTime]$Stat.Updated
-                User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }
-                Workers                  = [UInt]$Request.stats."$($Pool.name)".workers
-                WorkerName               = $PoolConfig.WorkerName
-                Variant                  = $PoolVariant
-            }
+        [PSCustomObject]@{ 
+            Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
+            Algorithm                = $AlgorithmNorm
+            Currency                 = $Currency
+            Disabled                 = $Stat.Disabled
+            EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
+            Fee                      = 0.03
+            Host                     = [String]$Pool.servers[0].host
+            Key                      = $Key
+            Name                     = $Name
+            Pass                     = "x"
+            Port                     = [UInt16]$Pool.servers[0].ports[0]
+            PortSSL                  = [UInt16]$Pool.servers[0].ssl_ports[0]
+            PoolUri                  = "https://hiveon.net/$($Currency.ToLower())"
+            Price                    = $Stat.Live
+            Protocol                 = "ethproxy"
+            Reasons                  = $Reasons
+            Region                   = [String]$PoolConfig.Region
+            SendHashrate             = $false
+            SSLselfSignedCertificate = $false
+            StablePrice              = $Stat.Week
+            Updated                  = [DateTime]$Stat.Updated
+            User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }
+            Workers                  = [UInt]$Request.stats."$($Pool.name)".workers
+            WorkerName               = $PoolConfig.WorkerName
+            Variant                  = $PoolVariant
         }
     }
 }

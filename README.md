@@ -62,7 +62,7 @@ UG-Miner code is partly based on
    4. Save configuration
    5. Start mining
 
-   <sup>(*)</sup> You only need to change the username if you are using MiningDutch, MiningPoolhub or ProHashing
+   <sup>(*)</sup> To enable MiningDutch, MiningPoolhub or ProHashing you must configure a username
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 

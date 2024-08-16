@@ -83,31 +83,31 @@
                         {{{updated}}}<br>
                     </div>
                     {{#if showsums}}
-                      <div title="{{formatCurrency growth1 rate}} {{maincurrency}} last 1 hour">
+                      <div title="{{formatCurrency growth1 rate}} {{FIATcurrency}} last 1 hour">
                         <br>{{formatCurrency growth1}} {{currency}} last 1 hour
                       </div>
-                      <div title="{{formatCurrency growth6 rate}} {{maincurrency}} last 6 hrs">
+                      <div title="{{formatCurrency growth6 rate}} {{FIATcurrency}} last 6 hrs">
                         {{formatCurrency growth6}} {{currency}} last 6 hrs
                       </div>
-                      <div title="{{formatCurrency growth24 rate}} {{maincurrency}} last 24 hrs">
+                      <div title="{{formatCurrency growth24 rate}} {{FIATcurrency}} last 24 hrs">
                         {{formatCurrency growth24}} {{currency}} last 24 hrs
                       </div>
-                      <div title="{{formatCurrency growth168 rate}} {{maincurrency}} last 7 days">
+                      <div title="{{formatCurrency growth168 rate}} {{FIATcurrency}} last 7 days">
                         {{formatCurrency growth168}} {{currency}} last 7 days
                       </div>
-                      <div title="{{formatCurrency growth720 rate}} {{maincurrency}} last 30 days">
+                      <div title="{{formatCurrency growth720 rate}} {{FIATcurrency}} last 30 days">
                           {{formatCurrency growth720}} {{currency}} last 30 days
                       </div>
                     {{/if}}
                     {{#if showaverages}}
                       <br/>
-                      <div title="avg. {{formatCurrency avghourlygrowth rate}} {{maincurrency}} in 1h">
+                      <div title="avg. {{formatCurrency avghourlygrowth rate}} {{FIATcurrency}} in 1h">
                         avg. {{formatCurrency avghourlygrowth}} {{currency}} in 1h
                       </div>
-                      <div title="avg. {{formatCurrency avgdailygrowth rate}} {{maincurrency}} in 24 hrs">
+                      <div title="avg. {{formatCurrency avgdailygrowth rate}} {{FIATcurrency}} in 24 hrs">
                         avg. {{formatCurrency avgdailygrowth}} {{currency}} in 24 hrs
                       </div>
-                      <div title="avg. {{formatCurrency avgweeklygrowth rate}} {{maincurrency}} in 7 days">
+                      <div title="avg. {{formatCurrency avgweeklygrowth rate}} {{FIATcurrency}} in 7 days">
                         avg. {{formatCurrency avgweeklygrowth}} {{currency}} in 7 days
                       </div>
                     {{/if}}
@@ -116,7 +116,7 @@
                 {{#if total}}
                 {{else}}
                   <div class="card-body text-center">
-                    <p title="{{#if balanceinmaincurrency}}{{maincurrency}}: {{formatCurrency balanceinmaincurrency}}{{/if}}" class="card-text currencies">
+                    <p title="{{#if balanceinFIATcurrency}}{{FIATcurrency}}: {{formatCurrency balanceinFIATcurrency}}{{/if}}" class="card-text currencies">
                     {{#each balances}}
                       <b>{{@key}}: {{formatCurrency this}}</b>
                       <br/>
@@ -125,7 +125,7 @@
                     <p class="card-text currencies">
                     <div class="payout text-center">
                       {{#if percentage includeZero=true}}
-                        <div title="{{percentage}}% of {{convertRate payoutthreshold rates payoutthresholdcurrency maincurrency}} {{maincurrency}}">
+                        <div title="{{percentage}}% of {{convertRate payoutthreshold rates payoutthresholdcurrency FIATcurrency}} {{FIATcurrency}}">
                           Payout threshold<br/>
                           <b>{{percentage}}%</b> of <b>{{payoutthreshold}} {{payoutthresholdcurrency}}</b>
                         </div>
@@ -358,9 +358,9 @@
                   allbalances: {},
                   total: true,
                   outdated: false,
-                  maincurrency: config.MainCurrency
+                  FIATcurrency: config.FIATcurrency
               };
-              currencies = [config.MainCurrency].concat(config.ExtraCurrencies)
+              currencies = [config.FIATcurrency].concat(config.ExtraCurrencies)
 
               if (config.UsemBTC == true) currencies[currencies.indexOf('BTC')] = 'mBTC'
 
@@ -414,15 +414,15 @@
 
                             if (config.BalancesShowInAllCurrencies || footer.test(item.Pool)) {
                               item.Currencies = [currency].concat(currencies);
-                            } else if (config.BalancesShowInMainCurrency || footer.test(item.Pool)) {
-                              item.Currencies = [currency].concat(config.MainCurrency);
+                            } else if (config.BalancesShowInFIATcurrency || footer.test(item.Pool)) {
+                              item.Currencies = [currency].concat(config.FIATcurrency);
                             } else {
                               item.Currencies = [currency];
                             }
 
                             if (!(footer.test(item.Pool))) {
 
-                              if (rates[item.Currency]) currencyrate = rates[item.Currency][config.MainCurrency];
+                              if (rates[item.Currency]) currencyrate = rates[item.Currency][config.FIATcurrency];
 
                               if (item.Currency != item.PayoutThresholdCurrency) {
                                 // Payout threshold currency is different from asset currency
@@ -455,7 +455,7 @@
                                 rate: currencyrate,
                                 rates: rates,
                                 currency: currency,
-                                maincurrency: config.MainCurrency,
+                                FIATcurrency: config.FIATcurrency,
                                 percentage: percentage,
                                 paydate: formatDate(item.ProjectedPayDate),
                                 showaverages: config.BalancesShowAverages,
@@ -475,7 +475,7 @@
                                 $.each(item.Currencies, function(cindex, currency) {
                                   if (rates[currency]) data['balances'][currency] = item.Balance * rates[item.Currency][currency];
                                 });
-                                data.balanceinmaincurrency = item.Balance * rates[item.Currency][config.MainCurrency];
+                                data.balanceinFIATcurrency = item.Balance * rates[item.Currency][config.FIATcurrency];
                               } else { 
                                 if (config.BalancesShowInAllCurrencies) {
                                   data['balances']['Exchange rates unknown'] = "";
@@ -507,7 +507,7 @@
                           totals.outdated = true;
                         }
 
-                        if (!(config.BalancesShowInAllCurrencies)) currencies = [config.MainCurrency];
+                        if (!(config.BalancesShowInAllCurrencies)) currencies = [config.FIATcurrency];
 
                         $.each(currencies, function(cindex, currency) {
                           if (rates[currency]) {
@@ -546,14 +546,14 @@
                     };
                     datasets.push(earnings);
                   }
-                  renderChart(earningsdata.Labels, datasets, config.MainCurrency);
+                  renderChart(earningsdata.Labels, datasets, config.FIATcurrency);
                 }
               });
             }
 
             $(document).ready(function () {
               $(".addlocalcurrency").each(function () {
-                this.childNodes[0].innerText = this.childNodes[0].innerText + '\n(' + config.MainCurrency + ')';
+                this.childNodes[0].innerText = this.childNodes[0].innerText + '\n(' + config.FIATcurrency + ')';
               });
 
               updateEarningsChart();

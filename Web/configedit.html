@@ -49,7 +49,7 @@
           </div>
           <br>
 
-          <legend class=h6 title="You must have a registered account with NiceHash">NiceHash
+          <legend class=h6 title="You must have a registered account with NiceHash to use a NiceHash internal wallet">NiceHash
             <a id="RegisterNiceHash" href="https://www.nicehash.com/my/register" target="_blank" hidden style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
           <div style="padding-top: 0.2rem" title="Your NiceHash Bitcoin wallet address (must be between 26 and 35 chars long)">
@@ -98,13 +98,13 @@
 
           <!-- Currency settings -->
           <legend class=h6><b>Currency settings</b></legend>
-          <div title="Main currency used for BTC conversion&#10;Power cost, profit and earnings are shown in this currency">Main currency
-            <select id="MainCurrency" name="MainCurrency" style="margin-top: 0.2rem"></select>
+          <div title="Currency used for BTC conversion&#10;Power cost, profit and earnings are shown in this currency">Main (FIAT) currency
+            <select id="FIATcurrency" name="FIATcurrency" style="margin-top: 0.2rem"></select>
           </div>
           <div title="Default payout currency for all pools&#10;Important: Not all pools allow payouts in currencies other than BTC&#10;Consult the pool API for more information&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Default payout currency
             <select id="PayoutCurrency" name="PayoutCurrency" style="margin-top: 0.2rem"></select>
           </div>
-          <div title="Extra currencies to be shown in balances summary&#10;Values must be separated by commas&#10;&#10;Enter 'real-world' or crypto currencies&#10;mBTC (milli BTC) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem">Extra currencies</label>
+          <div title="Extra currencies to be shown in balances summary&#10;Values must be separated by commas&#10;&#10;Enter FIAT or crypto currencies&#10;mBTC (milli BTC) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem">Extra currencies</label>
             <input type="text" id="ExtraCurrencies" name="ExtraCurrencies" maxlength=45 size=50 value="USD, ETC">
           </div>
           <div style="padding-top: 0.5rem" title="If enabled UG-Miner will display BTC values in milli BTC">
@@ -363,8 +363,8 @@
             <div style="padding-top: 0.6rem" title="Show 1hr / 24hr & 7day pool earning averages&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
               <input type="checkbox" class="toggle-switch" id="BalancesShowAverages" name="BalancesShowAverages" style="margin-left:20px"> Show average earnings for each pool
             </div>
-            <div style="padding-top: 0.6rem" title="Pool balances will be shown in main currency&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
-              <input type="checkbox" class="toggle-switch" id="BalancesShowInMainCurrency" name="BalancesShowInMainCurrency" style="margin-left:20px"> Show pool balances in main currency
+            <div style="padding-top: 0.6rem" title="Pool balances will be shown in main (FIAT) currency&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+              <input type="checkbox" class="toggle-switch" id="BalancesShowInFIATcurrency" name="BalancesShowInFIATcurrency" style="margin-left:20px"> Show pool balances in main (FIAT) currency
             </div>
             <div style="padding-top: 0.6rem" title="Pool balances will be shown in extra currencies &#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
               <input type="checkbox" class="toggle-switch" id="BalancesShowInAllCurrencies" name="BalancesShowInAllCurrencies" style="margin-left:20px"> Show pool balances all currencies
@@ -480,7 +480,7 @@
 <script type="text/javascript">
 
   const walletscontainer = document.getElementById('Wallets');
-  const fiatcurrencycontainer = document.getElementById('MainCurrency');
+  const fiatcurrencycontainer = document.getElementById('FIATcurrency');
   const payoutcurrencycontainer = document.getElementById('PayoutCurrency');
   const poolscontainer = document.getElementById('Pools');
   const regionscontainer = document.getElementById('Regions');
@@ -634,49 +634,11 @@
       document.getElementById(currency).remove();
     });
 
-    // Mining Dutch
-    document.getElementById('MiningDutchUserName').value = config.MiningDutchUserName || '';
-    $(document.getElementById('MiningDutchUserName')).change(function (event) {
-      document.getElementById('RegisterMiningDutch').hidden = Boolean(document.getElementById('MiningDutchUserName').value);
-    });
-    $(document.getElementById('MiningDutchUserName')).trigger('change');
-    document.getElementById('MiningDutchAPIKey').value = config.MiningDutchAPIKey || '';
-    // Mining Pool Hub
-    document.getElementById('MiningPoolHubUserName').value = config.MiningPoolHubUserName || '';
-    $(document.getElementById('MiningPoolHubUserName')).change(function (event) {
-      document.getElementById('RegisterMiningPoolHub').hidden = Boolean(document.getElementById('MiningPoolHubUserName').value);
-    });
-    $(document.getElementById('MiningPoolHubUserName')).trigger('change');
-    document.getElementById('MiningPoolHubAPIKey').value = config.MiningPoolHubAPIKey || '';
-    // NiceHash
-    document.getElementById('NiceHashWallet').value = config.NiceHashWallet || '';
-    $(document.getElementById('NiceHashWallet')).change(function (event) {
-      document.getElementById('RegisterNiceHash').hidden = Boolean(document.getElementById('NiceHashWallet').value);
-    });
-    $(document.getElementById('NiceHashWallet')).trigger('change');
-    document.getElementById('NiceHashAPIKey').value = config.NiceHashAPIKey || '';
-    document.getElementById('NiceHashAPISecret').value = config.NiceHashAPISecret || '';
-    if (config.NiceHashWalletIsInternal) document.getElementById('NiceHashWalletIsInternal').value = 'internal';
-    else document.getElementById('NiceHashWalletIsInternal').value = 'external';
-    // NiceHashWalletIsInternal
-    $(document.getElementById('NiceHashWallet')).change(function (event) {
-      document.getElementById('NiceHashWalletIsInternal').disabled = (document.getElementById('NiceHashWallet')).value.notmatch(/^[0-9A-Za-z]{34}$/);
-    });
-    document.getElementById('NiceHashOrganizationId').value = config.NiceHashOrganizationId || '';
-    // ProHashing
-    document.getElementById('ProHashingUserName').value = config.ProHashingUserName || '';
-    $(document.getElementById('ProHashingUserName')).change(function (event) {
-      document.getElementById('RegisterProHashing').hidden = Boolean(document.getElementById('ProHashingUserName').value);
-    });
-    document.getElementById('ProHashingAPIKey').value = config.ProHashingAPIKey || '';
-    if (config.ProHashingMiningMode === 'PPLNS') document.getElementById('ProHashingMiningMode').value = config.ProHashingMiningMode;
-    else document.getElementById('ProHashingMiningMode').value = 'PPS';
-
     // Currency Settings
     $.each(fiatcurrencies, function(key, value) {
       $('<option/>', { value: key, text: key + ' (' + value + ')' }).appendTo(fiatcurrencycontainer);
     });
-    document.getElementById('MainCurrency').value = config.MainCurrency.trim();
+    document.getElementById('FIATcurrency').value = config.FIATcurrency.trim();
     document.getElementById('ExtraCurrencies').value = config.ExtraCurrencies.toString().trim();
     document.getElementById('PayoutCurrency').value = config.PayoutCurrency.trim();
     if (config.UsemBTC) document.getElementById('UsemBTC').checked = config.UsemBTC;
@@ -780,10 +742,6 @@
       if (pool && poolname != pool.id) pool.checked = false;
       var pool = document.getElementById(basePoolName + 'plus');
       if (pool && poolname != pool.id) pool.checked = false;
-      if (poolname.match('pool-miningdutch(|24hr|plus)')) {
-        document.getElementById('MiningDutchUserName').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('MiningDutchAPIKey').disabled = !(document.getElementById(poolname).checked);
-      };
       if (poolname == 'pool-miningpoolhub') {
         if (document.getElementById(poolname).checked) {
           $('.modal-title').text("Warning!");
@@ -792,20 +750,6 @@
             show: true
           });
         };
-        document.getElementById('MiningPoolHubUserName').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('MiningPoolHubAPIKey').disabled = !(document.getElementById(poolname).checked);
-      };
-      if (poolname == 'pool-nicehash') {
-        document.getElementById('NiceHashAPIKey').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('NiceHashAPISecret').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('NiceHashWallet').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('NiceHashWalletIsInternal').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('NiceHashOrganizationId').disabled = !(document.getElementById(poolname).checked);
-      };
-      if (poolname.match('pool-prohashing(|24hr|plus)$')) {
-        document.getElementById('ProHashingUserName').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('ProHashingAPIKey').disabled = !(document.getElementById(poolname).checked);
-        document.getElementById('ProHashingMiningMode').disabled = !(document.getElementById(poolname).checked);
       };
     });
     $.each([config.PoolName].flat(), function (key, value) {
@@ -818,26 +762,76 @@
           });
         };
     });
-    if (document.getElementById('pool-miningdutch')) {
-      document.getElementById('MiningDutchUserName').disabled = !(document.getElementById('pool-miningdutch').checked || (document.getElementById('pool-miningdutch24hr').checked) || document.getElementById('pool-miningdutchplus').checked);
-      document.getElementById('MiningDutchAPIKey').disabled = !(document.getElementById('pool-miningdutch').checked || (document.getElementById('pool-miningdutch24hr').checked) || document.getElementById('pool-miningdutchplus').checked);
-    }
-    if (document.getElementById('pool-miningpoolhub')) {
-      document.getElementById('MiningPoolHubUserName').disabled = !(document.getElementById('pool-miningpoolhub').checked);
-      document.getElementById('MiningPoolHubAPIKey').disabled = !(document.getElementById('pool-miningpoolhub').checked);
-    }
-    if (document.getElementById('pool-nicehash')) {
-      document.getElementById('NiceHashAPIKey').disabled = !(document.getElementById('pool-nicehash').checked);
-      document.getElementById('NiceHashAPISecret').disabled = !(document.getElementById('pool-nicehash').checked);
-      document.getElementById('NiceHashWalletIsInternal').disabled = !(document.getElementById('pool-nicehash').checked);
-      document.getElementById('NiceHashWallet').disabled = !(document.getElementById('pool-nicehash').checked);
-      document.getElementById('NiceHashOrganizationId').disabled = !(document.getElementById('pool-nicehash').checked);
-    }
-    if (document.getElementById('pool-prohashing')) {
-      document.getElementById('ProHashingUserName').disabled = !(document.getElementById('pool-prohashing').checked || document.getElementById('pool-prohashing24hr').checked || document.getElementById('pool-prohashingplus').checked);
-      document.getElementById('ProHashingAPIKey').disabled = !(document.getElementById('pool-prohashing').checked || document.getElementById('pool-prohashing24hr').checked || document.getElementById('pool-prohashingplus').checked);
-      document.getElementById('ProHashingMiningMode').disabled = !(document.getElementById('pool-prohashing').checked || document.getElementById('pool-prohashing24hr').checked || document.getElementById('pool-prohashingplus').checked);
-    }
+
+    // Mining Dutch
+    document.getElementById('MiningDutchUserName').value = config.MiningDutchUserName || '';
+    document.getElementById('MiningDutchAPIKey').value = config.MiningDutchAPIKey || '';
+    $(document.getElementById('MiningDutchUserName')).change(function (event) {
+      document.getElementById('RegisterMiningDutch').hidden = Boolean(document.getElementById('MiningDutchUserName').value);
+      if (document.getElementById('pool-miningdutch')) { 
+        if (!Boolean(document.getElementById('MiningDutchUserName').value)) document.getElementById('pool-miningdutch').checked = false;
+        document.getElementById('pool-miningdutch').disabled = !Boolean(document.getElementById('MiningDutchUserName').value)
+      };
+      if (document.getElementById('pool-miningdutch24hr')) {
+        if (!Boolean(document.getElementById('MiningDutchUserName').value)) document.getElementById('pool-miningdutch24hr').checked = false;
+        document.getElementById('pool-miningdutch24hr').disabled = !Boolean(document.getElementById('MiningDutchUserName').value)
+      };
+      if (document.getElementById('pool-miningdutchplus')) {
+        if (!Boolean(document.getElementById('MiningDutchUserName').value)) document.getElementById('pool-miningdutchplus').checked = false;
+        document.getElementById('pool-miningdutchplus').disabled = !Boolean(document.getElementById('MiningDutchUserName').value)
+      };
+    });
+    $(document.getElementById('MiningDutchUserName')).trigger('change');
+
+    // Mining Pool Hub
+    document.getElementById('MiningPoolHubUserName').value = config.MiningPoolHubUserName || '';
+    document.getElementById('MiningPoolHubAPIKey').value = config.MiningPoolHubAPIKey || '';
+    $(document.getElementById('MiningPoolHubUserName')).change(function (event) {
+      document.getElementById('RegisterMiningPoolHub').hidden = Boolean(document.getElementById('MiningPoolHubUserName').value);
+      if (document.getElementById('pool-miningpoolhub')) { 
+        if (!Boolean(document.getElementById('MiningPoolHubUserName').value)) document.getElementById('pool-miningpoolhub').checked = false;
+        document.getElementById('pool-miningpoolhub').disabled = !Boolean(document.getElementById('MiningPoolHubUserName').value)
+      };
+    });
+    $(document.getElementById('MiningPoolHubUserName')).trigger('change');
+
+    // NiceHash
+    document.getElementById('NiceHashWallet').value = config.NiceHashWallet || '';
+    if (config.NiceHashWalletIsInternal) document.getElementById('NiceHashWalletIsInternal').value = 'internal';
+    else document.getElementById('NiceHashWalletIsInternal').value = 'external';
+    document.getElementById('NiceHashAPIKey').value = config.NiceHashAPIKey || '';
+    document.getElementById('NiceHashOrganizationId').value = config.NiceHashOrganizationId || '';
+    document.getElementById('NiceHashAPISecret').value = config.NiceHashAPISecret || '';
+    $(document.getElementById('NiceHashWallet')).change(function (event) {
+      document.getElementById('RegisterNiceHash').hidden = Boolean(document.getElementById('NiceHashWallet').value);
+      if (document.getElementById('pool-nicehash')) { 
+        if (!Boolean(document.getElementById('NiceHashWallet').value.match(/^[0-9A-Za-z]{34}$/))) document.getElementById('pool-nicehash').checked = false;
+        document.getElementById('pool-nicehash').disabled = !Boolean(document.getElementById('NiceHashWallet').value.match(/^[0-9A-Za-z]{34}$/));
+      };
+    });
+    $(document.getElementById('NiceHashWallet')).trigger('change');
+   
+    // ProHashing
+    document.getElementById('ProHashingUserName').value = config.ProHashingUserName || '';
+    document.getElementById('ProHashingAPIKey').value = config.ProHashingAPIKey || '';
+    if (config.ProHashingMiningMode === 'PPLNS') document.getElementById('ProHashingMiningMode').value = config.ProHashingMiningMode;
+    else document.getElementById('ProHashingMiningMode').value = 'PPS';
+    $(document.getElementById('ProHashingUserName')).change(function (event) {
+      document.getElementById('RegisterProHashing').hidden = Boolean(document.getElementById('ProHashingUserName').value);
+      if (document.getElementById('pool-prohashing')) { 
+        if (!Boolean(document.getElementById('ProHashingUserName').value)) document.getElementById('pool-prohashing').checked = false;
+        document.getElementById('pool-prohashing').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
+      };
+      if (document.getElementById('pool-prohashing24hr')) {
+        if (!Boolean(document.getElementById('ProHashingUserName').value)) document.getElementById('pool-prohashing24hr').checked = false;
+        document.getElementById('pool-prohashing24hr').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
+      };
+      if (document.getElementById('pool-prohashingplus')) {
+        if (!Boolean(document.getElementById('ProHashingUserName').value)) document.getElementById('pool-prohashingplus').checked = false;
+        document.getElementById('pool-prohashingplus').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
+      };
+    });
+    $(document.getElementById('ProHashingUserName')).trigger('change');
 
     // Pool Settings
     if (config.UseAnycast) document.getElementById('UseAnycast').checked = true;
@@ -921,14 +915,14 @@
     });
 
     // ProfitabilityThreshold
-    $(document.getElementById('MainCurrency')).change(function (event) {
-      document.getElementById('ProfitabilityThresholdCurrency').innerHTML = document.getElementById('MainCurrency').value.split(',')[0];
-      document.getElementById('PowerPricekWhCurrency').innerHTML = '(time: ' + document.getElementById('MainCurrency').value.split(',')[0] + ' per kW/h)';
-      document.getElementById('PowerPricekWhTitle').title = 'Price of power in ' + document.getElementById('MainCurrency').value.split(',')[0] + ' per kW⋅h, valid from HH:mm (24hr format)\nData must be in compressed JSON format\n\ne.g. {"00:00":0.26; "12:00":0.3} means\nfrom 00:00h to 11:59h: ' + document.getElementById('MainCurrency').value.split(',')[0] + ' 0.26 per kW/h\nfrom 12:00h to 23:59h: ' + document.getElementById('MainCurrency').value.split(',')[0] + ' 0.30 per kW/h'
-      if (document.getElementById('CalculatePowerCost').checked) document.getElementById('ProfitabilityThresholdTitle').title = 'Mining will stop when profit (earnings - power cost) is less than the configured value\n(e.g. ' + document.getElementById('MainCurrency').value.split(',')[0] + ' 1.00). Use negative numbers to allow mining at loss.\n\nNote: This does not apply when benchmarking or measuring power consumption'
-      else document.getElementById('ProfitabilityThresholdTitle').title = 'Mining will stop when earning is less than the configured value\n(e.g. ' + document.getElementById('MainCurrency').value.split(',')[0] + ' 1.00). Use negative numbers to allow mining at loss.\n\nNote: This does not apply when benchmarking'
+    $(document.getElementById('FIATcurrency')).change(function (event) {
+      document.getElementById('ProfitabilityThresholdCurrency').innerHTML = document.getElementById('FIATcurrency').value.split(',')[0];
+      document.getElementById('PowerPricekWhCurrency').innerHTML = '(time: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' per kW/h)';
+      document.getElementById('PowerPricekWhTitle').title = 'Price of power in ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' per kW⋅h, valid from HH:mm (24hr format)\nData must be in compressed JSON format\n\ne.g. {"00:00":0.26; "12:00":0.3} means\nfrom 00:00h to 11:59h: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 0.26 per kW/h\nfrom 12:00h to 23:59h: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 0.30 per kW/h'
+      if (document.getElementById('CalculatePowerCost').checked) document.getElementById('ProfitabilityThresholdTitle').title = 'Mining will stop when profit (earnings - power cost) is less than the configured value\n(e.g. ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 1.00). Use negative numbers to allow mining at loss.\n\nNote: This does not apply when benchmarking or measuring power consumption'
+      else document.getElementById('ProfitabilityThresholdTitle').title = 'Mining will stop when earning is less than the configured value\n(e.g. ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 1.00). Use negative numbers to allow mining at loss.\n\nNote: This does not apply when benchmarking'
     });
-    $(document.getElementById('MainCurrency')).trigger('change');
+    $(document.getElementById('FIATcurrency')).trigger('change');
 
     // Calculation Settings
     document.getElementById('UnrealPoolPriceFactor').value = parseFloat(config.UnrealPoolPriceFactor);
@@ -953,7 +947,7 @@
       if (document.getElementById('BalancesTrackerPollInterval').value > 1 && document.getElementById('BalancesTrackerPollInterval').value < 9) document.getElementById('BalancesTrackerPollInterval').value = 0;
       document.getElementById('BalancesShowSums').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesShowAverages').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
-      document.getElementById('BalancesShowInMainCurrency').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
+      document.getElementById('BalancesShowInFIATcurrency').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesShowInAllCurrencies').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesKeepAlive').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesTrackerLog').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
@@ -961,7 +955,7 @@
     });
     if (config.BalancesShowSums) document.getElementById('BalancesShowSums').checked = true;
     if (config.BalancesShowAverages) document.getElementById('BalancesShowAverages').checked = true;
-    if (config.BalancesShowInMainCurrency) document.getElementById('BalancesShowInMainCurrency').checked = true;
+    if (config.BalancesShowInFIATcurrency) document.getElementById('BalancesShowInFIATcurrency').checked = true;
     if (config.BalancesShowInAllCurrencies) document.getElementById('BalancesShowInAllCurrencies').checked = true;
     if (config.BalancesKeepAlive) document.getElementById('BalancesKeepAlive').checked = true;
     if (config.BalancesTrackerLog) document.getElementById('BalancesTrackerLog').checked = true;
@@ -1328,10 +1322,8 @@
           config.Wallets[key] = document.getElementById('Wallet' + key).value.toString();
         });
         config.MiningDutchUserName = document.getElementById('MiningDutchUserName').value.toString().trim();
-        if ((document.getElementById('MiningDutchUserName').value) == '') config.MiningDutchUserName = document.getElementById('MiningDutchUserName').value = 'UselessGuru';
         config.MiningDutchAPIKey = document.getElementById('MiningDutchAPIKey').value = document.getElementById('MiningDutchAPIKey').value.toString().trim();
         config.MiningPoolHubUserName = document.getElementById('MiningPoolHubUserName').value.toString().trim();
-        if ((document.getElementById('MiningPoolHubUserName').value) == '') config.MiningPoolHubUserName = document.getElementById('MiningPoolHubUserName').value = 'UselessGuru';
         config.MiningPoolHubAPIKey = document.getElementById('MiningPoolHubAPIKey').value = document.getElementById('MiningPoolHubAPIKey').value.toString().trim();
         config.NiceHashAPIKey = document.getElementById('NiceHashAPIKey').value = document.getElementById('NiceHashAPIKey').value.toString().trim();
         config.NiceHashAPISecret = document.getElementById('NiceHashAPISecret').value = document.getElementById('NiceHashAPISecret').value.toString().trim();
@@ -1343,7 +1335,7 @@
         config.ProHashingMiningMode = document.getElementById('ProHashingMiningMode').value;
 
         // Currency settings
-        config.MainCurrency = document.getElementById('MainCurrency').value.trim();
+        config.FIATcurrency = document.getElementById('FIATcurrency').value.trim();
         config.ExtraCurrencies = []; // Enforce array
         if (document.getElementById('ExtraCurrencies').value) config.ExtraCurrencies = (document.getElementById('ExtraCurrencies').value).replace(" ", "").split(",");
         config.PayoutCurrency = document.getElementById('PayoutCurrency').value;
@@ -1451,7 +1443,7 @@
         config.BalancesTrackerPollInterval = parseInt(document.getElementById('BalancesTrackerPollInterval').value);
         config.BalancesShowSums = document.getElementById('BalancesShowSums').checked;
         config.BalancesShowAverages = document.getElementById('BalancesShowAverages').checked;
-        config.BalancesShowInMainCurrency = document.getElementById('BalancesShowInMainCurrency').checked;
+        config.BalancesShowInFIATcurrency = document.getElementById('BalancesShowInFIATcurrency').checked;
         config.BalancesShowInAllCurrencies = document.getElementById('BalancesShowInAllCurrencies').checked;
         config.BalancesKeepAlive = document.getElementById('BalancesKeepAlive').checked;
         config.BalancesTrackerLog = document.getElementById('BalancesTrackerLog').checked;
@@ -1497,7 +1489,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if (config.MainCurrency && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount && !(config.NiceHashWalletIsInternal && (!config.NiceHashWallet || config.NiceHashWallet == config.Wallets.BTC))) {
+        if (config.FIATcurrency && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount && !(config.NiceHashWalletIsInternal && (!config.NiceHashWallet || config.NiceHashWallet == config.Wallets.BTC))) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1505,10 +1497,10 @@
             document.body.style.cursor = 'default';
             $('#myModal').on('hidden.bs.modal', function () { location.reload(true) })
           });
-        } else if (!config.MainCurrency) {
-          // No main currency
+        } else if (!config.FIATcurrency) {
+          // No FIAT currency
           $('.modal-title').html('Error: Invalid configuration');
-          $('.modal-body').html('Cannot save configuration - you must set the main currency.');
+          $('.modal-body').html('Cannot save configuration - you must set the main (FIAT) currency.');
           document.body.style.cursor = 'default';
           $('#myModal').modal({ show: true });
         } else if (config.ExcludeDeviceName.length >= enabledDevicesCount) {

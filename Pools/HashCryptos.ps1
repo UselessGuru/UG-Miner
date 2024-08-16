@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.2.25
-Version date:   2024/08/13
+Version:        6.2.26
+Version date:   2024/08/16
 #>
 
 Param(
@@ -43,7 +43,7 @@ $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
-If ($DivisorMultiplier -and $PriceField -and $Wallet) { 
+If ($DivisorMultiplier -and $PriceField) { 
 
     Try { 
         If ($Variables.Brains.$Name) { 
@@ -68,6 +68,7 @@ If ($DivisorMultiplier -and $PriceField -and $Wallet) {
         }
 
         $Reasons = [System.Collections.Generic.List[String]]@()
+        If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet for [$($PayoutCurrency)]") }
         If ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"

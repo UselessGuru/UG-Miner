@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.2.25
-Version date:   2024/08/13
+Version:        6.2.26
+Version date:   2024/08/16
 #>
 
 using module .\Include.psm1
@@ -40,20 +40,14 @@ Do {
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
         # Internet connection must be available
-        If ($NetRoute = ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) | Get-NetIPInterface).Where({ $_.ConnectionState -eq "Connected" })) { 
-            $MyIP = ((Get-NetIPAddress -InterfaceIndex $NetRoute.ifIndex -AddressFamily IPV4).IPAddress)
-        }
-        If ($MyIP) { 
-            $Variables.MyIP = $MyIP
-            Remove-Variable MyIp, NetRoute -ErrorAction Ignore
-        }
-        Else { 
+        $Variables.$MyIP = (Get-NetIPAddress -InterfaceIndex (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex -AddressFamily IPV4).IPAddress
+        If (-not $Variables.MyIP) { 
             $Variables.Summary = "No internet connection - will retry in 60 seconds..."
             Write-Message -Level Error $Variables.Summary
             $Variables.MyIP = $null
             $Variables.RefreshNeeded = $true
             $Variables.RestartCycle = $true
- 
+
             #Stop all miners
             ForEach ($Miner in $Variables.Miners.Where({ $_.Status -ne [MinerStatus]::Idle })) { 
                 $Miner.SetStatus([MinerStatus]::Idle)
@@ -74,8 +68,6 @@ Do {
             $Variables.MinersMissingPrerequisite = [Miner[]]@()
             $Variables.MinersOptimal = [Miner[]]@()
             $Variables.MinersRunning = [Miner[]]@()
-
-            $Variables.Miners = [Miner[]]@()
 
             $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
             Start-Sleep -Seconds 60
@@ -196,7 +188,7 @@ Do {
                 $Config.PowerPricekWh."00:00" = $Config.PowerPricekWh.($Config.PowerPricekWh.psBase.Keys | Sort-Object -Bottom 1)
             }
             $Variables.PowerPricekWh = [Double]($Config.PowerPricekWh.($Config.PowerPricekWh.psBase.Keys.Where({ $_ -le (Get-Date -Format HH:mm).ToString() }) | Sort-Object -Bottom 1))
-            $Variables.PowerCostBTCperW = [Double](1 / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency))
+            $Variables.PowerCostBTCperW = [Double](1 / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency))
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -430,17 +422,8 @@ Do {
                         )
 
                         # Lower accuracy on older pool data
-                        $MaxPoolAgeMinutes = $Config.SyncWindow * $Config.SyncWindow * $Config.SyncWindow * $Config.SyncWindow * ($Variables.CycleStarts[-1] - $Variables.CycleStarts[0]).TotalMinutes
-                        $Pools.Where({ $_.Updated -lt $Variables.CycleStarts[0] }).ForEach(
-                            { 
-                                If ([Math]::Floor(($Variables.CycleStarts[-1] - $_.Updated).TotalMinutes) -gt $MaxPoolAgeMinutes) { $_.Reasons.Add("Data too old") }
-                                Else { $_.Price_Bias *= [Math]::Pow(0.9, ($Variables.CycleStarts[0] - $_.Updated).TotalMinutes) }
-                            }
-                        )
-                        Remove-Variable MaxPoolAgeMinutes
+                        $Pools.Where({ $_.Updated -lt $Variables.CycleStarts[0] }).ForEach({ $_.Price_Bias *= [Math]::Pow(0.9, ($Variables.CycleStarts[0] - $_.Updated).TotalMinutes) })
 
-                        # No username or wallet
-                        $Pools.Where({ -not $_.User }).ForEach({ $_.Reasons.Add("No username or wallet") })
                         # Pool disabled by stat file
                         $Pools.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled (by Stat file)") })
                         # Min accuracy not reached
@@ -824,7 +807,7 @@ Do {
                                     Else { 
                                         If ($_.SideIndicator -eq "=>") { 
                                             $_.CommandLine = $_.GetCommandLine()
-                                            # These properties need to be set only once because they are not dependent on any config or pool information
+                                            # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
                                             $_.BaseName, $_.Version = ($_.Name -split "-")[0, 1]
                                             $_.Algorithms = $_.Workers.Pool.Algorithm
                                         }
@@ -1030,7 +1013,7 @@ Do {
             Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
 
             If ($Miners.Where({ $_.Available })) { 
-                Write-Message -Level Info "Selecting best miner$(If (($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { " profit (power cost $($Config.MainCurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earnings" })..."
+                Write-Message -Level Info "Selecting best miner$(If (($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { " profit (power cost $($Config.FIATcurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earnings" })..."
 
                 If ($Miners.Where({ $_.Available }).Count -eq 1) { 
                     $MinersBest = $Variables.MinersBestPerDevice = $Variables.MinersOptimal = $Miners.Where({ $_.Available })
@@ -1076,7 +1059,7 @@ Do {
                 }
 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
-                $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency))
+                $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency))
                 $Variables.MiningEarning = [Double]($MinersBest | Measure-Object Earning_Bias -Sum).Sum
                 $Variables.MiningPowerCost = [Double]($MinersBest | Measure-Object PowerCost -Sum).Sum
                 $Variables.MiningPowerConsumption = [Double]($MinersBest | Measure-Object PowerConsumption -Sum).Sum
@@ -1084,7 +1067,7 @@ Do {
             }
             Else { 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum).Maximum
-                $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency))
+                $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency))
                 $Variables.MinersOptimal = $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinations = $MinersBest = [Miner[]]@()
                 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
             }
@@ -1096,14 +1079,14 @@ Do {
 
         # ProfitabilityThreshold check - OK to run miners?
         $Miners.ForEach({ $_.Best = $false })
-        If ($Variables.DonationRunning -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement -or (-not $Config.CalculatePowerCost -and $Variables.MiningEarning -ge ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.MainCurrency))) -or ($Config.CalculatePowerCost -and $Variables.MiningProfit -ge ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.MainCurrency)))) { 
+        If ($Variables.DonationRunning -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement -or (-not $Config.CalculatePowerCost -and $Variables.MiningEarning -ge ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.FIATcurrency))) -or ($Config.CalculatePowerCost -and $Variables.MiningProfit -ge ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.FIATcurrency)))) { 
             $MinersBest.ForEach({ $_.Best = $true })
             If ($Variables.Rates.($Config.PayoutCurrency)) { 
                 If ($Variables.MinersNeedingBenchmark.Count) { 
                     $Variables.Summary = "Earning / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
                 }
                 ElseIf ($Variables.MiningEarning -gt 0) { 
-                    $Variables.Summary = "Earning / day: {0:n} {1}" -f ($Variables.MiningEarning * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.MainCurrency
+                    $Variables.Summary = "Earning / day: {0:n} {1}" -f ($Variables.MiningEarning * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
                 }
                 Else { 
                     $Variables.Summary = ""
@@ -1119,7 +1102,7 @@ Do {
                         $Variables.Summary += "Profit / day: n/a"
                     }
                     ElseIf ($Variables.MiningPowerConsumption -gt 0) { 
-                        $Variables.Summary += "Profit / day: {0:n} {1}" -f ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.MainCurrency
+                        $Variables.Summary += "Profit / day: {0:n} {1}" -f ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
                     }
                     Else { 
                         $Variables.Summary += "Profit / day: n/a (no power data)"
@@ -1129,22 +1112,22 @@ Do {
                         If ($Variables.Summary -ne "") { $Variables.Summary += "&ensp;&ensp;&ensp;" }
 
                         If ([Double]::IsNaN($Variables.MiningEarning) -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
-                            $Variables.Summary += "Power cost / day: n/a&ensp;[Miner$(If ($MinersBest.Count -ne 1) { "s" }): n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.MainCurrency, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Variables.PowerConsumptionIdleSystemW
+                            $Variables.Summary += "Power cost / day: n/a&ensp;[Miner$(If ($MinersBest.Count -ne 1) { "s" }): n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.FIATcurrency, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
                         }
                         ElseIf ($Variables.MiningPowerConsumption -gt 0) { 
-                            $Variables.Summary += "Power cost / day: {1:n} {0}&ensp;[Miner$(If ($MinersBest.Count -ne 1) { "s" }): {2:n} {0} ({3:n2} W); Base: {4:n} {0} ({5:n2} W)]" -f $Config.MainCurrency, (($Variables.MiningPowerCost + $Variables.BasePowerCost) * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), ($Variables.MiningPowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Variables.MiningPowerConsumption, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Variables.PowerConsumptionIdleSystemW
+                            $Variables.Summary += "Power cost / day: {1:n} {0}&ensp;[Miner$(If ($MinersBest.Count -ne 1) { "s" }): {2:n} {0} ({3:n2} W); Base: {4:n} {0} ({5:n2} W)]" -f $Config.FIATcurrency, (($Variables.MiningPowerCost + $Variables.BasePowerCost) * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), ($Variables.MiningPowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.MiningPowerConsumption, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
                         }
                         Else { 
-                            $Variables.Summary += "Power cost / day: n/a&ensp;[Miner: n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.MainCurrency, ($Variables.BasePowerCost * $Variables.Rates.BTC.($Config.MainCurrency)), $Variables.PowerConsumptionIdleSystemW
+                            $Variables.Summary += "Power cost / day: n/a&ensp;[Miner: n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.FIATcurrency, ($Variables.BasePowerCost * $Variables.Rates.BTC.($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
                         }
                     }
                 }
                 If ($Variables.Summary -ne "") { $Variables.Summary += "<br>" }
 
                 # Add currency conversion rates
-                @((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.MainCurrency) }).ForEach(
+                @((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
                     { 
-                        $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.MainCurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.MainCurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.MainCurrency)
+                        $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.FIATcurrency)
                     }
                 )
             }
@@ -1155,20 +1138,18 @@ Do {
         Else { 
             # Mining earning/profit is below threshold
             $MinersBest = [Miner[]]@()
-            $Variables.Summary = "Mining profit {0} {1:n$($Config.DecimalsMax)} / day is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.MainCurrency, (($Variables.MiningEarning - $(If ($Config.CalculatePowerCost) { $Variables.MiningPowerCost - $Variables.BasePowerCost } Else { 0 })) * $Variables.Rates.($Config.PayoutCurrency).($Config.MainCurrency)), $Config.ProfitabilityThreshold
+            $Variables.Summary = "Mining profit {0} {1:n$($Config.DecimalsMax)} / day is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.FIATcurrency, (($Variables.MiningEarning - $(If ($Config.CalculatePowerCost) { $Variables.MiningPowerCost - $Variables.BasePowerCost } Else { 0 })) * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.ProfitabilityThreshold
             Write-Message -Level Warn ($Variables.Summary -replace "<br>", " " -replace " / day", "/day")
             If ($Variables.Rates) { 
                 # Add currency conversion rates
                 If ($Variables.Summary -ne "") { $Variables.Summary += "<br>" }
-                @((@(If ($Config.UsemBTC) { "mBTC" } Else { $Config.PayoutCurrency }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.MainCurrency) }).ForEach(
+                @((@(If ($Config.UsemBTC) { "mBTC" } Else { $Config.PayoutCurrency }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
                     { 
-                        $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.MainCurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.MainCurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.MainCurrency)
+                        $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.FIATcurrency)
                     }
                 )
             }
         }
-
-        If (-not $MinersBest) { $Miners.ForEach({ $_.Best = $false }) }
 
         # Stop running miners
         ForEach ($Miner in @($Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { [String]$_.DeviceNames })) { 
