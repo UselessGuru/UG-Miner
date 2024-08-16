@@ -284,7 +284,7 @@ Virtual memory settings
 When running multiple cards its recommended to increase Virtual Memory. 16GB is optimal.
 
 Recommended/optimal Windows Nvidia driver  
-[Windows Nvidia driver 537.42](https://us.download.nvidia.com/Windows/537.42/537.42-desktop-win10-win11-64bit-international-dch-whql.exe)
+[Windows Nvidia driver 537.42](https://us.download.nvidia.com/Windows/537.42/537.42-desktop-win10-win11-64bit-international-dch-whql.exe)  
 If you use older drivers some miners will not be available.
 
 Recommended/optimal Windows AMD driver  
