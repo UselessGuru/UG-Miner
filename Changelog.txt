@@ -8,8 +8,8 @@ Changelog UG-Miner 6.2.26 2024/08/16
 ====================================
 
 Changes:
-- Renamed configuration item 'BalancesShowInMainCurrency' to 'BalancesShowInFIATcurrency'. Configuration file will get automatically during update.
-- Renamed configuration item 'MainCurrency' to 'FIATcurrency'. Configuration file will get automatically during update.
+- Renamed configuration item 'BalancesShowInMainCurrency' to 'BalancesShowInFIATcurrency'. Configuration file will get updated automatically during update.
+- Renamed configuration item 'MainCurrency' to 'FIATcurrency'. Configuration file will get updated automatically during update.
 - Web GUI / Configuration editor: Change pool selection logic. Can only select pool when prerequisites are met
 
 Enhancements:
