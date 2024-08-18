@@ -64,7 +64,7 @@
 <!-- Start of page scripts 'head.html' -->
   <script type='text/javascript'>
 
-    window.ajaxOptions = {
+window.ajaxOptions = {
       async: false
     }
 
@@ -73,7 +73,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 10,
+        timeout: 1,
         url: '/config',
         success: function(result) {
           config = result;
@@ -83,7 +83,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 10,
+        timeout: 1,
         url: '/btc',
         success: function(result) {
           btc = result;
@@ -96,7 +96,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 10,
+        timeout: 1,
         url: '/summary',
         success: function(result) {
           $('#summary').empty().append(result);
@@ -108,7 +108,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 10,
+        timeout: 1,
         url: '/version',
         success: function(result) {
           version = result
@@ -120,7 +120,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 10,
+        timeout: 1,
         url: '/functions/mining/getstatus',
         success: function(result) {
           switch (result) {

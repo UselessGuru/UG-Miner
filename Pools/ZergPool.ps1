@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.26
-Version date:   2024/08/16
+Version:        6.2.27
+Version date:   2024/08/18
 #>
 
 Param(
@@ -71,8 +71,8 @@ If ($DivisorMultiplier -and $Regions) {
         If ($PayoutThreshold) { $PayoutThresholdParameter = ",pl=$([Double]$PayoutThreshold)" }
 
         $Reasons = [System.Collections.Generic.List[String]]@()
-        If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet for [$($PayoutCurrency)]") }
-        If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Pool] configured") }
+        If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") }
+        If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Pool] (conversion disabled at pool)") }
         If ($Request.$Pool.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
 
         # Cannot cast negative values to [UInt]

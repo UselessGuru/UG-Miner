@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.2.26
-Version date:   2024/08/16
+Version:        6.2.27
+Version date:   2024/08/18
 #>
 
 Param(
@@ -62,8 +62,8 @@ If ($PriceField) {
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Currency -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
 
         $Reasons = [System.Collections.Generic.List[String]]@()
-        If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet for [$($PayoutCurrency)]") }
-        If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
+        If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") }
+        If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") }
         If ($Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
 
         # SCC firo variant

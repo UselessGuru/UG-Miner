@@ -14,7 +14,7 @@
     <table>
       <tr style="vertical-align: top; line-height: 125%">
         <td>
-          <!-- Wallet Addresses and User Names -->
+          <!-- Wallet addresses and user names -->
           <legend title="Define your wallet and user names&#10;All your earnings will be sent to the accounts defined here&#10;Correct data is essential" class=h6><b>Wallet addresses and user names</b>
             <button title="Add a new currency to wallet list" class="btn btn-light btn-sm addwalletbutton" id="btn-addwallet" style="height:20px; float: right; padding-top:0px; " type="button">Add new wallet</button>
           </legend>
@@ -135,6 +135,9 @@
           </div>
           <div style="padding-top: 0.7rem" title="Show the console window&#10;&#10;Note: You must keep the legacy GUI open when you disable the console window">
             <input type="checkbox" class="toggle-switch" id="ShowConsole" name="Show Console"> Show console window
+          </div>
+          <div style="padding-top: 0.7rem" title="If enabled miner and rig entries will use different background colors based on status">
+            <input type="checkbox" class="toggle-switch" id="UseColorForMinerStatus" name="UseColorForMinerStatus"> Use colors for miner & rig status
           </div>
           <div style="padding-top: 0.7rem" title="Watchdog will monitor pools & miners for frequent failures&#10;and suspend failing pools or miners for some cycles">
             <input type="checkbox" class="toggle-switch" id="Watchdog" name="Watchdog"> Activate watchdog (recommended)
@@ -378,9 +381,9 @@
           </fieldset>
         </td>
         <td style="vertical-align: top; line-height: 125%">
-          <!-- Display settings (Console) -->
+          <!-- Console display settings -->
           <div class="col-md-12">
-            <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Display settings (Console)</b></legend>
+            <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console display settings</b></legend>
             <div style="padding-top: 0.3rem" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing 's' in the console window while waiting for the next cycle"> UI Style
               <select name="UIStyle" id="UIStyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>
@@ -430,13 +433,6 @@
             </div>
             <div style="padding-top: 0.5rem" title="Show the Pool balances in the console window&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;Can be toggled by pressing 'b' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowPoolBalances" name="ShowPoolBalances" > Show pool balances
-            </div>
-            <br>
-
-            <!-- GUI display settings -->
-            <legend class=h6><b>Display settings (GUI)</b></legend>
-            <div style="padding-top: 0.3rem" title="Miners and Rigs will be shown with colored background depending on status">
-              <input type="checkbox" class="toggle-switch" id="UseColorForMinerStatus" name="UseColorForMinerStatus"> Use colors for miner & rig status
             </div>
             <br>
 
@@ -558,7 +554,7 @@
       }
     });
 
-    // Wallet addresses and User Names
+    // Wallet addresses and user names
     // Fill wallet addresses
     $.each(config.Wallets, function (key, value) {
       var key = key.toUpperCase();
@@ -634,7 +630,7 @@
       document.getElementById(currency).remove();
     });
 
-    // Currency Settings
+    // Currency settings
     $.each(fiatcurrencies, function(key, value) {
       $('<option/>', { value: key, text: key + ' (' + value + ')' }).appendTo(fiatcurrencycontainer);
     });
@@ -643,11 +639,11 @@
     document.getElementById('PayoutCurrency').value = config.PayoutCurrency.trim();
     if (config.UsemBTC) document.getElementById('UsemBTC').checked = config.UsemBTC;
 
-    // General Runtime Settings
+    // General settings
     document.getElementById('WorkerName').value = config.WorkerName.trim();
     if (config.StartupMode === 'Idle' || config.StartupMode === 'Paused' || config.StartupMode === 'Running') document.getElementById('StartupMode').value = config.StartupMode;
     else document.getElementById('StartupMode').value = 'Idle';
-    // StartPaused
+    // Start paused
     $(document.getElementById('AutoStart')).click(function (event) {
       document.getElementById('StartPaused').disabled = !(document.getElementById('AutoStart').checked);
     });
@@ -670,6 +666,7 @@
     });
     $(document.getElementById('LegacyGUI')).trigger('change');
     if (config.ShowConsole) document.getElementById('ShowConsole').checked = true;
+    if (config.UseColorForMinerStatus) document.getElementById('UseColorForMinerStatus').checked = true;
     if (config.Watchdog) document.getElementById('Watchdog').checked = true;
     if (config.AutoReboot) document.getElementById('AutoReboot').checked = true;
     if (Number.isInteger(config.Donation)) document.getElementById('Donation').value = parseInt(config.Donation);
@@ -686,7 +683,7 @@
     if (config.OpenFirewallPorts) document.getElementById('OpenFirewallPorts').checked = true;
     document.getElementById('DecimalsMax').value = parseInt(config.DecimalsMax);
 
-    // Select Mining Devices
+    // Select mining devices
     $.ajax({
       async: false,
       dataType: 'json',
@@ -706,7 +703,7 @@
       }
     });
 
-    // Pool Selection
+    // Pool selection
     const Pools = document.getElementById('Pools');
     const regex = /24hr$|coins$|coins24hr$|coinsplus$|plus$/
     // Populate pool checkbox list
@@ -763,7 +760,7 @@
         };
     });
 
-    // Mining Dutch
+    // MiningDutch
     document.getElementById('MiningDutchUserName').value = config.MiningDutchUserName || '';
     document.getElementById('MiningDutchAPIKey').value = config.MiningDutchAPIKey || '';
     $(document.getElementById('MiningDutchUserName')).change(function (event) {
@@ -783,7 +780,7 @@
     });
     $(document.getElementById('MiningDutchUserName')).trigger('change');
 
-    // Mining Pool Hub
+    // MiningPoolHub
     document.getElementById('MiningPoolHubUserName').value = config.MiningPoolHubUserName || '';
     document.getElementById('MiningPoolHubAPIKey').value = config.MiningPoolHubAPIKey || '';
     $(document.getElementById('MiningPoolHubUserName')).change(function (event) {
@@ -833,7 +830,7 @@
     });
     $(document.getElementById('ProHashingUserName')).trigger('change');
 
-    // Pool Settings
+    // Pool settings
     if (config.UseAnycast) document.getElementById('UseAnycast').checked = true;
     if (config.SSL === 'Never' || config.SSL === 'Prefer' || config.SSL === 'Always') document.getElementById('SSL').value = config.SSL;
     else document.getElementById('SSL').value = 'Prefer';
@@ -844,7 +841,7 @@
     document.getElementById('MinWorker').value = parseInt(config.MinWorker);
     if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
 
-    // Select the Region closest to your Location
+    // Select the region closest to your location
     // Fill region list
     $.ajax({
       async: false,
@@ -865,7 +862,7 @@
       document.getElementById(('region-europe').toLowerCase()).checked = true;
     }
 
-    // Miner Selection
+    // Miner selection
     if (config.MinerInstancePerDeviceModel) document.getElementById('MinerInstancePerDeviceModel').checked = true;
     if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
     if (parseInt(config.MinerSet) >= 0 && parseInt(config.MinerSet) <= 3) document.getElementById('MinerSet').value = config.MinerSet;
@@ -876,6 +873,7 @@
     if (config.DisableDualAlgoMining) document.getElementById('DisableDualAlgoMining').checked = true;
     if (config.DisableSingleAlgoMining) document.getElementById('DisableSingleAlgoMining').checked = true;
     if (config.Currency) document.getElementById('Currency').value = (config.Currency).toString().trim();
+
     // Dual AND single algorithm mining cannot be disabled at the same time
     $(document.getElementById('DisableDualAlgoMining')).click(function (event) {
       if (document.getElementById('DisableDualAlgoMining').checked) document.getElementById('DisableSingleAlgoMining').checked = false;
@@ -884,7 +882,7 @@
       if (document.getElementById('DisableSingleAlgoMining').checked) document.getElementById('DisableDualAlgoMining').checked = false;
     });
 
-    // Miner Runtime Settings
+    // Miner runtime settings
     document.getElementById('MinerWindowStyle').value = config.MinerWindowStyle.toLowerCase();
     if (config.MinerWindowStyleNormalWhenBenchmarking) document.getElementById('MinerWindowStyleNormalWhenBenchmarking').checked = true;
     if (parseInt(config.CPUMinerProcessPriority) >= -2 && parseInt(config.CPUMinerProcessPriority) <= 1) document.getElementById('CPUMinerProcessPriority').value = config.CPUMinerProcessPriority;
@@ -895,7 +893,7 @@
     if (config.DisableMinerFee) document.getElementById('DisableMinerFee').checked = true;
     if (config.UseMinerTweaks) document.getElementById('UseMinerTweaks').checked = true;
 
-    // Power Cost Calculation Settings
+    // Power cost calculation settings
     if (config.CalculatePowerCost) document.getElementById('CalculatePowerCost').checked = true;
     else {
       document.getElementById('PowerPricekWh').disabled = true;
@@ -924,7 +922,7 @@
     });
     $(document.getElementById('FIATcurrency')).trigger('change');
 
-    // Calculation Settings
+    // Calculation settings
     document.getElementById('UnrealPoolPriceFactor').value = parseFloat(config.UnrealPoolPriceFactor);
     document.getElementById('MinAccuracy').value = parseFloat(config.MinAccuracy) * 100;
     if (config.IgnorePoolFee) document.getElementById('IgnorePoolFee').checked = true;
@@ -937,10 +935,10 @@
     if (config.IgnoreMinerFee) document.getElementById('IgnoreMinerFee').checked = true;
     document.getElementById('ProfitabilityThreshold').value = config.ProfitabilityThreshold;
 
-    // Balance Tracker Settings
+    // Balance tracker settings
     if (parseInt(config.BalancesTrackerPollInterval) >= 1 && parseInt(config.BalancesTrackerPollInterval) <= 9) document.getElementById('BalancesTrackerPollInterval').value = 10;
     else document.getElementById('BalancesTrackerPollInterval').value = parseInt(config.BalancesTrackerPollInterval);
-    // Poll Pools for Balances & Earnings
+    // Poll pools for balances & earnings
     $(document.getElementById('BalancesTrackerPollInterval')).change(function (event) {
       if (document.getElementById('BalancesTrackerPollInterval').value == 9) document.getElementById('BalancesTrackerPollInterval').value = 0;
       if (document.getElementById('BalancesTrackerPollInterval').value == 1) document.getElementById('BalancesTrackerPollInterval').value = 10;
@@ -961,7 +959,7 @@
     if (config.BalancesTrackerLog) document.getElementById('BalancesTrackerLog').checked = true;
     $(document.getElementById('BalancesTrackerPollInterval')).trigger('change');
 
-    // Console Display Settings
+    // Console display settings
     $(document.getElementById('ShowConsole')).change(function (event) {
       document.getElementById('UIStyle').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowPowerCost').disabled = !(document.getElementById('ShowConsole').checked);
@@ -1010,10 +1008,7 @@
       document.getElementById('ShowProfitBias').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
     });
 
-    // GUI Display Settings
-    if (config.UseColorForMinerStatus) document.getElementById('UseColorForMinerStatus').checked = true;
-
-    // Log To File Settings
+    // Log to file settings
     values = ["Info", "Warn", "Error", "Verbose", "Debug"];
     $.each(values, function (key, value) {
       $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('logtofile-' + value), value: value }).appendTo(logtofilecontainer);
@@ -1022,7 +1017,7 @@
       document.getElementById(('logtofile-' + value)).checked = config.LogToFile.includes(value);
     })
 
-    // Log To Screen Settings
+    // Log to screen settings
     values = ["Info", "Warn", "Error", "Verbose", "Debug"];
     $.each(values, function (key, value) {
       $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('logtoscreen-' + value), value: value }).appendTo(logtoscreencontainer);
@@ -1031,7 +1026,7 @@
       document.getElementById(('logtoscreen-' + value)).checked = config.LogToScreen.includes(value);
     })
 
-    // Auto Update Settings
+    // Auto update settings
     if (config.AutoUpdateCheckInterval) document.getElementById('AutoUpdateCheckInterval').value = parseInt(config.AutoUpdateCheckInterval)
     else document.getElementById('AutoUpdateCheckInterval').value = 1;
     if (config.AutoUpdate) document.getElementById('AutoUpdate').checked = true;
@@ -1341,7 +1336,7 @@
         config.PayoutCurrency = document.getElementById('PayoutCurrency').value;
         config.UsemBTC = document.getElementById('UsemBTC').checked;
 
-        // Runtime Settings
+        // General settings
         config.WorkerName = document.getElementById('WorkerName').value.toString().trim();
         if ((document.getElementById('WorkerName').value) == '') config.WorkerName = document.getElementById('WorkerName').value = 'WorkerName';
         if (document.getElementById('StartupMode').value.match('Idle|Paused|Running')) config.StartupMode = document.getElementById('StartupMode').value;
@@ -1351,6 +1346,7 @@
         config.LegacyGUI = document.getElementById('LegacyGUI').checked;
         config.LegacyGUIStartMinimized = document.getElementById('LegacyGUIStartMinimized').checked;
         config.ShowConsole = document.getElementById('ShowConsole').checked;
+        config.UseColorForMinerStatus = document.getElementById('UseColorForMinerStatus').checked;
         config.Watchdog = document.getElementById('Watchdog').checked;
         config.AutoReboot = document.getElementById('AutoReboot').checked;
         config.Donation = parseInt(document.getElementById('Donation').value);
@@ -1375,7 +1371,7 @@
           if (document.getElementById(('pool-' + value.toLowerCase())).checked == true) config.PoolName.push(value);
         });
 
-        // Pool Settings
+        // Pool settings
         config.UseAnycast = document.getElementById('UseAnycast').checked;
         if (document.getElementById('SSL').value.match('Never|Prefer|Always')) config.SSL = document.getElementById('SSL').value;
         else config.SSL = 'Prefer';
@@ -1388,22 +1384,22 @@
           if (document.getElementById('region-' + value.toLowerCase()).checked == true) config.Region = value;
         });
 
-        // Miner Selection
+        // Miner selection
         config.MinerInstancePerDeviceModel = document.getElementById('MinerInstancePerDeviceModel').checked;
         config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
         config.MinerSet = parseInt(document.getElementById('MinerSet').value);
-        config.ExcludeMinerName = []; // Enforce array
+        config.ExcludeMinerName = []; // enforce array
         if (document.getElementById('ExcludeMinerName').value) config.ExcludeMinerName = document.getElementById('ExcludeMinerName').value.replace(' ', '').split(',');
-        config.Algorithm = []; // Enforce array
+        config.Algorithm = []; // enforce array
         if (document.getElementById('Algorithm').value) config.Algorithm = document.getElementById('Algorithm').value.replace(' ', '').split(',');
         config.DisableMinersWithFee = document.getElementById('DisableMinersWithFee').checked;
         config.DisableDualAlgoMining = document.getElementById('DisableDualAlgoMining').checked;
         config.DisableSingleAlgoMining = document.getElementById('DisableSingleAlgoMining').checked;
 
-        config.Currency = []; // Enforce array
+        config.Currency = []; // enforce array
         if (document.getElementById('Currency').value) config.Currency = document.getElementById('Currency').value.replace(' ', '').split(',');
 
-        // Miner Runtime Settings
+        // Miner runtime settings
         config.MinerWindowStyle = document.getElementById('MinerWindowStyle').value;
         config.MinerWindowStyleNormalWhenBenchmarking = document.getElementById('MinerWindowStyleNormalWhenBenchmarking').checked;
         config.CPUMinerProcessPriority = parseInt(document.getElementById('CPUMinerProcessPriority').value);
@@ -1412,7 +1408,7 @@
         config.DisableMinerFee = document.getElementById('DisableMinerFee').checked;
         config.UseMinerTweaks = document.getElementById('UseMinerTweaks').checked;
 
-        // Power Cost Calculation Settings
+        // Power cost calculation settings
         config.CalculatePowerCost = document.getElementById('CalculatePowerCost').checked;
         document.getElementById('PowerPricekWh').value = document.getElementById('PowerPricekWh').value.replace('[', '').replace(']', '');
         if (document.getElementById('PowerPricekWh').value.toString().trim() === '') document.getElementById('PowerPricekWh').value = '{"00:00":0.0}';
@@ -1426,7 +1422,7 @@
         config.PowerConsumptionIdleSystemW = parseInt(document.getElementById('PowerConsumptionIdleSystemW').value);
         config.IgnorePowerCost = document.getElementById('IgnorePowerCost').checked;
 
-        // Calculation Settings
+        // Calculation settings
         config.UnrealPoolPriceFactor = parseFloat(document.getElementById('UnrealPoolPriceFactor').value);
         config.MinAccuracy = parseFloat(document.getElementById('MinAccuracy').value) / 100;
         config.IgnorePoolFee = document.getElementById('IgnorePoolFee').checked;
@@ -1439,7 +1435,7 @@
         config.SubtractBadShares = document.getElementById('SubtractBadShares').checked;
         config.ProfitabilityThreshold = parseFloat(document.getElementById('ProfitabilityThreshold').value);
 
-        // Balance Tracker Settings
+        // Balance tracker settings
         config.BalancesTrackerPollInterval = parseInt(document.getElementById('BalancesTrackerPollInterval').value);
         config.BalancesShowSums = document.getElementById('BalancesShowSums').checked;
         config.BalancesShowAverages = document.getElementById('BalancesShowAverages').checked;
@@ -1448,7 +1444,7 @@
         config.BalancesKeepAlive = document.getElementById('BalancesKeepAlive').checked;
         config.BalancesTrackerLog = document.getElementById('BalancesTrackerLog').checked;
 
-        // Console Display Settings
+        // Console display settings
         config.UIStyle = document.getElementById('UIStyle').value;
         config.ShowPowerCost = document.getElementById('ShowPowerCost').checked;
         config.ShowPowerConsumption = document.getElementById('ShowPowerConsumption').checked;
@@ -1465,24 +1461,21 @@
         config.ShowPoolBalances = document.getElementById('ShowPoolBalances').checked;
         config.ShowAllMiners = document.getElementById('ShowAllMiners').checked;
 
-        // GUI Display Settings
-        config.UseColorForMinerStatus = document.getElementById('UseColorForMinerStatus').checked;
-
-        // Log To File Settings
+        // Log to file settings
         values = ["Info", "Warn", "Error", "Verbose", "Debug"];
         config.LogToFile = [];
         $.each(values, function (key, value) {
           if (document.getElementById(('logtofile-' + value)).checked) config.LogToFile.push(value);
         });
 
-        // Log To Screen Settings
+        // Log to screen settings
         values = ["Info", "Warn", "Error", "Verbose", "Debug"];
         config.LogToScreen = [];
         $.each(values, function (key, value) {
           if (document.getElementById(('logtoscreen-' + value)).checked) config.LogToScreen.push(value);
         });
 
-        // Auto Update Settings
+        // Auto update settings
         config.AutoUpdateCheckInterval = parseInt(document.getElementById('AutoUpdateCheckInterval').value);
         config.AutoUpdate = document.getElementById('AutoUpdate').checked;
         config.ShowChangeLog = document.getElementById('ShowChangeLog').checked;

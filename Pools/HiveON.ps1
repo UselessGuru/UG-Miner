@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.2.26
-Version date:   2024/08/16
+Version:        6.2.27
+Version date:   2024/08/18
 #>
 
 Param(
@@ -62,9 +62,8 @@ ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
         }
 
         $Reasons = [System.Collections.Generic.List[String]]@()
-        If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet for [$($Currency)]") }
+        If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") }
         If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
-        If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("Conversion disabled at pool, no wallet address for [$Currency] configured") }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false

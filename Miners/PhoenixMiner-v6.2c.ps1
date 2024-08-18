@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.26
-Version date:   2024/08/16
+Version:        6.2.27
+Version date:   2024/08/18
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -88,9 +88,9 @@ If ($Algorithms) {
                         If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools -notcontains $_.Name[0] -and $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 })) { 
+                        # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 })) { 
                         ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 })) { 
-                            # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools -notcontains $_.Name[1] })) { 
+                            # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] })) { 
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB

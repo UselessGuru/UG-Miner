@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.26
-Version date:   2024/08/16
+Version:        6.2.27
+Version date:   2024/08/18
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -2719,7 +2719,8 @@ Function Get-Region {
     )
 
     If ($List) { Return $Variables.Regions[$Region] }
-    ElseIf ($Variables.Regions[$Region]) { Return $($Variables.Regions[$Region] | Select-Object -First 1) }
+
+    If ($Variables.Regions[$Region]) { Return $($Variables.Regions[$Region] | Select-Object -First 1) }
     Else { Return $Region }
 }
 

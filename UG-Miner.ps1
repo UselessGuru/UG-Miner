@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.26
-Version date:   2024/08/16
+Version:        6.2.27
+Version date:   2024/08/18
 #>
 
 using module .\Includes\Include.psm1
@@ -301,7 +301,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.26"
+    Version      = [System.Version]"6.2.27"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -320,7 +320,7 @@ $Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedPr
 
 If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
-    Write-Host "Verifing that no other instance of $($Variables.Branding.ProductLabel) is running..."
+    Write-Host "Verifying that no other instance of $($Variables.Branding.ProductLabel) is running..."
     Start-Sleep 20
     If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
         Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"

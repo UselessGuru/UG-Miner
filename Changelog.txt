@@ -4,6 +4,17 @@ Known issues:
   -> It is recommended to set it to 'Windows Console Host'
 - Idle detection has a big memory leak on each core stop (still investigating)
 
+Changelog UG-Miner 6.2.27 2024/08/18
+====================================
+
+Enhancements:
+- Core: Remove obsolete code & minor code optimizations
+
+Fixes:
+- Correct typo in UG-Miner.ps1
+- APIserver.psm1: Do not print full path in log
+
+
 Changelog UG-Miner 6.2.26 2024/08/16
 ====================================
 
