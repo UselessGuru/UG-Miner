@@ -220,15 +220,18 @@ Displays available balances and an estimation of when the pool payment threshold
 Supported pools:
 
  - HashCryptos
- - Hiveon <sup>(*)</sup>
- - MiningDutch
+ - Hiveon <sup>(a)</sup>
+ - MiningDutch <sup>(b)</sup>
  - MiningPoolHub
  - NiceHash (internal & external wallet)
  - ProHashing
- - ZergPool
- - Zpool
-   
-<sup>(*)</sup> Pool does not support auto-exchange to other currencies. You need to configure  a wallet address for each currency you want to mine.
+ - ZergPool <sup>(a)</sup>
+ - Zpool <sup>(a)</sup>
+
+<sup>(a)</sup> Pool does not support auto-exchange for some currencies. You need to configure  
+a wallet address for each currency you want to mine.
+<sup>(b)</sup> Pool does not support auto-exchange to other currencies. You need to configure  
+a wallet address for each currency you want to mine.
 
 UG-Miner shows stats for all supported pools.  
 Press key 'e' in the console window to show/hide earnings.
