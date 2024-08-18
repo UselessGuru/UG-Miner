@@ -228,11 +228,9 @@ Supported pools:
  - ZergPool <sup>(a)</sup>
  - Zpool <sup>(a)</sup>
 
-<sup>(a)</sup> Pool does not support auto-exchange for some currencies. You need to configure  
-a wallet address for each currency you want to mine.
+<sup>(a)</sup> Pool does not support auto-exchange for some currencies. You need to configure a wallet address for each currency you want to mine.
 
-<sup>(b)</sup> Pool does not support auto-exchange to other currencies. You need to configure  
-a wallet address for each currency you want to mine.
+<sup>(b)</sup> Pool does not support auto-exchange to other currencies. You need to configure a wallet address for each currency you want to mine.
 
 UG-Miner shows stats for all supported pools.  
 Press key 'e' in the console window to show/hide earnings.
