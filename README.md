@@ -218,7 +218,7 @@ Any other changes need to be done manually.
 
 ## Balances tracking
 
-Displays available balances and an estimation of when the pool payment threshold will be reached.
+Displays available balances and calculates an estimation of when the pool payment threshold will be reached.
 
 Supported pools:
 
@@ -230,9 +230,6 @@ Supported pools:
  - ProHashing
  - ZergPool
  - Zpool
-
-UG-Miner shows stats for all supported pools.  
-Press key 'e' in the console window to show/hide earnings.
 
 ## Miner switching log
 
