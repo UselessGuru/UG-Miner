@@ -15,14 +15,16 @@ This project is updated & maintained by UselessGuru.
 
 UG-Miner code is partly based on
 
-- MultiPoolMiner  
-  https://github.com/MultiPoolMiner/MultiPoolMiner (Project is no longer maintained)
+- MultiPoolMiner<sup>(*)</sup>  
+  https://github.com/MultiPoolMiner/MultiPoolMiner
 
-- NPlusMiner  
-  https://github.com/MrPlusGH/NPlusMiner (Project is no longer maintained)
+- NPlusMiner<sup>(*)</sup>  
+  https://github.com/MrPlusGH/NPlusMiner
 
-- NemosMiner  
-  https://github.com/Minerx117/NemosMiner (Project is no longer maintained)
+- NemosMiner<sup>(*)</sup>  
+  https://github.com/Minerx117/NemosMiner
+  
+  <sup>(*)</sup>These project are no longer maintained
 
 ## Main features:
 
@@ -207,14 +209,13 @@ A separate section can be added for each pool. If a pool is listed in this file,
 - Currency: List of included or excluded currencies per pool
 - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
 
+  See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
 
 **Usage**
 
 - Edit 'Config\PoolsConfig.json' (**careful with json formatting ;)**
 - Add an entry for the pool you want to customize  
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
-
-  See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
 
 Note: The configuration editor in the Web GUI only updates generic pool settings. Pool specific settings override the generic settings.
 
