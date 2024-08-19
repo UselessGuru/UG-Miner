@@ -37,21 +37,24 @@ UG-Miner code is partly based on
 - Calculate power cost
   (optional installation of HWiNFO required, see ConfigHWinfo64.pdf)
 - Miner switching log
-- Supports these pools: 
+- Supported pools: 
    - [HashCryptos](<https://hashcryptos.com/>)
    - [Hiveon](<https://hiveon.net/>)<sup>(1)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
    - [MiningPoolHub](<https://miningpoolhub.com/>)<sup>(2)</sup>
    - [NiceHash](<https://www.nicehash.com/>)
    - [ProHashing](<https://prohashing.com/>)
-   - [ZergPool](<https://zergpool.com/>)
-   - [ZPool](<https://zpool.ca/>)
+   - [ZergPool](<https://zergpool.com/>)<sup>(2)</sup>
+   - [ZPool](<https://zpool.ca/>)<sup>(2)</sup>
 
-<sup>(1)</sup> Pool does not support auto-exchange to other currencies.  
+<sup>(1)</sup> Pool does not support auto-exchange to BTC other currencies.  
     You need to configure a wallet address for each currency you want to mine.
     
 <sup>(2)</sup> MiningPoolHub is no longer trustworthy.  
     Outstanding balances will not get paid and support will not respond. Use at your own risk!
+
+<sup>(3)</sup> Pool does not support auto-exchange for some currencies.  
+    You need to configure a wallet address for each currency you want to mine.
 
 ## Easy configuration, easy start
 
@@ -220,17 +223,13 @@ Displays available balances and an estimation of when the pool payment threshold
 Supported pools:
 
  - HashCryptos
- - Hiveon <sup>(a)</sup>
- - MiningDutch <sup>(b)</sup>
+ - Hiveon
+ - MiningDutch
  - MiningPoolHub
  - NiceHash (internal & external wallet)
  - ProHashing
- - ZergPool <sup>(a)</sup>
- - Zpool <sup>(a)</sup>
-
-<sup>(a)</sup> Pool does not support auto-exchange for some currencies. You need to configure a wallet address for each currency you want to mine.
-
-<sup>(b)</sup> Pool does not support auto-exchange. You need to configure a wallet address for each currency you want to mine.
+ - ZergPool
+ - Zpool
 
 UG-Miner shows stats for all supported pools.  
 Press key 'e' in the console window to show/hide earnings.
