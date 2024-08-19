@@ -209,13 +209,14 @@ A separate section can be added for each pool. If a pool is listed in this file,
 - Currency: List of included or excluded currencies per pool
 - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
 
-  See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
+See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
 
 **Usage**
 
 - Edit 'Config\PoolsConfig.json' (**careful with json formatting ;)**
 - Add an entry for the pool you want to customize  
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
+- Add the pool specific configuration items
 
 Note: The configuration editor in the Web GUI only updates generic pool settings. Pool specific settings override the generic settings.
 
@@ -298,7 +299,7 @@ UG-Miner is currently tested on the following Rigs:
 
 ## Developer donation
 
-Donation fee is approx. 1% (15 minutes per day) and can be increased or decreased in the configuration editor.
+The donation fee is approx. 1% (15 minutes per day). It can be increased or decreased in the configuration editor.
 
 Please help support the great team behind UG-Miner by leaving mining donations turned on.
 
