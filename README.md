@@ -30,7 +30,8 @@ UG-Miner code is partly based on
 
 - Web & legacy GUI
 - Easy configuration
-- Auto benchmark each algorithm to get optimal speeds
+- Automatic benchmark each algorithm to get optimal speeds
+- Idle detection
 - Fully automated
 - Automatically downloads miner binaries
 - Automatic updates
@@ -160,9 +161,10 @@ Some settings can be configured per [advanced pool configuration](<https://githu
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_LegacyGUI.png "UG-Miner Legacy GUI")
 
-## Pause mining
+## Idle detection
 
-The 'pause mining' button will will pause mining activity.
+The idle detection functionality (if enabled in the configuration) will suspend mining when UG-Miner detects any mouse or keyboard activitity.  
+Mining will resume when no further activity is detected for a configurable numer of seconds.
 
 Brains will still run in the background avoiding the learning phase on resume.
 
