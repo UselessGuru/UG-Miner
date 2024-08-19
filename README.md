@@ -72,15 +72,6 @@ UG-Miner code is partly based on
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
-## Idle detection
-
-The idle detection functionality (if enabled in the configuration) will suspend mining when UG-Miner detects any mouse or keyboard activitity.  
-Mining will resume when no further activity is detected for a configurable number of seconds.
-
-Pool brains will still run in the background avoiding the learning phase on resume.
-
-BalancesTracker will still run in the background to keep the pool balances up to date.
-
 ### Pool Variants
 
 UG-Miner pools the pools in regular intervals to get up-to-date pricing and coin availablilty data.
@@ -155,6 +146,15 @@ Will mine only EVR and KIIRO
 
 Currency list blank  
 Will mine anything
+
+## Idle detection
+
+The idle detection functionality (if enabled in the configuration) will suspend mining when UG-Miner detects any mouse or keyboard activitity.  
+Mining will resume when no further activity is detected for a configurable number of seconds.
+
+Pool brains will still run in the background avoiding the learning phase on resume.
+
+BalancesTracker will still run in the background to keep the pool balances up to date.
 
 ## Web & legacy GUI
 
