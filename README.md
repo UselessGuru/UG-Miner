@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Updated  2024/08/18
+Updated  2024/08/19
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -70,6 +70,8 @@ UG-Miner code is partly based on
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
 ### Pool Variants
+
+UG-Miner pools the pools in regular intervals to get up-to-date pricing and coin availablilty data.
 
 #### Poolnames ending in *24h:
 
@@ -158,7 +160,7 @@ Some settings can be configured per [advanced pool configuration](<https://githu
 
 ## Pause mining
 
-Ability to pause miners while keeping other jobs running (pause button). This will stop mining activity.
+The 'pause mining' button will will pause mining activity.
 
 Brains will still run in the background avoiding the learning phase on resume.
 
@@ -190,11 +192,10 @@ Before starting a miner executable UG-Miner is trying to launch one of the follo
 **This is for advanced users. Do not use if you do not know what you are doing.**
 
 The file 'Config\PoolsConfig.json' contains configuration details for the pools.
-A separate section can be added for each pool. If a pool is listed in this file,
-the specific settings will be taken into account. If not, the built in default values will be used.
-See 'Data\PoolData.json' for the basic structure of the file 'Config\PoolsConfig.json'
 
-You can set specific options per pool. For example, you can mine NiceHash on the internal wallet and other pools on a valid wallet. See 'Data\PoolsConfig-Template.json' for some pool specific configuration options.
+A separate section can be added for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built in default values will be used.  
+See 'Data\PoolsConfig-Template.json' for the available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
+
 
 **Available options**
 
@@ -218,7 +219,7 @@ Any other changes need to be done manually.
 
 ## Balances tracking
 
-Displays available balances and calculates an estimation of when the pool payment threshold will be reached.
+UG-Miner displays available balances and calculates an estimation of when the pool payment threshold will be reached.
 
 Supported pools:
 
