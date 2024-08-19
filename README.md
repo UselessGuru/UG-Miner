@@ -44,8 +44,8 @@ UG-Miner code is partly based on
    - [MiningPoolHub](<https://miningpoolhub.com/>)<sup>(2)</sup>
    - [NiceHash](<https://www.nicehash.com/>)
    - [ProHashing](<https://prohashing.com/>)
-   - [ZergPool](<https://zergpool.com/>)<sup>(2)</sup>
-   - [ZPool](<https://zpool.ca/>)<sup>(2)</sup>
+   - [ZergPool](<https://zergpool.com/>)<sup>(3)</sup>
+   - [ZPool](<https://zpool.ca/>)<sup>(3)</sup>
 
 <sup>(1)</sup> Pool does not support auto-exchange to BTC other currencies.  
     You need to configure a wallet address for each currency you want to mine.
