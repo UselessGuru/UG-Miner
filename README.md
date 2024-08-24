@@ -35,9 +35,9 @@ UG-Miner code is partly based on
 - Fully automated
 - Automatically downloads miner binaries
 - Automatic updates
-- Earnings graph & Balances tracker
+- Earnings graph & balances tracker
 - Low developer fee of 1% (can be set to 0)
-- Calculate power cost
+- Calculate power cost  
   (optional installation of HWiNFO required, see ConfigHWinfo64.pdf)
 - Miner switching log
 - Supported pools: 
@@ -119,7 +119,7 @@ Algorithm list = '+ethash,+kawpow'
 Will mine only ethash and kawpow
 
 Algorithm list blank  
-Will mine anything
+Will mine all available algorithms
 
 ### Currency selection / removal
 
@@ -145,7 +145,7 @@ Currency list = '+EVR,+KIIRO'
 Will mine only EVR and KIIRO
 
 Currency list blank  
-Will mine anything
+Will mine all available currencies
 
 ## Idle detection
 
