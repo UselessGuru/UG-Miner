@@ -202,14 +202,16 @@ A separate section can be added for each pool. If a pool is listed in this file,
 
 **Available options**
 
-- Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
-- UserName: your MPH or ProHashing user name
-- WorkerName: your worker name
-- EarningsAdjustmentFactor: This adds a multiplicator on estimations presented by the pool  
-  (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
 - Algorithm: List of included or excluded algorithms per pool
 - Currency: List of included or excluded currencies per pool
+- EarningsAdjustmentFactor: This adds a multiplicator on estimations presented by the pool  
+  (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
+- Exclude region: One or more of 'Asia', 'Europe', 'HongKong', 'Japan', 'Russia', 'USA East', 'USA West'
+- MinWorker: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be disabled
 - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
+- SSL: Either 'Prefer' (use SSL pool connections where available), 'Never' (pools that do only support SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL connections are marked as unavailable)
+- SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
+- Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
 
 See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
 

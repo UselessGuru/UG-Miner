@@ -17,24 +17,28 @@
       "-GRLC",
       "-DYN"
     ],
+    // EarningsAdjustmentFactor: Default factor with which UG-Miner multiplies the prices reported by the pool. Value between 0.01 & 10.00
+    "EarningsAdjustmentFactor": 0.9,
     // Exclude region: One or more of 'Asia', 'Europe', 'HongKong', 'Japan', 'Russia', 'USA East', 'USA West'
     "ExcludeRegion": [ 
       "Asia",
       "Europe"
     ],
-    // EarningsAdjustmentFactor: Default factor with which UG-Miner multiplies the prices reported by the pool. Value between 0.01 & 10.00
-    "EarningsAdjustmentFactor": 0.9,
+    // Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be disabled
+    "MinWorker": 25,
     // PayoutThreshold: One key/value pair per currency
     "PayoutThreshold": { 
       "mBTC": 0.00025
     },
-    // Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be disabled
-    "MinWorker": 25,
     // PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hasrate reported in the API
     "PoolAllow0Hashrate": false,
     // SSL pool connections: Either 'Prefer' (use SSL pool connections where available), 'Never' (pools that do only support SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL connections are marked as unavailable)
     "SSL": "Always",
     // SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
-    "SSLallowSelfSignedCertificate": true
+    "SSLallowSelfSignedCertificate": true,
+    // Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
+    "Wallets": { 
+      "CURRENCY": "Wallet Address"
+    }
   }
 }
