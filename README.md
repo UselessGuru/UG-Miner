@@ -24,7 +24,7 @@ UG-Miner code is partly based on
 - NemosMiner<sup>(*)</sup>  
   https://github.com/Minerx117/NemosMiner
   
-  <sup>(*)</sup>These project are no longer maintained
+  <sup>(*)</sup>These projects are no longer maintained
 
 ## Main features:
 
