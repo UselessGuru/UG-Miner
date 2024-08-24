@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 using module .\Includes\Include.psm1

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 using module ..\Includes\Include.psm1
@@ -53,7 +53,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Do { 
             Try { 
                 $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                If ($AlgoData.message) { # Only 1 request every 10 seconds allowed
+                If ($AlgoData.message) { 
+                    # Only 1 request every 10 seconds allowed
                     $APICallFails ++
                     Start-Sleep -Seconds $PoolConfig.PoolAPIretryInterval
                 }
@@ -132,7 +133,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         }
 
         $Variables.BrainData.$BrainName = $AlgoData
-        $Variables.Brains.$BrainName["Updated"] = $Timestamp
+        $Variables.Brains.$BrainName | Add-member "Updated" $Timestamp -Force
 
         # Limit to only sample size + 10 minutes history
         $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))

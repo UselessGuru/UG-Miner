@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.14"
+    $APIVersion = "0.5.4.16"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -115,8 +115,10 @@ Function Start-APIServer {
                                 { 
                                     $Key, $Value = $_ -split "="
                                     # Decode any url escaped characters in the key and value
-                                    $Key = [URI]::UnescapeDataString($Key)
-                                    $Value = [URI]::UnescapeDataString($Value)
+                                    $Key = [System.Web.HttpUtility]::UrlDecode($Key)
+                                    $Value = [System.Web.HttpUtility]::UrlDecode($Value)
+                                    # $Key = [URI]::UnescapeDataString($Key)
+                                    # $Value = [URI]::UnescapeDataString($Value)
                                     If ($Key -and $Value) { 
                                         $Parameters.$Key = $Value
                                     }
@@ -285,7 +287,7 @@ Function Start-APIServer {
                                             $Data = "Device configuration changed`n`nOld values:"
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
-                                            $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ", ")]'"
+                                            $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ", " )]'"
                                             $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
                                             $Variables.Devices.Where({ $Values -contains $_.Name }).ForEach(
                                                 { 

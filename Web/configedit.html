@@ -139,7 +139,10 @@
           <div style="padding-top: 0.7rem" title="If enabled miner and rig entries will use different background colors based on status">
             <input type="checkbox" class="toggle-switch" id="UseColorForMinerStatus" name="UseColorForMinerStatus"> Use colors for miner & rig status
           </div>
-          <div style="padding-top: 0.7rem" title="Watchdog will monitor pools & miners for frequent failures&#10;and suspend failing pools or miners for some cycles">
+          <div style="padding-top: 0.4rem" title="Display numbers with maximal n decimal digits&#10;(larger numbers are shown with less decimal digits)&#10;&#10;(min: 0, max: 10; default: 6)" for="DecimalsMax">Display numbers with maximal
+            <input type="number" id="DecimalsMax" name="DecimalsMax" min=0 max=10 value=6 step=1 size=4> decimal digits
+          </div>
+          <div style="padding-top: 0.5rem" title="Watchdog will monitor pools & miners for frequent failures&#10;and suspend failing pools or miners for some cycles">
             <input type="checkbox" class="toggle-switch" id="Watchdog" name="Watchdog"> Activate watchdog (recommended)
           </div>
           <div style="padding-top: 0.7rem" title="Computer will restart when a dead miner is detected&#10;(e.g. miner cannot get stopped gracefully)">
@@ -154,17 +157,14 @@
           <div style="padding-top: 0.3rem" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
             <input type="number" id="MinDataSample" name="MinDataSample" min=10 max=100 value=20 step=1 size=4> data samples while benchmarking
           </div>
-          <div style="padding-top: 0.3rem" title="Minimum number of continous full cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 full cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
-            <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 size=2> full cycles before switching
+          <div style="padding-top: 0.3rem" title="Minimum number of continous cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
+            <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 size=2> cycles before switching
           </div>
           <div style="padding-top: 0.2rem" title="Enter Proxy IP address and port&#10;e.g. 192.168.1.1:3128"> Proxy address:port
             <input type="text" id="Proxy" name="Proxy" maxlength=22 size=30>
           </div>
           <div style="padding-top: 0.4rem" title="If enabled UG-Miner will open firewall ports for all miners&#10;Admin rights required (or you must accept the UAC prompts)">
             <input type="checkbox" class="toggle-switch" id="OpenFirewallPorts" name="OpenFirewallPorts"> Open firewall ports (admin rights required)
-          </div>
-          <div style="padding-top: 0.3rem" title="Display numbers with maximal n decimal digits&#10;(larger numbers are shown with less decimal digits)&#10;&#10;(min: 0, max: 10; default: 6)" for="DecimalsMax">Display numbers with maximal
-            <input type="number" id="DecimalsMax" name="DecimalsMax" min=0 max=10 value=6 step=1 size=4> decimal digits
           </div>
           <br>
         </td>
@@ -667,6 +667,7 @@
     $(document.getElementById('LegacyGUI')).trigger('change');
     if (config.ShowConsole) document.getElementById('ShowConsole').checked = true;
     if (config.UseColorForMinerStatus) document.getElementById('UseColorForMinerStatus').checked = true;
+    document.getElementById('DecimalsMax').value = parseInt(config.DecimalsMax);
     if (config.Watchdog) document.getElementById('Watchdog').checked = true;
     if (config.AutoReboot) document.getElementById('AutoReboot').checked = true;
     if (Number.isInteger(config.Donation)) document.getElementById('Donation').value = parseInt(config.Donation);
@@ -681,7 +682,6 @@
     document.getElementById('MinCycle').value = parseInt(config.MinCycle);
     document.getElementById('Proxy').value = config.Proxy.trim();
     if (config.OpenFirewallPorts) document.getElementById('OpenFirewallPorts').checked = true;
-    document.getElementById('DecimalsMax').value = parseInt(config.DecimalsMax);
 
     // Select mining devices
     $.ajax({
@@ -1347,6 +1347,7 @@
         config.LegacyGUIStartMinimized = document.getElementById('LegacyGUIStartMinimized').checked;
         config.ShowConsole = document.getElementById('ShowConsole').checked;
         config.UseColorForMinerStatus = document.getElementById('UseColorForMinerStatus').checked;
+        config.DecimalsMax = parseInt(document.getElementById('DecimalsMax').value);
         config.Watchdog = document.getElementById('Watchdog').checked;
         config.AutoReboot = document.getElementById('AutoReboot').checked;
         config.Donation = parseInt(document.getElementById('Donation').value);
@@ -1355,7 +1356,6 @@
         config.MinCycle = parseInt(document.getElementById('MinCycle').value);
         config.Proxy = document.getElementById('Proxy').value;
         config.OpenFirewallPorts = document.getElementById('OpenFirewallPorts').checked;
-        config.DecimalsMax = parseInt(document.getElementById('DecimalsMax').value);
 
         // Select mining devices
         config.ExcludeDeviceName = [];

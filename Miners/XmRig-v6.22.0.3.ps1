@@ -17,34 +17,34 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda12_4-win64.zip"; Break }
-    { $_ -ge "12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda12_3-win64.zip"; Break }
-    { $_ -ge "12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda12_2-win64.zip"; Break }
-    { $_ -ge "12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda12_1-win64.zip"; Break }
-    { $_ -ge "12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda12_0-win64.zip"; Break }
-    { $_ -ge "11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_8-win64.zip"; Break }
-    { $_ -ge "11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_7-win64.zip"; Break }
-    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_6-win64.zip"; Break }
-    { $_ -ge "11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_5-win64.zip"; Break }
-    { $_ -ge "11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_4-win64.zip"; Break }
-    { $_ -ge "11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_3-win64.zip"; Break }
-    { $_ -ge "11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_2-win64.zip"; Break }
-    { $_ -ge "11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_1-win64.zip"; Break }
-    { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda11_0-win64.zip"; Break }
-    { $_ -ge "10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda10_2-win64.zip"; Break }
-    { $_ -ge "10.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda10_1-win64.zip"; Break }
-    { $_ -ge "10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda10_0-win64.zip"; Break }
-    { $_ -ge "9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda9_2-win64.zip"; Break }
-    { $_ -ge "9.1" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda9_1-win64.zip"; Break }
-    { $_ -ge "9.0" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda9_0-win64.zip"; Break }
-    Default           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.21.3.14-cuda8_0-win64.zip"; Break }
+    { $_ -ge "12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_4-win64.zip"; Break }
+    { $_ -ge "12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_3-win64.zip"; Break }
+    { $_ -ge "12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_2-win64.zip"; Break }
+    { $_ -ge "12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_1-win64.zip"; Break }
+    { $_ -ge "12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_0-win64.zip"; Break }
+    { $_ -ge "11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_8-win64.zip"; Break }
+    { $_ -ge "11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_7-win64.zip"; Break }
+    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_6-win64.zip"; Break }
+    { $_ -ge "11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_5-win64.zip"; Break }
+    { $_ -ge "11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_4-win64.zip"; Break }
+    { $_ -ge "11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_3-win64.zip"; Break }
+    { $_ -ge "11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_2-win64.zip"; Break }
+    { $_ -ge "11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_1-win64.zip"; Break }
+    { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_0-win64.zip"; Break }
+    { $_ -ge "10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda10_2-win64.zip"; Break }
+    { $_ -ge "10.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda10_1-win64.zip"; Break }
+    { $_ -ge "10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda10_0-win64.zip"; Break }
+    { $_ -ge "9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda9_2-win64.zip"; Break }
+    { $_ -ge "9.1" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda9_1-win64.zip"; Break }
+    { $_ -ge "9.0" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda9_0-win64.zip"; Break }
+    Default           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda8_0-win64.zip"; Break }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xmrig.exe"
@@ -104,8 +104,9 @@ $Algorithms = @(
 #   @{ Algorithm = "CryptonightHeavyXhv";  Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" } # Not profitable with CPU
 #   @{ Algorithm = "CryptonightZls";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/zls" } # Not profitable with CPU
 #   @{ Algorithm = "Randomx";              Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 20);  ExcludePools = @(); Arguments = " --algo rx/0" } # ASIC
-#   @{ Algorithm = "Flex";                 Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo flex" } # NOt workinf
+#   @{ Algorithm = "Flex";                 Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo flex" } # https://github.com/RainbowMiner/RainbowMiner/issues/2841
     @{ Algorithm = "Ghostrider";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo gr" }
+    @{ Algorithm = "Panthera";             Type = "CPU"; MinerSet = 0; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo panthera" }
     @{ Algorithm = "RandomxArq";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/arq" } # FPGA
     @{ Algorithm = "RandomXeq";            Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/xeq" }
     @{ Algorithm = "RandomxKeva";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/keva" }
@@ -202,8 +203,9 @@ If ($Algorithms) {
                             If ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))" }
                             ElseIf ("AMD", "INTEL" -contains $_.Type) { $Arguments += " --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             Else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
+                            If (-not $Variables.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
 
-                            If ("Flex", "RandomXeq" -contains $_.Algorithm) { $Path = $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
+                            $MinerPath = If ("Ghostrider", "Flex",  "Panthera", "RandomXeq" -contains $_.Algorithm) { $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
 
                             [PSCustomObject]@{ 
                                 API         = "XmRig"
@@ -213,7 +215,7 @@ If ($Algorithms) {
                                 MinerSet    = $_.MinerSet
                                 MinerUri    = "http://workers.xmrig.info/worker?url=$([System.Web.HTTPUtility]::UrlEncode("http://127.0.0.1:$($MinerAPIPort)"))?Authorization=Bearer $([System.Web.HTTPUtility]::UrlEncode($MinerName))"
                                 Name        = $MinerName
-                                Path        = $Path
+                                Path        = $MinerPath
                                 Port        = $MinerAPIPort
                                 Type        = $_.Type
                                 URI         = $URI

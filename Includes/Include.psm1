@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -285,6 +285,7 @@ Class Miner {
     [UInt16]$MinerSet
     [String]$MinerUri
     [String]$Name
+    [String]$NameAndDevice
     [Bool]$Optimal = $false
     [String]$Path
     [String]$PrerequisitePath
@@ -365,7 +366,7 @@ Class Miner {
         $this.DataCollectInterval = If ($this.Benchmark -or $this.MeasurePowerConsumption) { 1 } Else { 5 }
 
         # Start Miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
-        $this.DataReaderJob = Start-ThreadJob -Name "$($this.Name)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
+        $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -WarningVariable $null -Name "$($this.NameAdDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
 
         Remove-Variable ScriptBlock -ErrorAction Ignore
     }
@@ -437,7 +438,7 @@ Class Miner {
 
         If ($this.Status -ne [MinerStatus]::DryRun) { 
 
-            $this.ProcessJob = Invoke-CreateProcess -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile
+            $this.ProcessJob = Invoke-CreateProcess -ErrorVariable $null -InformationVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile
 
             # Sometimes the process cannot be found instantly
             $Loops = 100
@@ -457,6 +458,7 @@ Class Miner {
             } While ($Loops -gt 0)
             Remove-Variable Loops
         }
+
         $this.WorkersRunning = $this.Workers
     }
 
@@ -468,6 +470,7 @@ Class Miner {
         Else { 
             $this.SubStatus = [MinerStatus]::Failed
             Write-Message -Level Error $this.StatusInfo
+            If ($this.Benchmark -or $this.MeasurePowerConsumption) { $this.Data = @() }
         }
 
         $this.StopDataReader()
@@ -512,7 +515,7 @@ Class Miner {
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
-            Reason                  = If ($this.StatusInfo -and $this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo -replace "'$($this.StatusInfo)' " } Else { "" }
+            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { "$($this.StatusInfo)" -replace "'$($this.StatusInfo)' " } Else { "" }
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
@@ -799,24 +802,22 @@ Function Start-Brain {
                 If ($Config.PoolsConfig.$_.BrainConfig -and -not $Variables.Brains.$_) { 
                     $BrainScript = ".\Brains\$($_).ps1"
                     If (Test-Path -LiteralPath $BrainScript -PathType Leaf) { 
-                        $Variables.Brains.$_ = @{ }
+                        $Variables.Brains.$_ = [RunspaceFactory]::CreateRunspace()
+                        $Variables.Brains.$_.ApartmentState = "STA"
+                        $Variables.Brains.$_.Name = "Brain_$($_)"
+                        $Variables.Brains.$_.ThreadOptions = "ReuseThread"
+                        $Variables.Brains.$_.Open()
 
-                        $Runspace = [RunspaceFactory]::CreateRunspace()
-                        $Runspace.ApartmentState = "STA"
-                        $Runspace.Name = "Brain_$($_)"
-                        $Runspace.ThreadOptions = "ReuseThread"
-                        $Runspace.Open()
-
-                        $Runspace.SessionStateProxy.SetVariable("Config", $Config)
-                        $Runspace.SessionStateProxy.SetVariable("Stats", $Stats)
-                        $Runspace.SessionStateProxy.SetVariable("Variables", $Variables)
-                        [Void]$Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
+                        $Variables.Brains.$_.SessionStateProxy.SetVariable("Config", $Config)
+                        $Variables.Brains.$_.SessionStateProxy.SetVariable("Stats", $Stats)
+                        $Variables.Brains.$_.SessionStateProxy.SetVariable("Variables", $Variables)
+                        [Void]$Variables.Brains.$_.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
                         $PowerShell = [PowerShell]::Create()
-                        $PowerShell.Runspace = $Runspace
-                        $Variables.Brains.$_.Job = $Powershell.AddScript($BrainScript).BeginInvoke()
-                        $Variables.Brains.$_.PowerShell = $PowerShell
-                        $Variables.Brains.$_.StartTime = [DateTime]::Now.ToUniversalTime()
+                        $PowerShell.Runspace = $Variables.Brains.$_
+                        $Variables.Brains.$_ | Add-Member Job ($Powershell.AddScript($BrainScript).BeginInvoke())
+                        $Variables.Brains.$_ | Add-Member PowerShell $PowerShell
+                        $Variables.Brains.$_ | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
 
                         $BrainsStarted += $_
                     }
@@ -959,7 +960,7 @@ Function Get-Rate {
                 }
                 Else { 
                     If ($Response.Message -eq "You are over your rate limit please upgrade your account!") { 
-                        Write-Message -Level Error "min-api.cryptocompare.com API rate exceeded. You need to register an account with cryptocompare.com and add the API key as 'CryptoCompareAPIKeyParam' to the configuration file '$($Variables.ConfigFile)'."
+                        Write-Message -Level Error "min-api.cryptocompare.com API rate exceeded. You need to register an account with cryptocompare.com and add the API key as 'CryptoCompareAPIKeyParam' to the configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'."
                     }
                 }
             }
@@ -1075,9 +1076,9 @@ Function Write-Message {
 
         $Variables.LogFile = "$($Variables.MainPath)\Logs\$($Variables.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
 
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
+        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary
         If ($Mutex.WaitOne(1000)) { 
@@ -1550,16 +1551,17 @@ Function Edit-File {
     # Check if the window is not already in foreground
     While ($NotepadProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -Like "*\Notepad.exe* $($FileName)" })) { 
         Try { 
-            $FGWindowPid = [IntPtr]::Zero
-            [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid) | Out-Null
-            $MainWindowHandle = (Get-Process -Id $NotepadProcess.ProcessId).MainWindowHandle
-            If ($NotepadProcess.ProcessId -ne $FGWindowPid) { 
-                If ([Win32]::GetForegroundWindow() -ne $MainWindowHandle) { 
-                    [Win32]::ShowWindowAsync($MainWindowHandle, 6) | Out-Null # SW_MINIMIZE 
-                    [Win32]::ShowWindowAsync($MainWindowHandle, 9) | Out-Null # SW_RESTORE
+            If ($MainWindowHandle = (Get-Process -Id $NotepadProcess.ProcessId).MainWindowHandle) { 
+                $FGWindowPid = [IntPtr]::Zero
+                [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid) | Out-Null
+                If ($NotepadProcess.ProcessId -ne $FGWindowPid) { 
+                    If ([Win32]::GetForegroundWindow() -ne $MainWindowHandle) { 
+                        [Win32]::ShowWindowAsync($MainWindowHandle, 6) | Out-Null # SW_MINIMIZE 
+                        [Win32]::ShowWindowAsync($MainWindowHandle, 9) | Out-Null # SW_RESTORE
+                    }
                 }
+                Start-Sleep -Milliseconds 100
             }
-            Start-Sleep -Milliseconds 100
         }
         Catch { }
     }
@@ -2470,8 +2472,7 @@ Filter ConvertTo-Hash {
     $Units = " kMGTPEZY" # k(ilo) in small letters, see https://en.wikipedia.org/wiki/Metric_prefix
 
     If ( $_ -eq $null -or [Double]::IsNaN($_)) { Return "n/a" }
-    $Base1000 = [Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1)))
-    $Base1000 = [Math]::Max([Double]0, [Math]::Min($Base1000, $Units.Length - 1))
+    $Base1000 = [Math]::Max([Double]0, [Math]::Min([Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1))), $Units.Length - 1))
     $UnitValue = $_ / [Math]::Pow(1000, $Base1000)
     $Digits = If ($UnitValue -lt 10 ) { 3 } Else { 2 }
     "{0:n$($Digits)} $($Units[$Base1000])H/s" -f $UnitValue
@@ -2555,7 +2556,7 @@ Function Invoke-CreateProcess {
     )
 
     # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and miners remain running
-    Start-Job -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
+    Start-Job -ErrorVariable $null -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
         Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID)
 
         $ControllerProcess = Get-Process -Id $ControllerProcessID
@@ -2639,7 +2640,7 @@ public static class Kernel32
         $Proc.Handle | Out-Null
 
         Do { 
-            If ($ControllerProcess.WaitForExit(1000)) { 
+            If ($ControllerProcess.WaitForExit(200)) { 
                 [Void]$Proc.CloseMainWindow()
                 [Void]$Proc.WaitForExit()
                 [Void]$Proc.Close()
@@ -2706,7 +2707,8 @@ Function Get-Algorithm {
     $Algorithm = $Algorithm -replace "[^a-z0-9]+"
 
     If ($Variables.Algorithms[$Algorithm]) { Return $Variables.Algorithms[$Algorithm] }
-    (Get-Culture).TextInfo.ToTitleCase($Algorithm.ToLower())
+
+    Return (Get-Culture).TextInfo.ToTitleCase($Algorithm.ToLower())
 }
 
 Function Get-Region { 
@@ -2721,7 +2723,8 @@ Function Get-Region {
     If ($List) { Return $Variables.Regions[$Region] }
 
     If ($Variables.Regions[$Region]) { Return $($Variables.Regions[$Region] | Select-Object -First 1) }
-    Else { Return $Region }
+
+    Return $Region
 }
 
 Function Add-CoinName { 
@@ -2785,10 +2788,9 @@ Function Get-AlgorithmFromCurrency {
             $Mutex.ReleaseMutex()
         }
 
-        If ($Variables.CurrencyAlgorithm[$Currency]) { 
-            Return $Variables.CurrencyAlgorithm[$Currency]
-        }
+        If ($Variables.CurrencyAlgorithm[$Currency]) { Return $Variables.CurrencyAlgorithm[$Currency] }
     }
+
     Return $null
 }
 
@@ -2804,6 +2806,7 @@ Function Get-CurrencyFromAlgorithm {
             Return $Currencies
         }
     }
+
     Return $null
 }
 
@@ -2830,6 +2833,7 @@ Function Get-EquihashCoinPers {
             Return "$($Command)$($Variables.EquihashCoinPers[$Currency])"
         }
     }
+
     Return $DefaultCommand
 }
 
@@ -2943,7 +2947,9 @@ Function Test-Prime {
     If ($Number -eq 2) { Return $true }
 
     $PowNumber = [Int64][Math]::Pow($Number, 0.5)
-    For ([Int64]$I = 3; $I -lt $PowNumber; $I += 2) { If ($Number % $I -eq 0) { Return $false } }
+    For ([Int64]$I = 3; $I -lt $PowNumber; $I += 2) { 
+        If ($Number % $I -eq 0) { Return $false }
+    }
 
     Return $true
 }
@@ -3186,7 +3192,6 @@ Function Update-DAGdata {
         $Variables.DAGdata = $Variables.DAGdata | Get-SortedObject
         $Variables.DAGdata | ConvertTo-Json -Depth 5 | Out-File -LiteralPath ".\Data\DAGdata.json" -Force
     }
-    Remove-Variable Algorithm, BlockHeight, Currency, DAGdata, DAGdataKeys, DAGdataResponse, DAGsize, Epoch, Url -ErrorAction Ignore
 }
 
 Function Get-DAGsize { 

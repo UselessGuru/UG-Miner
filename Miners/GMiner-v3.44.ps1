@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -56,7 +56,7 @@ $Algorithms = @(
 #   @{ Algorithms = @("Ethash", "HeavyHashKaspa");     Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo ethash --dalgo kheavyhash --cuda 1 --opencl 0" } # ASIC
     @{ Algorithms = @("Ethash", "SHA512256d");         Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 90); ExcludeGPUarchitectures = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo ethash --dalgo radiant --cuda 1 --opencl 0" }
     @{ Algorithms = @("FiroPow");                      Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo firo --cuda 1 --opencl 0" }
-    @{ Algorithms = @("IronFish");                     Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@("NiceHash"), @());   AutoCoinPers = "";             Arguments = " --algo ironfish --cuda 1 --opencl 0" } # XmRig-v6.21.3.15 is almost as fast but has no fee
+    @{ Algorithms = @("IronFish");                     Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@("NiceHash"), @());   AutoCoinPers = "";             Arguments = " --algo ironfish --cuda 1 --opencl 0" } # XmRig-v6.22.0.3 is almost as fast but has no fee
     @{ Algorithms = @("KawPow");                       Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo kawpow --cuda 1 --opencl 0" }
     @{ Algorithms = @("HeavyHashKarlsen");             Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @("Other"); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo karlsen --cuda 1 --opencl 0" }
 #   @{ Algorithms = @("HeavyHashKaspa");               Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo kaspa --cuda 1 --opencl 0" } # ASIC

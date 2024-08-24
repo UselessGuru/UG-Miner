@@ -4,6 +4,25 @@ Known issues:
   -> It is recommended to set it to 'Windows Console Host'
 - Idle detection has a big memory leak on each core stop (still investigating)
 
+Changelog UG-Miner 6.2.28 2024/08/24
+====================================
+
+Enhancements:
+- Core / Console display: Optimze hotkey legend
+- Core / Consone display: Optimize miner list when benchmarking or power usage measuring
+- Core: Reduce number of miners to benchmark when configuration item 'BenchmarkAllPoolAlgorithmCombinations' -eq $true
+- Web GUI: Use [System.Web.HttpUtility]::UrlDecode to decode payload
+
+Fixes:
+- Core: Suppress MemDbg debug message
+- Core: Configuration item 'SSL' not working some scenarios when set in pool config (Regression from 6.2.19)
+- Web GUI / Unavailable miners: 'Remove watchdog' not working
+
+Miner updates:
+- SRBMinerMulti-v2.6.2
+- XmRig-v6.22.0.3
+
+
 Changelog UG-Miner 6.2.27 2024/08/18
 ====================================
 

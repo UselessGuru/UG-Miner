@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
@@ -44,7 +44,7 @@ $Algorithms = @(
     @{ Algorithms = @("CryptonightHeavyTube");             Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cn_saber --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
 #   @{ Algorithms = @("CryptonightR");                     Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 3; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cnr --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" } # ASIC
     @{ Algorithms = @("CryptonightV1");                    Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cnv8 --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
-    @{ Algorithms = @("CryptonightDouble");                Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cnv8_dbl --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" } # XmRig-v6.21.3.15 is fastest
+    @{ Algorithms = @("CryptonightDouble");                Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cnv8_dbl --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" } # XmRig-v6.22.0.3 is fastest
     @{ Algorithms = @("CryptonightHalf");                  Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cnv8_half --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
     @{ Algorithms = @("CryptonightTurtle");                Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cnv8_trtl --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }
     @{ Algorithms = @("CryptonightRwz");                   Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @("GCN1", "RDNA1", "RDNA2", "RDNA3"); ExcludePools = @(@(), @());           Arguments = " --algo=cnv8_rwz --auto_tune=QUICK --auto_tune_runs=2 --allow_large_alloc --no_lean" }

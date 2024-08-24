@@ -40,7 +40,6 @@
     "Region": [
       "n/a"
     ],
-    "SSL": "prefer",
     "Variant": {
       "HashCryptos": {
         "DivisorMultiplier": 1000000,
@@ -86,7 +85,6 @@
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
     "PoolStatusUri": "https://Hiveon.net/api/v1/stats/pool",
-    "SSL": "prefer",
     "Variant": {
       "Hiveon": {}
     }
@@ -205,7 +203,6 @@
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
-    "SSL": "prefer",
     "Variant": {
       "NiceHash External": {
         "Fee": 0.05,
@@ -306,7 +303,7 @@
       "n/a (Anycast)",
       "na"
     ],
-    "SSL": "false",
+    "SSL": "Never",
     "Variant": {
       "ZergPool": {
         "DivisorMultiplier": 1000000,
@@ -368,7 +365,6 @@
       "na",
       "sea"
     ],
-    "SSL": "prefer",
     "Variant": {
       "ZPool": {
         "DivisorMultiplier": 1000000,

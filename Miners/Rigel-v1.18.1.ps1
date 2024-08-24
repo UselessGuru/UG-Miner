@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 # Return 
@@ -98,9 +98,11 @@ If ($Algorithms) {
                     If ($SupportedMinerDevices = $MinerDevices) { 
                     # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                    $ExcludePools = $_.ExcludePools
+                    # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
+                            # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
                                 $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB

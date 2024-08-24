@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.27
-Version date:   2024/08/18
+Version:        6.2.28
+Version date:   2024/08/24
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -40,7 +40,7 @@ $Algorithms = @(
     @{ Algorithms = @("Ethash", "KawPow");     Fee = @(0.01, 0.01); MinMemGiB = 10;   MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo kawpow --lhr-tune -1" }
     @{ Algorithms = @("Ethash", "Octopus");    Fee = @(0.01, 0.02); MinMemGiB = 8;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo octopus --lhr-tune -1" }
     @{ Algorithms = @("FiroPow");              Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow --intensity 25" }
-    @{ Algorithms = @("KawPow");               Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.21.3.15 is almost as fast but has no fee
+    @{ Algorithms = @("KawPow");               Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.22.0.3 is almost as fast but has no fee
 #   @{ Algorithms = @("MTP");                  Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
     @{ Algorithms = @("MTPTcr");               Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp-tcr --intensity 21" }
     @{ Algorithms = @("Multi");                Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo multi --intensity 25" }
