@@ -80,10 +80,10 @@ UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin
 
 #### Poolnames ending in *24h:
 
-+ use calculations based on 24hr prices to get a more stable estimate
-+ are NOT sensible to price spikes
-+ show less switching than following current or plus price estimate
-- lower estimated profitability in exchange for less switching
+\+ use calculations based on 24hr prices to get a more stable estimate
+\+ are NOT sensible to price spikes
+\+ show less switching than following current or plus price estimate
+\- lower estimated profitability in exchange for less switching
 
 #### Poolnames ending in *Plus:
 
