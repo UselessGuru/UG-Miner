@@ -37,26 +37,28 @@ UG-Miner code is partly based on
 - Automatic updates
 - Earnings graph & balances tracker
 - Low developer fee of 1% (can be set to 0)
-- Calculate power cost  
-  (optional installation of HWiNFO required, see ConfigHWinfo64.pdf)
+- Calculate power cost<sup>(1)</sup>
+
 - Miner switching log
 - Supported pools: 
    - [HashCryptos](<https://hashcryptos.com/>)
-   - [Hiveon](<https://hiveon.net/>)<sup>(1)</sup>
+   - [Hiveon](<https://hiveon.net/>)<sup>(2)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
-   - [MiningPoolHub](<https://miningpoolhub.com/>)<sup>(2)</sup>
+   - [MiningPoolHub](<https://miningpoolhub.com/>)<sup>(3)</sup>
    - [NiceHash](<https://www.nicehash.com/>)
    - [ProHashing](<https://prohashing.com/>)
-   - [ZergPool](<https://zergpool.com/>)<sup>(3)</sup>
-   - [ZPool](<https://zpool.ca/>)<sup>(3)</sup>
+   - [ZergPool](<https://zergpool.com/>)<sup>(4)</sup>
+   - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
 
-<sup>(1)</sup> Pool does not support auto-exchange to BTC other currencies.  
+<sup>(1)</sup> Optional installation of HWiNFO required, see ConfigHWinfo64.pdf
+
+<sup>(2)</sup> Pool does not support auto-exchange to BTC other currencies.  
     You need to configure a wallet address for each currency you want to mine.
     
-<sup>(2)</sup> MiningPoolHub is no longer trustworthy.  
+<sup>(3)</sup> MiningPoolHub is no longer trustworthy.  
     Outstanding balances will not get paid and support will not respond. Use at your own risk!
 
-<sup>(3)</sup> Pool does not support auto-exchange for some currencies.  
+<sup>(4)</sup> Pool does not support auto-exchange for some currencies.  
     You need to configure a wallet address for each currency you want to mine.
 
 ## Easy configuration, easy start
