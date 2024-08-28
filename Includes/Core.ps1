@@ -616,16 +616,18 @@ Try {
                                 Else { 
                                     # Create watchdog timer
                                     $Variables.WatchdogTimers += [PSCustomObject]@{ 
-                                        Algorithm        = $Worker.Pool.Algorithm
-                                        AlgorithmVariant = $Worker.Pool.AlgorithmVariant
-                                        DeviceNames      = $Miner.DeviceNames
-                                        Kicked           = [DateTime]::Now.ToUniversalTime()
-                                        MinerBaseName    = $Miner.BaseName
-                                        MinerName        = $Miner.Name
-                                        MinerVersion     = $Miner.Version
-                                        PoolName         = $Worker.Pool.Name
-                                        PoolRegion       = $Worker.Pool.Region
-                                        PoolVariant      = $Worker.Pool.Variant
+                                        Algorithm          = $Worker.Pool.Algorithm
+                                        AlgorithmVariant   = $Worker.Pool.AlgorithmVariant
+                                        DeviceNames        = $Miner.DeviceNames
+                                        Kicked             = [DateTime]::Now.ToUniversalTime()
+                                        MinerBaseName      = $Miner.BaseName
+                                        MinerName          = $Miner.Name
+                                        MinerNameAndDevice = $Miner.NameAndDevice
+                                        MinerVersion       = $Miner.Version
+                                        PoolName           = $Worker.Pool.Name
+                                        PoolRegion         = $Worker.Pool.Region
+                                        PoolVariant        = $Worker.Pool.Variant
+                                        CommandLine        = $Miner.CommandLine
                                     }
                                 }
                             }
@@ -787,7 +789,7 @@ Try {
                 )
                 Remove-Variable Algorithm, Miner, MinerFileName, MinerPools -ErrorAction Ignore
 
-                If ($Config.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info -replace '\[.+\]' }) }
+                If ($Config.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info }) }
             }
             Remove-Variable AvailableMinerPools -ErrorAction Ignore
 
@@ -1350,17 +1352,18 @@ Try {
                 If ($Config.Watchdog) { 
                     ForEach ($Worker in $Miner.Workers) { 
                         $Variables.WatchdogTimers += [PSCustomObject]@{ 
-                            Algorithm        = $Worker.Pool.Algorithm
-                            AlgorithmVariant = $Worker.Pool.AlgorithmVariant
-                            DeviceNames      = $Miner.DeviceNames
-                            Kicked           = [DateTime]::Now.ToUniversalTime()
-                            MinerBaseName    = $Miner.BaseName
-                            MinerName        = $Miner.Name
-                            MinerVersion     = $Miner.Version
-                            PoolName         = $Worker.Pool.Name
-                            PoolRegion       = $Worker.Pool.Region
-                            PoolVariant      = $Worker.Pool.Variant
-                            CommandLine      = $Miner.CommandLine
+                            Algorithm          = $Worker.Pool.Algorithm
+                            AlgorithmVariant   = $Worker.Pool.AlgorithmVariant
+                            DeviceNames        = $Miner.DeviceNames
+                            Kicked             = [DateTime]::Now.ToUniversalTime()
+                            MinerBaseName      = $Miner.BaseName
+                            MinerName          = $Miner.Name
+                            MinerNameAndDevice = $Miner.NameAndDevice
+                            MinerVersion       = $Miner.Version
+                            PoolName           = $Worker.Pool.Name
+                            PoolRegion         = $Worker.Pool.Region
+                            PoolVariant        = $Worker.Pool.Variant
+                            CommandLine        = $Miner.CommandLine
                         }
                     }
                     Remove-Variable Worker -ErrorAction Ignore
