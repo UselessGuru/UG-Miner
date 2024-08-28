@@ -34,6 +34,9 @@ Try {
 
     Do { 
         Write-Message -Level Info "Started new cycle."
+
+        If ($LegacyGUIform) { $host.UI.RawUI.WindowTitle }
+    
         $Variables.EndCycleMessage = ""
 
         # Set master timer
@@ -238,6 +241,7 @@ Try {
                             If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                                 $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                             }
+                            # $Variables.DonationStart = [DateTime]::Now
                         }
                     }
 
@@ -363,14 +367,23 @@ Try {
                         }
                     ).ForEach(
                         { 
-                            $Pool = [Pool]$_
-                            $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
-                            $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
-                            $Pool.Price *= $Factor
-                            $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
-                            $Pool.StablePrice *= $Factor
-                            $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
-                            $Pool
+                            $Pool = $_
+                            Try { 
+                                $Pool = [Pool]$_
+                                $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
+                                $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
+                                $Pool.Price *= $Factor
+                                $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
+                                $Pool.StablePrice *= $Factor
+                                $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
+                                $Pool
+                            }
+                            Catch { 
+                                Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                $_.Exception | Format-List -Force >> $ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            }
                         }
                     )
                     Remove-Variable Factor, Pool, PoolDataCollectedTimeStamp, PoolName -ErrorAction Ignore
@@ -1420,6 +1433,9 @@ Try {
             $LoopEnd = [DateTime]::Now.AddSeconds(1)
             Try { 
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
+                    If ($DebugMinerGetData) { 
+                        [Void]$Miner.GetMinerData()
+                    }
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
                         $Miner.StatusInfo = "'$($Miner.Info)' exited unexpectedly"
@@ -1429,6 +1445,9 @@ Try {
                     ElseIf ($Miner.DataReaderJob.State -ne [MinerStatus]::Running) { 
                         # Miner data reader process failed
                         $Miner.StatusInfo = "'$($Miner.Info)' miner data reader exited unexpectedly"
+                        # If ($DebugMinerGetData) { 
+                            [Void]$Miner.GetMinerData()
+                        # }
                         $Miner.SetStatus([MinerStatus]::Failed)
                         $Variables.MinersFailed += $Miner
                     }

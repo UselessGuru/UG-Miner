@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
@@ -41,7 +41,7 @@ $Algorithms = @(
     @{ Algorithms = @("JanusHash");        Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a warthog") }
     @{ Algorithms = @("KawPow");           Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("GCN4");  ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a rvn") } # https://github.com/bzminer/bzminer/issues/264
     @{ Algorithms = @("NexaPow");          Type = "AMD"; Fee = @(0.02);  MinMemGiB = 3;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a nexa") }
-    @{ Algorithms = @("SHA512256d");       Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a radiant") }
+    @{ Algorithms = @("SHA512256d");       Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("GCN1");  ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a radiant") } # Error 
     @{ Algorithms = @("SHA256dt");         Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a novo") }
     @{ Algorithms = @("SHA3d");            Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a kylacoin") }
     @{ Algorithms = @("Skein2");           Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = ""; ExcludePools = @(@(), @());                         Arguments = @(" -a woodcoin") }
@@ -103,7 +103,7 @@ If ($Algorithms) {
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $ExcludeGPUmodel = $_.ExcludeGPUmodel
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ (-not $ExcludeGPUmodel -or $_.Model -notmatch $ExcludeGPUmodel) -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ (-not $ExcludeGPUmodel -or $_.Model -notmatch $ExcludeGPUmodel) -and $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
 
                         $ExcludePools = $_.ExcludePools
                         ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -70,7 +70,7 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightXao";       Type = "AMD"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
     @{ Algorithm = "CryptonightHeavyXhv";  Type = "AMD"; MinMemGiB = 4;    MinerSet = 1; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
     @{ Algorithm = "CryptonightZls";       Type = "AMD"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "AMD"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" } # NBMiner-v42.3 is fastest, but has 2% miner fee
+    @{ Algorithm = "KawPow";               Type = "AMD"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo kawpow" } # NBMiner-v42.3 is fastest, but has 2% miner fee
 #   @{ Algorithm = "Randomx";              Type = "AMD"; MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxArq";           Type = "AMD"; MinMemGiB = 4;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxKeva";          Type = "AMD"; MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway

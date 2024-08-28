@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 Param(
@@ -115,9 +115,9 @@ If ($DivisorMultiplier -and $Regions) {
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Request.$Pool.Updated
                     User                     = $PoolConfig.Wallets.$PayoutCurrency
-                    Workers                  = [UInt]$Request.$Pool.workers_shared
-                    WorkerName               = ""
                     Variant                  = $PoolVariant
+                    WorkerName               = ""
+                    Workers                  = [UInt]$Request.$Pool.workers_shared
                 }
                 Break
             }

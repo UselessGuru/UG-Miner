@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -111,9 +111,12 @@ Function CheckBoxSwitching_Click {
 }
 
 Function Set-DataGridViewDoubleBuffer { 
+
     Param (
-        [Parameter(Mandatory = $true)][System.Windows.Forms.DataGridView]$Grid,
-        [Parameter(Mandatory = $true)][Boolean]$Enabled
+        [Parameter(Mandatory = $true)]
+        [System.Windows.Forms.DataGridView]$Grid,
+        [Parameter(Mandatory = $true)]
+        [Boolean]$Enabled
     )
 
     $Type = $Grid.GetType();
@@ -365,7 +368,7 @@ Function Update-TabControl {
                     @{ Name = "Status"; Expression = { $_.Status } },
                     @{ Name = "Earning (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                     @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
-                    @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost ) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
+                    @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                     @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
                     @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & "} },
                     @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } },
@@ -573,7 +576,7 @@ Function Update-TabControl {
 }
 
 Function Resize-Form { 
-    If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width ) { Return } # Sometimes $LegacyGUIform is smalle than minimum (Why?)
+    If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smalle than minimum (Why?)
     Try { 
         $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
         $LegacyGUItabControl.Height = $LegacyGUIform.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - 72
@@ -946,7 +949,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $_.Status = "Idle"
                             $_.SubStatus = "failed"
                             $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
-                            If ($_.Reasons -notcontains "0 H/s stat file" ) { $_.Reasons.Add("0 H/s stat file") }
+                            If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") }
                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
                         }
                     )
@@ -1287,7 +1290,7 @@ $LegacyGUIminersDGV.RowHeadersVisible = $false
 $LegacyGUIminersDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIminersDGV.Add_MouseUP(
     { 
-        If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right ) { 
+        If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
             $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$This.SelectedRows
         }
     }
@@ -1371,7 +1374,7 @@ $LegacyGUIpoolsDGV.RowHeadersVisible = $false
 $LegacyGUIpoolsDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIpoolsDGV.Add_MouseUP(
     { 
-        If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right ) { 
+        If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
             $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$This.SelectedRows
         }
     }

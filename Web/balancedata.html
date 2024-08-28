@@ -23,7 +23,7 @@
             data-reorderable-columns="true"
             data-show-button-text="true"
             data-show-columns="true"
-            data-show-fullscreen="true"
+            data-show-fullscreen="false"
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="false"
@@ -56,14 +56,12 @@
 
             $table.bootstrapTable({
               async: 'true',
-              onAll: function() { 
-                try {
-                  document.getElementById('btn-remove-entry').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-                }
-                catch {}
-              },
               autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
               height: $(window).height() - $('#balanceobjects').offset().top - 20
+            });
+
+            $('#balanceobjects').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
+              document.getElementById('btn-remove-entry').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 
             $(document).ready(function () {

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -ne "NVIDIA" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"455.23") }))) { Return }
@@ -101,7 +101,7 @@ If ($Algorithms) {
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
 
                         If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                             $PrerequisitePath = $Variables.VerthashDatPath

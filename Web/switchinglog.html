@@ -25,7 +25,7 @@
             data-response-handler="formatData"
             data-show-button-text="true"
             data-show-columns="true"
-            data-show-fullscreen="true"
+            data-show-fullscreen="false"
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
@@ -84,7 +84,7 @@
                     });
                   };
                   $(".addlocalcurrency").each(function () {
-                    if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
+                    if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
                   });
                 };
               }
@@ -92,7 +92,7 @@
 
             $('#switchinglog').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
               $(".addlocalcurrency").each(function () {
-                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
               });
             });
 

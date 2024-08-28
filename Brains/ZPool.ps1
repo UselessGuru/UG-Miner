@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 using module ..\Includes\Include.psm1
@@ -72,7 +72,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
             # Add currency and convert to array for easy sorting
             $CurrenciesArray = [PSCustomObject[]]@()
-            $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -and $CurrenciesData.$_.name -ne "Hashtap" }).ForEach(
+            $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -and $CurrenciesData.$_.name -notcontains "Hashtap" }).ForEach(
                 { 
                     $CurrenciesData.$_ | Add-Member Currency $(If ($CurrenciesData.$_.symbol) { $CurrenciesData.$_.symbol -replace '-.+$' } Else { $_ -replace '-.+$' })
                     $CurrenciesData.$_ | Add-Member CoinName $(If ($CurrenciesData.$_.name) { $CurrenciesData.$_.name } Else { $_ })
@@ -202,9 +202,9 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     }
     Catch { 
         Write-Message -Level Error "Error in file 'Brains\$BrainName.ps1' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting brain..."
-        "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Brain_$($BrainName)_Error.txt"
-        $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
-        $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
+        "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
+        $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
+        $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
     }
     Remove-Variable AlgoData, CurrenciesData -ErrorAction Ignore
 

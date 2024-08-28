@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -230,6 +230,7 @@ Class Pool {
     [String]$Variant
     [String]$WorkerName = ""
     [Nullable[UInt]]$Workers
+    [String]$ZAPcurrency
 }
 
 Class Worker { 
@@ -391,6 +392,7 @@ Class Miner {
 
         # Stat just got removed (Miner.Activated < 1, set by API)
         If ($this.Activated -le 0) { $this.Activated = 0 }
+        If ($this.Benchmark -or $this.MeasurePowerConsumption) { $this.Data = @() }
 
         $this.ContinousCycle = 0
         $this.DataSampleTimestamp = [DateTime]0
@@ -470,7 +472,6 @@ Class Miner {
         Else { 
             $this.SubStatus = [MinerStatus]::Failed
             Write-Message -Level Error $this.StatusInfo
-            If ($this.Benchmark -or $this.MeasurePowerConsumption) { $this.Data = @() }
         }
 
         $this.StopDataReader()
@@ -707,7 +708,6 @@ Class Miner {
             $this.PowerConsumption = [Double]::NaN
             $this.Profit = [Double]::NaN
             $this.Profit_Bias = [Double]::NaN
-            $this.MeasurePowerConsumption = $Config.CalculatePowerCost
         }
     }
 }
@@ -759,10 +759,9 @@ Function Stop-Core {
             Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
             $Miner.SetStatus([MinerStatus]::Idle)
         }
-        Remove-Variable $Miner
+        Remove-Variable $Miner -ErrorAction Ignore
 
         # Must close runspace after miners were stopped, otherwise methods don't work any longer
-        $Global:CoreRunspace.PowerShell.EndInvoke($Global:CoreRunspace.Job)
         $Global:CoreRunspace.PowerShell.Dispose()
         $Global:CoreRunspace.PowerShell = $null
         $Global:CoreRunspace.Close()
@@ -846,7 +845,6 @@ Function Stop-Brain {
             { 
                 # Stop Brains
                 $Variables.Brains[$_].PowerShell.Stop()
-                If (-not $Variables.Brains[$_].Job.IsCompleted) { $Variables.Brains[$_].PowerShell.EndInvoke($Variables.Brains[$_].Job) }
                 $Variables.Brains[$_].PowerShell.Runspace.Dispose()
                 $Variables.Brains[$_].PowerShell.Dispose()
                 $Variables.Brains[$_].PowerShell = $null
@@ -907,8 +905,7 @@ Function Stop-BalancesTracker {
 
         $Variables.BalancesTrackerRunning = $false
 
-        $Global:BalancesTrackerRunspace.PowerShell.EndInvoke($Global:BalancesTrackerRunspace.Job)
-        $Global:BalancesTrackerRunspace.PowerShell.Dispose($true)
+        $Global:BalancesTrackerRunspace.PowerShell.Dispose()
         $Global:BalancesTrackerRunspace.PowerShell = $null
         $Global:BalancesTrackerRunspace.Close()
         $Global:BalancesTrackerRunspace.Dispose()
@@ -1036,31 +1033,38 @@ Function Write-Message {
     If ($Host.Name -eq "ConsoleHost" -and (-not $Config.Keys -or $Config.LogToScreen -contains $Level)) { 
         # Write to console
         Switch ($Level) { 
-            "Debug"    { Write-Host $Message -ForegroundColor "Blue" }
-            "Error"    { Write-Host $Message -ForegroundColor "Red" }
-            "Info"     { Write-Host $Message -ForegroundColor "White" }
-            "MemDebug" { Write-Host $Message -ForegroundColor "Cyan" }
-            "Verbose"  { Write-Host $Message -ForegroundColor "Yello" }
-            "Warn"     { Write-Host $Message -ForegroundColor "Magenta" }
+            "Debug"   { Write-Host $Message -ForegroundColor "Blue" }
+            "Error"   { Write-Host $Message -ForegroundColor "Red" }
+            "Info"    { Write-Host $Message -ForegroundColor "White" }
+            "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" }
+            "Verbose" { Write-Host $Message -ForegroundColor "Yello" }
+            "Warn"    { Write-Host $Message -ForegroundColor "Magenta" }
         }
     }
 
-    $Message = "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $($Level.ToUpper()): $Message"
+    Switch ($Level) { 
+        "Debug"   { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+        "Error"   { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+        "Info"    { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+        "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+        "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+        "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+    }
 
-    If (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level ) { 
+    If (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level) { 
         # Ignore error when legacy GUI gets closed
         Try { 
             $SelectionLength = $Variables.TextBoxSystemLog.SelectionLength
             $SelectionStart = $Variables.TextBoxSystemLog.SelectionStart
             $TextLength = $Variables.TextBoxSystemLog.TextLength
 
-            If ($Variables.TextBoxSystemLog.Lines.Count -gt 100) { 
-                # Keep only 100 lines, more lines impact performance
-                $Variables.TextBoxSystemLog.Lines = $Variables.TextBoxSystemLog.Lines | Select-Object -Last 100
+            If ($Variables.TextBoxSystemLog.Lines.Count -gt 250) { 
+                # Keep only 200 lines, more lines impact performance
+                $Variables.TextBoxSystemLog.Lines = $Variables.TextBoxSystemLog.Lines | Select-Object -Last 200
             }
 
-            $SelectionStart = $SelectionStart + ($Variables.TextBoxSystemLog.TextLength - $TextLength)
-            If ($SelectionLength -and $SelectionStart -gt 0) { 
+            $SelectionStart += ($Variables.TextBoxSystemLog.TextLength - $TextLength)
+            If ($SelectionLength -and $SelectionStart -ge 0) { 
                 $Variables.TextBoxSystemLog.Lines += $Message
                 $Variables.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
                 $Variables.TextBoxSystemLog.ScrollToCaret()
@@ -1465,6 +1469,12 @@ Function Update-ConfigFile {
             }
         }
     )
+
+    # ZergPoolCoins is no longer available
+    If ($Config.PoolName -like "ZergPoolCoins*") { 
+        Write-Message -Level Warn "Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' )). Please verify your configuration."
+        $Config.PoolName = $Config.PoolName -replace 'Coins'
+    }
 
     # Available regions have changed
     If ((Get-Region $Config.Region -List) -notcontains $Config.Region) { 
@@ -2301,9 +2311,10 @@ Function Get-Device {
         Remove-Variable Device, Device_CIM, Device_PNP, Device_Reg -ErrorAction Ignore
 
         # Get OpenCL data
-        Try { 
-            [OpenCl.Platform]::GetPlatformIDs().ForEach(
-                { 
+        [OpenCl.Platform]::GetPlatformIDs().ForEach(
+            { 
+                Try { 
+                    $OpenCLplatform = $_
                     # Skip devices with negative PCIbus 
                     ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).Where({ $_.PCIbus -ge 0 }).ForEach({ $_ | ConvertTo-Json -WarningAction SilentlyContinue }) | Select-Object -Unique).ForEach(
                         { 
@@ -2320,12 +2331,12 @@ Function Get-Device {
                                         Default { [String]$Device_OpenCL.Type -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                                     }
                                 )
-                                Bus       = $(
+                                Bus = $(
                                     If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
                                         [Int64]$Device_OpenCL.PCIBus
                                     }
                                 )
-                                Vendor    = $(
+                                Vendor = $(
                                     Switch -Regex ([String]$Device_OpenCL.Vendor) { 
                                         "Advanced Micro Devices" { "AMD" }
                                         "AMD"                    { "AMD" }
@@ -2410,43 +2421,44 @@ Function Get-Device {
                     )
                     $PlatformId ++
                 }
-            )
-
-            ($Variables.Devices.Where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -Is [Int64] }) | Sort-Object -Property Bus).ForEach(
-                { 
-                    If ($_.Type -eq "GPU") { 
-                        If ($_.Vendor -eq "NVIDIA") { 
-                            $_ | Add-Member "Architecture" (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability)
-                        }
-                        ElseIf ($_.Vendor -eq "AMD") { 
-                            $_ | Add-Member "Architecture" (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture)
-                        }
-                        Else { 
-                            $_ | Add-Member "Architecture" "Other"
-                        }
-                    }
-
-                    $_ | Add-Member @{ 
-                        Slot             = [Int]$Slot
-                        Type_Slot        = [Int]$Type_Slot.($_.Type)
-                        Vendor_Slot      = [Int]$Vendor_Slot.($_.Vendor)
-                        Type_Vendor_Slot = [Int]$Type_Vendor_Slot.($_.Type).($_.Vendor)
-                    }
-
-                    If (-not $Type_Vendor_Slot.($_.Type)) { 
-                        $Type_Vendor_Slot.($_.Type) = @{ }
-                    }
-
-                    $Slot ++
-                    $Type_Slot.($_.Type) ++
-                    $Vendor_Slot.($_.Vendor) ++
-                    $Type_Vendor_Slot.($_.Type).($_.Vendor) ++
+                Catch { 
+                    Write-Message -Level Warn "Device detection for OpenCL platform'$($OpenCLplatform.Version)' has failed."
                 }
-            )
-        }
-        Catch { 
-            Write-Message -Level Warn "OpenCL device detection has failed."
-        }
+            }
+        )
+        Remove-Variable OpenCLplatform -ErrorAction Ignore
+
+        ($Variables.Devices.Where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -Is [Int64] }) | Sort-Object -Property Bus).ForEach(
+            { 
+                If ($_.Type -eq "GPU") { 
+                    If ($_.Vendor -eq "NVIDIA") { 
+                        $_ | Add-Member "Architecture" (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability)
+                    }
+                    ElseIf ($_.Vendor -eq "AMD") { 
+                        $_ | Add-Member "Architecture" (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture)
+                    }
+                    Else { 
+                        $_ | Add-Member "Architecture" "Other"
+                    }
+                }
+
+                $_ | Add-Member @{ 
+                    Slot             = [Int]$Slot
+                    Type_Slot        = [Int]$Type_Slot.($_.Type)
+                    Vendor_Slot      = [Int]$Vendor_Slot.($_.Vendor)
+                    Type_Vendor_Slot = [Int]$Type_Vendor_Slot.($_.Type).($_.Vendor)
+                }
+
+                If (-not $Type_Vendor_Slot.($_.Type)) { 
+                    $Type_Vendor_Slot.($_.Type) = @{ }
+                }
+
+                $Slot ++
+                $Type_Slot.($_.Type) ++
+                $Vendor_Slot.($_.Vendor) ++
+                $Type_Vendor_Slot.($_.Type).($_.Vendor) ++
+            }
+        )
     }
 
     $Variables.Devices.ForEach(
@@ -2474,7 +2486,7 @@ Filter ConvertTo-Hash {
     If ( $_ -eq $null -or [Double]::IsNaN($_)) { Return "n/a" }
     $Base1000 = [Math]::Max([Double]0, [Math]::Min([Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1))), $Units.Length - 1))
     $UnitValue = $_ / [Math]::Pow(1000, $Base1000)
-    $Digits = If ($UnitValue -lt 10 ) { 3 } Else { 2 }
+    $Digits = If ($UnitValue -lt 10) { 3 } Else { 2 }
     "{0:n$($Digits)} $($Units[$Base1000])H/s" -f $UnitValue
 }
 
@@ -3194,6 +3206,31 @@ Function Update-DAGdata {
     }
 }
 
+Function Get-DAGdata { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Double]$BlockHeight,
+        [Parameter(Mandatory = $true)]
+        [String]$Currency,
+        [Parameter(Mandatory = $false)]
+        [Int16]$EpochReserve = 0
+    )
+
+    If ($Algorithm = Get-AlgorithmFromCurrency $Currency) { 
+        $Epoch = Get-DAGepoch -BlockHeight $BlockHeight -Algorithm $Algorithm -EpochReserve $EpochReserve
+
+        Return [PSCustomObject]@{ 
+            Algorithm   = $Algorithm
+            BlockHeight = [Int]$BlockHeight
+            CoinName    = [String]$Variables.CoinNames[$Currency]
+            DAGsize     = [Int64](Get-DAGSize -Epoch $Epoch -Currency $Currency)
+            Epoch       = [UInt16]$Epoch
+        }
+    }
+    Return $null
+}
+
 Function Get-DAGsize { 
 
     Param (
@@ -3266,31 +3303,6 @@ Function Get-DAGsize {
     Return [Int64]$Size
 }
 
-Function Get-DAGdata { 
-
-    Param (
-        [Parameter(Mandatory = $true)]
-        [Double]$BlockHeight,
-        [Parameter(Mandatory = $true)]
-        [String]$Currency,
-        [Parameter(Mandatory = $false)]
-        [Int16]$EpochReserve = 0
-    )
-
-    If ($Algorithm = Get-AlgorithmFromCurrency $Currency) { 
-        $Epoch = Get-DAGepoch -BlockHeight $BlockHeight -Algorithm $Algorithm -EpochReserve $EpochReserve
-
-        Return [PSCustomObject]@{ 
-            Algorithm   = $Algorithm
-            BlockHeight = [Int]$BlockHeight
-            CoinName    = [String]$Variables.CoinNames[$Currency]
-            DAGsize     = [Int64](Get-DAGSize -Epoch $Epoch -Currency $Currency)
-            Epoch       = [UInt16]$Epoch
-        }
-    }
-    Return $null
-}
-
 Function Get-DAGepoch { 
 
     Param (
@@ -3322,7 +3334,7 @@ Function Get-DAGepochLength {
 
     Switch ($Algorithm) { 
         "Autolykos2"   { Return 1024 }
-        "EtcHash"      { If ($BlockHeight -ge 11700000 ) { Return 60000 } Else { Return 30000 } }
+        "EtcHash"      { If ($BlockHeight -ge 11700000) { Return 60000 } Else { Return 30000 } }
         "EthashSHA256" { Return 4000 }
         "EvrProgPow"   { Return 12000 }
         "FiroPow"      { Return 1300 }
@@ -3415,7 +3427,7 @@ Function Get-MemoryUsage {
     $DiffText = ""
     $Sign = ""
 
-    If ( $Script:LastMemoryUsageByte -ne 0 ) { 
+    If ( $Script:LastMemoryUsageByte -ne 0) { 
         If ($DiffBytes -ge 0) { 
             $Sign = "+"
         }

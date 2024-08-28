@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 Param(
@@ -37,7 +37,7 @@ $Hostsuffix = "mining-dutch.nl"
 $PoolConfig = $Variables.PoolsConfig.$Name
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
-$PayoutCurrency = $PoolConfig.Wallets.psBase.Keys | Select-Object -First 1
+$PayoutCurrency = $PoolConfig.PayoutCurrency
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
@@ -100,9 +100,9 @@ If ($DivisorMultiplier -and $PriceField) {
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Request.$Algorithm.Updated
                     User                     = "$($PoolConfig.UserName).$($PoolConfig.WorkerName)"
-                    Workers                  = [UInt]$Algorithm.workers
-                    WorkerName               = ""
                     Variant                  = $PoolVariant
+                    WorkerName               = ""
+                    Workers                  = [UInt]$Algorithm.workers
                 }
                 Break
             }

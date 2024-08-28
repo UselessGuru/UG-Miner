@@ -27,7 +27,7 @@
             data-response-handler="formatPools"
             data-show-button-text="true"
             data-show-columns="true"
-            data-show-fullscreen="true"
+            data-show-fullscreen="false"
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
@@ -95,7 +95,7 @@
             });
 
             $(document).ready(function () {
-              $('#pools').on('check.bs.table check-all.bs.table check-some.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
+              $('#pools').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
                 document.getElementById('btn-reset-data').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               });
 

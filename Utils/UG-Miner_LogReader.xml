@@ -15,7 +15,7 @@
       <BookmarkTextColor>Yellow</BookmarkTextColor>
       <BookmarkBackColor>DarkGreen</BookmarkBackColor>
       <Modeless>false</Modeless>
-      <Title>UG-Miner_2024-08-12.log</Title>
+      <Title>UG-Miner_2024-08-28.log</Title>
       <WindowState>Maximized</WindowState>
       <WindowSize>
         <Width>1886</Width>
@@ -31,6 +31,26 @@
       <DisplayTabIcon>true</DisplayTabIcon>
       <ColumnFilterActive>false</ColumnFilterActive>
       <KeywordHighlight>
+        <Keyword>
+          <Keyword>^\[ERROR \ ] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}</Keyword>
+          <MatchCaseSensitive>false</MatchCaseSensitive>
+          <MatchRegularExpression>true</MatchRegularExpression>
+          <LogHitCounter>false</LogHitCounter>
+          <TextColoring>true</TextColoring>
+          <AlertHighlight>false</AlertHighlight>
+          <TextColor>White</TextColor>
+          <BackColor>Red</BackColor>
+        </Keyword>
+        <Keyword>
+          <Keyword>^\[WARN   \] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} </Keyword>
+          <MatchCaseSensitive>false</MatchCaseSensitive>
+          <MatchRegularExpression>true</MatchRegularExpression>
+          <LogHitCounter>false</LogHitCounter>
+          <TextColoring>true</TextColoring>
+          <AlertHighlight>false</AlertHighlight>
+          <TextColor>#FFFF80</TextColor>
+          <BackColor>Black</BackColor>
+        </Keyword>
         <Keyword>
           <Keyword>(benchmark|power consumption).+for .+ in progress</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
@@ -57,7 +77,7 @@
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
           <TextColoring>true</TextColoring>
-          <AlertHighlight>true</AlertHighlight>
+          <AlertHighlight>false</AlertHighlight>
           <TextColor>#55AAAA</TextColor>
           <BackColor>Black</BackColor>
         </Keyword>
@@ -122,7 +142,37 @@
           <BackColor>#400040</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+: Started new cycle|^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+: Collecting miner data while|enough samples for this cycle|^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:.+Ending cycle|^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:.+Exiting cycle</Keyword>
+          <Keyword>Stopped idle detection</Keyword>
+          <MatchCaseSensitive>false</MatchCaseSensitive>
+          <MatchRegularExpression>false</MatchRegularExpression>
+          <LogHitCounter>false</LogHitCounter>
+          <TextColoring>true</TextColoring>
+          <AlertHighlight>false</AlertHighlight>
+          <TextColor>White</TextColor>
+          <BackColor>Black</BackColor>
+        </Keyword>
+        <Keyword>
+          <Keyword>Balances tracker|Loaded currency exchange rates</Keyword>
+          <MatchCaseSensitive>false</MatchCaseSensitive>
+          <MatchRegularExpression>true</MatchRegularExpression>
+          <LogHitCounter>false</LogHitCounter>
+          <TextColoring>true</TextColoring>
+          <AlertHighlight>false</AlertHighlight>
+          <TextColor>#C8FFE0</TextColor>
+          <BackColor>Black</BackColor>
+        </Keyword>
+        <Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+ GUI: </Keyword>
+          <MatchCaseSensitive>true</MatchCaseSensitive>
+          <MatchRegularExpression>true</MatchRegularExpression>
+          <LogHitCounter>false</LogHitCounter>
+          <TextColoring>true</TextColoring>
+          <AlertHighlight>false</AlertHighlight>
+          <TextColor>#FFD7AE</TextColor>
+          <BackColor>Black</BackColor>
+        </Keyword>
+        <Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Started new cycle|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Collecting miner data while|enough samples for this cycle|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.+Ending cycle|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.+Exiting cycle</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -132,7 +182,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+: Stopping miner .*</Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Stopping miner .*</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -142,63 +192,13 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+: Starting miner .+|^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+: Dry run .+</Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Starting miner .+|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Dry run .+</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
           <TextColoring>true</TextColoring>
           <AlertHighlight>false</AlertHighlight>
           <TextColor>#00E600</TextColor>
-          <BackColor>Black</BackColor>
-        </Keyword>
-        <Keyword>
-          <Keyword>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} WARN:.*</Keyword>
-          <MatchCaseSensitive>false</MatchCaseSensitive>
-          <MatchRegularExpression>true</MatchRegularExpression>
-          <LogHitCounter>false</LogHitCounter>
-          <TextColoring>true</TextColoring>
-          <AlertHighlight>false</AlertHighlight>
-          <TextColor>#FFFF80</TextColor>
-          <BackColor>Black</BackColor>
-        </Keyword>
-        <Keyword>
-          <Keyword>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} ERROR:.*</Keyword>
-          <MatchCaseSensitive>false</MatchCaseSensitive>
-          <MatchRegularExpression>true</MatchRegularExpression>
-          <LogHitCounter>false</LogHitCounter>
-          <TextColoring>true</TextColoring>
-          <AlertHighlight>true</AlertHighlight>
-          <TextColor>White</TextColor>
-          <BackColor>Red</BackColor>
-        </Keyword>
-        <Keyword>
-          <Keyword>Stopped idle detection</Keyword>
-          <MatchCaseSensitive>false</MatchCaseSensitive>
-          <MatchRegularExpression>false</MatchRegularExpression>
-          <LogHitCounter>false</LogHitCounter>
-          <TextColoring>true</TextColoring>
-          <AlertHighlight>true</AlertHighlight>
-          <TextColor>White</TextColor>
-          <BackColor>Black</BackColor>
-        </Keyword>
-        <Keyword>
-          <Keyword> Balances Tracker </Keyword>
-          <MatchCaseSensitive>false</MatchCaseSensitive>
-          <MatchRegularExpression>false</MatchRegularExpression>
-          <LogHitCounter>false</LogHitCounter>
-          <TextColoring>true</TextColoring>
-          <AlertHighlight>false</AlertHighlight>
-          <TextColor>#C8FFE0</TextColor>
-          <BackColor>Black</BackColor>
-        </Keyword>
-        <Keyword>
-          <Keyword> GUI: </Keyword>
-          <MatchCaseSensitive>true</MatchCaseSensitive>
-          <MatchRegularExpression>false</MatchRegularExpression>
-          <LogHitCounter>false</LogHitCounter>
-          <TextColoring>true</TextColoring>
-          <AlertHighlight>true</AlertHighlight>
-          <TextColor>#FFD7AE</TextColor>
           <BackColor>Black</BackColor>
         </Keyword>
       </KeywordHighlight>
@@ -211,8 +211,8 @@
     <Height>1163</Height>
   </WindowSize>
   <WindowPosition>
-    <X>78</X>
-    <Y>48</Y>
+    <X>75</X>
+    <Y>132</Y>
   </WindowPosition>
   <MinimizedToTray>false</MinimizedToTray>
   <AlwaysOnTop>false</AlwaysOnTop>

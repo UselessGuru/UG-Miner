@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") }))) { Return }
@@ -59,7 +59,7 @@ If ($Algorithms) {
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $MinComputeCapability = $_.MinComputeCapability
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability -and $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability -and $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
                         # Apply tuning parameters
                         If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 

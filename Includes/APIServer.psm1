@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 Function Start-APIServer { 
@@ -620,7 +620,7 @@ Function Start-APIServer {
                                                         $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
                                                         $_.Available = $false
                                                         $_.Disabled = $false
-                                                        If ($_.Reasons -notcontains "0 H/s Stat file" ) { $_.Reasons.Add("0 H/s Stat file") }
+                                                        If ($_.Reasons -notcontains "0 H/s Stat file") { $_.Reasons.Add("0 H/s Stat file") }
                                                         $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
                                                         $_.Status = [MinerStatus]::Failed
                                                     }

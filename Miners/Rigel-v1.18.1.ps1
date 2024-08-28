@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 # Return 
@@ -96,7 +96,7 @@ If ($Algorithms) {
                 { 
                     # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     If ($SupportedMinerDevices = $MinerDevices) { 
-                    # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notin $ExcludeGPUarchitectures })) { 
+                    # If ($SupportedMinerDevices = $MinerDevices.Where({ $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
 
                     $ExcludePools = $_.ExcludePools
                     # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 

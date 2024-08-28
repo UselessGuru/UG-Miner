@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 Param(
@@ -104,9 +104,9 @@ ForEach ($Pool in $Request.return) {
                 StablePrice              = $Stat.Week
                 Updated                  = [DateTime]$Stat.Updated
                 User                     = "$($PoolConfig.UserName).$($PoolConfig.WorkerName)"
+                Variant                  = $PoolVariant
                 WorkerName               = $PoolConfig.WorkerName
                 Workers                  = [UInt]$Pool.workers
-                Variant                  = $PoolVariant
             }
             Break
         }

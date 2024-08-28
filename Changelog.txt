@@ -4,6 +4,23 @@ Known issues:
   -> It is recommended to set it to 'Windows Console Host'
 - Idle detection has a big memory leak on each core stop (still investigating)
 
+Changelog UG-Miner 6.2.29 2024/08/28
+====================================
+
+Changes:
+- Core: Declutter log messages (move level to start of line)
+- Pool 'ZergPool': Remove *Coins* variants
+
+Enhancements:
+- Core: Rework core restart process. An error in 'Core.ps1' will trigger a complete core runspace restart.
+
+Fixes:
+- Core: Fix typo
+- Core: Trying to measure power consumption even when HWiNFO64 sensor naming is invalid
+- Miner 'SRBMinerMulti-v0.9.4' creating invalid miner objects
+- Web GUI: Earnings currency 'Unknown' (Regression from 6.2.26)
+
+
 Changelog UG-Miner 6.2.28 2024/08/24
 ====================================
 

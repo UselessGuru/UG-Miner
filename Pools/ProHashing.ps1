@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 Param(
@@ -104,6 +104,7 @@ If ($DivisorMultiplier -and $PriceField) {
                         User                     = $PoolConfig.UserName
                         Variant                  = $PoolVariant
                         WorkerName               = $PoolConfig.WorkerName
+                        Workers                  = $null
                     }
                     Break
                 }

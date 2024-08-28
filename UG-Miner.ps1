@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 using module .\Includes\Include.psm1
@@ -45,7 +45,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Boolean]$BalancesKeepAlive = $true, # If true will force mining at a pool to protect your earnings (some pools auto-purge the wallet after longer periods of inactivity, see '\Data\PoolData.Json' BalancesKeepAlive properties)
     [Parameter(Mandatory = $false)]
-    [Boolean]$BalancesShowSums = $true, #Show 1hr / 6hrs / 24hr / 7day & 30day pool earning sums in web dashboard
+    [Boolean]$BalancesShowSums = $true, # Show 1hr / 6hrs / 24hr / 7day & 30day pool earning sums in web dashboard
     [Parameter(Mandatory = $false)]
     [Boolean]$BalancesShowAverages = $true, # Show 1hr / 24hr & 7day pool earning averages in web dashboard
     [Parameter(Mandatory = $false)]
@@ -117,9 +117,9 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$LogBalanceAPIResponse = $false, # If true will log the pool balance API data
     [Parameter(Mandatory = $false)]
-    [String[]]$LogToFile = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of "Debug", "Error", "Info", "MemDebug", "Verbose", "Warn"
+    [String[]]$LogToFile = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of "Debug", "Error", "Info", "MemDbg", "Verbose", "Warn"
     [Parameter(Mandatory = $false)]
-    [String[]]$LogToScreen = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to screen, see Write-Message function; any of "Debug", "Error", "Info", "MemDebug", "Verbose", "Warn"
+    [String[]]$LogToScreen = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to screen, see Write-Message function; any of "Debug", "Error", "Info", "MemDbg", "Verbose", "Warn"
     [Parameter(Mandatory = $false)]
     [String]$LogViewerConfig = ".\Utils\UG-Miner_LogReader.xml", # Path to external log viewer config file
     [Parameter(Mandatory = $false)]
@@ -301,7 +301,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.28"
+    Version      = [System.Version]"6.2.29"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -560,6 +560,12 @@ Function MainLoop {
         $Variables.MiningStatus = $Variables.NewMiningStatus
         Start-Core
     }
+    ElseIf ($CoreRunspace.Job.IsCompleted -eq $true) { 
+        Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
+        Stop-Core
+        $Variables.MiningStatus = $Variables.NewMiningStatus
+        Start-Core
+    }
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
     If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIminingSummaryLabel.Text)) { 
@@ -652,7 +658,7 @@ Function MainLoop {
                     }
                     Start-Core
                     $Proc = Get-Process -Id $PID
-                    Write-Message -Level MemDebug "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
+                    Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
                     If ($LegacyGUIform) { Update-GUIstatus }
                 }
             }
@@ -662,14 +668,14 @@ Function MainLoop {
                 Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
                 Stop-Core
                 $Proc = Get-Process -Id $PID
-                Write-Message -Level MemDebug "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
+                Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
                 If ($LegacyGUIform) { Update-GUIstatus }
             }
         }
         ElseIf (-not $Global:CoreRunspace) { 
             Start-Core
             $Proc = Get-Process -Id $PID
-            Write-Message -Level MemDebug "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
+            Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
             If ($LegacyGUIform) { Update-GUIstatus }
         }
     }
@@ -1072,7 +1078,7 @@ Function MainLoop {
         $Error.Clear()
         [System.GC]::Collect()
         $Proc = Get-Process -Id $PID
-        Write-Message -Level MemDebug "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
+        Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
     }
 }
 

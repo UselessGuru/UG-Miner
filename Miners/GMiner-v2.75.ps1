@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -31,7 +31,7 @@ $DeviceEnumerator = "Type_Vendor_Slot"
 $Algorithms = @(
     @{ Algorithm = "Equihash1927"; Fee = @(0.02); MinMemGiB = 2.8; Type = "AMD"; Tuning = ""; MinerSet = 0; WarmupTimes = @(30, 0); ExcludePools = @(); AutoCoinPers = " --pers auto"; Arguments = " --algo equihash192_7 --cuda 0 --opencl 1" } # FPGA
 
-    @{ Algorithm = "Equihash1927"; Fee = @(0.02); MinMemGiB = 2.8; Type = "NVIDIA"; Tuning = ""; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); AutoCoinPers = " --pers auto"; Arguments = " --algo equihash192_7  --cuda 0 --opencl 1" } # FPGA
+    @{ Algorithm = "Equihash1927"; Fee = @(0.02); MinMemGiB = 2.8; Type = "NVIDIA"; Tuning = ""; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); AutoCoinPers = " --pers auto"; Arguments = " --algo equihash192_7  --cuda 1 --opencl 0" } # FPGA
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

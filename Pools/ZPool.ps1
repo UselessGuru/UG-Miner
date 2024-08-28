@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 Param(
@@ -66,11 +66,8 @@ If ($PriceField) {
         If (-not $Request.$Algorithm.conversion_supported) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") }
         If ($Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
 
-        # SCC firo variant
-        If ($Algorithm -eq "firopow") { 
-            $AlgorithmNorm = "SCCpow"
-            $Currency = "SCC"
-        }
+        # SCC firo variant is a separate algorithm
+        If ($Algorithm -eq "firopow" -and $Currency -eq "SCC") { continue }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
@@ -88,7 +85,7 @@ If ($PriceField) {
                     Host                     = "$($Algorithm).$($Region).$($HostSuffix)"
                     Key                      = $Key
                     Name                     = $Name
-                    Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(If ($Currency -eq $PayoutCurrency) { ",zap=$Currency" })"
+                    Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(If ($Currency -eq $PayoutCurrency) { ",zap=$PayoutCurrency" })"
                     Port                     = [UInt16]$Request.$Algorithm.port
                     PortSSL                  = [UInt16]("5$([String]$Request.$Algorithm.port)")
                     PoolUri                  = "https://zpool.ca/algo/$($Algorithm)"
@@ -101,9 +98,9 @@ If ($PriceField) {
                     StablePrice              = $Stat.Week
                     Updated                  = [DateTime]$Request.$Algorithm.Updated
                     User                     = $PoolConfig.Wallets.$PayoutCurrency
+                    Variant                  = $PoolVariant
                     WorkerName               = ""
                     Workers                  = [UInt]$Request.$Algorithm.workers
-                    Variant                  = $PoolVariant
                 }
                 Break
             }

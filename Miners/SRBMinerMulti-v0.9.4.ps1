@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -31,40 +31,40 @@ $DeviceEnumerator = "Type_Vendor_Slot"
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
-    @{ Algorithm = "0x10";              Fee = @(0.0085); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu -algorithm 0x10" }
-    @{ Algorithm = "Argon2d16000";      Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu -algorithm argon2d_16000" }
-    @{ Algorithm = "Argon2d500";        Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu -algorithm argon2d_dynamic" }
-    @{ Algorithm = "Argon2Chukwa";      Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu -algorithm argon2id_chukwa" }
-    @{ Algorithm = "Argon2Chukwa2";     Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu -algorithm argon2id_chukwa2" }
-    @{ Algorithm = "Autolykos2";        Fee = @(0.02; ); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm autolykos2" }
-    @{ Algorithm = "Blake2b";           Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm blake2b" } # FPGA
-#   @{ Algorithm = "Blake2s";           Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm blake2s" } # ASIC
-    @{ Algorithm = "Blake3";            Fee = @(0.01); ; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm blake3_alephium" }
-    @{ Algorithm = "CircCash";          Fee = @(00085;); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm circcash" }
-    @{ Algorithm = "CryptonightCcx";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm cryptonight_ccx" }
-    @{ Algorithm = "CryptonightGpu";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm cryptonight_gpu" }
-    @{ Algorithm = "CryptonightTalleo"; Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm cryptonight_talleo" }
-    @{ Algorithm = "CryptonightTurtle"; Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm cryptonight_turtle" } # TeamRedMiner-v0.10.3 is fastest
-    @{ Algorithm = "CryptonightUpx";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm cryptonight_upx" }
-    @{ Algorithm = "CryptonightXhv";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm cryptonight_xhv" }
-#   @{ Algorithm = "DynamoCoin";        Fee = @(0.01); ; MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm dynamo" } # Algorithm 'dynamo' supports only 'pool' mode (yiimp stratum compatibility removed)
-    @{ Algorithm = "EtcHash";           Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(90, 75); ExcludePools = @(); Arguments = " --disable-cpu -algorithm etchash --gpu-boost 50" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
-    @{ Algorithm = "Ethash";            Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(90, 75); ExcludePools = @(); Arguments = " --disable-cpu -algorithm ethash --gpu-boost 50" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
-    @{ Algorithm = "FiroPow";           Fee = @(0.0085); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 75); ExcludePools = @(); Arguments = " --disable-cpu -algorithm firopow --gpu-boost 50" }
-    @{ Algorithm = "HeavyHash";         Fee = @(0.01); ; MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm heavyhash" } # FPGA
-#   @{ Algorithm = "K12";               Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 3; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm k12" } # ASIC
-    @{ Algorithm = "KawPow";            Fee = @(0.0085); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 75); ExcludePools = @(); Arguments = " --disable-cpu -algorithm kawpow --gpu-boost 50" }
-#   @{ Algorithm = "Keccak";            Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm keccak" } # ASIC
-    @{ Algorithm = "Lyra2v2Webchain";   Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm lyra2v2_webchain" }
-    @{ Algorithm = "ProgPowEpic";       Fee = @(0.0065); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm progpow_epic" }
-    @{ Algorithm = "ProgPowSero";       Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm progpow_sero" }
-    @{ Algorithm = "ProgPowVeil";       Fee = @(0.0065); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm progpow_veil" }
-    @{ Algorithm = "ProgPowVeriblock";  Fee = @(0.0065); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm progpow_veriblock" }
-    @{ Algorithm = "ProgPowanoZ";       Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm progpow_zano" }
-    @{ Algorithm = "SHA3d";             Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm sha3d" } # FPGU
-#   @{ Algorithm = "VerusHash";         Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm verushash" }
-    @{ Algorithm = "VertHash";          Fee = @(0.0125); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm verthash --verthash-dat-path ..\.$($Variables.VerthashDatPath)" }
-    @{ Algorithm = "Yescrypt";          Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 30); ExcludePools = @(); Arguments = " --disable-cpu -algorithm yescrypt" }
+    @{ Algorithm = "0x10";              Fee = @(0.0085); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu --algorithm 0x10" }
+    @{ Algorithm = "Argon2d16000";      Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu --algorithm argon2d_16000" }
+    @{ Algorithm = "Argon2d500";        Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu --algorithm argon2d_dynamic" }
+    @{ Algorithm = "Argon2Chukwa";      Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu --algorithm argon2id_chukwa" }
+    @{ Algorithm = "Argon2Chukwa2";     Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu --algorithm argon2id_chukwa2" }
+    @{ Algorithm = "Autolykos2";        Fee = @(0.02; ); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm autolykos2" }
+    @{ Algorithm = "Blake2b";           Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm blake2b" } # FPGA
+#   @{ Algorithm = "Blake2s";           Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 3; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm blake2s" } # ASIC
+    @{ Algorithm = "Blake3";            Fee = @(0.01); ; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm blake3_alephium" }
+    @{ Algorithm = "CircCash";          Fee = @(00085;); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm circcash" }
+    @{ Algorithm = "CryptonightCcx";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm cryptonight_ccx" }
+    @{ Algorithm = "CryptonightGpu";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm cryptonight_gpu" }
+    @{ Algorithm = "CryptonightTalleo"; Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm cryptonight_talleo" }
+    @{ Algorithm = "CryptonightTurtle"; Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm cryptonight_turtle" } # TeamRedMiner-v0.10.3 is fastest
+    @{ Algorithm = "CryptonightUpx";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm cryptonight_upx" }
+    @{ Algorithm = "CryptonightXhv";    Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm cryptonight_xhv" }
+#   @{ Algorithm = "DynamoCoin";        Fee = @(0.01); ; MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm dynamo" } # Algorithm 'dynamo' supports only 'pool' mode (yiimp stratum compatibility removed)
+    @{ Algorithm = "EtcHash";           Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(90, 75); ExcludePools = @(); Arguments = " --disable-cpu --algorithm etchash --gpu-boost 50" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
+    @{ Algorithm = "Ethash";            Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(90, 75); ExcludePools = @(); Arguments = " --disable-cpu --algorithm ethash --gpu-boost 50" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
+    @{ Algorithm = "FiroPow";           Fee = @(0.0085); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 75); ExcludePools = @(); Arguments = " --disable-cpu --algorithm firopow --gpu-boost 50" }
+    @{ Algorithm = "HeavyHash";         Fee = @(0.01); ; MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm heavyhash" } # FPGA
+#   @{ Algorithm = "K12";               Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 3; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm k12" } # ASIC
+    @{ Algorithm = "KawPow";            Fee = @(0.0085); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 75); ExcludePools = @(); Arguments = " --disable-cpu --algorithm kawpow --gpu-boost 50" }
+#   @{ Algorithm = "Keccak";            Fee = @(0);    ; MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm keccak" } # ASIC
+    @{ Algorithm = "Lyra2v2Webchain";   Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm lyra2v2_webchain" }
+    @{ Algorithm = "ProgPowEpic";       Fee = @(0.0065); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_epic" }
+    @{ Algorithm = "ProgPowSero";       Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_sero" }
+    @{ Algorithm = "ProgPowVeil";       Fee = @(0.0065); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_veil" }
+    @{ Algorithm = "ProgPowVeriblock";  Fee = @(0.0065); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_veriblock" }
+    @{ Algorithm = "ProgPowanoZ";       Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_zano" }
+    @{ Algorithm = "SHA3d";             Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm sha3d" } # FPGU
+#   @{ Algorithm = "VerusHash";         Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verushash" }
+    @{ Algorithm = "VertHash";          Fee = @(0.0125); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 10); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verthash --verthash-dat-path ..\.$($Variables.VerthashDatPath)" }
+    @{ Algorithm = "Yescrypt";          Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --disable-cpu --algorithm yescrypt" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -108,7 +108,7 @@ If ($Algorithms) {
                                 Default        { "" }
                             }
                             $Arguments += " --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
-                            If ($Pool.WorkerName) { " --worker $($Pool.WorkerName)" }
+                            If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
                             $Arguments += " --password $($Pool.Pass)"
                             If ($Pool.PoolPorts[1]) { $Arguments += " --tls true" }
 

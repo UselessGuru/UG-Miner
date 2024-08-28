@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 using module ..\Includes\Include.psm1
@@ -50,17 +50,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Do { 
             Try { 
-                If ($PoolVariant -ne $PoolVariantOld) { 
-                    # Variant got changed, reset data
-                    $PoolObjects = @()
-                }
-                If ($PoolVariant -match "$($BrainName)Coins.*") { 
-                    $Uri = $PoolConfig.PoolCurrenciesUri
-                }
-                Else { 
-                    $Uri = $PoolConfig.PoolStatusUri
-                }
-                $APIdata = Invoke-RestMethod -Uri $Uri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                $APIdata = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
 
                 $APICallFails = 0
             }
@@ -185,9 +175,9 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     }
     Catch { 
         Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
-        "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Brain_$($BrainName)_Error.txt"
-        $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
-        $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error.txt"
+        "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
+        $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
+        $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
     }
     Remove-Variable APIdata -ErrorAction Ignore
 

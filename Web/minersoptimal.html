@@ -29,7 +29,7 @@
             data-response-handler="formatMiners"
             data-show-button-text="true"
             data-show-columns="true"
-            data-show-fullscreen="true"
+            data-show-fullscreen="false"
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
@@ -136,25 +136,24 @@
                       if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());
                     });
                   };
-                  $(".addlocalcurrency").each(function () {
-                    if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
-                  });
                 };
+                $(".addlocalcurrency").each(function () {
+                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
+                });
               }
             });
 
             $('#miners').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
               $(".addlocalcurrency").each(function () {
-                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.MainCurrency + ' / day';
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
               });
             });
 
-            $('#miners').on('check.bs.table check-all.bs.table check-some.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
+            $('#miners').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
               document.getElementById('btn-re-benchmark').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-enable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 

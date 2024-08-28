@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.2.28
-Version date:   2024/08/24
+Version:        6.2.29
+Version date:   2024/08/28
 #>
 
 Param(
@@ -97,9 +97,9 @@ If ($DivisorMultiplier -and $PriceField) {
             StablePrice              = $Stat.Week
             Updated                  = [DateTime]$Request.$Algorithm.Updated
             User                     = $Wallet
+            Variant                  = $PoolVariant
             WorkerName               = $PoolConfig.WorkerName
             Workers                  = [UInt]$Request.$Algorithm.workers
-            Variant                  = $PoolVariant
         }
     }
 }
