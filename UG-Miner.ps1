@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           UG-Miner.ps1
 Version:        6.2.29
-Version date:   2024/08/28
+Version date:   2024/08/29
 #>
 
 using module .\Includes\Include.psm1
@@ -330,19 +330,13 @@ If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command 
 }
 
 # Internet connection must be available
-If ($NetRoute = ((Get-NetRoute).Where({ $_.DestinationPrefix -eq "0.0.0.0/0" }) | Get-NetIPInterface).Where({ $_.ConnectionState -eq "Connected" })) { 
-    $MyIP = ((Get-NetIPAddress -InterfaceIndex $NetRoute.ifIndex -AddressFamily IPV4).IPAddress)
-}
-If ($NetRoute -and $MyIP) { 
-    $Variables.MyIP = $MyIP
-}
-Else { 
-    $Variables.MyIP = $null
+$NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+$Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+If (-not $Variables.MyIP) { 
     Write-Host "Terminating Error - No internet connection." -ForegroundColor "Red"
     $WscriptShell.Popup("No internet connection", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
-Remove-Variable MyIp, NetRoute -ErrorAction Ignore
 
 # Create directories
 If (-not (Test-Path -LiteralPath ".\Cache" -PathType Container)) { New-Item -Path . -Name "Cache" -ItemType Directory | Out-Null }

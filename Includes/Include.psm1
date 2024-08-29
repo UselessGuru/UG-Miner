@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\include.ps1
 Version:        6.2.29
-Version date:   2024/08/28
+Version date:   2024/08/29
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -262,6 +262,8 @@ Class Miner {
     [String]$Arguments
     [Boolean]$Available = $true
     [String]$BaseName
+    [String]$BaseName_Version
+    [String]$BaseName_Version_Device
     [DateTime]$BeginTime # UniversalTime
     [Boolean]$Benchmark = $false # derived from stats
     [Boolean]$Best = $false
@@ -286,7 +288,6 @@ Class Miner {
     [UInt16]$MinerSet
     [String]$MinerUri
     [String]$Name
-    [String]$NameAndDevice
     [Bool]$Optimal = $false
     [String]$Path
     [String]$PrerequisitePath
