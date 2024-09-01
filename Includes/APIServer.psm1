@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.16"
+    $APIVersion = "0.5.4.18"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -313,6 +313,7 @@ Function Start-APIServer {
                                 Try { 
                                     $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
                                     Write-Config -ConfigFile $Variables.ConfigFile -Config $TempConfig
+                                    Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
                                     $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
                                     Remove-Variable TempConfig
 
@@ -331,7 +332,6 @@ Function Start-APIServer {
                                     )
                                     $Variables.RestartCycle = $true
                                     $Variables.FreshConfig = $false
-                                    Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
                                     $Data = "Configuration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become fully active in the next cycle."
                                 }
                                 Catch { 

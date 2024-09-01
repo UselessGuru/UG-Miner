@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 Class EthMiner : Miner { 
@@ -42,14 +42,8 @@ Class EthMiner : Miner {
         $HashRate = [PSCustomObject]@{ }
         $HashRateName = [String]$this.Algorithms[0]
         $HashRateValue = [Double]($Data.result[2] -split ";")[0]
-        If ($Data.result[0] -notmatch "^TT-Miner") { 
-            If ($HashRateName -eq "EtcHash")         { $HashRateValue *= 1000 }
-            ElseIf ($HashRateName -eq "Ethash")      { $HashRateValue *= 1000 }
-            ElseIf ($HashRateName -eq "MeowPow")     { $HashRateValue *= 1000 }
-            ElseIf ($HashRateName -eq "UbqHash")     { $HashRateValue *= 1000 }
-        }
-        If ($HashRateName -eq "Neoscrypt")           { $HashRateValue *= 1000 }
-        ElseIf ($HashRateName -eq "BitcoinInterest") { $HashRateValue *= 1000 }
+
+        If ($Data.result[0] -notmatch "^TT-Miner" -and $HashRateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashRateValue *= 1000 }
         $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
@@ -60,8 +54,7 @@ Class EthMiner : Miner {
 
         If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
             $HashRateValue = [Double]($Data.result[4] -split ";")[0]
-            If ($this.Algorithms[0] -eq "Blake2s") { $HashRateValue *= 1000 }
-            If ($this.Algorithms[0] -eq "Keccak") { $HashRateValue *= 1000 }
+            If ($this.Algorithms[0] -match "^Blake2s|^Keccak") { $HashRateValue *= 1000 }
             $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
 
             $SharesAccepted = [Int64]($Data.result[4] -split ";")[1]
@@ -72,18 +65,15 @@ Class EthMiner : Miner {
 
         $PowerConsumption = [Double]0
 
-        If ($HashRate.PSObject.Properties.Value -gt 0) { 
-            If ($this.ReadPowerConsumption) { 
-                $PowerConsumption = $this.GetPowerConsumption()
-            }
-
-            Return [PSCustomObject]@{ 
-                Date             = [DateTime]::Now.ToUniversalTime()
-                HashRate         = $HashRate
-                PowerConsumption = $PowerConsumption
-                Shares           = $Shares
-            }
+        If ($this.ReadPowerConsumption) { 
+            $PowerConsumption = $this.GetPowerConsumption()
         }
-        Return $null
+
+        Return [PSCustomObject]@{ 
+            Date             = [DateTime]::Now.ToUniversalTime()
+            HashRate         = $HashRate
+            PowerConsumption = $PowerConsumption
+            Shares           = $Shares
+        }
     }
 }

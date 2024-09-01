@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 Class TeamBlackMiner : Miner { 
@@ -65,22 +65,19 @@ Class TeamBlackMiner : Miner {
 
         $PowerConsumption = [Double]0
 
-        If ($HashRate.PSObject.Properties.Value -gt 0) { 
-            If ($this.ReadPowerConsumption) { 
-                $Data.Devices.ForEach({ $PowerConsumption += [Double]$_.PSObject.Properties.Value.watt })
-                $PowerConsumption = [Double]($Data.result | Measure-Object gpu_power_usage -Sum).Sum
-                If (-not $PowerConsumption) { 
-                    $PowerConsumption = $this.GetPowerConsumption()
-                }
-            }
-
-            Return [PSCustomObject]@{ 
-                Date             = [DateTime]::Now.ToUniversalTime()
-                HashRate         = $HashRate
-                PowerConsumption = $PowerConsumption
-                Shares           = $Shares
+        If ($this.ReadPowerConsumption) { 
+            $Data.Devices.ForEach({ $PowerConsumption += [Double]$_.PSObject.Properties.Value.watt })
+            $PowerConsumption = [Double]($Data.result | Measure-Object gpu_power_usage -Sum).Sum
+            If (-not $PowerConsumption) { 
+                $PowerConsumption = $this.GetPowerConsumption()
             }
         }
-        Return $null
+
+        Return [PSCustomObject]@{ 
+            Date             = [DateTime]::Now.ToUniversalTime()
+            HashRate         = $HashRate
+            PowerConsumption = $PowerConsumption
+            Shares           = $Shares
+        }
     }
 }

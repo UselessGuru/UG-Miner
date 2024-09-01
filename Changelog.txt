@@ -2,7 +2,18 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
-- Idle detection has a big memory leak on each core stop (still investigating)
+
+Changelog UG-Miner 6.3.0 2024/09/01
+===================================
+
+Changes:
+- Core: Remove configuration item 'MinerInstancePerDeviceModel'
+- Removed pool 'MiningPoolHub'. Pool is no longer trustworthy. Outstanding balances will not get paid and support will not respond.
+
+Fixes:
+- Core: Eliminate memory leak with idle detection
+- Miners: Fix algorithm typo ('XelisHassh' -> 'XelisHash')
+- Miner API 'EthMiner': Update hashrate multiplier
 
 
 Changelog UG-Miner 6.2.29 2024/08/29

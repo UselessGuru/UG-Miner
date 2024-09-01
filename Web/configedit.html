@@ -154,11 +154,11 @@
           <div style="padding-top: 0.3rem" title="Cycle duration&#10;This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
             <input type="number" id="Interval" name="Interval" min=30 max=3600 step=1 value=90> seconds
           </div>
-          <div style="padding-top: 0.3rem" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
-            <input type="number" id="MinDataSample" name="MinDataSample" min=10 max=100 value=20 step=1 size=4> data samples while benchmarking
-          </div>
           <div style="padding-top: 0.3rem" title="Minimum number of continous cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
             <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 size=2> cycles before switching
+          </div>
+          <div style="padding-top: 0.3rem" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
+            <input type="number" id="MinDataSample" name="MinDataSample" min=10 max=100 value=20 step=1 size=4> data samples while benchmarking
           </div>
           <div style="padding-top: 0.2rem" title="Enter Proxy IP address and port&#10;e.g. 192.168.1.1:3128"> Proxy address:port
             <input type="text" id="Proxy" name="Proxy" maxlength=22 size=30>
@@ -178,7 +178,7 @@
             <br>
 
             <!-- Pool selection -->
-            <fieldset title="You cannot select multiple variants of the same pool">
+            <fieldset title="You must select at least one pool">
               <legend class=h6><b>Pool selection</b></legend>
               <div style="padding-top: 0.1rem" id="Pools"></div>
             </fieldset>
@@ -219,9 +219,6 @@
         <td>
           <!-- Miner selection -->
           <legend class=h6><b>Miner selection</b></legend>
-          <div style="padding-top: 0.3rem" title="UG-Miner will run separate miner instances per GPU device model&#10;Recommended for rigs with mixed GPU device models of the same vendor installed, e.g. GTX 1060 & GTX 1070&#10;This will increase profitability&#10;&#10;Note: Miners of different device types (AMD, CPU, INTEL & NVIDIA) will always run as separate instances">
-            <input type="checkbox" class="toggle-switch" id="MinerInstancePerDeviceModel" name="MinerInstancePerDeviceModel"> Run separate miner instance per GPU device model
-          </div>
           <div style="padding-top: 0.6rem" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This can impact profitability, but is less CPU heavy">
             <input type="checkbox" class="toggle-switch" id="MinerUseBestPoolsOnly" name="MinerUseBestPoolsOnly"> Only use pools in the best pool list
             
@@ -246,10 +243,10 @@
           <div style="padding-top: 0.3rem" title="UG-Miner will disable all miners which sometimes mine to a miner developer wallet (a.k.a. comission or donation)">
             <input type="checkbox" class="toggle-switch" id="DisableMinersWithFee" name="DisableMinersWithFee"> Disable miners with dev fees
           </div>
-          <div style="padding-top: 0.6rem" title="UG-Miner will disable all dual algorithm miners&#10;(Note: This will enable single algorithm mining)">
+          <div style="padding-top: 0.6rem" title="UG-Miner will disable all dual algorithm miners&#10;&#10;Note: This will enable single algorithm mining">
             <input type="checkbox" class="toggle-switch" id="DisableDualAlgoMining" name="DisableDualAlgoMining"> Disable dual algorithm miners
           </div>
-          <div style="padding-top: 0.6rem" title="UG-Miner will disable all single algorithm miners&#10;(Note: This will enable dual algorithm mining)">
+          <div style="padding-top: 0.6rem" title="UG-Miner will disable all single algorithm miners&#10;&#10;Note: This will enable dual algorithm mining">
             <input type="checkbox" class="toggle-switch" id="DisableSingleAlgoMining" name="DisableSingleAlgoMining"> Disable single algorithm miners
           </div>
           <br>
@@ -286,11 +283,11 @@
             </select>
             <label for="GPUMinerProcessPriority">process priority</label>
           </div>
-          <div style="padding-top: 0.2rem" title="UG-Miner will not use CPU miners while computer is running on battery&#10;(Note: Some laptop computers will lower CPU speed while on battery)">
+          <div style="padding-top: 0.2rem" title="UG-Miner will not use CPU miners while computer is running on battery&#10;&#10;Note: Some laptop computers will lower CPU speed while on battery">
             <input type="checkbox" class="toggle-switch" id="DisableCpuMiningOnBattery" name="DisableCpuMiningOnBattery"> Disable CPU miners while running on battery
           </div>
-          <div style="padding-top: 0.6rem" title="UG-Miner will disable developer fee mining&#10;(Note: not all miners support disabling their built in fees, others will reduce the hashrate&#10;For miners that do not allow disabling the miner fees the effective fee will still be shown in the miner list.)">
-            <input type="checkbox" class="toggle-switch" id="DisableMinerFee" name="DisableMinerFee"> Disable miner fees
+          <div style="padding-top: 0.6rem" title="UG-Miner will disable developer fee mining&#10;&#10;Note: Not all miners support disabling their built in fees, others will reduce the hashrate.&#10;For miners that do not allow disabling the miner fees the effective fee will still be shown in the miner list.">
+            <input type="checkbox" class="toggle-switch" id="DisableMinerFee" name="DisableMinerFee"> Disable miner fees (where applicable)
           </div>
           <div style="padding-top: 0.6rem" title="Enable miner specific tweaks, e.g. sharper memory timings or mild overclock&#10;&#10;Note: This may cause stability issues, use with caution!">
             <input type="checkbox" class="toggle-switch" id="UseMinerTweaks" name="UseMinerTweaks"> Enable miner tweaks (admin rights required)
@@ -324,7 +321,7 @@
           <div style="padding-top: 0.3rem" title="Mark pool as unavailable if accuracy is below this value&#10;&#10;(min: 0%, max 100%; default: 50%)"> Minimum accuracy
             <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinAccuracy" name="MinAccuracy"> %
           </div>
-          <div style="padding-top: 0.5rem" title="UG-Miner will ignore the pool fee for earning & profit calculation">
+          <div style="padding-top: 0.5rem" title="UG-Miner will ignore the pool fee when calculating earning & profit">
             <input type="checkbox" class="toggle-switch" id="IgnorePoolFee" name="IgnorePoolFee"> Ignore pool fees
           </div>
           <div style="padding-top: 0.3rem" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings Adjustment Factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')"> Earnings adjustment factor
@@ -336,7 +333,7 @@
           <div style="padding-top: 0.3rem" title="UG-Miner will not switch miners&#10;unless another miner has n% higher earnings / profit&#10;&#10;Smaller numbers will cause more switching&#10;&#10;(min: 0%, max: 100%; default: 5%)" for="MinerSwitchingThreshold">Miner switching threshold
             <input type="number" id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" min=0 max=100 value=5 step=0.1 size=3> %
           </div>
-          <div style="padding-top: 0.5rem" title="UG-Miner will ignore the miner fee for earning & profit calculation">
+          <div style="padding-top: 0.5rem" title="UG-Miner will ignore the miner fee when calculating earning & profit">
             <input type="checkbox" class="toggle-switch" id="IgnoreMinerFee" name="IgnoreMinerFee"> Ignore miner fees
           </div>
           <div style="padding-top: 0.5rem" title="Show shares information (Total / Rejected / Accepted) in log">
@@ -678,8 +675,8 @@
       $('#myModal').modal({ show: true });
     };
     document.getElementById('Interval').value = parseInt(config.Interval);
-    document.getElementById('MinDataSample').value = parseInt(config.MinDataSample);
     document.getElementById('MinCycle').value = parseInt(config.MinCycle);
+    document.getElementById('MinDataSample').value = parseInt(config.MinDataSample);
     document.getElementById('Proxy').value = config.Proxy.trim();
     if (config.OpenFirewallPorts) document.getElementById('OpenFirewallPorts').checked = true;
 
@@ -690,14 +687,14 @@
       url: '/devices',
       success: function (result) {
         devices = result;
-        $.each(devices, function (key, value) {
-          $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('device-' + value.Name).toLowerCase(), value: value.Name, style: 'margin-top:0.3rem' }).appendTo(devicescontainer);
-          $('<label/>', { for: ('device-' + value.Name).toLowerCase(), text: (value.Name + ': ' + value.Model), style: 'margin-left:5px' }).appendTo(devicescontainer);
+        $.each(devices, function (key, device) {
+          $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('device-' + device.Name).toLowerCase(), value: device.Name, style: 'margin-top:0.3rem' }).appendTo(devicescontainer);
+          $('<label/>', { for: ('device-' + device.Name).toLowerCase(), text: (device.Name + ': ' + device.Model), style: 'margin-left:5px' }).appendTo(devicescontainer);
           $('<br>').appendTo(devicescontainer);
-          if (value.State == 0) document.getElementById(('device-' + value.Name).toLowerCase()).checked = true;
-          if (value.State == 2) {
-            document.getElementById(('device-' + value.Name).toLowerCase()).disabled = true;
-            document.getElementById(('device-' + value.Name).toLowerCase()).checked = false;
+          if (device.State == 0) document.getElementById(('device-' + device.Name).toLowerCase()).checked = true;
+          if (device.State == 2) {
+            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = true;
+            document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
           }
         })
       }
@@ -705,7 +702,7 @@
 
     // Pool selection
     const Pools = document.getElementById('Pools');
-    const regex = /24hr$|coins$|coins24hr$|coinsplus$|plus$/
+    const regex = /24hr$|plus$/
     // Populate pool checkbox list
     $.ajax({
       async: false,
@@ -713,51 +710,35 @@
       url: '/poolvariants',
       success: function (result) {
         poolvariants = result;
-        var basePoolName = '';
-        $.each(result, function (key, value) {
-          if (basePoolName != '' && basePoolName != value.toLowerCase().replace(regex, '')) $('<br>').appendTo(poolscontainer);
-          basePoolName = value.toLowerCase().replace(regex, '');
-          $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('pool-' + value).toLowerCase(), value: value, style: 'margin-top:0.3rem' }).appendTo(poolscontainer);
-          $('<label/>', { for: ('pool-' + value).toLowerCase(), text: (value), style: 'margin-left: 5px; line-height: 75%' }).appendTo(poolscontainer);
-          $('<br>').appendTo(poolscontainer);
-        })
+        var poolbasename = '';
+        $.each(poolvariants, function (key, poolvariant) {
+          if (poolbasename != '' && poolbasename != poolvariant.toLowerCase().replace(regex, '')) $('<br>').appendTo(poolscontainer);
+          poolbasename = poolvariant.toLowerCase().replace(regex, '');
+          if (poolvariants.filter((poolvariant) => poolvariant.toLowerCase().replace(regex, '').match(poolbasename)).length == 1) {
+            title = "You must select at least one pool";
+          } else {
+            title = "You cannot select multiple variants of the same pool";
+          }
+          $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('pool-' + poolvariant).toLowerCase(), value: poolvariant, style: 'margin-top:0.3rem' }).appendTo(poolscontainer);
+            $('<label/>', { for: ('pool-' + poolvariant).toLowerCase(), text: poolvariant, title: title, style: 'margin-left: 5px; line-height: 75%' }).appendTo(poolscontainer);
+            $('<br>').appendTo(poolscontainer);
+          })
       }
     });
+
     // Only one pool variant can be checked
     $(Pools).click(function (event) {
       var poolname = (event.target).id.toLowerCase();
-      var basePoolName = poolname.replace(regex, '');
-      var pool = document.getElementById(basePoolName);
+      var poolbasename = poolname.toLowerCase().replace(regex, '');
+      var pool = document.getElementById(poolbasename);
       if (pool && poolname != pool.id) pool.checked = false;
-      var pool = document.getElementById(basePoolName + '24hr');
+      var pool = document.getElementById(poolbasename + '24hr');
       if (pool && poolname != pool.id) pool.checked = false;
-      var pool = document.getElementById(basePoolName + 'coins');
+      var pool = document.getElementById(poolbasename + 'plus');
       if (pool && poolname != pool.id) pool.checked = false;
-      var pool = document.getElementById(basePoolName + 'coins24hr');
-      if (pool && poolname != pool.id) pool.checked = false;
-      var pool = document.getElementById(basePoolName + 'coinsplus');
-      if (pool && poolname != pool.id) pool.checked = false;
-      var pool = document.getElementById(basePoolName + 'plus');
-      if (pool && poolname != pool.id) pool.checked = false;
-      if (poolname == 'pool-miningpoolhub') {
-        if (document.getElementById(poolname).checked) {
-          $('.modal-title').text("Warning!");
-          $('.modal-body').html("You have enabled mining to MiningPoolHub.&#10;The pool is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
-          $('#myModal').modal({ 
-            show: true
-          });
-        };
-      };
     });
-    $.each([config.PoolName].flat(), function (key, value) {
-      if (document.getElementById(('pool-' + value).toString().toLowerCase())) document.getElementById(('pool-' + value).toString().toLowerCase()).checked = true;
-      if (value === "MiningPoolHub") {
-          $('.modal-title').text("Warning!");
-          $('.modal-body').html("You have enabled mining to MiningPoolHub.&#10;The pool is no longer trustworthy.&#10;Outstanding balances will not get paid and support will not respond.&#10;Use at your own risk!");
-          $('#myModal').modal({ 
-            show: true
-          });
-        };
+    $.each([config.PoolName].flat(), function (key, poolvariant) {
+      if (document.getElementById(('pool-' + poolvariant).toString().toLowerCase())) document.getElementById(('pool-' + poolvariant).toString().toLowerCase()).checked = true;
     });
 
     // MiningDutch
@@ -863,7 +844,6 @@
     }
 
     // Miner selection
-    if (config.MinerInstancePerDeviceModel) document.getElementById('MinerInstancePerDeviceModel').checked = true;
     if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
     if (parseInt(config.MinerSet) >= 0 && parseInt(config.MinerSet) <= 3) document.getElementById('MinerSet').value = config.MinerSet;
     else document.getElementById('MinerSet').value = 2;
@@ -1352,17 +1332,17 @@
         config.AutoReboot = document.getElementById('AutoReboot').checked;
         config.Donation = parseInt(document.getElementById('Donation').value);
         config.Interval = parseInt(document.getElementById('Interval').value);
-        config.MinDataSample = parseInt(document.getElementById('MinDataSample').value);
         config.MinCycle = parseInt(document.getElementById('MinCycle').value);
+        config.MinDataSample = parseInt(document.getElementById('MinDataSample').value);
         config.Proxy = document.getElementById('Proxy').value;
         config.OpenFirewallPorts = document.getElementById('OpenFirewallPorts').checked;
 
         // Select mining devices
         config.ExcludeDeviceName = [];
         var enabledDevicesCount = 0
-        $.each(devices, function (key, value) {
-          if (value.State != 2) enabledDevicesCount ++;
-          if (document.getElementById(('device-' + value.Name.toLowerCase())).checked == false && value.State != 2) config.ExcludeDeviceName.push(value.Name);
+        $.each(devices, function (key, device) {
+          if (device.State != 2) enabledDevicesCount ++;
+          if (document.getElementById(('device-' + device.Name.toLowerCase())).checked == false && device.State != 2) config.ExcludeDeviceName.push(device.Name);
         });
 
         // Select one or more pools
@@ -1385,7 +1365,6 @@
         });
 
         // Miner selection
-        config.MinerInstancePerDeviceModel = document.getElementById('MinerInstancePerDeviceModel').checked;
         config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
         config.MinerSet = parseInt(document.getElementById('MinerSet').value);
         config.ExcludeMinerName = []; // enforce array

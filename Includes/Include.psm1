@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -145,6 +145,7 @@ public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
 
 $Global:PriorityNames = [PSCustomObject]@{ -2 = "Idle"; -1 = "BelowNormal"; 0 = "Normal"; 1 = "AboveNormal"; 2 = "High"; 3 = "RealTime" }
 
+[NoRunspaceAffinity()] # https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_classes?view=powershell-7.4#example-4---class-definition-with-and-without-runspace-affinity
 Class Device { 
     [String]$Architecture
     [Int]$Bus
@@ -193,7 +194,8 @@ Enum DeviceState {
     Unsupported
 }
 
-Class Pool { 
+[NoRunspaceAffinity()]
+Class Pool : IDisposable { 
     [Double]$Accuracy
     [String]$Algorithm
     [String]$AlgorithmVariant
@@ -231,9 +233,14 @@ Class Pool {
     [String]$WorkerName = ""
     [Nullable[UInt]]$Workers
     [String]$ZAPcurrency
+     
+    Dispose() {
+        $this = $null
+    }
 }
 
-Class Worker { 
+[NoRunspaceAffinity()]
+Class Worker : IDisposable { 
     [Boolean]$Disabled
     [Double]$Earning
     [Double]$Earning_Bias
@@ -243,6 +250,10 @@ Class Worker {
     [Pool]$Pool
     [TimeSpan]$TotalMiningDuration
     [DateTime]$Updated = [DateTime]::Now.ToUniversalTime()
+     
+    Dispose() {
+        $this = $null
+    }
 }
 
 Enum MinerStatus { 
@@ -254,7 +265,8 @@ Enum MinerStatus {
     Unavailable
 }
 
-Class Miner { 
+[NoRunspaceAffinity()]
+Class Miner : IDisposable { 
     [Int]$Activated
     [TimeSpan]$Active = [TimeSpan]::Zero
     [String[]]$Algorithms = @() # derived from workers, required for GetDataReader & Web GUI
@@ -325,6 +337,10 @@ Class Miner {
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [System.Diagnostics.Process]$Process = $null
  
+    Dispose() {
+        $this = $null
+    }
+
     [String[]]GetProcessNames() { 
         Return @(([IO.FileInfo]($this.Path | Split-Path -Leaf)).BaseName)
     }
@@ -481,7 +497,7 @@ Class Miner {
 
         If ($this.ProcessId) { 
             If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore | Out-Null }
-            $this.ProcessId = $null
+            If (-not (Get-Process -Id $this.ProcessId -ErrorAction Ignore)) { $this.ProcessId = $null }
         }
 
         If ($this.Process) { 
@@ -713,14 +729,9 @@ Class Miner {
     }
 }
 
-Function Start-Core { 
+Function Open-CoreRunspace { 
 
     If (-not $Global:CoreRunspace) { 
-
-        $Variables.LastDonated = [DateTime]::Now.AddDays( -1 ).AddHours(1)
-
-        $Variables.Remove("EndCycleTime")
-
         $Global:CoreRunspace = [RunspaceFactory]::CreateRunspace()
         $Global:CoreRunspace.ApartmentState = "STA"
         $Global:CoreRunspace.Name = "Core"
@@ -734,22 +745,56 @@ Function Start-Core {
 
         $PowerShell = [PowerShell]::Create()
         $PowerShell.Runspace = $Global:CoreRunspace
-        $Global:CoreRunspace | Add-Member Job ($Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1").BeginInvoke())
+        [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
         $Global:CoreRunspace | Add-Member PowerShell $PowerShell
-        $Global:CoreRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
+    }
+}
+
+Function Close-CoreRunspace { 
+
+    If ($Global:CoreRunspace) { 
+
+        Stop-Core
+
+        # Must close runspace after miners were stopped, otherwise methods don't work any longer
+        $Global:CoreRunspace.PowerShell.Dispose()
+        $Global:CoreRunspace.PowerShell = $null
+        $Global:CoreRunspace.Close()
+        $Global:CoreRunspace.Dispose()
+
+        Remove-Variable CoreRunspace -Scope global
+
+        [System.GC]::Collect()
+    }
+}
+
+Function Start-Core { 
+
+    Try { 
+        Open-CoreRunspace
+
+        If ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
+            $Global:CoreRunspace | Add-Member Job ($Global:CoreRunspace.PowerShell.BeginInvoke()) -Force
+            $Global:CoreRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+        }
+    }
+    Catch { 
+        Write-Message -Level Error "Failed to start core [$($Error[0])]."
     }
 }
 
 Function Stop-Core { 
 
-    If ($Global:CoreRunspace) { 
+    If ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
 
         $Global:CoreRunspace.PowerShell.Stop()
+        $Variables.Remove("EndCycleTime")
+        $Variables.Remove("Timer")
 
         Write-Message -Level Info "Ending cycle."
+    }
 
-        $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
-
+    If ($Variables.Miners) { 
         ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
             ForEach ($Worker in $Miner.WorkersRunning) { 
                 If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
@@ -760,14 +805,8 @@ Function Stop-Core {
             Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
             $Miner.SetStatus([MinerStatus]::Idle)
         }
-        Remove-Variable $Miner -ErrorAction Ignore
 
-        # Must close runspace after miners were stopped, otherwise methods don't work any longer
-        $Global:CoreRunspace.PowerShell.Dispose()
-        $Global:CoreRunspace.PowerShell = $null
-        $Global:CoreRunspace.Close()
-        $Global:CoreRunspace.Dispose()
-
+        $Variables.Miners.ForEach({ $_.Dispose })
         $Variables.Miners = [Miner[]]@()
         $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
         $Variables.MinersBest = [Miner[]]@()
@@ -780,7 +819,7 @@ Function Stop-Core {
         $Variables.MinersOptimal = [Miner[]]@()
         $Variables.MinersRunning = [Miner[]]@()
 
-        Remove-Variable CoreRunspace -Scope global
+        $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
 
         [System.GC]::Collect()
     }
@@ -862,49 +901,37 @@ Function Stop-Brain {
     }
 }
 
-Function Start-BalancesTracker { 
+Function Open-BalancesTrackerRunspace { 
 
-    If (-not $Global:BalancesTrackerRunspace) { 
+    If (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
+        If (-not $Global:BalancesTrackerRunspace) { 
+            $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
+            $Global:BalancesTrackerRunspace.ApartmentState = "STA"
+            $Global:BalancesTrackerRunspace.Name = "BalancesTracker"
+            $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
+            $Global:BalancesTrackerRunspace.Open()
 
-        If (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
-            Try { 
-                $Variables.Summary = "Starting Balances tracker background process..."
-                Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
+            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Config", $Config)
+            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
+            [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
-                $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
-                $Global:BalancesTrackerRunspace.ApartmentState = "STA"
-                $Global:BalancesTrackerRunspace.Name = "BalancesTracker"
-                $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
-                $Global:BalancesTrackerRunspace.Open()
-
-                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Config", $Config)
-                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
-                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
-                [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
-
-                $PowerShell = [PowerShell]::Create()
-                $PowerShell.Runspace = $Global:BalancesTrackerRunspace
-                $Global:BalancesTrackerRunspace | Add-Member Job ($Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1").BeginInvoke())
-                $Global:BalancesTrackerRunspace | Add-Member PowerShell $PowerShell
-                $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
-            }
-            Catch { 
-                Write-Message -Level Error "Failed to start Balances tracker [$Error[0]]."
-            }
+            $PowerShell = [PowerShell]::Create()
+            $PowerShell.Runspace = $Global:BalancesTrackerRunspace
+            [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1")
+            $Global:BalancesTrackerRunspace | Add-Member PowerShell $PowerShell
         }
-        Else { 
-            Write-Message -Level Error "Failed to start Balances tracker. Directory '.\Balances' is missing."
-        }
+    }
+    Else { 
+        Write-Message -Level Error "Failed to start Balances tracker. Directory '.\Balances' is missing."
     }
 }
 
-Function Stop-BalancesTracker { 
+Function Close-BalancesTrackerRunspace { 
 
     If ($Global:BalancesTrackerRunspace) { 
 
-        $Global:BalancesTrackerRunspace.PowerShell.Stop()
-
-        $Variables.BalancesTrackerRunning = $false
+        Stop-BalancesTracker
 
         $Global:BalancesTrackerRunspace.PowerShell.Dispose()
         $Global:BalancesTrackerRunspace.PowerShell = $null
@@ -913,8 +940,38 @@ Function Stop-BalancesTracker {
 
         Remove-Variable BalancesTrackerRunspace -Scope global
 
-        $Variables.Summary += "<br>Balances tracker background process stopped."
-        Write-Message -Level Info "Balances tracker background process stopped."
+        [System.GC]::Collect()
+    }
+}
+
+Function Start-BalancesTracker { 
+
+    Try { 
+        Open-BalancesTrackerRunspace
+
+        If ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
+            $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
+            $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+
+            $Variables.Summary = "Balances tracker background process started."
+            Write-Message -Level Info $Variables.Summary
+        }
+    }
+    Catch { 
+        Write-Message -Level Error "Failed to start Balances tracker [$($Error[0])]."
+    }
+}
+
+Function Stop-BalancesTracker { 
+
+    If ($Global:BalancesTrackerRunspace.Job.IsCompleted -eq $false) { 
+
+        $Global:BalancesTrackerRunspace.PowerShell.Stop()
+
+        $Variables.BalancesTrackerRunning = $false
+
+        $Variables.Summary = "Balances tracker background process stopped."
+        Write-Message -Level Info $Variables.Summary
 
         [System.GC]::Collect()
     }
@@ -1298,7 +1355,7 @@ Function Read-Config {
         # Load pool data
         If (-not $Variables.PoolData) { 
             $Variables.PoolData = [System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
-            $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys -replace " External$| Internal$" })) | Sort-Object -Unique)
+            $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys -replace " External$| Internal$" }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
             If (-not $Variables.PoolVariants) { 
                 Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
                 $WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -1450,6 +1507,8 @@ Function Read-Config {
     $Variables.ShowCurrency = $Config.ShowCurrency
     $Variables.ShowUser = $Config.ShowUser
     $Variables.UIStyle = $Config.UIStyle
+
+    $Variables.ConfigReadTimestamp = [DateTime]::Now.ToUniversalTime()
 }
 
 Function Update-ConfigFile { 
@@ -1466,10 +1525,17 @@ Function Update-ConfigFile {
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_) }
                 "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_) }
+                "MinerInstancePerDeviceModel" { $Config.Remove($_) }
                 Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
             }
         }
     )
+
+    # MiningPoolHub is no longer available
+    If ($Config.PoolName -contains "MiningPoolHub") { 
+        Write-Message -Level Warn "Pool configuration changed (MiningPoolHub removed). Please verify your configuration."
+        $Config.PoolName = $Config.PoolName -notmatch "MiningPoolHub"
+    }
 
     # ZergPoolCoins is no longer available
     If ($Config.PoolName -like "ZergPoolCoins*") { 
@@ -2653,15 +2719,16 @@ public static class Kernel32
         $Proc.Handle | Out-Null
 
         Do { 
-            If ($ControllerProcess.WaitForExit(200)) { 
+            If ($ControllerProcess.WaitForExit(1000)) { 
                 [Void]$Proc.CloseMainWindow()
                 [Void]$Proc.WaitForExit()
                 [Void]$Proc.Close()
+                $Proc = $null
             }
         } While ($Proc.HasExited -eq $false)
 
-        Remove-Variable ArgumentList, BinaryPath, ControllerProcess, ControllerProcessID, CreationFlags, EnvBlock, Proc, ProcessInfo, SecAttr, ShowWindow, StartF, StartupInfo, WindowStyle, WorkingDirectory
-        [System.GC]::Collect()
+        # Remove-Variable ArgumentList, BinaryPath, ControllerProcess, ControllerProcessID, CreationFlags, EnvBlock, Proc, ProcessInfo, SecAttr, ShowWindow, StartF, StartupInfo, WindowStyle, WorkingDirectory
+        # [System.GC]::Collect()
     }
 }
 
@@ -3120,28 +3187,25 @@ Function Update-DAGdata {
     $Currency = "EVR"
     $Url = "https://evr.cryptoscope.io/api/getblockcount"
     If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # ZergPool (Coins) also supplies EVR DAG data
-        If (-not ($Variables.PoolName -notmatch "ZergPoolCoins.*")) { 
-            # Get block data from EVR block explorer
-            Try { 
-                Write-Message -Level Info "Loading DAG data from '$Url'..."
-                $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
-                If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
-                    $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
-                    If ($DAGdata.Epoch) { 
-                        $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                        $DAGdata | Add-Member Url $Url -Force
-                        $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
-                        $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                    }
-                    Else { 
-                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
-                    }
+        # Get block data from EVR block explorer
+        Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
+                If ($DAGdata.Epoch) { 
+                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                    $DAGdata | Add-Member Url $Url -Force
+                    $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                    $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                }
+                Else { 
+                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
                 }
             }
-            Catch { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url'."
-            }
+        }
+        Catch { 
+            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
         }
     }
 

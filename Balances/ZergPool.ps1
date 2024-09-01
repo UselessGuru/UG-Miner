@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ZergPool.ps1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -30,7 +30,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
         $Currency = $_
         $Wallet = $Config.PoolsConfig.$Name.Wallets.$Currency
 
-        $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+        $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
         $Request = "https://zergpool.com/api/wallet?address=$Wallet"
 
         While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 

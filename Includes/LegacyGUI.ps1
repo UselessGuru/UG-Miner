@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -77,9 +77,6 @@ Function Set-WorkerColor {
 }
 
 Function CheckBoxSwitching_Click { 
-
-    $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-
     $SwitchingDisplayTypes = @()
     $LegacyGUIswitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
@@ -106,8 +103,6 @@ Function CheckBoxSwitching_Click {
     Else { $LegacyGUIswitchingLogLabel.Text = "Switching log - no data" }
 
     $LegacyGUIswitchingLogClearButton.Enabled = [Boolean]$LegacyGUIswitchingDGV.Columns
-
-    $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
 
 Function Set-DataGridViewDoubleBuffer { 
@@ -125,8 +120,6 @@ Function Set-DataGridViewDoubleBuffer {
 }
 
 Function Update-TabControl { 
-
-    $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
 
     Switch ($LegacyGUItabControl.SelectedTab.Text) { 
         "System status" { 
@@ -572,10 +565,10 @@ Function Update-TabControl {
             $LegacyGUIwatchdogTimersRemoveButton.Enabled = [Boolean]$LegacyGUIwatchdogTimersDGV.Rows
         }
     }
-    $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
 
 Function Resize-Form { 
+
     If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smalle than minimum (Why?)
     Try { 
         $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
@@ -687,8 +680,6 @@ Function Update-GUIstatus {
         }
     }
     Update-TabControl
-
-    $Variables.TextBoxSystemLog.ScrollToCaret()
 }
 
 $LegacyGUItooltip = New-Object System.Windows.Forms.ToolTip
@@ -817,7 +808,13 @@ $LegacyGUIeditConfigLink.LinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIeditConfigLink.Location = [System.Drawing.Point]::new(10, ($LegacyGUIform.Bottom - 26))
 $LegacyGUIeditConfigLink.TextAlign = "MiddleLeft"
 $LegacyGUIeditConfigLink.Size = New-Object System.Drawing.Size(380, 26)
-$LegacyGUIeditConfigLink.Add_Click({ If ($LegacyGUIeditConfigLink.Tag -eq "WebGUI") { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/configedit.html" } Else { Edit-File $Variables.ConfigFile } })
+$LegacyGUIeditConfigLink.Add_Click(
+    { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        If ($LegacyGUIeditConfigLink.Tag -eq "WebGUI") { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/configedit.html" } Else { Edit-File $Variables.ConfigFile }
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 $LegacyGUIControls += $LegacyGUIeditConfigLink
 $LegacyGUItooltip.SetToolTip($LegacyGUIeditConfigLink, "Click to the edit configuration")
 
@@ -1177,7 +1174,7 @@ $Variables.TextBoxSystemLog.Scrollbars = "Vertical"
 $Variables.TextBoxSystemLog.Text = ""
 $Variables.TextBoxSystemLog.WordWrap = $true
 $LegacyGUIstatusPageControls += $Variables.TextBoxSystemLog
-$LegacyGUItooltip.SetToolTip($Variables.TextBoxSystemLog, "These are the last 100 lines of the system log")
+$LegacyGUItooltip.SetToolTip($Variables.TextBoxSystemLog, "These are the last 200 lines of the system log")
 
 # Earnings Page Controls
 $LegacyGUIearningsPageControls = @()
@@ -1229,7 +1226,13 @@ $LegacyGUIradioButtonMinersOptimal.Height = 22
 $LegacyGUIradioButtonMinersOptimal.Location = [System.Drawing.Point]::new(0, 0)
 $LegacyGUIradioButtonMinersOptimal.Text = "Optimal miners"
 $LegacyGUIradioButtonMinersOptimal.Width = 150
-$LegacyGUIradioButtonMinersOptimal.Add_Click({ Update-TabControl })
+$LegacyGUIradioButtonMinersOptimal.Add_Click(
+    { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        Update-TabControl
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonMinersOptimal, "These are all optimal miners per algorithm and device.")
 
 $LegacyGUIradioButtonMinersUnavailable = New-Object System.Windows.Forms.RadioButton
@@ -1239,7 +1242,13 @@ $LegacyGUIradioButtonMinersUnavailable.Height = $LegacyGUIradioButtonMinersOptim
 $LegacyGUIradioButtonMinersUnavailable.Location = [System.Drawing.Point]::new(150, 0)
 $LegacyGUIradioButtonMinersUnavailable.Text = "Unavailable miners"
 $LegacyGUIradioButtonMinersUnavailable.Width = 170
-$LegacyGUIradioButtonMinersUnavailable.Add_Click({ Update-TabControl })
+$LegacyGUIradioButtonMinersUnavailable.Add_Click(
+    {
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        Update-TabControl
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonMinersUnavailable, "These are all unavailable miners.`rThe column 'Reason(s)' shows the filter criteria(s) that made the miner unavailable.")
 
 $LegacyGUIradioButtonMiners = New-Object System.Windows.Forms.RadioButton
@@ -1249,7 +1258,13 @@ $LegacyGUIradioButtonMiners.Height = $LegacyGUIradioButtonMinersUnavailable.Heig
 $LegacyGUIradioButtonMiners.Location = [System.Drawing.Point]::new(320, 0)
 $LegacyGUIradioButtonMiners.Text = "All miners"
 $LegacyGUIradioButtonMiners.Width = 100
-$LegacyGUIradioButtonMiners.Add_Click({ Update-TabControl })
+$LegacyGUIradioButtonMiners.Add_Click(
+    { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        Update-TabControl
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonMiners, "These are all miners.`rNote: UG-Miner will only create miners for algorithms that have at least one available pool.")
 
 $LegacyGUIminersLabel = New-Object System.Windows.Forms.Label
@@ -1311,7 +1326,13 @@ $LegacyGUIradioButtonPoolsBest.Tag = ""
 $LegacyGUIradioButtonPoolsBest.Text = "Best pools"
 $LegacyGUIradioButtonPoolsBest.Width = 120
 $LegacyGUIradioButtonPoolsBest.Checked = $true
-$LegacyGUIradioButtonPoolsBest.Add_Click({ Update-TabControl })
+$LegacyGUIradioButtonPoolsBest.Add_Click(
+    { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        Update-TabControl
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPoolsBest, "This is the list of the best paying pool for each algorithm.")
 
 $LegacyGUIradioButtonPoolsUnavailable = New-Object System.Windows.Forms.RadioButton
@@ -1322,7 +1343,13 @@ $LegacyGUIradioButtonPoolsUnavailable.Location = [System.Drawing.Point]::new(120
 $LegacyGUIradioButtonPoolsUnavailable.Tag = ""
 $LegacyGUIradioButtonPoolsUnavailable.Text = "Unavailable pools"
 $LegacyGUIradioButtonPoolsUnavailable.Width = 170
-$LegacyGUIradioButtonPoolsUnavailable.Add_Click({ Update-TabControl })
+$LegacyGUIradioButtonPoolsUnavailable.Add_Click(
+    { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        Update-TabControl
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPoolsUnavailable, "This is the pool data of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
 
 $LegacyGUIradioButtonPools = New-Object System.Windows.Forms.RadioButton
@@ -1333,7 +1360,13 @@ $LegacyGUIradioButtonPools.Location = [System.Drawing.Point]::new((120 + 175), 0
 $LegacyGUIradioButtonPools.Tag = ""
 $LegacyGUIradioButtonPools.Text = "All pools"
 $LegacyGUIradioButtonPools.Width = 100
-$LegacyGUIradioButtonPools.Add_Click({ Update-TabControl })
+$LegacyGUIradioButtonPools.Add_Click(
+    { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        Update-TabControl
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPools, "This is the pool data of all configured pools.")
 
 $LegacyGUIpoolsLabel = New-Object System.Windows.Forms.Label
@@ -1453,11 +1486,16 @@ $LegacyGUIswitchingLogClearButton.Visible = $true
 $LegacyGUIswitchingLogClearButton.Width = 160
 $LegacyGUIswitchingLogClearButton.Add_Click(
     { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+
         Get-ChildItem -Path ".\Logs\switchinglog.csv" -File | Remove-Item -Force
         $LegacyGUIswitchingDGV.DataSource = $null
         $Data = "Switching log '.\Logs\switchinglog.csv' cleared."
         Write-Message -Level Verbose "GUI: $Data"
         $LegacyGUIswitchingLogClearButton.Enabled = $false
+
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+
         [Void][System.Windows.Forms.MessageBox]::Show($Data, "$($Variables.Branding.ProductLabel) $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64)
     }
 )
@@ -1473,7 +1511,17 @@ $LegacyGUIcheckShowSwitchingCPU.Tag = "CPU"
 $LegacyGUIcheckShowSwitchingCPU.Text = "CPU"
 $LegacyGUIcheckShowSwitchingCPU.Width = 70
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingCPU
-$LegacyGUIcheckShowSwitchingCPU.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
+$LegacyGUIcheckShowSwitchingCPU.ForEach(
+    { 
+        $_.Add_Click(
+            { 
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+                CheckBoxSwitching_Click($this)
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+            }
+        )
+    }
+)
 
 $LegacyGUIcheckShowSwitchingAMD = New-Object System.Windows.Forms.CheckBox
 $LegacyGUIcheckShowSwitchingAMD.AutoSize = $false
@@ -1484,7 +1532,17 @@ $LegacyGUIcheckShowSwitchingAMD.Tag = "AMD"
 $LegacyGUIcheckShowSwitchingAMD.Text = "AMD"
 $LegacyGUIcheckShowSwitchingAMD.Width = 70
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingAMD
-$LegacyGUIcheckShowSwitchingAMD.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
+$LegacyGUIcheckShowSwitchingAMD.ForEach(
+    { 
+        $_.Add_Click(
+            { 
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+                CheckBoxSwitching_Click($this)
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+            }
+        )
+    }
+)
 
 $LegacyGUIcheckShowSwitchingINTEL = New-Object System.Windows.Forms.CheckBox
 $LegacyGUIcheckShowSwitchingINTEL.AutoSize = $false
@@ -1495,7 +1553,17 @@ $LegacyGUIcheckShowSwitchingINTEL.Tag = "INTEL"
 $LegacyGUIcheckShowSwitchingINTEL.Text = "INTEL"
 $LegacyGUIcheckShowSwitchingINTEL.Width = 77
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingINTEL
-$LegacyGUIcheckShowSwitchingINTEL.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
+$LegacyGUIcheckShowSwitchingINTEL.ForEach(
+    { 
+        $_.Add_Click(
+            { 
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+                CheckBoxSwitching_Click($this)
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+            }
+        )
+    }
+)
 
 $LegacyGUIcheckShowSwitchingNVIDIA = New-Object System.Windows.Forms.CheckBox
 $LegacyGUIcheckShowSwitchingNVIDIA.AutoSize = $false
@@ -1506,7 +1574,17 @@ $LegacyGUIcheckShowSwitchingNVIDIA.Tag = "NVIDIA"
 $LegacyGUIcheckShowSwitchingNVIDIA.Text = "NVIDIA"
 $LegacyGUIcheckShowSwitchingNVIDIA.Width = 80
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingNVIDIA
-$LegacyGUIcheckShowSwitchingNVIDIA.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
+$LegacyGUIcheckShowSwitchingNVIDIA.ForEach(
+    { 
+        $_.Add_Click(
+            { 
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+                CheckBoxSwitching_Click($this)
+                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+            }
+        )
+    }
+)
 
 $LegacyGUIswitchingDGV = New-Object System.Windows.Forms.DataGridView
 $LegacyGUIswitchingDGV.AllowUserToAddRows = $false
@@ -1558,6 +1636,8 @@ $LegacyGUIwatchdogTimersRemoveButton.Visible = $true
 $LegacyGUIwatchdogTimersRemoveButton.Width = 220
 $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
     { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+
         $Variables.WatchDogTimers = @()
         $LegacyGUIwatchdogTimersDGV.DataSource = $null
         $Variables.Miners.ForEach(
@@ -1574,6 +1654,9 @@ $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
         )
         Write-Message -Level Verbose "GUI: All watchdog timers reset."
         $LegacyGUIwatchdogTimersRemoveButton.Enabled = $false
+
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+
         [Void][System.Windows.Forms.MessageBox]::Show("Watchdog timers will be recreated in next cycle.", "$($Variables.Branding.ProductLabel) $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64)
     }
 )
@@ -1621,7 +1704,13 @@ $LegacyGUItabControl.Height = 0
 $LegacyGUItabControl.Width = 0
 # $LegacyGUItabControl.Controls.AddRange(@($LegacyGUIstatusPage, $LegacyGUIearningsPage, $LegacyGUIminersPage, $LegacyGUIpoolsPage, $LegacyGUIrigMonitorPage, $LegacyGUIswitchingPage, $LegacyGUIwatchdogTimersPage))
 $LegacyGUItabControl.Controls.AddRange(@($LegacyGUIstatusPage, $LegacyGUIearningsPage, $LegacyGUIminersPage, $LegacyGUIpoolsPage, $LegacyGUIswitchingPage, $LegacyGUIwatchdogTimersPage))
-$LegacyGUItabControl.Add_Click({ Update-TabControl })
+$LegacyGUItabControl.Add_Click(
+    { 
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        Update-TabControl
+        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+    }
+)
 
 $LegacyGUIform.Controls.Add($LegacyGUItabControl)
 $LegacyGUIform.KeyPreview = $true
@@ -1678,9 +1767,9 @@ $LegacyGUIform.Add_FormClosing(
             Write-Message -Level Info "Shutting down $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"
 
-            Stop-Core
+            Close-CoreRunspace
             Stop-Brain
-            Stop-BalancesTracker
+            Close-BalancesTrackerRunspace
 
             If ($LegacyGUIform.DesktopBounds.Width -ge 0) { 
                 # Save window settings

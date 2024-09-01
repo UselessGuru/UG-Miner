@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 Class BzMiner : Miner { 
@@ -68,21 +68,18 @@ Class BzMiner : Miner {
 
         $PowerConsumption = [Double]0
 
-        If ($HashRate.PSObject.Properties.Value -gt 0) { 
-            If ($this.ReadPowerConsumption) { 
-                $PowerConsumption = [Double]($Devices | Measure-Object power -Sum).Sum
-                If (-not $PowerConsumption) { 
-                    $PowerConsumption = $this.GetPowerConsumption()
-                }
-            }
-
-            Return [PSCustomObject]@{ 
-                Date             = [DateTime]::Now.ToUniversalTime()
-                HashRate         = $HashRate
-                PowerConsumption = $PowerConsumption
-                Shares           = $Shares
+        If ($this.ReadPowerConsumption) { 
+            $PowerConsumption = [Double]($Devices | Measure-Object power -Sum).Sum
+            If (-not $PowerConsumption) { 
+                $PowerConsumption = $this.GetPowerConsumption()
             }
         }
-        Return $null
+
+        Return [PSCustomObject]@{ 
+            Date             = [DateTime]::Now.ToUniversalTime()
+            HashRate         = $HashRate
+            PowerConsumption = $PowerConsumption
+            Shares           = $Shares
+        }
     }
 }

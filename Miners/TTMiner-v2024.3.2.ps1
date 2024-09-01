@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -60,7 +60,7 @@ $Algorithms = @(
     @{ Algorithm = "Ghostrider";       Type = "CPU"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(30, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -a Ghostrider" }
     @{ Algorithm = "Flex";             Type = "CPU"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(30, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -a Flex" }
     @{ Algorithm = "SpectreX";         Type = "CPU"; Fee = @(0.01); MinerSet = 1; WarmupTimes = @(60, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -a SpectreX" }
-    @{ Algorithm = "XelisHassh";       Type = "CPU"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(30, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -a Xelis" }
+    @{ Algorithm = "XelisHash";        Type = "CPU"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(30, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -a Xelis" }
 
     @{ Algorithm = "Blake3";           Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -a Blake3" }
     @{ Algorithm = "EtcHash";          Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " -a EtcHash" }

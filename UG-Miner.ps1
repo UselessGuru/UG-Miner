@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 using module .\Includes\Include.psm1
@@ -131,8 +131,6 @@ Param(
     [Parameter(Mandatory = $false)]
     [Int]$MinDataSample = 20, # Minimum number of hashrate samples required to store hashrate
     [Parameter(Mandatory = $false)]
-    [Switch]$MinerInstancePerDeviceModel = $true, # If true will UG-Miner will create separate miner instances for each device model. This will increase profitability, but will take longer to select the best miner
-    [Parameter(Mandatory = $false)]
     [Int]$MinerSet = 3, # Defines the set of available miners. 0: Benchmark best miner per algorithm and device only; 1: Benchmark optimal miners (more than one per algorithm and device); 2: Benchmark all miners per algorithm and device (except those in the unprofitable algorithms list); 3: Benchmark most miners per algorithm and device (even those in the unprofitable algorithms list, not recommended)
     [Parameter(Mandatory = $false)]
     [Double]$MinerSwitchingThreshold = 10, # Will not switch miners unless another miner has n% higher earnings / profit
@@ -171,7 +169,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$PayoutCurrency = "BTC", # i.e. BTC, LTC, ZEC, ETH etc., Default PayoutCurrency for all pools that have no other currency configured, PayoutCurrency is also a per pool setting (to be configured in 'PoolsConfig.json')
     [Parameter(Mandatory = $false)]
-    [Switch]$PoolAllow0Hashrate = $true, # Allow mining to the pool even when there is no 0 hasrate reported in the API
+    [Switch]$PoolAllow0Hashrate = $true, # Allow mining to the pool even when there is 0 (or no) hashrate reported in the API
     [Parameter(Mandatory = $false)]
     [Int]$PoolAPIallowedFailureCount = 3, # Max number of pool API request attempts
     [Parameter(Mandatory = $false)]
@@ -301,7 +299,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.2.29"
+    Version      = [System.Version]"6.3.0"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -472,6 +470,7 @@ $Variables.Brains = @{ }
 $Variables.CPUfeatures = (Get-CpuId).Features | Sort-Object
 $Variables.CycleStarts = @()
 $Variables.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")
+$Variables.LastDonated = [DateTime]::Now.AddDays( -1 ).AddHours(1)
 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
 $Variables.NewMiningStatus = If ($Config.StartupMode -match "Paused|Running") { $Config.StartupMode } Else { "Idle" }
 $Variables.RestartCycle = $true
@@ -479,11 +478,11 @@ $Variables.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 $Variables.SuspendCycle = $false
 $Variables.WatchdogTimers = [PSCustomObject[]]@()
 
-$Variables.RegexAlgoIsEthash = "^Autolykos2|^Etc?hash|^UbqHash"
+$Variables.RegexAlgoIsEthash = "^Autolykos2|^Ethash|^EtcHash|^UbqHash"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^ProgPow|^SCCpow"
-$Variables.RegexAlgoHasDynamicDAG = "^Autolykos2|^Etc?hash|^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^Octopus|^ProgPow|^SCCpow|UbqHash"
+$Variables.RegexAlgoHasDynamicDAG = "^Autolykos2|^Ethash|^EtcHash|^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^Octopus|^ProgPow|^SCCpow|^UbqHash"
 $Variables.RegexAlgoHasStaticDAG = "^FishHash"
-$Variables.RegexAlgoHasDAG = "$($Variables.RegexAlgoHasDynamicDAG)|$($Variables.RegexAlgoHasStaticDAG)"
+$Variables.RegexAlgoHasDAG = (($Variables.RegexAlgoHasDynamicDAG -split '\|') + ($Variables.RegexAlgoHasStaticDAG) | Sort-Object) -join '|'
 
 $Variables.Summary = "Loading miner device information.<br>This may take a while..."
 Write-Message -Level Verbose $Variables.Summary
@@ -500,11 +499,6 @@ $Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Variables.Su
 $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
 
 $Variables.Devices.Where({ $Config.ExcludeDeviceName -contains $_.Name -and $_.State -ne [DeviceState]::Unsupported }).ForEach({ $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" })
-
-If ($Variables.FreshConfig) { 
-    # MinerInstancePerDeviceModel: Default to $true if more than one device model per vendor
-    $Variables.MinerInstancePerDeviceModel = (($Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }) | Group-Object Vendor).ForEach({ ($_.Group.Model | Sort-Object -Unique).Count }) | Measure-Object -Maximum).Maximum -gt 1
-}
 
 # Build driver version table
 $Variables.DriverVersion = [PSCustomObject]@{ }
@@ -547,18 +541,13 @@ If ($Config.WebGUI) { Start-APIServer }
 
 Function MainLoop { 
 
-    # Core watchdog. Sometimes core loop gets stuck
-    If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
-        Write-Message -Level Warn "Core cycle is stuck - restarting..."
-        Stop-Core
-        $Variables.MiningStatus = $Variables.NewMiningStatus
-        Start-Core
-    }
-    ElseIf ($CoreRunspace.Job.IsCompleted -eq $true) { 
-        Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
-        Stop-Core
-        $Variables.MiningStatus = $Variables.NewMiningStatus
-        Start-Core
+    If ($Variables.MiningStatus -eq "Running") { 
+        # Core watchdog. Sometimes core loop gets stuck
+        If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $CoreRunspace.Job.IsCompleted -eq $false -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
+            Write-Message -Level Warn "Core cycle is stuck - restarting..."
+            Stop-Core
+            Start-Core
+        }
     }
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
@@ -566,6 +555,8 @@ Function MainLoop {
         $Variables.RestartCycle = $false
 
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus) { 
+
+            If ($Variables.NewMiningStatus -eq "Running" -and $Config.IdleDetection) { Write-Message -Level Verbose "Idle detection is enabled. Mining will get suspended on any keyboard or mouse activity." }
 
             # Keep only the last 10 files
             Get-ChildItem -Path ".\Logs\$($Variables.Branding.ProductLabel)_*.log" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
@@ -588,9 +579,7 @@ Function MainLoop {
                         Write-Message -Level Info $Variables.Summary
 
                         Stop-Core
-                        $Variables.Remove("Timer")
                         Stop-Brain
-                        Stop-BalancesTracker
                         # If ($Config.ReportToServer) { Write-MonitoringData }
 
                         # Load currency exchange rates
@@ -602,7 +591,6 @@ Function MainLoop {
                         Write-Host "`n"
                         Write-Message -Level Info ($Variables.Summary -replace "<br>", " ")
                     }
-
                     Break
                 }
                 "Paused" { 
@@ -613,7 +601,6 @@ Function MainLoop {
                     Stop-Core
                     Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
-                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     # If ($Config.ReportToServer) { Write-MonitoringData }
 
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is paused.<br>Click the 'Start mining' button to make money."
@@ -627,49 +614,49 @@ Function MainLoop {
                         Write-Host "`n"
                         Write-Message -Level Info $Variables.Summary
                     }
-                    $Variables.Remove("Timer")
-
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
-
-                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
+                    Start-Core
                     Break
                 }
             }
             $Variables.MiningStatus = $Variables.NewMiningStatus
         }
         If ($LegacyGUIform) { Update-GUIstatus }
-        If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
     }
+
+    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
 
     If ($Variables.MiningStatus -eq "Running") { 
         If ($Config.IdleDetection) { 
-            # System was idle long enough, start mining
             If ([Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
-                If (-not $Global:CoreRunspace) { 
-                    If ($Variables.Timer) { 
-                        $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
-                        Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
-                    }
-                    Start-Core
-                    $Proc = Get-Process -Id $PID
-                    Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
+                # System was idle long enough, start mining
+                If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+                    $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
+                    Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
                     If ($LegacyGUIform) { Update-GUIstatus }
                 }
+                Start-Core
             }
-            # Activity detected, pause mining
-            ElseIf ($Global:CoreRunspace) { 
-                $Variables.Summary = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
-                Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
+            ElseIf ($CoreRunspace.Job.IsCompleted -eq $false) { 
+                $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+                Write-Message -Level Verbose ($Message -replace "<br>", " ")
                 Stop-Core
-                $Proc = Get-Process -Id $PID
-                Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
                 If ($LegacyGUIform) { Update-GUIstatus }
+
+                $LegacyGUIminingSummaryLabel.Text = ""
+                ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+
+                $Variables.Summary = $Message
+                Remove-Variable Message
             }
         }
-        ElseIf (-not $Global:CoreRunspace) { 
+        ElseIf ($CoreRunspace.Job.IsCompleted -ne $false) {
+            If ($Variables.Timer) { 
+                Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
+                Stop-Core
+            }
             Start-Core
-            $Proc = Get-Process -Id $PID
-            Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
             If ($LegacyGUIform) { Update-GUIstatus }
         }
     }
@@ -894,7 +881,7 @@ Function MainLoop {
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
         If ($Config.ShowConsole) { 
-            If ($Variables.CycleStarts.Count -gt 1) { Clear-Host }
+            If ($Variables.MinersBest) { Clear-Host }
 
             # Get and display earnings stats
             If ($Variables.Balances -and $Variables.ShowPoolBalances) { 
@@ -1057,7 +1044,7 @@ Function MainLoop {
                         }
                     }
 
-                    If ($Variables.CycleStarts.Count -gt 1 -or $Variables.Miners) { 
+                    If ($Variables.MinersBest) { 
                         $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString("G")) } Else { 'n/a (Mining is suspended)' })   |   Hot Keys: $(If ($Variables.CalculatePowerCost) { "[123acefimnprtuwy]" } Else { "[123aefimnruwy]" })   |   Press 'h' for help"
                         Write-Host ("-" * $StatusInfo.Length)
                         Write-Host -ForegroundColor Yellow $StatusInfo

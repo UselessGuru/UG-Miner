@@ -11,6 +11,8 @@
       "-Ethash(7GiB)",
       "-Neoscrypt"
     ],
+    // Allow mining to the pool even when there is 0 (or no) hashrate reported in the API
+    "PoolAllow0Hashrate": false,
     // Currency: '+[Currency]' to enable currency; '-[Currency]' to disable currency.
     // If '+' is used, then only the explicitly enabled currencies are used; if '-' is used, then all currencies are used except the disabled ones
     "Currency": [
@@ -30,7 +32,7 @@
     "PayoutThreshold": { 
       "mBTC": 0.00025
     },
-    // PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hasrate reported in the API
+    // PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hashrate reported in the API
     "PoolAllow0Hashrate": false,
     // SSL pool connections: Either 'Prefer' (use SSL pool connections where available), 'Never' (pools that do only support SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL connections are marked as unavailable)
     "SSL": "Always",

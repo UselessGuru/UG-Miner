@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.2.29
-Version date:   2024/08/29
+Version:        6.3.0
+Version date:   2024/09/01
 #>
 
 Class NanoMiner : Miner { 
@@ -76,21 +76,18 @@ Class NanoMiner : Miner {
 
         $PowerConsumption = [Double]0
 
-        If ($HashRate.PSObject.Properties.Value -gt 0) { 
-            If ($this.ReadPowerConsumption) { 
-                ForEach ($Device in $Data.Devices) { $PowerConsumption += [Double]$Device.PSObject.Members.Value.Power }
-                If (-not $PowerConsumption) { 
-                    $PowerConsumption = $this.GetPowerConsumption()
-                }
-            }
-
-            Return [PSCustomObject]@{ 
-                Date             = [DateTime]::Now.ToUniversalTime()
-                HashRate         = $HashRate
-                PowerConsumption = $PowerConsumption
-                Shares           = $Shares
+        If ($this.ReadPowerConsumption) { 
+            ForEach ($Device in $Data.Devices) { $PowerConsumption += [Double]$Device.PSObject.Members.Value.Power }
+            If (-not $PowerConsumption) { 
+                $PowerConsumption = $this.GetPowerConsumption()
             }
         }
-        Return $null
+
+        Return [PSCustomObject]@{ 
+            Date             = [DateTime]::Now.ToUniversalTime()
+            HashRate         = $HashRate
+            PowerConsumption = $PowerConsumption
+            Shares           = $Shares
+        }
     }
 }
