@@ -1293,7 +1293,7 @@ Function Get-RandomDonationPoolsConfig {
             $PoolConfig.Region = $Config.PoolsConfig[$_].Region
             $PoolConfig.WorkerName = "$($Variables.Branding.ProductLabel)-$($Variables.Branding.Version.ToString())-donate$($Config.Donation)"
             Switch -regex ($_) { 
-                "^MiningDutch$|^MiningPoolHub$|^ProHashing$" { 
+                "^MiningDutch$|^ProHashing$" { 
                     If ($Variables.DonationRandom."$($_)UserName") { 
                         # not all devs have a known HashCryptos, MiningDutch or ProHashing account
                         $PoolConfig.UserName = $Variables.DonationRandom."$($_)UserName"
@@ -1342,7 +1342,6 @@ Function Read-Config {
 
         $RandomDonationData = $Variables.DonationData | Get-Random
         $DefaultConfig.MiningDutchUserName = $RandomDonationData.MiningDutchUserName
-        $DefaultConfig.MiningPoolHubUserName = $RandomDonationData.MiningPoolHubUserName
         $DefaultConfig.NiceHashWallet = $RandomDonationData.Wallets.BTC
         $DefaultConfig.ProHashingUserName = $RandomDonationData.ProHashingUserName
         $DefaultConfig.Wallets.BTC = $RandomDonationData.Wallets.BTC

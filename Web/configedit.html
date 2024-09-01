@@ -36,19 +36,6 @@
           </div>
           <br>
 
-          <legend class=h6 title="You must have a registered account with Mining Pool Hub">Mining Pool Hub
-            <a id="RegisterMiningPoolHub" href="https://miningpoolhub.com/index.php?page=register" target="_blank" hidden style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
-          </legend>
-          <div style="padding-top: 0.2rem" title="Your username as registered with Mining Pool Hub&#10;(min. 2 and max. 32 characters)">
-            <label for="MiningPoolHubUserName">Mining Pool Hub user name</label>
-            <input type="text" id="MiningPoolHubUserName" name="MiningPoolHubUserName" maxlength=33 size=38>
-          </div>
-          <div title="Your Mining Pool Hub API Key&#10;taken from your Mining Pool Hub account settings&#10;If left empty UG-Miner cannot retrieve balance data from Mining Pool Hub">
-            <label for="MiningPoolHubAPIKey">Mining Pool Hub API key</label>
-            <input type="text" id="MiningPoolHubAPIKey" name="MiningPoolHubAPIKey" maxlength=65 size=70>
-          </div>
-          <br>
-
           <legend class=h6 title="You must have a registered account with NiceHash to use a NiceHash internal wallet">NiceHash
             <a id="RegisterNiceHash" href="https://www.nicehash.com/my/register" target="_blank" hidden style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
@@ -761,18 +748,6 @@
     });
     $(document.getElementById('MiningDutchUserName')).trigger('change');
 
-    // MiningPoolHub
-    document.getElementById('MiningPoolHubUserName').value = config.MiningPoolHubUserName || '';
-    document.getElementById('MiningPoolHubAPIKey').value = config.MiningPoolHubAPIKey || '';
-    $(document.getElementById('MiningPoolHubUserName')).change(function (event) {
-      document.getElementById('RegisterMiningPoolHub').hidden = Boolean(document.getElementById('MiningPoolHubUserName').value);
-      if (document.getElementById('pool-miningpoolhub')) { 
-        if (!Boolean(document.getElementById('MiningPoolHubUserName').value)) document.getElementById('pool-miningpoolhub').checked = false;
-        document.getElementById('pool-miningpoolhub').disabled = !Boolean(document.getElementById('MiningPoolHubUserName').value)
-      };
-    });
-    $(document.getElementById('MiningPoolHubUserName')).trigger('change');
-
     // NiceHash
     document.getElementById('NiceHashWallet').value = config.NiceHashWallet || '';
     if (config.NiceHashWalletIsInternal) document.getElementById('NiceHashWalletIsInternal').value = 'internal';
@@ -1074,18 +1049,6 @@
           maxlength: 64,
           pattern: '^[0-9a-f]{64}$'
         },
-        MiningPoolHubUserName: {
-          required: false,
-          minlength: 2,
-          maxlength: 32,
-          pattern: '^[0-9A-Za-z]{2,32}$'
-        },
-        MiningPoolHubAPIKey: {
-          required: false,
-          minlength: 64,
-          maxlength: 64,
-          pattern: '^[0-9a-f]{64}$'
-        },
         NiceHashWallet: {
           required: false,
           minlength: 26,
@@ -1243,16 +1206,10 @@
           pattern: "<br>Bitcoin address must be between 26 and 35 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
         },
         MiningDutchserName: {
-          pattern: "<br>MiningPoolHub user name must be between 2 and 32 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
+          pattern: "<br>Mining Dutch user name must be between 2 and 32 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
         },
         MiningDutchAPIKey: {
           pattern: "<br>Mining Dutch API key must be exactly 64 characters long<br>and may only contain lower case letters (a-f) and digits"
-        },
-        MiningPoolHubUserName: {
-          pattern: "<br>Mining Dutch user name must be between 2 and 32 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
-        },
-        MiningPoolHubAPIKey: {
-          pattern: "<br>MiningPoolHub API key must be exactly 64 characters long<br>and may only contain lower case letters (a-f) and digits"
         },
         NiceHashWallet: {
           pattern: "<br>NiceHash internal Bitcoin address must be be between 26 and 35 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
@@ -1298,8 +1255,6 @@
         });
         config.MiningDutchUserName = document.getElementById('MiningDutchUserName').value.toString().trim();
         config.MiningDutchAPIKey = document.getElementById('MiningDutchAPIKey').value = document.getElementById('MiningDutchAPIKey').value.toString().trim();
-        config.MiningPoolHubUserName = document.getElementById('MiningPoolHubUserName').value.toString().trim();
-        config.MiningPoolHubAPIKey = document.getElementById('MiningPoolHubAPIKey').value = document.getElementById('MiningPoolHubAPIKey').value.toString().trim();
         config.NiceHashAPIKey = document.getElementById('NiceHashAPIKey').value = document.getElementById('NiceHashAPIKey').value.toString().trim();
         config.NiceHashAPISecret = document.getElementById('NiceHashAPISecret').value = document.getElementById('NiceHashAPISecret').value.toString().trim();
         config.NiceHashWallet = document.getElementById('NiceHashWallet').value = document.getElementById('NiceHashWallet').value.toString().trim();
