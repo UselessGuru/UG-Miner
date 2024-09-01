@@ -44,21 +44,17 @@ UG-Miner code is partly based on
    - [HashCryptos](<https://hashcryptos.com/>)
    - [Hiveon](<https://hiveon.net/>)<sup>(2)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
-   - [MiningPoolHub](<https://miningpoolhub.com/>)<sup>(3)</sup>
    - [NiceHash](<https://www.nicehash.com/>)
    - [ProHashing](<https://prohashing.com/>)
-   - [ZergPool](<https://zergpool.com/>)<sup>(4)</sup>
-   - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
+   - [ZergPool](<https://zergpool.com/>)<sup>(3)</sup>
+   - [ZPool](<https://zpool.ca/>)<sup>(3)</sup>
 
 <sup>(1)</sup> Optional installation of HWiNFO required, see ConfigHWinfo64.pdf
 
 <sup>(2)</sup> Pool does not support auto-exchange to BTC other currencies.  
     You need to configure a wallet address for each currency you want to mine.
-    
-<sup>(3)</sup> MiningPoolHub is no longer trustworthy.  
-    Outstanding balances will not get paid and support will not respond. Use at your own risk!
 
-<sup>(4)</sup> Pool does not support auto-exchange for some currencies.  
+<sup>(3)</sup> Pool does not support auto-exchange for some currencies.  
     You need to configure a wallet address for each currency you want to mine.
 
 ## Easy configuration, easy start
@@ -70,7 +66,7 @@ UG-Miner code is partly based on
    4. Save configuration
    5. Start mining
 
-   <sup>(*)</sup> To enable MiningDutch, MiningPoolhub or ProHashing you must configure a username
+   <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
@@ -237,7 +233,6 @@ Supported pools:
  - HashCryptos
  - Hiveon
  - MiningDutch
- - MiningPoolHub
  - NiceHash (internal & external wallet)
  - ProHashing
  - ZergPool
