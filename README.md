@@ -51,7 +51,7 @@ UG-Miner code is partly based on
 
 <sup>(1)</sup> Optional installation of HWiNFO required, see ConfigHWinfo64.pdf
 
-<sup>(2)</sup> Pool does not support auto-exchange to BTC other currencies.  
+<sup>(2)</sup> Pool does not support auto-exchange to BTC or other currencies.  
     You need to configure a wallet address for each currency you want to mine.
 
 <sup>(3)</sup> Pool does not support auto-exchange for some currencies.  
