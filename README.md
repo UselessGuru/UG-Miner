@@ -326,7 +326,6 @@ All donation time and addresses are recorded in the donation log file 'Log\Donat
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
-- Idle detection has a big memory leak on each core stop (still investigating)
 
 ## Experimental support for running multiple instances (not recommended)
 
