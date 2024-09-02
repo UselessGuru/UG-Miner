@@ -193,6 +193,9 @@
             <div style="padding-top: 0.4rem" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if 0 hashrate@pool
             </div>
+            <div style="padding-top: 0.8rem" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This can impact profitability, but is less CPU heavy">
+              <input type="checkbox" class="toggle-switch" id="MinerUseBestPoolsOnly" name="MinerUseBestPoolsOnly"> Only use the pools in the best pool list (not recommended)
+            </div>
             <br>
 
             <!-- Select the region closest to your Location -->
@@ -206,10 +209,6 @@
         <td>
           <!-- Miner selection -->
           <legend class=h6><b>Miner selection</b></legend>
-          <div style="padding-top: 0.6rem" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This can impact profitability, but is less CPU heavy">
-            <input type="checkbox" class="toggle-switch" id="MinerUseBestPoolsOnly" name="MinerUseBestPoolsOnly"> Only use pools in the best pool list
-            
-          </div>
           <div style="padding-top: 0.3rem" title="Select miner set to be used by UG-Miner">Use
             <select name="" id="MinerSet" width="10">
               <option title="The best miners chosen by the developers may not be the best miners for you&#10;(Minerset 0)" value=0>only best miner per algorithm and per device</option>
@@ -796,6 +795,7 @@
     });
     document.getElementById('MinWorker').value = parseInt(config.MinWorker);
     if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
+    if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
 
     // Select the region closest to your location
     // Fill region list
@@ -819,7 +819,6 @@
     }
 
     // Miner selection
-    if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
     if (parseInt(config.MinerSet) >= 0 && parseInt(config.MinerSet) <= 3) document.getElementById('MinerSet').value = config.MinerSet;
     else document.getElementById('MinerSet').value = 2;
     if (config.ExcludeMinerName) document.getElementById('ExcludeMinerName').value = (config.ExcludeMinerName).toString().trim();
@@ -1313,6 +1312,7 @@
         config.SSLallowSelfSignedCertificate = document.getElementById('SSLallowSelfSignedCertificate').checked;
         config.MinWorker = parseInt(document.getElementById('MinWorker').value);
         config.PoolAllow0Hashrate = document.getElementById('PoolAllow0Hashrate').checked;
+        config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
 
         // Select the region closest to your location
         $.each(regions, function (key, value) {
@@ -1320,7 +1320,6 @@
         });
 
         // Miner selection
-        config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
         config.MinerSet = parseInt(document.getElementById('MinerSet').value);
         config.ExcludeMinerName = []; // enforce array
         if (document.getElementById('ExcludeMinerName').value) config.ExcludeMinerName = document.getElementById('ExcludeMinerName').value.replace(' ', '').split(',');
