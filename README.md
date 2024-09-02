@@ -330,7 +330,7 @@ All donation time and addresses are recorded in the donation log file 'Log\Donat
 ## Experimental support for running multiple instances (not recommended)
 
 More than one instance of UG-Miner can run on the same rig. Each instance must be placed in its own directory.  
-You must use non-overlapping port ranges (configuration item '$APIport').  
+You must use non-overlapping port ranges (configuration item 'APIport').  
 Do not use the same miner devices in more than one instance (this will give invalid hash rate & power consumption readings causing incorrect best miner selection).
 
 ## Copyright & licenses
