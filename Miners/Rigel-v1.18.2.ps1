@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.0
+Version:        6.3.1
 Version date:   2024/09/01
 #>
 
 # Return 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.18.1/rigel-1.18.1-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.18.2/rigel-1.18.2-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -111,7 +111,7 @@ If ($Algorithms) {
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                     $Arguments = $_.Arguments
-                                    If ("ABEL", "AIPG", "ALPH", "CFX", "CLORE", "ERGO", "ETC", "ETHW", "GRAM", "HYP", "IRON", "KLS", "NEOX", "NEXA", "NX", "OCTA", "PYI", "RXD", "XEL", "XNA", "XPB", "ZIL" -contains $Pool0.Currency) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
+                                    If ("ABEL", "AIPG", "ALPH", "BLOCX", "CFX", "CLORE", "ERGO", "ETC", "ETHW", "GRAM", "HYP", "IRON", "KLS", "NEOX", "NEXA", "NX", "OCTA", "PYI", "RXD", "XEL", "XNA", "XPB", "ZIL" -contains $Pool0.Currency) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
 
                                     $Index = 1
                                     ForEach ($Pool in $Pools) { 
