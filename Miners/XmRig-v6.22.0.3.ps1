@@ -17,34 +17,34 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.0
+Version:        6.3.1
 Version date:   2024/09/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_4-win64.zip"; Break }
-    { $_ -ge "12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_3-win64.zip"; Break }
-    { $_ -ge "12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_2-win64.zip"; Break }
-    { $_ -ge "12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_1-win64.zip"; Break }
-    { $_ -ge "12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda12_0-win64.zip"; Break }
-    { $_ -ge "11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_8-win64.zip"; Break }
-    { $_ -ge "11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_7-win64.zip"; Break }
-    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_6-win64.zip"; Break }
-    { $_ -ge "11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_5-win64.zip"; Break }
-    { $_ -ge "11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_4-win64.zip"; Break }
-    { $_ -ge "11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_3-win64.zip"; Break }
-    { $_ -ge "11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_2-win64.zip"; Break }
-    { $_ -ge "11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_1-win64.zip"; Break }
-    { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda11_0-win64.zip"; Break }
-    { $_ -ge "10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda10_2-win64.zip"; Break }
-    { $_ -ge "10.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda10_1-win64.zip"; Break }
-    { $_ -ge "10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda10_0-win64.zip"; Break }
-    { $_ -ge "9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda9_2-win64.zip"; Break }
-    { $_ -ge "9.1" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda9_1-win64.zip"; Break }
-    { $_ -ge "9.0" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda9_0-win64.zip"; Break }
-    Default           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3-cuda8_0-win64.zip"; Break }
+    { $_ -ge "12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_4-win64.zip"; Break }
+    { $_ -ge "12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_3-win64.zip"; Break }
+    { $_ -ge "12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_2-win64.zip"; Break }
+    { $_ -ge "12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_1-win64.zip"; Break }
+    { $_ -ge "12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_0-win64.zip"; Break }
+    { $_ -ge "11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_8-win64.zip"; Break }
+    { $_ -ge "11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_7-win64.zip"; Break }
+    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_6-win64.zip"; Break }
+    { $_ -ge "11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_5-win64.zip"; Break }
+    { $_ -ge "11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_4-win64.zip"; Break }
+    { $_ -ge "11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_3-win64.zip"; Break }
+    { $_ -ge "11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_2-win64.zip"; Break }
+    { $_ -ge "11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_1-win64.zip"; Break }
+    { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_0-win64.zip"; Break }
+    { $_ -ge "10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_2-win64.zip"; Break }
+    { $_ -ge "10.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_1-win64.zip"; Break }
+    { $_ -ge "10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_0-win64.zip"; Break }
+    { $_ -ge "9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_2-win64.zip"; Break }
+    { $_ -ge "9.1" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_1-win64.zip"; Break }
+    { $_ -ge "9.0" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_0-win64.zip"; Break }
+    Default           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda8_0-win64.zip"; Break }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xmrig.exe"
@@ -79,41 +79,41 @@ $Algorithms = @(
 #   @{ Algorithm = "RandomxWow";           Type = "AMD"; MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/wow" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "Uplexa";               Type = "AMD"; MinMemGiB = 0.25; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 
-    @{ Algorithm = "Argon2Chukwa";         Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo argon2/chukwa" }
-    @{ Algorithm = "Argon2ChukwaV2";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo argon2/chukwav2" }
-    @{ Algorithm = "Argon2Ninja";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo argon2/ninja" }
-    @{ Algorithm = "Argon2WRKZ";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo argon2/wrkz" }
-#   @{ Algorithm = "Cryptonight";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/0" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightCcx";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/ccx" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightDouble";    Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/double" }  # Not profitable with CPU
-#   @{ Algorithm = "CryptonightFast";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/fast" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightLite";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn-lite/0" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightLiteV1";    Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn-lite/1" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightHalf";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/half" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightHeavy";     Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 20);  ExcludePools = @(); Arguments = " --algo cn-heavy/0" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightHeavyTube"; Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn-heavy/tube" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightPico";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn-pico" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightPicoTlo";   Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn-pico/tlo" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightR";         Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/r" } # ASIC
-#   @{ Algorithm = "CryptonightRto";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/rto" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightRwz";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/rwz" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightUpx";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/upx2" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightV1";        Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/1" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightV2";        Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/2" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightXao";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/xao" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightHeavyXhv";  Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" } # Not profitable with CPU
-#   @{ Algorithm = "CryptonightZls";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo cn/zls" } # Not profitable with CPU
-#   @{ Algorithm = "Randomx";              Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 20);  ExcludePools = @(); Arguments = " --algo rx/0" } # ASIC
-#   @{ Algorithm = "Flex";                 Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo flex" } # https://github.com/RainbowMiner/RainbowMiner/issues/2841
-    @{ Algorithm = "Ghostrider";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo gr" }
-    @{ Algorithm = "Panthera";             Type = "CPU"; MinerSet = 0; WarmupTimes = @(180, 60); ExcludePools = @(); Arguments = " --algo panthera" }
-    @{ Algorithm = "RandomxArq";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/arq" } # FPGA
-    @{ Algorithm = "RandomXeq";            Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/xeq" }
-    @{ Algorithm = "RandomxKeva";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/keva" }
-    @{ Algorithm = "RandomxLoki";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/loki" }
-    @{ Algorithm = "RandomxSfx";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/sfx" }
-    @{ Algorithm = "RandomxWow";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/wow" }
-    @{ Algorithm = "Uplexa";               Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @(); Arguments = " --algo rx/upx2" }
+    @{ Algorithm = "Argon2Chukwa";         Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo argon2/chukwa" }
+    @{ Algorithm = "Argon2ChukwaV2";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo argon2/chukwav2" }
+    @{ Algorithm = "Argon2Ninja";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo argon2/ninja" }
+    @{ Algorithm = "Argon2WRKZ";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo argon2/wrkz" }
+#   @{ Algorithm = "Cryptonight";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/0" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightCcx";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/ccx" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightDouble";    Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/double" }  # Not profitable with CPU
+#   @{ Algorithm = "CryptonightFast";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/fast" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightLite";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-lite/0" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightLiteV1";    Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-lite/1" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightHalf";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/half" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightHeavy";     Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo cn-heavy/0" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightHeavyTube"; Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/tube" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightPico";      Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-pico" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightPicoTlo";   Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-pico/tlo" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightR";         Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/r" } # ASIC
+#   @{ Algorithm = "CryptonightRto";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/rto" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightRwz";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/rwz" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightUpx";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/upx2" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightV1";        Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/1" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightV2";        Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/2" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightXao";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightHeavyXhv";  Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" } # Not profitable with CPU
+#   @{ Algorithm = "CryptonightZls";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" } # Not profitable with CPU
+#   @{ Algorithm = "Randomx";              Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo rx/0" } # ASIC
+#   @{ Algorithm = "Flex";                 Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo flex" } # https://github.com/RainbowMiner/RainbowMiner/issues/2841
+    @{ Algorithm = "Ghostrider";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo gr" }
+    @{ Algorithm = "Panthera";             Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo panthera" }
+    @{ Algorithm = "RandomxArq";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # FPGA
+    @{ Algorithm = "RandomXeq";            Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/xeq" }
+    @{ Algorithm = "RandomxKeva";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" }
+    @{ Algorithm = "RandomxLoki";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/loki" }
+    @{ Algorithm = "RandomxSfx";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/sfx" }
+    @{ Algorithm = "RandomxWow";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/wow" }
+    @{ Algorithm = "Uplexa";               Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" }
 
     @{ Algorithm = "Cryptonight";          Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/0" }
     @{ Algorithm = "CryptonightCcx";       Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/ccx" }
