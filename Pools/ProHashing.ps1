@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.3.0
-Version date:   2024/09/01
+Version:        6.3.1
+Version date:   2024/09/06
 #>
 
 Param(

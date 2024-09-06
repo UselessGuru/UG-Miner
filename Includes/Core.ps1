@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.0
-Version date:   2024/09/01
+Version:        6.3.1
+Version date:   2024/09/06
 #>
 
 using module .\Include.psm1
@@ -144,7 +144,7 @@ Try {
                     If ($RegValue = Get-ItemProperty -Path $RegistryPath -ErrorAction Ignore) { 
                         $HWiNFO64RegTime = Get-RegTime "HKCU:\Software\HWiNFO64\VSB"
                         If ($Variables.HWiNFO64RegTime -eq $HWiNFO64RegTime.AddSeconds(5)) { 
-                            Write-Message -Level Warn "Power consumption data in registry has not been updated since $($Variables.HWiNFO64RegTime.ToString("yyyy-MM-dd HH:mm:ss")) [HWiNFO64 not running???] - disabling power consumption and profit calculations."
+                            Write-Message -Level Warn "Power consumption data in registry has not been updated since $($Variables.HWiNFO64RegTime.ToString("yyyy-MM-dd HH:mm:ss")) [HWiNFO64 not running???] - disabling power consumption readout and profit calculations."
                             $Variables.CalculatePowerCost = $false
                         }
                         Else { 
@@ -193,7 +193,8 @@ Try {
                 }
                 Else { $Variables.CalculatePowerCost = $false }
             }
-            Else { 
+
+            If (-not $Variables.CalculatePowerCost ) { 
                 $Variables.EnabledDevices.ForEach({ $_.ReadPowerConsumption = $false })
             }
 
@@ -603,7 +604,7 @@ Try {
             }
 
             # Ensure we get the hashrate for running miners prior looking for best miner
-            ForEach ($Miner in $Variables.MinersBest | Sort-Object { [String]$_.DeviceNames }) { 
+            ForEach ($Miner in $Variables.MinersBest) { 
                 If ($Miner.DataReaderJob.HasMoreData -and $Miner.Status -ne [MinerStatus]::DryRun) { 
                     If ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.Date })) { 
                         $Sample = $Samples[-1]
@@ -1150,7 +1151,7 @@ Try {
                 If ($Variables.Summary -ne "") { $Variables.Summary += "<br>" }
 
                 # Add currency conversion rates
-                @((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
+                ((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
                     { 
                         $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.FIATcurrency)
                     }
@@ -1168,7 +1169,7 @@ Try {
             If ($Variables.Rates) { 
                 # Add currency conversion rates
                 If ($Variables.Summary -ne "") { $Variables.Summary += "<br>" }
-                @((@(If ($Config.UsemBTC) { "mBTC" } Else { $Config.PayoutCurrency }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
+                ((@(If ($Config.UsemBTC) { "mBTC" } Else { $Config.PayoutCurrency }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
                     { 
                         $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.FIATcurrency)
                     }
@@ -1204,7 +1205,7 @@ Try {
         Remove-Variable Miner, WatchdogTimers, Worker -ErrorAction Ignore
 
         # Kill stuck miners on subsequent cycles when not in dry run mode
-        If (-not $Config.DryRun -or $Variables.CycleStarts.Count -eq 1 -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
+        If (-not $Config.DryRun) { 
             $Loops = 0
             # Some miners, e.g. BzMiner spawn a second executable
             While ($StuckMinerProcessIDs = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and ($Miners.Path | Sort-Object -Unique) -contains $_.ExecutablePath -and (Get-CimInstance win32_process -Filter "ParentProcessId = $($_.ProcessId)") -and $Miners.ProcessID -notcontains $_.ProcessID }) | Select-Object -ExpandProperty ProcessID) { 
@@ -1212,7 +1213,7 @@ Try {
                     { 
                         If ($Miner = $Miners | Where-Object ProcessID -EQ $_) { Write-Message -Level Verbose "Killing stuck miner '$($Miner.Name)'." }
                         If ($ChildProcessID = (Get-CimInstance win32_process -Filter "ParentProcessId = $_").ProcessID) { Stop-Process -Id $ChildProcessID -Force -ErrorAction Ignore }
-                        Stop-Process -Id $_ -Force -ErrorAction Ignore
+                        Stop-Process -Id $_ -Force -ErrorAction Ignore | Out-Null
                     }
                 )
                 Start-Sleep -Milliseconds 500
@@ -1254,7 +1255,7 @@ Try {
 
         # Update data in API
         $Variables.Miners = $Miners.Where({ $_.SideIndicator -ne "<=" })
-        $Variables.MinersBest = $MinersBest
+        $Variables.MinersBest = $MinersBest | Sort-Object { [String]$_.DeviceNames }
         Remove-Variable Miners, MinersBest -ErrorAction Ignore
 
         $Variables.Miners.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
@@ -1301,24 +1302,20 @@ Try {
         # Optional delay to avoid blue screens
         Start-Sleep -Seconds $Config.Delay
 
-        ForEach ($Miner in $Variables.MinersBest | Sort-Object { [String]$_.DeviceNames }) { 
+        ForEach ($Miner in $Variables.MinersBest) { 
             If ($Miner.Status -ne [MinerStatus]::DryRun -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
-                If ($Miner.Status -ne [MinerStatus]::DryRun) { 
+                If ($Config.DryRun -and -not ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
+                    $Miner.SetStatus([MinerStatus]::DryRun)
+                }
+                Else { 
                     # Launch prerun if exists
-                    If ($Miner.Type -eq "AMD" -and (Test-Path -LiteralPath ".\Utils\Prerun\AMDPrerun.bat" -PathType Leaf)) { 
-                        Start-Process ".\Utils\Prerun\AMDPrerun.bat" -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                    If (Test-Path -LiteralPath ".\Utils\Prerun\$($Miner.Type)Prerun.bat" -PathType Leaf) { 
+                        Write-Message -Level Info "Launching Prerun: .\Utils\Prerun\$($Miner.Type)Prerun.bat"
+                        Start-Process ".\Utils\Prerun\$($Miner.Type)Prerun.bat" -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                        Start-Sleep -Seconds 2
                     }
-                    ElseIf ($Miner.Type -eq "CPU" -and (Test-Path -LiteralPath ".\Utils\Prerun\CPUPrerun.bat" -PathType Leaf)) { 
-                        Start-Process ".\Utils\Prerun\CPUPrerun.bat" -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
-                    }
-                    ElseIf ($Miner.Type -eq "INTEL" -and (Test-Path -LiteralPath ".\Utils\Prerun\INTELPrerun.bat" -PathType Leaf)) { 
-                        Start-Process ".\Utils\Prerun\INTELPrerun.bat" -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
-                    }
-                    ElseIf ($Miner.Type -eq "NVIDIA" -and (Test-Path -LiteralPath ".\Utils\Prerun\NVIDIAPrerun.bat" -PathType Leaf)) { 
-                        Start-Process ".\Utils\Prerun\NVIDIAPrerun.bat" -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
-                    }
-                    $MinerAlgorithmPrerunName = ".\Utils\Prerun\$($Miner.Name)$(If ($Miner.Algorithms.Count -eq 1) { "_$($Miner.Algorithms[0])" }).bat"
-                    $AlgorithmPrerunName = ".\Utils\Prerun\$($Miner.Algorithms -join "-").bat"
+                    $MinerAlgorithmPrerunName = ".\Utils\Prerun\$($Miner.Name)$(If ($Miner.Algorithms.Count -eq 1) { "_$($Miner.Algorithms[0])" } Else { "_$($Miner.Algorithms -join '&')" }).bat"
+                    $AlgorithmPrerunName = ".\Utils\Prerun\$($Miner.Algorithms -join "&").bat"
                     $DefaultPrerunName = ".\Utils\Prerun\default.bat"
                     If (Test-Path -LiteralPath $MinerAlgorithmPrerunName -PathType Leaf) { 
                         Write-Message -Level Info "Launching Prerun: $MinerAlgorithmPrerunName"
@@ -1336,26 +1333,16 @@ Try {
                         Start-Sleep -Seconds 2
                     }
                     Remove-Variable AlgorithmPrerunName, DefaultPrerunName, MinerAlgorithmPrerunName -ErrorAction Ignore
-                }
 
-                If ($Miner.Workers.Pool.DAGSizeGiB) { 
-                    # Add extra time when CPU mining and miner requires DAG creation
-                    If ($Variables.MinersBest.Type -contains "CPU" -and -not $Config.DryRun) { $Miner.WarmupTimes[0] += 15 <# seconds #> }
-                    # Add extra time when notebook runs on battery
-                    If ((Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miner.WarmupTimes[0] += 90 <# seconds #> }
-                }
-
-                If ($Config.DryRun -and -not ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
-                    $Miner.SetStatus([MinerStatus]::DryRun)
-                }
-                Else { 
-                    If ($Config.DryRun -and $Miner.MeasurePowerConsumption -and -not $Miner.Benchmark) { 
-                        # Faster power usage measurement. Accept first data sample and only wait for $MinDataSamples to get power consumption
-                        $Miner.WarmupTimes[1] = 0
+                    If ($Miner.Workers.Pool.DAGSizeGiB) { 
+                        # Add extra time when CPU mining and miner requires DAG creation
+                        If ($Variables.MinersBest.Type -contains "CPU") { $Miner.WarmupTimes[0] += 15 <# seconds #> }
+                        # Add extra time when notebook runs on battery
+                        If ((Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miner.WarmupTimes[0] += 90 <# seconds #> }
                     }
 
-                    # Do not wait for stable hash rates, for quick and dirty benchmarking
-                    If ($Config.DryRun -and $Variables.BenchmarkAllPoolAlgorithmCombinations) { $Miner.WarmupTimes[1] = 0 } 
+                    #  Do not wait for stable hash rates, for quick and dirty benchmarking
+                    If ($Config.DryRun -and $Variables.BenchmarkAllPoolAlgorithmCombinations) { $Miner.WarmupTimes[1] = 0 }
 
                     $Miner.SetStatus([MinerStatus]::Running)
                 }
@@ -1396,7 +1383,7 @@ Try {
             }
         }
 
-        ForEach ($Miner in $Variables.MinersBest | Sort-Object { [String]$_.DeviceNames }) { 
+        ForEach ($Miner in $Variables.MinersBest) { 
             If ($Message = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) samples]..."
             }
@@ -1424,7 +1411,7 @@ Try {
             $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime().AddSeconds($Config.Interval)
         }
 
-        $Variables.MinersRunning = $Variables.MinersBest | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption
+        $Variables.MinersRunning = $Variables.MinersBest
         $Variables.MinersBenchmarkingOrMeasuring = $Variables.MinersRunning.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
         $Variables.MinersFailed = [Miner[]]@()
 
@@ -1474,7 +1461,7 @@ Try {
                                     }
                                 }
                                 Else { 
-                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0) { " (incomplete sample)" } Else { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])"} )"
+                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(If ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])"} )"
                                     $Miner.StatusInfo = "Warming up '$($Miner.Info)'"
                                     $Miner.SubStatus = "warmingup"
                                 }
@@ -1527,7 +1514,7 @@ Try {
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
             # Wait until 1 second since loop start has passed
-            While ([DateTime]::Now -lt $LoopEnd) { Start-Sleep -Milliseconds 50 }
+            While ([DateTime]::Now -le $LoopEnd) { Start-Sleep -Milliseconds 50 }
 
             # Exit loop when
             # - a miner crashed

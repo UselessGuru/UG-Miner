@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.0
-Version date:   2024/09/01
+Version:        6.3.1
+Version date:   2024/09/06
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -119,7 +119,7 @@ If ($Algorithms) {
                                 Else { 
                                     $Arguments = $_.Arguments
                                 }
-                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9\.]+" }
+                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
                                 $Arguments += " -o "
                                 Switch ($Pool.Protocol) { 
                                     "ethstratum1"  { $Arguments += "stratum+" }

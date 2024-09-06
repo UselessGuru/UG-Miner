@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.3.1
-Version date:   2024/09/01
+Version date:   2024/09/06
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -205,7 +205,7 @@ If ($Algorithms) {
                             Else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             If (-not $Variables.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
 
-                            $MinerPath = If ("Ghostrider", "Flex",  "Panthera", "RandomXeq" -contains $_.Algorithm) { $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
+                            $MinerPath = If ("Ghostrider", "Flex",  "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
 
                             [PSCustomObject]@{ 
                                 API         = "XmRig"

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.0
-Version date:   2024/09/01
+Version:        6.3.1
+Version date:   2024/09/06
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -533,7 +533,7 @@ Class Miner : IDisposable {
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
-            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { "$($this.StatusInfo)" -replace "'$($this.StatusInfo)' " } Else { "" }
+            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo -replace '.+\) ' -replace '.+sample*\) ' } Else { "" }
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
@@ -2550,6 +2550,7 @@ Filter ConvertTo-Hash {
     $Units = " kMGTPEZY" # k(ilo) in small letters, see https://en.wikipedia.org/wiki/Metric_prefix
 
     If ( $_ -eq $null -or [Double]::IsNaN($_)) { Return "n/a" }
+    ElseIf ($_ -eq 0) { Return "0H/s "}
     $Base1000 = [Math]::Max([Double]0, [Math]::Min([Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1))), $Units.Length - 1))
     $UnitValue = $_ / [Math]::Pow(1000, $Base1000)
     $Digits = If ($UnitValue -lt 10) { 3 } Else { 2 }
@@ -3156,9 +3157,35 @@ Function Update-DAGdata {
         }
     }
 
+    # # Update on script start, once every 24hrs or if unable to get data from source
+    # $Currency = "SCC"
+    # $Url = "https://www.coinexplorer.net/api/v1/SCC/getblockcount"
+    # If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    #     # Get block data from StakeCube block explorer
+    #     Try { 
+    #         Write-Message -Level Info "Loading DAG data from '$Url'..."
+    #         $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+    #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+    #             $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
+    #             If ($DAGdata.Epoch) { 
+    #                 $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+    #                 $DAGdata | Add-Member Url $Url -Force
+    #                 $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+    #                 $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+    #             }
+    #             Else { 
+    #                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+    #             }
+    #         }
+    #     }
+    #     Catch { 
+    #         Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+    #     }
+    # }
+
     # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "SCC"
-    $Url = "https://www.coinexplorer.net/api/v1/SCC/getblockcount"
+    $Url = "https://scc.ccore.online/api/getblockcount"
     If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from StakeCube block explorer
         Try { 
@@ -3167,6 +3194,32 @@ Function Update-DAGdata {
             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
                 If ($DAGdata.Epoch) { 
+                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                    $DAGdata | Add-Member Url $Url -Force
+                    $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                    $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                }
+                Else { 
+                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                }
+            }
+        }
+        Catch { 
+            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+        }
+    }
+
+    # Update on script start, once every 24hrs or if unable to get data from source
+    $Currency = "BLOCX"
+    $Url = "https://api-explorer.blocxscan.com/api/getblockcount"
+    If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        # Get block data from BLOCX block explorer
+        Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
+                If ($DAGdata.DAGsize) { 
                     $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                     $DAGdata | Add-Member Url $Url -Force
                     $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
@@ -3281,7 +3334,16 @@ Function Get-DAGdata {
         [Int16]$EpochReserve = 0
     )
 
-    If ($Algorithm = Get-AlgorithmFromCurrency $Currency) { 
+    If ($Currency -eq "BLOCX") { 
+        Return [PSCustomObject]@{ 
+            Algorithm   = Get-AlgorithmFromCurrency $Currency
+            BlockHeight = [Int]$BlockHeight
+            CoinName    = [String]$Variables.CoinNames[$Currency]
+            DAGsize     = [Int64]2GB
+            Epoch       = [UInt16]0
+        }
+    }
+    ElseIf ($Algorithm = Get-AlgorithmFromCurrency $Currency) { 
         $Epoch = Get-DAGepoch -BlockHeight $BlockHeight -Algorithm $Algorithm -EpochReserve $EpochReserve
 
         Return [PSCustomObject]@{ 

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.3.0
-Version date:   2024/09/01
+Version:        6.3.1
+Version date:   2024/09/06
 #>
 
 using module .\Include.psm1
@@ -85,7 +85,7 @@ Do {
         )
 
         # Keep most recent balance objects, keep empty balances for 7 days
-        $BalanceObjects = @(@($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object DateTime -Bottom 1 }))
+        $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object DateTime -Bottom 1 }))
 
         # Do not keep balances with 0
         $BalanceObjects = $BalanceObjects.Where({ $_.Balance -gt 0 })
@@ -334,7 +334,7 @@ Do {
 
     # Always keep pools sorted, even when new pools were added
     $Variables.Balances = [Ordered]@{ }
-    ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -notin @($Config.BalancesTrackerExcludePool) }) | Sort-Object).ForEach(
+    ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -notin $Config.BalancesTrackerExcludePool }) | Sort-Object).ForEach(
         { 
             $Variables.Balances.Remove($_)
             $Variables.Balances.$_ = $Balances.$_
