@@ -197,10 +197,10 @@ Before starting a miner executable UG-Miner is trying to launch one of the follo
 
 The file 'Config\PoolsConfig.json' contains configuration details for the pools.
 
-A separate section can be added for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built in default values will be used.
+A separate section can be added for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built-in default values will be used.
 
 
-**Available options**
+**Available per pool configuration options**
 
 - Algorithm: List of included or excluded algorithms per pool
 - Currency: List of included or excluded currencies per pool
@@ -217,7 +217,7 @@ See 'Data\PoolsConfig-Template.json' for all available pool configuration option
 
 **Usage**
 
-- Edit 'Config\PoolsConfig.json' (**careful with json formatting ;)**
+- Edit 'Config\PoolsConfig.json' (**careful with json formatting** ;-)
 - Add an entry for the pool you want to customize  
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
 - Add the pool specific configuration items
