@@ -217,7 +217,7 @@ See 'Data\PoolsConfig-Template.json' for all available pool configuration option
 
 **Usage**
 
-- Edit 'Config\PoolsConfig.json' (**careful with json formatting** ;-)
+- Edit 'Config\PoolsConfig.json' (**be careful with json formatting!**)
 - Add an entry for the pool you want to customize  
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
 - Add the pool specific configuration items
@@ -246,33 +246,34 @@ A simple miner switching log in csv format is written to '[UG-Miner directory]\L
 
 UI style can be set to 'light' or 'full':
 
-- Light (default)  
+- light (default)  
   Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be not be shown
 
-- Full  
+- full  
   Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be shown
 
-UIStyle automatically switches to full during benchmarking.
+UIStyle automatically switches to full during benchmarking or when measuring power cunsumption.
 
 In the main text window (session console) the following hot keys are supported:
 
-  1:  Toggle Listing pool balances (currently off)  
-  2:  Toggle Listing all optimal miners (currently off)  
-  3:  Toggle UI style [full or light] (currently light)  
-  
-  a:  Toggle 'Accuracy' column visibility (currently on)  
-  c:  Toggle 'PowerCost' column visibility (currently on)  
-  e:  Toggle 'Earnings' column visibility (currently off)  
-  f:  Toggle Pool 'Fees' column visibility (currently on)  
-  i:  Toggle 'EarningBias' column visibility (currently on)  
-  m:  Toggle Miner 'Fees' column visibility (currently on)  
-  n:  Toggle 'CoinName' column visibility (currently on)  
-  p:  Toggle 'Pool' column visibility (currently on)  
-  r:  Toggle 'ProfitBias' column visibility (currently on)  
-  t:  Toggle 'Profit' column visibility (currently off)  
-  u:  Toggle 'User' column visibility (currently on)  
-  w:  Toggle 'PowerConsumption' column visibility (currently on)  
-  y:  Toggle 'Currency' column visibility (currently on)  
+Hot key legend:
+1: Toggle Listing pool balances                    [off]
+2: Toggle Listing all optimal miners               [off]
+3: Toggle UI style [full or light]                 [light]
+
+a: Toggle 'Accuracy' column visibility             [on]
+c: Toggle 'Power cost' column visibility           [on]
+e: Toggle 'Earnings' column visibility             [off]
+f: Toggle Pool 'Fees' column visibility            [on]
+i: Toggle 'Earning bias' column visibility         [on]
+m: Toggle Miner 'fees' column visibility           [on]
+n: Toggle 'CoinName' column visibility             [on]
+p: Toggle 'Pool' column visibility                 [on]
+r: Toggle 'Profit bias' column visibility          [on]
+t: Toggle 'Profit' column visibility               [off]
+u: Toggle 'User' column visibility                 [on]
+w: Toggle 'Power consumption' column visibility    [on]
+y: Toggle 'Currency' column visibility             [on]
 
 ## Requirements
 
