@@ -256,6 +256,7 @@ UIStyle automatically switches to full during benchmarking or when measuring pow
 
 In the main text window (session console) the following hot keys are supported:
 
+```
 Hot key legend:
 1: Toggle Listing pool balances                    [off]
 2: Toggle Listing all optimal miners               [off]
@@ -274,6 +275,7 @@ t: Toggle 'Profit' column visibility               [off]
 u: Toggle 'User' column visibility                 [on]
 w: Toggle 'Power consumption' column visibility    [on]
 y: Toggle 'Currency' column visibility             [on]
+```
 
 ## Requirements
 
