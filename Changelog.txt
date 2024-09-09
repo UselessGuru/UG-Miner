@@ -3,6 +3,44 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+
+Changelog UG-Miner 6.3.2 2024/09/09
+===================================
+
+Changes:
+- Keep miners when paused
+
+Enhancements:
+- Core / Includes.psm1: Function 'Update-DAGdata' can now handle TLS (ProgPowTelestai) data
+
+Fixes:
+- Legacy GUI: Miners table not getting cleared when no miners available
+
+Improvements:
+- Minor code optimizations
+
+Miner changes:
+- TeleMerakiMiner-v1.5.0.ps1
+
+
+Changelog UG-Miner 6.3.1 2024/09/06
+===================================
+
+Enhancements
+- Core / Includes.psm1: Function 'Update-DAGdata' can now handle BLOCX (SCCpow) data
+- Legacy GUI / Miners: Do not update tables when data is selected
+- Legacy GUI / Switching log: Do not reset check boxes on each data update
+
+Improvements:
+- Minor code optimizations
+
+Miner fixes + updates:
+- BzMiner API: Fix incomplete samples
+- Rigel-v1.18.2
+- SRBMinerMulti-v2.6.3
+- XmRig-v6.22.0.3: Faster benchmarking for some CPU algorithms (no more benchmarking all algorithms before mining)
+
+
 Changelog UG-Miner 6.3.0 2024/09/01
 ===================================
 
@@ -56,12 +94,12 @@ Miner updates:
 Changelog UG-Miner 6.2.27 2024/08/18
 ====================================
 
-Enhancements:
-- Core: Remove obsolete code & minor code optimizations
-
 Fixes:
 - Correct typo in UG-Miner.ps1
 - APIserver.psm1: Do not print full path in log
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
 
 
 Changelog UG-Miner 6.2.26 2024/08/16
@@ -72,21 +110,21 @@ Changes:
 - Renamed configuration item 'MainCurrency' to 'FIATcurrency'. Configuration file will get updated automatically during update.
 - Web GUI / Configuration editor: Change pool selection logic. Can only select pool when prerequisites are met
 
-Enhancements:
-- Core: Remove obsolete code & minor code optimizations
-
 Fixes:
 - Core: 'Error in file 'Includes\Core.ps1' line 291' (Regression from 6.2.25)
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
 
 
 Changelog UG-Miner 6.2.25 2024/08/13
 ====================================
 
-Enhancements:
-- Core: Remove obsolete code & minor code optimizations
-
 Fixed:
 - Pool 'Miningdutch': Payout threshold 1000x too low
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
 
 
 Changelog UG-Miner 6.2.24 2024/08/10
@@ -97,6 +135,8 @@ Changes:
 
 Enhancements:
 - Core: Check if there is already another instance running and show error message
+
+Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
 Miner changes:
@@ -110,13 +150,13 @@ Changelog UG-Miner 6.2.23 2024/08/04
 Changes:
 - Rework 'README.md'
 
-Enhancements:
-- Core: Remove obsolete code & minor code optimizations
-- Miners: Minor code optimizations when reading miner objects
-
 Fixes:
 - Core: Miners not getting stopped when idle detection stops mining
 - Web GUI: Watchdog timer table not getting cleared when no watchdog timers exist
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+- Miners: Minor code optimizations when reading miner objects
 
 Miner changes:
 - SRBMinerMulti-v2.6.0
@@ -125,7 +165,7 @@ Miner changes:
 Changelog UG-Miner 6.2.22 2024/08/01
 ====================================
 
-Enhancements:
+Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
 Miner changes:
@@ -141,10 +181,12 @@ Changes:
 
 Enhancements:
 - API: Added url for '/cpufeatures'
-- Core: Minor code optimizations
 
 Fixes:
 - Core: Not starting benchmarking when triggered through GUI (regression from 6.2.20)
+
+Improvements:
+- Core: Minor code optimizations
 
 Miner changes:
 - ClaymoreNeoscrypt-v1.2 (fix download link)
@@ -162,6 +204,8 @@ Changes:
 Enhancements:
 - API: Added urls for '/miners/missingbinary', '/miners/missingfirewallrule' & '/miners/missingpprerequisite'
 - Core: Mark miner as 'unavailable' when firewall rule is missing
+
+Improvements:
 - Core: Minor code optimizations
 
 Miner updates:
@@ -191,9 +235,6 @@ Miner updates:
 Changelog UG-Miner 6.2.18 2024/07/19
 ====================================
 
-Enhancements:
-- Core: Minor code optimizations
-
 Fixes:
 - Web GUI / Configuration editor: Incorrect ProHashing registration link
 - Web GUI / Switching log: Incorrect background color for stopped miners
@@ -201,6 +242,7 @@ Fixes:
 Improvements:
 - Core: No more unnecessary queries for DAG data when switching to donation run
 - Core: Optimize number of queries for rates update
+- Core: Minor code optimizations
 
 
 Changelog UG-Miner 6.2.17 2024/07/13
@@ -212,16 +254,16 @@ Changes:
 Enhancements:
 - Core: Add support for algorithms with static DAG size
 - Core: Faster startup
-- Core / Includes.psm1: Minor code optimizations
 
 Fixes:
 - Core: Error when request to pen firewall ports is declined ('Error in file 'Includes\Core.ps1' line 1001 detected. Restarting core...')
 - Core: Watchdog timeout message incorrect (regression from 6.2.5)
 - Core / Includes.psm1: Function 'Get-DAGdata' returning incorrect DAG size for IRON
 - CPU Miners broken (regression from 6.2.16)
-
-Fixes:
 - HiveOn balances querying for unsupported BTC balance
+
+Improvements:
+- Core / Includes.psm1: Minor code optimizations
 
 Miner changes:
 - ClaymoreDualME-v2.7.ps1 (removed - would only work with Nvidia drivers older than 20.12.1)
@@ -248,7 +290,6 @@ Changelog UG-Miner 6.2.15 2024/07/07
 ====================================
 
 Enhancements:
-- Core: Minor code optimizations
 - Legacy GUI: Always select full table rows
 - Miners: Remove miners that are incompatible with RTX306012GB
 
@@ -256,6 +297,9 @@ Fixes:
 - Brain 'ZPool' not updating CurrencyAlgorithm list
 - Legacy GUI: Incorrect watchdog count message when no corresponding pool watchdog exists
 - Web GUI / 'Earnings and Balances': Zergpool balances wallet link incorrect
+
+Improvements:
+- Core: Minor code optimizations
 
 Miner updatwes:
 - OneZeroMiner-v1.3.7
@@ -275,13 +319,13 @@ Miner changes:
 Changelog UG-Miner 6.2.13 2024/06/30
 ====================================
 
-Enhancements:
-- Core: Minor code optimizations
-
 Fixes
 - Core / Includes.psm1: Functions 'Show-Console' & 'Hide-Console' broken (regression from 6.2.10)
 - Core / Includes.psm1: Function 'Write-Config' temporarily removed 'PoolsConfig' property 
 - Legacy GUI: 'Miners' tab sort order incorrect
+
+Improvements:
+- Core: Minor code optimizations
 
 Miner updates:
 - BzMiner-v21.3.0
@@ -291,26 +335,27 @@ Miner updates:
 Changelog UG-Miner 6.2.12 2024/06/26
 ====================================
 
-Enhancements:
-- Core: Minor code optimizations
-
 Fixes:
 - TeamBlackMiner-v2.25: Invalid command line for dual mining with EvrProgPow
 - Various miners: Not creating all possible miner objects (no available devices enumerated)
 
+Improvements:
+- Core: Minor code optimizations
 
 Changelog UG-Miner 6.2.11 2024/06/23
 ====================================
 
 Enhancements:
-- Core: Minor code optimizations
-- Core: Faster watchdog processing, only one watchdog reason per pool or miner
 - Core / Includes.psm1: 'Get-Device' Ignore devices with negative PCIbus
 
 Fixes:
 - AutoUpdater: Do not add 'Debug' to configuration items 'LogToFile' & 'LogToScreen' if not set in current config
 - Legacy GUI: Not saving windows size and position (regression from 6.2.9)
 - ZergPool balances tracker not working
+
+Improvements:
+- Core: Minor code optimizations
+- Core: Faster watchdog processing, only one watchdog reason per pool or miner
 
 Miner updates:
 - RplantCpu-v5.0.40
@@ -338,13 +383,15 @@ Changelog UG-Miner 6.2.9 2024/06/13
 
 Enhancements:
 - API: Add '/pools/expired' data
-- Core: Minor code optimizations when reading miner objects
 - Miners: Comment out obsolete code for better speed
 
 Fixes:
 - Core: Do not count dry run miner launches as miner activation
 - TTMiner-v2024.2.0: Incorrect command line (double -p)
 - Web GUI: Right mouse button context actions for miners broken
+
+Improvements:
+- Core: Minor code optimizations when reading miner objects
 
 Miner changes:
 - lolMiner-v1.88
@@ -786,7 +833,6 @@ Changelog UG-Miner 6.0.1 2024/01/05
 Changes:
 - Fix typos
 - Minimize memory leak
-- Minor code optimizations
 
 Enhancements:
 - Includes.psm1 / Update-DAGdata: Do not query 'evr.cryptoscope.io' unless needed
@@ -795,6 +841,9 @@ Enhancements:
 Fixes:
 - Brains:  No pool data for 'ZergPoolCoins24hr'
 - Core: 'UnrealPoolPriceFactor' not excluding NiceHash & MiningPoolHub (their prices are always right)
+
+Improvements:
+- Minor code optimizations
 
 Miner changes:
 - BzMiner-v19.2.1
@@ -807,4 +856,4 @@ Web GUI:
 Changelog UG-Miner 6.0.0 2024/01/01
 ===================================
 
-Initial release.
+Initial 6.x.x release.

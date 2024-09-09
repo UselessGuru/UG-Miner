@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.1
-Version date:   2024/09/06
+Version:        6.3.2
+Version date:   2024/09/09
 #>
 
 using module .\Includes\Include.psm1
@@ -299,14 +299,14 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.1"
+    Version      = [System.Version]"6.3.2"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "`nUnsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
+    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
     $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
@@ -315,6 +315,30 @@ If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") {
 $Variables.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
 $Variables.ConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigFile)
 $Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile)
+
+# Create directories
+If (-not (Test-Path -LiteralPath ".\Cache" -PathType Container)) { New-Item -Path . -Name "Cache" -ItemType Directory | Out-Null }
+If (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { New-Item -Path . -Name "Config" -ItemType Directory | Out-Null }
+If (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { New-Item -Path . -Name "Logs" -ItemType Directory | Out-Null }
+If (-not (Test-Path -LiteralPath ".\Stats" -PathType Container)) { New-Item "Stats" -ItemType Directory -Force | Out-Null }
+
+$Variables.AllCommandLineParameters = [Ordered]@{ }
+($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
+    { 
+        $Variables.AllCommandLineParameters.$_ = Get-Variable $_ -ValueOnly
+        If ($MyInvocation.MyCommandLineParameters.$_ -is [Switch]) { $Variables.AllCommandLineParameters.$_ = [Boolean]$Variables.AllCommandLineParameters.$_ }
+        Remove-Variable $_
+    }
+)
+
+Write-Host "Preparing environment and loading data files..." -ForegroundColor Yellow
+Initialize-Environment
+
+# Read configuration
+[Void](Read-Config -ConfigFile $Variables.ConfigFile)
+
+Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru..."
+Write-Host ""
 
 If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
@@ -336,32 +360,6 @@ If (-not $Variables.MyIP) {
     Exit
 }
 
-# Create directories
-If (-not (Test-Path -LiteralPath ".\Cache" -PathType Container)) { New-Item -Path . -Name "Cache" -ItemType Directory | Out-Null }
-If (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { New-Item -Path . -Name "Config" -ItemType Directory | Out-Null }
-If (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { New-Item -Path . -Name "Logs" -ItemType Directory | Out-Null }
-If (-not (Test-Path -LiteralPath ".\Stats" -PathType Container)) { New-Item "Stats" -ItemType Directory -Force | Out-Null }
-
-$Variables.AllCommandLineParameters = [Ordered]@{ }
-($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
-    { 
-        $Variables.AllCommandLineParameters.$_ = Get-Variable $_ -ValueOnly
-        If ($MyInvocation.MyCommandLineParameters.$_ -is [Switch]) { $Variables.AllCommandLineParameters.$_ = [Boolean]$Variables.AllCommandLineParameters.$_ }
-        Remove-Variable $_
-    }
-)
-
-Write-Host "$($Variables.Branding.ProductLabel) is getting ready. Please wait..."
-
-Write-Host "`nPreparing environment and loading data files..."
-Initialize-Environment
-
-# Read configuration
-[Void](Read-Config -ConfigFile $Variables.ConfigFile)
-
-Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru"
-Write-Host ""
-
 # Update config file to include all new config items
 If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
     Update-ConfigFile -ConfigFile $Variables.ConfigFile
@@ -374,22 +372,40 @@ If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocat
 Start-LogReader
 
 If (-not $Variables.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'." }
+ElseIf ((Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
+    # Exclude from AV scanner
+    Try { 
+        If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..." }
+        Start-Process "pwsh" "-Command Write-Host 'Excluding UG-Miner directory ''$(Convert-Path .)'' from Microsoft Defender Antivirus scans...'; Start-Sleep -Seconds 5; Import-Module Defender -SkipEditionCheck; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
+        Write-Message -Level Info "Excluded the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans."
+    }
+    Catch { 
+        $WscriptShell.Popup("Could not to exclude the directory`n$($Variables.Branding.ProductLabel)`n from Microsoft Defender Antivirus scans. This may lead to unpredictable results.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    # Unblock files
+    If (Get-Command "Unblock-File" -ErrorAction Ignore) { 
+        If (Get-Item .\* -Stream Zone.*) { 
+            Write-Host "Unblocking files that were downloaded from the internet..." -ForegroundColor Yellow
+            Get-ChildItem -Path . -Recurse | Unblock-File
+        }
+    }
+}
 Write-Host ""
 
 #Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
-$Prerequisites = @(
-    "$env:SystemRoot\System32\MSVCR120.dll",
-    "$env:SystemRoot\System32\VCRUNTIME140.dll",
-    "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
-)
-
 If ([System.Environment]::OSVersion.Version -lt [Version]"10.0.0.0") { 
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
     $WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 
+$Prerequisites = @(
+    "$env:SystemRoot\System32\MSVCR120.dll",
+    "$env:SystemRoot\System32\VCRUNTIME140.dll",
+    "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
+)
 If ($PrerequisitesMissing = @($Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) }))) { 
     $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "$_ is missing." })
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
@@ -441,12 +457,12 @@ Import-Module NetSecurity -ErrorAction Ignore
 Import-Module Defender -ErrorAction Ignore -SkipEditionCheck
 
 # Unblock files
-If (Get-Item .\* -Stream Zone.*) { 
-    Write-Host "Unblocking files that were downloaded from the internet..." -ForegroundColor Yellow
-    If (Get-Command "Unblock-File" -ErrorAction Ignore) { Get-ChildItem -Path . -Recurse | Unblock-File }
-    If ((Get-Command "Get-MpPreference") -and (Get-MpComputerStatus) -and (Get-MpPreference).ExclusionPath -notcontains (Convert-Path .)) { 
-        Start-Process "pwsh" "-Command Import-Module Defender; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
+If (Get-Command "Unblock-File" -ErrorAction Ignore) { 
+    If ($UnblockFiles = (Get-ChildItem -Path . -Recurse).Where({ -not $_.PsIsContainer -and $_.FullName -notmatch "Logs|Stats" }).Where({ Try { Get-Item $_ -Stream Zone.* } Catch { } })) { 
+        Write-Host "Unblocking $($UnblockFiles.Count) file$(If ($UnblockFiles.Count -ne 1) { "s" }) that $(If ($UnblockFiles.Count -eq 1) { "was" } Else { "were" }) downloaded from the internet..." -ForegroundColor Yellow
+        $UnblockFiles | Unblock-File
     }
+    Remove-Variable UnblockFiles -ErrorAction Ignore
 }
 
 Write-Message -Level Verbose "Setting variables..."
@@ -470,7 +486,7 @@ $Variables.Brains = @{ }
 $Variables.CPUfeatures = (Get-CpuId).Features | Sort-Object
 $Variables.CycleStarts = @()
 $Variables.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")
-$Variables.LastDonated = [DateTime]::Now.AddDays( -1 ).AddHours(1)
+$Variables.LastDonated = [DateTime]::Now.AddDays(-1).AddHours(1)
 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = [Double]::NaN
 $Variables.NewMiningStatus = If ($Config.StartupMode -match "Paused|Running") { $Config.StartupMode } Else { "Idle" }
 $Variables.RestartCycle = $true
@@ -541,15 +557,6 @@ If ($Config.WebGUI) { Start-APIServer }
 
 Function MainLoop { 
 
-    If ($Variables.MiningStatus -eq "Running") { 
-        # Core watchdog. Sometimes core loop gets stuck
-        If (-not $Variables.SuspendCycle -and $Variables.MyIP -and $Variables.EndCycleTime -and $CoreRunspace.Job.IsCompleted -eq $false -and [DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime.AddSeconds(15 * $Config.Interval)) { 
-            Write-Message -Level Warn "Core cycle is stuck - restarting..."
-            Stop-Core
-            Start-Core
-        }
-    }
-
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
     If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIminingSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
@@ -575,46 +582,60 @@ Function MainLoop {
                 "Idle" { 
                     If ($Variables.MiningStatus) { 
                         $Variables.Summary = "'Stop Mining' button clicked."
-                        Write-Host "`n"
+                        Write-Host ""
                         Write-Message -Level Info $Variables.Summary
 
                         Stop-Core
                         Stop-Brain
-                        # If ($Config.ReportToServer) { Write-MonitoringData }
+                        Stop-BalancesTracker
 
-                        # Load currency exchange rates
-                        [Void](Get-Rate)
+                        # If ($Config.ReportToServer) { Write-MonitoringData }
                     }
 
                     If (-not $Variables.FreshConfig) { 
+                        Write-Host ""
                         $Variables.Summary = "$($Variables.Branding.ProductLabel) is stopped.<br>Click the 'Start mining' button to make money."
-                        Write-Host "`n"
                         Write-Message -Level Info ($Variables.Summary -replace "<br>", " ")
                     }
                     Break
                 }
                 "Paused" { 
                     $Variables.Summary = "'Pause Mining' button clicked."
-                    Write-Host "`n"
+                    Write-Host ""
                     Write-Message -Level Info $Variables.Summary
 
-                    Stop-Core
+                    If ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+                        $Global:CoreRunspace.PowerShell.Stop()
+                        $Variables.Remove("EndCycleTime")
+                        $Variables.Remove("Timer")
+                    }
+
+                    #Stop all miners
+                    ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status })) { 
+                        $Miner.SetStatus([MinerStatus]::Idle)
+                        $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                    }
+                    Remove-Variable Miner -ErrorAction Ignore
+                    $Variables.MinersRunning = [Miner[]]@()
+
                     Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     # If ($Config.ReportToServer) { Write-MonitoringData }
 
+                    Write-Host ""
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is paused.<br>Click the 'Start mining' button to make money."
-                    Write-Host "`n"
                     Write-Message -Level Info ($Variables.Summary -replace "<br>", " ")
                     Break
                 }
                 "Running" { 
-                    If ($Variables.Timer) { 
+                    If ($Variables.MiningStatus) { 
                         $Variables.Summary = "'Start Mining' button clicked."
-                        Write-Host "`n"
+                        Write-Host ""
                         Write-Message -Level Info $Variables.Summary
                     }
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     Start-Core
                     Break
                 }
@@ -624,7 +645,11 @@ Function MainLoop {
         If ($LegacyGUIform) { Update-GUIstatus }
     }
 
-    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
+    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker }
+    ElseIf ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
+        # Update rates every 15 minutes
+        [Void](Get-Rate)
+    }
 
     If ($Variables.MiningStatus -eq "Running") { 
         If ($Config.IdleDetection) { 
@@ -637,7 +662,7 @@ Function MainLoop {
                 }
                 Start-Core
             }
-            ElseIf ($CoreRunspace.Job.IsCompleted -eq $false) { 
+            ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
                 $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                 Write-Message -Level Verbose ($Message -replace "<br>", " ")
                 Stop-Core
@@ -651,13 +676,19 @@ Function MainLoop {
                 Remove-Variable Message
             }
         }
-        ElseIf ($CoreRunspace.Job.IsCompleted -ne $false) {
+        ElseIf ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
             If ($Variables.Timer) { 
                 Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
                 Stop-Core
             }
             Start-Core
             If ($LegacyGUIform) { Update-GUIstatus }
+        }
+        ElseIf (-not $Variables.SuspendCycle -and -not $Variables.MinersBenchmarkingOrMeasuring -and [DateTime]::Now.ToUniversalTime() -gt $Variables.BeginCycleTimeCycleTime.AddSeconds(1.5 *$Config.Interval)) { 
+            # Core watchdog. Sometimes core loop gets stuck
+            Write-Message -Level Warn "Core cycle is stuck - restarting..."
+            Stop-Core
+            Start-Core
         }
     }
     ElseIf ((Test-Path -Path $Variables.PoolsConfigFile) -and (Test-Path -Path $Variables.ConfigFile)) { 

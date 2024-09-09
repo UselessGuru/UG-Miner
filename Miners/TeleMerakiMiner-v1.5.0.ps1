@@ -23,13 +23,13 @@ Version date:   2024/09/09
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MeowPowMiner/MeowPowMiner-windows-2.0.0-cuda12-2.zip"
+$URI = "https://github.com/Telestai-Project/tele-meraki-miner/releases/download/1.5.0/WindowsRelease.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "Bin\$Name\meowpowminer.exe"
-$DeviceEnumerator = "Type_Vendor_Slot"
+$Path = "Bin\$Name\telemerakiminer.exe"
+$DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "MeowPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = "" }
+    @{ Algorithm = "ProgPowTelestai"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = @("Pascal"); ExcludePools = @(); Arguments = "" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -45,30 +45,29 @@ If ($Algorithms) {
 
             $Algorithms.ForEach(
                 { 
-                    # $ExcludeGPUarchitectures = $_.ExcludeGPUArchitectures
-                    If ($SupportedMinerDevices = $MinerDevices) { 
-                    # If ($SupportedMinerDevices = $MinerDevices.Where({ $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
+                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
 
                         # $ExcludePools = $_.ExcludePools
                         # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB 
                             If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                                 $Protocol = Switch ($Pool.Protocol) { 
-                                    "ethproxy"     { "stratum1" }
-                                    "ethstratum1"  { "stratum2" }
-                                    "ethstratum2"  { "stratum2" }
+                                    "ethproxy"     { "stratum1"; Break }
+                                    "ethstratum1"  { "stratum2"; Break }
+                                    "ethstratum2"  { "stratum2"; Break }
                                     Default        { "stratum" }
                                 }
-                                $Protocol += If ($Pool.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
+                                $Protocol += If ($Pool.PoolPorts[1]) { "+tls" } Else { "+tcp" }
 
                                 [PSCustomObject]@{ 
                                     API         = "EthMiner"
-                                    Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode("$($Pool.User)")):$([System.Web.HttpUtility]::UrlEncode($($Pool.Pass)))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:-$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode("$($Pool.User)")):$([System.Web.HttpUtility]::UrlEncode($($Pool.Pass)))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-port -$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     EnvVars     = @("SSL_NOVERIFY=TRUE")
                                     Fee         = @(0) # Dev fee

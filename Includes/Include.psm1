@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.1
-Version date:   2024/09/06
+Version:        6.3.2
+Version date:   2024/09/09
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -795,7 +795,7 @@ Function Stop-Core {
     }
 
     If ($Variables.Miners) { 
-        ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
+        ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status })) { 
             ForEach ($Worker in $Miner.WorkersRunning) { 
                 If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
                     # Remove Watchdog timers
@@ -3058,7 +3058,7 @@ Function Update-DAGdata {
                         If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG) { 
                             If ($DAGdataResponse.coins.$_.last_block -ge $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
-                                If ($DAGdata.Epoch -and $DAGdata.Algorithm -match $Variables.RegexAlgoHasDAG) { 
+                                If ($DAGdata.BlockHeight -and $DAGdata.Algorithm -match $Variables.RegexAlgoHasDAG) { 
                                     $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                                     $DAGdata | Add-Member Url $Url -Force
                                     $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
@@ -3184,6 +3184,32 @@ Function Update-DAGdata {
     # }
 
     # Update on script start, once every 24hrs or if unable to get data from source
+    $Currency = "TLS"
+    $Url = "https://telestai.cryptoscope.io/api/getblockcount/"
+    If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        # Get block data from StakeCube block explorer
+        Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
+                If ($DAGdata.Epoch) { 
+                    $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                    $DAGdata | Add-Member Url $Url -Force
+                    $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                    $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                }
+                Else { 
+                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                }
+            }
+        }
+        Catch { 
+            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+        }
+    }
+
+    # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "SCC"
     $Url = "https://scc.ccore.online/api/getblockcount"
     If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3302,7 +3328,8 @@ Function Update-DAGdata {
                         Epoch       = [Int]($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $Variables.DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
                     }
                 ) -Force
-                $Variables.DAGdata.Algorithm.$Algorithm | Add-Member CoinName ($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.DAGsize -eq $Variables.DAGdata.Algorithm.$Algorithm.DAGsize -and $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
+                $Variables.DAGdata.Algorithm.$Algorithm | Add-Member Currency ($DAGdataKeys.Where({ $Variables.DAGdata.Currency.$_.DAGsize -eq $Variables.DAGdata.Algorithm.$Algorithm.DAGsize -and $Variables.DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
+                $Variables.DAGdata.Algorithm.$Algorithm | Add-Member CoinName ($Variables.CoinNames[$Variables.DAGdata.Algorithm.$Algorithm.Currency]) -Force
             }
             Catch { 
                 Start-Sleep 0
@@ -3313,7 +3340,7 @@ Function Update-DAGdata {
         $Variables.DAGdata.Currency | Add-Member "*" (
             [PSCustomObject]@{ 
                 BlockHeight = [Int]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
-                CoinName    = "*"
+                Currency    = "*"
                 DAGsize     = [Int64]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
                 Epoch       = [Int]($DAGdataKeys.ForEach({ $Variables.DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
             }
@@ -3459,16 +3486,17 @@ Function Get-DAGepochLength {
     )
 
     Switch ($Algorithm) { 
-        "Autolykos2"   { Return 1024 }
-        "EtcHash"      { If ($BlockHeight -ge 11700000) { Return 60000 } Else { Return 30000 } }
-        "EthashSHA256" { Return 4000 }
-        "EvrProgPow"   { Return 12000 }
-        "FiroPow"      { Return 1300 }
-        "KawPow"       { Return 7500 }
-        "MeowPow"      { Return 7500 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L32
-        "Octopus"      { Return 524288 }
-        "SCCpow"       { Return 3240 } # https://github.com/stakecube/sccminer/commit/16bdfcaccf9cba555f87c05f6b351e1318bd53aa#diff-200991710fe4ce846f543388b9b276e959e53b9bf5c7b7a8154b439ae8c066aeR32
-        Default        { Return 30000 }
+        "Autolykos2"      { Return 1024 }
+        "EtcHash"         { If ($BlockHeight -ge 11700000) { Return 60000 } Else { Return 30000 } }
+        "EthashSHA256"    { Return 4000 }
+        "EvrProgPow"      { Return 12000 }
+        "FiroPow"         { Return 1300 }
+        "KawPow"          { Return 7500 }
+        "MeowPow"         { Return 7500 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L32
+        "Octopus"         { Return 524288 }
+        "SCCpow"          { Return 3240 } # https://github.com/stakecube/sccminer/commit/16bdfcaccf9cba555f87c05f6b351e1318bd53aa#diff-200991710fe4ce846f543388b9b276e959e53b9bf5c7b7a8154b439ae8c066aeR32
+        "ProgPowTelestai" { Return 12000 }
+        Default           { Return 30000 }
     }
 }
 
