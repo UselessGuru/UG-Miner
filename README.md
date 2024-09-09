@@ -95,7 +95,7 @@ UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin
 \- are sensible to price spikes  
 \- show more switching  
 
-### Algorithm selection / removal
+### Algorithm selection
 
 +[algorithm] to enable algorithm  
 -[algorithm] to disable algorithm
@@ -121,7 +121,7 @@ Will mine only ethash and kawpow
 Algorithm list blank  
 Will mine all available algorithms
 
-### Currency selection / removal
+### Currency selection
 
 +[currency] to enable currency  
 -[currency] to disable currency
