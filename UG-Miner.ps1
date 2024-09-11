@@ -666,11 +666,13 @@ Function MainLoop {
                 $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                 Write-Message -Level Verbose ($Message -replace "<br>", " ")
                 Stop-Core
-                If ($LegacyGUIform) { Update-GUIstatus }
+                If ($LegacyGUIform) { 
+                    Update-GUIstatus
 
-                $LegacyGUIminingSummaryLabel.Text = ""
-                ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
-                $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+                    $LegacyGUIminingSummaryLabel.Text = ""
+                    ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+                }
 
                 $Variables.Summary = $Message
                 Remove-Variable Message
@@ -898,7 +900,7 @@ Function MainLoop {
 
         $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan]([DateTime]::Now.ToUniversalTime() - $Variables.ScriptStartTime)
 
-        If ($LegacyGUIform) { 
+        If ($LegacyGUIform -and -not $Variables.SuspendCycle) { 
             $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle 
 
             If ($Variables.MyIP) { 
