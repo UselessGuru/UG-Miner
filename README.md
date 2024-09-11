@@ -180,16 +180,16 @@ Before starting a miner executable UG-Miner is trying to launch one of the follo
 
 1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the 'Utils\\prerun' folder  
-   e.g.
+   e.g.  
    'MiniZ-v2.4.d-1xRadeonRX5808GB-EtcHash.bat'  
-   'BzMiner-v21.4.0-1xRTX306012GB-Ethash&SHA512256d.bat'
+   'BzMiner-v21.4.0-1xRTX306012GB-Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
 3. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<AlgorithmName\>.bat in the 'Utils\\prerun' folder  
-   e.g.
+   e.g.  
    'Ethash.bat'  
-   'Ethash&SHA512256d.bat'
+   'Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)    
 
 5. default.bat  
