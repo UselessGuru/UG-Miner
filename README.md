@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Updated  2024/09/06
+Updated  2024/09/11
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -178,13 +178,13 @@ The prerun scripts can be used to apply per miner/algorithm overclocking setting
 
 Before starting a miner executable UG-Miner is trying to launch one of the following 3 prerun scripts (in this order):
 
-1. \<MinerName\>\_\<Algorithm\>.bat  
-   Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the 'Utils\\prerun folder'  
-   e.g. 'MiniZ-v2.4.d-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat'
+1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
+   Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the 'Utils\\prerun' folder (use the algorithm base name, not the algorithm variant name)  
+   e.g. 'MiniZ-v2.4.d-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat' or 'BzMiner-v21.4.0-1xRTX306012GB-Ethash&SHA512256d.bat'
 
-3. \<Algorithm\>.bat  
+3. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<AlgorithmName\>.bat in the 'Utils\\prerun' folder  
-   e.g. 'Ethash.bat'
+   e.g. 'Ethash.bat' or 'Ethash&SHA512256d.bat'
 
 5. default.bat  
    If neither of the two above exist UG-Miner will try to launch 'Utils\prerun\default.bat'
