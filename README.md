@@ -183,7 +183,7 @@ Before starting a miner executable UG-Miner is trying to launch one of the follo
    e.g. 'MiniZ-v2.4.d-1xRadeonRX5808GB-EtcHash.bat' or 'Wildrig-v0.40.5-1xGTX10606GB_Ghostrider.bat' or 'BzMiner-v21.4.0-1xRTX306012GB-Ethash&SHA512256d.bat'
 
 3. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
-   Create a file named \<AlgorithmName\>.bat in the 'Utils\\prerun' folder  
+   Create a file named \<AlgorithmName\>.bat in the 'Utils\\prerun' folder (use the algorithm base name, not the algorithm variant name)    
    e.g. 'Ethash.bat' or 'Ethash&SHA512256d.bat'
 
 5. default.bat  
