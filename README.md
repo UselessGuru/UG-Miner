@@ -179,15 +179,13 @@ The prerun scripts can be used to apply per miner/algorithm overclocking setting
 Before starting a miner executable UG-Miner is trying to launch one of the following 3 prerun scripts (in this order):
 
 1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
-   Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the 'Utils\\prerun' folder  
-   e.g.  
-   'MiniZ-v2.4.d-1xRadeonRX5808GB-EtcHash.bat'  
-   'BzMiner-v21.4.0-1xRTX306012GB-Ethash&SHA512256d.bat'  
+   Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the 'Utils\\prerun' folder, e.g.  
+   'MiniZ-v2.4.d-1xRadeonRX5808GB_EtcHash.bat'  
+   'BzMiner-v21.4.0-1xRTX306012GB_Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
 3. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
-   Create a file named \<AlgorithmName\>.bat in the 'Utils\\prerun' folder  
-   e.g.  
+   Create a file named \<AlgorithmName\>.bat in the 'Utils\\prerun' folder, e.g.  
    'Ethash.bat'  
    'Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)    
