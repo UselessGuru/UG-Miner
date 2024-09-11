@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.2
-Version date:   2024/09/09
+Version:        6.3.3
+Version date:   2024/09/11
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3014,6 +3014,56 @@ Function Get-ObsoleteMinerStats {
     $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
 
     Return @($StatFiles.Where({ (($_ -split "-")[0, 1] -join "-") -notin $MinerNames }))
+}
+
+Function Update-PoolWatchdog { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Pool[]]$Pools
+    )
+
+    # Apply watchdog to pools
+    If ($Config.Watchdog) { 
+        # We assume that miner is up and running, so watchdog timer is not relevant
+        If ($RelevantWatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -notin $Variables.MinersRunning })) { 
+            # Only pools with a corresponding watchdog timer object are of interest
+            If ($RelevantPools = $Pools.Where({ $RelevantWatchdogTimers.PoolName -contains $_.Name })) { 
+
+                # Add miner reason "Pool suspended by watchdog 'all algorithms'"
+                ($RelevantWatchdogTimers | Group-Object -Property PoolName).ForEach(
+                    { 
+                        If ($_.Count -ge 2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1) { 
+                            $Group = $_.Group
+                            If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName })) { 
+                                $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") })
+                                Write-Message -Level Warn "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                            }
+                        }
+                    }
+                )
+                Remove-Variable Group, PoolsToSuspend -ErrorAction Ignore
+
+                If ($RelevantPools = $RelevantPools.Where({ -not ($_.Reasons -match "Pool suspended by watchdog [all algorithms]") })) { 
+                    # Add miner reason "Pool suspended by watchdog 'Algorithm [Algorithm]'"
+                    ($RelevantWatchdogTimers | Group-Object -Property PoolName, Algorithm).ForEach(
+                        { 
+                            If ($_.Count -ge 2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count - 1) { 
+                                $Group = $_.Group
+                                If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm })) { 
+                                    $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") })
+                                    Write-Message -Level Warn "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
+                                }
+                            }
+                        }
+                    )
+                    Remove-Variable Group, PoolsToSuspend -ErrorAction Ignore
+                }
+            }
+            Remove-Variable RelevantPools
+        }
+        Remove-Variable RelevantWatchdogTimers
+    }
 }
 
 Function Test-Prime { 

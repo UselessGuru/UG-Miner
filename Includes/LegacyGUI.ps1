@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.2
-Version date:   2024/09/09
+Version:        6.3.3
+Version date:   2024/09/11
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -777,9 +777,40 @@ $LegacyGUIbuttonPause.Visible = $true
 $LegacyGUIbuttonPause.Width = 100
 $LegacyGUIbuttonPause.Add_Click(
     { 
-        If ($Variables.NewMiningStatus -ne "Paused") { 
+        If ($LegacyGUIbuttonPause.Tag) { 
+            If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
+                # Core is complete / gone. Cycle cannot be suspended anymore
+                $Variables.SuspendCycle = $false
+            }
+            Else { 
+                $Variables.SuspendCycle = -not $Variables.SuspendCycle
+                If ($Variables.SuspendCycle) { 
+                    $Message = "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again."
+                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Blue
+                    $LegacyGUIminingSummaryLabel.Text = $Message
+                    Write-Host $Message -ForegroundColor Cyan
+                }
+                Else { 
+                    $Message = "'<Ctrl><Alt>P' pressed. Core cycle is running again."
+                    $LegacyGUIminingSummaryLabel.Text = $Message
+                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Blue
+                    Write-Host $Message -ForegroundColor Cyan
+                    If ([DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                }
+                Remove-Variable Message
+            }
+        }
+        ElseIf ($Variables.NewMiningStatus -ne "Paused") { 
             $Variables.NewMiningStatus = "Paused"
+            $Variables.SuspendCycle = $false
             $Variables.RestartCycle = $true
+        }
+    }
+)
+$LegacyGUIbuttonPause.Add_KeyDown(
+    {
+        If ([System.Windows.Forms.UserControl]::MouseButtons -eq "Left") {
+            $LegacyGUIbuttonPause.Tag = $_.Control -and $_.Alt
         }
     }
 )
@@ -797,6 +828,7 @@ $LegacyGUIbuttonStart.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Running") { 
             $Variables.NewMiningStatus = "Running"
+            $Variables.SuspendCycle = $false
             $Variables.RestartCycle = $true
         }
     }
@@ -815,6 +847,7 @@ $LegacyGUIbuttonStop.Add_Click(
     { 
         If ($Variables.NewMiningStatus -ne "Idle") { 
             $Variables.NewMiningStatus = "Idle"
+            $Variables.SuspendCycle = $false
             $Variables.RestartCycle = $true
         }
     }

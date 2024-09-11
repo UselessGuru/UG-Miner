@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.2
-Version date:   2024/09/09
+Version:        6.3.3
+Version date:   2024/09/11
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.18"
+    $APIVersion = "0.5.4.20"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -366,6 +366,7 @@ Function Start-APIServer {
                                 If ($Variables.MiningStatus -ne "Paused") { 
                                     $Variables.NewMiningStatus = "Paused"
                                     $Data = "Mining is being paused...`n$(If ($Variables.BalancesTrackerPollInterval -gt 0) { If ($Variables.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
+                                    $Variables.SuspendCycle = $false
                                     $Variables.RestartCycle = $true
                                 }
                                 Break
@@ -374,6 +375,7 @@ Function Start-APIServer {
                                 If ($Variables.MiningStatus -ne "Running") { 
                                     $Variables.NewMiningStatus = "Running"
                                     $Data = "Mining processes starting...`n$(If ($Variables.BalancesTrackerPollInterval -gt 0) { If ($Variables.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
+                                    $Variables.SuspendCycle = $false
                                     $Variables.RestartCycle = $true
                                 }
                                 Break
@@ -382,6 +384,7 @@ Function Start-APIServer {
                                 If ($Variables.MiningStatus -ne "Idle") { 
                                     $Variables.NewMiningStatus = "Idle"
                                     $Data = "$($Variables.Branding.ProductLabel) is stopping...`n"
+                                    $Variables.SuspendCycle = $false
                                     $Variables.RestartCycle = $true
                                 }
                                 Break

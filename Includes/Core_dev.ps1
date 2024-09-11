@@ -34,6 +34,9 @@ Try {
 
     Do { 
         Write-Message -Level Info "Started new cycle."
+
+        If ($LegacyGUIform) { $host.UI.RawUI.WindowTitle }
+    
         $Variables.EndCycleMessage = ""
 
         # Set master timer
@@ -255,6 +258,7 @@ Try {
                             If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                                 $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                             }
+                            # $Variables.DonationStart = [DateTime]::Now
                         }
                     }
 
@@ -377,14 +381,23 @@ Try {
                         }
                     ).ForEach(
                         { 
-                            $Pool = [Pool]$_
-                            $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
-                            $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
-                            $Pool.Price *= $Factor
-                            $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
-                            $Pool.StablePrice *= $Factor
-                            $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
-                            $Pool
+                            $Pool = $_
+                            Try { 
+                                $Pool = [Pool]$_
+                                $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
+                                $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
+                                $Pool.Price *= $Factor
+                                $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
+                                $Pool.StablePrice *= $Factor
+                                $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
+                                $Pool
+                            }
+                            Catch { 
+                                Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                $_.Exception | Format-List -Force >> $ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            }
                         }
                     )
                     Remove-Variable Factor, Pool, PoolDataCollectedTimeStamp, PoolName -ErrorAction Ignore
@@ -1162,8 +1175,8 @@ Try {
         }
         Remove-Variable Miner, WatchdogTimers, Worker -ErrorAction Ignore
 
-        # Kill stuck miners on subsequent cycles when not in dry run mode
-        If (-not $Config.DryRun) { 
+        # Kill stuck miners on subsequent cycles
+        # If (-not ($Variables.MinersBest.Where({ $_.Benchmark -or $_.MeasurePowerConsumption }))) { 
             $Loops = 0
             # Some miners, e.g. BzMiner spawn a second executable
             While ($StuckMinerProcessIDs = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and ($Miners.Path | Sort-Object -Unique) -contains $_.ExecutablePath -and (Get-CimInstance win32_process -Filter "ParentProcessId = $($_.ProcessId)") -and $Miners.ProcessID -notcontains $_.ProcessID }) | Select-Object -ExpandProperty ProcessID) { 
@@ -1189,7 +1202,7 @@ Try {
                 }
             }
             Remove-Variable ChildProcessID, Loops, Message, Miner, StuckMinerProcessIDs -ErrorAction Ignore
-        }
+        # }
 
         $Miners.ForEach(
             { 
@@ -1385,6 +1398,9 @@ Try {
             $LoopEnd = [DateTime]::Now.AddSeconds(1)
             Try { 
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
+                    # If ($DebugMinerGetData) { 
+                        Write-Host "$($Miner.BaseName_Version_Device): $($Miner.GetMinerData() | ConvertTo-Json -Compress)"
+                    # }
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
                         $Miner.StatusInfo = "'$($Miner.Info)' ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"

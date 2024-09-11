@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.2
-Version date:   2024/09/09
+Version:        6.3.3
+Version date:   2024/09/11
 #>
 
 using module .\Includes\Include.psm1
@@ -299,7 +299,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.2"
+    Version      = [System.Version]"6.3.3"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -684,7 +684,7 @@ Function MainLoop {
             Start-Core
             If ($LegacyGUIform) { Update-GUIstatus }
         }
-        ElseIf (-not $Variables.SuspendCycle -and -not $Variables.MinersBenchmarkingOrMeasuring -and [DateTime]::Now.ToUniversalTime() -gt $Variables.BeginCycleTimeCycleTime.AddSeconds(1.5 *$Config.Interval)) { 
+        ElseIf (-not $Variables.SuspendCycle -and -not $Variables.MinersBenchmarkingOrMeasuring -and $Variables.BeginCycleTimeCycleTime -and [DateTime]::Now.ToUniversalTime() -gt $Variables.BeginCycleTimeCycleTime.AddSeconds(1.5 *$Config.Interval)) { 
             # Core watchdog. Sometimes core loop gets stuck
             Write-Message -Level Warn "Core cycle is stuck - restarting..."
             Stop-Core
@@ -711,12 +711,23 @@ Function MainLoop {
                 Else { 
                     $Variables.SuspendCycle = -not $Variables.SuspendCycle
                     If ($Variables.SuspendCycle) { 
-                        Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again." -ForegroundColor Cyan 
+                        $Message = "'<Ctrl><Alt>P' pressed. Core cycle is suspended until you press '<Ctrl><Alt>P' again."
+                        If ($LegacyGUIform) { 
+                            $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Blue
+                            $LegacyGUIminingSummaryLabel.Text = $Message
+                        }
+                        Write-Host $Message -ForegroundColor Cyan
                     }
                     Else { 
-                        Write-Host "'<Ctrl><Alt>P' pressed. Core cycle is running again." -ForegroundColor Cyan 
+                        $Message = "'<Ctrl><Alt>P' pressed. Core cycle is running again."
+                        If ($LegacyGUIform) { 
+                            $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Blue
+                            $LegacyGUIminingSummaryLabel.Text = $Message
+                        }
+                        Write-Host $Message -ForegroundColor Cyan
                         If ([DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                     }
+                    Remove-Variable Message
                 }
             }
             Else { 
