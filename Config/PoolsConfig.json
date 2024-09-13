@@ -1,0 +1,55 @@
+{
+  "HashCryptos": {
+    "Algorithm": [
+      "-MemeHash"
+    ],
+    "BrainDebug": false
+  },
+  "Hiveon": {
+    "Algorithm": []
+  },
+  "MiningDutch": {
+    "Algorithm": [
+      "-MemeHash",
+      "-YescryptR16"
+    ],
+    "BrainDebug": false,
+    "EarningsAdjustmentFactor": 0.8,
+    "ExcludeRegion": []
+  },
+  "MiningPoolHub": {
+    "ExcludeRegion": [],
+    "PayoutThreshold": {
+      "ETH": 0.25,
+      "mBTC": 50
+    }
+  },
+  "NiceHash": {
+    "Algorithm": []
+  },
+  "ProHashing": {
+    "Algorithm": [
+    ],
+    "BrainDebug": false
+  },
+  "ZergPool": {
+    "Algorithm": [
+      "_-Ethash",
+      "_-EthashB3",
+      "_-HeavyHashKarlsen",
+      "_-HeavyHashPyrin",
+      "_-Kawpow"
+    ],
+    "BrainDebug": false,
+    "Currency": [
+      "_-NXL"
+    ],
+    "PoolAllow0Hashrate": false,
+    "SSL": "Never",
+    "SSLselfSignedCertificate": true
+  },
+  "ZPool": {
+    "Algorithm": [],
+    "BrainDebug": false
+  }
+}

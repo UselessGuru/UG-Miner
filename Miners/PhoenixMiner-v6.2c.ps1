@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.3
-Version date:   2024/09/11
+Version:        6.3.4
+Version date:   2024/09/13
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -55,23 +55,25 @@ If ($Algorithms) {
         "Blake2s" = @(10, 20, 30, 40)
     }
 
-    # Build command sets for intensities
-    $Algorithms = $Algorithms.ForEach(
-        { 
-            $_.PsObject.Copy()
-            If ($_.Algorithms[1]) { 
-                $Intensity = $_.Intensity
-                $WarmupTimes = $_.WarmupTimes.PsObject.Copy()
-                If ($_.Type -eq "NVIDIA" -and $Intensity) { $Intensity *= 5 } # Nvidia allows much higher intensity
-                ForEach ($Intensity in $IntensityValues.($_.Algorithms[1]) | Select-Object) { 
-                    $_ | Add-Member Intensity $Intensity -Force
-                    # Allow extra time for auto tuning
-                    $_.WarmupTimes[1] = $WarmupTimes[1] + 45
-                    $_.PsObject.Copy()
+    If (-not $Config.DryRun) { 
+        # Build command sets for intensities
+        $Algorithms = $Algorithms.ForEach(
+            { 
+                $_.PsObject.Copy()
+                If ($_.Algorithms[1]) { 
+                    $Intensity = $_.Intensity
+                    $WarmupTimes = $_.WarmupTimes.PsObject.Copy()
+                    If ($_.Type -eq "NVIDIA" -and $Intensity) { $Intensity *= 5 } # Nvidia allows much higher intensity
+                    ForEach ($Intensity in $IntensityValues.($_.Algorithms[1]) | Select-Object) { 
+                        $_ | Add-Member Intensity $Intensity -Force
+                        # Allow extra time for auto tuning
+                        $_.WarmupTimes[1] = $WarmupTimes[1] + 45
+                        $_.PsObject.Copy()
+                    }
                 }
             }
-        }
-    )
+        )
+    }
 
     ($Devices | Select-Object Type, Model -Unique).ForEach(
         { 

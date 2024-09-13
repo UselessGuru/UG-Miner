@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.3
-Version date:   2024/09/11
+Version:        6.3.4
+Version date:   2024/09/13
 #>
 
 using module .\Includes\Include.psm1
@@ -299,7 +299,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.3"
+    Version      = [System.Version]"6.3.4"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -681,7 +681,7 @@ Function MainLoop {
         ElseIf ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
             If ($Variables.Timer) { 
                 Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
-                Stop-Core
+                Close-CoreRunspace
             }
             Start-Core
             If ($LegacyGUIform) { Update-GUIstatus }
@@ -705,7 +705,7 @@ Function MainLoop {
         If ($host.UI.RawUI.KeyAvailable) { 
             $KeyPressed = [System.Console]::ReadKey($true)
 
-            If ($KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Alt><Ctrl>#>) { 
+            If ($Variables.NewMiningStatus -eq "Running" -and $KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Alt><Ctrl>#>) { 
                 If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
                     # Core is complete / gone. Cycle cannot be suspended anymore
                     $Variables.SuspendCycle = $false
@@ -717,6 +717,7 @@ Function MainLoop {
                         If ($LegacyGUIform) { 
                             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Blue
                             $LegacyGUIminingSummaryLabel.Text = $Message
+                            $LegacyGUIbuttonPause.Enabled = $false
                         }
                         Write-Host $Message -ForegroundColor Cyan
                     }
@@ -725,6 +726,7 @@ Function MainLoop {
                         If ($LegacyGUIform) { 
                             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Blue
                             $LegacyGUIminingSummaryLabel.Text = $Message
+                            $LegacyGUIbuttonPause.Enabled = $true
                         }
                         Write-Host $Message -ForegroundColor Cyan
                         If ([DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }

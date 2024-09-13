@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.3
-Version date:   2024/09/11
+Version:        6.3.4
+Version date:   2024/09/13
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.20"
+    $APIVersion = "0.5.4.22"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -833,7 +833,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners" { 
-                                $Data = ConvertTo-Json -Depth 4 -Compress @(($Variables.Miners | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, DeviceNames, Name)
+                                $Data = ConvertTo-Json -Depth 4 -Compress @(($Variables.Miners | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/available" { 
@@ -876,7 +876,7 @@ Function Start-APIServer {
                             }
                             "/miners/optimal" { 
                                 $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersOptimal | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, DeviceNames, @{ Expression = $Bias; Descending = $true })
+                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersOptimal | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp)
                                 Remove-Variable Bias
                                 Break
                             }

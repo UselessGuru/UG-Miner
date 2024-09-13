@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.3
-Version date:   2024/09/11
+Version:        6.3.4
+Version date:   2024/09/13
 #>
 
 using module .\Include.psm1
@@ -1000,7 +1000,7 @@ Try {
                 Write-Message -Level Info "Selecting best miner$(If (($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { " profit (power cost $($Config.FIATcurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earnings" })..."
 
                 If ($Miners.Where({ $_.Available }).Count -eq 1) { 
-                    $MinersBest = $Variables.MinersBestPerDevice = $Variables.MinersOptimal = $Miners.Where({ $_.Available })
+                    $MinersBest = $Variables.MinersBestPerDevice = $MinersOptimal = $Miners.Where({ $_.Available })
                 }
                 Else { 
                     $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
@@ -1009,7 +1009,7 @@ Try {
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias *= $RunningMinerBonusFactor })
 
                     # Get the optimal miners per algorithm and device
-                    $Variables.MinersOptimal = ($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) })
+                    $MinersOptimal = ($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) })
                     # Get the best miners per device
                     $Variables.MinersBestPerDevice = ($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true } -Top 1 })
                     $Variables.MinerDeviceNamesCombinations = (Get-Combination @($Variables.MinersBestPerDevice | Select-Object DeviceNames -Unique)).Where({ (Compare-Object ($_.Combination | Select-Object -ExpandProperty DeviceNames -Unique) ($_.Combination | Select-Object -ExpandProperty DeviceNames) | Measure-Object).Count -eq 0 })
@@ -1039,7 +1039,7 @@ Try {
 
                     # Revert running miner bonus
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias /= $RunningMinerBonusFactor })
-                    Remove-Variable Bias, MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
+                    Remove-Variable MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
                 }
 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
@@ -1052,10 +1052,9 @@ Try {
             Else { 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum).Maximum
                 $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency))
-                $Variables.MinersOptimal = $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinations = $MinersBest = [Miner[]]@()
+                $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinations = $MinersBest = $MinersOptimal = [Miner[]]@()
                 $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
             }
-            Remove-Variable Bias -ErrorAction Ignore
         }
 
         $Variables.MinersNeedingBenchmark = $Miners.Where({ $_.Available -and $_.Benchmark }) | Sort-Object -Property Name -Unique
@@ -1212,9 +1211,10 @@ Try {
         )
 
         # Update data in API
-        $Variables.Miners = $Miners.Where({ $_.SideIndicator -ne "<=" })
+        $Variables.Miners = $Miners.Where({ $_.SideIndicator -ne "<=" }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { [String]$_.DeviceNames }, Info
         $Variables.MinersBest = $MinersBest | Sort-Object { [String]$_.DeviceNames }
-        Remove-Variable Miners, MinersBest -ErrorAction Ignore
+        $Variables.MinersOptimal = $MinersOptimal | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { [String]$_.DeviceNames }, @{ Expression = $Bias; Descending = $true }
+        Remove-Variable Bias, Miners, MinersBest, MinersOptimal -ErrorAction Ignore
 
         $Variables.Miners.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
 
@@ -1500,6 +1500,9 @@ Try {
         $Proc = Get-Process -Id $PID
         Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) runspace: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb"
 
+        # Core suspended with <Ctrl><Alt>P in MainLoop
+        While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
+
         $Variables.RestartCycle = $true
 
         If ($Variables.NewMiningStatus -eq "Running") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
@@ -1510,5 +1513,6 @@ Catch {
     "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
     $_.Exception | Format-List -Force >> $ErrorLogFile
     $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
-    $Variables.EndCycleTime = $Variables.StartCycleTime.AddSeconds($Config.Interval) # Reset timers
+    # Reset timers
+    $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
 }

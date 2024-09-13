@@ -4,14 +4,48 @@ Known issues:
   -> It is recommended to set it to 'Windows Console Host'
 
 
+Changelog UG-Miner 6.3.4 2024/09/13
+===================================
+
+Changes:
+- Legacy GUI: Use <Ctrl>-<Alt>-P instead of <Ctrl>-<Alt>-<Pause Mining> button to suspend core (same as in console window)
+
+Improvements:
+- Web GUI / Miners tables: Optimize colum width handling
+- Core: Use 'Close-CoreRunspace' instead of 'Stop-Core' on error in 'Core.ps1'
+
+Miner changes:
+- lolMiner-v1.89
+
+
+Changelog UG-Miner 6.3.3 2024/09/11
+===================================
+
+Enhancement:
+- Legacy GUI: <Ctrl>-<Alt>-<Pause Mining> button suspends core (same <Ctrl>-<Alt>-P in console window)
+
+Fixes:
+- Core: Benchmarking or power usage measuring not stopping on time when no valid samples are found
+- Core: Watchdog not suspending algorithm@pool
+- Core: Watchdog suspending wrong miner
+
+Improvements:
+- Minor code optimizations
+
+Miner updates:
+- Rigel-v1.19.0
+- SRBMinerMulti-v2.6.4
+
+
 Changelog UG-Miner 6.3.2 2024/09/09
 ===================================
 
 Changes:
-- Keep miners when paused
+- Keep miners when mining is paused
 
 Enhancements:
 - Core / Includes.psm1: Function 'Update-DAGdata' can now handle TLS (ProgPowTelestai) data
+- Core: Add support for 'HeavyHashKarlsenV2' & 'HeavyHashPyrinV2' algorithms
 
 Fixes:
 - Legacy GUI: Miners table not getting cleared when no miners available
