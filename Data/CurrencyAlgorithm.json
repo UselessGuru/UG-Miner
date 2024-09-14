@@ -132,6 +132,7 @@
   "EVR": "EvrProgPow",
   "EXO": "X16r",
   "EXP": "Ethash",
+  "FB": "SHA256",
   "FCH": "SHA256",
   "FEC": "Scrypt",
   "FIRO": "FiroPow",
