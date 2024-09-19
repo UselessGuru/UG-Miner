@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Updated  2024/09/14
+Updated  2024/09/19
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -55,7 +55,7 @@ UG-Miner code is partly based on
     You need to configure a wallet address for each currency you want to mine.
 
 <sup>(3)</sup> Pool does not support auto-exchange for some currencies.  
-    You need to configure a wallet address for each currency you want to mine.
+    You need to configure a wallet address for each non-auto-exchangable currency you want to mine.
 
 ## Easy configuration, easy start
 
