@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Updated  2024/09/19
+Updated  2024/09/24
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -59,7 +59,7 @@ UG-Miner code is partly based on
 
 ## Easy configuration, easy start
 
-   Run UG-Miner.bat
+   Run **UG-Miner.bat** or **UG-Miner_AsAdmin.bat**
    1. Edit configuration (http://localhost:3999/configedit.html)
    2. Set your wallet address(es) and username(s) <sup>(*)</sup>
    3. Select your pool(s)
@@ -67,6 +67,8 @@ UG-Miner code is partly based on
    5. Start mining
 
    <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username
+
+It is recommended to run UG-Miner with local computer administrator rights to ensure file permissions and firewall rules can be set without user intervention. 
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
@@ -172,7 +174,7 @@ Some settings can be configured per [advanced pool configuration](<https://githu
 
 ## PreRun
 
-Ability to run a batch script prior switching to a specific miner and/or algorithm.
+UG-Miner can run a batch script prior switching to a specific miner and/or algorithm.
 
 The prerun scripts can be used to apply per miner/algorithm overclocking settings via nvidiaInspector or OverdriveNTool.  
 
@@ -210,8 +212,8 @@ A separate section can be added for each pool. If a pool is listed in this file,
 - Currency: List of included or excluded currencies per pool
 - EarningsAdjustmentFactor: This adds a multiplicator on estimations presented by the pool  
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
-- Exclude region: One or more of 'Asia', 'Europe', 'HongKong', 'Japan', 'Russia', 'USA East', 'USA West'
-- MinWorker: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be disabled
+- Exclude region: One or more of 'Europe', 'HongKong', 'India', 'Japan', 'Russia', 'Singapore', 'USA East', 'USA West'
+- MinWorker: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
 - PayoutThreshold[Currency]: pool will allow payout if this amount is reached
 - SSL: Either 'Prefer' (use SSL pool connections where available), 'Never' (pools that do only support SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL connections are marked as unavailable)
 - SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
@@ -248,18 +250,7 @@ A simple miner switching log in csv format is written to '[UG-Miner directory]\L
 
 ## Console display options
 
-UI style can be set to 'light' or 'full':
-
-- light (default)  
-  Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be not be shown
-
-- full  
-  Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be shown
-
-UIStyle automatically switches to full during benchmarking or when measuring power cunsumption.
-
 In the main text window (session console) the following hot keys are supported:
-
 ```
 Hot key legend:
 1: Toggle Listing pool balances                    [off]
@@ -280,6 +271,15 @@ u: Toggle 'User' column visibility                 [on]
 w: Toggle 'Power consumption' column visibility    [on]
 y: Toggle 'Currency' column visibility             [on]
 ```
+UI style can be set to 'light' or 'full':
+
+- light (default)  
+  Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be not be shown
+
+- full  
+  Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be shown
+
+UIStyle automatically switches to full during benchmarking or when measuring power cunsumption.
 
 ## Requirements
 
