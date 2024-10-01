@@ -4,6 +4,21 @@ Known issues:
   -> It is recommended to set it to 'Windows Console Host'
 
 
+Changelog UG-Miner 6.3.6 2024/10/01
+===================================
+
+Enhancements:
+- Added configuration item 'Ignore0HashrateSample'.
+- Web GUI: Change some icons
+
+Miner changes:
+- JayddeeCpu-v24.5
+- lolMiner-v1.91
+- Rigel-v1.19.1
+- SRBMinerMulti-v2.6.6
+- TeamBlackMiner-v2.26
+
+
 Changelog UG-Miner 6.3.5 2024/09/14
 ===================================
 
