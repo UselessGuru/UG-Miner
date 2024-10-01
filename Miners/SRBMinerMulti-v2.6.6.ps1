@@ -285,9 +285,7 @@ If ($Algorithms) {
 
     If (-not $Config.DryRun) { 
         # Allowed max loss for 1. algorithm
-        $GpuDualMaxLosses = @($null, 2, 4, 7, 10, 15, 21, 30)
-        $GpuDualMaxLosses = @($null, 5)
-        $GpuDualMaxLosses = @($null)
+        $GpuDualMaxLosses = @(2, 5, 9, 14, 21, 30)
 
         # Build command sets for max loss
         $Algorithms = $Algorithms.ForEach(
@@ -330,10 +328,11 @@ If ($Algorithms) {
                         ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name }) | Select-Object -Last $(If ($Config.BenchmarkAllPoolAlgorithmCombinations) { $MinerPools[0][$_.Algorithms[0]].Count } Else { 1 })) { 
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name }) | Select-Object -Last $(If ($Config.BenchmarkAllPoolAlgorithmCombinations) { $MinerPools[1][$_.Algorithms[1]].Count } Else { 1 })) { 
                                 $Pools = @(($Pool0, $Pool1).Where({ $_ }))
+
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -gt $MinMemGiB })) { 
 
-                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.GpuDualMaxLoss) { "-$($_.GpuDualMaxLoss)" })"
+                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.GpuDualMaxLoss) { "-GpuDualMaxLoss$($_.GpuDualMaxLoss)" })"
 
                                     $Arguments = ""
                                     ForEach ($Pool in $Pools) { 
@@ -348,9 +347,10 @@ If ($Algorithms) {
                                         $Arguments += " --password $($Pool.Pass)"
                                         If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
                                         $Arguments += If ($Pool.PoolPorts[1]) { " --tls true" } Else { " --tls false" }
-                                        If ($_.GpuDualMaxLoss) { $Arguments += " --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
+
                                     }
                                     Remove-Variable Pool
+                                    If ($_.GpuDualMaxLoss) { $Arguments += " --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
 
                                     If ($_.Type -eq "CPU") { 
                                         $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))"
