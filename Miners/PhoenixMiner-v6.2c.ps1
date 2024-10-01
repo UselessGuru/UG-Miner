@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
+Version:        6.3.7
 Version date:   2024/10/01
 #>
 
@@ -104,7 +104,7 @@ If ($Algorithms) {
 
                                     If ($AvailableMinerDevices) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.Intensity) { "-$($_.Intensity)" })"
+                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.Intensity) { "-Intensity$($_.Intensity)" })"
 
                                         $Arguments = $_.Arguments
                                         $Arguments += " -pool $(If ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User)"
