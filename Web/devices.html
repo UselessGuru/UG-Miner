@@ -277,11 +277,9 @@
             $(document).ready(function () {
               $(function () {
                 $('#btn-disable-device').click(function () {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   var command = 'functions/config/device/disable?Name=' + encodeURIComponent($('#enableddevices').bootstrapTable('getSelections').map(item => item.Name));
                   $('.modal-body').load(command, function() {
-
-
                     $('.modal-title').text($('#btn-disable-device').text());
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
@@ -293,10 +291,9 @@
 
               $(function () {
                 $('#btn-enable-device').click(function () {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   var command = 'functions/config/device/enable?Name=' + encodeURIComponent($('#disableddevices').bootstrapTable('getSelections').map(item => item.Name));
                   $('.modal-body').load(command, function() {
-
                     $('.modal-title').text($('#btn-enable-device').text());
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});

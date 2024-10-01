@@ -102,7 +102,7 @@
               $('#btn-reset-data').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
                   $payload = {'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm, Currency: $element.Currency })))};
                   $('.modal-body').load($url, $payload, function() {

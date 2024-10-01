@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.5
-Version date:   2024/09/14
+Version:        6.3.6
+Version date:   2024/10/01
 #>
 
 using module .\Includes\Include.psm1
@@ -107,7 +107,9 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$IgnorePoolFee = $false, # If true will ignore pool fee for earning & profit calculation
     [Parameter(Mandatory = $false)]
-    [Switch]$IgnorePowerCost = $false, # If true ill ignore power cost in best miner selection, instead miners with best earnings will be selected
+    [Switch]$IgnorePowerCost = $false, # If true will ignore power cost in best miner selection, instead miners with best earnings will be selected
+    [Parameter(Mandatory = $false)]
+    [Switch]$Ignore0HashrateSample = $false, # If true will ignore 0 hashrate samples when setting miner status to 'warming up'
     [Parameter(Mandatory = $false)]
     [Int]$Interval = 90, # Average cycle loop duration (seconds), min 60, max 3600
     [Parameter(Mandatory = $false)]
@@ -299,14 +301,14 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.5"
+    Version      = [System.Version]"6.3.6"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n" -ForegroundColor Red
+    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
     $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
@@ -375,12 +377,12 @@ If (-not $Variables.FreshConfig) { Write-Message -Level Info "Using configuratio
 ElseIf ((Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
     # Exclude from AV scanner
     Try { 
-        If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..." }
-        Start-Process "pwsh" "-Command Write-Host 'Excluding UG-Miner directory ''$(Convert-Path .)'' from Microsoft Defender Antivirus scans...'; Start-Sleep -Seconds 5; Import-Module Defender -SkipEditionCheck; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
+        If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..."; Start-Sleep -Seconds 5 }
+        Start-Process "pwsh" "-Command Write-Host 'Excluding UG-Miner directory ''$(Convert-Path .)'' from Microsoft Defender Antivirus scans...'; Import-Module Defender -SkipEditionCheck; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
         Write-Message -Level Info "Excluded the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans."
     }
     Catch { 
-        $WscriptShell.Popup("Could not to exclude the directory`n$($Variables.Branding.ProductLabel)`n from Microsoft Defender Antivirus scans. This may lead to unpredictable results.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis may lead to unpredictable results.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     # Unblock files
@@ -456,15 +458,6 @@ Catch {
 Import-Module NetSecurity -ErrorAction Ignore
 Import-Module Defender -ErrorAction Ignore -SkipEditionCheck
 
-# Unblock files
-If (Get-Command "Unblock-File" -ErrorAction Ignore) { 
-    If ($UnblockFiles = (Get-ChildItem -Path . -Recurse).Where({ -not $_.PsIsContainer -and $_.FullName -notmatch "Logs|Stats" }).Where({ Try { Get-Item $_ -Stream Zone.* } Catch { } })) { 
-        Write-Host "Unblocking $($UnblockFiles.Count) file$(If ($UnblockFiles.Count -ne 1) { "s" }) that $(If ($UnblockFiles.Count -eq 1) { "was" } Else { "were" }) downloaded from the internet..." -ForegroundColor Yellow
-        $UnblockFiles | Unblock-File
-    }
-    Remove-Variable UnblockFiles -ErrorAction Ignore
-}
-
 Write-Message -Level Verbose "Setting variables..."
 $nl = "`n" # Must use variable, cannot join with "`n" with Write-Host
 
@@ -497,7 +490,7 @@ $Variables.WatchdogTimers = [PSCustomObject[]]@()
 $Variables.RegexAlgoIsEthash = "^Autolykos2|^Ethash|^EtcHash|^UbqHash"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^ProgPow|^SCCpow"
 $Variables.RegexAlgoHasDynamicDAG = "^Autolykos2|^Ethash|^EtcHash|^EvrProgPow|^FiroPow|^KawPow|^MeowPow|^Octopus|^ProgPow|^SCCpow|^UbqHash"
-$Variables.RegexAlgoHasStaticDAG = "^FishHash"
+$Variables.RegexAlgoHasStaticDAG = "^FishHash|^HeavyHashKarlsenV2$"
 $Variables.RegexAlgoHasDAG = (($Variables.RegexAlgoHasDynamicDAG -split '\|') + ($Variables.RegexAlgoHasStaticDAG) | Sort-Object) -join '|'
 
 $Variables.Summary = "Loading miner device information.<br>This may take a while..."
@@ -621,6 +614,7 @@ Function MainLoop {
                     Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
                     If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
+
                     # If ($Config.ReportToServer) { Write-MonitoringData }
 
                     Write-Host ""

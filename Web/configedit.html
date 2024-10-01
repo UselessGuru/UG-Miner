@@ -238,7 +238,7 @@
           <br>
 
           <!-- Miner runtime settings -->
-          <legend title="Miner Runtime Settings" class=h6><b>Miner runtime settings</b></legend>
+          <legend title="Miner runtime settings" class=h6><b>Miner runtime settings</b></legend>
 
           <label for="MinerWindowStyle">Run miner</label>
           <select name="" id="MinerWindowStyle">
@@ -367,7 +367,7 @@
           <!-- Console display settings -->
           <div class="col-md-12">
             <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console display settings</b></legend>
-            <div style="padding-top: 0.3rem" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing 's' in the console window while waiting for the next cycle"> UI Style
+            <div style="padding-top: 0.3rem" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle"> UI Style
               <select name="UIStyle" id="UIStyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>
                 <option value='light' title="Information about miners run in the past, failed miners & watchdog timers will not be shown">light</option>
@@ -420,14 +420,14 @@
             <br>
 
             <!-- Log to file settings -->
-            <fieldset title="Defines the detail level of information written to the log file&#10;&#10;It is recommended to keep at least 'Info' enabled">
+            <fieldset title="Sets the detail level of information written to the log file&#10;&#10;It is recommended to keep at least 'Info' enabled">
               <legend class=h6><b>Log level details (File)</b></legend>
               <div style="padding-top: 0.3rem" id="LogToFile"></div>
             </fieldset>
             <br>
 
             <!-- Log to screen settings -->
-            <fieldset title="Defines the detail level of information written to the screen&#10;&#10;It is recommended to keep at least 'Info' enabled">
+            <fieldset title="Sets the detail level of information written to the screen&#10;&#10;It is recommended to keep at least 'Info' enabled">
               <legend class=h6><b>Log level details (Screen)</b></legend>
               <div style="padding-top: 0.3rem" id="LogToScreen"></div>
             </fieldset>
@@ -471,7 +471,7 @@
   var regions = [];
 
   $(document).ready(function () {
-    document.body.style.cursor = 'wait';
+    $('body').css('cursor', 'wait');
 
     // Edit config file
     $('#btn-editconfig').click(function () {
@@ -987,7 +987,7 @@
     if (config.ShowChangeLog) document.getElementById('ShowChangeLog').checked = true;
     if (config.BackupOnAutoUpdate) document.getElementById('BackupOnAutoUpdate').checked = true;
 
-    document.body.style.cursor = 'default';
+    $('body').css('cursor', 'default');
 
     $.ajax({
       async: false,
@@ -1246,7 +1246,7 @@
         if (validator.numberOfInvalids()) $("#alerts").append('<div class="alert alert-danger alert-dismissible fade show" role="alert">Error saving data - fields with invalid data are marked in red.<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>')
       },
       submitHandler: function (form) {
-        document.body.style.cursor = 'wait';
+        $('body').css('cursor', 'wait');
 
         // Wallet addresses and user names
         $.each(config.Wallets, function (key, value) {
@@ -1420,32 +1420,32 @@
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
             $('#myModal').modal({ show: true });
-            document.body.style.cursor = 'default';
+            $('body').css('cursor', 'default');
             $('#myModal').on('hidden.bs.modal', function () { location.reload(true) })
           });
         } else if (!config.FIATcurrency) {
           // No FIAT currency
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must set the main (FIAT) currency.');
-          document.body.style.cursor = 'default';
+          $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         } else if (config.ExcludeDeviceName.length >= enabledDevicesCount) {
           // No mining device selected
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must select at least one mining device.');
-          document.body.style.cursor = 'default';
+          $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         } else if (config.NiceHashWalletIsInternal && (!config.NiceHashWallet || config.NiceHashWallet == config.Wallets.BTC)) {
           // Nicehash External but no wallet
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - Internal NiceHash address must be different from your normal BTC wallet.');
-          document.body.style.cursor = 'default';
+          $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         } else {
           // No pool selected
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must select at least one pool.');
-          document.body.style.cursor = 'default';
+          $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         }
       }

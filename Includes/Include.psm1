@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.5
-Version date:   2024/09/14
+Version:        6.3.6
+Version date:   2024/10/01
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1899,8 +1899,8 @@ Function Set-Stat {
 Function Get-Stat { 
 
     Param (
-        [Parameter(Mandatory = $true)]
-        [String[]]$Names
+        [Parameter(Mandatory = $false)]
+        [String[]]$Names = (Get-ChildItem $PWD\Stats).BaseName
     )
 
     $Names.ForEach(
@@ -3214,7 +3214,7 @@ Function Update-DAGdata {
     #     # Get block data from StakeCube block explorer
     #     Try { 
     #         Write-Message -Level Info "Loading DAG data from '$Url'..."
-    #         $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+    #         $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
     #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
     #             $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
     #             If ($DAGdata.Epoch) { 
@@ -3240,7 +3240,7 @@ Function Update-DAGdata {
         # Get block data from StakeCube block explorer
         Try { 
             Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                 If ($DAGdata.Epoch) { 
@@ -3266,7 +3266,7 @@ Function Update-DAGdata {
         # Get block data from StakeCube block explorer
         Try { 
             Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
                 If ($DAGdata.Epoch) { 
@@ -3292,7 +3292,7 @@ Function Update-DAGdata {
         # Get block data from BLOCX block explorer
         Try { 
             Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
                 If ($DAGdata.DAGsize) { 
@@ -3318,7 +3318,7 @@ Function Update-DAGdata {
         # Get block data from EVR block explorer
         Try { 
             Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+            $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                 $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                 If ($DAGdata.Epoch) { 
@@ -3345,7 +3345,7 @@ Function Update-DAGdata {
             # Get block data from MeowCoin block explorer
             Try { 
                 Write-Message -Level Info "Loading DAG data from '$Url'..."
-                $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15
+                $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
                 If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse.blockcount -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
                     $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                     If ($DAGdata.Epoch) { 
@@ -3478,7 +3478,12 @@ Function Get-DAGsize {
             Break
         }
         "IRON" { 
-            # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
+            # IRON (FishHash) has a static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
+            $Size = 4608MB
+            Break
+        }
+        "KLS" { 
+            # KLS (KarlsenHash) is based on FishHash and has a static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
             $Size = 4608MB
             Break
         }

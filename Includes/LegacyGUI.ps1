@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.5
-Version date:   2024/09/14
+Version:        6.3.6
+Version date:   2024/10/01
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -585,7 +585,7 @@ Function Update-TabControl {
 
 Function Resize-Form { 
 
-    If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smalle than minimum (Why?)
+    If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smaller than minimum (Why?)
     Try { 
         $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
         $LegacyGUItabControl.Height = $LegacyGUIform.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - 72
@@ -1739,11 +1739,13 @@ $LegacyGUIswitchingPage.Controls.AddRange(@($LegacyGUIswitchingPageControls))
 $LegacyGUIwatchdogTimersPage.Controls.AddRange(@($LegacyGUIwatchdogTimersPageControls))
 
 $LegacyGUItabControl = New-Object System.Windows.Forms.TabControl
+$LegacyGUItabControl.Appearance = "Buttons"
 $LegacyGUItabControl.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUItabControl.Height = 0
 $LegacyGUItabControl.Location = [System.Drawing.Point]::new(6, $LegacyGUIminingSummaryLabel.Bottom)
 $LegacyGUItabControl.Name = "TabControl"
 $LegacyGUItabControl.ShowToolTips = $true
-$LegacyGUItabControl.Height = 0
+$LegacyGUItabControl.Padding = [System.Drawing.Point]::new(18, 6)
 $LegacyGUItabControl.Width = 0
 # $LegacyGUItabControl.Controls.AddRange(@($LegacyGUIstatusPage, $LegacyGUIearningsPage, $LegacyGUIminersPage, $LegacyGUIpoolsPage, $LegacyGUIrigMonitorPage, $LegacyGUIswitchingPage, $LegacyGUIwatchdogTimersPage))
 $LegacyGUItabControl.Controls.AddRange(@($LegacyGUIstatusPage, $LegacyGUIearningsPage, $LegacyGUIminersPage, $LegacyGUIpoolsPage, $LegacyGUIswitchingPage, $LegacyGUIwatchdogTimersPage))

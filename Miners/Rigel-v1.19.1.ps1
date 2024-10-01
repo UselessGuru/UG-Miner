@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.5
-Version date:   2024/09/14
+Version:        6.3.6
+Version date:   2024/10/01
 #>
 
 # Return 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.19.0/rigel-1.19.0-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.19.1/rigel-1.19.1-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -80,10 +80,9 @@ $Algorithms = @(
     @{ Algorithms = @("FishHash", "SHA512256d");                 Fee = @(0.01, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+sha512256d" }
     @{ Algorithms = @("HeavyHashKarlsen");                       Fee = @(0.007);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhash" }
     @{ Algorithms = @("HeavyHashKarlsenv2");                     Fee = @(0.01);        MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhashv2" }
-    @{ Algorithms = @("HeavyHashKarlsenv2", "HeavyHashPyrinV2"); Fee = @(0.01, 0.01);  MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhashv2+pyrinhashv2" }
+    @{ Algorithms = @("HeavyHashKarlsenv2", "HeavyHashPyrinV2"); Fee = @(0.01, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhashv2+pyrinhashv2" }
     @{ Algorithms = @("HeavyHashPyrin");                         Fee = @(0.01);        MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm pyrinhash" }
     @{ Algorithms = @("HeavyHashPyrinV2");                       Fee = @(0.01);        MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm pyrinhashv2" }
-    @{ Algorithms = @("HeavyHashPyrinV2", "HeavyHashKarlsenv2"); Fee = @(0.01, 0.01);  MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm pyrinhashv2+karlsenhashv2" }
     @{ Algorithms = @("KawPow");                                 Fee = @(0.01);        MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(90, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm kawpow" }
     @{ Algorithms = @("NexaPow");                                Fee = @(0.02);        MinMemGiB = 3.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm nexapow" }
     @{ Algorithms = @("Octopus");                                Fee = @(0.02);        MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus" }
@@ -123,7 +122,7 @@ If ($Algorithms) {
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
                                 $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"

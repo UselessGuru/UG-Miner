@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.5
-Version date:   2024/09/14
+Version:        6.3.6
+Version date:   2024/10/01
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.22"
+    $APIVersion = "0.5.4.24"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -473,8 +473,7 @@ Function Start-APIServer {
                                 }
                             }
                             "/functions/stat/get" { 
-                                $TempStats = @(If ($null -ne $Parameters.Value) { @($Stats.psBase.Keys.Where({ $_ -like "*_$($Parameters.Type)" -and $Stats[$_].Live -eq $Parameters.Value }).ForEach({ $Stats[$_] })) } Else { @($Stats) })
-                                If ($TempStats) { 
+                                If ($TempStats = @(If ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } Else { Get-Stat })) { 
                                     If ($null -ne $Parameters.Value) { 
                                        ($TempStats.Name | Sort-Object).ForEach({ $Data += "$($_ -replace "(_Hashrate|_PowerConsumption)$")`n" })
                                         If ($Parameters.Type -eq "Hashrate") { $Data += "`n$($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)H/s hashrate." }
@@ -584,9 +583,7 @@ Function Start-APIServer {
                                     }
                                     Break
                                 }
-                                If ($Parameters.Value) { $TempStats = @($Stats.psBase.Keys.Where({ $_ -like "*_$($Parameters.Type)" -and $Stats[$_].Live -eq $Parameters.Value }).ForEach({ $Stats[$_] })) }
-                                Else { $TempStats = @( (Get-ChildItem -Path ".\Stats\*_$($Parameters.Type).txt").BaseName.ForEach({ $Stats[$_] })) }
-                                If ($TempStats) { 
+                                If ($TempStats = @(If ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } Else { Get-Stat })) { 
                                     $Data = @()
                                     ($TempStats | Sort-Object -Property Name).ForEach(
                                         { 

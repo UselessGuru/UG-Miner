@@ -24,7 +24,7 @@ version date:    2024/06/18
 <html>
 
 <body>
-  <h1>UG-Miner API (version 0.5.4.22)</h1>
+  <h1>UG-Miner API (version 0.5.4.24)</h1>
 
   API data is available at http://localhost:[API port]/&lt;resource&gt.<br>
   The default API port is 3999.
@@ -86,7 +86,7 @@ version date:    2024/06/18
   <p>Shows the Currency / Algorithm mapping (defined in '\Data\CurrencyAlgorithm.json').</p>
   <br>
   <b><a href="http://localhost:3999/dagdata">/dagdata</a></b>
-  <p>Returns the DAG data (Ethash & EtcHash).</p>
+  <p>Returns the DAG data (algorithms & currencies).</p>
   <br>
   <b><a href="http://localhost:3999/devices">/devices</a></b>
   <p>Shows information about all mining devices.</p>
@@ -346,7 +346,7 @@ version date:    2024/06/18
   <br><b>/functions/stat/set</b>
   <br>Set miner hashrate value, not useful for pool stats:
   <br>Parameters: (JSON, pool list as array, requires properties Name=StatName, Algorithm=Algorithm(s), Type=Hashrate, Value (0=failed; -1=disabled))
-  <br>e.g.: /functions/stat/set?Miners%3D%5B{"Name"%3A"SRBMinerMulti-v2.5.7-1xRadeonRX5700XT8GB"%2C"Algorithms"%3A%5B"Argon2d16000"%5D}%5D%26Type%3DHashrate%26Value%3D-1
+  <br>e.g.: /functions/stat/set?Miners%3D%5B{"Name"%3A"SRBMinerMulti-v2.6.6-1xRadeonRX5700XT8GB"%2C"Algorithms"%3A%5B"Argon2d16000"%5D}%5D%26Type%3DHashrate%26Value%3D-1
   <br>
   <br><b>/functions/pool/enable</b>
   <br>Enable disabled pool

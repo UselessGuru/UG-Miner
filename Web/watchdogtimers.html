@@ -77,7 +77,7 @@
                 $('#watchdogalert').text('Watchdog is disabled in configuration (Watchdog -eq $false)');
               };
               $('#btn-removewatchdogs').click(function () {
-                $('body').css('cursor', 'progress');
+                $('body').css('cursor', 'wait');
                 $url = '/functions/watchdogtimers/reset';
                 $('.modal-body').load($url, function() {
                   $('.modal-title').text($('#btn-removewatchdogs').text());

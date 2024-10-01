@@ -165,7 +165,7 @@
               $('#btn-re-benchmark').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -183,7 +183,7 @@
               $('#btn-re-measure').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -201,7 +201,7 @@
               $('#btn-failed').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/set';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -220,7 +220,7 @@
               $('#btn-disable').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/disable';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
@@ -237,7 +237,7 @@
               $('#btn-enable').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/enable';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
@@ -254,7 +254,7 @@
               $('#btn-remove-watchdog').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'progress');
+                  $('body').css('cursor', 'wait');
                   $url = '/functions/watchdogtimers/remove';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
