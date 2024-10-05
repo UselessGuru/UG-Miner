@@ -304,7 +304,7 @@ $Variables.Branding = [PSCustomObject]@{
     Version      = [System.Version]"6.3.7"
 }
 
-$WscriptShell = New-Object -ComObject Wscript.Shell
+$Global:WscriptShell = New-Object -ComObject Wscript.Shell
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
