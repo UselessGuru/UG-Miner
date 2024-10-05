@@ -1358,7 +1358,7 @@ Function Read-Config {
             $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys -replace " External$| Internal$" }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
             If (-not $Variables.PoolVariants) { 
                 Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-                $WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+                $Global:WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
                 Exit
             }
         }
@@ -3592,32 +3592,32 @@ Function Initialize-Environment {
     # Check if all required files are present
     If (-not (Get-ChildItem -LiteralPath $PWD\Balances)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Balances'. Please restore the folder from your original download."
-        $WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Brains)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Brains'. Please restore the folder from your original download."
-        $WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Data)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Data'. Please restore the folder from your original download."
-        $WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Miners)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Miners'. Please restore the folder from your original download."
-        $WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Pools)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Pools'. Please restore the folder from your original download."
-        $WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Web)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Web'. Please restore the folder from your original download."
-        $WscriptShell.Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
 
@@ -3625,7 +3625,7 @@ Function Initialize-Environment {
     $Variables.DonationData = [System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -NoEnumerate
     If (-not $Variables.DonationData) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded donation data."
@@ -3640,7 +3640,7 @@ Function Initialize-Environment {
     (([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Algorithms[$_.Name] = $_.Value })
     If (-not $Variables.Algorithms.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
 
@@ -3649,7 +3649,7 @@ Function Initialize-Environment {
     (([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CoinNames[$_.Name] = $_.Value })
     If (-not $Variables.CoinNames.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
 
@@ -3658,7 +3658,7 @@ Function Initialize-Environment {
     (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Start-Sleep -Seconds 10
         Exit
     }
@@ -3678,7 +3678,7 @@ Function Initialize-Environment {
     (([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Regions[$_.Name] = @($_.Value) })
     If (-not $Variables.Regions.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded regions database."
@@ -3687,7 +3687,7 @@ Function Initialize-Environment {
     $Variables.FIATcurrencies = [System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
     If (-not $Variables.FIATcurrencies) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded fiat currencies database."
@@ -3696,7 +3696,7 @@ Function Initialize-Environment {
     $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Stop -AsHashtable | Get-SortedObject
     If (-not $Variables.UnprofitableAlgorithms.Count) { 
         Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded list of unprofitable algorithms."
@@ -3727,7 +3727,7 @@ Function Initialize-Environment {
     $Variables.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore
     If (-not $Variables.GPUArchitectureDbNvidia) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Else { Write-Host "Loaded NVidia GPU architecture table." }
@@ -3736,7 +3736,7 @@ Function Initialize-Environment {
     $Variables.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore
     If (-not $Variables.GPUArchitectureDbAMD) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Else { Write-Host "Loaded AMD GPU architecture table." }
