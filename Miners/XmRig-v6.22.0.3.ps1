@@ -17,34 +17,34 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_4-win64.zip"; Break }
-    { $_ -ge "12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_3-win64.zip"; Break }
-    { $_ -ge "12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_2-win64.zip"; Break }
-    { $_ -ge "12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_1-win64.zip"; Break }
-    { $_ -ge "12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_0-win64.zip"; Break }
-    { $_ -ge "11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_8-win64.zip"; Break }
-    { $_ -ge "11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_7-win64.zip"; Break }
-    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_6-win64.zip"; Break }
-    { $_ -ge "11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_5-win64.zip"; Break }
-    { $_ -ge "11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_4-win64.zip"; Break }
-    { $_ -ge "11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_3-win64.zip"; Break }
-    { $_ -ge "11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_2-win64.zip"; Break }
-    { $_ -ge "11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_1-win64.zip"; Break }
-    { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_0-win64.zip"; Break }
-    { $_ -ge "10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_2-win64.zip"; Break }
-    { $_ -ge "10.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_1-win64.zip"; Break }
-    { $_ -ge "10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_0-win64.zip"; Break }
-    { $_ -ge "9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_2-win64.zip"; Break }
-    { $_ -ge "9.1" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_1-win64.zip"; Break }
-    { $_ -ge "9.0" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_0-win64.zip"; Break }
-    Default           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda8_0-win64.zip"; Break }
+    { $_ -ge [System.Version]"12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_4-win64.zip"; Break }
+    { $_ -ge [System.Version]"12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_3-win64.zip"; Break }
+    { $_ -ge [System.Version]"12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_2-win64.zip"; Break }
+    { $_ -ge [System.Version]"12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_1-win64.zip"; Break }
+    { $_ -ge [System.Version]"12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_0-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_8-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_7-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_6-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_5-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_4-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_3-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_2-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_1-win64.zip"; Break }
+    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_0-win64.zip"; Break }
+    { $_ -ge [System.Version]"10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_2-win64.zip"; Break }
+    { $_ -ge [System.Version]"10.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_1-win64.zip"; Break }
+    { $_ -ge [System.Version]"10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_0-win64.zip"; Break }
+    { $_ -ge [System.Version]"9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_2-win64.zip"; Break }
+    { $_ -ge [System.Version]"9.1" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_1-win64.zip"; Break }
+    { $_ -ge [System.Version]"9.0" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_0-win64.zip"; Break }
+    Default                           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda8_0-win64.zip"; Break }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xmrig.exe"

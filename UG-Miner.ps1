@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 using module .\Includes\Include.psm1
@@ -301,7 +301,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.6"
+    Version      = [System.Version]"6.3.7"
 }
 
 $WscriptShell = New-Object -ComObject Wscript.Shell
@@ -397,7 +397,7 @@ Write-Host ""
 
 #Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
-If ([System.Environment]::OSVersion.Version -lt [Version]"10.0.0.0") { 
+If ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") { 
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
     $WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
@@ -511,23 +511,19 @@ $Variables.Devices.Where({ $Config.ExcludeDeviceName -contains $_.Name -and $_.S
 
 # Build driver version table
 $Variables.DriverVersion = [PSCustomObject]@{ }
+If ($Variables.Devices.CUDAversion) { $Variables.DriverVersion | Add-Member "CUDA" ($Variables.Devices.CUDAversion | Sort-Object -Top 1) }
 $Variables.DriverVersion | Add-Member "CIM" ([PSCustomObject]@{ })
-$Variables.DriverVersion.CIM | Add-Member "CPU" ([Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Variables.DriverVersion.CIM | Add-Member "AMD" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Variables.DriverVersion.CIM | Add-Member "NVIDIA" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Variables.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Variables.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Variables.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Variables.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
-$Variables.DriverVersion.OpenCL | Add-Member "CPU" ([Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Variables.DriverVersion.OpenCL | Add-Member "AMD" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Variables.DriverVersion.OpenCL | Add-Member "NVIDIA" ([Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-
-If ($Variables.DriverVersion.OpenCL.NVIDIA) { 
-    $Variables.DriverVersion | Add-Member "CUDA" ([Version]($Variables.CUDAVersionTable.($Variables.CUDAVersionTable.Keys.Where({ $_ -le ([System.Version]$Variables.DriverVersion.OpenCL.NVIDIA).Major }) | Sort-Object -Bottom 1)))
-    $Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).ForEach({ $_.CUDAVersion = [Version]$Variables.DriverVersion.CUDA })
-}
+$Variables.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Variables.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Variables.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 
 # Driver version changed
 If (([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Variables.DriverVersion | ConvertTo-Json -Compress)) { 
-    If (Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) { Write-Message -Level Warn "Graphis card driver version data changed. It is recommended to re-benchmark all miners." }
+    If (Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) { Write-Message -Level Warn "Graphics card driver version data has changed. It is recommended to re-benchmark all miners." }
     $Variables.DriverVersion | ConvertTo-Json | Out-File -LiteralPath ".\Cache\DriverVersion.json" -Force
 }
 
@@ -548,6 +544,9 @@ Remove-Variable VertHashDatCheckJob
 # Start API server
 If ($Config.WebGUI) { Start-APIServer }
 
+# Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
+(Get-Process -Id $PID).PriorityClass = "BelowNormal"
+
 Function MainLoop { 
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
@@ -567,9 +566,6 @@ Function MainLoop {
 
             If ($Config.Proxy -eq "") { $PSDefaultParameterValues.Remove("*:Proxy") }
             Else { $PSDefaultParameterValues["*:Proxy"] = $Config.Proxy }
-
-            # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
-            (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 
@@ -637,61 +633,6 @@ Function MainLoop {
             $Variables.MiningStatus = $Variables.NewMiningStatus
         }
         If ($LegacyGUIform) { Update-GUIstatus }
-    }
-
-    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker }
-    ElseIf ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
-        # Update rates every 15 minutes
-        [Void](Get-Rate)
-    }
-
-    If ($Variables.MiningStatus -eq "Running") { 
-        If ($Config.IdleDetection) { 
-            If ([Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
-                # System was idle long enough, start mining
-                If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
-                    $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
-                    Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
-                    If ($LegacyGUIform) { Update-GUIstatus }
-                }
-                Start-Core
-            }
-            ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
-                $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
-                Write-Message -Level Verbose ($Message -replace "<br>", " ")
-                Stop-Core
-                If ($LegacyGUIform) { 
-                    Update-GUIstatus
-
-                    $LegacyGUIminingSummaryLabel.Text = ""
-                    ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
-                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-                }
-
-                $Variables.Summary = $Message
-                Remove-Variable Message
-            }
-        }
-        ElseIf ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
-            If ($Variables.Timer) { 
-                Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
-                Close-CoreRunspace
-            }
-            Start-Core
-            If ($LegacyGUIform) { Update-GUIstatus }
-        }
-        ElseIf (-not $Variables.SuspendCycle -and -not $Variables.MinersBenchmarkingOrMeasuring -and $Variables.BeginCycleTimeCycleTime -and [DateTime]::Now.ToUniversalTime() -gt $Variables.BeginCycleTimeCycleTime.AddSeconds(1.5 *$Config.Interval)) { 
-            # Core watchdog. Sometimes core loop gets stuck
-            Write-Message -Level Warn "Core cycle is stuck - restarting..."
-            Stop-Core
-            Start-Core
-        }
-    }
-    ElseIf ((Test-Path -Path $Variables.PoolsConfigFile) -and (Test-Path -Path $Variables.ConfigFile)) { 
-        If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
-            [Void](Read-Config -ConfigFile $Variables.ConfigFile)
-            Write-Message -Level Verbose "Activated changed configuration."
-        }
     }
 
     If ($Config.ShowConsole) { 
@@ -891,34 +832,91 @@ Function MainLoop {
         Hide-Console
     }
 
+    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker }
+    ElseIf ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
+        # Update rates every 15 minutes
+        [Void](Get-Rate)
+    }
+
+    If ($Variables.MiningStatus -eq "Running") { 
+        If ($Config.IdleDetection) { 
+            If ([Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
+                # System was idle long enough, start mining
+                If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+                    $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
+                    Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
+                    If ($LegacyGUIform) { Update-GUIstatus }
+                }
+                Start-Core
+            }
+            ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+                $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+                Write-Message -Level Verbose ($Message -replace "<br>", " ")
+                Stop-Core
+                If ($LegacyGUIform) { 
+                    Update-GUIstatus
+
+                    $LegacyGUIminingSummaryLabel.Text = ""
+                    ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+                }
+
+                $Variables.Summary = $Message
+                Remove-Variable Message
+            }
+        }
+        ElseIf ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
+            If ($Variables.Timer) { 
+                Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
+                Close-CoreRunspace
+            }
+            Start-Core
+            If ($LegacyGUIform) { Update-GUIstatus }
+        }
+        ElseIf (-not $Variables.SuspendCycle -and -not $Variables.MinersBenchmarkingOrMeasuring -and $Variables.BeginCycleTimeCycleTime -and [DateTime]::Now.ToUniversalTime() -gt $Variables.BeginCycleTimeCycleTime.AddSeconds(1.5 *$Config.Interval)) { 
+            # Core watchdog. Sometimes core loop gets stuck
+            Write-Message -Level Warn "Core cycle is stuck - restarting..."
+            Stop-Core
+            Start-Core
+        }
+    }
+    ElseIf ((Test-Path -Path $Variables.PoolsConfigFile) -and (Test-Path -Path $Variables.ConfigFile)) { 
+        If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
+            [Void](Read-Config -ConfigFile $Variables.ConfigFile)
+            Write-Message -Level Verbose "Activated changed configuration."
+        }
+    }
+
     If ($Variables.RefreshNeeded) { 
         $Variables.RefreshNeeded = $false
 
         $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan]([DateTime]::Now.ToUniversalTime() - $Variables.ScriptStartTime)
 
-        If ($LegacyGUIform -and -not $Variables.SuspendCycle) { 
-            $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle 
-
-            If ($Variables.MyIP) { 
-                If ($Variables.MinersBenchmarkingOrMeasuring -or -not $Variables.MinersBest) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
-                ElseIf ($Variables.MiningProfit -ge 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
-                ElseIf ($Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
-
-                $LegacyGUIminingSummaryLabel.Text = ""
-                (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
-                $LegacyGUIminingSummaryLabel.Text += "`r`n "
-            }
-            Else { 
-                Write-Message -Level Error $Variables.Message
-                $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red
-                $LegacyGUIminingSummaryLabel.Text = "Error: $($Variables.Summary)"
-            }
-
-            # Refresh selected tab
-            Update-TabControl
-        }
-
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
+
+        If ($LegacyGUIform) {
+            If (-not $Variables.SuspendCycle) { 
+                $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle 
+
+                If ($Variables.MyIP) { 
+                    If ($Variables.MinersBenchmarkingOrMeasuring -or -not $Variables.MinersBest) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+                    ElseIf ($Variables.MiningProfit -ge 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
+                    ElseIf ($Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
+
+                    $LegacyGUIminingSummaryLabel.Text = ""
+                    (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
+                    $LegacyGUIminingSummaryLabel.Text += "`r`n "
+                }
+                Else { 
+                    Write-Message -Level Error $Variables.Message
+                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red
+                    $LegacyGUIminingSummaryLabel.Text = "Error: $($Variables.Summary)"
+                }
+
+                # Refresh selected tab
+                Update-TabControl
+            }
+        }
 
         If ($Config.ShowConsole) { 
             If ($Variables.MinersBest) { Clear-Host }
@@ -1096,6 +1094,7 @@ Function MainLoop {
                 Write-Host -ForegroundColor Red "$((Get-Date).ToString("G")): $($Variables.Summary)"
             }
         }
+
         $Error.Clear()
         [System.GC]::Collect()
         $Proc = Get-Process -Id $PID

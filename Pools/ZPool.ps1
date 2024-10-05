@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Param(
@@ -58,7 +58,7 @@ If ($PriceField) {
     ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
         $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = [String]$Request.$Algorithm.currency
-        $Divisor = $DivisorMultiplier * [Double]$Request.$Algorithm.mbtc_mh_factor
+        $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Currency -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
 
         $Reasons = [System.Collections.Generic.List[String]]@()

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Param(
@@ -62,7 +62,7 @@ If ($DivisorMultiplier -and $Regions) {
         $Algorithm = $Request.$Pool.algo
         $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = [String]$Request.$Pool.Currency
-        $Divisor = $DivisorMultiplier * [Double]$Request.$Pool.mbtc_mh_factor
+        $Divisor = [Double]$Request.$Pool.mbtc_mh_factor * $DivisorMultiplier
 
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Pool -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
         $PayoutThreshold = $PoolConfig.PayoutThreshold.$PayoutCurrency

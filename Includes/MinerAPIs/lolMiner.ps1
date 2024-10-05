@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Class lolMiner : Miner { 
@@ -53,7 +53,7 @@ Class lolMiner : Miner {
             Default { $HashRateUnit = [UInt64]1 }
         }
         $HashRateValue = [Double]($Data.Algorithms[0].Total_Performance * $HashRateUnit)
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.Algorithms[0].Total_Accepted
@@ -75,7 +75,7 @@ Class lolMiner : Miner {
                 Default { $HashRateUnit = 1 }
             }
             $HashRateValue = [Double]($Data.Algorithms[1].Total_Performance * $HashRateUnit)
-            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
             $SharesAccepted = [Int64]$Data.Algorithms[1].Total_Accepted
             $SharesRejected = [Int64]$Data.Algorithms[1].Total_Rejected

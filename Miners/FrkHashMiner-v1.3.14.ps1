@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"9.1" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1" }))) { Return }
 
 $URI = "https://github.com/frkhash/frkhashminer/releases/download/v1.3.14/frkminer.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

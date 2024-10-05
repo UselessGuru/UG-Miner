@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Xgminer.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Class XgMiner : Miner { 
@@ -60,7 +60,7 @@ Class XgMiner : Miner {
         ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
         ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
         ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$DataSummary.accepted
@@ -87,7 +87,7 @@ Class XgMiner : Miner {
             ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
             ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
             ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
-            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
             $SharesAccepted = [Int64]$DataSummary.accepted
             $SharesRejected = [Int64]$DataSummary.rejected

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Class GMiner : Miner { 
@@ -40,7 +40,7 @@ Class GMiner : Miner {
         $HashRate = [PSCustomObject]@{ }
         $HashRateName = [String]$this.Algorithms[0]
         $HashRateValue = [Double]($Data.devices.speed | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.total_accepted_shares
@@ -50,7 +50,7 @@ Class GMiner : Miner {
 
         If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
             $HashRateValue = [Double]($Data.devices.speed2 | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
             $SharesAccepted = [Int64]$Data.total_accepted_shares2
             $SharesRejected = [Int64]$Data.total_rejected_shares2

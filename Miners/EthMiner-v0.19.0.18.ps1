@@ -17,16 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAVersion -ge [Version]"9.1") }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1") }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda11.6-windows-vs2019-amd64.zip"; Break }
-    { $_ -ge "10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda10.0-windows-amd64.zip"; Break }
-    Default           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda9.1-windows-amd64.zip" }
+    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda11.6-windows-vs2019-amd64.zip"; Break }
+    { $_ -ge [System.Version]"10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda10.0-windows-amd64.zip"; Break }
+    Default                           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/EthMiner/ethminer-0.19.0-18-cuda9.1-windows-amd64.zip" }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ethminer.exe"

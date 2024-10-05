@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Param(
@@ -61,7 +61,7 @@ If ($DivisorMultiplier -and $PriceField) {
             $Algorithm = $Request.$_.name
             $AlgorithmNorm = Get-Algorithm $Algorithm
             $Currency = [String]$Request.$_.currency
-            $Divisor = $DivisorMultiplier * [Double]$Request.$_.mbtc_mh_factor
+            $Divisor = [Double]$Request.$_.mbtc_mh_factor * $DivisorMultiplier
             $Fee = If ($Currency) { $Request.$_."$($PoolConfig.MiningMode)_fee" } Else { $Request.$_."pps_fee" }
             $Pass = "a=$($Algorithm.ToLower()),n=$($PoolConfig.WorkerName)$(If ($Config.ProHashingMiningMode -eq "PPLNS" -and $Request.$_.CoinName) { ",c=$($Request.$_.CoinName.ToLower()),m=pplns" })"
 

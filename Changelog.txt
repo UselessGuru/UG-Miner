@@ -3,6 +3,20 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.3.7 2024/10/05
+===================================
+
+Improvements:
+- Core & Miner APIs: Remove obsolete code & minor code optimizations
+- Core / Includes.psm1: Function 'Update-DAGdata' sets CUDAversion property. No need for 'CUDAversion.json' anymore
+- Core: Streamline failed miner reason text in switching log file
+- Log viewer (SnakeTail): Change color for 'WARN' messages to match color in text console
+
+Miner changes:
+- NanoMiner-v3.9.3
+- SRBMinerMulti-v2.6.7
+- TeamBlackMiner-v2.27
+
 
 Changelog UG-Miner 6.3.6 2024/10/01
 ===================================
@@ -33,7 +47,7 @@ Changes:
 - Legacy GUI: Use <Ctrl>-<Alt>-P instead of <Ctrl>-<Alt>-<Pause Mining> button to suspend core (same as in console window)
 
 Improvements:
-- Web GUI / Miners tables: Optimize colum width handling
+- Web GUI / Miners tables: Optimize column width handling
 - Core: Use 'Close-CoreRunspace' instead of 'Stop-Core' on error in 'Core.ps1'
 
 Miner changes:

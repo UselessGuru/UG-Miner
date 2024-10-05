@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Return # Bad shares
@@ -26,8 +26,8 @@ Return # Bad shares
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/SCCminer/sccminer-1.1.0-Windows.zip" }
-    Default           { Return }
+    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/SCCminer/sccminer-1.1.0-Windows.zip" }
+    Default                           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\sccminer.exe"

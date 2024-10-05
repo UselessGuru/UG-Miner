@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Class Fireice : Miner { 
@@ -123,7 +123,7 @@ Class Fireice : Miner {
         $HashRateValue = [Double]$Data.hashrate.total[0]
         If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[1] } #fix
         If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[2] } #fix
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.results.shares_good

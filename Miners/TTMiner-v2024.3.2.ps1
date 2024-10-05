@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -26,8 +26,8 @@ If (($Variables.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { Return }
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.3.2/TT-Miner-2024.3.2.zip" }
-    Default           { Return }
+    { $_ -ge [System.Version]"11.0" } { "https://github.com/TrailingStop/TT-Miner-release/releases/download/2024.3.2/TT-Miner-2024.3.2.zip" }
+    Default                           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\TT-Miner.exe"

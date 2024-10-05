@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAVersion -ge [Version]"10.2") }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Kudaraidee/kudaraidee-v1.2.0a-win64.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

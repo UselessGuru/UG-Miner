@@ -15,7 +15,7 @@
       <BookmarkTextColor>Yellow</BookmarkTextColor>
       <BookmarkBackColor>DarkGreen</BookmarkBackColor>
       <Modeless>false</Modeless>
-      <Title>UG-Miner_2024-10-04.log</Title>
+      <Title>UG-Miner_2024-08-28.log</Title>
       <WindowState>Maximized</WindowState>
       <WindowSize>
         <Width>1886</Width>
@@ -48,7 +48,7 @@
           <LogHitCounter>false</LogHitCounter>
           <TextColoring>true</TextColoring>
           <AlertHighlight>false</AlertHighlight>
-          <TextColor>FUCHSIA</TextColor>
+          <TextColor>#FFFF80</TextColor>
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
@@ -82,23 +82,23 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Downloader: Initiated|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Some miners binaries are missing.*starting downloader</Keyword>
+          <Keyword>Some miners binaries are missing, starting downloader...</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
-          <MatchRegularExpression>true</MatchRegularExpression>
+          <MatchRegularExpression>false</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
           <TextColoring>true</TextColoring>
           <AlertHighlight>false</AlertHighlight>
-          <TextColor>#FFFF80</TextColor>
+          <TextColor>Fuchsia</TextColor>
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Downloader:</Keyword>
+          <Keyword>Downloader:</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
-          <MatchRegularExpression>true</MatchRegularExpression>
+          <MatchRegularExpression>false</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
           <TextColoring>true</TextColoring>
           <AlertHighlight>false</AlertHighlight>
-          <TextColor>#C6C600</TextColor>
+          <TextColor>#FF80FF</TextColor>
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>

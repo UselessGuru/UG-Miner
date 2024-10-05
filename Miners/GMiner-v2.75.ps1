@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -57,7 +57,7 @@ If ($Algorithms) {
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                         # Windows 10 requires more memory on some algos
-                        If ($_.Algorithm -match 'Cuckaroo.*|Cuckoo.*' -and [System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += 1 }
+                        If ($_.Algorithm -match 'Cuckaroo.*|Cuckoo.*' -and [System.Environment]::OSVersion.Version -ge [System.Version]"10.0.0.0") { $MinMemGiB += 1 }
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"

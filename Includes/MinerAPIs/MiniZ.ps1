@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Class MiniZ : Miner { 
@@ -43,7 +43,7 @@ Class MiniZ : Miner {
         $HashRateName = [String]$this.Algorithms[0]
         $HashRateValue = [Double]($Data.result.speed_sps | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
         If (-not $HashRateValue) { $HashRateValue = [Double]($Data.result.sol_ps | Measure-Object -Sum | Select-Object -ExpandProperty Sum) } #fix
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]($Data.result.accepted_shares | Measure-Object -Sum | Select-Object -ExpandProperty Sum)

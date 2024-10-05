@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Class OneZero : Miner { 
@@ -40,7 +40,7 @@ Class OneZero : Miner {
         $HashRate = [PSCustomObject]@{ }
         $HashRateName = [String]$this.Algorithms[0]
         $HashRateValue = [Double]$Data.algos[0].total_hashrate
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.algos[0].total_accepted_shares

@@ -47,7 +47,7 @@
                 <th data-field="tClockSpeed" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Clock speed</th>
                 <th data-field="tDriverVersionCIM" data-filter-control="select" data-width=3>Driver version<br>CIM</th>
                 <th data-field="tDriverVersionOpenCL" data-filter-control="select" data-width=3>Driver version<br>OpenCL</th>
-                <th data-field="tCUDAVersion" data-align="right" data-filter-control="select" data-width=3>CUDA version</th>
+                <th data-field="tCUDAversion" data-align="right" data-filter-control="select" data-width=3>CUDA version</th>
                 <th data-field="tArchitecture" data-filter-control="select" data-width=3>Architecture</th>
                 <th data-field="ConfiguredPowerUsage" data-filter-control="select" data-align="right" data-align="right" data-visible="false" data-sortable="true" data-formatter="formatWatt" data-width=3>Configured power consumption</th>
                 <th data-field="Bus" data-filter-control="select" data-align="right" data-visible="false" data-sortable="true">PCI<br>Bus<br>id</th>
@@ -121,7 +121,7 @@
                 <th data-field="tClockSpeed" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Clock speed</th>
                 <th data-field="tDriverVersionCIM" data-filter-control="select" data-width=3>Driver version<br>CIM</th>
                 <th data-field="tDriverVersionOpenCL" data-filter-control="select" data-width=3>Driver version<br>OpenCL</th>
-                <th data-field="tCUDAVersion" data-filter-control="select" data-align="right" data-width=3>CUDA version</th>
+                <th data-field="tCUDAversion" data-filter-control="select" data-align="right" data-width=3>CUDA version</th>
                 <th data-field="tArchitecture" data-filter-control="select" data-width=3>Architecture</th>
                 <th data-field="ConfiguredPowerUsage" data-filter-control="select" data-align="right" data-align="right" data-visible="false" data-sortable="true" data-formatter="formatWatt" data-width=3>Configured power consumption</th>
                 <th data-field="Bus" data-filter-control="select" data-align="right" data-visible="false" data-sortable="true">PCI<br>Bus<br>id</th>
@@ -191,7 +191,7 @@
                   <th data-field="tClockSpeed" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Clock speed</th>
                   <th data-field="tDriverVersionCIM" data-filter-control="select" data-width=3>Driver version<br>CIM</th>
                   <th data-field="tDriverVersionOpenCL" data-filter-control="select" data-width=3>Driver version<br>OpenCL</th>
-                  <th data-field="tCUDAVersion" data-filter-control="select" data-align="right" data-width=3>CUDA version</th>
+                  <th data-field="tCUDAversion" data-filter-control="select" data-align="right" data-width=3>CUDA version</th>
                   <th data-field="tArchitecture" data-filter-control="select" data-width=3>Architecture</th>
                   <th data-field="ConfiguredPowerUsage" data-filter-control="select" data-align="right" data-align="right" data-visible="false" data-sortable="true" data-formatter="formatWatt" data-width=3>Configured<br>power consumtion</th>
                   <th data-field="Bus" data-filter-control="select" data-align="right" data-visible="false" data-sortable="true">PCI<br>Bus<br>id</th>
@@ -242,8 +242,8 @@
                 if (item.OpenCL) item.tCores = item.OpenCL.MaxComputeUnits;
                 else if (item.CIM) item.tCores = item.CIM.NumberOfLogicalProcessors;
 
-                // Convert CUDAVersion to string
-                if (item.CUDAVersion) item.tCUDAVersion = item.CUDAVersion.Major + '.' + item.CUDAVersion.Minor;
+                // Convert CUDAversion to string
+                if (item.CUDAversion) item.tCUDAversion = item.CUDAversion.Major + '.' + item.CUDAversion.Minor + ' (build ' + item.CUDAversion.Build + ')';
 
                 if (item.Architecture) item.tArchitecture = item.Architecture;
 

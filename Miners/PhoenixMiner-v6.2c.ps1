@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.3.7
-Version date:   2024/10/01
+Version date:   2024/10/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -99,7 +99,7 @@ If ($Algorithms) {
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
                                     If ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
                                         If ($Pool0.DAGSizeGiB -ge 4) { Return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
-                                        $AvailableMinerDevices = $AvailableMinerDevices.Where({ [Version]$_.CIM.DriverVersion -le [Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)
+                                        $AvailableMinerDevices = $AvailableMinerDevices.Where({ [System.Version]$_.CIM.DriverVersion -le [System.Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)
                                     }
 
                                     If ($AvailableMinerDevices) { 

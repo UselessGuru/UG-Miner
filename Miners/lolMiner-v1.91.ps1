@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.3.7
-Version date:   2024/10/01
+Version date:   2024/10/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
@@ -160,7 +160,7 @@ If ($Algorithms) {
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                 # Windows 10 requires more memory on some algos
-                                If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0")) { $MinMemGiB += 1 }
+                                If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [System.Version]"10.0.0.0")) { $MinMemGiB += 1 }
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.MaxDualImpact -gt 0) { "-MaxDualImpact$($_.MaxDualImpact)" })"

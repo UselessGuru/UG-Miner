@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Hiveon.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Param(
@@ -93,7 +93,7 @@ ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
             User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }
             Variant                  = $PoolVariant
             WorkerName               = $PoolConfig.WorkerName
-            Workers                  = [UInt]$Request.stats."$($Pool.name)".workers
+            Workers                  = [UInt]$Request.stats.$($Pool.name).workers
         }
     }
 }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 Class Trex : Miner { 
@@ -41,7 +41,7 @@ Class Trex : Miner {
         $HashRateName = [String]$this.Algorithms[0]
         $HashRateValue = [Double]$Data.hashrate_minute
         If (-not $Data.hashrate_minute) { $HashRateValue = [Double]$Data.hashrate }
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.accepted_count
@@ -52,7 +52,7 @@ Class Trex : Miner {
         If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
             $HashRateValue = [Double]$Data.dual_stat.hashrate_minute
             If (-not $HashRateValue) { $HashRateValue = [Double]$Data.dual_stat.hashrate }
-            $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
 
             $SharesAccepted = [Int64]$Data.dual_stat.accepted_count
             $SharesRejected = [Int64]$Data.dual_stat.rejected_count

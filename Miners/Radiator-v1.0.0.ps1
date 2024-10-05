@@ -17,16 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.6" } { "https://github.com/xiaolin1579/radiator/releases/download/v1.0.0/Radiator1.0.0_cuda11.6_Win64.zip"; Break }
-    { $_ -ge "11.2" } { "https://github.com/xiaolin1579/radiator/releases/download/v1.0.0/Radiator1.0.0_cuda11.2_Win64.zip"; Break }
-    Default { Return }
+    { $_ -ge [System.Version]"11.6" } { "https://github.com/xiaolin1579/radiator/releases/download/v1.0.0/Radiator1.0.0_cuda11.6_Win64.zip"; Break }
+    { $_ -ge [System.Version]"11.2" } { "https://github.com/xiaolin1579/radiator/releases/download/v1.0.0/Radiator1.0.0_cuda11.2_Win64.zip"; Break }
+    Default                           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"

@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [Version]"450.80.02" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02" }))) { Return }
 
 $URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.3.7/onezerominer-win64-1.3.7.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -154,7 +154,7 @@ Class Device {
     [Int]$Bus_Platform_Index
     [Int]$Bus_Vendor_Index
     [PSCustomObject]$CIM
-    [Version]$CUDAVersion
+    [System.Version]$CUDAversion
     [Double]$ConfiguredPowerConsumption = 0 # Workaround if device does not expose power consumption
     [PSCustomObject]$CPUfeatures
     [Int]$Id
@@ -233,7 +233,7 @@ Class Pool : IDisposable {
     [String]$WorkerName = ""
     [Nullable[UInt]]$Workers
     [String]$ZAPcurrency
-     
+
     Dispose() {
         $this = $null
     }
@@ -281,7 +281,7 @@ Class Miner : IDisposable {
     [Boolean]$Best = $false
     [String]$CommandLine
     [UInt]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
-    [UInt16]$DataCollectInterval = 5 # Seconds
+    [Double]$DataCollectInterval = 5 # Seconds, allow fractions of seconds
     [DateTime]$DataSampleTimestamp = 0 # Newest sample
     [String[]]$DeviceNames = @() # derived from devices
     [PSCustomObject[]]$Devices
@@ -380,8 +380,6 @@ Class Miner : IDisposable {
             }
             Remove-Variable Miner, LoopEnd -ErrorAction Ignore
         }
-
-        $this.DataCollectInterval = If ($this.Benchmark -or $this.MeasurePowerConsumption) { 1 } Else { 5 }
 
         # Start Miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
         $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -WarningVariable $null -Name "$($this.NameAdDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
@@ -533,14 +531,15 @@ Class Miner : IDisposable {
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
-            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo -replace '.+\) ' -replace '.+sample*\) ' } Else { "" }
+            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { 
+                                          $this.StatusInfo = $this.StatusInfo.Replace("'$($this.Name)' ", "") -replace '.+stopped. ' -replace '.+sample.*\) '
+                                          $this.StatusInfo.substring(0,1).toUpper() + $this.StatusInfo.substring(1)
+                                      } Else { "" }
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
-        If ($this.Status -eq [MinerStatus]::Idle) { 
-            $this.StatusInfo = "Idle"
-            $this.SubStatus = $this.Status
-        }
+        $this.StatusInfo = "Idle"
+        $this.SubStatus = $this.Status
         $this.WorkersRunning = [Worker[]]@()
     }
 
@@ -946,19 +945,22 @@ Function Close-BalancesTrackerRunspace {
 
 Function Start-BalancesTracker { 
 
-    Try { 
-        Open-BalancesTrackerRunspace
+    Open-BalancesTrackerRunspace
 
-        If ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
-            $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
-            $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+    If ($Global:BalancesTrackerRunspace) { 
+        Try { 
 
-            $Variables.Summary = "Balances tracker background process started."
-            Write-Message -Level Info $Variables.Summary
+            If ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
+                $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
+                $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+
+                $Variables.Summary = "Balances tracker background process started."
+                Write-Message -Level Info $Variables.Summary
+            }
         }
-    }
-    Catch { 
-        Write-Message -Level Error "Failed to start Balances tracker [$($Error[0])]."
+        Catch { 
+            Write-Message -Level Error "Failed to start Balances tracker [$($Error[0])]."
+        }
     }
 }
 
@@ -1025,7 +1027,7 @@ Function Get-Rate {
             $Currencies.Where({ $_ -ne "BTC" }).ForEach(
                 { 
                     $Currency = $_
-                    $Rates | Add-Member $Currency ($Rates.BTC | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json) -Force
+                    $Rates | Add-Member $Currency $Rates.BTC.PSObject.Copy() -Force
                     $Rates.$Currency.PSObject.Properties.Name.ForEach(
                         { 
                             $Rates.$Currency | Add-Member $_ (($Rates.BTC.$_ / $Rates.BTC.$Currency) -as [Double]) -Force
@@ -1040,7 +1042,7 @@ Function Get-Rate {
                     { 
                         $Currency = $_
                         $mCurrency = "m$Currency"
-                        $Rates | Add-Member $mCurrency ($Rates.$Currency | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json) -Force
+                        $Rates | Add-Member $mCurrency $Rates.$Currency.PSObject.Copy() -Force
                         $Rates.$mCurrency.PSOBject.Properties.Name.ForEach({ $Rates.$mCurrency | Add-Member $_ ([Double]$Rates.$Currency.$_ / 1000) -Force })
                     }
                 )
@@ -1056,7 +1058,7 @@ Function Get-Rate {
                     }
                 )
             }
-            Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", ' &$1')." })"
+            Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", ' &$1'). $($Variables.Branding.ProductLabel) cannot calculate FIAT or BTC value for $(If ($Variables.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" } )." })"
             $Variables.Rates = $Rates
             $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
 
@@ -1200,7 +1202,7 @@ Function Write-MonitoringData {
         }
     }
     Catch { 
-        Write-Message -Level Warn "Monitoring: Unable to send status to '$($Config.MonitoringServer)' [ID $($Config.MonitoringUser)]."
+        Write-Message -Level Warn "Monitoring: Unable to send status to  monitoring server '$($Config.MonitoringServer)' [ID $($Config.MonitoringUser)]."
     }
 }
 
@@ -1313,7 +1315,6 @@ Function Get-RandomDonationPoolsConfig {
             }
         }
     )
-
     Return $DonationRandomPoolsConfig
 }
 
@@ -1422,7 +1423,6 @@ Function Read-Config {
                 $PoolsConfig.$PoolName = $PoolConfig
             }
         )
-
         Return $PoolsConfig
     }
 
@@ -1683,7 +1683,6 @@ Function Get-SortedObject {
             $SortedObject = $Object
         }
     }
-
     Return $SortedObject
 }
 
@@ -2249,7 +2248,7 @@ Function Get-Device {
         Try { 
             (Get-CimInstance CIM_Processor).ForEach(
                 { 
-                    $Device_CIM = $_ | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json
+                    $Device_CIM = [CimInstance]::new($_)
 
                     # Add normalised values
                     $Variables.Devices += $Device = [PSCustomObject]@{ 
@@ -2281,9 +2280,7 @@ Function Get-Device {
                     $Device.Name  = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
                     $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor) -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^ A-Z0-9\.]" -replace " \s+").trim()
 
-                    If (-not $Type_Vendor_Id.($Device.Type)) { 
-                        $Type_Vendor_Id.($Device.Type) = @{ }
-                    }
+                    If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
 
                     $Id ++
                     $Vendor_Id.($Device.Vendor) ++
@@ -2291,7 +2288,6 @@ Function Get-Device {
                     If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Type_Id.($Device.Type) ++ }
 
                     # Read CPU features
-                    # $Device | Add-Member CPUfeatures ((Get-CpuId).Features | Sort-Object)
                     $Device | Add-Member CPUfeatures $Variables.CPUfeatures 
 
                     # Add raw data
@@ -2303,21 +2299,17 @@ Function Get-Device {
 
             (Get-CimInstance CIM_VideoController).ForEach(
                 { 
-                    $Device_CIM = $_ | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json
-
+                    $Device_CIM = [CimInstance]::new($_)
                     $Device_PNP = [PSCustomObject]@{ }
                     (Get-PnpDevice $Device_CIM.PNPDeviceID | Get-PnpDeviceProperty).ForEach({ $Device_PNP | Add-Member $_.KeyName $_.Data })
-                    $Device_PNP = $Device_PNP | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json
-
-                    $Device_Reg = Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)" | ConvertTo-Json -WarningAction SilentlyContinue | ConvertFrom-Json
-
-                    # Add normalised values
+                    $Device_PNP = $Device_PNP.PSObject.Copy()
+                    $Device_Reg = (Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)").PSObject.Copy()
                     $Variables.Devices += $Device = [PSCustomObject]@{ 
                         Name      = $null
                         Model     = $Device_CIM.Name
                         Type      = "GPU"
                         Bus       = $(
-                            If ($Device_PNP.DEVPKEY_Device_BusNumber -is [Int64] -or $Device_PNP.DEVPKEY_Device_BusNumber -is [Int32]) { 
+                            If ($Device_PNP.DEVPKEY_Device_BusNumber -is [UInt64] -or $Device_PNP.DEVPKEY_Device_BusNumber -is [UInt32]) { 
                                 [Int64]$Device_PNP.DEVPKEY_Device_BusNumber
                             }
                         )
@@ -2341,21 +2333,15 @@ Function Get-Device {
                         Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
                         Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
                     }
+
                     #Unsupported devices start with DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
-                    If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { 
-                        $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
-                    }
-                    ElseIf ($Device.Type -eq "CPU") { 
-                        $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)"
-                    }
-                    Else { 
-                        $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)"
-                    }
+                    If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
+                    ElseIf ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
+                    Else { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
+
                     $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB" -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^ A-Z0-9\.]" -replace " \s+").trim()
 
-                    If (-not $Type_Vendor_Id.($Device.Type)) { 
-                        $Type_Vendor_Id.($Device.Type) = @{ }
-                    }
+                    If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
 
                     $Id ++
                     $Vendor_Id.($Device.Vendor) ++
@@ -2422,31 +2408,21 @@ Function Get-Device {
                                 Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
                                 Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
                             }
+
                             #Unsupported devices get DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
-                            If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { 
-                                $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
-                            }
-                            ElseIf ($Device.Type -eq "CPU") { 
-                                $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)"
-                            }
-                            Else { 
-                                $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)"
-                            }
+                            If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
+                            ElseIf ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
+                            Else {$Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
+
                             $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9 ]"
 
-                            If (-not $Type_Vendor_Id.($Device.Type)) { 
-                                $Type_Vendor_Id.($Device.Type) = @{ }
-                            }
+                            If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
 
-                            If ($Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })) { 
-                                $Device = $Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })
-                            }
-                            ElseIf ($Device.Type -eq "GPU" -and "AMD", "INTEL", "NVIDIA" -contains $Device.Vendor) { 
+                            If ($Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })) { $Device = $Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus }) }
+                            ElseIf ($Device.Type -eq "GPU" -and $Variables.SupportedGPUDeviceVendors -contains $Device.Vendor) { 
                                 $Variables.Devices += $Device
 
-                                If (-not $Type_Vendor_Index.($Device.Type)) { 
-                                    $Type_Vendor_Index.($Device.Type) = @{ }
-                                }
+                                If (-not $Type_Vendor_Index.($Device.Type)) { $Type_Vendor_Index.($Device.Type) = @{ } }
 
                                 $Id ++
                                 $Vendor_Id.($Device.Vendor) ++
@@ -2465,17 +2441,13 @@ Function Get-Device {
                                 Type_PlatformId_Index = [Int]$Type_PlatformId_Index.($Device.Type).($PlatformId)
                             } -Force
 
-                            # Add raw data
-                            $Device | Add-Member @{ 
-                                OpenCL = $Device_OpenCL
-                            } -Force
+                            # # Add raw data
+                            $Device | Add-Member @{ OpenCL = $Device_OpenCL } -Force
 
-                            If (-not $Type_Vendor_Index.($Device.Type)) { 
-                                $Type_Vendor_Index.($Device.Type) = @{ }
-                            }
-                            If (-not $Type_PlatformId_Index.($Device.Type)) { 
-                                $Type_PlatformId_Index.($Device.Type) = @{ }
-                            }
+                            If ($Device_OpenCL.PlatForm.Name -eq "NVIDIA CUDA") { $Device | Add-Member CUDAversion ([System.Version]($Device_OpenCL.PlatForm.Version -replace '.+CUDA ')) -Force }
+
+                            If (-not $Type_Vendor_Index.($Device.Type)) { $Type_Vendor_Index.($Device.Type) = @{ } }
+                            If (-not $Type_PlatformId_Index.($Device.Type)) { $Type_PlatformId_Index.($Device.Type) = @{ } }
 
                             $Index ++
                             $Type_Index.($Device.Type) ++
@@ -2488,7 +2460,7 @@ Function Get-Device {
                     $PlatformId ++
                 }
                 Catch { 
-                    Write-Message -Level Warn "Device detection for OpenCL platform'$($OpenCLplatform.Version)' has failed."
+                    Write-Message -Level Warn "Device detection for OpenCL platform '$($OpenCLplatform.Version)' has failed."
                 }
             }
         )
@@ -2497,15 +2469,9 @@ Function Get-Device {
         ($Variables.Devices.Where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -Is [Int64] }) | Sort-Object -Property Bus).ForEach(
             { 
                 If ($_.Type -eq "GPU") { 
-                    If ($_.Vendor -eq "NVIDIA") { 
-                        $_ | Add-Member "Architecture" (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability)
-                    }
-                    ElseIf ($_.Vendor -eq "AMD") { 
-                        $_ | Add-Member "Architecture" (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture)
-                    }
-                    Else { 
-                        $_ | Add-Member "Architecture" "Other"
-                    }
+                    If ($_.Vendor -eq "NVIDIA") { $_ | Add-Member "Architecture" (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability) }
+                    ElseIf ($_.Vendor -eq "AMD") { $_ | Add-Member "Architecture" (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture) }
+                    Else { $_ | Add-Member "Architecture" "Other" }
                 }
 
                 $_ | Add-Member @{ 
@@ -2515,9 +2481,7 @@ Function Get-Device {
                     Type_Vendor_Slot = [Int]$Type_Vendor_Slot.($_.Type).($_.Vendor)
                 }
 
-                If (-not $Type_Vendor_Slot.($_.Type)) { 
-                    $Type_Vendor_Slot.($_.Type) = @{ }
-                }
+                If (-not $Type_Vendor_Slot.($_.Type)) { $Type_Vendor_Slot.($_.Type) = @{ } }
 
                 $Slot ++
                 $Type_Slot.($_.Type) ++
@@ -2933,7 +2897,7 @@ Function Get-Version {
 
         $Variables.CheckedForUpdate = [DateTime]::Now
 
-        If ($Variables.Branding.ProductLabel -and [Version]$UpdateVersion.Version -gt $Variables.Branding.Version) { 
+        If ($Variables.Branding.ProductLabel -and [System.Version]$UpdateVersion.Version -gt $Variables.Branding.Version) { 
             If ($UpdateVersion.AutoUpdate) { 
                 If ($Config.AutoUpdate) { 
                     Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Starting update..."
@@ -3206,32 +3170,6 @@ Function Update-DAGdata {
             Write-Message -Level Warn "Failed to load DAG data from '$Url'."
         }
     }
-
-    # # Update on script start, once every 24hrs or if unable to get data from source
-    # $Currency = "SCC"
-    # $Url = "https://www.coinexplorer.net/api/v1/SCC/getblockcount"
-    # If (-not $Variables.DAGdata.Currency.$Currency.BlockHeight -or $Variables.DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $Variables.DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-    #     # Get block data from StakeCube block explorer
-    #     Try { 
-    #         Write-Message -Level Info "Loading DAG data from '$Url'..."
-    #         $DAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-    #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $DAGdataResponse -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
-    #             $DAGdata = Get-DAGdata -BlockHeight $DAGdataResponse -Currency $Currency -EpochReserve 2
-    #             If ($DAGdata.Epoch) { 
-    #                 $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-    #                 $DAGdata | Add-Member Url $Url -Force
-    #                 $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
-    #                 $Variables.DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-    #             }
-    #             Else { 
-    #                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
-    #             }
-    #         }
-    #     }
-    #     Catch { 
-    #         Write-Message -Level Warn "Failed to load DAG data from '$Url'."
-    #     }
-    # }
 
     # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "TLS"
@@ -3752,15 +3690,6 @@ Function Initialize-Environment {
     # Load Balances data to make it available early in GUI
     If (Test-Path -LiteralPath ".\Data\Balances.json" -PathType Leaf) { $Variables.Balances = [System.IO.File]::ReadAllLines("$PWD\Data\Balances.json") | ConvertFrom-Json }
     Else { Write-Host "Loaded balances data." }
-
-    # Load CUDA version table
-    $Variables.CUDAVersionTable = [System.IO.File]::ReadAllLines("$PWD\Data\CUDAVersion.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
-    If (-not $Variables.CUDAVersionTable) { 
-        Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\CUDAVersion.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\CUDAVersion.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-        Exit
-    }
-    Else { Write-Host "Loaded CUDA version table." }
 
     # Load NVidia GPU architecture table
     $Variables.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved

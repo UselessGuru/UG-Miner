@@ -17,18 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge [Version]"6.0" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge [System.Version]"6.0" }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge "11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda118-x64.7z"; Break }
-    { $_ -ge "11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda117-x64.7z"; Break }
-    { $_ -ge "11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda116-x64.7z"; Break }
-    { $_ -ge "11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda115-x64.7z"; Break }
-    Default { Return }
+    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda118-x64.7z"; Break }
+    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda117-x64.7z"; Break }
+    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda116-x64.7z"; Break }
+    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda115-x64.7z"; Break }
+    Default                           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"

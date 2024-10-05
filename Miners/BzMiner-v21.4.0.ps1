@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [Version]"460.27.03") }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/BzMiner/bzminer_v21.4.0_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

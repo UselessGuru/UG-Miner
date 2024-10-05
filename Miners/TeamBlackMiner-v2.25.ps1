@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.CUDAVersion -ge [Version]"11.6" -and $_.CUDAVersion -lt [Version]"12.6" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.CUDAversion -ge [System.Version]"11.6" -and $_.CUDAversion -lt [System.Version]"12.6" }))) { Return }
 
 $URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.25/TeamBlackMiner_2_25_cuda_12_2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.6
-Version date:   2024/10/01
+Version:        6.3.7
+Version date:   2024/10/05
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -lt [Version]"26.20.15011.10003" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -lt [System.Version]"26.20.15011.10003" }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/ClaymoreNeoscrypt/Claymore-Neoscrypt-v1.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
