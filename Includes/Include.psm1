@@ -3589,6 +3589,33 @@ Function Get-MemoryUsage {
 
 Function Initialize-Environment { 
 
+    # Check if all required files are present
+    If (-not (Get-ChildItem -LiteralPath $PWD\Balances)) { 
+        Write-Error "Terminating Error - Cannot continue! No files in folder '\Balances. Please restore the folder from your original download."
+        $WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    If (-not (Get-ChildItem -LiteralPath $PWD\Brains)) { 
+        Write-Error "Terminating Error - Cannot continue! No files in folder '\Brains. Please restore the folder from your original download."
+        $WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    If (-not (Get-ChildItem -LiteralPath $PWD\Data)) { 
+        Write-Error "Terminating Error - Cannot continue! No files in folder '\Data. Please restore the folder from your original download."
+        $WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    If (-not (Get-ChildItem -LiteralPath $PWD\Miners)) { 
+        Write-Error "Terminating Error - Cannot continue! No files in folder '\Miners. Please restore the folder from your original download."
+        $WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+    If (-not (Get-ChildItem -LiteralPath $PWD\Pools)) { 
+        Write-Error "Terminating Error - Cannot continue! No files in folder '\Pools. Please restore the folder from your original download."
+        $WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Exit
+    }
+
     # Verify donation data
     $Variables.DonationData = [System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -NoEnumerate
     If (-not $Variables.DonationData) { 
