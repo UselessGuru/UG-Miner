@@ -43,7 +43,7 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 If ($Algorithms) { 
 
-    ($Devices | Select-Object Model -Unique).ForEach(
+    ($Devices | Sort-Object Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
@@ -61,7 +61,7 @@ If ($Algorithms) {
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                             $Arguments = $_.Arguments
-                            If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity [0-9]+" }
+                            If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity .+$" }
 
                             [PSCustomObject]@{ 
                                 API         = "CcMiner"

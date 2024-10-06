@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.6
+Version date:   2024/10/01
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAversion -ge [System.Version]"10.0") }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") }))) { Return }
 
 $URI = "https://github.com/NebuTech/NBMiner/releases/download/v42.3/NBMiner_42.3_Win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -48,7 +48,7 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
 
-    ($Devices | Select-Object Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
@@ -68,7 +68,7 @@ If ($Algorithms) {
 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                             # Windows 10 requires more memory on some algos
-                            If ([System.Environment]::OSVersion.Version -ge [System.Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
+                            If ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
                             If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"

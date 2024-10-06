@@ -32,12 +32,12 @@ $Path = "Bin\$Name\z-enemy.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Aergo";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo aergo --intensity 23 --statsavg 5" }
+    @{ Algorithm = "Aergo";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo aergo --statsavg 5 --intensity 23" }
 #   @{ Algorithm = "BCD";        MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo bcd --statsavg 5" } # ASIC
-#   @{ Algorithm = "Bitcore";    MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo bitcore --intensity 22 --statsavg 5" } # Bitcore is using MegaBtx
-    @{ Algorithm = "C11";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo c11 --intensity 24 --statsavg 5" }
-    @{ Algorithm = "Hex";        MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo hex --intensity 24 --statsavg 5" }
-    @{ Algorithm = "KawPow";     MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo kawpow --intensity 24 --statsavg 1" }
+#   @{ Algorithm = "Bitcore";    MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo bitcore --statsavg 5 --intensity 22" } # Bitcore is using MegaBtx
+    @{ Algorithm = "C11";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo c11 --statsavg 5 --intensity 24" }
+    @{ Algorithm = "Hex";        MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo hex --statsavg 5 --intensity 24" }
+    @{ Algorithm = "KawPow";     MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo kawpow --statsavg 1 --intensity 24" }
 #   @{ Algorithm = "Phi";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo phi --statsavg 5" } # ASIC
     @{ Algorithm = "Phi2";       MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo phi2 --statsavg 5" }
     @{ Algorithm = "Polytimos";  MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo poly --statsavg 5" }
@@ -49,7 +49,7 @@ $Algorithms = @(
     @{ Algorithm = "X16rv2";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo x16rv2 --statsavg 5" }
     @{ Algorithm = "X16s";       MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo x16s --statsavg 5" } # FPGA
     @{ Algorithm = "X17";        MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo x17 --statsavg 1" }
-#   @{ Algorithm = "Xevan";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo xevan --intensity 26 --diff-factor 1 --statsavg 1" } # No hashrate in time
+#   @{ Algorithm = "Xevan";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo xevan --diff-factor 1 --statsavg 1 --intensity 26" } # No hashrate in time
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -57,7 +57,7 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
 
-    ($Devices | Select-Object Model -Unique).ForEach(
+    ($Devices | Sort-Object Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })

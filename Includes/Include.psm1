@@ -148,7 +148,7 @@ $Global:PriorityNames = [PSCustomObject]@{ -2 = "Idle"; -1 = "BelowNormal"; 0 = 
 [NoRunspaceAffinity()] # https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_classes?view=powershell-7.4#example-4---class-definition-with-and-without-runspace-affinity
 Class Device { 
     [String]$Architecture
-    [Int]$Bus
+    [Int64]$Bus
     [Int]$Bus_Index
     [Int]$Bus_Type_Index
     [Int]$Bus_Platform_Index
@@ -163,7 +163,7 @@ Class Device {
     [String]$Model
     [Double]$MemoryGiB
     [String]$Name
-    [PSCustomObject]$OpenCL = [PSCustomObject]@{ }
+    [PSCustomObject]$OpenCL
     [Int]$PlatformId = 0
     [Int]$PlatformId_Index
     # [PSCustomObject]$PNP
@@ -2175,16 +2175,13 @@ Function Get-GPUArchitectureNvidia {
     }
     Return "Other"
 }
-
 Function Get-Device { 
 
     Param (
         [Parameter(Mandatory = $false)]
         [String[]]$Name = @(),
         [Parameter(Mandatory = $false)]
-        [String[]]$ExcludeName = @(),
-        [Parameter(Mandatory = $false)]
-        [Switch]$Refresh = $false
+        [String[]]$ExcludeName = @()
     )
 
     If ($Name) { 
@@ -2219,286 +2216,274 @@ Function Get-Device {
         )
     }
 
-    If (-not $Variables.Devices -or $Refresh) { 
-        $Variables.Devices = @()
+    $Devices = @()
 
-        $Id = 0
-        $Type_Id = @{ }
-        $Vendor_Id = @{ }
-        $Type_Vendor_Id = @{ }
+    $Id = 0
+    $Type_Id = @{ }
+    $Vendor_Id = @{ }
+    $Type_Vendor_Id = @{ }
 
-        $Slot = 0
-        $Type_Slot = @{ }
-        $Vendor_Slot = @{ }
-        $Type_Vendor_Slot = @{ }
+    $Slot = 0
+    $Type_Slot = @{ }
+    $Vendor_Slot = @{ }
+    $Type_Vendor_Slot = @{ }
 
-        $Index = 0
-        $Type_Index = @{ }
-        $Vendor_Index = @{ }
-        $Type_Vendor_Index = @{ }
+    $Index = 0
+    $Type_Index = @{ }
+    $Vendor_Index = @{ }
+    $Type_Vendor_Index = @{ }
 
-        $PlatformId = 0
-        $PlatformId_Index = @{ }
-        $Type_PlatformId_Index = @{ }
+    $PlatformId = 0
+    $PlatformId_Index = @{ }
+    $Type_PlatformId_Index = @{ }
 
-        $UnsupportedCPUVendorID = 100
-        $UnsupportedGPUVendorID = 100
+    $UnsupportedCPUVendorID = 100
+    $UnsupportedGPUVendorID = 100
 
-        # Get WDDM data
-        Try { 
-            (Get-CimInstance CIM_Processor).ForEach(
-                { 
-                    $Device_CIM = [CimInstance]::new($_)
-
-                    # Add normalised values
-                    $Variables.Devices += $Device = [PSCustomObject]@{ 
-                        Name      = $null
-                        Model     = $Device_CIM.Name
-                        Type      = "CPU"
-                        Bus       = $null
-                        Vendor    = $(
-                            Switch -Regex ($Device_CIM.Manufacturer) { 
-                                "Advanced Micro Devices" { "AMD" }
-                                "AMD"                    { "AMD" }
-                                "Intel"                  { "INTEL" }
-                                "NVIDIA"                 { "NVIDIA" }
-                                "Microsoft"              { "MICROSOFT" }
-                                Default                  { $Device_CIM.Manufacturer -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
-                            }
-                        )
-                        Memory    = $null
-                        MemoryGiB = $null
-                    }
-
-                    $Device | Add-Member @{ 
-                        Id             = [Int]$Id
-                        Type_Id        = [Int]$Type_Id.($Device.Type)
-                        Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
-                        Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
-                    }
-
-                    $Device.Name  = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
-                    $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor) -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^ A-Z0-9\.]" -replace " \s+").trim()
-
-                    If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
-
-                    $Id ++
-                    $Vendor_Id.($Device.Vendor) ++
-                    $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
-                    If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Type_Id.($Device.Type) ++ }
-
-                    # Read CPU features
-                    $Device | Add-Member CPUfeatures $Variables.CPUfeatures 
-
-                    # Add raw data
-                    $Device | Add-Member @{ 
-                        CIM = $Device_CIM
-                    }
-                }
-            )
-
-            (Get-CimInstance CIM_VideoController).ForEach(
-                { 
-                    $Device_CIM = [CimInstance]::new($_)
-                    $Device_PNP = [PSCustomObject]@{ }
-                    (Get-PnpDevice $Device_CIM.PNPDeviceID | Get-PnpDeviceProperty).ForEach({ $Device_PNP | Add-Member $_.KeyName $_.Data })
-                    $Device_PNP = $Device_PNP.PSObject.Copy()
-                    $Device_Reg = (Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)").PSObject.Copy()
-                    $Variables.Devices += $Device = [PSCustomObject]@{ 
-                        Name      = $null
-                        Model     = $Device_CIM.Name
-                        Type      = "GPU"
-                        Bus       = $(
-                            If ($Device_PNP.DEVPKEY_Device_BusNumber -is [UInt64] -or $Device_PNP.DEVPKEY_Device_BusNumber -is [UInt32]) { 
-                                [Int64]$Device_PNP.DEVPKEY_Device_BusNumber
-                            }
-                        )
-                        Vendor    = $(
-                            Switch -Regex ([String]$Device_CIM.AdapterCompatibility) { 
-                                "Advanced Micro Devices" { "AMD" }
-                                "AMD"                    { "AMD" }
-                                "Intel"                  { "INTEL" }
-                                "NVIDIA"                 { "NVIDIA" }
-                                "Microsoft"              { "MICROSOFT" }
-                                Default                  { $Device_CIM.AdapterCompatibility -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
-                            }
-                        )
-                        Memory    = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
-                        MemoryGiB = [Double]([Math]::Round([Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize') / 0.05GB) / 20) # Round to nearest 50MB
-                    }
-
-                    $Device | Add-Member @{ 
-                        Id             = [Int]$Id
-                        Type_Id        = [Int]$Type_Id.($Device.Type)
-                        Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
-                        Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
-                    }
-
-                    #Unsupported devices start with DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
-                    If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
-                    ElseIf ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
-                    Else { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
-
-                    $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB" -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^ A-Z0-9\.]" -replace " \s+").trim()
-
-                    If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
-
-                    $Id ++
-                    $Vendor_Id.($Device.Vendor) ++
-                    $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
-                    If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Type_Id.($Device.Type) ++ }
-
-                    # Add raw data
-                    $Device | Add-Member @{ 
-                        CIM = $Device_CIM
-                        # PNP = $Device_PNP
-                        # Reg = $Device_Reg
-                    }
-                }
-            )
-        }
-        Catch { 
-            Write-Message -Level Warn "WDDM device detection has failed."
-        }
-        Remove-Variable Device, Device_CIM, Device_PNP, Device_Reg -ErrorAction Ignore
-
-        # Get OpenCL data
-        [OpenCl.Platform]::GetPlatformIDs().ForEach(
+    # Get WDDM data
+    Try { 
+        (Get-CimInstance CIM_Processor).ForEach(
             { 
-                Try { 
-                    $OpenCLplatform = $_
-                    # Skip devices with negative PCIbus 
-                    ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).Where({ $_.PCIbus -ge 0 }).ForEach({ $_ | ConvertTo-Json -WarningAction SilentlyContinue }) | Select-Object -Unique).ForEach(
-                        { 
-                            $Device_OpenCL = $_ | ConvertFrom-Json
+                $Device_CIM = [CimInstance]::new($_)
 
-                            # Add normalised values
-                            $Device = [PSCustomObject]@{ 
-                                Name      = $null
-                                Model     = $Device_OpenCL.Name
-                                Type      = $(
-                                    Switch -Regex ([String]$Device_OpenCL.Type) { 
-                                        "CPU"   { "CPU" }
-                                        "GPU"   { "GPU" }
-                                        Default { [String]$Device_OpenCL.Type -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
-                                    }
-                                )
-                                Bus = $(
-                                    If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
-                                        [Int64]$Device_OpenCL.PCIBus
-                                    }
-                                )
-                                Vendor = $(
-                                    Switch -Regex ([String]$Device_OpenCL.Vendor) { 
-                                        "Advanced Micro Devices" { "AMD" }
-                                        "AMD"                    { "AMD" }
-                                        "Intel"                  { "INTEL" }
-                                        "NVIDIA"                 { "NVIDIA" }
-                                        "Microsoft"              { "MICROSOFT" }
-                                        Default                  { [String]$Device_OpenCL.Vendor -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
-                                    }
-                                )
-                                Memory    = [UInt64]$Device_OpenCL.GlobalMemSize
-                                MemoryGiB = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
-                            }
-
-                            $Device | Add-Member @{ 
-                                Id             = [Int]$Id
-                                Type_Id        = [Int]$Type_Id.($Device.Type)
-                                Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
-                                Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
-                            }
-
-                            #Unsupported devices get DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
-                            If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
-                            ElseIf ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
-                            Else {$Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
-
-                            $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9 ]"
-
-                            If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
-
-                            If ($Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })) { $Device = $Variables.Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus }) }
-                            ElseIf ($Device.Type -eq "GPU" -and $Variables.SupportedGPUDeviceVendors -contains $Device.Vendor) { 
-                                $Variables.Devices += $Device
-
-                                If (-not $Type_Vendor_Index.($Device.Type)) { $Type_Vendor_Index.($Device.Type) = @{ } }
-
-                                $Id ++
-                                $Vendor_Id.($Device.Vendor) ++
-                                $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
-                                $Type_Id.($Device.Type) ++
-                            }
-
-                            # Add OpenCL specific data
-                            $Device | Add-Member @{ 
-                                Index                 = [Int]$Index
-                                Type_Index            = [Int]$Type_Index.($Device.Type)
-                                Vendor_Index          = [Int]$Vendor_Index.($Device.Vendor)
-                                Type_Vendor_Index     = [Int]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
-                                PlatformId            = [Int]$PlatformId
-                                PlatformId_Index      = [Int]$PlatformId_Index.($PlatformId)
-                                Type_PlatformId_Index = [Int]$Type_PlatformId_Index.($Device.Type).($PlatformId)
-                            } -Force
-
-                            # # Add raw data
-                            $Device | Add-Member @{ OpenCL = $Device_OpenCL } -Force
-
-                            If ($Device_OpenCL.PlatForm.Name -eq "NVIDIA CUDA") { $Device | Add-Member CUDAversion ([System.Version]($Device_OpenCL.PlatForm.Version -replace '.+CUDA ')) -Force }
-
-                            If (-not $Type_Vendor_Index.($Device.Type)) { $Type_Vendor_Index.($Device.Type) = @{ } }
-                            If (-not $Type_PlatformId_Index.($Device.Type)) { $Type_PlatformId_Index.($Device.Type) = @{ } }
-
-                            $Index ++
-                            $Type_Index.($Device.Type) ++
-                            $Vendor_Index.($Device.Vendor) ++
-                            $Type_Vendor_Index.($Device.Type).($Device.Vendor) ++
-                            $PlatformId_Index.($PlatformId) ++
-                            $Type_PlatformId_Index.($Device.Type).($PlatformId) ++
+                # Add normalised values
+                $Devices += $Device = [Device]@{ 
+                    Name      = $null
+                    Model     = $Device_CIM.Name
+                    Type      = "CPU"
+                    Bus       = $null
+                    Vendor    = $(
+                        Switch -Regex ($Device_CIM.Manufacturer) { 
+                            "Advanced Micro Devices" { "AMD" }
+                            "AMD"                    { "AMD" }
+                            "Intel"                  { "INTEL" }
+                            "NVIDIA"                 { "NVIDIA" }
+                            "Microsoft"              { "MICROSOFT" }
+                            Default                  { $Device_CIM.Manufacturer -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
-                    $PlatformId ++
+                    Memory    = $null
+                    MemoryGiB = $null
                 }
-                Catch { 
-                    Write-Message -Level Warn "Device detection for OpenCL platform '$($OpenCLplatform.Version)' has failed."
-                }
+
+                $Device.Id             = [Int]$Id
+                $Device.Type_Id        = [Int]$Type_Id.($Device.Type)
+                $Device.Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
+                $Device.Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
+
+                $Device.Name  = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
+                $Device.Model = (($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor) -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel"-replace "^\s*" -replace "[^ A-Z0-9\.]" -replace "\s+", " " -replace "\s*$"
+
+                If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
+
+                $Id ++
+                $Vendor_Id.($Device.Vendor) ++
+                $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
+                If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Type_Id.($Device.Type) ++ }
+
+                # Read CPU features
+                $Device.CPUfeatures = $Variables.CPUfeatures 
+
+                # Add raw data
+                $Device.CIM = $Device_CIM
+
             }
         )
-        Remove-Variable OpenCLplatform -ErrorAction Ignore
 
-        ($Variables.Devices.Where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -Is [Int64] }) | Sort-Object -Property Bus).ForEach(
+        (Get-CimInstance CIM_VideoController).ForEach(
             { 
-                If ($_.Type -eq "GPU") { 
-                    If ($_.Vendor -eq "NVIDIA") { $_ | Add-Member "Architecture" (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability) }
-                    ElseIf ($_.Vendor -eq "AMD") { $_ | Add-Member "Architecture" (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture) }
-                    Else { $_ | Add-Member "Architecture" "Other" }
+                $Device_CIM = [CimInstance]::new($_)
+                $Device_PNP = [PSCustomObject]@{ }
+                (Get-PnpDevice $Device_CIM.PNPDeviceID | Get-PnpDeviceProperty).ForEach({ $Device_PNP | Add-Member $_.KeyName $_.Data })
+                $Device_PNP = $Device_PNP.PSObject.Copy()
+                $Device_Reg = (Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)").PSObject.Copy()
+                $Devices += $Device = [Device]@{ 
+                    Name      = $null
+                    Model     = $Device_CIM.Name
+                    Type      = "GPU"
+                    Bus       = $(
+                        If ($Device_PNP.DEVPKEY_Device_BusNumber -is [UInt64] -or $Device_PNP.DEVPKEY_Device_BusNumber -is [UInt32]) { 
+                            [Int64]$Device_PNP.DEVPKEY_Device_BusNumber
+                        }
+                    )
+                    Vendor    = $(
+                        Switch -Regex ([String]$Device_CIM.AdapterCompatibility) { 
+                            "Advanced Micro Devices" { "AMD" }
+                            "AMD"                    { "AMD" }
+                            "Intel"                  { "INTEL" }
+                            "NVIDIA"                 { "NVIDIA" }
+                            "Microsoft"              { "MICROSOFT" }
+                            Default                  { $Device_CIM.AdapterCompatibility -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
+                        }
+                    )
+                    Memory    = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
+                    MemoryGiB = [Double]([Math]::Round([Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize') / 0.05GB) / 20) # Round to nearest 50MB
                 }
 
-                $_ | Add-Member @{ 
-                    Slot             = [Int]$Slot
-                    Type_Slot        = [Int]$Type_Slot.($_.Type)
-                    Vendor_Slot      = [Int]$Vendor_Slot.($_.Vendor)
-                    Type_Vendor_Slot = [Int]$Type_Vendor_Slot.($_.Type).($_.Vendor)
-                }
+                $Device.Id             = [Int]$Id
+                $Device.Type_Id        = [Int]$Type_Id.($Device.Type)
+                $Device.Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
+                $Device.Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
 
-                If (-not $Type_Vendor_Slot.($_.Type)) { $Type_Vendor_Slot.($_.Type) = @{ } }
+                #Unsupported devices start with DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
+                If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
+                ElseIf ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
+                Else { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
 
-                $Slot ++
-                $Type_Slot.($_.Type) ++
-                $Vendor_Slot.($_.Vendor) ++
-                $Type_Vendor_Slot.($_.Type).($_.Vendor) ++
+                $Device.Model = (($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB" -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel"-replace "^\s*" -replace "[^ A-Z0-9\.]" -replace "\s+", " " -replace "\s*$"
+
+                If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
+
+                $Id ++
+                $Vendor_Id.($Device.Vendor) ++
+                $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
+                If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Type_Id.($Device.Type) ++ }
+
+                # Add raw data
+                $Device.CIM = $Device_CIM
+                # $Device.PNP = $Device_PNP
+                # $Device.Reg = $Device_Reg
             }
         )
     }
+    Catch { 
+        Write-Message -Level Warn "WDDM device detection has failed."
+    }
+    Remove-Variable Device, Device_CIM, Device_PNP, Device_Reg -ErrorAction Ignore
 
-    $Variables.Devices.ForEach(
+    # Get OpenCL data
+    [OpenCl.Platform]::GetPlatformIDs().ForEach(
         { 
-            [Device]$Device = $_
+            Try { 
+                $OpenCLplatform = $_
+                # Skip devices with negative PCIbus 
+                ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).Where({ $_.PCIbus -ge 0 }).ForEach({ $_ | ConvertTo-Json -EnumsAsStrings -WarningAction SilentlyContinue }) | Select-Object -Unique).ForEach(
+                    { 
+                        $Device_OpenCL = $_ | ConvertFrom-Json
 
-            $Device.Bus_Index = @($Variables.Devices.Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Type_Index = @($Variables.Devices.Where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Vendor_Index = @($Variables.Devices.Where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Platform_Index = @($Variables.Devices.Where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+                        # Add normalised values
+                        $Device = [Device]@{ 
+                            Name      = $null
+                            Model     = $Device_OpenCL.Name
+                            Type      = $(
+                                Switch -Regex ([String]$Device_OpenCL.Type) { 
+                                    "CPU"   { "CPU" }
+                                    "GPU"   { "GPU" }
+                                    Default { [String]$Device_OpenCL.Type -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
+                                }
+                            )
+                            Bus = $(
+                                If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
+                                    [Int64]$Device_OpenCL.PCIBus
+                                }
+                            )
+                            Vendor = $(
+                                Switch -Regex ([String]$Device_OpenCL.Vendor) { 
+                                    "Advanced Micro Devices" { "AMD" }
+                                    "AMD"                    { "AMD" }
+                                    "Intel"                  { "INTEL" }
+                                    "NVIDIA"                 { "NVIDIA" }
+                                    "Microsoft"              { "MICROSOFT" }
+                                    Default                  { [String]$Device_OpenCL.Vendor -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
+                                }
+                            )
+                            Memory    = [UInt64]$Device_OpenCL.GlobalMemSize
+                            MemoryGiB = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
+                        }
+
+                        $Device.Id             = [Int]$Id
+                        $Device.Type_Id        = [Int]$Type_Id.($Device.Type)
+                        $Device.Vendor_Id      = [Int]$Vendor_Id.($Device.Vendor)
+                        $Device.Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
+
+                        #Unsupported devices get DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
+                        If ($Variables."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
+                        ElseIf ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
+                        Else {$Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
+
+                        $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "^\s*" -replace "[^ A-Z0-9\.]" -replace "\s+", " " -replace "\s*$"
+
+                        If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
+
+                        If ($Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })) { $Device = [Device]($Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus }) | Select-Object) }
+                        ElseIf ($Device.Type -eq "GPU" -and $Variables.SupportedGPUDeviceVendors -contains $Device.Vendor) { 
+                            $Devices += $Device
+
+                            If (-not $Type_Vendor_Index.($Device.Type)) { $Type_Vendor_Index.($Device.Type) = @{ } }
+
+                            $Id ++
+                            $Vendor_Id.($Device.Vendor) ++
+                            $Type_Vendor_Id.($Device.Type).($Device.Vendor) ++
+                            $Type_Id.($Device.Type) ++
+                        }
+
+                        # Add OpenCL specific data
+                        $Device.Index                 = [Int]$Index
+                        $Device.Type_Index            = [Int]$Type_Index.($Device.Type)
+                        $Device.Vendor_Index          = [Int]$Vendor_Index.($Device.Vendor)
+                        $Device.Type_Vendor_Index     = [Int]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
+                        $Device.PlatformId            = [Int]$PlatformId
+                        $Device.PlatformId_Index      = [Int]$PlatformId_Index.($PlatformId)
+                        $Device.Type_PlatformId_Index = [Int]$Type_PlatformId_Index.($Device.Type).($PlatformId)
+
+                        # Add raw data
+                        $Device.OpenCL = $Device_OpenCL
+
+                        If ($Device.OpenCL.PlatForm.Name -eq "NVIDIA CUDA") { $Device.CUDAversion = ([System.Version]($Device.OpenCL.PlatForm.Version -replace '.+CUDA ')) }
+
+                        If (-not $Type_Vendor_Index.($Device.Type)) { $Type_Vendor_Index.($Device.Type) = @{ } }
+                        If (-not $Type_PlatformId_Index.($Device.Type)) { $Type_PlatformId_Index.($Device.Type) = @{ } }
+
+                        $Index ++
+                        $Type_Index.($Device.Type) ++
+                        $Vendor_Index.($Device.Vendor) ++
+                        $Type_Vendor_Index.($Device.Type).($Device.Vendor) ++
+                        $PlatformId_Index.($PlatformId) ++
+                        $Type_PlatformId_Index.($Device.Type).($PlatformId) ++
+                    }
+                )
+                $PlatformId ++
+            }
+            Catch { 
+                Write-Message -Level Warn "Device detection for OpenCL platform '$($OpenCLplatform.Version)' has failed. $"
+                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                $_.Exception | Format-List -Force >> $ErrorLogFile
+                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+            }
+        }
+    )
+    Remove-Variable OpenCLplatform -ErrorAction Ignore
+
+    ($Devices.Where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -Is [Int64] }) | Sort-Object -Property Bus).ForEach(
+        { 
+            If ($_.Type -eq "GPU") { 
+                If ($_.Vendor -eq "NVIDIA") { $_.Architecture = (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability) }
+                ElseIf ($_.Vendor -eq "AMD") { $_.Architecture = (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture) }
+                Else { $_.Architecture = "Other" }
+            }
+
+            $_.Slot             = [Int]$Slot
+            $_.Type_Slot        = [Int]$Type_Slot.($_.Type)
+            $_.Vendor_Slot      = [Int]$Vendor_Slot.($_.Vendor)
+            $_.Type_Vendor_Slot = [Int]$Type_Vendor_Slot.($_.Type).($_.Vendor)
+
+            If (-not $Type_Vendor_Slot.($_.Type)) { $Type_Vendor_Slot.($_.Type) = @{ } }
+
+            $Slot ++
+            $Type_Slot.($_.Type) ++
+            $Vendor_Slot.($_.Vendor) ++
+            $Type_Vendor_Slot.($_.Type).($_.Vendor) ++
+        }
+    )
+
+    $Devices.ForEach(
+        { 
+            $Device = $_
+
+            $Device.Bus_Index = @($Devices.Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Type_Index = @($Devices.Where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Vendor_Index = @($Devices.Where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Platform_Index = @($Devices.Where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
 
             If (-not $Name -or ($Name_Devices.Where({ ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) }))) { 
                 If (-not $ExcludeName -or -not ($ExcludeName_Devices.Where({ ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) }))) { 

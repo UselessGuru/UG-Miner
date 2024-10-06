@@ -129,7 +129,7 @@ $Algorithms = @(
 #   @{ Algorithm = "HeavyHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo heavyhash" } # FPGA, Not yet supported on Nvidia
     @{ Algorithm = "HMQ1725";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo hmq1725 --watchdog" } # CryptoDredge-v0.27.0 is fastest
     @{ Algorithm = "JeongHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
-    @{ Algorithm = "KawPow";           Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.90; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo kawpow --watchdog" } # NBMiner-v42.3 is fastest
+    @{ Algorithm = "KawPow";           Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.90; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo kawpow --watchdog" }
 #   @{ Algorithm = "Lyra2RE2";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo lyra2v2 --watchdog" } # ASIC
 #   @{ Algorithm = "Lyra2RE3";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
     @{ Algorithm = "Lyra2TDC";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
@@ -208,7 +208,7 @@ $Algorithms = @(
     @{ Algorithm = "Hex";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo hex --watchdog" }
     @{ Algorithm = "HMQ1725";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo hmq1725 --watchdog" } # CryptoDredge-v0.27.0 is fastest
     @{ Algorithm = "JeongHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
-    @{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo kawpow --watchdog" } # NBMiner-v42.3 is fastest
+    @{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo kawpow --watchdog" }
 #   @{ Algorithm = "Lyra2RE2";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo lyra2v2 --watchdog" } # ASIC
 #   @{ Algorithm = "Lyra2RE3";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
     @{ Algorithm = "Lyra2TDC";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";        ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
@@ -273,7 +273,7 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
 
-    ($Devices | Select-Object Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type

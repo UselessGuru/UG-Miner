@@ -99,7 +99,7 @@ If ($Algorithms) {
 
     $Coins = @("aeon7", "bbscoin", "bittube", "freehaven", "graft", "haven", "intense", "masari", "monero" ,"qrl", "ryo", "stellite", "turtlecoin")
 
-    ($Devices | Select-Object Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type

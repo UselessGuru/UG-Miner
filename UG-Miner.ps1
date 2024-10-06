@@ -283,6 +283,7 @@ Param(
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 $ProcessName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 
+$ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 @"
 UG-Miner
 Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru
@@ -308,8 +309,8 @@ $Global:WscriptShell = New-Object -ComObject Wscript.Shell
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
-    $WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.4.3) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.5) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
+    $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.4.5) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 
@@ -348,7 +349,7 @@ If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command 
     Start-Sleep 20
     If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
         Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
-        $WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
 }
@@ -358,7 +359,7 @@ $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "
 $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
 If (-not $Variables.MyIP) { 
     Write-Host "Terminating Error - No internet connection." -ForegroundColor "Red"
-    $WscriptShell.Popup("No internet connection", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    $Global:WscriptShell.Popup("No internet connection", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 
@@ -382,7 +383,7 @@ ElseIf ((Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) {
         Write-Message -Level Info "Excluded the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans."
     }
     Catch { 
-        $WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis may lead to unpredictable results.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis may lead to unpredictable results.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     # Unblock files
@@ -399,7 +400,7 @@ Write-Host ""
 Write-Message -Level Verbose "Verifying pre-requisites..."
 If ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") { 
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
-    $WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    $Global:WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 
@@ -413,7 +414,7 @@ If ($PrerequisitesMissing = @($Prerequisites.Where({ -not (Test-Path -LiteralPat
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
     Write-Message -Level Error "and run 'install_all.bat' (Admin rights are required)."
-    $WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    $Global:WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 Remove-Variable Prerequisites, PrerequisitesMissing
@@ -421,7 +422,7 @@ Remove-Variable Prerequisites, PrerequisitesMissing
 If ( -not (Get-Command Get-PnpDevice)) { 
     Write-Message -Level Error "Windows Management Framework 5.1 is missing."
     Write-Message -Level Error "Please install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616"
-    $WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    $Global:WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 

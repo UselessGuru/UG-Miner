@@ -49,7 +49,7 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 If ($Algorithms) { 
 
-    ($Devices | Select-Object Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type

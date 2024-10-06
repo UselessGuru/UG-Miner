@@ -49,7 +49,7 @@ $Algorithms = $Algorithms.Where({ $_.Algorithm -ne "KawPow" -or $MinerPools[0][$
 
 If ($Algorithms) { 
 
-    ($Devices | Select-Object Model -Unique).ForEach(
+    ($Devices | Sort-Object Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
