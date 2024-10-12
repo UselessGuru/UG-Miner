@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.8
+Version date:   2024/10/12
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.24"
+    $APIVersion = "0.5.4.26"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -426,7 +426,7 @@ Function Start-APIServer {
                                                 $Data += $_.Name
                                                 ForEach ($Worker in $_.Workers) { 
                                                     Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
-                                                    $Worker.Hashrate = [Double]::NaN
+                                                    $Worker.Disabled = $false
                                                 }
                                                 Remove-Variable Worker
                                                 $_.Disabled = $true
@@ -528,6 +528,13 @@ Function Start-APIServer {
                                                 ForEach ($Worker in $_.Workers) { 
                                                     Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                                                     $Worker.Hashrate = [Double]::NaN
+                                                    $Worker.Disabled = $false
+                                                    $Worker.Earning = [Double]::NaN
+                                                    $Worker.Earning_Accuracy = [Double]::NaN
+                                                    $Worker.Earning_Bias = [Double]::NaN
+                                                    $Worker.Fee = 0
+                                                    $Worker.Hashrate = [Double]::NaN
+                                                    $Worker.TotalMiningDuration = [TimeSpan]0
                                                 }
                                                 Remove-Variable Worker
 

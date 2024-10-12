@@ -57,7 +57,14 @@
             $table.bootstrapTable({
               async: 'true',
               autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
-              height: $(window).height() - $('#balanceobjects').offset().top - 20
+              height: $(window).height() - $('#balanceobjects').offset().top - 20,
+
+              onPreBody: function() {
+                $('*').css('cursor', 'wait');
+              },
+              onLoadSuccess: function () {
+                $('*').css('cursor', 'default');
+              }
             });
 
             $('#balanceobjects').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
@@ -66,18 +73,22 @@
 
             $(document).ready(function () {
               $('#btn-remove-entry').click(function () {
+                $('*').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
                   $url = '/functions/balancedata/remove';
-                  $payload = {'Data': JSON.stringify($data.map($element => ({DateTime: $element.DateTime, Pool: $element.Pool, Currency: $element.Currency, Wallet: $element.Wallet})))};
+                  $payload = {
+                    'Data': JSON.stringify($data.map($element => ({DateTime: $element.DateTime, Pool: $element.Pool, Currency: $element.Currency, Wallet: $element.Wallet})))
+                  };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-remove-entry').text());
-                    $('body').css('cursor', 'default');
+                    $('*').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
+                  $('*').css('cursor', 'wait');
                   $table.bootstrapTable('refresh');
-                }
+                };
+                $('*').css('cursor', 'default');
               });
             });
 

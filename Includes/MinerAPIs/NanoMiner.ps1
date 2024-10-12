@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.8
+Version date:   2024/10/12
 #>
 
 Class NanoMiner : Miner { 

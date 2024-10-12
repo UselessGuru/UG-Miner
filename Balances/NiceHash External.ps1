@@ -18,54 +18,57 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash Internal.ps1
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.8
+Version date:   2024/10/12
 #>
 
-$Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$PoolConfig = $Config.PoolsConfig.NiceHash
-$PayoutCurrency = $PoolConfig.Variant.$Name.PayoutCurrency
-$Wallet = $Config.PoolsConfig.NiceHash.Variant.$Name.Wallets.$PayoutCurrency
-$RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
-$RetryInterval = $PoolConfig.PoolAPIretryInterval
+If (-not $Config.NiceHashWalletIsInternal) { 
 
-$Request = "https://api2.nicehash.com/main/api/v2/mining/external/$Wallet/rigs2"
+    $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
+    $PoolConfig = $Config.PoolsConfig.NiceHash
+    $PayoutCurrency = $PoolConfig.PayoutCurrency
+    $Wallet = $PoolConfig.Wallets.$PayoutCurrency
+    $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
+    $RetryInterval = $PoolConfig.PoolAPIretryInterval
 
-While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
+    $Request = "https://api2.nicehash.com/main/api/v2/mining/external/$Wallet/rigs2"
 
-    Try { 
-        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore
+    While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
-        If ($Config.LogBalanceAPIResponse) { 
-            "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-            $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-            $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-        }
+        Try { 
+            $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore
 
-        If ($Sum = [Double]$APIResponse.unpaidAmount + [Double]$APIResponse.externalBalance) { 
-            Return [PSCustomObject]@{ 
-                DateTime   = [DateTime]::Now.ToUniversalTime()
-                Pool       = $Name
-                Currency   = $PayoutCurrency
-                Wallet     = $Wallet
-                Pending    = [Double]$APIResponse.unpaidAmount
-                Balance    = [Double]$APIResponse.externalBalance
-                Unpaid     = $Sum
-                #Total      = $Sum
-                Url        = "https://www.nicehash.com/my/miner/$Wallet"
-                NextPayout = $APIResponse.NextPayoutTimeStamp
+            If ($Config.LogBalanceAPIResponse) { 
+                "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+            }
+
+            If ($Sum = [Double]$APIResponse.unpaidAmount + [Double]$APIResponse.externalBalance) { 
+                Return [PSCustomObject]@{ 
+                    DateTime   = [DateTime]::Now.ToUniversalTime()
+                    Pool       = $Name
+                    Currency   = $PayoutCurrency
+                    Wallet     = $Wallet
+                    Pending    = [Double]$APIResponse.unpaidAmount
+                    Balance    = [Double]$APIResponse.externalBalance
+                    Unpaid     = $Sum
+                    #Total      = $Sum
+                    Url        = "https://www.nicehash.com/my/miner/$Wallet"
+                    NextPayout = $APIResponse.NextPayoutTimeStamp
+                }
+            }
+            Else { 
+                Return
             }
         }
-        Else { 
-            Return
+        Catch { 
+            Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
         }
-    }
-    Catch { 
-        Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
+
+        $RetryCount--
     }
 
-    $RetryCount--
+    $Error.Clear()
+    [System.GC]::Collect()
 }
-
-$Error.Clear()
-[System.GC]::Collect()

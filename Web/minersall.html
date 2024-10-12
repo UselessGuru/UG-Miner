@@ -5,7 +5,7 @@
           <div class="alert alert-info" role="alert">These are all miners.<br>Note: UG-Miner will only create miners for algorithms that have at least one available pool.</div>
           <div id="toolbar">
             <button id="btn-re-benchmark" class="btn btn-primary" disabled title="The marked miners will re-benchmark&#10;Use this if the recorded hashrate is unreal or to re-enable disabled miners">Re-benchmark</button>
-            <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power usage is unreal">Re-measure power consumption</button>
+            <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power consumption is unreal">Re-measure power consumption</button>
             <button id="btn-failed" class="btn btn-warning" disabled title="The marked miners will be marked as failed&#10;Use this if the miners fail benchmarking or produce unpredictable results">Mark as failed</button>
             <button id="btn-disable" class="btn btn-danger" disabled title="The marked miners will be marked as disabled">Disable</button>
             <button id="btn-enable" class="btn btn-success" disabled title="The marked miners will be enabled">Enable</button>
@@ -54,7 +54,7 @@
                 <th data-field="Type" data-sortable="true" data-filter-control="select" data-visible="false">Type</th>
                 <th data-field="Status" data-sortable="true" data-filter-control="select">Status</th>
                 <th data-field="StatusInfo" data-sortable="true" data-filter-control="select" data-visible="false">Status Info</th>
-                <th data-field="Reasons" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Reasons</th>
+                <th data-field="Reasons" data-sortable="true" data-filter-control="select">Reasons</th>
                 <th data-field="Earning_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning (biased)</th>
                 <th data-field="Earning" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning</th>
                 <th data-field="Earning_Accuracy" data-align="right" data-sortable="true">Earning<br>Accuracy</th>
@@ -112,10 +112,16 @@
             var $table = $('#miners');
 
             $table.bootstrapTable({
-              async: 'true',
+              async: 'false',
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 26,
 
+              onPreBody: function() {
+                $('*').css('cursor', 'wait');
+              },
+              onLoadSuccess: function() {
+                $('*').css('cursor', 'default');
+              },
               onPostBody: function () {
                 if (this.data.length > 0) {
                   if (config.UseColorForMinerStatus == true) {
@@ -130,13 +136,13 @@
               }
             });
 
-            $('#miners').on('column-switch.bs.table column-switch-all.bs.table refresh.bs.table reorder-column.bs.table', function () {
+            $('#miners').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
               $(".addlocalcurrency").each(function () {
                 if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
               });
             });
 
-            $('#miners').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
+            $('#miners').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
               document.getElementById('btn-re-benchmark').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
@@ -158,9 +164,9 @@
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-re-benchmark').text());
+                    $('body').css('cursor', 'default');
+                    $('#myModal').modal({show:true});
                   });
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
                   $table.bootstrapTable('refresh');
                 }
               });
@@ -240,20 +246,19 @@
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
                   $('body').css('cursor', 'wait');
-                  // $('body').css('cursor', 'wait');
                   $url = '/functions/watchdogtimers/remove';
                   $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
+                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-remove-watchdog').text());
-                    // $('body').css('cursor', 'default');
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $table.bootstrapTable('refresh');
                 }
               });
+
             });
 
             $(window).resize(function () {

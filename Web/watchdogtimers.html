@@ -77,11 +77,11 @@
                 $('#watchdogalert').text('Watchdog is disabled in configuration (Watchdog -eq $false)');
               };
               $('#btn-removewatchdogs').click(function () {
-                $('body').css('cursor', 'wait');
+                $('*').css('cursor', 'wait');
                 $url = '/functions/watchdogtimers/reset';
                 $('.modal-body').load($url, function() {
                   $('.modal-title').text($('#btn-removewatchdogs').text());
-                  $('body').css('cursor', 'default');
+                  $('*').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
                 $('#watchdogtimers').bootstrapTable('refresh');

@@ -7,10 +7,14 @@ function formatMiners(data) {
   $.each(data, function(index, item) {
     try {
       // Format miner link
-      if (item.MinerUri && item.Best && item.Status == 4) { 
-        item.BaseName = '<a href="' + item.MinerUri + '" target="_blank">' + item.BaseName + '</a>';
-        item.Name = '<a href="' + item.MinerUri + '" target="_blank">' + item.Name + '</a>';
-        item.StatusInfo = '<a href="' + item.MinerUri + '" target="_blank">' + item.StatusInfo + '</a>';
+      if (item.MinerUri) {
+        if (item.Best) {
+          if (item.Status == 4) {
+            item.BaseName = '<a href="' + item.MinerUri + '" target="_blank">' + item.BaseName + '</a>';
+            item.Name = '<a href="' + item.MinerUri + '" target="_blank">' + item.Name + '</a>';
+            item.StatusInfo = '<a href="' + item.MinerUri + '" target="_blank">' + item.StatusInfo + '</a>';
+          }
+        }
       }
 
       // Format the device(s)
@@ -39,6 +43,9 @@ function formatMiners(data) {
         item.SecondaryPoolUser = item.Workers[1].Pool.User;
         item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
       }
+
+      // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
+      if (item.Reasons.length <= 0) item.Reasons = [" "];
 
       // Format margin of error
       if (isNaN(item.Earning_Accuracy)) item.Earning_Accuracy = 'n/a'; 
@@ -79,6 +86,9 @@ function formatPools(data) {
     item.Price = item.Price * factor;
     item.Price_Bias = item.Price_Bias * factor;
     item.StablePrice = item.StablePrice * factor;
+
+    // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
+    if (item.Reasons.length <= 0) item.Reasons = [" "];
   });
   return data;
 }

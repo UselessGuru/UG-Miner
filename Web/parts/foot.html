@@ -15,10 +15,12 @@
       });
 
       $('#btn-miningpause').click(function () {
+        $('*').css('cursor', 'wait');
         $command = '/functions/mining/pause';
         $('.modal-body').load($command, function() {
           if (this.outerText) {
             $('.modal-title').text($('#btn-miningpause').text());
+            $('*').css('cursor', 'default');
             $('#myModal').modal({show:true});
           };
         });
@@ -31,10 +33,12 @@
       });
 
       $('#btn-miningstart').click(function () {
+        $('*').css('cursor', 'wait');
         $command = '/functions/mining/start';
         $('.modal-body').load($command, function() {
           if (this.outerText) {
             $('.modal-title').text($('#btn-miningstart').text());
+            $('*').css('cursor', 'default');
             $('#myModal').modal({show:true});
           };
         });
@@ -47,10 +51,12 @@
       });
 
       $('#btn-miningstop').click(function () {
+        $('*').css('cursor', 'wait');
         $command = '/functions/mining/stop';
         $('.modal-body').load($command, function() {
           if (this.outerText) {
             $('.modal-title').text($('#btn-miningstop').text());
+            $('*').css('cursor', 'default');
             $('#myModal').modal({show:true});
           };
         });
@@ -77,9 +83,9 @@
       if (version) $('#footer').empty().append(version.join('&nbsp;/&nbsp;') + '&nbsp;/&nbsp;All earnings and profit numbers are estimates based on data provided by the pools APIs&nbsp;/&nbsp&copy; UselessGuru');
     });
 
-    $(window).on('beforeunload', function(){
-      $('*').css('cursor', 'wait');
-    });
+    // $(window).on('beforeunload', function(){
+    //   // $('*').css('cursor', 'wait');
+    // });
 </script>
 <!-- End of page scripts 'foot.html'-->
 </html>

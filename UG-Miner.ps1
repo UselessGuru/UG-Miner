@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.8
+Version date:   2024/10/12
 #>
 
 using module .\Includes\Include.psm1
@@ -87,7 +87,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Int]$Donation = 15, # Minutes per Day
     [Parameter(Mandatory = $false)]
-    [Double]$EarningsAdjustmentFactor = 1, # Default factor with which multiplies the prices reported by ALL pools. Allowed values: 0.0 - 10.0
+    [Double]$EarningsAdjustmentFactor = 1, # Default adjustment factor for prices reported by ALL pools (unless there is a per pool value configuration definined). Prices will be multiplied with this. Allowed values: 0.0 - 10.0
     [Parameter(Mandatory = $false)]
     [String[]]$ExcludeDeviceName = @(), # Array of disabled devices, e.g. @("CPU#00", "GPU#02"); by default all devices are enabled
     [Parameter(Mandatory = $false)]
@@ -280,10 +280,11 @@ Param(
     [String]$WorkerName = [System.Net.Dns]::GetHostName()
 )
 
+$ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
+
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 $ProcessName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 @"
 UG-Miner
 Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru
@@ -302,7 +303,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.7"
+    Version      = [System.Version]"6.3.8"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell

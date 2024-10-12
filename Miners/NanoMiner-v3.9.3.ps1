@@ -17,16 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.8
+Version date:   2024/10/12
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -ne "NVIDIA" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
 
 $URI = "https://github.com/nanopool/nanominer/releases/download/v3.9.3/nanominer-windows-3.9.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\nanominer.exe"
-$DeviceEnumerator = "Slot"
+$DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @(
     @{ Algorithms = @("Autolykos2");         Type = "AMD"; Fee = @(0.025); MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = @(); ExcludePools = @(@("NiceHash"), @());   Arguments = @(" -algo Autolykos") }
@@ -56,18 +56,18 @@ $Algorithms = @(
     @{ Algorithms = @("Octopus");            Type = "INTEL"; Fee = @(0.02); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Octopus") }
     @{ Algorithms = @("UbqHash");            Type = "INTEL"; Fee = @(0.01); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(75, 45); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Ubqhash") }
 
-    @{ Algorithms = @("Autolykos2");         Type = "NVIDIA"; Fee = @(0.025); MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@("NiceHash"), @());   Arguments = @(" -algo Autolykos") } # Trex-v0.26.8 is fastest
-    @{ Algorithms = @("Blake3");             Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Alephium") }
-    @{ Algorithms = @("EtcHash");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Etchash") } # PhoenixMiner-v6.2c is fastest
-    @{ Algorithms = @("Ethash");             Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Ethash") } # PhoenixMiner-v6.2c is fastest
-    @{ Algorithms = @("EthashB3");           Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo EthashB3") }
-    @{ Algorithms = @("EvrProgPow");         Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Evrprogpow") }
-    @{ Algorithms = @("FiroPow");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 0; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo FiroPow") }
-    @{ Algorithms = @("FishHash");           Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Fishhash") }
-    @{ Algorithms = @("HeavyHashKarlsenV2"); Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Karlsen") }
-    @{ Algorithms = @("KawPow");             Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 1.08; MinerSet = 0; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@("ProHashing"), @()); Arguments = @(" -algo KawPow") } # Trex-v0.26.8 is fastest
-    @{ Algorithms = @("Octopus");            Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Octopus") }
-    @{ Algorithms = @("UbqHash");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @());             Arguments = @(" -algo Ubqhash") } # PhoenixMiner-v6.2c is fastest
+    @{ Algorithms = @("Autolykos2");         Type = "NVIDIA"; Fee = @(0.025); MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@("NiceHash"), @());   Arguments = @(" -algo Autolykos") } # Trex-v0.26.8 is fastest
+    @{ Algorithms = @("Blake3");             Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @("Other"); ExcludePools = @(@(), @());             Arguments = @(" -algo Alephium") }
+    @{ Algorithms = @("EtcHash");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo Etchash") } # PhoenixMiner-v6.2c is fastest
+    @{ Algorithms = @("Ethash");             Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo Ethash") } # PhoenixMiner-v6.2c is fastest
+    @{ Algorithms = @("EthashB3");           Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo EthashB3") }
+    @{ Algorithms = @("EvrProgPow");         Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo Evrprogpow") }
+    @{ Algorithms = @("FiroPow");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 0; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo FiroPow") }
+    @{ Algorithms = @("FishHash");           Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo Fishhash") }
+    @{ Algorithms = @("HeavyHashKarlsenV2"); Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo Karlsen") }
+    @{ Algorithms = @("KawPow");             Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 1.08; MinerSet = 0; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@("ProHashing"), @()); Arguments = @(" -algo KawPow") } # Trex-v0.26.8 is fastest
+    @{ Algorithms = @("Octopus");            Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo Octopus") }
+    @{ Algorithms = @("UbqHash");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();        ExcludePools = @(@(), @());             Arguments = @(" -algo Ubqhash") } # PhoenixMiner-v6.2c is fastest
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -115,10 +115,11 @@ If ($Algorithms) {
                                         $Arguments += " -wallet $($Pool.User -replace '\..+')"
                                         $Arguments += " -rigName $($Pool.User)$(If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Pool.WorkerName })"
                                         $Arguments += " -rigPassword $($Pool.Pass)"
-                                        $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')"
+                                        If ($_.Type -ne "CPU") { $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
                                     }
                                     Remove-Variable Pool
 
+                                    If ($_.Type -eq "CPU") { $Arguments += " -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Config.CPUMiningReserveCPUcore))" }
                                     $Arguments += " -mport 0 -webPort $MinerAPIPort -checkForUpdates false -noLog true -watchdog false"
 
                                     # Apply tuning parameters

@@ -83,6 +83,12 @@
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 30,
 
+              onPreBody: function() {
+                $('*').css('cursor', 'wait');
+              },
+              onLoadSuccess: function() {
+                $('*').css('cursor', 'default');
+              },
               onPostBody: function () {
                 if (this.data.length > 0) {
                   if (config.UsemBTC) {
@@ -104,7 +110,9 @@
                 if ($data.length >= 1) {
                   $('body').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
-                  $payload = {'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm, Currency: $element.Currency })))};
+                  $payload = {
+                    'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm, Currency: $element.Currency })))
+                  };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-reset-data').text());
                     $('body').css('cursor', 'default');

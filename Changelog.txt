@@ -1,8 +1,26 @@
 Known issues:
-- UG-Miner does not work with PWSH 7.5.0-preview.5
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
+
+Changelog UG-Miner 6.3.8 2024/10/12
+===================================
+
+Fixes:
+- BalancesTracker: NiceHash balances not working
+- Core / Includes.psm1: Function 'Get-AllDAGdata' querying API's too often
+- Core / Includes.psm1: Function 'Get-Stat' not returning all stats if called without parameter
+- Core / Includes.psm1: Function 'Update-PoolWatchdog' Pool watchdog marking pools unavailable with two reasons simultaneously (Regression from 6.3.3)
+- Miner API 'EthMiner': Error when miner crashed
+- Web GUI: Miners & Pools tables: Reasons filter not working
+
+Improvements:
+- Core & Miner APIs: Remove obsolete code & minor code optimizations
+- LegacyGUI.ps1: Remove obsolete code & minor code optimizations
+
+Miner updates:
+- BzMiner-v21.5.1
+
 
 Changelog UG-Miner 6.3.7 2024/10/05
 ===================================

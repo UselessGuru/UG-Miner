@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.8
+Version date:   2024/10/12
 #>
 
 Class EthMiner : Miner { 
@@ -31,7 +31,7 @@ Class EthMiner : Miner {
 
         Try { 
             $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout
-            $Data = $Response | ConvertFrom-Json
+            $Data = $Response | ConvertFrom-Json -ErrorAction Stop
         }
         Catch { 
             Return $null

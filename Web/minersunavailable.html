@@ -12,7 +12,6 @@
             <button id="btn-remove-watchdog" class="btn btn-info" disabled title="Remove the watchdog timers for the marked miners">Remove watchdog</button>
           </div>
           <table id="miners" class="table"
-            data-ajax-options="ajaxOptions"
             data-auto-refresh="true"
             data-auto-refresh-status="false"
             data-cache="true"
@@ -54,7 +53,7 @@
                 <th data-field="Type" data-sortable="true" data-filter-control="select" data-visible="false">Type</th>
                 <th data-field="Status" data-sortable="true" data-filter-control="select" data-visible="false">Status</th>
                 <th data-field="StatusInfo" data-sortable="true" data-filter-control="select" data-visible="false">Status Info</th>
-                <th data-field="Reasons" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Reasons</th>
+                <th data-field="Reasons" data-sortable="true" data-filter-control="select">Reasons</th>
                 <th data-field="Earning_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning (biased)</th>
                 <th data-field="Earning" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earning</th>
                 <th data-field="Earning_Accuracy" data-align="right" data-sortable="true">Earning<br>Accuracy</th>
@@ -131,6 +130,12 @@
               //   });
               // },
 
+              onPreBody: function() {
+                $('*').css('cursor', 'wait');
+              },
+              onLoadSuccess: function() {
+                $('*').css('cursor', 'default');
+              },
               onPostBody: function () {
                 if (this.data.length > 0) {
                   if (config.UseColorForMinerStatus == true) {
@@ -139,6 +144,7 @@
                     });
                   };
                 };
+
                 $(".addlocalcurrency").each(function () {
                   if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
                 });

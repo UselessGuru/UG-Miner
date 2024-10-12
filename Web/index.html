@@ -185,7 +185,7 @@
               $('#btn-re-benchmark').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
+                  $('*').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -193,7 +193,7 @@
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-re-benchmark').text());
-                    $('body').css('cursor', 'default');
+                    $('*').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $('#activeminers').bootstrapTable('refresh');
@@ -203,7 +203,7 @@
               $('#btn-re-measure').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
+                  $('*').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -211,7 +211,7 @@
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-re-measure').text());
-                    $('body').css('cursor', 'default');
+                    $('*').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $('#activeminers').bootstrapTable('refresh');
@@ -221,7 +221,7 @@
               $('#btn-failed').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
+                  $('*').css('cursor', 'wait');
                   $url = '/functions/stat/set';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -230,7 +230,7 @@
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-failed').text());
-                    $('body').css('cursor', 'default');
+                    $('*').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $('#activeminers').bootstrapTable('refresh');
@@ -240,14 +240,14 @@
               $('#btn-disable').click(function () {
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
+                  $('*').css('cursor', 'wait');
                   $url = '/functions/stat/disable'
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-disable').text());
-                    $('body').css('cursor', 'default');
+                    $('*').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $('#activeminers').bootstrapTable('refresh');

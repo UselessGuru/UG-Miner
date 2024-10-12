@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.7
-Version date:   2024/10/05
+Version:        6.3.8
+Version date:   2024/10/12
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -550,7 +550,8 @@ Function Update-TabControl {
                         $LegacyGUIwatchdogTimersDGV.ClearSelection()
                         $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
                             @{ Name = "Name"; Expression = { $_.MinerName } },
-                            @{ Name = "Algorithms"; Expression = { $_.Algorithm } },
+                            @{ Name = "Algorithm"; Expression = { $_.Algorithm } },
+                            @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } },
                             @{ Name = "Pool name"; Expression = { $_.PoolName } },
                             @{ Name = "Region"; Expression = { $_.PoolRegion } },
                             @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
@@ -559,12 +560,13 @@ Function Update-TabControl {
                         $LegacyGUIwatchdogTimersDGV.ClearSelection()
 
                         If (-not $LegacyGUIwatchdogTimersDGV.ColumnWidthChanged -and $LegacyGUIwatchdogTimersDGV.Columns) { 
-                            $LegacyGUIwatchdogTimersDGV.Columns[0].FillWeight = 120
-                            $LegacyGUIwatchdogTimersDGV.Columns[1].FillWeight = 100
-                            $LegacyGUIwatchdogTimersDGV.Columns[2].FillWeight = 100
+                            $LegacyGUIwatchdogTimersDGV.Columns[0].FillWeight = 200
+                            $LegacyGUIwatchdogTimersDGV.Columns[1].FillWeight = 60
+                            $LegacyGUIwatchdogTimersDGV.Columns[2].FillWeight = 60
                             $LegacyGUIwatchdogTimersDGV.Columns[3].FillWeight = 60
-                            $LegacyGUIwatchdogTimersDGV.Columns[4].FillWeight = 30 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
-                            $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 100
+                            $LegacyGUIwatchdogTimersDGV.Columns[4].FillWeight = 44
+                            $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 25 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
+                            $LegacyGUIwatchdogTimersDGV.Columns[6].FillWeight = 55
 
                             $LegacyGUIwatchdogTimersDGV | Add-Member ColumnWidthChanged $true
                         }
@@ -1772,7 +1774,7 @@ $LegacyGUIform.Add_Load(
             If ($WindowSettings.Left -gt 0) { $LegacyGUIform.Left = $WindowSettings.Left }
         }
 
-        $LegacyGUIformWindowState = If ($Config.LegacyGUIStartMinimized) { [System.Windows.Forms.FormWindowState]::Minimized } Else { [System.Windows.Forms.FormWindowState]::Normal }
+        $LegacyGUIform.State = If ($Config.LegacyGUIStartMinimized) { [System.Windows.Forms.FormWindowState]::Minimized } Else { [System.Windows.Forms.FormWindowState]::Normal }
 
         Update-GUIstatus
 
@@ -1780,7 +1782,7 @@ $LegacyGUIform.Add_Load(
         $TimerUI.Interval = 50
         $TimerUI.Add_Tick(
             { 
-                If ($LegacyGUIform.CanSelect) { 
+                # If ($LegacyGUIform.CanSelect) { 
                     If ($Variables.APIRunspace) { 
                         If ($LegacyGUIeditConfigLink.Tag -ne "WebGUI") { 
                             $LegacyGUIeditConfigLink.Tag = "WebGUI"
@@ -1792,7 +1794,7 @@ $LegacyGUIform.Add_Load(
                         $LegacyGUIeditConfigLink.Text = "Edit configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
                     }
                     [Void](MainLoop)
-                }
+                # }
             }
         )
         $TimerUI.Start()
@@ -1866,13 +1868,4 @@ $LegacyGUIform.Add_KeyDown(
     }
 )
 
-$LegacyGUIform.Add_ResizeEnd({ Resize-Form })
-
-$LegacyGUIform.Add_SizeChanged(
-    { 
-        If ($this.WindowState -ne $LegacyGUIformWindowState) { 
-            $LegacyGUIformWindowState = $this.WindowState
-            Resize-Form
-        }
-    }
-)
+$LegacyGUIform.Add_SizeChanged({ Resize-Form })
