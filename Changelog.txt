@@ -3,7 +3,7 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
-Changelog UG-Miner 6.3.8 2024/10/12
+Changelog UG-Miner 6.3.8 2024/10/13
 ===================================
 
 Enhancements:

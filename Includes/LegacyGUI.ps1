@@ -88,7 +88,7 @@ Function CheckBoxSwitching_Click {
                 $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
                 $LegacyGUIswitchingDGV.Columns[2].FillWeight = 90; $LegacyGUIswitchingDGV.Columns[2].HeaderText = "Miner"
                 $LegacyGUIswitchingDGV.Columns[3].FillWeight = 60 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum).Maximum * 40; $LegacyGUIswitchingDGV.Columns[3].HeaderText = "Pool(s)"
-                $LegacyGUIswitchingDGV.Columns[4].FillWeight = 50 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIswitchingDGV.Columns[4].HeaderText = "Algorithm(s))"
+                $LegacyGUIswitchingDGV.Columns[4].FillWeight = 50 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIswitchingDGV.Columns[4].HeaderText = "Algorithm(s) (variant)"
                 $LegacyGUIswitchingDGV.Columns[5].FillWeight = 90 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum).Maximum * 50; $LegacyGUIswitchingDGV.Columns[5].HeaderText = "Account(s)"
                 $LegacyGUIswitchingDGV.Columns[6].FillWeight = 30; $LegacyGUIswitchingDGV.Columns[6].HeaderText = "Cycles"; $LegacyGUIswitchingDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
                 $LegacyGUIswitchingDGV.Columns[7].FillWeight = 35; $LegacyGUIswitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
@@ -635,15 +635,15 @@ Function Resize-Form {
             $Variables.TextBoxSystemLog.ScrollToCaret()
         }
 
-        $LegacyGUIminersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIminersLabel.Height - $LegacyGUIminersPanel.Height - 61
+        $LegacyGUIminersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIminersLabel.Height - $LegacyGUIminersPanel.Height - 64
 
-        $LegacyGUIpoolsDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIpoolsLabel.Height - $LegacyGUIpoolsPanel.Height - 61
+        $LegacyGUIpoolsDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIpoolsLabel.Height - $LegacyGUIpoolsPanel.Height - 64
 
-        $LegacyGUIworkersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIworkersLabel.Height - 58
+        $LegacyGUIworkersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIworkersLabel.Height - 61
 
-        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 64
+        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 67
 
-        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 64
+        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 67
 
         $LegacyGUIeditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIeditMonitoringLink.Width - 12), 6)
 
