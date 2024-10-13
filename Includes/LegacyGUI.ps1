@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
 Version:        6.3.8
-Version date:   2024/10/12
+Version date:   2024/10/13
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -87,9 +87,9 @@ Function CheckBoxSwitching_Click {
                 $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50
                 $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
                 $LegacyGUIswitchingDGV.Columns[2].FillWeight = 90; $LegacyGUIswitchingDGV.Columns[2].HeaderText = "Miner"
-                $LegacyGUIswitchingDGV.Columns[3].FillWeight = 60 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum).Maximum * 40; $LegacyGUIswitchingDGV.Columns[3].HeaderText = "Pool"
-                $LegacyGUIswitchingDGV.Columns[4].FillWeight = 50 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIswitchingDGV.Columns[4].HeaderText = "Algorithm (variant)"
-                $LegacyGUIswitchingDGV.Columns[5].FillWeight = 90 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum).Maximum * 50; $LegacyGUIswitchingDGV.Columns[5].HeaderText = "Account"
+                $LegacyGUIswitchingDGV.Columns[3].FillWeight = 60 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum).Maximum * 40; $LegacyGUIswitchingDGV.Columns[3].HeaderText = "Pool(s)"
+                $LegacyGUIswitchingDGV.Columns[4].FillWeight = 50 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIswitchingDGV.Columns[4].HeaderText = "Algorithm(s))"
+                $LegacyGUIswitchingDGV.Columns[5].FillWeight = 90 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum).Maximum * 50; $LegacyGUIswitchingDGV.Columns[5].HeaderText = "Account(s)"
                 $LegacyGUIswitchingDGV.Columns[6].FillWeight = 30; $LegacyGUIswitchingDGV.Columns[6].HeaderText = "Cycles"; $LegacyGUIswitchingDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
                 $LegacyGUIswitchingDGV.Columns[7].FillWeight = 35; $LegacyGUIswitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
                 $LegacyGUIswitchingDGV.Columns[8].FillWeight = 30 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIswitchingDGV.Columns[8].HeaderText = "Device"

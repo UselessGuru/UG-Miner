@@ -148,11 +148,9 @@
                   $table.bootstrapTable('hideColumn', 'SecondaryMinerFee');
                 };
               },
-
               onResetView: function () {
                 document.getElementById('logtext').style.height = ($(window).height() - $table.height() - 410) + 'px';
               },
-
               onPostBody: function () {
                 if (config.UseColorForMinerStatus == true) {
                   $(".statuscolor").each(function () {

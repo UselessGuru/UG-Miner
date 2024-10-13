@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\include.ps1
 Version:        6.3.8
-Version date:   2024/10/12
+Version date:   2024/10/13
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -444,11 +444,13 @@ Class Miner : IDisposable {
             Duration                = ""
             Earning                 = $this.Earning
             Earning_Bias            = $this.Earning_Bias
+            Hashrates               = ""
             LastDataSample          = $null
             MeasurePowerConsumption = $this.MeasurePowerConsumption
             Pools                   = ($this.Workers.Pool.Name | Select-Object -Unique) -join " "
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
+            PowerConsumption        = ""
             Reason                  = ""
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
@@ -526,9 +528,11 @@ Class Miner : IDisposable {
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
             Earning                 = $this.Earning
             Earning_Bias            = $this.Earning_Bias
+            Hashrates               = $this.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & "
             LastDataSample          = If ($this.Data.Count -ge 1) { $this.Data.Item($this.Data.Count - 1 ) | ConvertTo-Json -Compress } Else { "" }
             MeasurePowerConsumption = $this.MeasurePowerConsumption
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
+            PowerConsumption        = "$($this.PowerConsumption.ToString("N2"))W"
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
             Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { 

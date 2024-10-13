@@ -6,6 +6,10 @@ Known issues:
 Changelog UG-Miner 6.3.8 2024/10/12
 ===================================
 
+Enhancements:
+- SwitchingLog.csv : Added 'Hashrate(s)' & 'PowerUsage' columns
+- Web GUI / Switching Log: Added hidden 'Hashrate(s)' & 'PowerUsage' columns
+
 Fixes:
 - BalancesTracker: NiceHash balances not working
 - Core / Includes.psm1: Function 'Get-AllDAGdata' querying API's too often
@@ -20,6 +24,7 @@ Improvements:
 
 Miner updates:
 - BzMiner-v21.5.1
+- SRBMinerMulti-v2.6.8
 
 
 Changelog UG-Miner 6.3.7 2024/10/05

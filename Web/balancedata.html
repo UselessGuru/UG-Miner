@@ -59,10 +59,10 @@
               autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
               height: $(window).height() - $('#balanceobjects').offset().top - 20,
 
-              onPreBody: function() {
+              onCreatedControls: function() {
                 $('*').css('cursor', 'wait');
               },
-              onLoadSuccess: function () {
+              onLoadSuccess: function() {
                 $('*').css('cursor', 'default');
               }
             });
