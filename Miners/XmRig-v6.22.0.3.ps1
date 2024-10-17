@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -133,7 +133,7 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightV2";        Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/2" }
     @{ Algorithm = "CryptonightXao";       Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
     @{ Algorithm = "CryptonightHeavyXhv";  Type = "INTEL"; MinMemGiB = 4;    MinerSet = 1; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
-    @{ Algorithm = "CryptonightZls";       Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" } 
+    @{ Algorithm = "CryptonightZls";       Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
     @{ Algorithm = "KawPow";               Type = "INTEL"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" }
 #   @{ Algorithm = "Randomx";              Type = "INTEL"; MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxArq";           Type = "INTEL"; MinMemGiB = 4;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway

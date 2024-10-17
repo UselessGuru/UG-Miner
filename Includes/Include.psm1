@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -234,7 +234,7 @@ Class Pool : IDisposable {
     [Nullable[UInt]]$Workers
     [String]$ZAPcurrency
 
-    Dispose() {
+    Dispose() { 
         $this = $null
     }
 }
@@ -250,8 +250,8 @@ Class Worker : IDisposable {
     [Pool]$Pool
     [TimeSpan]$TotalMiningDuration = [TimeSpan]0
     [DateTime]$Updated = [DateTime]::Now.ToUniversalTime()
-     
-    Dispose() {
+
+    Dispose() { 
         $this = $null
     }
 }
@@ -336,8 +336,8 @@ Class Miner : IDisposable {
     hidden [System.Management.Automation.Job]$DataReaderJob = $null
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [System.Diagnostics.Process]$Process = $null
- 
-    Dispose() {
+
+    Dispose() { 
         $this = $null
     }
 
@@ -1069,7 +1069,7 @@ Function Get-Rate {
                     }
                 )
             }
-            Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", ' &$1'). $($Variables.Branding.ProductLabel) cannot calculate FIAT or BTC value for $(If ($Variables.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" } )." })"
+            Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", ' &$1'). $($Variables.Branding.ProductLabel) cannot calculate FIAT or BTC value for $(If ($Variables.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
             $Variables.Rates = $Rates
             $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
 
@@ -2514,7 +2514,7 @@ Filter ConvertTo-Hash {
     $Units = " kMGTPEZY" # k(ilo) in small letters, see https://en.wikipedia.org/wiki/Metric_prefix
 
     If ( $_ -eq $null -or [Double]::IsNaN($_)) { Return "n/a" }
-    ElseIf ($_ -eq 0) { Return "0H/s "}
+    ElseIf ($_ -eq 0) { Return "0H/s " }
     $Base1000 = [Math]::Max([Double]0, [Math]::Min([Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1))), $Units.Length - 1))
     $UnitValue = $_ / [Math]::Pow(1000, $Base1000)
     $Digits = If ($UnitValue -lt 10) { 3 } Else { 2 }
@@ -3112,7 +3112,7 @@ Function Get-AllDAGdata {
                 (($CurrencyDAGdataResponse.Content -split "\n" -replace '"', "'").Where({ $_ -like "<div class='block' title='Current block height of *" })).ForEach(
                     { 
                         $Currency = $_ -replace "^<div class='block' title='Current block height of " -replace "'>.*$"
-                        If ($Currency -notin @("ETF")) {
+                        If ($Currency -notin @("ETF")) { 
                             # ETF has invalid DAG data of 444GiB
                             $BlockHeight = [Math]::Floor(($_ -replace "^<div class='block' title='Current block height of $Currency'>" -replace "</div>"))
                             If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $BlockHeight -ge $DAGdata.Currency.$Currency.BlockHeight) { 

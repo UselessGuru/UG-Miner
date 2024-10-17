@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash Internal.ps1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 If ($Config.NiceHashWalletIsInternal) { 
@@ -82,22 +82,17 @@ If ($Config.NiceHashWalletIsInternal) {
                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             }
 
-            If ($APIResponse.active) { 
-                Return [PSCustomObject]@{ 
-                    DateTime   = [DateTime]::Now.ToUniversalTime()
-                    Pool       = $Name
-                    Currency   = $PayoutCurrency
-                    Wallet     = $Wallet
-                    Pending    = [Double]$APIResponse.pending
-                    Balance    = [Double]$APIResponse.available
-                    Unpaid     = [Double]$APIResponse.totalBalance
-                    Withdrawal = [Double]$APIResponse.pendingDetails.withdrawal
-                    #Total      = [Double]$APIResponse.pendingDetails.totalBalance
-                    Url        = "https://www.nicehash.com/my/mining/rigs/$($PoolConfig.WorkerName)"
-                }
-            }
-            Else { 
-                Return
+            Return [PSCustomObject]@{ 
+                DateTime   = [DateTime]::Now.ToUniversalTime()
+                Pool       = $Name
+                Currency   = $PayoutCurrency
+                Wallet     = $Wallet
+                Pending    = [Double]$APIResponse.pending
+                Balance    = [Double]$APIResponse.available
+                Unpaid     = [Double]$APIResponse.totalBalance
+                Withdrawal = [Double]$APIResponse.pendingDetails.withdrawal
+                #Total      = [Double]$APIResponse.pendingDetails.totalBalance
+                Url        = "https://www.nicehash.com/my/mining/rigs/$($PoolConfig.WorkerName)"
             }
         }
         Catch { 

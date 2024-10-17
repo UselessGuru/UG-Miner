@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 using module .\Include.psm1
@@ -467,34 +467,35 @@ Try {
                         )
                         Remove-Variable PriceThreshold -ErrorAction Ignore
                     }
+                    # Per pool config algorithm filter
+                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Algorithm -like "+*" -and $Variables.PoolsConfig[$_.Name].Algorithm -split ',' -notcontains "+$($_.AlgorithmVariant)" -and $Variables.PoolsConfig[$_.Name].Algorithm -split ',' -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
+                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Algorithm -split ',' -contains "-$($_.Algorithm)" -or $Variables.PoolsConfig[$_.Name].Algorithm -split ',' -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in $($_.Name) pool config)") })
                     # Filter non-enabled algorithms
-                    If ($Config.Algorithm -like "+*") { $Pools.Where({ $Config.Algorithm -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in generic config") }) }
+                    If ($Config.Algorithm -like "+*") { 
+                        $Pools.Where({ $Config.Algorithm -split ',' -notcontains "+$($_.Algorithm)" -and $Config.Algorithm -split ',' -notcontains "+$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in generic config") })
+                    }
                     # Filter disabled algorithms
                     ElseIf ($Config.Algorithm -like "-*") { 
-                        $Pools.Where({ $Config.Algorithm -contains "-$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in generic config)") })
-                        $Pools.Where({ $Config.Algorithm -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.AlgorithmVariant)`` in generic config)") })
+                        $Pools.Where({ $Config.Algorithm -split ',' -contains "-$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in generic config)") })
+                        $Pools.Where({ $Config.Algorithm -split ',' -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.AlgorithmVariant)`` in generic config)") })
                     }
-                    # Per pool config algorithm filter
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Algorithm -like "+*" -and $Variables.PoolsConfig.$($_.Name).Algorithm -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Algorithm -contains "-$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in $($_.Name) pool config)") })
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Algorithm -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.AlgorithmVariant)`` in $($_.Name) pool config)") })
-                    # Filter non-enabled currencies
-                    If ($Config.Currency -like "+*") { $Pools.Where({ $Config.Currency -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in generic config") }) }
-                    # Filter disabled currencies
-                    ElseIf ($Config.Currency -like "-*") { $Pools.Where({ $Config.Currency -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in generic config)") }) }
                     # Per pool config currency filter
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -like "+*" -and $Variables.PoolsConfig.$($_.Name).Currency -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in $($_.Name) pool config)") })
+                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -like "+*" -and $Variables.PoolsConfig[$_.Name].Currency -split ',' -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
+                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -split ',' -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in $($_.Name) pool config)") })
+                    # Filter non-enabled currencies
+                    If ($Config.Currency -like "+*") { $Pools.Where({ $Config.Currency -split ',' -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in generic config") }) }
+                    # Filter disabled currencies
+                    ElseIf ($Config.Currency -like "-*") { $Pools.Where({ $Config.Currency -split ',' -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in generic config)") }) }
                     # MinWorkers
-                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Variables.PoolsConfig[$_.Name].MinWorker }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Variables.PoolsConfig[$_.Name].MinWorker)`` in $($_.Name) pool config)") })
-                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Config.MinWorker }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Config.MinWorker)`` in generic config)") })
+                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Variables.PoolsConfig[$_.Name].MinWorkers }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Variables.PoolsConfig[$_.Name].MinWorker)`` in $($_.Name) pool config)") })
+                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Config.MinWorker -and $Variables.PoolsConfig[$_.Name].MinWorkers -ne 0 -and $Variables.PoolsConfig[$_.Name].MinWorkers -lt $Config.MinWorker }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Config.MinWorker)`` in generic config)") })
                     # SSL
                     $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Never" }).ForEach({ $_.PoolPorts[1] = $null })
                     $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Always" }).ForEach({ $_.PoolPorts[0] = $null })
                     $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Never" -and -not $_.PoolPorts[0] }).ForEach({ $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in $($_.Name) pool config)") })
                     $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Always" -and -not $_.PoolPorts[1] }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in $($_.Name) pool config)") })
                     If ($Config.SSL -eq "Never") { $Pools.Where({ -not $_.PoolPorts[0] -and $_.Reasons -notmatch "Non-SSL port not available .+" }).ForEach({ $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in generic config)") }) }
-                    If ($Config.SSL -eq "Always") { $Pools.Where({ -not $_.PoolPorts[1] -and $_.Reasons -notmatch "SSL port not available .+" }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in generic config)") }) }
+                    ElseIf ($Config.SSL -eq "Always") { $Pools.Where({ -not $_.PoolPorts[1] -and $_.Reasons -notmatch "SSL port not available .+" }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in generic config)") }) }
                     # SSL Allow selfsigned certificate
                     $Pools.Where({ $_.SSLselfSignedCertificate -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -ne $null -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $false }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in $($_.Name) pool config)") })
                     If (-not $Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $null }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") }) }
@@ -567,6 +568,7 @@ Try {
                 Write-Message -Level Warn "No available pools - retrying in $($Config.Interval) seconds..."
                 Start-Sleep -Seconds $Config.Interval
                 Write-Message -Level Info "Ending cycle (No available pools)."
+                Continue
             }
 
             # Ensure we get the hashrate for running miners prior looking for best miner
@@ -662,7 +664,7 @@ Try {
                         ForEach ($Worker in $Miner.Workers) { 
                             $Algorithm = $Worker.Pool.Algorithm
                             $MinerData = ($Miner.Data[-1]).Shares
-                            If ($Miner.Data.Count -gt $Miner.MinDataSample -and -not $Miner.Benchmark -and $Config.SubtractBadShares -and $MinerData.$Algorithm -gt 0) {
+                            If ($Miner.Data.Count -gt $Miner.MinDataSample -and -not $Miner.Benchmark -and $Config.SubtractBadShares -and $MinerData.$Algorithm -gt 0) { 
                                 # Need $Miner.MinDataSample shares before adjusting hashrate
                                 $Factor = (1 - $MinerData.$Algorithm[1] / $MinerData.$Algorithm[3])
                                 $MinerHashrates.$Algorithm *= $Factor
@@ -678,7 +680,7 @@ Try {
                                 $Variables.AlgorithmsLastUsed.($Worker.Pool.Algorithm) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; MinerName = $Miner.Name }
                                 $Variables.PoolsLastUsed.($Worker.Pool.Name) = $Stat.Updated # most likely this will count at the pool to keep balances alive
                             }
-                            ElseIf ($MinerHashrates.$Algorithm -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and $Stat.Week -and ($MinerHashrates.$Algorithm -gt $Stat.Week * 2 -or $MinerHashrates.$Algorithm -lt $Stat.Week / 2)) {
+                            ElseIf ($MinerHashrates.$Algorithm -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and $Stat.Week -and ($MinerHashrates.$Algorithm -gt $Stat.Week * 2 -or $MinerHashrates.$Algorithm -lt $Stat.Week / 2)) { 
                                 # Stop miner if new value is outside ±200% of current value
                                 $Miner.StatusInfo = "'$($Miner.Info)' reported hashrate is unreal ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
                                 $Miner.SetStatus([MinerStatus]::Failed)
@@ -1340,6 +1342,11 @@ Try {
             If ($Message = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) samples]..."
             }
+            If ($Miner.Process) { 
+                $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
+                # Set window title
+                [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
+            }
         }
         Remove-Variable Miner, Message -ErrorAction Ignore
 
@@ -1415,7 +1422,7 @@ Try {
                                     }
                                 }
                                 ElseIf (-not $Config.Ignore0HashrateSample -or $Miner.ValidDataSampleTimestamp -ne [DateTime]0) { 
-                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(If ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])"} )"
+                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(If ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])" })"
                                     $Miner.StatusInfo = "Warming up '$($Miner.Info)'"
                                     $Miner.SubStatus = "warmingup"
                                 }
@@ -1435,11 +1442,11 @@ Try {
                                 $Variables.MinersFailed += $Miner
                             }
                         }
-                        If ($Miner.Process) { 
-                            $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
-                            # Set window title
-                            [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
-                        }
+                    }
+                    If ($Miner.Process) { 
+                        $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
+                        # Set window title
+                        [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
                     }
                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                 }

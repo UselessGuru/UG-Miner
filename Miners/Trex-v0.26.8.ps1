@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -72,7 +72,7 @@ If ($Algorithms) {
 
                     # $ExcludePools = $_.ExcludePools
                     # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                    ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({  $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
+                    ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
                         # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
                         ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
 

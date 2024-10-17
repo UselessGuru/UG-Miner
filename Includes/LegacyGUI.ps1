@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -80,7 +80,7 @@ Function CheckBoxSwitching_Click {
     $SwitchingDisplayTypes = @()
     $LegacyGUIswitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
-        $LegacyGUIswitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
+        $LegacyGUIswitchingLogLabel.Text = "Switching log (updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString()))"
         If (-not $LegacyGUIswitchingDGV.SelectedRows) { 
             $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
             If ($LegacyGUIswitchingDGV.Columns) { 
@@ -127,7 +127,7 @@ Function Update-TabControl {
 
     Switch ($LegacyGUItabControl.SelectedTab.Text) { 
         "System status" { 
-            $LegacyGUIactiveMinersLabel.Text = If ($Variables.MinersBest) { "Active miners updated $([DateTime]::Now.ToString())" } Else { "No miners running." }
+            $LegacyGUIactiveMinersLabel.Text = If ($Variables.MinersBest) { "Active miners (updated $([DateTime]::Now.ToString()))" } Else { "No miners running." }
 
             $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark"
             $LegacyGUIcontextMenuStripItem1.Visible = $true
@@ -154,7 +154,7 @@ Function Update-TabControl {
                     @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                     @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                     @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
-                    @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & "} },
+                    @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
                     @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
                     @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
                     @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
@@ -184,7 +184,7 @@ Function Update-TabControl {
             Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
             Break
         }
-        "Earnings" { 
+        "Earnings and balances" { 
 
             Function Get-NextColor { 
                 Param (
@@ -281,7 +281,7 @@ Function Update-TabControl {
                 Catch {}
             }
             If ($Config.BalancesTrackerPollInterval -gt 0) { 
-                $LegacyGUIbalancesLabel.Text = "Balances data updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())"
+                $LegacyGUIbalancesLabel.Text = "Balances (updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString()))"
                 If ($Variables.Balances) { 
                     If (-not $LegacyGUIbalancesDGV.SelectedRows) { 
                         $LegacyGUIbalancesDGV.BeginInit()
@@ -294,7 +294,7 @@ Function Update-TabControl {
                             @{ Name = "$($Config.FIATcurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
                             @{ Name = "$($Config.FIATcurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
                             @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
-                            @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), ($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } }
+                            @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String]($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } } # Cast to string to avoid extra decimal places
                         ) | Sort-Object -Property Pool | Out-DataTable
                         $LegacyGUIbalancesDGV.ClearSelection()
 
@@ -352,14 +352,23 @@ Function Update-TabControl {
             ElseIf ($LegacyGUIradioButtonMinersUnavailable.checked) { $DataSource = $Variables.Miners.Where({ -not $_.Available }) | Sort-Object { [String]$_.DeviceNames }, Info }
             Else { $DataSource = $Variables.Miners }
 
-            If ($Variables.MiningStatus -eq "Idle") { $LegacyGUIminersLabel.Text = "No data - mining is stopped" }
-            ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIminersLabel.Text = "No data - mining is paused" }
-            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
+            If ($Variables.MiningStatus -eq "Idle") { 
+                $LegacyGUIminersLabel.Text = "No data - mining is stopped"
+                $LegacyGUIminersDGV.DataSource = $null
+            }
+            ElseIf ($Variables.MiningStatus -eq "Paused") { 
+                $LegacyGUIminersLabel.Text = "No data - mining is paused"
+                $LegacyGUIminersDGV.DataSource = $null
+            }
+            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+                $LegacyGUIminersLabel.Text = "No data - mining is suspended"
+                $LegacyGUIminersDGV.DataSource = $null
+            }
             ElseIf ($DataSource) { 
                 If (-not $LegacyGUIminersDGV.SelectedRows) { 
-                    $LegacyGUIminersLabel.Text = "Miner data updated $([DateTime]::Now.ToString())"
+                    $LegacyGUIminersLabel.Text = "Miner data (updated $([DateTime]::Now.ToString()))"
                     $LegacyGUIminersDGV.BeginInit()
-        
+
                     $LegacyGUIminersDGV.DataSource = $DataSource | Select-Object @(
                         @{ Name = "Info"; Expression = { $_.Info } },
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
@@ -371,10 +380,10 @@ Function Update-TabControl {
                         @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                         @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                         @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
-                        @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & "} },
+                        @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } },
                         @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
-                        If ($LegacyGUIradioButtonMinersUnavailable.checked -or $LegacyGUIradioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", "} } }
+                        If ($LegacyGUIradioButtonMinersUnavailable.checked -or $LegacyGUIradioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
                     $LegacyGUIminersDGV.ClearSelection()
 
@@ -419,12 +428,21 @@ Function Update-TabControl {
             ElseIf ($LegacyGUIradioButtonPoolsUnavailable.checked) { $DataSource = $Variables.Pools.Where({ -not $_.Available }) }
             Else { $DataSource = $Variables.Pools }
 
-            If ($Variables.MiningStatus -eq "Idle") { $LegacyGUIpoolsLabel.Text = "No data - mining is stopped" }
-            ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIpoolsLabel.Text = "No data - mining is paused" }
-            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
+            If ($Variables.MiningStatus -eq "Idle") { 
+                $LegacyGUIpoolsLabel.Text = "No data - mining is stopped"
+                $LegacyGUIpoolsDGV.DataSource = $null
+            }
+            ElseIf ($Variables.MiningStatus -eq "Paused") { 
+                $LegacyGUIpoolsLabel.Text = "No data - mining is paused"
+                $LegacyGUIpoolsDGV.DataSource = $null
+            }
+            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { 
+                $LegacyGUIminersLabel.Text = "No data - mining is suspended"
+                $LegacyGUIpoolsDGV.DataSource = $null
+            }
             ElseIf ($DataSource) { 
                 If (-not $LegacyGUIpoolsDGV.SelectedRows) { 
-                    $LegacyGUIpoolsLabel.Text = "Pool data updated $([DateTime]::Now.ToString())"
+                    $LegacyGUIpoolsLabel.Text = "Pool data (updated $([DateTime]::Now.ToString()))"
                     $LegacyGUIpoolsDGV.BeginInit()
                     If ($Config.UsemBTC) { 
                         $Factor = 1000
@@ -446,7 +464,7 @@ Function Update-TabControl {
                         @{ Name = "SSL port"; Expression = { "$(If ($_.PortSSL) { $_.PortSSL } Else { "-" })" } }
                         @{ Name = "Earnings adjustment factor"; Expression = { $_.EarningsAdjustmentFactor } }
                         @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
-                        If ($LegacyGUIradioButtonPoolsUnavailable.checked -or $LegacyGUIradioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", "} } }
+                        If ($LegacyGUIradioButtonPoolsUnavailable.checked -or $LegacyGUIradioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
                     $LegacyGUIpoolsDGV.ClearSelection()
 
@@ -484,7 +502,7 @@ Function Update-TabControl {
         #
         #             Read-MonitoringData | Out-Null
         #
-        #             If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status updated $($Variables.WorkersLastUpdated.ToString())" }
+        #             If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status (updated $($Variables.WorkersLastUpdated.ToString()))" }
         #             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped" }
         #             ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
         #             ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
@@ -545,7 +563,7 @@ Function Update-TabControl {
             If ($Config.Watchdog) { 
                 If ($Variables.WatchdogTimers) { 
                     If (-not $LegacyGUIwatchdogTimersDGV.SelectedRows) { 
-                        $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers updated $([DateTime]::Now.ToString())"
+                        $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers (updated $([DateTime]::Now.ToString()))"
                         $LegacyGUIwatchdogTimersDGV.BeginInit()
                         $LegacyGUIwatchdogTimersDGV.ClearSelection()
                         $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
@@ -679,7 +697,7 @@ Function Update-GUIstatus {
             $LegacyGUIbuttonStop.Enabled = $true
         }
         "Running" { 
-            If (-not $Global:CoreRunspace) { 
+            If (-not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
                 $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
                 $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is suspended"
                 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
@@ -722,7 +740,7 @@ $LegacyGUIstatusPage = New-Object System.Windows.Forms.TabPage
 $LegacyGUIstatusPage.Text = "System status"
 $LegacyGUIstatusPage.ToolTipText = "Show active miners and system log"
 $LegacyGUIearningsPage = New-Object System.Windows.Forms.TabPage
-$LegacyGUIearningsPage.Text = "Earnings"
+$LegacyGUIearningsPage.Text = "Earnings and balances"
 $LegacyGUIearningsPage.ToolTipText = "Information about the calculated earnings / profit"
 $LegacyGUIminersPage = New-Object System.Windows.Forms.TabPage
 $LegacyGUIminersPage.Text = "Miners"
@@ -1272,7 +1290,7 @@ $LegacyGUIradioButtonMinersUnavailable.Location = [System.Drawing.Point]::new(15
 $LegacyGUIradioButtonMinersUnavailable.Text = "Unavailable miners"
 $LegacyGUIradioButtonMinersUnavailable.Width = 170
 $LegacyGUIradioButtonMinersUnavailable.Add_Click(
-    {
+    { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
         $LegacyGUIminersDGV | Add-Member ColumnWidthChanged $false -Force
         $LegacyGUIminersDGV.ClearSelection()
@@ -1775,8 +1793,6 @@ $LegacyGUIform.Add_Load(
         }
 
         $LegacyGUIform.State = If ($Config.LegacyGUIStartMinimized) { [System.Windows.Forms.FormWindowState]::Minimized } Else { [System.Windows.Forms.FormWindowState]::Normal }
-
-        Update-GUIstatus
 
         $TimerUI = New-Object System.Windows.Forms.Timer
         $TimerUI.Interval = 50

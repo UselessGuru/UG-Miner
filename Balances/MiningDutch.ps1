@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -52,15 +52,18 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
                                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                             }
 
-                            [PSCustomObject]@{ 
-                                DateTime        = [DateTime]::Now.ToUniversalTime()
-                                Pool            = $Name
-                                Currency        = $Currency
-                                Wallet          = $Config.MiningDutchUserName
-                                Pending         = [Double]$APIResponse.unconfirmed
-                                Balance         = [Double]$APIResponse.confirmed
-                                Unpaid          = [Double]$APIResponse.confirmed + [Double]$APIResponse.unconfirmed
-                                Url             = "https://www.mining-dutch.nl/index.php?page=earnings"
+                            $Unpaid = [Double]$APIResponse.confirmed + [Double]$APIResponse.unconfirmed
+                            If ($Unpaid -gt 0) { 
+                                [PSCustomObject]@{ 
+                                    DateTime        = [DateTime]::Now.ToUniversalTime()
+                                    Pool            = $Name
+                                    Currency        = $Currency
+                                    Wallet          = $Config.MiningDutchUserName
+                                    Pending         = [Double]$APIResponse.unconfirmed
+                                    Balance         = [Double]$APIResponse.confirmed
+                                    Unpaid          = $Unpaid
+                                    Url             = "https://www.mining-dutch.nl/index.php?page=earnings"
+                                }
                             }
                         }
                     }

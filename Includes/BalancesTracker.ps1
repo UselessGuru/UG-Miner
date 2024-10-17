@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 using module .\Include.psm1
@@ -86,9 +86,6 @@ Do {
 
         # Keep most recent balance objects, keep empty balances for 7 days
         $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object DateTime -Bottom 1 }))
-
-        # Do not keep balances with 0
-        $BalanceObjects = $BalanceObjects.Where({ $_.Balance -gt 0 })
 
         # Read exchange rates
         [Void](Get-Rate)

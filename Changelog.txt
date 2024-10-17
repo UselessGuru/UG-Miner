@@ -3,6 +3,19 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.3.9 2024/10/nn
+===================================
+
+Changes:
+- Brains: Price data is based on estimate_current (instead of estimate_last24h)
+
+Fixes:
+- Core: BalancesTracker not getting stopped when '$BalancesTrackerPollInterval' -eq 0
+
+Miner updates:
+- SRBMinerMulti-v2.6.9 (Keep SRBMinerMulti-v2.6.8 for old algorithms)
+
+
 Changelog UG-Miner 6.3.8 2024/10/13
 ===================================
 

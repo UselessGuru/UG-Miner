@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash Internal.ps1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 If (-not $Config.NiceHashWalletIsInternal) { 
@@ -44,22 +44,19 @@ If (-not $Config.NiceHashWalletIsInternal) {
                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             }
 
-            If ($Sum = [Double]$APIResponse.unpaidAmount + [Double]$APIResponse.externalBalance) { 
-                Return [PSCustomObject]@{ 
-                    DateTime   = [DateTime]::Now.ToUniversalTime()
-                    Pool       = $Name
-                    Currency   = $PayoutCurrency
-                    Wallet     = $Wallet
-                    Pending    = [Double]$APIResponse.unpaidAmount
-                    Balance    = [Double]$APIResponse.externalBalance
-                    Unpaid     = $Sum
-                    #Total      = $Sum
-                    Url        = "https://www.nicehash.com/my/miner/$Wallet"
-                    NextPayout = $APIResponse.NextPayoutTimeStamp
-                }
-            }
-            Else { 
-                Return
+            $Sum = [Double]$APIResponse.unpaidAmount + [Double]$APIResponse.externalBalance
+
+            Return [PSCustomObject]@{ 
+                DateTime   = [DateTime]::Now.ToUniversalTime()
+                Pool       = $Name
+                Currency   = $PayoutCurrency
+                Wallet     = $Wallet
+                Pending    = [Double]$APIResponse.unpaidAmount
+                Balance    = [Double]$APIResponse.externalBalance
+                Unpaid     = $Sum
+                #Total      = $Sum
+                Url        = "https://www.nicehash.com/my/miner/$Wallet"
+                NextPayout = $APIResponse.NextPayoutTimeStamp
             }
         }
         Catch { 

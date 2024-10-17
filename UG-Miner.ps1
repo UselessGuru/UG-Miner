@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 using module .\Includes\Include.psm1
@@ -303,7 +303,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.8"
+    Version      = [System.Version]"6.3.9"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -578,7 +578,6 @@ Function MainLoop {
 
                         Stop-Core
                         Stop-Brain
-                        Stop-BalancesTracker
 
                         # If ($Config.ReportToServer) { Write-MonitoringData }
                     }
@@ -611,7 +610,6 @@ Function MainLoop {
 
                     Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
-                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
 
                     # If ($Config.ReportToServer) { Write-MonitoringData }
 
@@ -627,7 +625,6 @@ Function MainLoop {
                         Write-Message -Level Info $Variables.Summary
                     }
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
-                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker }
                     Start-Core
                     Break
                 }
@@ -834,7 +831,7 @@ Function MainLoop {
         Hide-Console
     }
 
-    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker }
+    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
     ElseIf ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
         # Update rates every 15 minutes
         [Void](Get-Rate)
@@ -847,9 +844,9 @@ Function MainLoop {
                 If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
                     $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
                     Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
-                    If ($LegacyGUIform) { Update-GUIstatus }
                 }
                 Start-Core
+                If ($LegacyGUIform) { Update-GUIstatus }
             }
             ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
                 $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
@@ -896,7 +893,7 @@ Function MainLoop {
 
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
-        If ($LegacyGUIform) {
+        If ($LegacyGUIform) { 
             If (-not $Variables.SuspendCycle) { 
                 $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle 
 
@@ -983,7 +980,7 @@ Function MainLoop {
                                     $MinersDeviceGroupNeedingBenchmark -contains $_ -or
                                     $MinersDeviceGroupNeedingPowerConsumptionMeasurement -contains $_ -or
                                     $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
-                                } 
+                                }
                             ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
                                 Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ",") [$(($Variables.EnabledDevices.Where({ $MinersDeviceGroup[0].DeviceNames -contains $_.Name })).Model -join ", ")]" } } -AutoSize | Out-Host
 
@@ -1005,7 +1002,7 @@ Function MainLoop {
                     [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Name"; Expression = { $_.Name } }
                         If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
-                        @{ Label = "Hashrate"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }; Align = "right" }
+                        @{ Label = "Hashrate(s)"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }; Align = "right" }
                         @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
                         @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }

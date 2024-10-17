@@ -99,6 +99,7 @@
       "UseTransferFile": false
     },
     "ExcludeRegion": [],
+    "MinWorkers": 0, // no values in API, reported on 2024/10/14
     "PayoutThreshold": {
       "*": {
          "mBTC": 0.00025

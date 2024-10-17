@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.8
-Version date:   2024/10/13
+Version:        6.3.9
+Version date:   2024/10/17
 #>
 
 Function Start-APIServer { 
@@ -620,7 +620,7 @@ Function Start-APIServer {
                                                 $Data += $_.Name
                                                 ForEach ($Algorithm in $_.Algorithms) { 
                                                     $StatName = "$($_.Name)_$($Algorithm)_$($Parameters.Type)"
-                                                    If ($Parameters.Value -eq 0) {
+                                                    If ($Parameters.Value -eq 0) { 
                                                         # Miner failed
                                                         Remove-Stat -Name $StatName
                                                         Set-Stat -Name $StatName -Value $Parameters.Value -FaultDetection $false | Out-Null
