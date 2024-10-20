@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.3.9
-Version date:   2024/10/17
+Version:        6.3.10
+Version date:   2024/10/20
 #>
 
 using module .\Include.psm1
@@ -131,10 +131,10 @@ Do {
             $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = $GrowthToday = $AvgHourlyGrowth = $AvgDailyGrowth = $AvgWeeklyGrowth = $Delta = $Payout = $HiddenPending = [Double]0
 
             If ($PoolBalanceObjects.Count -eq 0) { 
+                $PoolBalanceObject | Add-Member Delta ([Double]0)
                 $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObject.Unpaid))
                 $PoolBalanceObject | Add-Member Payout ([Double]0)
                 $PoolBalanceObject | Add-Member Total ([Double]($PoolBalanceObject.Unpaid))
-                $PoolBalanceObject | Add-Member Delta ([Double]0)
 
                 $PoolBalanceObjects += $PoolBalanceObject
                 $Variables.BalancesData += $PoolBalanceObject
@@ -170,12 +170,7 @@ Do {
                                 $PoolBalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
                             }
                         }
-                        If (($PoolBalanceObjects[-1]).Unpaid -gt $PoolBalanceObject.Unpaid) { 
-                            $Payout = ($PoolBalanceObjects[-1]).Unpaid - $PoolBalanceObject.Unpaid
-                        }
-                        Else { 
-                            $Payout = 0
-                        }
+                        $Payout = If (($PoolBalanceObjects[-1]).Unpaid -gt $PoolBalanceObject.Unpaid) { ($PoolBalanceObjects[-1]).Unpaid - $PoolBalanceObject.Unpaid } Else { 0 }
                     }
                     $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects[-1]).Unpaid
                     $PoolBalanceObject | Add-Member Earnings ([Double]($PoolBalanceObjects[-1]).Earnings + $Delta + $HiddenPending + $Payout) -Force
@@ -419,7 +414,8 @@ Do {
     $Error.Clear()
     [System.GC]::Collect()
     $Proc = Get-Process -Id $PID
-    Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
+    Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) loop: Handles: $($Proc.HandleCount) / Memory: $($Proc.PrivateMemorySize64 / 1MB)MB / Threads: $($Proc.Threads.Count) / Modules: $($Proc.Modules.Count)"
+    Remove-Variable Proc
 
     # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
     While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }

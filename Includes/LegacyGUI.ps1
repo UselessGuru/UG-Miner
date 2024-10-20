@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.9
-Version date:   2024/10/17
+Version:        6.3.10
+Version date:   2024/10/20
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -36,45 +36,6 @@ public class ProcessDPI {
 '@
 $null = [ProcessDPI]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
-
-$LegacyGUIcolors = @{ }
-$LegacyGUIcolors["benchmarking"]                                                    = [System.Drawing.Color]::FromArgb(241, 255, 229)
-$LegacyGUIcolors["disabled"]                                                        = [System.Drawing.Color]::FromArgb(255, 243, 231)
-$LegacyGUIcolors["failed"]                                                          = [System.Drawing.Color]::FromArgb(255, 230, 230)
-$LegacyGUIcolors["idle"] = $LegacyGUIcolors["stopped"] = $LegacyGUIcolors["dryrun"] = [System.Drawing.Color]::FromArgb(230, 248, 252)
-$LegacyGUIcolors["launched"]                                                        = [System.Drawing.Color]::FromArgb(229, 255, 229)
-$LegacyGUIcolors["running"]                                                         = [System.Drawing.Color]::FromArgb(212, 244, 212)
-$LegacyGUIcolors["starting"] = $LegacyGUIcolors["stopping"]                         = [System.Drawing.Color]::FromArgb(245, 255, 245)
-$LegacyGUIcolors["unavailable"]                                                     = [System.Drawing.Color]::FromArgb(254, 245, 220)
-$LegacyGUIcolors["warmingup"]                                                       = [System.Drawing.Color]::FromArgb(231, 255, 230)
-
-Function Set-TableColor { 
-
-    Param (
-        [Parameter(Mandatory = $true)]
-        $DataGridView
-    )
-    If ($Config.UseColorForMinerStatus) { 
-        ForEach ($Row in $DataGridView.Rows) { 
-            If ($LegacyGUIcolors[$Row.DataBoundItem.SubStatus]) { 
-                $Row.DefaultCellStyle.Backcolor = $LegacyGUIcolors[$Row.DataBoundItem.SubStatus]
-            }
-        }
-    }
-}
-
-Function Set-WorkerColor { 
-    If ($Config.UseColorForMinerStatus) { 
-        ForEach ($Row in $LegacyGUIworkersDGV.Rows) { 
-            $Row.DefaultCellStyle.Backcolor = Switch ($Row.DataBoundItem.Status) { 
-                "Offline" { $LegacyGUIcolors["disabled"] }
-                "Paused"  { $LegacyGUIcolors["idle"] }
-                "Running" { $LegacyGUIcolors["running"] }
-                Default   { [System.Drawing.Color]::FromArgb(255, 255, 255, 255) }
-            }
-        }
-    }
-}
 
 Function CheckBoxSwitching_Click { 
     $SwitchingDisplayTypes = @()
@@ -109,6 +70,76 @@ Function CheckBoxSwitching_Click {
     }
 }
 
+Function Resize-Form { 
+
+    If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smaller than minimum (Why?)
+    Try { 
+        $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
+        $LegacyGUItabControl.Height = $LegacyGUIform.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - 72
+
+        $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 60), 6)
+        $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 50), 6)
+        $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - 40), 6)
+
+        $LegacyGUIminingSummaryLabel.Width = $Variables.TextBoxSystemLog.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIworkersDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.Width - 26
+
+        If ($Config.BalancesTrackerPollInterval -gt 0 -and $LegacyGUIbalancesDGV.RowCount -gt 0) { 
+            $LegacyGUIbalancesDGVHeight = ($LegacyGUIbalancesDGV.Rows.Height | Measure-Object -Sum | Select-Object -ExpandProperty Sum) + $LegacyGUIbalancesDGV.ColumnHeadersHeight
+            If ($LegacyGUIbalancesDGVHeight -gt $LegacyGUItabControl.Height / 2) { 
+                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height / 2
+                $LegacyGUIbalancesDGV.ScrollBars = "Vertical"
+                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height / 2 - 10))
+            }
+            Else { 
+                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesDGVHeight - 46
+                $LegacyGUIbalancesDGV.ScrollBars = "None"
+                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIearningsChart.Bottom - 20))
+            }
+        }
+        Else { 
+            $LegacyGUIbalancesDGV.ScrollBars = "None"
+            $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height - $LegacyGUIbalancesLabel.Height - 50))
+            $LegacyGUIearningsChart.Height = $LegacyGUIbalancesLabel.Top + 36
+        }
+        $LegacyGUIbalancesDGV.Location = [System.Drawing.Point]::new(10, $LegacyGUIbalancesLabel.Bottom)
+        $LegacyGUIbalancesDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesLabel.Bottom - 48
+
+        $LegacyGUIactiveMinersDGV.Height = $LegacyGUIactiveMinersDGV.RowTemplate.Height * $LegacyGUIactiveMinersDGV.RowCount + $LegacyGUIactiveMinersDGV.ColumnHeadersHeight
+        If ($LegacyGUIactiveMinersDGV.Height -gt $LegacyGUItabControl.Height / 2) { 
+            $LegacyGUIactiveMinersDGV.Height = $LegacyGUItabControl.Height / 2
+            $LegacyGUIactiveMinersDGV.ScrollBars = "Vertical"
+        }
+        Else { 
+            $LegacyGUIactiveMinersDGV.ScrollBars = "None"
+        }
+
+        $LegacyGUIsystemLogLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + 25))
+        $Variables.TextBoxSystemLog.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + $LegacyGUIsystemLogLabel.Height + 24))
+        $Variables.TextBoxSystemLog.Height = ($LegacyGUItabControl.Height - $LegacyGUIactiveMinersLabel.Height - $LegacyGUIactiveMinersDGV.Height - $LegacyGUIsystemLogLabel.Height - 68)
+        If (-not $Variables.TextBoxSystemLog.SelectionLength) { 
+            $Variables.TextBoxSystemLog.ScrollToCaret()
+        }
+
+        $LegacyGUIminersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIminersLabel.Height - $LegacyGUIminersPanel.Height - 64
+
+        $LegacyGUIpoolsDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIpoolsLabel.Height - $LegacyGUIpoolsPanel.Height - 64
+
+        $LegacyGUIworkersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIworkersLabel.Height - 61
+
+        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 67
+
+        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 67
+
+        $LegacyGUIeditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIeditMonitoringLink.Width - 12), 6)
+
+        $LegacyGUIeditConfigLink.Location = [System.Drawing.Point]::new(10, ($LegacyGUIform.Height - $LegacyGUIeditConfigLink.Height - 58))
+        $LegacyGUIcopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIcopyrightLabel.Width + 6), ($LegacyGUIform.Height - $LegacyGUIeditConfigLink.Height - 58))
+    }
+    Catch { 
+        Start-Sleep 0
+    }
+}
+
 Function Set-DataGridViewDoubleBuffer { 
 
     Param (
@@ -121,6 +152,34 @@ Function Set-DataGridViewDoubleBuffer {
     $Type = $Grid.GetType();
     $PropInfo = $Type.GetProperty("DoubleBuffered", ("Instance", "NonPublic"))
     $PropInfo.SetValue($Grid, $Enabled, $null)
+}
+
+Function Set-TableColor { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        $DataGridView
+    )
+    If ($Config.UseColorForMinerStatus) { 
+        ForEach ($Row in $DataGridView.Rows) { 
+            If ($LegacyGUIcolors[$Row.DataBoundItem.SubStatus]) { 
+                $Row.DefaultCellStyle.Backcolor = $LegacyGUIcolors[$Row.DataBoundItem.SubStatus]
+            }
+        }
+    }
+}
+
+Function Set-WorkerColor { 
+    If ($Config.UseColorForMinerStatus) { 
+        ForEach ($Row in $LegacyGUIworkersDGV.Rows) { 
+            $Row.DefaultCellStyle.Backcolor = Switch ($Row.DataBoundItem.Status) { 
+                "Offline" { $LegacyGUIcolors["disabled"] }
+                "Paused"  { $LegacyGUIcolors["idle"] }
+                "Running" { $LegacyGUIcolors["running"] }
+                Default   { [System.Drawing.Color]::FromArgb(255, 255, 255, 255) }
+            }
+        }
+    }
 }
 
 Function Update-TabControl { 
@@ -154,7 +213,7 @@ Function Update-TabControl {
                     @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                     @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                     @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
-                    @{ Name = "Algorithm [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.Algorithm)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
+                    @{ Name = "Algorithm variant [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
                     @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
                     @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
                     @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
@@ -166,19 +225,19 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
                     $LegacyGUIactiveMinersDGV.Columns[1].FillWeight = 20 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                     $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 190
-                    $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[3].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[4].Visible = $Variables.CalculatePowerCost
-                    $LegacyGUIactiveMinersDGV.Columns[5].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
-                    $LegacyGUIactiveMinersDGV.Columns[6].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
+                    $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[4].Visible = $Variables.CalculatePowerCost
+                    $LegacyGUIactiveMinersDGV.Columns[5].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
+                    $LegacyGUIactiveMinersDGV.Columns[6].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                     $LegacyGUIactiveMinersDGV.Columns[7].FillWeight = 60 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
                     $LegacyGUIactiveMinersDGV.Columns[8].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
-                    $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[9].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[11].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight";  $LegacyGUIactiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                    $LegacyGUIactiveMinersDGV.Columns[11].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
 
                     $LegacyGUIactiveMinersDGV | Add-Member ColumnWidthChanged $true
                 }
-                Resize-Form # To fully show lauched miners gridview
+                Resize-Form # To fully show grid
                 $LegacyGUIactiveMinersDGV.EndInit()
             }
             Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
@@ -254,9 +313,7 @@ Function Update-TabControl {
                                 $_ *= $Variables.Rates.BTC.($Config.FIATcurrency)
                                 $LegacyGUIearningsChart.Series[$Pool].Points.addxy(0, $_) | Out-Null
                                 $Daysum[$I] += $_
-                                If ($_) { 
-                                    $LegacyGUItooltipText[$I] = "$($LegacyGUItooltipText[$I])`r$($Pool): {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $_
-                                }
+                                If ($_) { $LegacyGUItooltipText[$I] = "$($LegacyGUItooltipText[$I])`r$($Pool): {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $_ }
                                 $I ++
                             }
                         )
@@ -269,9 +326,7 @@ Function Update-TabControl {
                             $ChartArea.AxisX.CustomLabels.Add($I +0.5, $I + 1.5, " $_ ")
                             $ChartArea.AxisX.CustomLabels[$I].ToolTip = "$($LegacyGUItooltipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $Daysum[$I]
                             ForEach ($Pool in $DataSource.Earnings.PSObject.Properties.Name) { 
-                                If ($Datasource.Earnings.$Pool[$I]) { 
-                                    $LegacyGUIearningsChart.Series[$Pool].Points[$I].ToolTip = "$($LegacyGUItooltipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $Daysum[$I]
-                                }
+                                If ($Datasource.Earnings.$Pool[$I]) { $LegacyGUIearningsChart.Series[$Pool].Points[$I].ToolTip = "$($LegacyGUItooltipText[$I])`rTotal: {0:N$($Config.DecimalsMax)} $($Config.FIATcurrency)" -f $Daysum[$I] }
                             }
                             $I ++
                         }
@@ -279,6 +334,7 @@ Function Update-TabControl {
                     $ChartArea.AxisY.Maximum = ($DaySum | Measure-Object -Maximum).Maximum * 1.05
                 }
                 Catch {}
+
             }
             If ($Config.BalancesTrackerPollInterval -gt 0) { 
                 $LegacyGUIbalancesLabel.Text = "Balances (updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString()))"
@@ -289,36 +345,48 @@ Function Update-TabControl {
                             @{ Name = "Currency"; Expression = { $_.Currency } },
                             @{ Name = "Pool [Currency]"; Expression = { "$($_.Pool) [$($_.Currency)]" } },
                             @{ Name = "Balance ($($Config.FIATcurrency))"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Balance * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "Avg. $($Config.FIATcurrency)/day"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "$($Config.FIATcurrency) in 1h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "$($Config.FIATcurrency) in 6h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "$($Config.FIATcurrency) in 24h"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
+                            @{ Name = "$($Config.FIATcurrency) in past 1 hr"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "$($Config.FIATcurrency) in past 6 hrs"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "$($Config.FIATcurrency) in past 24 hrs"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "$($Config.FIATcurrency) in past 7 days"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth168 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "$($Config.FIATcurrency) in past 30 days"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth720 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "Avg. $($Config.FIATcurrency) / 1 hr"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgHourlyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "Avg. $($Config.FIATcurrency) / 24 hrs"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "Avg. $($Config.FIATcurrency) / 7 days"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
                             @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String]($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } } # Cast to string to avoid extra decimal places
                         ) | Sort-Object -Property Pool | Out-DataTable
                         $LegacyGUIbalancesDGV.ClearSelection()
 
                         If ($LegacyGUIbalancesDGV.Columns) { 
                             $LegacyGUIbalancesDGV.Columns[0].Visible = $false
-                            $LegacyGUIbalancesDGV.Columns[1].FillWeight = 140 
-                            $LegacyGUIbalancesDGV.Columns[2].FillWeight = 90; $LegacyGUIbalancesDGV.Columns[2].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
-                            $LegacyGUIbalancesDGV.Columns[3].FillWeight = 90; $LegacyGUIbalancesDGV.Columns[3].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                            $LegacyGUIbalancesDGV.Columns[4].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                            $LegacyGUIbalancesDGV.Columns[5].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
-                            $LegacyGUIbalancesDGV.Columns[6].FillWeight = 75; $LegacyGUIbalancesDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
-                            $LegacyGUIbalancesDGV.Columns[7].FillWeight = 80
-                            $LegacyGUIbalancesDGV.Columns[8].FillWeight = 100
+                            $LegacyGUIbalancesDGV.Columns[1].FillWeight = 120 
+                            $LegacyGUIbalancesDGV.Columns[2].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[2].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
+                            $LegacyGUIbalancesDGV.Columns[3].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[3].Visible = $Config.BalancesShowSums
+                            $LegacyGUIbalancesDGV.Columns[4].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[4].Visible = $Config.BalancesShowSums
+                            $LegacyGUIbalancesDGV.Columns[5].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[5].Visible = $Config.BalancesShowSums
+                            $LegacyGUIbalancesDGV.Columns[6].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[6].Visible = $Config.BalancesShowSums
+                            $LegacyGUIbalancesDGV.Columns[7].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[7].Visible = $Config.BalancesShowSums
+                            $LegacyGUIbalancesDGV.Columns[8].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[8].Visible = $Config.BalancesShowAverages
+                            $LegacyGUIbalancesDGV.Columns[9].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[9].Visible = $Config.BalancesShowAverages
+                            $LegacyGUIbalancesDGV.Columns[10].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[10].Visible = $Config.BalancesShowAverages
+                            $LegacyGUIbalancesDGV.Columns[11].FillWeight = 80
+                            $LegacyGUIbalancesDGV.Columns[12].FillWeight = 80
                         }
                         $LegacyGUIbalancesDGV.Rows.ForEach(
                             { 
-                                $_.Cells[2].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[2].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
-                                $_.Cells[3].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[3].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
-                                $_.Cells[4].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[4].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
-                                $_.Cells[5].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[5].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
-                                $_.Cells[6].ToolTipText = "$($_.Cells[0].Value) {0:n$($Config.DecimalsMax)}" -f ([Double]$_.Cells[6].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value))
+                                $_.Cells[2].ToolTipText = "Balance {0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[3].ToolTipText = "{0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[4].ToolTipText = "{0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[5].ToolTipText = "{0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[6].ToolTipText = "{0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[7].ToolTipText = "{0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[8].ToolTipText = "Avg. {0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[9].ToolTipText = "Avg. {0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                                $_.Cells[10].ToolTipText = "Avg. {0:n$($Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Variables.Rates.($Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                             }
                         )
-                        Resize-Form # To fully show lauched miners gridview
+                        Resize-Form # To fully show grid
                         $LegacyGUIbalancesDGV.EndInit()
                     }
                 }
@@ -370,9 +438,7 @@ Function Update-TabControl {
                     $LegacyGUIminersDGV.BeginInit()
 
                     $LegacyGUIminersDGV.DataSource = $DataSource | Select-Object @(
-                        @{ Name = "Info"; Expression = { $_.Info } },
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
-                        @{ Name = "Best"; Expression = { $_.Best } },
                         @{ Name = "Miner"; Expression = { $_.Name } },
                         @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
                         @{ Name = "Status"; Expression = { $_.Status } },
@@ -389,18 +455,16 @@ Function Update-TabControl {
 
                     If (-not $LegacyGUIminersDGV.ColumnWidthChanged -and $LegacyGUIminersDGV.Columns) { 
                         $LegacyGUIminersDGV.Columns[0].Visible = $false
-                        $LegacyGUIminersDGV.Columns[1].Visible = $false
-                        $LegacyGUIminersDGV.Columns[2].Visible = $false
-                        $LegacyGUIminersDGV.Columns[3].FillWeight = 160
-                        $LegacyGUIminersDGV.Columns[4].FillWeight = 20 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
-                        $LegacyGUIminersDGV.Columns[5].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked; $LegacyGUIminersDGV.Columns[5].FillWeight = 30
-                        $LegacyGUIminersDGV.Columns[6].FillWeight = 40; $LegacyGUIminersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIminersDGV.Columns[7].FillWeight = 40; $LegacyGUIminersDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIminersDGV.Columns[8].FillWeight = 40; $LegacyGUIminersDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIminersDGV.Columns[9].FillWeight = 40; $LegacyGUIminersDGV.Columns[9].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[9].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIminersDGV.Columns[10].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 90 } Else { 60 }
-                        $LegacyGUIminersDGV.Columns[11].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 85 } Else { 60 }
-                        $LegacyGUIminersDGV.Columns[12].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 80 } Else { 50 }; $LegacyGUIminersDGV.Columns[12].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIminersDGV.Columns[1].FillWeight = 160
+                        $LegacyGUIminersDGV.Columns[2].FillWeight = 20 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
+                        $LegacyGUIminersDGV.Columns[3].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked; $LegacyGUIminersDGV.Columns[3].FillWeight = 30
+                        $LegacyGUIminersDGV.Columns[4].FillWeight = 40; $LegacyGUIminersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIminersDGV.Columns[5].FillWeight = 40; $LegacyGUIminersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIminersDGV.Columns[6].FillWeight = 40; $LegacyGUIminersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIminersDGV.Columns[7].FillWeight = 40; $LegacyGUIminersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIminersDGV.Columns[8].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 90 } Else { 60 }
+                        $LegacyGUIminersDGV.Columns[9].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 85 } Else { 60 }
+                        $LegacyGUIminersDGV.Columns[10].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 80 } Else { 50 }; $LegacyGUIminersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
 
                         $LegacyGUIminersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
@@ -472,14 +536,14 @@ Function Update-TabControl {
                         $LegacyGUIpoolsDGV.Columns[0].FillWeight = 80
                         $LegacyGUIpoolsDGV.Columns[1].FillWeight = 40
                         $LegacyGUIpoolsDGV.Columns[2].FillWeight = 70
-                        $LegacyGUIpoolsDGV.Columns[3].FillWeight = 55; $LegacyGUIpoolsDGV.Columns[3].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIpoolsDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIpoolsDGV.Columns[4].FillWeight = 45; $LegacyGUIpoolsDGV.Columns[4].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIpoolsDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIpoolsDGV.Columns[3].FillWeight = 55; $LegacyGUIpoolsDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIpoolsDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIpoolsDGV.Columns[4].FillWeight = 45; $LegacyGUIpoolsDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIpoolsDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIpoolsDGV.Columns[5].FillWeight = 80
                         $LegacyGUIpoolsDGV.Columns[6].FillWeight = 140
-                        $LegacyGUIpoolsDGV.Columns[7].FillWeight = 40; $LegacyGUIpoolsDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIpoolsDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIpoolsDGV.Columns[8].FillWeight = 40; $LegacyGUIpoolsDGV.Columns[8].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIpoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIpoolsDGV.Columns[9].FillWeight = 50; $LegacyGUIpoolsDGV.Columns[9].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIpoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIpoolsDGV.Columns[10].FillWeight = 40; $LegacyGUIpoolsDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIpoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIpoolsDGV.Columns[7].FillWeight = 40; $LegacyGUIpoolsDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIpoolsDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIpoolsDGV.Columns[8].FillWeight = 40; $LegacyGUIpoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIpoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIpoolsDGV.Columns[9].FillWeight = 50; $LegacyGUIpoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIpoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIpoolsDGV.Columns[10].FillWeight = 40; $LegacyGUIpoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIpoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
 
                         $LegacyGUIpoolsDGV | Add-Member ColumnWidthChanged $true
                     }
@@ -532,13 +596,13 @@ Function Update-TabControl {
         #                 $LegacyGUIworkersDGV.Columns[2].FillWeight = 80
         #                 $LegacyGUIworkersDGV.Columns[3].FillWeight = 70
         #                 $LegacyGUIworkersDGV.Columns[4].FillWeight = 40
-        #                 $LegacyGUIworkersDGV.Columns[5].FillWeight = 65; $LegacyGUIworkersDGV.Columns[5].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
-        #                 $LegacyGUIworkersDGV.Columns[6].FillWeight = 65; $LegacyGUIworkersDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
+        #                 $LegacyGUIworkersDGV.Columns[5].FillWeight = 65; $LegacyGUIworkersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIworkersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
+        #                 $LegacyGUIworkersDGV.Columns[6].FillWeight = 65; $LegacyGUIworkersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIworkersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
         #                 $LegacyGUIworkersDGV.Columns[7].FillWeight = 150
         #                 $LegacyGUIworkersDGV.Columns[8].FillWeight = 95
         #                 $LegacyGUIworkersDGV.Columns[9].FillWeight = 75
-        #                 $LegacyGUIworkersDGV.Columns[10].FillWeight = 65; $LegacyGUIworkersDGV.Columns[10].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-        #                 $LegacyGUIworkersDGV.Columns[11].FillWeight = 65; $LegacyGUIworkersDGV.Columns[11].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIworkersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+        #                 $LegacyGUIworkersDGV.Columns[10].FillWeight = 65; $LegacyGUIworkersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIworkersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+        #                 $LegacyGUIworkersDGV.Columns[11].FillWeight = 65; $LegacyGUIworkersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIworkersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
         #
         #                 $LegacyGUIworkersDGV | Add-Member ColumnWidthChanged $true
         #             }
@@ -570,7 +634,7 @@ Function Update-TabControl {
                             @{ Name = "Name"; Expression = { $_.MinerName } },
                             @{ Name = "Algorithm"; Expression = { $_.Algorithm } },
                             @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } },
-                            @{ Name = "Pool name"; Expression = { $_.PoolName } },
+                            @{ Name = "Pool"; Expression = { $_.PoolName } },
                             @{ Name = "Region"; Expression = { $_.PoolRegion } },
                             @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
                             @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
@@ -600,76 +664,6 @@ Function Update-TabControl {
 
             $LegacyGUIwatchdogTimersRemoveButton.Enabled = [Boolean]$LegacyGUIwatchdogTimersDGV.Rows
         }
-    }
-}
-
-Function Resize-Form { 
-
-    If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smaller than minimum (Why?)
-    Try { 
-        $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
-        $LegacyGUItabControl.Height = $LegacyGUIform.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - 72
-
-        $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 60), 6)
-        $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 50), 6)
-        $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - 40), 6)
-
-        $LegacyGUIminingSummaryLabel.Width = $Variables.TextBoxSystemLog.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIworkersDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.Width - 26
-
-        If ($Config.BalancesTrackerPollInterval -gt 0 -and $LegacyGUIbalancesDGV.RowCount -gt 0) { 
-            $LegacyGUIbalancesDGVHeight = ($LegacyGUIbalancesDGV.Rows.Height | Measure-Object -Sum | Select-Object -ExpandProperty Sum) + $LegacyGUIbalancesDGV.ColumnHeadersHeight
-            If ($LegacyGUIbalancesDGVHeight -gt $LegacyGUItabControl.Height / 2) { 
-                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height / 2
-                $LegacyGUIbalancesDGV.ScrollBars = "Vertical"
-                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height / 2 - 10))
-            }
-            Else { 
-                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesDGVHeight - 46
-                $LegacyGUIbalancesDGV.ScrollBars = "None"
-                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIearningsChart.Bottom - 20))
-            }
-        }
-        Else { 
-            $LegacyGUIbalancesDGV.ScrollBars = "None"
-            $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height - $LegacyGUIbalancesLabel.Height - 50))
-            $LegacyGUIearningsChart.Height = $LegacyGUIbalancesLabel.Top + 36
-        }
-        $LegacyGUIbalancesDGV.Location = [System.Drawing.Point]::new(10, $LegacyGUIbalancesLabel.Bottom)
-        $LegacyGUIbalancesDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesLabel.Bottom - 48
-
-        $LegacyGUIactiveMinersDGV.Height = $LegacyGUIactiveMinersDGV.RowTemplate.Height * $LegacyGUIactiveMinersDGV.RowCount + $LegacyGUIactiveMinersDGV.ColumnHeadersHeight
-        If ($LegacyGUIactiveMinersDGV.Height -gt $LegacyGUItabControl.Height / 2) { 
-            $LegacyGUIactiveMinersDGV.Height = $LegacyGUItabControl.Height / 2
-            $LegacyGUIactiveMinersDGV.ScrollBars = "Vertical"
-        }
-        Else { 
-            $LegacyGUIactiveMinersDGV.ScrollBars = "None"
-        }
-
-        $LegacyGUIsystemLogLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + 25))
-        $Variables.TextBoxSystemLog.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + $LegacyGUIsystemLogLabel.Height + 24))
-        $Variables.TextBoxSystemLog.Height = ($LegacyGUItabControl.Height - $LegacyGUIactiveMinersLabel.Height - $LegacyGUIactiveMinersDGV.Height - $LegacyGUIsystemLogLabel.Height - 68)
-        If (-not $Variables.TextBoxSystemLog.SelectionLength) { 
-            $Variables.TextBoxSystemLog.ScrollToCaret()
-        }
-
-        $LegacyGUIminersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIminersLabel.Height - $LegacyGUIminersPanel.Height - 64
-
-        $LegacyGUIpoolsDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIpoolsLabel.Height - $LegacyGUIpoolsPanel.Height - 64
-
-        $LegacyGUIworkersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIworkersLabel.Height - 61
-
-        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 67
-
-        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 67
-
-        $LegacyGUIeditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIeditMonitoringLink.Width - 12), 6)
-
-        $LegacyGUIeditConfigLink.Location = [System.Drawing.Point]::new(10, ($LegacyGUIform.Height - $LegacyGUIeditConfigLink.Height - 58))
-        $LegacyGUIcopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIcopyrightLabel.Width + 6), ($LegacyGUIform.Height - $LegacyGUIeditConfigLink.Height - 58))
-    }
-    Catch { 
-        Start-Sleep 0
     }
 }
 
@@ -720,12 +714,24 @@ Function Update-GUIstatus {
     Update-TabControl
 }
 
+$LegacyGUIcolors = @{ }
+$LegacyGUIcolors["benchmarking"]                                                    = [System.Drawing.Color]::FromArgb(241, 255, 229)
+$LegacyGUIcolors["disabled"]                                                        = [System.Drawing.Color]::FromArgb(255, 243, 231)
+$LegacyGUIcolors["failed"]                                                          = [System.Drawing.Color]::FromArgb(255, 230, 230)
+$LegacyGUIcolors["idle"] = $LegacyGUIcolors["stopped"] = $LegacyGUIcolors["dryrun"] = [System.Drawing.Color]::FromArgb(230, 248, 252)
+$LegacyGUIcolors["launched"]                                                        = [System.Drawing.Color]::FromArgb(229, 255, 229)
+$LegacyGUIcolors["running"]                                                         = [System.Drawing.Color]::FromArgb(212, 244, 212)
+$LegacyGUIcolors["starting"] = $LegacyGUIcolors["stopping"]                         = [System.Drawing.Color]::FromArgb(245, 255, 245)
+$LegacyGUIcolors["unavailable"]                                                     = [System.Drawing.Color]::FromArgb(254, 245, 220)
+$LegacyGUIcolors["warmingup"]                                                       = [System.Drawing.Color]::FromArgb(231, 255, 230)
+
 $LegacyGUItooltip = New-Object System.Windows.Forms.ToolTip
 
 $LegacyGUIform = New-Object System.Windows.Forms.Form
-#--- For High DPI, First Call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode ---
-# SuspendLayout() is Very important to correctly size and position all controls!
+# For High DPI, First Call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode
+# SuspendLayout() is very important to correctly size and position all controls!
 $LegacyGUIform.SuspendLayout()
+# $LegacyGUIform.AutoScaleDimensions = New-Object System.Drawing.SizeF(120, 120)
 $LegacyGUIform.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96)
 $LegacyGUIform.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::DPI
 $LegacyGUIform.MaximizeBox = $true
@@ -1384,6 +1390,8 @@ $LegacyGUIradioButtonPoolsBest.Checked = $true
 $LegacyGUIradioButtonPoolsBest.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        $LegacyGUIpoolsDGV | Add-Member ColumnWidthChanged $false -Force
+        $LegacyGUIpoolsDGV.ClearSelection()
         Update-TabControl
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
@@ -1401,6 +1409,8 @@ $LegacyGUIradioButtonPoolsUnavailable.Width = 170
 $LegacyGUIradioButtonPoolsUnavailable.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        $LegacyGUIpoolsDGV | Add-Member ColumnWidthChanged $false -Force
+        $LegacyGUIpoolsDGV.ClearSelection()
         Update-TabControl
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
@@ -1418,6 +1428,8 @@ $LegacyGUIradioButtonPools.Width = 100
 $LegacyGUIradioButtonPools.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        $LegacyGUIpoolsDGV | Add-Member ColumnWidthChanged $false -Force
+        $LegacyGUIpoolsDGV.ClearSelection()
         Update-TabControl
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
@@ -1572,6 +1584,7 @@ $LegacyGUIcheckShowSwitchingCPU.ForEach(
         $_.Add_Click(
             { 
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+                $LegacyGUIswitchingDGV.ClearSelection()
                 CheckBoxSwitching_Click($this)
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
             }
@@ -1594,7 +1607,8 @@ $LegacyGUIcheckShowSwitchingAMD.ForEach(
         $_.Add_Click(
             { 
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-                CheckBoxSwitching_Click($this)
+                $LegacyGUIswitchingDGV.ClearSelection()
+                LegacyGUIswitchingDGV($this)
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
             }
         )
@@ -1616,6 +1630,7 @@ $LegacyGUIcheckShowSwitchingINTEL.ForEach(
         $_.Add_Click(
             { 
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+                $LegacyGUIswitchingDGV.ClearSelection()
                 CheckBoxSwitching_Click($this)
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
             }
@@ -1638,6 +1653,7 @@ $LegacyGUIcheckShowSwitchingNVIDIA.ForEach(
         $_.Add_Click(
             { 
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+                $LegacyGUIswitchingDGV.ClearSelection()
                 CheckBoxSwitching_Click($this)
                 $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
             }
@@ -1783,9 +1799,8 @@ $LegacyGUIform.ResumeLayout()
 
 $LegacyGUIform.Add_Load(
     { 
-         If (Test-Path -LiteralPath ".\Config\WindowSettings.json" -PathType Leaf) { 
-            $WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable
-            # Restore window size
+        # Restore window size
+        If ((Test-Path -LiteralPath ".\Config\WindowSettings.json" -PathType Leaf) -and ($WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable)) { 
             If ($WindowSettings.Width -gt $LegacyGUIform.MinimumSize.Width) { $LegacyGUIform.Width = $WindowSettings.Width }
             If ($WindowSettings.Height -gt $LegacyGUIform.MinimumSize.Height) { $LegacyGUIform.Height = $WindowSettings.Height }
             If ($WindowSettings.Top -gt 0) { $LegacyGUIform.Top = $WindowSettings.Top }
@@ -1834,24 +1849,19 @@ $LegacyGUIform.Add_FormClosing(
             Stop-Brain
             Close-BalancesTrackerRunspace
 
-            If ($LegacyGUIform.DesktopBounds.Width -ge 0) { 
-                # Save window settings
-                $LegacyGUIform.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore
-            }
+            # Save window settings
+            If ($LegacyGUIform.DesktopBounds.Width -ge 0) { $LegacyGUIform.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
 
             Write-Message -Level Info "$($Variables.Branding.ProductLabel) has shut down."
             Start-Sleep -Seconds 2
             Stop-Process $PID -Force
         }
-        If ($Config.LegacyGUI -or $MsgBoxInput -eq "Cancel") { 
-            $_.Cancel = $true
-        }
+        If ($Config.LegacyGUI -or $MsgBoxInput -eq "Cancel") { $_.Cancel = $true }
     }
 )
 
 $LegacyGUIform.Add_KeyDown(
     { 
-        If ($PSItem.KeyCode -eq "F5") { Update-TabControl }
         If ($Variables.NewMiningStatus -eq "Running" -and $_.KeyCode -eq "P" -and $_.Control -and $_.Alt) { 
             If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
                 # Core is complete / gone. Cycle cannot be suspended anymore
@@ -1878,8 +1888,20 @@ $LegacyGUIform.Add_KeyDown(
                     Write-Host $Message -ForegroundColor Cyan
                     If ([DateTime]::Now.ToUniversalTime() -gt $Variables.EndCycleTime) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                 }
-                Remove-Variable Message
             }
+        }
+        ElseIf ($_.KeyCode -eq "F5") { 
+            $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+            # Clear selection, this will allow refreshing the table data
+            $LegacyGUIactiveMinersDGV.ClearSelection()
+            $LegacyGUIbalancesDGV.ClearSelection()
+            $LegacyGUIminersDGV.ClearSelection()
+            $LegacyGUIpoolsDGV.ClearSelection()
+            # $LegacyGUIworkersDGV.ClearSelection()
+            $LegacyGUIwatchdogTimersDGV.ClearSelection()
+
+            Update-TabControl
+            $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
         }
     }
 )

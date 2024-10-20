@@ -18,6 +18,7 @@
     "ExcludeRegion": []
   },
   "MiningPoolHub": {
+    "Algorithm": [],
     "ExcludeRegion": [],
     "PayoutThreshold": {
       "ETH": 0.25,
@@ -28,8 +29,7 @@
     "Algorithm": []
   },
   "ProHashing": {
-    "Algorithm": [
-    ],
+    "Algorithm": [],
     "BrainDebug": false
   },
   "ZergPool": {

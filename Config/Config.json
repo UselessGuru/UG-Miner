@@ -21,7 +21,7 @@
   "BalancesTrackerPollInterval": 0,
   "BenchmarkAllPoolAlgorithmCombinations": true,
   "CalculatePowerCost": true,
-  "ConfigFileVersion": "6.3.9",
+  "ConfigFileVersion": "6.3.10",
   "CPUMinerProcessPriority": -2,
   "CPUMiningReserveCPUcore": 1,
   "CryptoCompareAPIKeyParam": "af9b92255132dac6d1560c6eb1e04067d9fc0fb4c6630df00fb1d055bf858352",

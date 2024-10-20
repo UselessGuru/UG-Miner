@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.9
-Version date:   2024/10/17
+Version:        6.3.10
+Version date:   2024/10/20
 #>
 
 using module .\Include.psm1
@@ -1498,7 +1498,8 @@ Try {
         $Error.Clear()
         [System.GC]::Collect()
         $Proc = Get-Process -Id $PID
-        Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) runspace: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb"
+        Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) runspace: handles: $($Proc.HandleCount) / Memory: $($Proc.PrivateMemorySize64 / 1MB)MB"
+        Remove-Variable Proc
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }

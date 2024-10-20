@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningPoolHub.ps1
-Version:        6.3.9
-Version date:   2024/10/17
+Version:        6.3.10
+Version date:   2024/10/20
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.9
-Version date:   2024/10/17
+Version:        6.3.10
+Version date:   2024/10/20
 #>
 
 using module .\Includes\Include.psm1
@@ -280,6 +280,11 @@ Param(
     [String]$WorkerName = [System.Net.Dns]::GetHostName()
 )
 
+# Close useless empty cmd window that comes up when starting from cmd file
+$ParentProcessId = (Get-CimInstance win32_process -Filter "ProcessId = $PID")[0].ParentProcessId
+If ($RootProcess = (Get-CimInstance win32_process -Filter "ProcessId = $ParentProcessId")[0]) { If ($RootProcess[0].Name -eq "conhost.exe") { Stop-Process -Id $RootProcess[0].ParentProcessId -Force } }
+Remove-Variable ParentProcessId, RootProcess -ErrorAction Ignore
+
 $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
@@ -298,12 +303,12 @@ $Global:Config = [Hashtable]::Synchronized(@{ })
 $Global:Stats = [Hashtable]::Synchronized(@{ })
 $Global:Variables = [Hashtable]::Synchronized(@{ })
 
-# Load Branding
+# Branding data
 $Variables.Branding = [PSCustomObject]@{ 
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.9"
+    Version      = [System.Version]"6.3.10"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -524,10 +529,8 @@ $Variables.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Variables
 $Variables.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 
 # Driver version changed
-If (([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Variables.DriverVersion | ConvertTo-Json -Compress)) { 
-    If (Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) { Write-Message -Level Warn "Graphics card driver version data has changed. It is recommended to re-benchmark all miners." }
-    $Variables.DriverVersion | ConvertTo-Json | Out-File -LiteralPath ".\Cache\DriverVersion.json" -Force
-}
+If ((Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) -and ([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Variables.DriverVersion | ConvertTo-Json -Compress)) { Write-Message -Level Warn "Graphics card driver version data has changed. It is recommended to re-benchmark all miners." }
+$Variables.DriverVersion | ConvertTo-Json | Out-File -LiteralPath ".\Cache\DriverVersion.json" -Force
 
 # Rename existing switching log
 If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Rename-Item -NewName { "SwitchingLog$($_.LastWriteTime.toString("_yyyy-MM-dd_HH-mm-ss")).csv" } }
@@ -951,17 +954,17 @@ Function MainLoop {
                     # Miner list format
                     [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Miner"; Expression = { $_.Name } }
-                        If ($Variables.ShowMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
+                        If ($Variables.ShowMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Fee }) }; Align = "right" } }
                         If ($Variables.ShowEarningBias) { @{ Label = "Earning bias"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.ShowEarning) { @{ Label = "Earning"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "Power cost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.MiningPowerCost -and $Variables.ShowProfitBias) { @{ Label = "Profit bias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.MiningPowerCost -and $Variables.ShowProfit) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } }; Align = "right" } }
-                        If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.Pool.Accuracy.ForEach({ "{0:P0}" -f [Double]$_ }) }; Align = "right" } }
+                        If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.ForEach({ "{0:P0}" -f [Double]$_.Pool.Accuracy }) }; Align = "right" } }
                         @{ Label = "Algorithm"; Expression = { $_.Workers.Pool.Algorithm } }
                         If ($Variables.ShowPool) { @{ Label = "Pool"; Expression = { $_.Workers.Pool.Name } } }
-                        If ($Variables.ShowPoolFee -and ($Variables.Miners.Workers.Pool.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.Pool.Fee.ForEach({ "{0:P2}" -f [Double]$_ }) }; Align = "right" } }
+                        If ($Variables.ShowPoolFee -and ($Variables.Miners.Workers.Pool.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Pool.Fee }) }; Align = "right" } }
                         @{ Label = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) } }; Align = "right" }
                         If ($Variables.ShowUser) { @{ Label = "User"; Expression = { $_.Workers.Pool.User } } }
                         If ($Variables.ShowCurrency) { @{ Label = "Currency"; Expression = { $_.Workers.Pool.Currency } } }
@@ -1057,11 +1060,11 @@ Function MainLoop {
                     If ($Config.Watchdog) { 
                         # Display watchdog timers
                         $Variables.WatchdogTimers.Where({ $_.Kicked -gt $Variables.Timer.AddSeconds(-$Variables.WatchdogReset) }) | Sort-Object -Property MinerName, Kicked | Format-Table -Wrap (
-                            @{Label = "Miner Watchdog Timer"; Expression = { $_.MinerName } },
-                            @{Label = "Pool"; Expression = { $_.PoolName } },
-                            @{Label = "Algorithm"; Expression = { $_.Algorithm } },
-                            @{Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } },
-                            @{Label = "Last Updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
+                            @{ Label = "Miner Watchdog Timer"; Expression = { $_.MinerName } },
+                            @{ Label = "Pool"; Expression = { $_.PoolName } },
+                            @{ Label = "Algorithm"; Expression = { $_.Algorithm } },
+                            @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } },
+                            @{ Label = "Last Updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
                         ) | Out-Host
                     }
                 }
@@ -1097,7 +1100,8 @@ Function MainLoop {
         $Error.Clear()
         [System.GC]::Collect()
         $Proc = Get-Process -Id $PID
-        Write-Message -Level MemDbg "$ProcessName main loop: handles: $($Proc.HandleCount) / memory: $($Proc.PrivateMemorySize64 / 1mb) mb / threads: $($Proc.Threads.Count) / modules: $($Proc.Modules.Count)"
+        Write-Message -Level MemDbg "$ProcessName main loop: Handles: $($Proc.HandleCount) / Memory: $($Proc.PrivateMemorySize64 / 1MB)MB / Threads: $($Proc.Threads.Count) / Modules: $($Proc.Modules.Count)"
+        Remove-Variable Proc
     }
 }
 

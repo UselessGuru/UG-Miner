@@ -3,7 +3,17 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
-Changelog UG-Miner 6.3.9 2024/10/nn
+Changelog UG-Miner 6.3.10 2024/10/20
+====================================
+
+Improvements:
+- Core: Close useless empty cmd window that comes up when starting from cmd file (Windows 11)
+- Core: Minor code optimizations
+- LegacyGUI  / Earnings & balances: Add more columns to balances table
+- LegacyGUI: Remove obsolete code & minor code optimizations 
+
+
+Changelog UG-Miner 6.3.9 2024/10/17
 ===================================
 
 Changes:
@@ -47,7 +57,7 @@ Improvements:
 - Core & Miner APIs: Remove obsolete code & minor code optimizations
 - Core / Includes.psm1: Function 'Update-DAGdata' sets CUDAversion property. No need for 'CUDAversion.json' anymore
 - Core: Streamline failed miner reason text in switching log file
-- Log viewer (SnakeTail): Change color for 'WARN' messages to match color in text console
+- Log viewer (SnakeTail): Change color for 'WARN' messages to magenta to match color in text console
 
 Miner changes:
 - NanoMiner-v3.9.3

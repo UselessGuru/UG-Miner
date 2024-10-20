@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.9
-Version date:   2024/10/17
+Version:        6.3.10
+Version date:   2024/10/20
 #>
 
 Function Start-APIServer { 
@@ -111,7 +111,7 @@ Function Start-APIServer {
                             # Parse any parameters in the URL - $Request.Url.Query looks like "+ ?a=b&c=d&message=Hello%20world"
                             # Decode any url escaped characters in the key and value
                             $Parameters = @{ }
-                            ($Request.Url.Query -replace "\?" -split "&").Foreach(
+                            ($Request.Url.Query -replace "\?" -split "&").ForEach(
                                 { 
                                     $Key, $Value = $_ -split "="
                                     # Decode any url escaped characters in the key and value
@@ -1028,29 +1028,29 @@ Function Start-APIServer {
                                 $Data = $Variables.WatchdogReset
                                 Break
                             }
-                            "/workers" { 
-                                If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
-                                    Read-MonitoringData
-                                }
-                                $Workers = [System.Collections.ArrayList]@(
-                                    $Variables.Workers | Select-Object @(
-                                        @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split "," -join " & " })) -join "<br>" } },
-                                        @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
-                                        @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
-                                        @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
-                                        @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
-                                        @{ Name = "LastSeen"; Expression = { "$($_.date)" } },
-                                        @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
-                                        @{ Name = "Miner"; Expression = { $_.data.name -join "<br>" } },
-                                        @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace "Internal$", " (Internal)" -replace "External", " (External)" })) -join " & " })) -join "<br>" } },
-                                        @{ Name = "Status"; Expression = { $_.status } },
-                                        @{ Name = "Version"; Expression = { $_.version } },
-                                        @{ Name = "Worker"; Expression = { $_.worker } }
-                                    ) | Sort-Object -Property "Worker"
-                                )
-                                $Data = ConvertTo-Json @($Workers | Select-Object) -Depth 4
-                                Break
-                            }
+                            # "/workers" { 
+                            #     If ($Config.ShowWorkerStatus -and $Config.MonitoringUser -and $Config.MonitoringServer -and $Variables.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
+                            #         Read-MonitoringData
+                            #     }
+                            #     $Workers = [System.Collections.ArrayList]@(
+                            #         $Variables.Workers | Select-Object @(
+                            #             @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split "," -join " & " })) -join "<br>" } },
+                            #             @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
+                            #             @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
+                            #             @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                            #             @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                            #             @{ Name = "LastSeen"; Expression = { "$($_.date)" } },
+                            #             @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
+                            #             @{ Name = "Miner"; Expression = { $_.data.name -join "<br>" } },
+                            #             @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace "Internal$", " (Internal)" -replace "External", " (External)" })) -join " & " })) -join "<br>" } },
+                            #             @{ Name = "Status"; Expression = { $_.status } },
+                            #             @{ Name = "Version"; Expression = { $_.version } },
+                            #             @{ Name = "Worker"; Expression = { $_.worker } }
+                            #         ) | Sort-Object -Property "Worker"
+                            #     )
+                            #     $Data = ConvertTo-Json @($Workers | Select-Object) -Depth 4
+                            #     Break
+                            # }
                             Default { 
                                 # Set index page
                                 If ($Path -eq "/") { $Path = "/index.html" }
@@ -1072,7 +1072,7 @@ Function Start-APIServer {
                                         # Includes are in the traditional '<!-- #include file="/path/filename.html" -->' format used by many web servers
                                         If ($File.Extension -eq ".html") { 
                                             $IncludeRegex = [regex]'<!-- *#include *file="(.*)" *-->'
-                                            $IncludeRegex.Matches($Data).Foreach(
+                                            $IncludeRegex.Matches($Data).ForEach(
                                                 { 
                                                     $IncludeFile = $BasePath + "/" + $_.Groups[1].Value
                                                     If (Test-Path -LiteralPath $IncludeFile -PathType Leaf) { 
@@ -1161,10 +1161,10 @@ Function Stop-APIServer {
             $Variables.APIRunspace.APIServer.Close()
         }
         If ($Variables.APIRunspace.APIport) { $Variables.APIRunspace.Remove("APIport") }
-        $Variables.APIRunspace.PowerShell.Stop() | Out-Null
-        If (-not $Variables.APIRunspace.AsyncObject.IsCompleted) { $Variables.APIRunspace.PowerShell.EndInvoke($Variables.APIRunspace.AsyncObject) | Out-Null }
-        $Variables.APIRunspace.PowerShell.Runspace.Close() | Out-Null
-        $Variables.APIRunspace.PowerShell.Dispose() | Out-Null
+        $Variables.APIRunspace.PowerShell.Stop()
+        If (-not $Variables.APIRunspace.AsyncObject.IsCompleted) { $Variables.APIRunspace.PowerShell.EndInvoke($Variables.APIRunspace.AsyncObject) }
+        $Variables.APIRunspace.PowerShell.Runspace.Close()
+        $Variables.APIRunspace.PowerShell.Dispose()
         $Variables.Remove("APIRunspace")
         $Variables.Remove("APIVersion")
 
