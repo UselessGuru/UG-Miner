@@ -35,8 +35,6 @@
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 11,
     "PoolAPItimeout": 30,
-    "PoolCurrenciesUri": "",
-    "PoolStatusUri": "https://hashcryptos.com/api/status",
     "Region": [
       "n/a"
     ],
@@ -84,13 +82,14 @@
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
-    "PoolStatusUri": "https://Hiveon.net/api/v1/stats/pool",
     "Variant": {
       "Hiveon": {}
     }
   },
   "MiningDutch": {
-    "Algorithm": [],
+    "Algorithm": [
+      "-YescryptR16"
+    ],
     "AutoExchange": true,
     "BalancesKeepAlive": 180, // https://www.mining-dutch.nl/index.php?page=wallets
     "BrainConfig": {
@@ -99,7 +98,6 @@
       "UseTransferFile": false
     },
     "ExcludeRegion": [],
-    "MinWorkers": 0, // no values in API, reported on 2024/10/14
     "PayoutThreshold": {
       "*": {
          "mBTC": 0.00025
@@ -110,7 +108,6 @@
     "PoolAPIretryInterval": 15, // Only 1 request every 10 seconds allowed
     "PoolAPItimeout": 3,
     "PoolCurrenciesUri": "",
-    "PoolStatusUri": "https://www.mining-dutch.nl/api/status",
     "Region": [
       "americas",
       "europe",
@@ -135,7 +132,7 @@
     }
   },
   "MiningPoolHub": {
-    "_Algorithm": [
+    "Algorithm": [
       "-Neoscrypt",
       "-Skein",
       "-VertHash"
@@ -235,8 +232,6 @@
     "PoolAPIallowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
-    "PoolCurrenciesUri": "https://prohashing.com/api/v1/currencies",
-    "PoolStatusUri": "https://prohashing.com/api/v1/status",
     "Region": [
       "ASIA",
       "EU",
@@ -295,8 +290,6 @@
     "PoolAPIallowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 30,
-    "PoolCurrenciesUri": "https://zergpool.com/api/currencies",
-    "PoolStatusUri": "https://zergpool.com/api/status",
     "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
     "Region": [
       "asia",
@@ -345,8 +338,6 @@
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 30,
-    "PoolCurrenciesUri": "https://www.zpool.ca/api/currencies",
-    "PoolStatusUri": "https://www.zpool.ca/api/status",
     "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
     "Region": [
       "eu",

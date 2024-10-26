@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.3.10
-Version date:   2024/10/20
+Version:        6.3.11
+Version date:   2024/10/26
 #>
 
 using module ..\Includes\Include.psm1
@@ -50,32 +50,42 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
+        
         Do { 
             Try { 
-                $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                If ($AlgoData.message) { 
-                    # Only 1 request every 10 seconds allowed
-                    $APICallFails ++
-                    Start-Sleep -Seconds $PoolConfig.PoolAPIretryInterval
+                If (-not $AlgoData) { 
+                    $AlgoData = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                 }
-                Else { 
-                    $APICallFails = 0
+                If (-not $TotalStats) { 
+                    $TotalStats = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                 }
+                $APICallFails = 0
             }
             Catch { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
                 Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
             }
-        } While ((-not $AlgoData -or $AlgoData.message) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
+        } While (-not ($AlgoData -and $TotalStats) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
         $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-        If ($AlgoData) { 
-            ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
+        If ($AlgoData -and $TotalStats) { 
+            # Change numeric string to numbers, some values are null
+            $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+            $TotalStats = ($TotalStats | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+
+             ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
                 $AlgorithmNorm = Get-Algorithm $Algo
                 $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
 
                 $AlgoData.$Algo | Add-Member Updated $Timestamp -Force
+                If ($AlgoStats = $TotalStats.result.Where({ $_.Algorithm -eq $Algo })) { 
+                    $AlgoData.$Algo | Add-Member hashrate_shared $AlgoStats.hashrate -Force
+                    $AlgoData.$Algo | Add-Member hashrate_solo $AlgoStats.hashrate_solo -Force
+                    $AlgoData.$Algo | Add-Member workers_shared $AlgoStats.workers -Force
+                    $AlgoData.$Algo | Add-Member workers_solo $AlgoStats.workers_solo -Force
+                }
+                Remove-Variable AlgoStats
 
                 If ($PoolVariant) { 
                     # Reset history when stat file got removed
@@ -146,7 +156,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
         $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
     }
-    Remove-Variable AlgoData -ErrorAction Ignore
+    Remove-Variable AlgoData, TotalStats -ErrorAction Ignore
 
     $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
     $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum).Minimum

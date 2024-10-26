@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.3.10
-Version date:   2024/10/20
+Version:        6.3.11
+Version date:   2024/10/26
 #>
 
 using module ..\Includes\Include.psm1
@@ -49,7 +49,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Do { 
             Try { 
-                $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                $AlgoData = Invoke-RestMethod -Uri "https://zergpool.com/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
 
                 $APICallFails = 0
             }

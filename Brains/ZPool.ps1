@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.3.10
-Version date:   2024/10/20
+Version:        6.3.11
+Version date:   2024/10/26
 #>
 
 using module ..\Includes\Include.psm1
@@ -50,10 +50,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Do { 
             Try { 
                 If (-not $AlgoData) { 
-                    $AlgoData = Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                    $AlgoData = Invoke-RestMethod -Uri "https://www.zpool.ca/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                 }
                 If (-not $CurrenciesData) { 
-                    $CurrenciesData = Invoke-RestMethod -Uri $PoolConfig.PoolCurrenciesUri -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                    $CurrenciesData = Invoke-RestMethod -Uri "https://www.zpool.ca/api/currencies" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                 }
                 $APICallFails = 0
             }

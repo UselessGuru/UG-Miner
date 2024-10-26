@@ -3,6 +3,14 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.3.11 2024/10/26
+====================================
+
+Improvements:
+- Core: Minor code optimizations
+- Pool 'MiningDutch': Query additional API 'https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstat' for hashrate & worker data
+
+
 Changelog UG-Miner 6.3.10 2024/10/20
 ====================================
 
@@ -84,7 +92,7 @@ Changelog UG-Miner 6.3.5 2024/09/14
 ===================================
 
 Fixes:
-- Rigel-v1.19.0: 'HeavyHashKarlsenV2' & 'HeavyHashPyrinV2' algorithms not working
+- Miner 'Rigel-v1.19.0': 'HeavyHashKarlsenV2' & 'HeavyHashPyrinV2' algorithms not working
 
 
 Changelog UG-Miner 6.3.4 2024/09/13

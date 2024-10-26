@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
-Version:        6.3.10
-Version date:   2024/10/20
+Version:        6.3.11
+Version date:   2024/10/26
 #>
 
 Param(
@@ -71,6 +71,8 @@ ForEach ($Pool in $Request.return) {
     $Reasons = [System.Collections.Generic.List[String]]@()
     If (-not $PoolConfig.UserName) { $Reasons.Add("No username") }
     If ($Pool.pool_hash -eq "-" -or $_.pool_hash -eq "0" -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
+    If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") }
+
     If ($AlgorithmNorm -eq "Equihash1445") { $Pool.host_list = "hub.miningpoolhub.com" }
     ElseIf ($Pool.host -eq "hub.miningpoolhub.com") { $Pool.host_list = $Pool.host }
 

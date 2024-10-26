@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.10
-Version date:   2024/10/20
+Version:        6.3.11
+Version date:   2024/10/26
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1041,7 +1041,7 @@ Function Get-Rate {
                     $Rates | Add-Member $Currency $Rates.BTC.PSObject.Copy() -Force
                     $Rates.$Currency.PSObject.Properties.Name.ForEach(
                         { 
-                            $Rates.$Currency | Add-Member $_ (($Rates.BTC.$_ / $Rates.BTC.$Currency) -as [Double]) -Force
+                            $Rates.$Currency | Add-Member $_ ([Double]($Rates.BTC.$_ / $Rates.BTC.$Currency)) -Force
                         }
                     )
                 }
@@ -1379,7 +1379,10 @@ Function Read-Config {
         ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).ForEach(
             { 
                 $PoolName = $_
-                If ($PoolConfig = $Variables.PoolData.$PoolName) { 
+                If ($PoolConfig = $Variables.PoolData.$PoolName | ConvertTo-Json -ErrorAction Ignore | ConvertFrom-Json -AsHashtable | Get-SortedObject) { 
+                    # # Generic algorithm disabling is done in pool files
+                    $PoolConfig.Remove("Algorithm")
+
                     If ($CustomPoolConfig = $Variables.PoolsConfigData.$PoolName) { 
                         # Merge default config data with custom pool config
                         $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $CustomPoolConfig -Unique $true
@@ -3179,7 +3182,7 @@ Function Get-AllDAGdata {
 
     # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "TLS"
-    $Url = "https://telestai.cryptoscope.io/api/getblockcount/"
+    $Url = "https://telestai.cryptoscope.io/api/getblockcount"
     If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from StakeCube block explorer
         Try { 
@@ -3500,7 +3503,6 @@ Function Get-DAGepochLength {
         Default           { Return 30000 }
     }
 }
-
 Function Out-DataTable { 
     # based on http://thepowershellguy.com/blogs/posh/archive/2007/01/21/powershell-gui-scripblock-monitor-script.aspx
 
@@ -3545,11 +3547,11 @@ Function Get-Median {
     $Count = $Numbers.Count
 
     If ($Count % 2 -eq 0) { 
-        # Even number of elements, so the median is the average of the two middle elements.
+        # Even number of elements, median is the average of the two middle elements
         Return ($Numbers[$Count / 2] + $Numbers[$Count / 2 - 1]) / 2
     }
     Else { 
-        # Odd number of elements, so the median is the middle element.
+        # Odd number of elements, median is the middle element
         Return $Numbers[$Count / 2]
     }
 }

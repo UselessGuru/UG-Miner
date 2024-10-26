@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ProHashing.ps1
-Version:        6.3.10
-Version date:   2024/10/20
+Version:        6.3.11
+Version date:   2024/10/26
 #>
 
 using module ..\Includes\Include.psm1
@@ -53,10 +53,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Do { 
             Try { 
                 If (-not $AlgoData) { 
-                    $AlgoData = (Invoke-RestMethod -Uri $PoolConfig.PoolStatusUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout).data
+                    $AlgoData = (Invoke-RestMethod -Uri "https://prohashing.com/api/v1/status" -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout).data
                 }
                 If (-not $CurrenciesData) { 
-                    $CurrenciesData = (Invoke-RestMethod -Uri $PoolConfig.PoolCurrenciesUri -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout).data
+                    $CurrenciesData = (Invoke-RestMethod -Uri "https://prohashing.com/api/v1/currencies" -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout).data
                 }
                 $APICallFails = 0
             }
