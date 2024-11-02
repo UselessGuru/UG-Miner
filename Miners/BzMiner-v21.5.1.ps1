@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.11
-Version date:   2024/10/26
+Version:        6.3.12
+Version date:   2024/11/02
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
@@ -78,7 +78,7 @@ $Algorithms = @(
     @{ Algorithms = @("Ethash", "SHA512256d");            Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(90, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());           Arguments = @(" -a ethash", " --a2 radiant") }
     @{ Algorithms = @("EthashB3");                        Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 20); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a rethereum") }
     @{ Algorithms = @("FishHash");                        Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a ironfish") }
-    @{ Algorithms = @("FishHash", "Warthog");             Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a ironfish", " --a2 warthog") }
+    @{ Algorithms = @("FishHash", "JanusHash");           Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a ironfish", " --a2 warthog") }
     @{ Algorithms = @("HeavyHashKarlsenV2");              Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a karlsen") }
     @{ Algorithms = @("HeavyHashKarlsenV2", "JanusHash"); Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a karlsen", " --a2 warthog") }
 #   @{ Algorithms = @("HeavyHashKaspa");                  Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a kaspa") } # ASIC

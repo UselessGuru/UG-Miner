@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.11
-Version date:   2024/10/26
+Version:        6.3.12
+Version date:   2024/11/02
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -333,7 +333,7 @@ Function Update-TabControl {
                     )
                     $ChartArea.AxisY.Maximum = ($DaySum | Measure-Object -Maximum).Maximum * 1.05
                 }
-                Catch {}
+                Catch { }
 
             }
             If ($Config.BalancesTrackerPollInterval -gt 0) { 
@@ -586,7 +586,7 @@ Function Update-TabControl {
         #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join $nl } },
         #                 @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join " & " }) -join $nl } },
         #                 @{ Name = "Live hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } },
-        #                 @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.EstimatedSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } }
+        #                 @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.Hashrate.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } }
         #             ) | Sort-Object -Property "Worker" | Out-DataTable
         #             $LegacyGUIworkersDGV.ClearSelection()
         #

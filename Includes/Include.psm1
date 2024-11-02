@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.11
-Version date:   2024/10/26
+Version:        6.3.12
+Version date:   2024/11/02
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -382,7 +382,7 @@ Class Miner : IDisposable {
         }
 
         # Start Miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
-        $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -WarningVariable $null -Name "$($this.NameAdDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
+        $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -WarningVariable $null -Name "$($this.NameAndDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
 
         Remove-Variable ScriptBlock -ErrorAction Ignore
     }
@@ -1657,8 +1657,8 @@ Function Edit-File {
     }
 
     If ($FileWriteTime -ne (Get-Item -Path $FileName).LastWriteTime) { 
-        Write-Message -Level Verbose "Saved '$FileName'. Changes will become active in next cycle."
-        Return "Saved '$FileName'.`nChanges will become active in next cycle."
+        Write-Message -Level Verbose "Saved '$FileName'. Changes will become active in the next cycle."
+        Return "Saved '$FileName'.`nChanges will become active in the next cycle."
     }
     Else { 
         Return "No changes to '$FileName' made."
@@ -2594,7 +2594,7 @@ Function Invoke-CreateProcess {
         [Parameter(Mandatory = $false)]
         [String]$WindowStyle = "minimized",
         [Parameter(Mandatory = $false)]
-        [String]$StartF = 0x00000081, # STARTF_USESHOWWINDOW, STARTF_FORCEOFFFEEDBACK
+        [String]$StartF = 0x00003001, # STARTF_USESHOWWINDOW, STARTF_TITLEISAPPID, STARTF_PREVENTPINNING
         [Parameter(Mandatory = $false)]
         [String]$JobName,
         [Parameter(Mandatory = $false)]
@@ -2680,7 +2680,7 @@ public static class Kernel32
             Return 
         }
 
-        [PSCustomObject]@{ProcessId = $Proc.Id }
+        [PSCustomObject]@{ ProcessId = $Proc.Id }
 
         $ControllerProcess.Handle | Out-Null
         $Proc.Handle | Out-Null
@@ -2693,9 +2693,6 @@ public static class Kernel32
                 $Proc = $null
             }
         } While ($Proc.HasExited -eq $false)
-
-        # Remove-Variable ArgumentList, BinaryPath, ControllerProcess, ControllerProcessID, CreationFlags, EnvBlock, Proc, ProcessInfo, SecAttr, ShowWindow, StartF, StartupInfo, WindowStyle, WorkingDirectory
-        # [System.GC]::Collect()
     }
 }
 
@@ -2966,7 +2963,7 @@ Function Start-LogReader {
                     [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 6) | Out-Null # SW_MINIMIZE 
                     [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 9) | Out-Null # SW_RESTORE
                 }
-                Catch {}
+                Catch { }
             }
         }
         Else { 

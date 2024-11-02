@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.3.11
-Version date:   2024/10/26
+Version:        6.3.12
+Version date:   2024/11/02
 #>
 
 Class XmRig : Miner { 
@@ -119,7 +119,8 @@ Class XmRig : Miner {
 
         $HashRate = [PSCustomObject]@{ }
         $HashRateName = [String]$this.Algorithms[0]
-        $HashRateValue = [Double]$Data.hashrate.total[0]
+        $HashRateValue = [Double]($Data.hashrate.total.Where({ $_ }) | Measure-Object -Average).Average
+        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[0] } #fix
         If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[1] } #fix
         If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[2] } #fix
         $HashRate | Add-Member @{ $HashRateName = $HashRateValue }

@@ -58,7 +58,9 @@
               async: 'true',
               autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
               height: $(window).height() - $('#balanceobjects').offset().top - 20,
-
+              onColumnSwitch: function() {
+                $('*').css('cursor', 'default');
+              },
               onCreatedControls: function() {
                 $('*').css('cursor', 'wait');
               },

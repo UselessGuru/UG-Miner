@@ -77,7 +77,9 @@
             $table.bootstrapTable({
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top - 20,
-
+              onColumnSwitch: function() {
+                $('*').css('cursor', 'default');
+              },
               onCreatedControls: function() {
                 $('*').css('cursor', 'wait');
               },
@@ -95,6 +97,9 @@
                     if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
                   });
                 };
+              },
+              onToggle: function() {
+                $('*').css('cursor', 'default');
               }
             });
 

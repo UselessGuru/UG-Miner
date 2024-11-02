@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.11
-Version date:   2024/10/26
+Version:        6.3.12
+Version date:   2024/11/02
 #>
 
 using module .\Include.psm1
@@ -314,7 +314,7 @@ Try {
                         }
                     }
                 }
-                Catch {}
+                Catch { }
                 Remove-Variable Keys, StatFiles -ErrorAction Ignore
 
                 # Read latest DAG data from web
@@ -1341,14 +1341,14 @@ Try {
 
         ForEach ($Miner in $Variables.MinersBest) { 
             If ($Message = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
-                Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) samples]..."
+                Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) sample$(If ($Miner.MinDataSample -ne 1) { "s" })]..."
             }
             Try { 
                 $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
                 # Set window title
                 [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
             }
-            Catch {}
+            Catch { }
         }
         Remove-Variable Miner, Message -ErrorAction Ignore
 
@@ -1450,7 +1450,7 @@ Try {
                         # Set window title
                         [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
                     }
-                    Catch {}
+                    Catch { }
                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                 }
                 Remove-Variable Miner, Sample, Samples -ErrorAction Ignore
@@ -1508,6 +1508,8 @@ Try {
         While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
         $Variables.RestartCycle = $true
+
+        $Variables.CoreLoopCounter ++
 
         If ($Variables.NewMiningStatus -eq "Running") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
     } While ($Variables.NewMiningStatus -eq "Running")

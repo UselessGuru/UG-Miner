@@ -82,7 +82,9 @@
               async: 'true',
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 30,
-
+              onColumnSwitch: function() {
+                $('*').css('cursor', 'default');
+              },
               onCreatedControls: function() {
                 $('*').css('cursor', 'wait');
               },
@@ -97,6 +99,9 @@
                     });
                   };
                 };
+              },
+              onToggle: function() {
+                $('*').css('cursor', 'default');
               }
             });
 

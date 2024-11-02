@@ -127,7 +127,6 @@
             $table.bootstrapTable({
               async: 'true',
               cookieIdTable: $cookieIdTable,
-
               onLoadSuccess: function() {
                 if (config.CalculatePowerCost == false) {
                   $table.bootstrapTable('hideColumn', 'Profit_Bias');
@@ -160,6 +159,9 @@
                 $(".addlocalcurrency").each(function () {
                   if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
                 });
+              },
+              onToggle: function() {
+                $('*').css('cursor', 'default');
               }
             });
 

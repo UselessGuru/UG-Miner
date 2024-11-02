@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.11
-Version date:   2024/10/26
+Version:        6.3.12
+Version date:   2024/11/02
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.26"
+    $APIVersion = "0.5.4.28"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -41,9 +41,11 @@ Function Start-APIServer {
             Write-Message -Level Error "Error initializing API & Web GUI on port $($Config.APIport). Port is in use."
             [Void]$TCPclient.EndConnect($AsyncResult)
             [Void]$TCPclient.Dispose()
+            Remove-Variable AsyncResult, TCPClient
         }
         Else { 
             [Void]$TCPclient.Dispose()
+            Remove-Variable AsyncResult, TCPClient
 
             # Start API server
             If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API ($APIVersion) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore }
@@ -68,9 +70,10 @@ Function Start-APIServer {
             $Powershell.AddScript(
                 { 
                     $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
+                    Remove-Variable Script, ScriptBody
 
-                    $GCStopWatch = [System.Diagnostics.StopWatch]::New()
-                    $GCStopWatch.Start()
+                    $GCstopWatch = [System.Diagnostics.StopWatch]::New()
+                    $GCstopWatch.Start()
 
                     (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -80,7 +83,7 @@ Function Start-APIServer {
                     If ($Config.Transcript) { Start-Transcript -Path ".\Debug\APIServer-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
                     # List of possible mime types for files
-                    $MIMETypes = @{ 
+                    $MIMEtypes = @{ 
                         ".js"   = "application/x-javascript"
                         ".html" = "text/html"
                         ".htm"  = "text/html"
@@ -117,22 +120,18 @@ Function Start-APIServer {
                                     # Decode any url escaped characters in the key and value
                                     $Key = [System.Web.HttpUtility]::UrlDecode($Key)
                                     $Value = [System.Web.HttpUtility]::UrlDecode($Value)
-                                    # $Key = [URI]::UnescapeDataString($Key)
-                                    # $Value = [URI]::UnescapeDataString($Value)
-                                    If ($Key -and $Value) { 
-                                        $Parameters.$Key = $Value
-                                    }
+                                    If ($Key -and $Value) { $Parameters.$Key = $Value }
                                 }
                             )
                             If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url)" | Out-File $Config.APILogFile -Append -ErrorAction Ignore }
-
+                            Remove-Variable Value -ErrorAction Ignore
                         }
                         ElseIf ($Request.HttpMethod -eq "POST") { 
                             $Length = $Request.contentlength64
                             $Buffer = New-Object "byte[]" $Length
 
                             [Void]$Request.inputstream.read($Buffer, 0, $Length)
-                            $Body = [System.Text.Encoding]::ascii.getstring($Buffer)
+                            $Body = [Text.Encoding]::ascii.getstring($Buffer)
 
                             If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File $Config.APILogFile -Append -ErrorAction Ignore }
 
@@ -143,12 +142,10 @@ Function Start-APIServer {
                                     # Decode any url escaped characters in the key and value
                                     $Key = [System.Web.HttpUtility]::UrDecode($Key)
                                     $Value = [System.Web.HttpUtility]::UrlDecode($Value)
-                                    If ($Key -and $Value) { 
-                                        $Parameters.$Key = $Value
-                                    }
+                                    If ($Key -and $Value) { $Parameters.$Key = $Value }
                                 }
                             )
-                            Remove-Variable Body
+                            Remove-Variable Buffer, Body, Length, Value -ErrorAction Ignore
                         }
 
                         # Create a new response and the defaults for associated settings
@@ -177,7 +174,6 @@ Function Start-APIServer {
                                         $Pool.Available = $false
                                         $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                                     }
-                                    Remove-Variable Pool
                                     $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
                                     Write-Message -Level Verbose "Web GUI: $Message"
                                     $Data = "$($Data -join "`n")`n`n$Message"
@@ -186,6 +182,7 @@ Function Start-APIServer {
                                 Else { 
                                     $Data = "No matching stats found."
                                 }
+                                Remove-Variable Algorithms, Message, Pool, PoolNames, Pools, PoolsConfig -ErrorAction Ignore
                                 Break
                             }
                             "/functions/algorithm/enable" { 
@@ -206,7 +203,6 @@ Function Start-APIServer {
                                         If (-not $Pool.Reasons) { $Pool.Available = $true }
                                         $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                                     }
-                                    Remove-Variable Pool
                                     $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
                                     Write-Message -Level Verbose "Web GUI: $Message"
                                     $Data = "$($Data -join "`n")`n`n$Message"
@@ -215,6 +211,7 @@ Function Start-APIServer {
                                 Else { 
                                     $Data = "No matching stats found."
                                 }
+                                Remove-Variable Algorithms, Message, Pool, Pools, PoolsConfig -ErrorAction Ignore
                                 Break
                             }
                             "/functions/api/stop" { 
@@ -235,6 +232,7 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching entries found."
                                     }
+                                    Remove-Variable BalanceDataEntries, Message, RemovedEntriesCount -ErrorAction Ignore
                                     Break
                                 }
                             }
@@ -249,7 +247,7 @@ Function Start-APIServer {
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
                                             $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ", ")]'"
-                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
+                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
                                             ForEach ($DeviceName in $Values) { 
                                                 $Variables.Devices.Where({ $_.Name -eq $DeviceName }).ForEach(
                                                     { 
@@ -262,7 +260,6 @@ Function Start-APIServer {
                                                     }
                                                 )
                                             }
-                                            Remove-Variable DeviceName
                                             Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' disabled. Configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' updated."
                                         }
                                         Catch { 
@@ -273,7 +270,7 @@ Function Start-APIServer {
                                         $Data = "No configuration change."
                                     }
                                 }
-                                Remove-Variable Key
+                                Remove-Variable DeviceName, ExcludeDeviceName, Key, Values -ErrorAction Ignore
                                 Break
                             }
                             "/functions/config/device/enable" { 
@@ -288,7 +285,7 @@ Function Start-APIServer {
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
                                             $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ", " )]'"
-                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in next cycle."
+                                            $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
                                             $Variables.Devices.Where({ $Values -contains $_.Name }).ForEach(
                                                 { 
                                                     $_.State = [DeviceState]::Enabled
@@ -306,7 +303,7 @@ Function Start-APIServer {
                                         $Data = "No configuration change."
                                     }
                                 }
-                                Remove-Variable Key
+                                Remove-Variable ExcludedDeviceName, Key, Values -ErrorAction Ignore
                                 Break
                             }
                             "/functions/config/set" { 
@@ -315,7 +312,6 @@ Function Start-APIServer {
                                     Write-Config -ConfigFile $Variables.ConfigFile -Config $TempConfig
                                     Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
                                     $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
-                                    Remove-Variable TempConfig
 
                                     $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                                         { 
@@ -337,6 +333,7 @@ Function Start-APIServer {
                                 Catch { 
                                     $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
                                 }
+                                Remove-Variable Key, TempConfig -ErrorAction Ignore
                                 Break
                             }
                             "/functions/file/edit" { 
@@ -351,6 +348,7 @@ Function Start-APIServer {
                             "/functions/log/get" { 
                                 $Lines = If ([Int]$Parameters.Lines) { [Int]$Parameters.Lines } Else { 100 }
                                 $Data = "$((Get-Content -Path $Variables.LogFile -Tail $Lines).ForEach({ "$($_)`n" }))"
+                                Remove-Variable Lines
                                 Break
                             }
                             "/functions/mining/getstatus" { 
@@ -405,18 +403,20 @@ Function Start-APIServer {
                                 Else { 
                                     $Data = "No matching stats found."
                                 }
+                                Remove-Variable StatNames -ErrorAction Ignore
                                 Break
                             }
-                            "/functions/getminerdetail" { 
-                                $Miner = $Variables.Miners.Where({ $_.Info -eq $Key })
-                                If ($Miner) { 
-                                    $Data = $Miner | ConvertTo-Json -Depth 10
-                                }
-                                Else { 
-                                    $Data = "Miner with key '$Key' not found."
-                                }
-                                Break
-                            }
+                            # "/functions/getminerdetail" { 
+                            #     $Miner = $Variables.Miners.Where({ $_.Info -eq $Key })
+                            #     If ($Miner) { 
+                            #         $Data = $Miner | ConvertTo-Json -Depth 10
+                            #     }
+                            #     Else { 
+                            #         $Data = "Miner with key '$Key' not found."
+                            #     }
+                            #     Remove-Variable Miner -ErrorAction Ignore
+                            #     Break
+                            # }
                             "/functions/stat/disable" { 
                                 If ($Parameters.Miners) { 
                                     If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
@@ -428,7 +428,6 @@ Function Start-APIServer {
                                                     Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                                                     $Worker.Disabled = $false
                                                 }
-                                                Remove-Variable Worker
                                                 $_.Disabled = $true
                                                 $_.Reasons += "Disabled by user"
                                                 $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
@@ -442,6 +441,7 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching miner stats found."
                                     }
+                                    Remove-Variable Miners, Message, Worker -ErrorAction Ignore
                                     Break
                                 }
                             }
@@ -455,7 +455,6 @@ Function Start-APIServer {
                                                 ForEach ($Worker in $_.Workers) { 
                                                     Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                                                 }
-                                                Remove-Variable Worker
                                                 $_.Disabled = $false
                                                 $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
                                                 If (-not $_.Reasons) { $_.Available = $true }
@@ -469,6 +468,7 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching miner stats found."
                                     }
+                                    Remove-Variable Message, Miners, Worker -ErrorAction Ignore
                                     Break
                                 }
                             }
@@ -486,6 +486,7 @@ Function Start-APIServer {
                                 Else { 
                                     $Data = "No matching stats found."
                                 }
+                                Remove-Variable TempStats -ErrorAction Ignore
                                 Break
                             }
                             "/functions/stat/remove" { 
@@ -511,6 +512,7 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching pool stats found."
                                     }
+                                    Remove-Variable Message, Pools, StatName -ErrorAction Ignore
                                     Break
                                 }
                                 ElseIf ($Parameters.Miners -and $Parameters.Type -eq "Hashrate") { 
@@ -536,7 +538,6 @@ Function Start-APIServer {
                                                     $Worker.Hashrate = [Double]::NaN
                                                     $Worker.TotalMiningDuration = [TimeSpan]0
                                                 }
-                                                Remove-Variable Worker
 
                                                 # Clear power consumption
                                                 Remove-Stat -Name "$($_.Name)_PowerConsumption"
@@ -560,6 +561,7 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching hashrate stats found."
                                     }
+                                    Remove-Variable Message, Miners, Worker -ErrorAction Ignore
                                     Break
                                 }
                                 ElseIf ($Parameters.Miners -and $Parameters.Type -eq "PowerConsumption") { 
@@ -573,9 +575,8 @@ Function Start-APIServer {
                                                     $_.Activated = 0 # To allow 3 attempts
                                                 }
                                                 $_.PowerConsumption = [Double]::NaN
-                                                $StatName = $_.Name
-                                                $Data += $StatName
-                                                Remove-Stat -Name "$($StatName)_PowerConsumption"
+                                                $Data += $_.Name
+                                                Remove-Stat -Name "$($_.Name)_PowerConsumption"
                                                 $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
                                                 If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                                             }
@@ -588,6 +589,7 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching power consumption stats found."
                                     }
+                                    Remove-Variable Message, Miners -ErrorAction Ignore
                                     Break
                                 }
                                 If ($TempStats = @(If ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } Else { Get-Stat })) { 
@@ -608,6 +610,7 @@ Function Start-APIServer {
                                 Else { 
                                     $Data = "No matching stats found."
                                 }
+                                Remove-Variable Message, TempStats -ErrorAction Ignore
                                 Break
                             }
                             "/functions/stat/set" { 
@@ -632,7 +635,6 @@ Function Start-APIServer {
                                                         $_.Status = [MinerStatus]::Failed
                                                     }
                                                 }
-                                                Remove-Variable Algorithm
                                             }
                                         )
                                         $Data = $Data | Sort-Object -Unique
@@ -643,13 +645,13 @@ Function Start-APIServer {
                                     Else { 
                                         $Data = "No matching miners found."
                                     }
+                                    Remove-Variable Algorithm, Message, Miners, StatName -ErrorAction Ignore
                                     Break
                                 }
                             }
                             "/functions/switchinglog/clear" { 
                                 Get-ChildItem -Path ".\Logs\switchinglog.csv" -File | Remove-Item -Force
-                                $Data = "Switching log '.\Logs\switchinglog.csv' cleared."
-                                Write-Message -Level Verbose "Web GUI: $Data"
+                                Write-Message -Level Verbose "Web GUI: Switching log '.\Logs\switchinglog.csv' cleared."
                                 Break
                             }
                             "/functions/variables/get" { 
@@ -676,7 +678,6 @@ Function Start-APIServer {
                                     # Remove Watchdog timers
                                     $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name }))
                                 }
-                                Remove-Variable Miner
 
                                 ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
                                     # Update pool
@@ -691,7 +692,6 @@ Function Start-APIServer {
                                     # Remove Watchdog timers
                                     $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm }))
                                 }
-                                Remove-Variable Pool
                                 If ($Data) { 
                                     $Data = $Data | Sort-Object -Unique
                                     $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
@@ -701,6 +701,7 @@ Function Start-APIServer {
                                 Else { 
                                     $Data = "No matching watchdog timer found."
                                 }
+                                Remove-Variable Message, Miner, Pool -ErrorAction Ignore
                                 Break
                             }
                             "/functions/watchdogtimers/reset" { 
@@ -1035,7 +1036,7 @@ Function Start-APIServer {
                             #     $Workers = [System.Collections.ArrayList]@(
                             #         $Variables.Workers | Select-Object @(
                             #             @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split "," -join " & " })) -join "<br>" } },
-                            #             @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
+                            #             @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.Hashrate.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
                             #             @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
                             #             @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
                             #             @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
@@ -1085,8 +1086,8 @@ Function Start-APIServer {
                                     }
 
                                     # Set content type based on file extension
-                                    If ($MIMETypes.ContainsKey($File.Extension)) { 
-                                        $ContentType = $MIMETypes[$File.Extension]
+                                    If ($MIMEtypes.ContainsKey($File.Extension)) { 
+                                        $ContentType = $MIMEtypes[$File.Extension]
                                     }
                                     Else { 
                                         # If it's an unrecognized file type, prompt for download
@@ -1098,6 +1099,7 @@ Function Start-APIServer {
                                     $ContentType = "text/html"
                                     $Data = "URI '$Path' is not a valid resource."
                                 }
+                                Remove-Variable File, Filename, IncludeData, IncludeFile, IncludeRegex, Key -ErrorAction Ignore
                             }
                         }
 
@@ -1116,9 +1118,11 @@ Function Start-APIServer {
                         $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
                         $Response.Close()
 
-                        If ($GCStopWatch.Elapsed.TotalSeconds -gt 120) { 
+                        Remove-Variable ContentType, Data, Parameters, Response, ResponseBuffer, StatusCode -ErrorAction Ignore
+
+                        If ($GCstopWatch.Elapsed.TotalMinutes -gt 10) { 
                             [System.GC]::Collect()
-                            $GCStopWatch.Restart()
+                            $GCstopWatch.Restart()
                         }
                     }
                     # Only gets here if something is wrong and the server couldn't start or stops listening
@@ -1140,7 +1144,7 @@ Function Start-APIServer {
                     If ($Variables.APIVersion = (Invoke-RestMethod "http://localhost:$($Variables.APIRunspace.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
                         Write-Message -Level Info "Web GUI and API (version $($Variables.APIVersion)) running on http://localhost:$($Variables.APIRunspace.APIport)."
                         # Start Web GUI (show configuration edit if no existing config)
-                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/$(If ($Variables.FreshConfig) { "configedit.html" })" }
+                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)$(If ($Variables.FreshConfig) { "/configedit.html" })" }
                         Break
                     }
                 }

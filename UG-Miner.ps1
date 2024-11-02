@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.11
-Version date:   2024/10/26
+Version:        6.3.12
+Version date:   2024/11/02
 #>
 
 using module .\Includes\Include.psm1
@@ -308,7 +308,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.11"
+    Version      = [System.Version]"6.3.12"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -483,6 +483,7 @@ $env:GPU_MAX_WORKGROUP_SIZE = 256
 
 $Variables.BrainData = @{ }
 $Variables.Brains = @{ }
+$Variables.CoreLoopCounter = [Int64]0
 $Variables.CPUfeatures = (Get-CpuId).Features | Sort-Object
 $Variables.CycleStarts = @()
 $Variables.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")

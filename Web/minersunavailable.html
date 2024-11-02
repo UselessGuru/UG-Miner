@@ -113,7 +113,12 @@
               async: 'true',
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 26,
-
+              onColumnSwitch: function() {
+                $('*').css('cursor', 'default');
+              },
+              onCreatedControls: function() {
+                $('*').css('cursor', 'wait');
+              },
               // onExpandRow: function(index, row, $detail) {
               //   $.ajax({
               //     async: false,
@@ -129,10 +134,6 @@
               //     },
               //   });
               // },
-
-              onCreatedControls: function() {
-                $('*').css('cursor', 'wait');
-              },
               onLoadSuccess: function() {
                 $('*').css('cursor', 'default');
               },
@@ -148,6 +149,9 @@
                 $(".addlocalcurrency").each(function () {
                   if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
                 });
+              },
+              onToggle: function() {
+                $('*').css('cursor', 'default');
               }
             });
 
@@ -169,9 +173,9 @@
             $(document).ready(function () {
 
               $('#btn-re-benchmark').click(function () {
+                $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -184,12 +188,13 @@
                   });
                   $table.bootstrapTable('refresh');
                 }
+                else $('body').css('cursor', 'default');
               });
 
               $('#btn-re-measure').click(function () {
+                $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/remove';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -202,12 +207,13 @@
                   });
                   $table.bootstrapTable('refresh');
                 }
+                else $('body').css('cursor', 'default');
               });
 
               $('#btn-failed').click(function () {
+                $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/set';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
@@ -221,12 +227,13 @@
                   });
                   $table.bootstrapTable('refresh');
                 }
+                else $('body').css('cursor', 'default');
               });
 
               $('#btn-disable').click(function () {
+                $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/disable';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
@@ -238,12 +245,13 @@
                   });
                   $table.bootstrapTable('refresh');
                 }
+                else $('body').css('cursor', 'default');
               });
 
               $('#btn-enable').click(function () {
+                $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
                   $url = '/functions/stat/enable';
                   $payload = {
                     'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
@@ -255,15 +263,16 @@
                   });
                   $table.bootstrapTable('refresh');
                 }
+                else $('body').css('cursor', 'default');
               });
 
               $('#btn-remove-watchdog').click(function () {
+                $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
                   $url = '/functions/watchdogtimers/remove';
                   $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
+                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-remove-watchdog').text());
@@ -272,7 +281,9 @@
                   });
                   $table.bootstrapTable('refresh');
                 }
+                $('body').css('cursor', 'default');
               });
+
             });
 
             $(window).resize(function () {

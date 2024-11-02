@@ -3,6 +3,20 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.3.12 2024/11/02
+====================================
+
+Fixes:
+- Core / Includes.psm1: Method 'StartDataReader' creating truncated job names
+- Web GUI / Miners & pools tables: clear hourglass cursor when hiding/showing columns or toggling view
+
+Improvements:
+- APIserver.psm1: Minor code optimizations
+
+Miner changes:
+- Wildrig-v0.40.9
+
+
 Changelog UG-Miner 6.3.11 2024/10/26
 ====================================
 
@@ -47,7 +61,7 @@ Fixes:
 - Core / Includes.psm1: Function 'Get-Stat' not returning all stats if called without parameter
 - Core / Includes.psm1: Function 'Update-PoolWatchdog' Pool watchdog marking pools unavailable with two reasons simultaneously (Regression from 6.3.3)
 - Miner API 'EthMiner': Error when miner crashed
-- Web GUI: Miners & Pools tables: Reasons filter not working
+- Web GUI / Miners & pools tables: Reasons filter not working
 
 Improvements:
 - Core & Miner APIs: Remove obsolete code & minor code optimizations
