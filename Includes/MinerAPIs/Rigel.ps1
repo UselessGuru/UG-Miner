@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Rigel.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class Rigel : Miner { 
@@ -37,9 +37,9 @@ Class Rigel : Miner {
 
         If (-not $Data) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = ""
-        $HashRateValue = [Double]0
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = ""
+        $HashrateValue = [Double]0
         $Algorithms = [String[]]@($Data.algorithm -split "\+")
         $Algorithm = $Algorithms[0]
 
@@ -47,14 +47,14 @@ Class Rigel : Miner {
         $SharesAccepted = $SharesRejected = $SharesInvalid = [Int64]0
 
         ForEach ($Algorithm in $Algorithms) { 
-            $HashRateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
-            $HashRateValue = [Double]$Data.hashrate.$Algorithm
-            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+            $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
+            $HashrateValue = [Double]$Data.hashrate.$Algorithm
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]$Data.solution_stat.$Algorithm.accepted
             $SharesRejected = [Int64]$Data.solution_stat.$Algorithm.rejected
             $SharesInvalid = [Int64]$Data.solution_stat.$Algorithm.invalid
-            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0
@@ -68,7 +68,7 @@ Class Rigel : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

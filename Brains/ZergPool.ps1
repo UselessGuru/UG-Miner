@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 using module ..\Includes\Include.psm1

@@ -427,13 +427,13 @@
                               if (item.Currency != item.PayoutThresholdCurrency) {
                                 // Payout threshold currency is different from asset currency
                                 if (item.PayoutThresholdCurrency && rates[item.Currency] && rates[item.PayoutThresholdCurrency]) {
-                                  var percentage = ((item.Balance / item.PayoutThreshold * rates[item.Currency][item.PayoutThresholdCurrency] * 100) * factor).toFixed(2);
+                                  var percentage = (item.Balance / item.PayoutThreshold * rates[item.Currency][item.PayoutThresholdCurrency] * 100 * factor).toFixed(2);
                                 } else {
                                   // No exchangerate, cannot calculate percentage 
                                   var percentage = null;
                                 }
                               } else { 
-                                var percentage = ((item.Balance / item.PayoutThreshold * 100) * factor).toFixed(2);
+                                var percentage = (item.Balance / item.PayoutThreshold * 100 * factor).toFixed(2);
                               }
 
                               var data = {
@@ -449,7 +449,6 @@
                                 avghourlygrowth: item.AvgHourlyGrowth,
                                 avgdailygrowth: item.AvgDailyGrowth,
                                 avgweeklygrowth: item.AvgWeeklyGrowth,
-                                // payoutthreshold: item.PayoutThreshold,
                                 payoutthreshold: parseFloat(item.PayoutThreshold / factor).toFixed(config.DecimalsMax),
                                 payoutthresholdcurrency: item.PayoutThresholdCurrency,
                                 rate: currencyrate,

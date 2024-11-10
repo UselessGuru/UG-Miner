@@ -37,25 +37,25 @@ Class NBMiner : Miner {
 
         If (-not $Data) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]$this.Algorithms[0]
-        $HashRateValue = [Double]$Data.miner.total_hashrate_raw
-        $HashRate | Add-Member @{ $HashRateName = [Double]$HashRateValue }
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]$this.Algorithms[0]
+        $HashrateValue = [Double]$Data.miner.total_hashrate_raw
+        $Hashrate | Add-Member @{ $HashrateName = [Double]$HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.stratum.accepted_shares
         $SharesRejected = [Int64]$Data.stratum.rejected_shares
         $SharesInvalid = [Int64]$Data.stratum.invalid_shares
-        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($Data.stratum.dual_mine) { 
-            $HashRateName = [String]($this.Algorithms -ne $HashRateName)
-            $HashRate | Add-Member @{ $HashRateName = [Double]$Data.miner.total_hashrate2_raw }
+            $HashrateName = [String]($this.Algorithms -ne $HashrateName)
+            $Hashrate | Add-Member @{ $HashrateName = [Double]$Data.miner.total_hashrate2_raw }
 
             $SharesAccepted = [Int64]$Data.stratum.accepted_shares2
             $SharesRejected = [Int64]$Data.stratum.rejected_shares2
             $SharesInvalid = [Int64]$Data.stratum.invalid_shares2
-            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0
@@ -69,7 +69,7 @@ Class NBMiner : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Param(
@@ -33,7 +33,6 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PoolHost = "auto.nicehash.com"
 
 $PoolConfig = $Variables.PoolsConfig.$Name
-$PoolVariant = If ($Variables.NiceHashWalletIsInternal) { "NiceHash Internal" } Else { "NiceHash External" }
 
 $Fee = $PoolConfig.Variant.$PoolVariant.Fee
 $PayoutCurrency = $PoolConfig.PayoutCurrency

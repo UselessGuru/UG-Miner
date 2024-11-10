@@ -1,18 +1,13 @@
 {
   "HashCryptos": {
-    "Algorithm": [
-      "-MemeHash"
-    ],
+    "Algorithm": [],
     "BrainDebug": false
   },
   "Hiveon": {
     "Algorithm": []
   },
   "MiningDutch": {
-    "Algorithm": [
-      "-MemeHash",
-      "-YescryptR16"
-    ],
+    "Algorithm": [],
     "BrainDebug": false,
     "EarningsAdjustmentFactor": 0.8,
     "ExcludeRegion": []
@@ -33,17 +28,9 @@
     "BrainDebug": false
   },
   "ZergPool": {
-    "Algorithm": [
-      "_-Ethash",
-      "_-EthashB3",
-      "_-HeavyHashKarlsen",
-      "_-HeavyHashPyrin",
-      "_-Kawpow"
-    ],
+    "Algorithm": [],
     "BrainDebug": false,
-    "Currency": [
-      "_-NXL"
-    ],
+    "Currency": [],
     "PoolAllow0Hashrate": false,
     "SSL": "Never",
     "SSLselfSignedCertificate": true

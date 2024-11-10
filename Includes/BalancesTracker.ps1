@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 using module .\Include.psm1
@@ -98,27 +98,25 @@ Do {
 
             $PayoutThresholdCurrency = $PoolBalanceObject.Currency
 
-            If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').Variant.($PoolBalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-            If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+            If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).Variant.($PoolBalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
             If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-            If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-            If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*") -as [Double] }
+            If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+            If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*") -as [Double] }
             If (-not $PayoutThreshold) { 
-                If ($PayoutThresholdCurrency = [String]($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*".Keys)) { 
-                    $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
+                If ($PayoutThresholdCurrency = [String]($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*".Keys)) { 
+                    $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                 }
             }
 
             If (-not $PayoutThreshold -and $PoolBalanceObject.Currency -eq "BTC") { 
                 $PayoutThresholdCurrency = "mBTC"
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').Variant.($PoolBalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).Variant.($PoolBalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
                 If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*") -as [Double] }
+                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*") -as [Double] }
                 If (-not $PayoutThreshold) { 
-                    If ($PayoutThresholdCurrency = $Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*".Keys[0]) { 
-                        $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool -replace ' External$| Internal$').PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
+                    If ($PayoutThresholdCurrency = $Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*".Keys[0]) { 
+                        $PayoutThreshold = ($Config.PoolsConfig.($PoolBalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                     }
                 }
             }
@@ -276,7 +274,7 @@ Do {
                     AvgDailyGrowth          = [Double]$AvgDailyGrowth
                     AvgWeeklyGrowth         = [Double]$AvgWeeklyGrowth
                     ProjectedEndDayGrowth   = If (($Now - $PoolBalanceObjects[0].DateTime).TotalHours -ge 1) { [Double]($AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) } Else { [Double]($Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) }
-                    ProjectedPayDate        = If ($PayoutThreshold) { If ([Double]$PoolBalanceObject.Balance -lt $PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency)) { If (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-7) { [DateTime]$Now.AddDays(($PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency) - $PoolBalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } Else { "Unknown" } } Else { If ($PoolBalanceObject.NextPayout) { $PoolBalanceObject.NextPayout } Else { "Next pool payout" } } } Else { "Unknown" }
+                    ProjectedPayDate        = If ($PayoutThreshold -and $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency)) { If ([Double]$PoolBalanceObject.Balance -lt $PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency)) { If (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-7) { [DateTime]$Now.AddDays(($PayoutThreshold * $Variables.Rates.$PayoutThresholdCurrency.($PoolBalanceObject.Currency) - $PoolBalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } Else { "Unknown" } } Else { If ($PoolBalanceObject.NextPayout) { $PoolBalanceObject.NextPayout } Else { "Next pool payout" } } } Else { "Unknown" }
                     TrustLevel              = [Double]((($Now - $PoolBalanceObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum).Minimum
                     TotalHours              = [Double]($Now - $PoolBalanceObjects[0].DateTime).TotalHours
                     PayoutThreshold         = [Double]$PayoutThreshold
@@ -411,8 +409,6 @@ Do {
 
     If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')." }
 
-    $Error.Clear()
-    [System.GC]::Collect()
     $Proc = Get-Process -Id $PID
     Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) loop: Handles: $($Proc.HandleCount) / Memory: $($Proc.PrivateMemorySize64 / 1MB)MB / Threads: $($Proc.Threads.Count) / Modules: $($Proc.Modules.Count)"
     Remove-Variable Proc

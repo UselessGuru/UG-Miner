@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Function Start-APIServer { 
@@ -280,7 +280,7 @@ Function Start-APIServer {
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @($Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
                                             Write-Config -ConfigFile $Variables.ConfigFile -Config $Config
-                                            $Variables.FreshConfig = $false
+                                            $Variables.ConfigurationHasChangedDuringUpdate = $false
                                             $Data = "Device configuration changed`n`nOld values:"
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
@@ -326,8 +326,9 @@ Function Start-APIServer {
                                             }
                                         }
                                     )
-                                    $Variables.RestartCycle = $true
+                                    $Variables.Remove("ConfigurationHasChangedDuringUpdate")
                                     $Variables.FreshConfig = $false
+                                    $Variables.RestartCycle = $true
                                     $Data = "Configuration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become fully active in the next cycle."
                                 }
                                 Catch { 
@@ -352,8 +353,8 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/mining/getstatus" { 
-                                If ($Variables.FreshConfig) { 
-                                    $Data = "FreshConfig" | ConvertTo-Json
+                                If ($Variables.ConfigurationHasChangedDuringUpdate) { 
+                                    $Data = "ConfigurationHasChangedDuringUpdate" | ConvertTo-Json
                                 }
                                 Else { 
                                     $Data = $Variables.NewMiningStatus | ConvertTo-Json
@@ -1043,7 +1044,7 @@ Function Start-APIServer {
                             #             @{ Name = "LastSeen"; Expression = { "$($_.date)" } },
                             #             @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
                             #             @{ Name = "Miner"; Expression = { $_.data.name -join "<br>" } },
-                            #             @{ Name = "Pool"; Expression = { ($_.data.ForEach({ (($_.Pool -split ",").ForEach({ $_ -replace "Internal$", " (Internal)" -replace "External", " (External)" })) -join " & " })) -join "<br>" } },
+                            #             @{ Name = "Pool"; Expression = { ($_.data.ForEach({ $_.Pool -split "," -join " & " })) -join "<br>" } },
                             #             @{ Name = "Status"; Expression = { $_.status } },
                             #             @{ Name = "Version"; Expression = { $_.version } },
                             #             @{ Name = "Worker"; Expression = { $_.worker } }
@@ -1144,7 +1145,7 @@ Function Start-APIServer {
                     If ($Variables.APIVersion = (Invoke-RestMethod "http://localhost:$($Variables.APIRunspace.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
                         Write-Message -Level Info "Web GUI and API (version $($Variables.APIVersion)) running on http://localhost:$($Variables.APIRunspace.APIport)."
                         # Start Web GUI (show configuration edit if no existing config)
-                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)$(If ($Variables.FreshConfig) { "/configedit.html" })" }
+                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)$(If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
                         Break
                     }
                 }

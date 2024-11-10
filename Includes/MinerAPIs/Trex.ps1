@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class Trex : Miner { 
@@ -37,27 +37,27 @@ Class Trex : Miner {
 
         If (-not $Data) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]$this.Algorithms[0]
-        $HashRateValue = [Double]$Data.hashrate_minute
-        If (-not $Data.hashrate_minute) { $HashRateValue = [Double]$Data.hashrate }
-        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]$this.Algorithms[0]
+        $HashrateValue = [Double]$Data.hashrate_minute
+        If (-not $Data.hashrate_minute) { $HashrateValue = [Double]$Data.hashrate }
+        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.accepted_count
         $SharesRejected = [Int64]$Data.rejected_count
         $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
-            $HashRateValue = [Double]$Data.dual_stat.hashrate_minute
-            If (-not $HashRateValue) { $HashRateValue = [Double]$Data.dual_stat.hashrate }
-            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+            $HashrateValue = [Double]$Data.dual_stat.hashrate_minute
+            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.dual_stat.hashrate }
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]$Data.dual_stat.accepted_count
             $SharesRejected = [Int64]$Data.dual_stat.rejected_count
             $SharesInvalid = [Int64]0
-            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0
@@ -71,7 +71,7 @@ Class Trex : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

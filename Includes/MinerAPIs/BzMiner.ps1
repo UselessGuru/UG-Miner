@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class BzMiner : Miner { 
@@ -41,28 +41,28 @@ Class BzMiner : Miner {
 
         If ($Devices.Hashrate.Count -ne $this.Algorithms.Count) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]$this.Algorithms[0]
-        $HashRateValue = [Double]0
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]$this.Algorithms[0]
+        $HashrateValue = [Double]0
 
         $Shares = [PSCustomObject]@{ }
 
-        $HashRateValue = [Double]($Devices.ForEach({ $_.hashrate[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        $HashrateValue = [Double]($Devices.ForEach({ $_.hashrate[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $SharesAccepted = [Int64]($Devices.ForEach({ $_.valid_solutions[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
         $SharesRejected = [Int64]($Devices.ForEach({ $_.rejected_solutions[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
         $SharesInvalid = [Int64]($Devices.ForEach({ $_.stale_solutions[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
-            $HashRateValue = [Double]($Devices.ForEach({ $_.hashrate[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+            $HashrateValue = [Double]($Devices.ForEach({ $_.hashrate[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]($Devices.ForEach({ $_.valid_solutions[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
             $SharesRejected = [Int64]($Devices.ForEach({ $_.rejected_solutions[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
             $SharesInvalid = [Int64]($Devices.ForEach({ $_.stale_solutions[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0
@@ -76,7 +76,7 @@ Class BzMiner : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

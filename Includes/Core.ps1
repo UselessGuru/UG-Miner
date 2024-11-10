@@ -19,25 +19,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 using module .\Include.psm1
 
 $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
+If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
 Try { 
-    If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
-
     (Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
 
     Do { 
+        # Set master timer
+        $Variables.Timer = [DateTime]::Now.ToUniversalTime()
+
         Write-Message -Level Info "Started new cycle."
         $Variables.EndCycleMessage = ""
 
-        # Set master timer
-        $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
         $Variables.BeginCycleTime = $Variables.Timer
         $Variables.EndCycleTime = If ($Variables.EndCycleTime) { $Variables.EndCycleTime.AddSeconds($Config.Interval) } Else { $Variables.BeginCycleTime.AddSeconds($Config.Interval) }
@@ -64,7 +64,7 @@ Try {
             }
             Remove-Variable Miner -ErrorAction Ignore
 
-            $Variables.Miners.ForEach({ $_.Dispose })
+            $Variables.Miners.ForEach({ $_.Dispose() })
             $Variables.Miners = [Miner[]]@()
             $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
             $Variables.MinersBest = [Miner[]]@()
@@ -126,7 +126,6 @@ Try {
 
         # Use values from config
         $Variables.BenchmarkAllPoolAlgorithmCombinations = $Config.BenchmarkAllPoolAlgorithmCombinations
-        $Variables.NiceHashWalletIsInternal = $Config.NiceHashWalletIsInternal
         $Variables.PoolTimeout = [Math]::Floor($Config.PoolTimeout)
 
         If ($Variables.EnabledDevices = [Device[]]@($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName }).ForEach({ $_ | Select-Object -Property * }))) { 
@@ -270,7 +269,6 @@ Try {
                         # Use donation pool config
                         $Variables.PoolName = $Variables.DonationRandomPoolsConfig.Keys
                         $Variables.PoolsConfig = $Variables.DonationRandomPoolsConfig
-                        $Variables.NiceHashWalletIsInternal = $false
                     }
                     Else { 
                         # Donation end
@@ -497,8 +495,8 @@ Try {
                     If ($Config.SSL -eq "Never") { $Pools.Where({ -not $_.PoolPorts[0] -and $_.Reasons -notmatch "Non-SSL port not available .+" }).ForEach({ $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in generic config)") }) }
                     ElseIf ($Config.SSL -eq "Always") { $Pools.Where({ -not $_.PoolPorts[1] -and $_.Reasons -notmatch "SSL port not available .+" }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in generic config)") }) }
                     # SSL Allow selfsigned certificate
-                    $Pools.Where({ $_.SSLselfSignedCertificate -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -ne $null -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $false }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in $($_.Name) pool config)") })
-                    If (-not $Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $null }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") }) }
+                    $Pools.Where({ $_.SSLselfSignedCertificate -and $null -ne $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $false }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in $($_.Name) pool config)") })
+                    If (-not $Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $null -eq $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") }) }
                     # At least one port (SSL or non-SSL) must be available
                     $Pools.Where({ -not ($_.PoolPorts | Select-Object) }).ForEach({ $_.Reasons.Add("No ports available") })
 
@@ -560,6 +558,10 @@ Try {
             Else { 
                 # No configured pools, clear all pools
                 $Variables.Pools = [Pool[]]@()
+                $Variables.PoolsAdded = [Pool[]]@()
+                $Variables.PoolsExpired = [Pool[]]@()
+                $Variables.PoolsNew = [Pool[]]@()
+                $Variables.PoolsUpdated = [Pool[]]@()
             }
 
             $Variables.PoolsBest = $Variables.Pools.Where({ $_.Best }) | Sort-Object -Property Algorithm
@@ -797,7 +799,7 @@ Try {
                                             # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
                                             $_.Algorithms = $_.Workers.Pool.Algorithm
                                             $_.BaseName, $_.Version = ($_.Name -split "-")[0, 1]
-                                            $_.BaseName_Version = ($Miner.Name -split "-")[0..1] -join "-"
+                                            $_.BaseName_Version = ($_.Name -split "-")[0..1] -join "-"
                                             $_.CommandLine = $_.GetCommandLine()
                                         }
                                         Else { 
@@ -1404,7 +1406,7 @@ Try {
                     }
                     Else { 
                         If ($Miner.DataReaderJob.HasMoreData) { 
-                            If ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.HashRate.PSObject.Properties.Name })) { 
+                            If ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.Hashrate.PSObject.Properties.Name })) { 
                                 $Sample = $Samples[-1]
                                 $Miner.Hashrates_Live = $Sample.Hashrate.PSObject.Properties.Value
                                 $Miner.DataSampleTimestamp = $Sample.Date
@@ -1511,7 +1513,7 @@ Try {
 
         $Variables.CoreLoopCounter ++
 
-        If ($Variables.NewMiningStatus -eq "Running") { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
+        If ($Variables.NewMiningStatus -eq "Running" -and $Variables.EndCycleTime) { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
     } While ($Variables.NewMiningStatus -eq "Running")
 }
 Catch { 

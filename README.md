@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Updated 2024/11/02
+Version 6.3.13 / Updated 2024/11/10
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -239,7 +239,7 @@ Supported pools:
  - HashCryptos
  - Hiveon
  - MiningDutch
- - NiceHash (internal & external wallet)
+ - NiceHash
  - ProHashing
  - ZergPool
  - Zpool

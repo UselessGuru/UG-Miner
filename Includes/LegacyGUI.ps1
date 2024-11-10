@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -41,7 +41,7 @@ Function CheckBoxSwitching_Click {
     $SwitchingDisplayTypes = @()
     $LegacyGUIswitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
-        $LegacyGUIswitchingLogLabel.Text = "Switching log (updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString()))"
+        $LegacyGUIswitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
         If (-not $LegacyGUIswitchingDGV.SelectedRows) { 
             $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
             If ($LegacyGUIswitchingDGV.Columns) { 
@@ -186,8 +186,6 @@ Function Update-TabControl {
 
     Switch ($LegacyGUItabControl.SelectedTab.Text) { 
         "System status" { 
-            $LegacyGUIactiveMinersLabel.Text = If ($Variables.MinersBest) { "Active miners (updated $([DateTime]::Now.ToString()))" } Else { "No miners running." }
-
             $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark"
             $LegacyGUIcontextMenuStripItem1.Visible = $true
             $LegacyGUIcontextMenuStripItem2.Text = "Re-measure power consumption"
@@ -202,45 +200,64 @@ Function Update-TabControl {
             $LegacyGUIcontextMenuStripItem6.Enabled = $false
             $LegacyGUIcontextMenuStripItem6.Visible = $false
 
-            If (-not $LegacyGUIactiveMinersDGV.SelectedRows) { 
-                $LegacyGUIactiveMinersDGV.BeginInit()
-                $LegacyGUIactiveMinersDGV.ClearSelection()
-                $LegacyGUIactiveMinersDGV.DataSource = $Variables.MinersBest | Select-Object @(
-                    @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
-                    @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join " " } }
-                    @{ Name = "Status Info"; Expression = { $_.StatusInfo } }
-                    @{ Name = "Earning (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
-                    @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
-                    @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
-                    @{ Name = "Power consumption (live)"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
-                    @{ Name = "Algorithm variant [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
-                    @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
-                    @{ Name = "Hashrate (live)"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
-                    @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
-                    @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
-                ) | Sort-Object -Property "Device(s)" | Out-DataTable
-                $LegacyGUIactiveMinersDGV.ClearSelection()
-
-                If (-not $LegacyGUIactiveMinersDGV.ColumnWidthChanged -and $LegacyGUIactiveMinersDGV.Columns) { 
-                    $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
-                    $LegacyGUIactiveMinersDGV.Columns[1].FillWeight = 20 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
-                    $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 190
-                    $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[4].Visible = $Variables.CalculatePowerCost
-                    $LegacyGUIactiveMinersDGV.Columns[5].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
-                    $LegacyGUIactiveMinersDGV.Columns[6].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
-                    $LegacyGUIactiveMinersDGV.Columns[7].FillWeight = 60 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
-                    $LegacyGUIactiveMinersDGV.Columns[8].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
-                    $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                    $LegacyGUIactiveMinersDGV.Columns[11].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
-
-                    $LegacyGUIactiveMinersDGV | Add-Member ColumnWidthChanged $true
-                }
-                Resize-Form # To fully show grid
-                $LegacyGUIactiveMinersDGV.EndInit()
+            If ($Variables.NewMiningStatus -eq "Idle") { 
+                $LegacyGUIactiveMinersLabel.Text = "No miners running - mining is stopped"
+                $LegacyGUIactiveMinersDGV.DataSource = $null
             }
-            Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
+            ElseIf ($Variables.NewMiningStatus -eq "Paused") { 
+                $LegacyGUIactiveMinersLabel.Text = "No miners running - mining is paused"
+                $LegacyGUIactiveMinersDGV.DataSource = $null
+            }
+            ElseIf ($Variables.NewMiningStatus -eq "Running" -and $Variables.MiningStatus -eq "Running" -and -not $Variables.MinersBest -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+                $LegacyGUIactiveMinersLabel.Text = "No data - mining is suspended"
+                $LegacyGUIactiveMinersDGV.DataSource = $null
+            }
+            ElseIf ($Variables.MinersBest) { 
+                If (-not $LegacyGUIactiveMinersDGV.SelectedRows) { 
+                    $LegacyGUIactiveMinersLabel.Text = "Active miners updated $(($Variables.MinersBest.Updated | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
+                    $LegacyGUIactiveMinersDGV.BeginInit()
+                    $LegacyGUIactiveMinersDGV.ClearSelection()
+                    $LegacyGUIactiveMinersDGV.DataSource = $Variables.MinersBest | Select-Object @(
+                        @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
+                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join " " } }
+                        @{ Name = "Status Info"; Expression = { $_.StatusInfo } }
+                        @{ Name = "Earning (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
+                        @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
+                        @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
+                        @{ Name = "Power consumption (live)"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
+                        @{ Name = "Algorithm variant [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
+                        @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
+                        @{ Name = "Hashrate (live)"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
+                        @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
+                        @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
+                    ) | Sort-Object -Property "Device(s)" | Out-DataTable
+                    $LegacyGUIactiveMinersDGV.ClearSelection()
+
+                    If (-not $LegacyGUIactiveMinersDGV.ColumnWidthChanged -and $LegacyGUIactiveMinersDGV.Columns) { 
+                        $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
+                        $LegacyGUIactiveMinersDGV.Columns[1].FillWeight = 20 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
+                        $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 190
+                        $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[4].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIactiveMinersDGV.Columns[5].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIactiveMinersDGV.Columns[6].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIactiveMinersDGV.Columns[7].FillWeight = 60 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
+                        $LegacyGUIactiveMinersDGV.Columns[8].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
+                        $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIactiveMinersDGV.Columns[11].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+
+                        $LegacyGUIactiveMinersDGV | Add-Member ColumnWidthChanged $true -Force
+                    }
+                    $LegacyGUIactiveMinersDGV.EndInit()
+                    Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
+                }
+            }
+            Else { 
+                $LegacyGUIactiveMinersLabel.Text = "Waiting for data..."
+                $LegacyGUIactiveMinersDGV.DataSource = $null
+            }
+            Resize-Form # To fully show grid
             Break
         }
         "Earnings and balances" { 
@@ -337,7 +354,7 @@ Function Update-TabControl {
 
             }
             If ($Config.BalancesTrackerPollInterval -gt 0) { 
-                $LegacyGUIbalancesLabel.Text = "Balances (updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString()))"
+                $LegacyGUIbalancesLabel.Text = "Balances updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())"
                 If ($Variables.Balances) { 
                     If (-not $LegacyGUIbalancesDGV.SelectedRows) { 
                         $LegacyGUIbalancesDGV.BeginInit()
@@ -396,7 +413,7 @@ Function Update-TabControl {
                 }
             }
             Else { 
-                $LegacyGUIbalancesLabel.Text = "BalanceTracker is disabled (Configuration item 'BalancesTrackerPollInterval' -eq 0)"
+                $LegacyGUIbalancesLabel.Text = "Balances tracker is disabled (Configuration item 'BalancesTrackerPollInterval' -eq 0)"
             }
             Break
         }
@@ -420,21 +437,21 @@ Function Update-TabControl {
             ElseIf ($LegacyGUIradioButtonMinersUnavailable.checked) { $DataSource = $Variables.Miners.Where({ -not $_.Available }) | Sort-Object { [String]$_.DeviceNames }, Info }
             Else { $DataSource = $Variables.Miners }
 
-            If ($Variables.MiningStatus -eq "Idle") { 
+            If ($Variables.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIminersLabel.Text = "No data - mining is stopped"
                 $LegacyGUIminersDGV.DataSource = $null
             }
-            ElseIf ($Variables.MiningStatus -eq "Paused") { 
+            ElseIf ($Variables.NewMiningStatus -eq "Paused" -and -not $DataSource) { 
                 $LegacyGUIminersLabel.Text = "No data - mining is paused"
                 $LegacyGUIminersDGV.DataSource = $null
             }
-            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+            ElseIf ($Variables.NewMiningStatus -eq "Running" -and $Variables.MiningStatus -eq "Running" -and -not $Variables.Miners -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIminersLabel.Text = "No data - mining is suspended"
                 $LegacyGUIminersDGV.DataSource = $null
             }
-            ElseIf ($DataSource) { 
+            ElseIf ($Variables.Miners) { 
                 If (-not $LegacyGUIminersDGV.SelectedRows) { 
-                    $LegacyGUIminersLabel.Text = "Miner data (updated $([DateTime]::Now.ToString()))"
+                    $LegacyGUIminersLabel.Text = "Miner data updated $(($Variables.Miners.Updated | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
                     $LegacyGUIminersDGV.BeginInit()
 
                     $LegacyGUIminersDGV.DataSource = $DataSource | Select-Object @(
@@ -469,13 +486,13 @@ Function Update-TabControl {
                         $LegacyGUIminersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     $LegacyGUIminersDGV.EndInit()
+                    Set-TableColor -DataGridView $LegacyGUIminersDGV
                 }
             }
             Else { 
                 $LegacyGUIminersLabel.Text = "Waiting for data..."
                 $LegacyGUIminersDGV.DataSource = $null
             }
-            Set-TableColor -DataGridView $LegacyGUIminersDGV
             Break
         }
         "Pools" { 
@@ -492,21 +509,21 @@ Function Update-TabControl {
             ElseIf ($LegacyGUIradioButtonPoolsUnavailable.checked) { $DataSource = $Variables.Pools.Where({ -not $_.Available }) }
             Else { $DataSource = $Variables.Pools }
 
-            If ($Variables.MiningStatus -eq "Idle") { 
+            If ($Variables.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIpoolsLabel.Text = "No data - mining is stopped"
                 $LegacyGUIpoolsDGV.DataSource = $null
             }
-            ElseIf ($Variables.MiningStatus -eq "Paused") { 
+            ElseIf ($Variables.NewMiningStatus -eq "Paused" -and -not $DataSource) { 
                 $LegacyGUIpoolsLabel.Text = "No data - mining is paused"
                 $LegacyGUIpoolsDGV.DataSource = $null
             }
-            ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { 
-                $LegacyGUIminersLabel.Text = "No data - mining is suspended"
+            ElseIf ($Variables.NewMiningStatus -eq "Running" -and $Variables.MiningStatus -eq "Running" -and -not $Variables.Pools -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+                $LegacyGUIpoolsLabel.Text = "No data - mining is suspended"
                 $LegacyGUIpoolsDGV.DataSource = $null
             }
-            ElseIf ($DataSource) { 
+            ElseIf ($Variables.Pools) { 
                 If (-not $LegacyGUIpoolsDGV.SelectedRows) { 
-                    $LegacyGUIpoolsLabel.Text = "Pool data (updated $([DateTime]::Now.ToString()))"
+                    $LegacyGUIpoolsLabel.Text = "Pool data updated $(($Variables.Pools.Updated | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
                     $LegacyGUIpoolsDGV.BeginInit()
                     If ($Config.UsemBTC) { 
                         $Factor = 1000
@@ -566,10 +583,10 @@ Function Update-TabControl {
         #
         #             Read-MonitoringData | Out-Null
         #
-        #             If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status (updated $($Variables.WorkersLastUpdated.ToString()))" }
+        #             If ($Variables.Workers) { $LegacyGUIworkersLabel.Text = "Worker status updated $($Variables.WorkersLastUpdated.ToString())" }
         #             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped" }
-        #             ElseIf ($Variables.MiningStatus -eq "Paused") { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
-        #             ElseIf ($Variables.MiningStatus -eq "Running" -and -not $Global:CoreRunspace) { $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
+        #             ElseIf ($Variables.MiningStatus -eq "Paused" -and -not $DataSource) { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
+        #             ElseIf ($Variables.NewMiningStatus -eq "Running" -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace.Job.IsCompleted -eq $true) {  $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
         #             Else  { $LegacyGUIworkersLabel.Text = "Waiting for data..." }
         #
         #             $LegacyGUIworkersDGV.BeginInit()
@@ -627,7 +644,7 @@ Function Update-TabControl {
             If ($Config.Watchdog) { 
                 If ($Variables.WatchdogTimers) { 
                     If (-not $LegacyGUIwatchdogTimersDGV.SelectedRows) { 
-                        $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers (updated $([DateTime]::Now.ToString()))"
+                        $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers updated $(($Variables.WatchdogTimers.Kicked | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
                         $LegacyGUIwatchdogTimersDGV.BeginInit()
                         $LegacyGUIwatchdogTimersDGV.ClearSelection()
                         $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
@@ -669,7 +686,9 @@ Function Update-TabControl {
 
 Function Update-GUIstatus { 
 
-    Switch ($Variables.MiningStatus) { 
+    $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle
+
+    Switch ($Variables.NewMiningStatus) { 
         "Idle" { 
             $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Red
             $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is stopped"
@@ -684,26 +703,42 @@ Function Update-GUIstatus {
             $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
             $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is paused"
             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-            $LegacyGUIminingSummaryLabel.Text = "Click the 'Start mining' button to make money."
+            $LegacyGUIminingSummaryLabel.Text = ""
+            ((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
+                { 
+                    $LegacyGUIminingSummaryLabel.Text += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)   " -f $Variables.Rates.$_.($Config.FIATcurrency)
+                }
+            )
+            $LegacyGUIminingSummaryLabel.Text += "`r`n`r`nClick the 'Start mining' button to make money."
 
             $LegacyGUIbuttonPause.Enabled = $false
             $LegacyGUIbuttonStart.Enabled = $true
             $LegacyGUIbuttonStop.Enabled = $true
         }
         "Running" { 
-            If (-not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+            If ($Variables.MiningStatus -eq "Running" -and -$Global:CoreRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
                 $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is suspended"
                 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
             }
             Else { 
-                $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Green
                 $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is running"
-            }
-            If (-not $Variables.SuspendCycle) { 
-                $LegacyGUIminingSummaryLabel.Text = ""
-                (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
-                $LegacyGUIminingSummaryLabel.Text += "`r`n "
+                If ($Variables.MyIP) { 
+                    $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Green
+
+                    If ($Variables.MinersRunning -and $Variables.MiningProfit -gt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
+                    ElseIf ($Variables.MinersRunning -and $Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
+                    Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
+    
+                    $LegacyGUIminingSummaryLabel.Text = ""
+                    (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
+                    $LegacyGUIminingSummaryLabel.Text += "`r`n "
+                }
+                Else { 
+                    Write-Message -Level Error $Variables.Message
+                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red
+                    $LegacyGUIminingSummaryLabel.Text = "Error: $($Variables.Summary)"
+                }
             }
 
             $LegacyGUIbuttonPause.Enabled = $true
@@ -1807,25 +1842,23 @@ $LegacyGUIform.Add_Load(
             If ($WindowSettings.Left -gt 0) { $LegacyGUIform.Left = $WindowSettings.Left }
         }
 
-        $LegacyGUIform.State = If ($Config.LegacyGUIStartMinimized) { [System.Windows.Forms.FormWindowState]::Minimized } Else { [System.Windows.Forms.FormWindowState]::Normal }
+        $LegacyGUIform.WindowState = If ($Config.LegacyGUIStartMinimized) { [System.Windows.Forms.FormWindowState]::Minimized } Else { [System.Windows.Forms.FormWindowState]::Normal }
 
         $TimerUI = New-Object System.Windows.Forms.Timer
         $TimerUI.Interval = 50
         $TimerUI.Add_Tick(
             { 
-                # If ($LegacyGUIform.CanSelect) { 
-                    If ($Variables.APIRunspace) { 
-                        If ($LegacyGUIeditConfigLink.Tag -ne "WebGUI") { 
-                            $LegacyGUIeditConfigLink.Tag = "WebGUI"
-                            $LegacyGUIeditConfigLink.Text = "Edit configuration in the Web GUI"
-                        }
+                If ($Variables.APIRunspace) { 
+                    If ($LegacyGUIeditConfigLink.Tag -ne "WebGUI") { 
+                        $LegacyGUIeditConfigLink.Tag = "WebGUI"
+                        $LegacyGUIeditConfigLink.Text = "Edit configuration in the Web GUI"
                     }
-                    ElseIf ($LegacyGUIeditConfigLink.Tag -ne "Edit-File") { 
-                        $LegacyGUIeditConfigLink.Tag = "Edit-File"
-                        $LegacyGUIeditConfigLink.Text = "Edit configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
-                    }
-                    [Void](MainLoop)
-                # }
+                }
+                ElseIf ($LegacyGUIeditConfigLink.Tag -ne "Edit-File") { 
+                    $LegacyGUIeditConfigLink.Tag = "Edit-File"
+                    $LegacyGUIeditConfigLink.Text = "Edit configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
+                }
+                [Void](MainLoop)
             }
         )
         $TimerUI.Start()

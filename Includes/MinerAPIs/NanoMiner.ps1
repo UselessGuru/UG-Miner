@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class NanoMiner : Miner { 
@@ -53,9 +53,9 @@ Class NanoMiner : Miner {
 
         If (-not $Data) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = ""
-        $HashRateValue = [Double]0
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = ""
+        $HashrateValue = [Double]0
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]0
@@ -64,14 +64,14 @@ Class NanoMiner : Miner {
         $Algorithms = @($Data.Algorithms.ForEach({ ($_ | Get-Member -MemberType NoteProperty).Name }) | Select-Object -Unique)
 
         ForEach ($Algorithm in $Algorithms) { 
-            $HashRateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
-            $HashRateValue = [Double]($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+            $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
+            $HashrateValue = [Double]($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
             $SharesRejected = [Int64]($Data.Algorithms.$Algorithm.Total.Denied | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
             $SharesInvalid = [Int64]0
-            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0
@@ -85,7 +85,7 @@ Class NanoMiner : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

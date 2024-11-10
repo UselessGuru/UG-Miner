@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class lolMiner : Miner { 
@@ -37,50 +37,50 @@ Class lolMiner : Miner {
 
         If (-not $Data.Algorithms) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]$this.Algorithms[0]
-        $HashRateUnit = [UInt64]1
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]$this.Algorithms[0]
+        $HashrateUnit = [UInt64]1
 
         Switch ($Data.Algorithms[0].Performance_Unit) { 
-            "kh/s"  { $HashRateUnit = [Math]::Pow(10,3) }
-            "Mh/s"  { $HashRateUnit = [Math]::Pow(10,6) }
-            "GH/s"  { $HashRateUnit = [Math]::Pow(10,9) }
-            "TH/s"  { $HashRateUnit = [Math]::Pow(10,12) }
-            "PH/s"  { $HashRateUnit = [Math]::Pow(10,15) }
-            "EH/s"  { $HashRateUnit = [Math]::Pow(10,18) }
-            "ZH/s"  { $HashRateUnit = [Math]::Pow(10,21) }
-            "YH/s"  { $HashRateUnit = [Math]::Pow(10,24) }
-            Default { $HashRateUnit = [UInt64]1 }
+            "kh/s"  { $HashrateUnit = [Math]::Pow(10,3) }
+            "Mh/s"  { $HashrateUnit = [Math]::Pow(10,6) }
+            "GH/s"  { $HashrateUnit = [Math]::Pow(10,9) }
+            "TH/s"  { $HashrateUnit = [Math]::Pow(10,12) }
+            "PH/s"  { $HashrateUnit = [Math]::Pow(10,15) }
+            "EH/s"  { $HashrateUnit = [Math]::Pow(10,18) }
+            "ZH/s"  { $HashrateUnit = [Math]::Pow(10,21) }
+            "YH/s"  { $HashrateUnit = [Math]::Pow(10,24) }
+            Default { $HashrateUnit = [UInt64]1 }
         }
-        $HashRateValue = [Double]($Data.Algorithms[0].Total_Performance * $HashRateUnit)
-        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        $HashrateValue = [Double]($Data.Algorithms[0].Total_Performance * $HashrateUnit)
+        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.Algorithms[0].Total_Accepted
         $SharesRejected = [Int64]$Data.Algorithms[0].Total_Rejected
         $SharesInvalid = [Int64]$Data.Algorithms[0].Total_Stales
-        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
-            $HashRateUnit = [Int64]1
+        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+            $HashrateUnit = [Int64]1
             Switch ($Data.Algorithms[1].Performance_Unit) { 
-                "kh/s"  { $HashRateUnit = [Math]::Pow(10,3) }
-                "Mh/s"  { $HashRateUnit = [Math]::Pow(10,6) }
-                "GH/s"  { $HashRateUnit = [Math]::Pow(10,9) }
-                "TH/s"  { $HashRateUnit = [Math]::Pow(10,12) }
-                "PH/s"  { $HashRateUnit = [Math]::Pow(10,15) }
-                "EH/s"  { $HashRateUnit = [Math]::Pow(10,18) }
-                "ZH/s"  { $HashRateUnit = [Math]::Pow(10,21) }
-                "YH/s"  { $HashRateUnit = [Math]::Pow(10,24) }
-                Default { $HashRateUnit = 1 }
+                "kh/s"  { $HashrateUnit = [Math]::Pow(10,3) }
+                "Mh/s"  { $HashrateUnit = [Math]::Pow(10,6) }
+                "GH/s"  { $HashrateUnit = [Math]::Pow(10,9) }
+                "TH/s"  { $HashrateUnit = [Math]::Pow(10,12) }
+                "PH/s"  { $HashrateUnit = [Math]::Pow(10,15) }
+                "EH/s"  { $HashrateUnit = [Math]::Pow(10,18) }
+                "ZH/s"  { $HashrateUnit = [Math]::Pow(10,21) }
+                "YH/s"  { $HashrateUnit = [Math]::Pow(10,24) }
+                Default { $HashrateUnit = 1 }
             }
-            $HashRateValue = [Double]($Data.Algorithms[1].Total_Performance * $HashRateUnit)
-            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+            $HashrateValue = [Double]($Data.Algorithms[1].Total_Performance * $HashrateUnit)
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]$Data.Algorithms[1].Total_Accepted
             $SharesRejected = [Int64]$Data.Algorithms[1].Total_Rejected
             $SharesInvalid = [Int64]$Data.Algorithms[1].Total_Stales
-            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0
@@ -94,7 +94,7 @@ Class lolMiner : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

@@ -1,7 +1,19 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
-- UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
-  -> It is recommended to set it to 'Windows Console Host'
+
+
+Changelog UG-Miner 6.3.13 2024/11/10
+====================================
+
+Changes:
+- Remove 'NiceHash External' mining. To mine NiceHash you must register (https://www.nicehash.com/my/register), thanks to grantemsley
+
+Fixes:
+- Balances tracker: Set projected pay date to 'unknown' if exchange rate is not available
+
+Improvements:
+- Core: Minor code optimizations
+
 
 Changelog UG-Miner 6.3.12 2024/11/02
 ====================================
@@ -21,7 +33,7 @@ Changelog UG-Miner 6.3.11 2024/10/26
 ====================================
 
 Improvements:
-- Core: Minor code optimizations
+- Core: Minor codse optimizations
 - Pool 'MiningDutch': Query additional API 'https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstat' for hashrate & worker data
 
 

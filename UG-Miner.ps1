@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 using module .\Includes\Include.psm1
@@ -160,8 +160,6 @@ Param(
     [String]$NiceHashAPIKey = "", # NiceHash API Key (required to retrieve balance information)
     [Parameter(Mandatory = $false)]
     [String]$NiceHashAPISecret = "", # NiceHash API Secret (required to retrieve balance information)
-    [Parameter(Mandatory = $false)]
-    [Switch]$NiceHashWalletIsInternal = $false, # Set to $true if NiceHashWallet is a NiceHash internal wallet (lower pool fees)
     [Parameter(Mandatory = $false)]
     [String]$NiceHashWallet = "", # NiceHash wallet, if left empty $Wallets[BTC] is used
     [Parameter(Mandatory = $false)]
@@ -308,7 +306,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.12"
+    Version      = [System.Version]"6.3.13"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -352,7 +350,7 @@ Write-Host ""
 If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
     Write-Host "Verifying that no other instance of $($Variables.Branding.ProductLabel) is running..."
-    Start-Sleep 20
+    Start-Sleep -Seconds 20
     If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
         Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
         $Global:WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -369,16 +367,16 @@ If (-not $Variables.MyIP) {
     Exit
 }
 
-# Update config file to include all new config items
-If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
-    Update-ConfigFile -ConfigFile $Variables.ConfigFile
-}
-
 # Start transcript log
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
 # Start Log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
 Start-LogReader
+
+# Update config file to include all new config items
+If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
+    Update-ConfigFile -ConfigFile $Variables.ConfigFile
+}
 
 If (-not $Variables.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'." }
 ElseIf ((Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
@@ -554,12 +552,21 @@ If ($Config.WebGUI) { Start-APIServer }
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
 Function MainLoop { 
+    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
+
+    If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
+        # Update rates every 15 minutes
+        [Void](Get-Rate)
+        If ($Variables.NewMiningStatus -eq "paused") { $Variables.RefreshNeeded = $true }
+    }
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
     If ($Variables.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIminingSummaryLabel.Text)) { 
         $Variables.RestartCycle = $false
 
         If ($Variables.NewMiningStatus -ne $Variables.MiningStatus) { 
+
+            If ($LegacyGUIform) { Update-GUIstatus }
 
             If ($Variables.NewMiningStatus -eq "Running" -and $Config.IdleDetection) { Write-Message -Level Verbose "Idle detection is enabled. Mining will get suspended on any keyboard or mouse activity." }
 
@@ -573,6 +580,8 @@ Function MainLoop {
             If ($Config.Proxy -eq "") { $PSDefaultParameterValues.Remove("*:Proxy") }
             Else { $PSDefaultParameterValues["*:Proxy"] = $Config.Proxy }
 
+            Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
+
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 
                     If ($Variables.MiningStatus) { 
@@ -580,17 +589,18 @@ Function MainLoop {
                         Write-Host ""
                         Write-Message -Level Info $Variables.Summary
 
-                        Stop-Core
+                        Close-CoreRunspace
                         Stop-Brain
 
                         # If ($Config.ReportToServer) { Write-MonitoringData }
                     }
 
-                    If (-not $Variables.FreshConfig) { 
+                    If (-not $Variables.ConfigurationHasChangedDuringUpdate) { 
                         Write-Host ""
                         $Variables.Summary = "$($Variables.Branding.ProductLabel) is stopped.<br>Click the 'Start mining' button to make money."
                         Write-Message -Level Info ($Variables.Summary -replace "<br>", " ")
                     }
+
                     Break
                 }
                 "Paused" { 
@@ -610,32 +620,40 @@ Function MainLoop {
                         $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                     }
                     Remove-Variable Miner -ErrorAction Ignore
+                    $Variables.MinersBest = [Miner[]]@()
                     $Variables.MinersRunning = [Miner[]]@()
+                    $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
 
-                    Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
                     Start-Brain @(Get-PoolBaseName $Variables.PoolName)
 
                     # If ($Config.ReportToServer) { Write-MonitoringData }
 
                     Write-Host ""
-                    $Variables.Summary = "$($Variables.Branding.ProductLabel) is paused.<br>Click the 'Start mining' button to make money."
+                    $Variables.Summary = "$($Variables.Branding.ProductLabel) is paused.<br>"
                     Write-Message -Level Info ($Variables.Summary -replace "<br>", " ")
+                    ((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
+                        { 
+                            $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.FIATcurrency)
+                        }
+                    )
+                    $Variables.Summary += "<br>Click the 'Start mining' button to make money."
+
                     Break
                 }
                 "Running" { 
                     If ($Variables.MiningStatus) { 
-                        $Variables.Summary = "'Start Mining' button clicked."
+                        $Variables.Summary = "'Start Mining' button clicked. Mining processes are starting..."
                         Write-Host ""
                         Write-Message -Level Info $Variables.Summary
                     }
                     Start-Brain @(Get-PoolBaseName $Config.PoolName)
                     Start-Core
+
                     Break
                 }
             }
             $Variables.MiningStatus = $Variables.NewMiningStatus
         }
-        If ($LegacyGUIform) { Update-GUIstatus }
     }
 
     If ($Config.ShowConsole) { 
@@ -831,29 +849,20 @@ Function MainLoop {
             $host.UI.RawUI.FlushInputBuffer()
         }
     }
-    Else { 
-        Hide-Console
-    }
-
-    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
-
-    If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
-        # Update rates every 15 minutes
-        [Void](Get-Rate)
-    }
+    Else { Hide-Console }
 
     If ($Variables.MiningStatus -eq "Running") { 
         If ($Config.IdleDetection) { 
             If ([Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
                 # System was idle long enough, start mining
                 If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
-                    $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining."
+                    $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining..."
                     Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
+                    Start-Core
+                    If ($LegacyGUIform) { Update-GUIstatus }
                 }
-                Start-Core
-                If ($LegacyGUIform) { Update-GUIstatus }
             }
-            ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+            ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false -and $Global:CoreRunspace.StartTime -lt [DateTime]::Now.ToUniversalTime().AddSeconds( 1 )) { 
                 $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                 Write-Message -Level Verbose ($Message -replace "<br>", " ")
                 Stop-Core
@@ -885,7 +894,7 @@ Function MainLoop {
         }
     }
     ElseIf ((Test-Path -Path $Variables.PoolsConfigFile) -and (Test-Path -Path $Variables.ConfigFile)) { 
-        If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
+        If (-not ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) -and $Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
             [Void](Read-Config -ConfigFile $Variables.ConfigFile)
             Write-Message -Level Verbose "Activated changed configuration."
         }
@@ -895,60 +904,61 @@ Function MainLoop {
         $Variables.RefreshNeeded = $false
 
         $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan]([DateTime]::Now.ToUniversalTime() - $Variables.ScriptStartTime)
+        If ($LegacyGUIform) { Update-GUIstatus }
 
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
-        If ($LegacyGUIform) { 
-            If (-not $Variables.SuspendCycle) { 
-                $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle 
-
-                If ($Variables.MyIP) { 
-                    If ($Variables.MinersBenchmarkingOrMeasuring -or -not $Variables.MinersBest) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
-                    ElseIf ($Variables.MiningProfit -ge 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
-                    ElseIf ($Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
-
-                    $LegacyGUIminingSummaryLabel.Text = ""
-                    (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
-                    $LegacyGUIminingSummaryLabel.Text += "`r`n "
-                }
-                Else { 
-                    Write-Message -Level Error $Variables.Message
-                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red
-                    $LegacyGUIminingSummaryLabel.Text = "Error: $($Variables.Summary)"
-                }
-
-                # Refresh selected tab
-                Update-TabControl
-            }
-        }
-
         If ($Config.ShowConsole) { 
-            If ($Variables.MinersBest) { Clear-Host }
+            If ($Variables.MinersRunning) { Clear-Host }
 
             # Get and display earnings stats
             If ($Variables.Balances -and $Variables.ShowPoolBalances) { 
                 $Variables.Balances.Values.ForEach(
                     { 
-                        If ($_.Currency -eq "BTC" -and $Config.UsemBTC) { $Currency = "mBTC"; $mBTCfactor = 1000 } Else { $Currency = $_.Currency; $mBTCfactor = 1 }
-                        Write-Host "$($_.Pool -replace " Internal$", " (Internal Wallet)" -replace " External$", " (External Wallet)") [$($_.Wallet)]" -ForegroundColor Green
-                        If ($Config.BalancesShowSums) { 
-                            Write-Host ("Earnings last 1 hour:   {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth1 * $mBTCfactor), $Currency, ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
-                            Write-Host ("Earnings last 6 hours:  {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth6 * $mBTCfactor), $Currency, ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
-                            Write-Host ("Earnings last 24 hours: {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth24 * $mBTCfactor), $Currency, ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
-                            Write-Host ("Earnings last 7 days:   {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth168 * $mBTCfactor), $Currency, ($_.Growth168 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
-                            Write-Host ("Earnings last 30 days:  {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth720 * $mBTCfactor), $Currency, ($_.Growth720 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                        If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutCurrency = $_.PayoutCurrencyCurrency; $mBTCfactor = 1 }
+                        If ($_.Currency -ne $_.PayoutThresholdCurrency) { 
+                            # Payout threshold currency is different from asset currency
+                            If ($_.PayoutThresholdCurrency -and $Variables.Rates.($_.Currency) -and $Variables.Rates.($_.PayoutThresholdCurrency)) {
+                                $Percentage = ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)).toString("P2")
+                            }
+                            Else { $Percentage = "Unknown %"}
                         }
-                        If ($Config.BalancesShowAverages) { 
-                            Write-Host ("≈ average / hour:       {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.AvgHourlyGrowth * $mBTCfactor), $Currency, ($_.AvgHourlyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
-                            Write-Host ("≈ average / day:        {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.AvgDailyGrowth * $mBTCfactor), $Currency, ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
-                            Write-Host ("≈ average / week:       {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.AvgWeeklyGrowth * $mBTCfactor), $Currency, ($_.AvgWeeklyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                        Else { $Percentage = ($_.Balance / $_.PayoutThreshold).ToString("P2") }
+
+                        Write-Host "$($_.Pool) [$($_.Wallet)]" -ForegroundColor Green
+                        If ($Variables.Rates.($_.Currency).($Config.FIATcurrency)) { 
+                            If ($Config.BalancesShowSums) { 
+                                Write-Host ("Earnings last 1 hour:   {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth1 * $mBTCfactor), $_.Currency, ($_.Growth1 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                                Write-Host ("Earnings last 6 hours:  {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth6 * $mBTCfactor), $_.Currency, ($_.Growth6 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                                Write-Host ("Earnings last 24 hours: {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth24 * $mBTCfactor), $_.Currency, ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                                Write-Host ("Earnings last 7 days:   {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth168 * $mBTCfactor), $_.Currency, ($_.Growth168 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                                Write-Host ("Earnings last 30 days:  {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Growth720 * $mBTCfactor), $_.Currency, ($_.Growth720 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                            }
+                            If ($Config.BalancesShowAverages) { 
+                                Write-Host ("≈ average / hour:       {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.AvgHourlyGrowth * $mBTCfactor), $_.Currency, ($_.AvgHourlyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                                Write-Host ("≈ average / day:        {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.AvgDailyGrowth * $mBTCfactor), $_.Currency, ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                                Write-Host ("≈ average / week:       {0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.AvgWeeklyGrowth * $mBTCfactor), $_.Currency, ($_.AvgWeeklyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency)
+                            }
+                            Write-Host "Balance:                " -NoNewline; Write-Host ("{0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Balance * $mBTCfactor), $_.Currency, ($_.Balance * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency) -ForegroundColor Yellow                        }
+                        Else { 
+                            If ($Config.BalancesShowSums) { 
+                                Write-Host ("Earnings last 1 hour:   {0:n$($Config.DecimalsMax)} {1}" -f ($_.Growth1 * $mBTCfactor), $_.Currency)
+                                Write-Host ("Earnings last 6 hours:  {0:n$($Config.DecimalsMax)} {1}" -f ($_.Growth6 * $mBTCfactor), $_.Currency)
+                                Write-Host ("Earnings last 24 hours: {0:n$($Config.DecimalsMax)} {1}" -f ($_.Growth24 * $mBTCfactor), $_.Currency)
+                                Write-Host ("Earnings last 7 days:   {0:n$($Config.DecimalsMax)} {1}" -f ($_.Growth168 * $mBTCfactor), $_.Currency)
+                                Write-Host ("Earnings last 30 days:  {0:n$($Config.DecimalsMax)} {1}" -f ($_.Growth720 * $mBTCfactor), $_.Currency)
+                            }
+                            If ($Config.BalancesShowAverages) { 
+                                Write-Host ("≈ average / hour:       {0:n$($Config.DecimalsMax)} {1}" -f ($_.AvgHourlyGrowth * $mBTCfactor), $_.Currency)
+                                Write-Host ("≈ average / day:        {0:n$($Config.DecimalsMax)} {1}" -f ($_.AvgDailyGrowth * $mBTCfactor), $_.Currency)
+                                Write-Host ("≈ average / week:       {0:n$($Config.DecimalsMax)} {1}" -f ($_.AvgWeeklyGrowth * $mBTCfactor), $_.Currency)
+                            }
+                            Write-Host "Balance:                " -NoNewline; Write-Host ("{0:n$($Config.DecimalsMax)} {1}" -f ($_.Balance * $mBTCfactor), $_.Currency) -ForegroundColor Yellow
                         }
-                        Write-Host "Balance:                " -NoNewline; Write-Host ("{0:n$($Config.DecimalsMax)} {1} / {2:n$($Config.DecimalsMax)} {3}" -f ($_.Balance * $mBTCfactor), $Currency, ($_.Balance * $Variables.Rates.($_.Currency).($Config.FIATcurrency)), $Config.FIATcurrency) -ForegroundColor Yellow
-                        Write-Host "                        $(($_.Balance / $_.PayoutThreshold).ToString("P2")) of $(($_.PayoutThreshold * $mBTCfactor).ToString()) $Currency payment threshold"
-                        Write-Host "Projected payment date: $(If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } Else { $_.ProjectedPayDate })`n"
+                        Write-Host ("                        {0} of {1:n$($Config.DecimalsMax)} {2} payment threshold; projected payment date: $(If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } Else { $_.ProjectedPayDate })`n" -f $Percentage, ($_.PayoutThreshold * $mBTCfactor), $PayoutCurrency)
                     }
                 )
-                Remove-Variable Currency, mBTCfactor -ErrorAction Ignore
+                Remove-Variable Currency, mBTCfactor, Percentage -ErrorAction Ignore
             }
 
             If ($Variables.MyIP) { 
@@ -962,7 +972,7 @@ Function MainLoop {
                         If ($Variables.ShowPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "Power cost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.MiningPowerCost -and $Variables.ShowProfitBias) { @{ Label = "Profit bias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.MiningPowerCost -and $Variables.ShowProfit) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
-                        If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } }; Align = "right" } }
+                        If ($Variables.ShowPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } } }; Align = "right" } }
                         If ($Variables.ShowAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.ForEach({ "{0:P0}" -f [Double]$_.Pool.Accuracy }) }; Align = "right" } }
                         @{ Label = "Algorithm"; Expression = { $_.Workers.Pool.Algorithm } }
                         If ($Variables.ShowPool) { @{ Label = "Pool"; Expression = { $_.Workers.Pool.Name } } }
@@ -1002,11 +1012,11 @@ Function MainLoop {
                     Remove-Variable Bias, MinerTable, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
                 }
 
-                If ($Variables.MinersBest) { 
+                If ($Variables.MinersRunning) { 
                     Write-Host "`nRunning $(If ($Variables.MinersBest.Count -eq 1) { "miner:" } Else { "miners: $($Variables.MinersBest.Count)" })"
                     [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Name"; Expression = { $_.Name } }
-                        If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } }; Align = "right" } }
+                        If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2"))" } }; Align = "right" } }
                         @{ Label = "Hashrate(s)"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }; Align = "right" }
                         @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
@@ -1029,7 +1039,7 @@ Function MainLoop {
                         Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"
                         [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
-                            If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
+                            If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
                             @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & " }; Align = "right" }
                             @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                             @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
@@ -1046,7 +1056,7 @@ Function MainLoop {
                         Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed $(If ($ProcessesFailed.Count -eq 1) { "miner" } Else { "miners" }) (past 24 hrs):"
                         [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
-                            If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power consumption"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } }; Align = "right" } }
+                            If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
                             @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & " }; Align = "right" }
                             @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                             @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
@@ -1107,10 +1117,18 @@ Function MainLoop {
     }
 }
 
-If ($Variables.FreshConfig) { 
+If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { 
     $Variables.NewMiningStatus = "Idle" # Must click 'Start mining' in GUI
-    Write-Message -Level Warn "No configuration file found. Edit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
-    $Variables.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
+    If ($Variables.FreshConfig) { 
+        Write-Message -Level Warn "No configuration file found. Edit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
+        $Variables.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
+        $Global:WscriptShell.Popup("No configuration file found.`nEdit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", 4112) | Out-Null
+    }
+    Else { 
+        Write-Message -Level Warn "Configuration has changed during update. Verify and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
+        $Variables.Summary = "Verify your settings and save the configuration.<br>Then click the 'Start mining' button."
+        $Global:WscriptShell.Popup("The configuration has changed during update:`n`n$($Variables.ConfigurationHasChangedDuringUpdate -join $nl)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Variables.Branding.ProductLabel) v$($Variables.Branding.Version) - configuration has changed", 4112) | Out-Null
+    }
 }
 
 While ($true) { 
@@ -1121,7 +1139,7 @@ While ($true) {
         # Show legacy GUI
         $LegacyGUIform.ShowDialog() | Out-Null
     }
-    ElseIf (-not $Variables.FreshConfig) { 
+    ElseIf (-not $Variables.ConfigurationHasChangedDuringUpdate) { 
         [Void](MainLoop)
         Start-Sleep -Milliseconds 50
     }

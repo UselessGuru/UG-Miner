@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class TeamBlackMiner : Miner { 
@@ -37,9 +37,9 @@ Class TeamBlackMiner : Miner {
 
         If (-not $Data) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]""
-        $HashRateValue = [Double]0
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]""
+        $HashrateValue = [Double]0
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]0
@@ -50,14 +50,14 @@ Class TeamBlackMiner : Miner {
             $Data.pool.PSObject.Properties.Name.ForEach(
                 { 
                     If ($Data.pool.$_.Algo -eq $Algorithm) { 
-                        $HashRateName = [String]$Algorithm
-                        $HashRateValue = [Double]($Data.pool.$_.total_hashrate)
-                        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+                        $HashrateName = [String]$Algorithm
+                        $HashrateValue = [Double]($Data.pool.$_.total_hashrate)
+                        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
                         $SharesAccepted = [Int64]($Data.pool.$_.total_accepted)
                         $SharesRejected = [Int64]($Data.pool.$_.total_rejected)
                         $SharesInvalid  = [Int64]($Data.pool.$_.total_stale)
-                        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+                        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
                     }
                 }
             )
@@ -75,7 +75,7 @@ Class TeamBlackMiner : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

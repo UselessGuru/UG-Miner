@@ -202,16 +202,10 @@
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
     "Variant": {
-      "NiceHash External": {
+      "NiceHash": {
         "Fee": 0.05,
         "PayoutThreshold": {
           "mBTC": 1
-        }
-      },
-      "NiceHash Internal": {
-        "Fee": 0.02,
-        "PayoutThreshold": {
-          "mBTC": 0.5
         }
       }
     }

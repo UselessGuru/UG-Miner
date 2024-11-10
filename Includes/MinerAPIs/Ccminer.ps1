@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\CCminer.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class CcMiner : Miner { 
@@ -39,17 +39,17 @@ Class CcMiner : Miner {
 
         If (-not $Data.Keys) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]$this.Algorithms[0]
-        $HashRateValue = [Double]$Data.HS
-        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.KHS * 1000 }
-        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]$this.Algorithms[0]
+        $HashrateValue = [Double]$Data.HS
+        If (-not $HashrateValue) { $HashrateValue = [Double]$Data.KHS * 1000 }
+        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]($Data.ACC | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
         $SharesRejected = [Int64]($Data.REJ | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
         $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         $PowerConsumption = [Double]0
 
@@ -59,7 +59,7 @@ Class CcMiner : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

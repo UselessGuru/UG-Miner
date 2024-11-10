@@ -43,23 +43,15 @@
             <label for="NiceHashWallet">NiceHash Bitcoin wallet address</label>
             <input type="text" id="NiceHashWallet" name="NiceHashWallet" minlenght=26 maxlength=35 size=40>
           </div>
-          <div title="Select NiceHash wallet type&#10;&#10;Note: Internal wallets have lower pool fees&#10;but you must register the with NiceHash">
-            <label for="NiceHashWalletIsInternal">NiceHash Bitcoin wallet address is a NiceHash</label>
-            <select name="" id="NiceHashWalletIsInternal">
-              <option value=internal>internal</option>
-              <option value=external>external</option>
-            </select>
-            <label for="NiceHashWalletIsInternal">address</label>
-          </div>
-          <div title="Your NiceHash API Key&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash internal wallet" for="NiceHashAPIKey">
+          <div title="Your NiceHash API Key&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashAPIKey">
             <label for="NiceHashAPIKey">NiceHash API key</label>
             <input type="text" id="NiceHashAPIKey" name="NiceHashAPIKey" maxlength=37 size=42>
           </div>
-          <div title="Your NiceHash API Secret Key&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash internal wallet" for="NiceHashAPISecret">
+          <div title="Your NiceHash API Secret Key&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashAPISecret">
             <label for="NiceHashAPISecret">NiceHash API secret</label>
             <input type="text" id="NiceHashAPISecret" name="NiceHashAPISecret" maxlength=73 size=73>
           </div>
-          <div title="Your NiceHash Organization Id (must be 36 chars long)&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash internal wallet" for="NiceHashOrganizationId">
+          <div title="Your NiceHash Organization Id (must be 36 chars long)&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashOrganizationId">
             <label for="NiceHashOrganizationId">NiceHash organization Id</label>
             <input type="text" id="NiceHashOrganizationId" name="NiceHashOrganizationId" maxlength=37 size=42>
           </div>
@@ -749,8 +741,6 @@
 
     // NiceHash
     document.getElementById('NiceHashWallet').value = config.NiceHashWallet || '';
-    if (config.NiceHashWalletIsInternal) document.getElementById('NiceHashWalletIsInternal').value = 'internal';
-    else document.getElementById('NiceHashWalletIsInternal').value = 'external';
     document.getElementById('NiceHashAPIKey').value = config.NiceHashAPIKey || '';
     document.getElementById('NiceHashOrganizationId').value = config.NiceHashOrganizationId || '';
     document.getElementById('NiceHashAPISecret').value = config.NiceHashAPISecret || '';
@@ -1257,7 +1247,6 @@
         config.NiceHashAPIKey = document.getElementById('NiceHashAPIKey').value = document.getElementById('NiceHashAPIKey').value.toString().trim();
         config.NiceHashAPISecret = document.getElementById('NiceHashAPISecret').value = document.getElementById('NiceHashAPISecret').value.toString().trim();
         config.NiceHashWallet = document.getElementById('NiceHashWallet').value = document.getElementById('NiceHashWallet').value.toString().trim();
-        config.NiceHashWalletIsInternal = document.getElementById('NiceHashWalletIsInternal').value === "internal";
         config.NiceHashOrganizationId = document.getElementById('NiceHashOrganizationId').value = document.getElementById('NiceHashOrganizationId').value.toString().trim();
         config.ProHashingAPIKey = document.getElementById('ProHashingAPIKey').value = document.getElementById('ProHashingAPIKey').value.toString().trim();
         config.ProHashingUserName = document.getElementById('ProHashingUserName').value = document.getElementById('ProHashingUserName').value.toString().trim();
@@ -1415,7 +1404,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if (config.FIATcurrency && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount && !(config.NiceHashWalletIsInternal && (!config.NiceHashWallet || config.NiceHashWallet == config.Wallets.BTC))) {
+        if (config.FIATcurrency && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1435,10 +1424,10 @@
           $('.modal-body').html('Cannot save configuration - you must select at least one mining device.');
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
-        } else if (config.NiceHashWalletIsInternal && (!config.NiceHashWallet || config.NiceHashWallet == config.Wallets.BTC)) {
-          // Nicehash External but no wallet
+        } else if (config.NiceHashWallet == config.Wallets.BTC) {
+          // Nicehash wallet
           $('.modal-title').html('Error: Invalid configuration');
-          $('.modal-body').html('Cannot save configuration - Internal NiceHash address must be different from your normal BTC wallet.');
+          $('.modal-body').html('Cannot save configuration - NiceHash address must be different from your general BTC wallet.');
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         } else {

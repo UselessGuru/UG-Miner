@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -382,7 +382,7 @@ Class Miner : IDisposable {
         }
 
         # Start Miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
-        $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -WarningVariable $null -Name "$($this.NameAndDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
+        $this.DataReaderJob = Start-ThreadJob  -InformationVariable $null -WarningVariable $null -Name "$($this.NameAndDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
 
         Remove-Variable ScriptBlock -ErrorAction Ignore
     }
@@ -457,7 +457,7 @@ Class Miner : IDisposable {
 
         If ($this.Status -ne [MinerStatus]::DryRun) { 
 
-            $this.ProcessJob = Invoke-CreateProcess -ErrorVariable $null -InformationVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile
+            $this.ProcessJob = Invoke-CreateProcess -InformationVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile
 
             # Sometimes the process cannot be found instantly
             $Loops = 100
@@ -656,7 +656,7 @@ Class Miner : IDisposable {
         $PowerConsumptionSamples = @($this.Data.Where({ $_.PowerConsumption })) # Do not use 0 valued samples
 
         $PowerConsumptionAverage = ($PowerConsumptionSamples.PowerConsumption | Measure-Object -Average).Average
-        $PowerConsumptionVariance = $PowerConsumptionSamples.PowerUsage | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
+        $PowerConsumptionVariance = $PowerConsumptionSamples.Powerusage | Measure-Object -Average -Minimum -Maximum | ForEach-Object { If ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
 
         If ($Safe) { 
             If ($PowerConsumptionSamples.Count -lt 10 -or $PowerConsumptionVariance -gt 0.1) { 
@@ -765,6 +765,30 @@ Function Close-CoreRunspace {
     If ($Global:CoreRunspace) { 
 
         Stop-Core
+        
+        $Variables.Pools.ForEach({ $_.Dispose() })
+        $Variables.Pools = [Pool[]]@()
+        $Variables.PoolsAdded = [Pool[]]@()
+        $Variables.PoolsExpired = [Pool[]]@()
+        $Variables.PoolsNew = [Pool[]]@()
+        $Variables.PoolsUpdated = [Pool[]]@()
+
+        $Variables.Miners.ForEach({ $_.Dispose() })
+        $Variables.Miners = [Miner[]]@()
+        $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
+        $Variables.MinersBest = [Miner[]]@()
+        $Variables.MinersBestPerDevice = [Miner[]]@()
+        $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
+        $Variables.MinersFailed = [Miner[]]@()
+        $Variables.MinersMissingBinary = [Miner[]]@()
+        $Variables.MissingMinerFirewallRule = [Miner[]]@()
+        $Variables.MinersMissingPrerequisite = [Miner[]]@()
+        $Variables.MinersOptimal = [Miner[]]@()
+        $Variables.MinersRunning = [Miner[]]@()
+
+        $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
+
+        $Global:CoreRunspace.PSObject.Properties.Remove("Job")
 
         # Must close runspace after miners were stopped, otherwise methods don't work any longer
         $Global:CoreRunspace.PowerShell.Dispose()
@@ -799,9 +823,11 @@ Function Stop-Core {
 
         $Global:CoreRunspace.PowerShell.Stop()
         $Variables.Remove("EndCycleTime")
-        $Variables.Remove("Timer")
+        If ($Variables.Timer) { Write-Message -Level Info "Ending cycle." }
 
-        Write-Message -Level Info "Ending cycle."
+        $Variables.Remove("Timer")
+        $Global:CoreRunspace.PSObject.Properties.Remove("StartTime")
+
     }
 
     If ($Variables.Miners) { 
@@ -815,21 +841,6 @@ Function Stop-Core {
             Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
             $Miner.SetStatus([MinerStatus]::Idle)
         }
-
-        $Variables.Miners.ForEach({ $_.Dispose() })
-        $Variables.Miners = [Miner[]]@()
-        $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
-        $Variables.MinersBest = [Miner[]]@()
-        $Variables.MinersBestPerDevice = [Miner[]]@()
-        $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
-        $Variables.MinersFailed = [Miner[]]@()
-        $Variables.MinersMissingBinary = [Miner[]]@()
-        $Variables.MissingMinerFirewallRule = [Miner[]]@()
-        $Variables.MinersMissingPrerequisite = [Miner[]]@()
-        $Variables.MinersOptimal = [Miner[]]@()
-        $Variables.MinersRunning = [Miner[]]@()
-
-        $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
 
         [System.GC]::Collect()
     }
@@ -897,11 +908,16 @@ Function Stop-Brain {
                 $Variables.Brains[$_].PowerShell.Stop()
                 $Variables.Brains[$_].PowerShell.Runspace.Dispose()
                 $Variables.Brains[$_].PowerShell.Dispose()
-                $Variables.Brains[$_].PowerShell = $null
                 $Variables.Brains[$_].Close()
                 $Variables.Brains[$_].Dispose()
+
+                $Variables.Brains[$_].PSObject.Properties.Remove("Job")
+                $Variables.Brains[$_].PSObject.Properties.Remove("PowerShell")
+                $Variables.Brains[$_].PSObject.Properties.Remove("StartTime")
+
                 $Variables.Brains.Remove($_)
                 $Variables.BrainData.Remove($_)
+
                 $BrainsStopped += $_
             }
         )
@@ -943,6 +959,8 @@ Function Close-BalancesTrackerRunspace {
 
         Stop-BalancesTracker
 
+        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("Job")
+
         $Global:BalancesTrackerRunspace.PowerShell.Dispose()
         $Global:BalancesTrackerRunspace.PowerShell = $null
         $Global:BalancesTrackerRunspace.Close()
@@ -980,6 +998,8 @@ Function Stop-BalancesTracker {
     If ($Global:BalancesTrackerRunspace.Job.IsCompleted -eq $false) { 
 
         $Global:BalancesTrackerRunspace.PowerShell.Stop()
+
+        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("StartTime")
 
         $Variables.BalancesTrackerRunning = $false
 
@@ -1122,7 +1142,7 @@ Function Write-Message {
         "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
     }
 
-    If (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level) { 
+    If (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level -and $Variables.TextBoxSystemLog) { 
         # Ignore error when legacy GUI gets closed
         Try { 
             $SelectionLength = $Variables.TextBoxSystemLog.SelectionLength
@@ -1366,7 +1386,7 @@ Function Read-Config {
         # Load pool data
         If (-not $Variables.PoolData) { 
             $Variables.PoolData = [System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
-            $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys -replace " External$| Internal$" }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
+            $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
             If (-not $Variables.PoolVariants) { 
                 Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
                 $Global:WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -1531,28 +1551,30 @@ Function Update-ConfigFile {
         [String]$ConfigFile
     )
 
-    # Changed config items
-    ($Config.GetEnumerator().Name | Sort-Object).ForEach(
-        { 
-            Switch ($_) { 
-                # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
-                "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_) }
-                "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_) }
-                "MinerInstancePerDeviceModel" { $Config.Remove($_) }
-                Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
-            }
+    $Variables.ConfigurationHasChangedDuringUpdate = [System.Collections.Generic.List[String]]@()
+
+    # NiceHash Internal is no longer available as of November 12, 2024
+    If ($Config.PoolName -contains "NiceHash") { 
+        If ($null -ne $Config.NiceHashWalletIsInternal -and -not $Config.NiceHashWalletIsInternal) { 
+            Write-Message -Level Warn "Pool configuration changed during update (NiceHash [External] removed - to mine with NiceHash you must register)."
+            $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'NiceHash' [External] removed")
+            $Config.PoolName = $Config.PoolName -notmatch "NiceHash"
+            $Config.Remove("NiceHashWallet")
         }
-    )
+    }
+    $Config.Remove("NiceHashWalletIsInternal")
 
     # MiningPoolHub is no longer available
     If ($Config.PoolName -contains "MiningPoolHub") { 
-        Write-Message -Level Warn "Pool configuration changed (MiningPoolHub removed). Please verify your configuration."
+        Write-Message -Level Warn "Pool configuration changed during update (MiningPoolHub removed)."
+        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'MiningPoolHub' removed")
         $Config.PoolName = $Config.PoolName -notmatch "MiningPoolHub"
     }
 
     # ZergPoolCoins is no longer available
     If ($Config.PoolName -like "ZergPoolCoins*") { 
-        Write-Message -Level Warn "Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' )). Please verify your configuration."
+        Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' ))."
+        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' ))")
         $Config.PoolName = $Config.PoolName -replace 'Coins'
     }
 
@@ -1568,8 +1590,22 @@ Function Update-ConfigFile {
             "US"           { "USA West" }
             Default        { "Europe" }
         }
-        Write-Message -Level Warn "Available mining locations have changed ($OldRegion -> $($Config.Region)). Please verify your configuration."
+        Write-Message -Level Warn "Available mining locations have changed during update ($OldRegion -> $($Config.Region))".
+        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Mining locations have changed ($OldRegion -> $($Config.Region))")
     }
+
+    # Changed config items
+    ($Config.GetEnumerator().Name | Sort-Object).ForEach(
+        { 
+            Switch ($_) { 
+                # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
+                "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_) }
+                "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_) }
+                "MinerInstancePerDeviceModel" { $Config.Remove($_) }
+                Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
+            }
+        }
+    )
 
     $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
     Write-Config -ConfigFile $ConfigFile -Config $Config
@@ -2516,7 +2552,7 @@ Filter ConvertTo-Hash {
 
     $Units = " kMGTPEZY" # k(ilo) in small letters, see https://en.wikipedia.org/wiki/Metric_prefix
 
-    If ( $_ -eq $null -or [Double]::IsNaN($_)) { Return "n/a" }
+    If ( $null -eq $_ -or [Double]::IsNaN($_)) { Return "n/a" }
     ElseIf ($_ -eq 0) { Return "0H/s " }
     $Base1000 = [Math]::Max([Double]0, [Math]::Min([Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1))), $Units.Length - 1))
     $UnitValue = $_ / [Math]::Pow(1000, $Base1000)
@@ -2602,7 +2638,7 @@ Function Invoke-CreateProcess {
     )
 
     # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and miners remain running
-    Start-Job -ErrorVariable $null -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
+    Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
         Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID)
 
         $ControllerProcess = Get-Process -Id $ControllerProcessID

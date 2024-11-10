@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\SRBminer.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class SRBMiner : Miner { 
@@ -39,26 +39,26 @@ Class SRBMiner : Miner {
 
         $Type = If ($Data.total_cpu_workers -gt 0) { "cpu" } Else { "gpu" }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]$this.Algorithms[0]
-        $HashRateValue = [Double]$Data.algorithms[0].hashrate.$Type.total
-        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]$this.Algorithms[0]
+        $HashrateValue = [Double]$Data.algorithms[0].hashrate.$Type.total
+        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.algorithms[0].shares.accepted
         $SharesRejected = [Int64]$Data.algorithms[0].shares.rejected
         $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-        If ($HashRateName = [String]($this.Algorithms -ne $HashRateName)) { 
-            $HashRateName = [String]$this.Algorithms[1]
-            $HashRateValue = [Double]$Data.algorithms[1].hashrate.$Type.total
-            $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+            $HashrateName = [String]$this.Algorithms[1]
+            $HashrateValue = [Double]$Data.algorithms[1].hashrate.$Type.total
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]$Data.algorithms[1].shares.accepted
             $SharesRejected = [Int64]$Data.algorithms[1].shares.rejected 
             $SharesInvalid = [Int64]0
-            $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 
         $PowerConsumption = [Double]0
@@ -72,7 +72,7 @@ Class SRBMiner : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }

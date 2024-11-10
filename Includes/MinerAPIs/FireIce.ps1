@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.3.12
-Version date:   2024/11/02
+Version:        6.3.13
+Version date:   2024/11/10
 #>
 
 Class Fireice : Miner { 
@@ -118,18 +118,18 @@ Class Fireice : Miner {
 
         If (-not $Data) { Return $null }
 
-        $HashRate = [PSCustomObject]@{ }
-        $HashRateName = [String]$this.Algorithms[0]
-        $HashRateValue = [Double]$Data.hashrate.total[0]
-        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[1] } #fix
-        If (-not $HashRateValue) { $HashRateValue = [Double]$Data.hashrate.total[2] } #fix
-        $HashRate | Add-Member @{ $HashRateName = $HashRateValue }
+        $Hashrate = [PSCustomObject]@{ }
+        $HashrateName = [String]$this.Algorithms[0]
+        $HashrateValue = [Double]$Data.hashrate.total[0]
+        If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[1] } #fix
+        If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[2] } #fix
+        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.results.shares_good
         $SharesRejected = [Int64]($Data.results.shares_total - $Data.results.shares_good)
         $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashRateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         $PowerConsumption = [Double]0
 
@@ -139,7 +139,7 @@ Class Fireice : Miner {
 
         Return [PSCustomObject]@{ 
             Date             = [DateTime]::Now.ToUniversalTime()
-            HashRate         = $HashRate
+            Hashrate         = $Hashrate
             PowerConsumption = $PowerConsumption
             Shares           = $Shares
         }
