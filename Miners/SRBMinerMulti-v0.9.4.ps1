@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -99,13 +99,12 @@ If ($Algorithms) {
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Arguments = $_.Arguments
-                            $Arguments += Switch ($Pool.Protocol) { 
-                                "ethproxy"     { " --esm 0" }
-                                "ethstratum1"  { " --esm 1" }
-                                "ethstratum2"  { " --esm 2" }
-                                "ethstratumnh" { " --esm 2" }
-                                "minerproxy"   { " --esm 1" }
-                                Default        { "" }
+                            Switch ($Pool.Protocol) { 
+                                "ethproxy"     { $Arguments += " --esm 0" }
+                                "ethstratum1"  { $Arguments += " --esm 1" }
+                                "ethstratum2"  { $Arguments += " --esm 2" }
+                                "ethstratumnh" { $Arguments += " --esm 2" }
+                                "minerproxy"   { $Arguments += " --esm 1" }
                             }
                             $Arguments += " --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
                             If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }

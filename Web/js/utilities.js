@@ -219,57 +219,57 @@ function formatArrayAsSortedString(value) {
 };
 
 function format0DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 0, maximumFractionDigits: 0});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 0, maximumFractionDigits: 0});
   return '';
 };
 
 function forma2tDecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 1, maximumFractionDigits: 1});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 1, maximumFractionDigits: 1});
   return '';
 };
 
 function format2DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2});
   return '';
 };
 
 function format3DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 3, maximumFractionDigits: 3});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 3, maximumFractionDigits: 3});
   return '';
 };
 
 function format4DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 4, maximumFractionDigits: 4});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 4, maximumFractionDigits: 4});
   return '';
 };
 
 function format5DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 5, maximumFractionDigits: 5});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 5, maximumFractionDigits: 5});
   return '';
 };
 
 function format6DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 6, maximumFractionDigits: 6});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 6, maximumFractionDigits: 6});
   return '';
 };
 
 function format7DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 7, maximumFractionDigits: 7});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 7, maximumFractionDigits: 7});
   return '';
 };
 
 function format8DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 8, maximumFractionDigits: 8});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 8, maximumFractionDigits: 8});
   return '';
 };
 
 function format9DecimalsDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 9, maximumFractionDigits: 9});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 9, maximumFractionDigits: 9});
   return '';
 };
 
 function format10DecimalDigits(value) {
-  if (value > 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 10, maximumFractionDigits: 10});
+  if (value >= 0) return (value).toLocaleString(navigator.language, { minimumFractionDigits: 10, maximumFractionDigits: 10});
   return '';
 };
 

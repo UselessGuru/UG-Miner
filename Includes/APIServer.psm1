@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 Function Start-APIServer { 
@@ -395,7 +395,7 @@ Function Start-APIServer {
                                 ElseIf (-not ($Data = (Invoke-RestMethod -Uri $Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
                                     $Data = "No data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
                                 }
-                                break
+                                Break
                             }
                             "/functions/removeorphanedminerstats" { 
                                 If ($StatNames = Remove-ObsoleteMinerStats) { 
@@ -733,7 +733,7 @@ Function Start-APIServer {
                             }
                             "/allcurrencies" { 
                                 $Data = ConvertTo-Json -Depth 10 @($Variables.AllCurrencies)
-                                break
+                                Break
                             }
                             "/apiversion" { 
                                 $Data = $APIVersion
@@ -753,7 +753,7 @@ Function Start-APIServer {
                             }
                             "/balancescurrencies" { 
                                 $Data = ConvertTo-Json -Depth 10 @($Variables.BalancesCurrencies)
-                                break
+                                Break
                             }
                             "/braindata" { 
                                 $Data = ConvertTo-Json -Depth 2 ($Variables.BrainData | Get-SortedObject)
@@ -772,7 +772,7 @@ Function Start-APIServer {
                             }
                             "/configfile" { 
                                 $Data = $Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\")
-                                break
+                                Break
                             }
                             "/configrunning" { 
                                 $Data = ConvertTo-Json -Depth 10 ($Config | Get-SortedObject)
@@ -832,7 +832,7 @@ Function Start-APIServer {
                             }
                             "/extracurrencies" { 
                                 $Data = ConvertTo-Json -Depth 10 $Config.ExtraCurrencies
-                                break
+                                Break
                             }
                             "/fiatcurrencies" { 
                                 $Data = ConvertTo-Json -Depth 10 ($Variables.FIATcurrencies | Select-Object)
@@ -908,11 +908,11 @@ Function Start-APIServer {
                             }
                             "/poolname" { 
                                 $Data = ConvertTo-Json -Depth 10 $Config.PoolName
-                                break
+                                Break
                             }
                             "/pooldata" { 
                                 $Data = ConvertTo-Json -Depth 10 $Variables.PoolData
-                                break
+                                Break
                             }
                             "/poolsconfig" { 
                                 $Data = ConvertTo-Json -Depth 10 ($Config.PoolsConfig | Select-Object)
@@ -976,7 +976,7 @@ Function Start-APIServer {
                             }
                             "/poolvariants" { 
                                 $Data = ConvertTo-Json -Depth 10 $Variables.PoolVariants
-                                break
+                                Break
                             }
                             "/rates" { 
                                 $Data = ConvertTo-Json -Depth 10 ($Variables.Rates | Select-Object)
@@ -984,7 +984,7 @@ Function Start-APIServer {
                             }
                             "/refreshtimestamp" { 
                                 $Data = $Variables.RefreshTimestamp | ConvertTo-Json
-                                break
+                                Break
                             }
                             "/regions" { 
                                 $Data = ConvertTo-Json -Depth 10 @($Variables.Regions[0] | Sort-Object)

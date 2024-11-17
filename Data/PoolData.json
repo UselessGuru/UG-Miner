@@ -107,7 +107,6 @@
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 15, // Only 1 request every 10 seconds allowed
     "PoolAPItimeout": 3,
-    "PoolCurrenciesUri": "",
     "Region": [
       "americas",
       "europe",
@@ -194,13 +193,13 @@
     "GuaranteedPayoutCurrencies": [
       "BTC" // Required here for donation
     ],
-    "Region": [
-      "n/a (Anycast)"
-    ],
     "PayoutCurrency": "BTC", // Only BTC is supported
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
+    "Region": [
+      "n/a (Anycast)"
+    ],
     "Variant": {
       "NiceHash": {
         "Fee": 0.05,
@@ -227,6 +226,10 @@
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
     "Region": [
+      "ASIA",
+      "US"
+    ],
+    "Region_All": [  // 2024/11/11 EU ppols broken
       "ASIA",
       "EU",
       "US"
@@ -320,8 +323,8 @@
       "BTC",
       "DASH",
       "DGB",
-      "LTC",
       "KMD",
+      "LTC",
       "RVN"
     ],
     "PayoutCurrency": "[Default]",

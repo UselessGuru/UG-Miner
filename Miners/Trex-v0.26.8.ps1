@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -84,11 +84,10 @@ If ($Algorithms) {
                                 If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity .+$" }
 
                                 $Arguments = $_.Arguments
-                                $Arguments += Switch ($Pool0.Protocol) { 
-                                    "ethstratum1"  { " --url stratum2" }
-                                    "ethstratum2"  { " --url stratum2" }
-                                    "ethstratumnh" { " --url stratum2" }
-                                    Default        { " --url stratum" }
+                                Switch ($Pool0.Protocol) { 
+                                    "ethstratum1"  { $Arguments += " --url stratum2" }
+                                    "ethstratum2"  { $Arguments += " --url stratum2" }
+                                    "ethstratumnh" { $Arguments += " --url stratum2" }
                                 }
                                 $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
                                 $Arguments += "://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
@@ -101,11 +100,10 @@ If ($Algorithms) {
                                 }
 
                                 If ($_.Algorithms[1]) { 
-                                    $Arguments += Switch ($Pool1.Protocol) { 
-                                        "ethstratum1"  { " --url2 stratum2" }
-                                        "ethstratum2"  { " --url2 stratum2" }
-                                        "ethstratumnh" { " --url2 stratum2" }
-                                        Default        { " --url2 stratum" }
+                                    Switch ($Pool1.Protocol) { 
+                                        "ethstratum1"  { $Arguments += " --url2 stratum2" }
+                                        "ethstratum2"  { $Arguments += " --url2 stratum2" }
+                                        "ethstratumnh" { $Arguments += " --url2 stratum2" }
                                     }
                                     $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
                                     $Arguments += "://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"

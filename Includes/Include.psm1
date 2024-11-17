@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -537,7 +537,7 @@ Class Miner : IDisposable {
             Profit_Bias             = $this.Profit_Bias
             Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { 
                                           $this.StatusInfo = $this.StatusInfo.Replace("'$($this.Name)' ", "") -replace '.+stopped. ' -replace '.+sample.*\) '
-                                          $this.StatusInfo.substring(0,1).toUpper() + $this.StatusInfo.substring(1)
+                                          $this.StatusInfo.substring(0, 1).toUpper() + $this.StatusInfo.substring(1)
                                       } Else { "" }
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
@@ -599,10 +599,10 @@ Class Miner : IDisposable {
 
     [TimeSpan]GetActiveTime() { 
         If ($this.Process.BeginTime -and $this.Process.EndTime) { 
-            Return $this.Active + ($this.Process.EndTime - $this.Process.BeginTime)
+            Return $this.Active + $this.Process.EndTime - $this.Process.BeginTime
         }
         ElseIf ($this.Process.BeginTime) { 
-            Return $this.Active + ([DateTime]::Now - $this.Process.BeginTime)
+            Return $this.Active + [DateTime]::Now - $this.Process.BeginTime
         }
         Else { 
             Return $this.Active
@@ -716,9 +716,11 @@ Class Miner : IDisposable {
         }
         Else { 
             $this.Earning = 0
-            $this.Workers.ForEach({ $this.Earning += $_.Earning })
             $this.Earning_Bias = 0
-            $this.Workers.ForEach({ $this.Earning_Bias += $_.Earning_Bias })
+            $this.Workers.ForEach({ 
+                $this.Earning += $_.Earning
+                $this.Earning_Bias += $_.Earning_Bias
+            })
             $this.Earning_Accuracy = 0
             If ($this.Earning) { $this.Workers.ForEach({ $this.Earning_Accuracy += $_.Earning_Accuracy * $_.Earning / $this.Earning }) }
         }
@@ -731,8 +733,8 @@ Class Miner : IDisposable {
             $this.MeasurePowerConsumption = $false
         }
         Else { 
-            $this.PowerCost = [Double]::NaN
             $this.PowerConsumption = [Double]::NaN
+            $this.PowerCost = [Double]::NaN
             $this.Profit = [Double]::NaN
             $this.Profit_Bias = [Double]::NaN
         }
@@ -781,12 +783,15 @@ Function Close-CoreRunspace {
         $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
         $Variables.MinersFailed = [Miner[]]@()
         $Variables.MinersMissingBinary = [Miner[]]@()
-        $Variables.MissingMinerFirewallRule = [Miner[]]@()
+        $Variables.MinerMissingFirewallRule = [Miner[]]@()
         $Variables.MinersMissingPrerequisite = [Miner[]]@()
         $Variables.MinersOptimal = [Miner[]]@()
         $Variables.MinersRunning = [Miner[]]@()
 
-        $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
+        $Variables.MiningEarning = [Double]0
+        $Variables.MiningPowerConsumption = [Double]0
+        $Variables.MiningPowerCost = [Double]0
+        $Variables.MiningProfit = [Double]0
 
         $Global:CoreRunspace.PSObject.Properties.Remove("Job")
 
@@ -1399,8 +1404,8 @@ Function Read-Config {
         ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).ForEach(
             { 
                 $PoolName = $_
-                If ($PoolConfig = $Variables.PoolData.$PoolName | ConvertTo-Json -ErrorAction Ignore | ConvertFrom-Json -AsHashtable | Get-SortedObject) { 
-                    # # Generic algorithm disabling is done in pool files
+                If ($PoolConfig = $Variables.PoolData.$PoolName | Get-SortedObject) { 
+                    # Generic algorithm disabling is done in pool files
                     $PoolConfig.Remove("Algorithm")
 
                     If ($CustomPoolConfig = $Variables.PoolsConfigData.$PoolName) { 
@@ -2348,6 +2353,7 @@ Function Get-Device {
             { 
                 $Device_CIM = [CimInstance]::new($_)
                 $Device_PNP = [PSCustomObject]@{ }
+
                 (Get-PnpDevice $Device_CIM.PNPDeviceID | Get-PnpDeviceProperty).ForEach({ $Device_PNP | Add-Member $_.KeyName $_.Data })
                 $Device_PNP = $Device_PNP.PSObject.Copy()
                 $Device_Reg = (Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)").PSObject.Copy()

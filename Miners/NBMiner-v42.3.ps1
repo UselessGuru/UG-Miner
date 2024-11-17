@@ -74,11 +74,11 @@ If ($Algorithms) {
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                                 $Arguments = $_.Arguments
-                                $Arguments += Switch ($Pool.Protocol) { 
-                                    "ethstratum1"  { " --url stratum" }
-                                    "ethstratum2"  { " --url nicehash" }
-                                    "ethstratumnh" { " --url nicehash" }
-                                    Default        { " --url stratum" }
+                                Switch ($Pool.Protocol) { 
+                                    "ethstratum1"  { $Arguments += " --url stratum" }
+                                    "ethstratum2"  { $Arguments += " --url nicehash" }
+                                    "ethstratumnh" { $Arguments += " --url nicehash" }
+                                    Default        { $Arguments += " --url stratum" }
                                 }
                                 $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else  { "+tcp://" }
                                 $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"

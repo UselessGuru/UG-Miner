@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -65,7 +65,7 @@ If ($Algorithms) {
                     $WarmupTimes = $_.WarmupTimes.PsObject.Copy()
                     If ($_.Type -eq "NVIDIA" -and $Intensity) { $Intensity *= 5 } # Nvidia allows much higher intensity
                     ForEach ($Intensity in $IntensityValues.($_.Algorithms[1]) | Select-Object) { 
-                        $_ | Add-Member Intensity $Intensity -Force
+                        $_.Intensity = $Intensity
                         # Allow extra time for auto tuning
                         $_.WarmupTimes[1] = $WarmupTimes[1] + 45
                         $_.PsObject.Copy()

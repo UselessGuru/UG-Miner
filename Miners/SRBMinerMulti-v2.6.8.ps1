@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -107,25 +107,25 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algor
 
 If ($Algorithms) { 
 
-    If (-not $Config.DryRun) { 
-        # Allowed max loss for 1. algorithm
-        $GpuDualMaxLosses = @($null, 2, 4, 7, 10, 15, 21, 30)
-        $GpuDualMaxLosses = @($null, 5)
-        $GpuDualMaxLosses = @($null)
+    # If (-not $Config.DryRun) { 
+    #     # Allowed max loss for 1. algorithm
+    #     $GpuDualMaxLosses = @($null, 2, 4, 7, 10, 15, 21, 30)
+    #     $GpuDualMaxLosses = @($null, 5)
+    #     $GpuDualMaxLosses = @($null)
 
-        # Build command sets for max loss
-        $Algorithms = $Algorithms.ForEach(
-            { 
-                $_.PsObject.Copy()
-                If ($_.Algorithms[1]) { 
-                    ForEach ($GpuDualMaxLoss in $GpuDualMaxLosses) { 
-                        $_ | Add-Member GpuDualMaxLoss $GpuDualMaxLoss -Force
-                        $_.PsObject.Copy()
-                    }
-                }
-            }
-        )
-    }
+    #     # Build command sets for max loss
+    #     $Algorithms = $Algorithms.ForEach(
+    #         { 
+    #             $_.PsObject.Copy()
+    #             If ($_.Algorithms[1]) { 
+    #                 ForEach ($GpuDualMaxLoss in $GpuDualMaxLosses) { 
+    #                     $_.GpuDualMaxLoss = $GpuDualMaxLoss
+    #                     $_.PsObject.Copy()
+    #                 }
+    #             }
+    #         }
+    #     )
+    # }
 
     ($Devices | Sort-Object Type, Model -Unique).ForEach(
         { 
@@ -161,12 +161,12 @@ If ($Algorithms) {
 
                                     $Arguments = ""
                                     ForEach ($Pool in $Pools) { 
-                                        $Arguments += Switch ($Pool.Protocol) { 
-                                            "minerproxy"   { " --esm 0" }
-                                            "ethproxy"     { " --esm 0" }
-                                            "ethstratum1"  { " --esm 1" }
-                                            "ethstratum2"  { " --esm 2" }
-                                            "ethstratumnh" { " --esm 2" }
+                                        Switch ($Pool.Protocol) { 
+                                            "minerproxy"   { $Arguments += " --esm 0" }
+                                            "ethproxy"     { $Arguments += " --esm 0" }
+                                            "ethstratum1"  { $Arguments += " --esm 1" }
+                                            "ethstratum2"  { $Arguments += " --esm 2" }
+                                            "ethstratumnh" { $Arguments += " --esm 2" }
                                         }
                                         $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
                                         $Arguments += " --password $($Pool.Pass)"

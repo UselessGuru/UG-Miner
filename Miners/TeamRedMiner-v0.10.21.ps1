@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
@@ -125,8 +125,8 @@ If ($Algorithms) {
 
                                     $Arguments = $_.Arguments
                                     $Arguments += " --pool_force_ensub --url=$(If ($Pool0.PoolPorts[1]) { "stratum+ssl" } Else { "stratum+tcp" })://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += Switch ($Pool0.Protocol) { 
-                                        "ethstratumnh" { " --eth_stratum_mode=nicehash" }
+                                    Switch ($Pool0.Protocol) { 
+                                        "ethstratumnh" { $Arguments += " --eth_stratum_mode=nicehash" }
                                     }
                                     $Arguments += " --user=$($Pool0.User)$(If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
                                     $Arguments += " --pass=$($Pool0.Pass)"

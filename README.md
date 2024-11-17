@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.3.13 / Updated 2024/11/10
+Version 6.3.14 / Updated 2024/11/17
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -36,7 +36,7 @@ UG-Miner code is partly based on
 - Automatically downloads miner binaries
 - Automatic updates
 - Earnings graph & balances tracker
-- Low developer fee of 1% (can be set to 0)
+- Low developer fee of 1% (can be set to 0%)
 - Calculate power cost<sup>(1)</sup>
 
 - Miner switching log
@@ -178,7 +178,7 @@ UG-Miner can run a batch script prior switching to a specific miner and/or algor
 
 The prerun scripts can be used to apply per miner/algorithm overclocking settings via nvidiaInspector or OverdriveNTool.  
 
-Before starting a miner executable UG-Miner is trying to launch one of the following 3 prerun scripts (in this order):
+Before starting a miner executable UG-Miner wiil try to launch one of the following 3 prerun scripts (in this order):
 
 1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\\Utils\\prerun' folder, e.g.  

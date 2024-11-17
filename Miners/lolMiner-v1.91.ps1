@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
@@ -130,8 +130,8 @@ If ($Algorithms) {
         $Algorithms = $Algorithms.ForEach(
             { 
                 If ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
-                    ForEach ($Value in $MaxDualImpactValues) { 
-                        $_ | Add-Member MaxDualImpact $Value -Force
+                    ForEach ($MaxDualImpactValue in $MaxDualImpactValues) { 
+                        $_.MaxDualImpact = $MaxDualImpactValue
                         $_.PsObject.Copy()
                     }
                 }
@@ -173,12 +173,11 @@ If ($Algorithms) {
                                         $Arguments += " --user $($Pool0.User)$(If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
                                         $Arguments += " --pass $($Pool0.Pass)"
                                         $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
-                                        $Arguments += Switch ($Pool0.Protocol) { 
-                                            "ethproxy"     { " --ethstratum ETHPROXY" }
-                                            "ethstratum1"  { " --ethstratum ETHV1" }
-                                            "ethstratum2"  { " --ethstratum ETHV1" }
-                                            "ethstratumnh" { " --ethstratum ETHV1" }
-                                            Default        { "" }
+                                        Switch ($Pool0.Protocol) { 
+                                            "ethproxy"     { $Arguments += " --ethstratum ETHPROXY" }
+                                            "ethstratum1"  { $Arguments += " --ethstratum ETHV1" }
+                                            "ethstratum2"  { $Arguments += " --ethstratum ETHV1" }
+                                            "ethstratumnh" { $Arguments += " --ethstratum ETHV1" }
                                         }
 
                                         If ($_.Algorithms[1]) { 

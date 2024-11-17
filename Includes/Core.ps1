@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.13
-Version date:   2024/11/10
+Version:        6.3.14
+Version date:   2024/11/17
 #>
 
 using module .\Include.psm1
@@ -72,7 +72,7 @@ Try {
             $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
             $Variables.MinersFailed = [Miner[]]@()
             $Variables.MinersMissingBinary = [Miner[]]@()
-            $Variables.MissingMinerFirewallRule = [Miner[]]@()
+            $Variables.MinerMissingFirewallRule = [Miner[]]@()
             $Variables.MinersMissingPrerequisite = [Miner[]]@()
             $Variables.MinersOptimal = [Miner[]]@()
             $Variables.MinersRunning = [Miner[]]@()
@@ -115,7 +115,7 @@ Try {
             $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
             $Variables.MinersFailed = [Miner[]]@()
             $Variables.MinersMissingBinary = [Miner[]]@()
-            $Variables.MissingMinerFirewallRule = [Miner[]]@()
+            $Variables.MinerMissingFirewallRule = [Miner[]]@()
             $Variables.MinersMissingPrerequisite = [Miner[]]@()
             $Variables.MinersOptimal = [Miner[]]@()
             $Variables.MinersRunning = [Miner[]]@()
@@ -840,7 +840,7 @@ Try {
 
             # Filter miners
             $Miners.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled by user") })
-            If ($Config.ExcludeMinerName.Count) { $Miners.Where({ (Compare-Object @($Config.ExcludeMinerName | Select-Object) @($_.BaseName, "$($_.BaseName)-$($_.Version)", $_.Name | Select-Object -Unique) -IncludeEqual -ExcludeDifferent | Measure-Object).Count -gt 0 }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Config.ExcludeMinerName -join ", "))") }) }
+            If ($Config.ExcludeMinerName.Count) { $Miners.Where({ (Compare-Object @($Config.ExcludeMinerName | Select-Object) @($_.BaseName, $_.BaseName_Version, $_.Name | Select-Object -Unique) -IncludeEqual -ExcludeDifferent | Measure-Object).Count -gt 0 }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Config.ExcludeMinerName -join ", "))") }) }
             $Miners.Where({ $_.Earning -eq 0 }).ForEach({ $_.Reasons.Add("Earning -eq 0") })
             $Miners.Where({ -not $_.Benchmark -and $_.Workers.Hashrate -contains 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") })
             If ($Config.DisableMinersWithFee) { $Miners.Where({ $_.Workers.Fee }).ForEach({ $_.Reasons.Add("Config.DisableMinersWithFee") }) }
@@ -850,7 +850,7 @@ Try {
             # Add reason 'Config.DisableCpuMiningOnBattery' for CPU miners when running on battery
             If ($Config.DisableCpuMiningOnBattery -and (Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miners.Where({ $_.Type -eq "CPU" }).ForEach({ $_.Reasons.Add("Config.DisableCpuMiningOnBattery") }) }
 
-            # Add reason 'Unreal profit data...' for miners with unreal earning (> x times higher than average of the next best 10% or at least 5 miners)
+            # Add reason 'Unreal profit data...' for miners with unreal earning > x times higher than average of the next best 10% or at least 5 miners
             If ($Config.UnrealMinerEarningFactor -gt 1) { 
                 ($Miners.Where({ -not $_.Reasons }) | Group-Object { [String]$_.DeviceNames }).ForEach(
                     { 
@@ -896,7 +896,7 @@ Try {
             Remove-Variable DownloadList
 
             # Open firewall ports for all miners
-            $Variables.MissingMinerFirewallRule = [Miner[]]@()
+            $Variables.MinerMissingFirewallRule = [Miner[]]@()
             If ($Config.OpenFirewallPorts) { 
                 If (Get-Command Get-MpPreference) { 
                     If ((Get-Command Get-MpComputerStatus) -and (Get-MpComputerStatus)) { 
@@ -909,8 +909,8 @@ Try {
                                 }
                                 Catch { 
                                     Write-Message -Level Error "Could not add inbound firewall rules. Some miners will not be available."
-                                    $Variables.MissingMinerFirewallRule = $Miners.Where({ $MissingFirewallRules -contains $_.Path })
-                                    $Variables.MissingMinerFirewallRule.ForEach({ $_.Reasons.Add("Inbound firewall rule missing") })
+                                    $Variables.MinerMissingFirewallRule = $Miners.Where({ $MissingFirewallRules -contains $_.Path })
+                                    $Variables.MinerMissingFirewallRule.ForEach({ $_.Reasons.Add("Inbound firewall rule missing") })
                                 }
                             }
                             Remove-Variable MissingFirewallRules
@@ -999,6 +999,7 @@ Try {
 
             Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
 
+            $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
             If ($Miners.Where({ $_.Available })) { 
                 Write-Message -Level Info "Selecting best miner$(If (($Variables.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { " profit (power cost $($Config.FIATcurrency) $($Variables.PowerPricekWh)/kW⋅h)" } Else { " earnings" })..."
 
@@ -1006,7 +1007,6 @@ Try {
                     $MinersBest = $Variables.MinersBestPerDevice = $MinersOptimal = $Miners.Where({ $_.Available })
                 }
                 Else { 
-                    $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
                     # Add running miner bonus
                     $RunningMinerBonusFactor = 1 + $Config.MinerSwitchingThreshold / 100
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias *= $RunningMinerBonusFactor })
