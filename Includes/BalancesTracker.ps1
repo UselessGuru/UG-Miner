@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.3.14
-Version date:   2024/11/17
+Version:        6.3.16
+Version date:   2024/11/20
 #>
 
 using module .\Include.psm1

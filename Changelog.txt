@@ -2,6 +2,38 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.3.16 2024/11/20
+====================================
+
+Fixes:
+- Includes.psm1: Mitigate memory leak with runspace handling
+
+Miner updates:
+- SRBMinerMulti-v2.7.1
+
+
+Changelog UG-Miner 6.3.15 2024/11/17
+====================================
+
+Changes:
+- Removed config folder from distribution package
+
+
+Changelog UG-Miner 6.3.14 2024/11/17
+====================================
+
+Fixes:
+- Core: Corrupt data when merging PoolsConfig with CustomPoolConfig
+- Web GUI / Balances data: 0 valued fields left empty
+
+Improvements:
+- Core: Minor code optimizations
+
+Miner updates:
+- BzMiner-v21.5.3
+- OneZeroMiner-v1.4.2
+
+
 Changelog UG-Miner 6.3.13 2024/11/10
 ====================================
 
@@ -234,7 +266,7 @@ Enhancements:
 
 Fixes:
 - Core: Suppress MemDbg debug message
-- Core: Configuration item 'SSL' not working some scenarios when set in pool config (Regression from 6.2.19)
+- Core: Configuration item 'SSL' not working some scenarios when set in pool configuration (Regression from 6.2.19)
 - Web GUI / Unavailable miners: 'Remove watchdog' not working
 
 Miner updates:
@@ -960,7 +992,7 @@ Fixes:
 - Core: Invalid earnings & profit numbers if '$PayoutPayout' -ne 'BTC'
 
 Improvements:
-- Web GUI: Do not allow to save config if no main currency is configured
+- Web GUI: Do not allow to save configuration if no main currency is configured
 - Web GUI: Miner speed improvements for pool & miner tables
 
 Miner changes:

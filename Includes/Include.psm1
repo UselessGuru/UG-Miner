@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.14
-Version date:   2024/11/17
+Version:        6.3.16
+Version date:   2024/11/20
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -502,6 +502,9 @@ Class Miner : IDisposable {
 
         If ($this.Process) { 
             [Void]$this.Process.CloseMainWindow()
+            [Void]$this.Process.WaitForExit(100)
+            [Void]$this.Process.Kill()
+            [Void]$this.Process.Dispose()
             $this.Process = $null
         }
 
@@ -2730,8 +2733,9 @@ public static class Kernel32
         Do { 
             If ($ControllerProcess.WaitForExit(1000)) { 
                 [Void]$Proc.CloseMainWindow()
-                [Void]$Proc.WaitForExit()
-                [Void]$Proc.Close()
+                [Void]$Proc.WaitForExit(100)
+                [Void]$Proc.Kill()
+                [Void]$Proc.Dispose()
                 $Proc = $null
             }
         } While ($Proc.HasExited -eq $false)

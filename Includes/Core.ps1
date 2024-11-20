@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.14
-Version date:   2024/11/17
+Version:        6.3.16
+Version date:   2024/11/20
 #>
 
 using module .\Include.psm1
@@ -37,7 +37,6 @@ Try {
 
         Write-Message -Level Info "Started new cycle."
         $Variables.EndCycleMessage = ""
-
 
         $Variables.BeginCycleTime = $Variables.Timer
         $Variables.EndCycleTime = If ($Variables.EndCycleTime) { $Variables.EndCycleTime.AddSeconds($Config.Interval) } Else { $Variables.BeginCycleTime.AddSeconds($Config.Interval) }
@@ -661,7 +660,7 @@ Try {
                     # We don't want to store hashrates if we have less than $MinDataSample
                     If ($Miner.Data.Count -ge $Miner.MinDataSample -or $Miner.Activated -gt $Variables.WatchdogCount) { 
                         $Miner.StatEnd = [DateTime]::Now.ToUniversalTime()
-                        $Stat_Span = [TimeSpan]($Miner.StatEnd - $Miner.StatStart)
+                        $StatSpan = [TimeSpan]($Miner.StatEnd - $Miner.StatStart)
 
                         ForEach ($Worker in $Miner.Workers) { 
                             $Algorithm = $Worker.Pool.Algorithm
@@ -675,7 +674,7 @@ Try {
                                 $Factor = 1
                             }
                             $StatName = "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
-                            $Stat = Set-Stat -Name $StatName -Value $MinerHashrates.$Algorithm -Duration $Stat_Span -FaultDetection ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Variables.WatchdogCount) -ToleranceExceeded ($Variables.WatchdogCount + 1)
+                            $Stat = Set-Stat -Name $StatName -Value $MinerHashrates.$Algorithm -Duration $StatSpan -FaultDetection ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Variables.WatchdogCount) -ToleranceExceeded ($Variables.WatchdogCount + 1)
                             If ($Stat.Updated -gt $Miner.StatStart) { 
                                 Write-Message -Level Info "Saved hashrate for '$($StatName -replace "_Hashrate$")': $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ")$(If ($Factor -le 0.999) { " (adjusted by factor $($Factor.ToString("N3")) [Shares: A$($MinerData.$Algorithm[0])|R$($MinerData.$Algorithm[1])|I$($MinerData.$Algorithm[2])|T$($MinerData.$Algorithm[3])])" }) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.Benchmark) { " [Benchmark done]" })."
                                 $Miner.StatStart = $Miner.StatEnd
@@ -697,7 +696,7 @@ Try {
                             If ([Double]::IsNaN($MinerPowerConsumption )) { $MinerPowerConsumption = 0 }
                             $StatName = "$($Miner.Name)_PowerConsumption"
                             # Always update power consumption when benchmarking
-                            $Stat = Set-Stat -Name $StatName -Value $MinerPowerConsumption -Duration $Stat_Span -FaultDetection (-not $Miner.Benchmark -and ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Variables.WatchdogCount)) -ToleranceExceeded ($Variables.WatchdogCount + 1)
+                            $Stat = Set-Stat -Name $StatName -Value $MinerPowerConsumption -Duration $StatSpan -FaultDetection (-not $Miner.Benchmark -and ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Variables.WatchdogCount)) -ToleranceExceeded ($Variables.WatchdogCount + 1)
                             If ($Stat.Updated -gt $Miner.StatStart) { 
                                 Write-Message -Level Info "Saved power consumption for '$($StatName -replace "_PowerConsumption$")': $($Stat.Live.ToString("N2"))W ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.MeasurePowerConsumption) { " [Power consumption measurement done]" })."
                             }
