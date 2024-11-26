@@ -1,6 +1,19 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.3.17 2024/11/??
+====================================
+
+Fixes:
+- Legacy GUI: Context menu for miners not working
+
+Improvements:
+- Remove obsolete code & minor code optimizations 
+
+Miner updates:
+- lolMiner-v1.92
+- Wildrig-v0.41
+
 
 Changelog UG-Miner 6.3.16 2024/11/20
 ====================================
