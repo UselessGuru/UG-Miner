@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
@@ -77,7 +77,7 @@ $Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$
 
 If ($Algorithms) { 
 
-    ($Devices | Sort-Object Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
@@ -115,7 +115,7 @@ If ($Algorithms) {
                                         $Arguments += " -wallet $($Pool.User -replace '\..+')"
                                         $Arguments += " -rigName $($Pool.User)$(If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Pool.WorkerName })"
                                         $Arguments += " -rigPassword $($Pool.Pass)"
-                                        If ($_.Type -ne "CPU") { $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
+                                        If ($_.Type -ne "CPU") { $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
                                     }
                                     Remove-Variable Pool
 

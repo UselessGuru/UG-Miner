@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 using module .\Include.psm1
@@ -396,11 +396,11 @@ Try {
 
                 # Expire pools that have not been updated for 1 day
                 $Timestamp = [DateTime]::Now.ToUniversalTime().AddHours(-24)
-                $Variables.PoolsExpired = @($Variables.Pools.Where({ $_.Updated -lt $Timestamp }))
+                $Variables.PoolsExpired = $Variables.Pools.Where({ $_.Updated -lt $Timestamp })
                 $Variables.Pools = $Variables.Pools.Where({ $_.Updated -ge $Timestamp })
                 Remove-Variable Timestamp
 
-                # Remove de-configured pools
+                # Count deconfigured pools
                 $PoolsDeconfiguredCount = $Variables.Pools.Where({ $_.Variant -notin $Variables.PoolName }).Count
 
                 If ($Pools = Compare-Object @($Variables.PoolsNew | Select-Object) @($Variables.Pools.Where({ $Variables.PoolName -contains $_.Variant }) | Select-Object) -Property Algorithm, Variant -IncludeEqual -PassThru) { 
@@ -657,7 +657,7 @@ Try {
                         }
                     }
 
-                    # We don't want to store hashrates if we have less than $MinDataSample
+                    # We don't want to store hashrates or power consumption if we have less than $MinDataSample
                     If ($Miner.Data.Count -ge $Miner.MinDataSample -or $Miner.Activated -gt $Variables.WatchdogCount) { 
                         $Miner.StatEnd = [DateTime]::Now.ToUniversalTime()
                         $StatSpan = [TimeSpan]($Miner.StatEnd - $Miner.StatStart)
@@ -689,10 +689,8 @@ Try {
                             }
                         }
                         Remove-Variable Factor -ErrorAction Ignore
-                    }
-                    If ($Miner.ReadPowerConsumption) { 
-                        # We don't want to store power consumption if we have less than $MinDataSample, store even when fluctuating hash rates were recorded
-                        If ($Miner.Data.Count -ge $Miner.MinDataSample -or $Miner.Activated -gt $Variables.WatchdogCount) { 
+
+                        If ($Miner.ReadPowerConsumption) { 
                             If ([Double]::IsNaN($MinerPowerConsumption )) { $MinerPowerConsumption = 0 }
                             $StatName = "$($Miner.Name)_PowerConsumption"
                             # Always update power consumption when benchmarking
@@ -1501,9 +1499,6 @@ Try {
 
         $Error.Clear()
         [System.GC]::Collect()
-        $Proc = Get-Process -Id $PID
-        Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) runspace: handles: $($Proc.HandleCount) / Memory: $($Proc.PrivateMemorySize64 / 1MB)MB"
-        Remove-Variable Proc
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }

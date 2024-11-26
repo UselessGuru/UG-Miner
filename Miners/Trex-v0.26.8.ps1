@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -59,7 +59,7 @@ $Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$
 
 If ($Algorithms) { 
 
-    ($Devices | Sort-Object Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
@@ -88,6 +88,7 @@ If ($Algorithms) {
                                     "ethstratum1"  { $Arguments += " --url stratum2" }
                                     "ethstratum2"  { $Arguments += " --url stratum2" }
                                     "ethstratumnh" { $Arguments += " --url stratum2" }
+                                    Default        { $Arguments += " --url stratum" }
                                 }
                                 $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
                                 $Arguments += "://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
@@ -104,6 +105,7 @@ If ($Algorithms) {
                                         "ethstratum1"  { $Arguments += " --url2 stratum2" }
                                         "ethstratum2"  { $Arguments += " --url2 stratum2" }
                                         "ethstratumnh" { $Arguments += " --url2 stratum2" }
+                                        Default        { $Arguments += " --url2 stratum" }
                                     }
                                     $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
                                     $Arguments += "://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"

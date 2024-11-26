@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 using module .\Include.psm1
@@ -85,7 +85,7 @@ Do {
         )
 
         # Keep most recent balance objects, keep empty balances for 7 days
-        $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object DateTime -Bottom 1 }))
+        $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object -Property DateTime -Bottom 1 }))
 
         # Read exchange rates
         [Void](Get-Rate)
@@ -237,7 +237,6 @@ Do {
                     If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) })) { $Growth168 = [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
                     If ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) })) { $Growth720 = [Double]($PoolBalanceObject.Earnings - ($PoolBalanceObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
                 }
-
 
                 $AvgHourlyGrowth = If ($PoolBalanceObjects.Where({ $_.DateTime -lt $Now.AddHours(-1) })) { [Double](($PoolBalanceObject.Earnings - $PoolBalanceObjects[0].Earnings) / ($Now - $PoolBalanceObjects[0].DateTime).TotalHours) }    Else { $Growth1 }
                 $AvgDailyGrowth  = If ($PoolBalanceObjects.Where({ $_.DateTime -lt $Now.AddDays(-1) }))  { [Double](($PoolBalanceObject.Earnings - $PoolBalanceObjects[0].Earnings) / ($Now - $PoolBalanceObjects[0].DateTime).TotalDays) }     Else { $Growth24 }
@@ -408,10 +407,6 @@ Do {
     If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }
 
     If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')." }
-
-    $Proc = Get-Process -Id $PID
-    Write-Message -Level MemDbg "$((Get-Item $MyInvocation.MyCommand.Path).BaseName) loop: Handles: $($Proc.HandleCount) / Memory: $($Proc.PrivateMemorySize64 / 1MB)MB / Threads: $($Proc.Threads.Count) / Modules: $($Proc.Modules.Count)"
-    Remove-Variable Proc
 
     # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
     While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }

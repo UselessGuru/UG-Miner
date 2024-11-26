@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1150,26 +1150,28 @@ Function Write-Message {
         "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
     }
 
-    If (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level -and $Variables.TextBoxSystemLog) { 
+    If ($Variables.TextBoxSystemLog) { 
         # Ignore error when legacy GUI gets closed
         Try { 
-            $SelectionLength = $Variables.TextBoxSystemLog.SelectionLength
-            $SelectionStart = $Variables.TextBoxSystemLog.SelectionStart
-            $TextLength = $Variables.TextBoxSystemLog.TextLength
+            If (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level) { 
+                $SelectionLength = $Variables.TextBoxSystemLog.SelectionLength
+                $SelectionStart = $Variables.TextBoxSystemLog.SelectionStart
+                $TextLength = $Variables.TextBoxSystemLog.TextLength
 
-            If ($Variables.TextBoxSystemLog.Lines.Count -gt 250) { 
-                # Keep only 200 lines, more lines impact performance
-                $Variables.TextBoxSystemLog.Lines = $Variables.TextBoxSystemLog.Lines | Select-Object -Last 200
-            }
+                If ($Variables.TextBoxSystemLog.Lines.Count -gt 250) { 
+                    # Keep only 200 lines, more lines impact performance
+                    $Variables.TextBoxSystemLog.Lines = $Variables.TextBoxSystemLog.Lines | Select-Object -Last 200
+                }
 
-            $SelectionStart += ($Variables.TextBoxSystemLog.TextLength - $TextLength)
-            If ($SelectionLength -and $SelectionStart -ge 0) { 
-                $Variables.TextBoxSystemLog.Lines += $Message
-                $Variables.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
-                $Variables.TextBoxSystemLog.ScrollToCaret()
-            }
-            Else { 
-                $Variables.TextBoxSystemLog.AppendText("`r`n$Message")
+                $SelectionStart += ($Variables.TextBoxSystemLog.TextLength - $TextLength)
+                If ($SelectionLength -and $SelectionStart -ge 0) { 
+                    $Variables.TextBoxSystemLog.Lines += $Message
+                    $Variables.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
+                    $Variables.TextBoxSystemLog.ScrollToCaret()
+                }
+                Else { 
+                    $Variables.TextBoxSystemLog.AppendText("`r`n$Message")
+                }
             }
         }
         Catch { }
@@ -3327,6 +3329,32 @@ Function Get-AllDAGdata {
         }
     }
 
+    # # Update on script start, once every 24hrs or if unable to get data from source
+    # $Currency = "PHI"
+    # $Url = "https://explorer.phicoin.net/api/getblockcount"
+    # If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    #     # Get block data from EVR block explorer
+    #     Try { 
+    #         Write-Message -Level Info "Loading DAG data from '$Url'..."
+    #         $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+    #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+    #             $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
+    #             If ($CurrencyDAGdata.Epoch) { 
+    #                 $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+    #                 $CurrencyDAGdata | Add-Member Url $Url -Force
+    #                 $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+    #                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+    #             }
+    #             Else { 
+    #                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+    #             }
+    #         }
+    #     }
+    #     Catch { 
+    #         Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+    #     }
+    # }
+
     # ZergPool (Coins) also supplies MEWC DAG data
     If ($Variables.PoolName -match "ZergPoolCoins.*") { 
         $Currency = "MEWC"
@@ -3488,7 +3516,19 @@ Function Get-DAGsize {
             While (-not (Test-Prime ($Size / $MixBytes))) { 
                 $Size -= 2 * $MixBytes
             }
+            Break
         }
+        # "PHI" { 
+        #     If ($Epoch -ge 110) { $Epoch *= 4 } # https://phicoin.net/docs/Phicoin/algorithm#improved-dag-growth-mechanism
+        #     $DatasetBytesInit = 1GB
+        #     $DatasetBytesGrowth = 8MB
+        #     $MixBytes = 128
+        #     $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+        #     While (-not (Test-Prime ($Size / $MixBytes))) { 
+        #         $Size -= 2 * $MixBytes
+        #     }
+        #     Break
+        # }
         Default { 
             $DatasetBytesInit = 1GB
             $DatasetBytesGrowth = 8MB
@@ -3517,6 +3557,7 @@ Function Get-DAGepoch {
     Switch ($Algorithm) { 
         "Autolykos2" { $BlockHeight -= 416768 } # Epoch 0 starts @ 417792
         "FishHash"   { Return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
+        # "PhiHash"    { }
         Default      { }
     }
 

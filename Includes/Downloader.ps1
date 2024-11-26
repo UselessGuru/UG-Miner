@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 using module .\Includes\Include.psm1
@@ -59,7 +59,7 @@ $ProgressPreference = "SilentlyContinue"
                 If ($Searchable) { 
                     Write-Message -Level Info "Downloader:<br>Searching for $(Split-Path $Path -Leaf) on local computer..."
 
-                    ($Path_Old = Get-PSDrive -PSProvider FileSystem).ForEach({ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse }) | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+                    ($Path_Old = Get-PSDrive -PSProvider FileSystem).ForEach({ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse }) | Sort-Object -Property LastWriteTimeUtc -Descending | Select-Object -First 1
                     $Path_New = $Path
                 }
 

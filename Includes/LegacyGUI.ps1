@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -43,7 +43,7 @@ Function CheckBoxSwitching_Click {
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIswitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
         If (-not $LegacyGUIswitchingDGV.SelectedRows) { 
-            $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
+            $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
             If ($LegacyGUIswitchingDGV.Columns) { 
                 $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50; $LegacyGUIswitchingDGV.Sort($LegacyGUIswitchingDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
                 $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
@@ -216,6 +216,7 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.BeginInit()
                     $LegacyGUIactiveMinersDGV.ClearSelection()
                     $LegacyGUIactiveMinersDGV.DataSource = $Variables.MinersBest | Select-Object @(
+                        @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
                         @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join " " } }
                         @{ Name = "Status Info"; Expression = { $_.StatusInfo } }
@@ -234,17 +235,18 @@ Function Update-TabControl {
 
                     If (-not $LegacyGUIactiveMinersDGV.ColumnWidthChanged -and $LegacyGUIactiveMinersDGV.Columns) { 
                         $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
-                        $LegacyGUIactiveMinersDGV.Columns[1].FillWeight = 35 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
-                        $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 190
-                        $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[4].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIactiveMinersDGV.Columns[1].Visible = $false
+                        $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 35 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
+                        $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 190
+                        $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIactiveMinersDGV.Columns[5].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
                         $LegacyGUIactiveMinersDGV.Columns[6].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIactiveMinersDGV.Columns[7].FillWeight = 60 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
-                        $LegacyGUIactiveMinersDGV.Columns[8].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
-                        $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIactiveMinersDGV.Columns[7].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIactiveMinersDGV.Columns[8].FillWeight = 60 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
+                        $LegacyGUIactiveMinersDGV.Columns[9].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
+                        $LegacyGUIactiveMinersDGV.Columns[10].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIactiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIactiveMinersDGV.Columns[11].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIactiveMinersDGV.Columns[12].FillWeight = 50; $LegacyGUIactiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
 
                         $LegacyGUIactiveMinersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
@@ -431,7 +433,7 @@ Function Update-TabControl {
             $LegacyGUIcontextMenuStripItem5.Enabled = $true
             $LegacyGUIcontextMenuStripItem5.Text = "Enable"
             $LegacyGUIcontextMenuStripItem5.Visible = $true
-            $LegacyGUIcontextMenuStripItem6.Enabled = $Variables.WatchdogTimers
+            $LegacyGUIcontextMenuStripItem6.Enabled = $Config.WatchdogTimers
             $LegacyGUIcontextMenuStripItem6.Text = "Remove watchdog timer"
             $LegacyGUIcontextMenuStripItem6.Visible = $true
 
@@ -457,6 +459,7 @@ Function Update-TabControl {
                     $LegacyGUIminersDGV.BeginInit()
 
                     $LegacyGUIminersDGV.DataSource = $DataSource | Select-Object @(
+                        @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
                         @{ Name = "Miner"; Expression = { $_.Name } },
                         @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
@@ -474,16 +477,17 @@ Function Update-TabControl {
 
                     If (-not $LegacyGUIminersDGV.ColumnWidthChanged -and $LegacyGUIminersDGV.Columns) { 
                         $LegacyGUIminersDGV.Columns[0].Visible = $false
-                        $LegacyGUIminersDGV.Columns[1].FillWeight = 160
-                        $LegacyGUIminersDGV.Columns[2].FillWeight = 20 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
-                        $LegacyGUIminersDGV.Columns[3].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked; $LegacyGUIminersDGV.Columns[3].FillWeight = 30
-                        $LegacyGUIminersDGV.Columns[4].FillWeight = 40; $LegacyGUIminersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIminersDGV.Columns[5].FillWeight = 40; $LegacyGUIminersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIminersDGV.Columns[6].FillWeight = 40; $LegacyGUIminersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIminersDGV.Columns[7].FillWeight = 40; $LegacyGUIminersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIminersDGV.Columns[8].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 90 } Else { 60 }
-                        $LegacyGUIminersDGV.Columns[9].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 85 } Else { 60 }
-                        $LegacyGUIminersDGV.Columns[10].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 80 } Else { 50 }; $LegacyGUIminersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIminersDGV.Columns[1].Visible = $false
+                        $LegacyGUIminersDGV.Columns[2].FillWeight = 160
+                        $LegacyGUIminersDGV.Columns[3].FillWeight = 20 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
+                        $LegacyGUIminersDGV.Columns[4].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked; $LegacyGUIminersDGV.Columns[3].FillWeight = 30
+                        $LegacyGUIminersDGV.Columns[5].FillWeight = 40; $LegacyGUIminersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIminersDGV.Columns[6].FillWeight = 40; $LegacyGUIminersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIminersDGV.Columns[7].FillWeight = 40; $LegacyGUIminersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIminersDGV.Columns[8].FillWeight = 40; $LegacyGUIminersDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
+                        $LegacyGUIminersDGV.Columns[9].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 90 } Else { 60 }
+                        $LegacyGUIminersDGV.Columns[10].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 85 } Else { 60 }
+                        $LegacyGUIminersDGV.Columns[11].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 80 } Else { 50 }; $LegacyGUIminersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
 
                         $LegacyGUIminersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
@@ -943,11 +947,11 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
     { 
         $Data = @()
 
-        If ($This.SourceControl.Name -match "LaunchedMinersDGV|MinersDGV") { 
+        If ($this.SourceControl.Name -match "LaunchedMinersDGV|MinersDGV") { 
 
             Switch ($_.ClickedItem.Text) { 
                 "Re-benchmark" { 
-                    $Variables.Miners.Where({ $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             If ($_.Earning -eq 0) { $_.Available = $true }
                             $_.Earning_Accuracy = [Double]::NaN
@@ -976,7 +980,6 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                                 $_.SubStatus = "idle"
                             }
                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "0 H/s stat file" }))
                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
                             If (-not $_.Reasons) { $_.Available = $true }
@@ -993,7 +996,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Re-measure power consumption" { 
-                    $Variables.Miners.Where({ $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             If ($_.Earning -eq 0) { $_.Available = $true }
                             If ($Variables.CalculatePowerCost) { 
@@ -1019,7 +1022,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Mark as failed" { 
-                    $Variables.Miners.Where({ $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             If ($Parameters.Value -le 0 -and $Parameters.Type -eq "Hashrate") { $_.Available = $false; $_.Disabled = $true }
                             $Data += $_.Name
@@ -1049,7 +1052,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Disable" { 
-                    $Variables.Miners.Where({ -not $_.Disabled -and $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ -not $_.Disabled -and $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             $Data += $_.Name
                             ForEach ($Worker in $_.Workers) { 
@@ -1073,7 +1076,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Enable" { 
-                    $Variables.Miners.Where({ $_.Disabled -and $_.Info -in $This.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ $_.Disabled -and $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             $Data += $_.Name
                             ForEach ($Worker in $_.Workers) { 
@@ -1096,20 +1099,18 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Remove watchdog timer" { 
-                    $This.SourceControl.SelectedRows.ForEach(
+                    $this.SourceControl.SelectedRows.ForEach(
                         { 
-                            $SelectedMinerName = $_.Cells[0].Value
-                            # Update miner
-                            $Variables.Miners.Where({ $_.Name -eq $SelectedMinerName }).ForEach(
+                            $Variables.Miners.Where({ $_.Name -in $this.SourceControl.SelectedRows.ForEach({ $_.Cells[2].Value }) }).Where({ $Variables.WatchdogTimers.MinerName -contains $_.Name }).ForEach(
                                 { 
                                     $Data += "$($_.Name)"
                                     $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                                    # Update miner
                                     If (-not $_.Reasons) { $_.Available = $true }
+                                    # Remove Watchdog timers
+                                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name }))
                                 }
                             )
-
-                            # Remove Watchdog timers
-                            $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name }))
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
@@ -1125,13 +1126,13 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Break
                 }
             }
-            If ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Variables.Branding.ProductLabel): $($_.ClickedItem.Text) miners", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
+            If ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Variables.Branding.ProductLabel): $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
 
         }
-        ElseIf ($This.SourceControl.Name -match "PoolsDGV") { 
+        ElseIf ($this.SourceControl.Name -match "PoolsDGV") { 
             Switch ($_.ClickedItem.Text) { 
                 "Reset pool stat data" { 
-                    $This.SourceControl.SelectedRows.ForEach(
+                    $this.SourceControl.SelectedRows.ForEach(
                         { 
                             $SelectedPoolName = $_.Cells[5].Value
                             $SelectedPoolAlgorithm = $_.Cells[0].Value
@@ -1159,7 +1160,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Break
                 }
                 "Remove watchdog timer" { 
-                    $This.SourceControl.SelectedRows.ForEach(
+                    $this.SourceControl.SelectedRows.ForEach(
                         { 
                             $SelectedPoolName = $_.Cells[5].Value
                             $SelectedPoolAlgorithm = $_.Cells[0].Value
@@ -1236,7 +1237,7 @@ $LegacyGUIactiveMinersDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIactiveMinersDGV.Add_MouseUP(
     { 
         If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
-            $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$This.SelectedRows
+            $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$this.SelectedRows
         }
     }
 )
@@ -1404,7 +1405,7 @@ $LegacyGUIminersDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIminersDGV.Add_MouseUP(
     { 
         If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
-            $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$This.SelectedRows
+            $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$this.SelectedRows
         }
     }
 )
@@ -1516,7 +1517,7 @@ $LegacyGUIpoolsDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIpoolsDGV.Add_MouseUP(
     { 
         If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
-            $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$This.SelectedRows
+            $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$this.SelectedRows
         }
     }
 )

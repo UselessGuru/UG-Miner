@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 using module .\Includes\Include.psm1
@@ -311,7 +311,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.16"
+    Version      = [System.Version]"6.3.17"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -1029,7 +1029,7 @@ Function MainLoop {
                         @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
-                    $Variables.MinersBest | Sort-Object -Property { $_.DeviceNames } | Format-Table $MinerTable -Wrap | Out-Host
+                    $Variables.MinersBest | Sort-Object -Property { [String]$_.DeviceNames } | Format-Table $MinerTable -Wrap | Out-Host
                     Remove-Variable MinerTable
                 }
 
@@ -1052,7 +1052,7 @@ Function MainLoop {
                             @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } }
                             @{ Label = "Command"; Expression = { $_.CommandLine } }
                         )
-                        $ProcessesIdle | Sort-Object { $_.EndTime } -Descending | Format-Table $MinerTable -Wrap | Out-Host
+                        $ProcessesIdle | Sort-Object -Property EndTime -Descending | Format-Table $MinerTable -Wrap | Out-Host
                         Remove-Variable MinerTable
                     }
                     Remove-Variable ProcessesIdle
@@ -1116,9 +1116,6 @@ Function MainLoop {
 
         $Error.Clear()
         [System.GC]::Collect()
-        $Proc = Get-Process -Id $PID
-        Write-Message -Level MemDbg "$ProcessName main loop: Handles: $($Proc.HandleCount) / Memory: $($Proc.PrivateMemorySize64 / 1MB)MB / Threads: $($Proc.Threads.Count) / Modules: $($Proc.Modules.Count)"
-        Remove-Variable Proc
     }
 }
 

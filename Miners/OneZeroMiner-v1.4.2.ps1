@@ -21,20 +21,20 @@ Version:        6.3.17
 Version date:   2024/11/26
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "7.5" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02" }))) { Return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerVerusHash/ccminer_GPU_3_8_3.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.4.2/onezerominer-win64-1.4.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = "Bin\$Name\ccminer.exe"
-$DeviceEnumerator = "Type_Vendor_Index"
+$Path = "Bin\$Name\onezerominer.exe"
+$DeviceEnumerator = "Type_Vendor_Slot"
 
-$Algorithms = @(
-    @{ Algorithm = "VerusHash"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(30, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus --intensity 23" }
+$Algorithms = @( 
+    @{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
+    @{ Algorithm = "XelisHash";  Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 If ($Algorithms) { 
 
@@ -46,22 +46,22 @@ If ($Algorithms) {
 
             $Algorithms.ForEach(
                 { 
+                    # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $MinMemGiB = $_.MinMemGiB
                     If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                    # If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
-
-                            $Arguments = $_.Arguments
-                            If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity .+$" }
+                        # $ExcludePools = $_.ExcludePools
+                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                             [PSCustomObject]@{ 
-                                API         = "CcMiner"
-                                Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --statsavg 2 --retry-pause 1 --api-bind $MinerAPIPort --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                API         = "OneZero"
+                                Arguments   = "$($_.Arguments) --pool $(If ($Pool.PoolPorts[1]) { "ssl://" })$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.PoolPorts[1] -and $Config.SSLallowSelfSignedCertificate) { " --no-cert-validation" }) --api-port $MinerAPIPort --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
-                                Fee         = @(0) # Dev fee
+                                Fee         = $_.Fee # Dev fee
                                 MinerSet    = $_.MinerSet
                                 Name        = $MinerName
                                 Path        = $Path

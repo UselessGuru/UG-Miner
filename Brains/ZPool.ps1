@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 using module ..\Includes\Include.psm1
@@ -98,7 +98,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             ($CurrenciesArray | Group-Object algo).ForEach(
                 { 
                     If ($AlgoData.($_.name)) { 
-                        $BestCurrency = ($_.Group | Sort-Object conversion_supported, estimate -Descending | Select-Object -First 1)
+                        $BestCurrency = ($_.Group | Sort-Object -Property conversion_supported, estimate -Descending | Select-Object -First 1)
                         $AlgoData.($_.name) | Add-Member Currency $BestCurrency.currency -Force
                         $AlgoData.($_.name) | Add-Member CoinName $BestCurrency.coinname -Force
                         $AlgoData.($_.name) | Add-Member conversion_supported $BestCurrency.conversion_supported -Force

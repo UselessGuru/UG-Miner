@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 Function Start-APIServer { 
@@ -853,7 +853,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners/best" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBest | Sort-Object DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
+                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBest | Sort-Object -Property DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
                                 Break
                             }
                             "/miners/disabled" { 

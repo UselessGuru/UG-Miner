@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.16
-Version date:   2024/11/20
+Version:        6.3.17
+Version date:   2024/11/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -99,7 +99,7 @@ If ($Algorithms) {
 
     $Coins = @("aeon7", "bbscoin", "bittube", "freehaven", "graft", "haven", "intense", "masari", "monero" ,"qrl", "ryo", "stellite", "turtlecoin")
 
-    ($Devices | Sort-Object Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
@@ -118,9 +118,9 @@ If ($Algorithms) {
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm] | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
 
                             # Note: For fine tuning directly edit the config files in the miner binary directory
-                            $ConfigFileName = [System.Web.HttpUtility]::UrlEncode("$((@("Config") + @($_.Type) + @(($Model.ForEach({ $Model = $_; "$(@($AvailableMinerDevices.Where({ $_.Model -EQ $Model })).Count)x$Model($((($AvailableMinerDevices | Sort-Object Name).Where({ $_.Model -eq $Model })).Name -join ';'))" }) | Select-Object) -join '-') + @($MinerAPIPort) | Select-Object) -join '-').txt")
-                            $MinerThreadsConfigFileName = [System.Web.HttpUtility]::UrlEncode("$((@("ThreadsConfig") + @($_.Type) + @($_.Algorithm) + @(($Model.ForEach({ $Model = $_; "$(@($AvailableMinerDevices.Where({ $_.Model -eq $Model })).Count)x$Model($((($AvailableMinerDevices | Sort-Object Name).Where({ $_.Model -eq $Model })).Name -join ';'))" }) | Select-Object) -join '-') | Select-Object) -join '-').txt")
-                            $PlatformThreadsConfigFileName = [System.Web.HttpUtility]::UrlEncode("$((@($_.Type) + @($_.Algorithm) + @((($MinerDevices.Model | Sort-Object -Unique).ForEach({ $Model = $_; "$(@($MinerDevices.Where({ $_.Model -eq $Model })).Count)x$Model($((($MinerDevices | Sort-Object Name).Where({ $_.Model -eq $Model })).Name -join ';'))" }) | Select-Object) -join '-') | Select-Object) -join '-').txt")
+                            $ConfigFileName = [System.Web.HttpUtility]::UrlEncode("$((@("Config") + @($_.Type) + @(($Model.ForEach({ $Model = $_; "$(@($AvailableMinerDevices.Where({ $_.Model -EQ $Model })).Count)x$Model($((($AvailableMinerDevices | Sort-Object -Property Name).Where({ $_.Model -eq $Model })).Name -join ';'))" }) | Select-Object) -join '-') + @($MinerAPIPort) | Select-Object) -join '-').txt")
+                            $MinerThreadsConfigFileName = [System.Web.HttpUtility]::UrlEncode("$((@("ThreadsConfig") + @($_.Type) + @($_.Algorithm) + @(($Model.ForEach({ $Model = $_; "$(@($AvailableMinerDevices.Where({ $_.Model -eq $Model })).Count)x$Model($((($AvailableMinerDevices | Sort-Object -Property Name).Where({ $_.Model -eq $Model })).Name -join ';'))" }) | Select-Object) -join '-') | Select-Object) -join '-').txt")
+                            $PlatformThreadsConfigFileName = [System.Web.HttpUtility]::UrlEncode("$((@($_.Type) + @($_.Algorithm) + @((($MinerDevices.Model | Sort-Object -Unique).ForEach({ $Model = $_; "$(@($MinerDevices.Where({ $_.Model -eq $Model })).Count)x$Model($((($MinerDevices | Sort-Object -Property Name).Where({ $_.Model -eq $Model })).Name -join ';'))" }) | Select-Object) -join '-') | Select-Object) -join '-').txt")
                             $PoolFileName = [System.Web.HttpUtility]::UrlEncode("$((@("PoolConf") + @($($_.Algorithm).Name) + @($_.Algorithm) + @($Pool.User) + @($Pool.Pass) | Select-Object) -join '-').txt")
 
                             $Arguments = [PSCustomObject]@{ 
