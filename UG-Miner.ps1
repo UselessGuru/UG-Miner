@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.17
-Version date:   2024/11/26
+Version:        6.3.18
+Version date:   2024/11/30
 #>
 
 using module .\Includes\Include.psm1
@@ -280,6 +280,8 @@ Param(
     [String]$WorkerName = [System.Net.Dns]::GetHostName()
 )
 
+$RecommendedPWSHversion = [Version]"7.4.6"
+
 # Close useless empty cmd window that comes up when starting from bat file
 If ($ParentProcessId = (Get-CimInstance win32_process -Filter "ProcessId = $PID")[0].ParentProcessId) { 
     If ($RootProcess = (Get-CimInstance win32_process -Filter "ProcessId = $ParentProcessId")[0]) { 
@@ -311,15 +313,15 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.17"
+    Version      = [System.Version]"6.3.18"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
 
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is 7.4.5) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
-    $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is 7.4.5) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
+    $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Exit
 }
 
@@ -435,7 +437,8 @@ If ( -not (Get-Command Get-PnpDevice)) {
     Exit
 }
 
-Write-Message -Level Verbose "Pre-requisites verification OK - Running PWSH version $([String]($PSVersionTable.PSVersion))."
+Write-Message -Level Verbose "Pre-requisites verification OK - Running PWSH version $($PSVersionTable.PSVersion)$(If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { " (recommended version is $($RecommendedPWSHversion))"})."
+Remove-Variable RecommendedPWSHversion
 
 # Check if new version is available
 Get-Version

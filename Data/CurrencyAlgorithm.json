@@ -353,6 +353,7 @@
   "TMC": "Scrypt",
   "TNET": "Blake2b",
   "TRC": "SHA256",
+  "TROLL": "Scrypt",
   "TSF": "Ethash",
   "TSK": "RandomTuske",
   "TZC": "Neoscrypt",
