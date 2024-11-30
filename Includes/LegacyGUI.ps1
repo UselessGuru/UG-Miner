@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.17
-Version date:   2024/11/26
+Version:        6.3.18
+Version date:   2024/11/30
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -45,7 +45,7 @@ Function CheckBoxSwitching_Click {
         If (-not $LegacyGUIswitchingDGV.SelectedRows) { 
             $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
             If ($LegacyGUIswitchingDGV.Columns) { 
-                $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50; $LegacyGUIswitchingDGV.Sort($LegacyGUIswitchingDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
+                $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50; $LegacyGUIswitchingDGV.Sort($LegacyGUIswitchingDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Descending)
                 $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
                 $LegacyGUIswitchingDGV.Columns[2].FillWeight = 90; $LegacyGUIswitchingDGV.Columns[2].HeaderText = "Miner"
                 $LegacyGUIswitchingDGV.Columns[3].FillWeight = 60 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum).Maximum * 40; $LegacyGUIswitchingDGV.Columns[3].HeaderText = "Pool(s)"
@@ -479,9 +479,9 @@ Function Update-TabControl {
                         $LegacyGUIminersDGV.Columns[0].Visible = $false
                         $LegacyGUIminersDGV.Columns[1].Visible = $false
                         $LegacyGUIminersDGV.Columns[2].FillWeight = 160
-                        $LegacyGUIminersDGV.Columns[3].FillWeight = 20 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
-                        $LegacyGUIminersDGV.Columns[4].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked; $LegacyGUIminersDGV.Columns[3].FillWeight = 30
-                        $LegacyGUIminersDGV.Columns[5].FillWeight = 40; $LegacyGUIminersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIminersDGV.Columns[3].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
+                        $LegacyGUIminersDGV.Columns[4].FillWeight = 40; $LegacyGUIminersDGV.Columns[4].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked
+                        $LegacyGUIminersDGV.Columns[5].FillWeight = 40; $LegacyGUIminersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIminersDGV.Columns[6].FillWeight = 40; $LegacyGUIminersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                         $LegacyGUIminersDGV.Columns[7].FillWeight = 40; $LegacyGUIminersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                         $LegacyGUIminersDGV.Columns[8].FillWeight = 40; $LegacyGUIminersDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
@@ -853,7 +853,7 @@ $LegacyGUIbuttonPause.Add_Click(
     }
 )
 $LegacyGUIControls += $LegacyGUIbuttonPause
-$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonPause, "Pause mining processes.`rBackground processes remain running.")
+$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonPause, "Pause mining processes.`rBackground processes will remain running.")
 
 $LegacyGUIbuttonStart = New-Object System.Windows.Forms.Button
 $LegacyGUIbuttonStart.Enabled = $true

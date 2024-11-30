@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.17
-Version date:   2024/11/26
+Version:        6.3.18
+Version date:   2024/11/30
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
@@ -60,7 +60,7 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsen");                 Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo KARLSEN" }
     @{ Algorithms = @("HeavyHashKarlsenV2");               Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2" }
     @{ Algorithms = @("HeavyHashPyrinV2");                 Type = "AMD"; Fee = @(0.01);        MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo PYRINV2 " }
-    @{ Algorithms = @("NexaPow");                          Type = "AMD"; Fee = @(0.02);        MinMemGiB = 3.0;  MinerSet = 2; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo NEXA" }
+    @{ Algorithms = @("NexaPow");                          Type = "AMD"; Fee = @(0.02);        MinMemGiB = 3.0;  MinerSet = 2; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = "^GCN\d+$";         ExcludePools = @(@(), @());           Arguments = " --algo NEXA" }
     @{ Algorithms = @("Octopus");                          Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo OCTOPUS" }
     @{ Algorithms = @("SHA512256d");                       Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 1.0;  MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo RADIANT" }
     @{ Algorithms = @("UbqHash");                          Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH" }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.17
-Version date:   2024/11/26
+Version:        6.3.18
+Version date:   2024/11/30
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -2987,14 +2987,14 @@ Function Initialize-Autoupdate {
     $UpdateLog = ".\Logs\AutoUpdateLog_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
 
     # Download update script
-    "Downloading update script..." | Tee-Object $UpdateLog -Append | Write-Message -Level Verbose 
+    "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
     Try { 
         Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
-        "Executing update script..." | Tee-Object $UpdateLog -Append | Write-Message -Level Verbose 
+        "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
         . $UpdateScript
     }
     Catch { 
-        "Downloading update script failed. Cannot complete auto-update :-(" | Tee-Object $UpdateLog -Append | Write-Message -Level Error
+        "Downloading update script failed. Cannot complete auto-update :-(" | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Error
     }
 }
 
