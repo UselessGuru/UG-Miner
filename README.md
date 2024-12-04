@@ -54,7 +54,7 @@ UG-Miner code is partly based on
 <sup>(2)</sup> Pool does not support auto-exchange to BTC or other currencies.  
     You need to configure a wallet address for each currency you want to mine.
 
-<sup>(3)</sup> Registration with NiceHash is re3quired. For some countries private usage is not longer possible.  
+<sup>(3)</sup> Registration with NiceHash is required. For some countries private usage is not longer possible.  
 
 <sup>(4)</sup> Pool does not support auto-exchange for some currencies.  
     You need to configure a wallet address for each non-auto-exchangable currency you want to mine.
