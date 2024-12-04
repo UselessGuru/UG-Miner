@@ -93,6 +93,8 @@
                 $('*').css('cursor', 'wait');
               },
               onLoadSuccess: function() {
+                updateSummary();
+                updateButtonStatus();
                 $('*').css('cursor', 'default');
               },
               onPostBody: function () {

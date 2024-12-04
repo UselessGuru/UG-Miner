@@ -32,6 +32,8 @@
                   document.getElementById('btn-editconfig').disabled = false;
                   document.getElementById('btn-editpoolsconfig').disabled = false;
                 });
+                updateSummary();
+                updateButtonStatus();
               });
 
               //Edit poolsconfig file
@@ -80,6 +82,8 @@
                   }
                 });
               });
+              updateSummary();
+              updateButtonStatus();
             });
           </script>
 <!-- End of page scripts 'configrunning.html' -->

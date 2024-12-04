@@ -146,6 +146,8 @@
                   $table.bootstrapTable('hideColumn', 'SecondaryPoolFee');
                   $table.bootstrapTable('hideColumn', 'SecondaryMinerFee');
                 };
+                updateSummary();
+                updateButtonStatus();
               },
               onResetView: function () {
                 document.getElementById('logtext').style.height = ($(window).height() - $table.height() - 410) + 'px';

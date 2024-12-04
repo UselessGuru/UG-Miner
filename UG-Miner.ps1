@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.18
-Version date:   2024/11/30
+Version:        6.3.19
+Version date:   2024/12/04
 #>
 
 using module .\Includes\Include.psm1
@@ -171,7 +171,9 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$PayoutCurrency = "BTC", # i.e. BTC, LTC, ZEC, ETH etc., Default PayoutCurrency for all pools that have no other currency configured, PayoutCurrency is also a per pool setting (to be configured in 'PoolsConfig.json')
     [Parameter(Mandatory = $false)]
-    [Switch]$PoolAllow0Hashrate = $true, # Allow mining to the pool even when there is 0 (or no) hashrate reported in the API
+    [Switch]$PoolAllow0Hashrate = $false, # Allow mining to the pool even when there is 0 (or no) hashrate reported in the API (not recommended)
+    [Parameter(Mandatory = $false)]
+    [Switch]$PoolAllow0Price = $false, # Allow mining to the pool even when the price reported in the API is 0 (not recommended)
     [Parameter(Mandatory = $false)]
     [Int]$PoolAPIallowedFailureCount = 3, # Max number of pool API request attempts
     [Parameter(Mandatory = $false)]
@@ -313,7 +315,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.18"
+    Version      = [System.Version]"6.3.19"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell

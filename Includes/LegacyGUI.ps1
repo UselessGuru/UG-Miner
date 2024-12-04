@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.18
-Version date:   2024/11/30
+Version:        6.3.19
+Version date:   2024/12/04
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -42,24 +42,22 @@ Function CheckBoxSwitching_Click {
     $LegacyGUIswitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIswitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
-        If (-not $LegacyGUIswitchingDGV.SelectedRows) { 
-            $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
-            If ($LegacyGUIswitchingDGV.Columns) { 
-                $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50; $LegacyGUIswitchingDGV.Sort($LegacyGUIswitchingDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Descending)
-                $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
-                $LegacyGUIswitchingDGV.Columns[2].FillWeight = 90; $LegacyGUIswitchingDGV.Columns[2].HeaderText = "Miner"
-                $LegacyGUIswitchingDGV.Columns[3].FillWeight = 60 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum).Maximum * 40; $LegacyGUIswitchingDGV.Columns[3].HeaderText = "Pool(s)"
-                $LegacyGUIswitchingDGV.Columns[4].FillWeight = 50 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIswitchingDGV.Columns[4].HeaderText = "Algorithm(s) (variant)"
-                $LegacyGUIswitchingDGV.Columns[5].FillWeight = 90 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum).Maximum * 50; $LegacyGUIswitchingDGV.Columns[5].HeaderText = "Account(s)"
-                $LegacyGUIswitchingDGV.Columns[6].FillWeight = 30; $LegacyGUIswitchingDGV.Columns[6].HeaderText = "Cycles"; $LegacyGUIswitchingDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
-                $LegacyGUIswitchingDGV.Columns[7].FillWeight = 35; $LegacyGUIswitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
-                $LegacyGUIswitchingDGV.Columns[8].FillWeight = 30 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIswitchingDGV.Columns[8].HeaderText = "Device"
-                $LegacyGUIswitchingDGV.Columns[9].FillWeight = 30
-                $LegacyGUIswitchingLogClearButton.Enabled = $true
-            }
-            $LegacyGUIswitchingDGV.ClearSelection()
-            $LegacyGUIswitchingDGV.EndInit()
+        $LegacyGUIswitchingDGV.DataSource = (([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object @("DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type") | Out-DataTable
+        If ($LegacyGUIswitchingDGV.Columns) { 
+            $LegacyGUIswitchingDGV.Columns[0].FillWeight = 50; $LegacyGUIswitchingDGV.Sort($LegacyGUIswitchingDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Descending)
+            $LegacyGUIswitchingDGV.Columns[1].FillWeight = 50
+            $LegacyGUIswitchingDGV.Columns[2].FillWeight = 90; $LegacyGUIswitchingDGV.Columns[2].HeaderText = "Miner"
+            $LegacyGUIswitchingDGV.Columns[3].FillWeight = 60 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Pools.Count }) | Measure-Object -Maximum).Maximum * 40; $LegacyGUIswitchingDGV.Columns[3].HeaderText = "Pool(s)"
+            $LegacyGUIswitchingDGV.Columns[4].FillWeight = 50 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Algorithms.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIswitchingDGV.Columns[4].HeaderText = "Algorithm(s) (variant)"
+            $LegacyGUIswitchingDGV.Columns[5].FillWeight = 90 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum).Maximum * 50; $LegacyGUIswitchingDGV.Columns[5].HeaderText = "Account(s)"
+            $LegacyGUIswitchingDGV.Columns[6].FillWeight = 30; $LegacyGUIswitchingDGV.Columns[6].HeaderText = "Cycles"; $LegacyGUIswitchingDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
+            $LegacyGUIswitchingDGV.Columns[7].FillWeight = 35; $LegacyGUIswitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
+            $LegacyGUIswitchingDGV.Columns[8].FillWeight = 30 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIswitchingDGV.Columns[8].HeaderText = "Device"
+            $LegacyGUIswitchingDGV.Columns[9].FillWeight = 30
+            $LegacyGUIswitchingLogClearButton.Enabled = $true
         }
+        $LegacyGUIswitchingDGV.ClearSelection()
+        $LegacyGUIswitchingDGV.EndInit()
     }
     Else { 
         $LegacyGUIswitchingLogLabel.Text = "Switching log - no data"
@@ -224,7 +222,7 @@ Function Update-TabControl {
                         @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                         @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                         @{ Name = "Power consumption (live)"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
-                        @{ Name = "Algorithm variant [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
+                        @{ Name = "Algorithm (variant) [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
                         @{ Name = "Hashrate (live)"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
                         @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
@@ -652,35 +650,33 @@ Function Update-TabControl {
 
             If ($Config.Watchdog) { 
                 If ($Variables.WatchdogTimers) { 
-                    If (-not $LegacyGUIwatchdogTimersDGV.SelectedRows) { 
-                        $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers updated $(($Variables.WatchdogTimers.Kicked | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
-                        $LegacyGUIwatchdogTimersDGV.BeginInit()
-                        $LegacyGUIwatchdogTimersDGV.ClearSelection()
-                        $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
-                            @{ Name = "Name"; Expression = { $_.MinerName } },
-                            @{ Name = "Algorithm"; Expression = { $_.Algorithm } },
-                            @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } },
-                            @{ Name = "Pool"; Expression = { $_.PoolName } },
-                            @{ Name = "Region"; Expression = { $_.PoolRegion } },
-                            @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
-                            @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
-                        ) | Out-DataTable
-                        $LegacyGUIwatchdogTimersDGV.Sort($LegacyGUIwatchdogTimersDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
-                        $LegacyGUIwatchdogTimersDGV.ClearSelection()
+                    $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers updated $(($Variables.WatchdogTimers.Kicked | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
+                    $LegacyGUIwatchdogTimersDGV.BeginInit()
+                    $LegacyGUIwatchdogTimersDGV.ClearSelection()
+                    $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
+                        @{ Name = "Name"; Expression = { $_.MinerName } },
+                        @{ Name = "Algorithm"; Expression = { $_.Algorithm } },
+                        @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } },
+                        @{ Name = "Pool"; Expression = { $_.PoolName } },
+                        @{ Name = "Region"; Expression = { $_.PoolRegion } },
+                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
+                        @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
+                    ) | Out-DataTable
+                    $LegacyGUIwatchdogTimersDGV.Sort($LegacyGUIwatchdogTimersDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
+                    $LegacyGUIwatchdogTimersDGV.ClearSelection()
 
-                        If (-not $LegacyGUIwatchdogTimersDGV.ColumnWidthChanged -and $LegacyGUIwatchdogTimersDGV.Columns) { 
-                            $LegacyGUIwatchdogTimersDGV.Columns[0].FillWeight = 200
-                            $LegacyGUIwatchdogTimersDGV.Columns[1].FillWeight = 60
-                            $LegacyGUIwatchdogTimersDGV.Columns[2].FillWeight = 60
-                            $LegacyGUIwatchdogTimersDGV.Columns[3].FillWeight = 60
-                            $LegacyGUIwatchdogTimersDGV.Columns[4].FillWeight = 44
-                            $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 25 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
-                            $LegacyGUIwatchdogTimersDGV.Columns[6].FillWeight = 55
+                    If (-not $LegacyGUIwatchdogTimersDGV.ColumnWidthChanged -and $LegacyGUIwatchdogTimersDGV.Columns) { 
+                        $LegacyGUIwatchdogTimersDGV.Columns[0].FillWeight = 200
+                        $LegacyGUIwatchdogTimersDGV.Columns[1].FillWeight = 60
+                        $LegacyGUIwatchdogTimersDGV.Columns[2].FillWeight = 60
+                        $LegacyGUIwatchdogTimersDGV.Columns[3].FillWeight = 60
+                        $LegacyGUIwatchdogTimersDGV.Columns[4].FillWeight = 44
+                        $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 25 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
+                        $LegacyGUIwatchdogTimersDGV.Columns[6].FillWeight = 55
 
-                            $LegacyGUIwatchdogTimersDGV | Add-Member ColumnWidthChanged $true
-                        }
-                        $LegacyGUIwatchdogTimersDGV.EndInit()
+                        $LegacyGUIwatchdogTimersDGV | Add-Member ColumnWidthChanged $true
                     }
+                    $LegacyGUIwatchdogTimersDGV.EndInit()
                 }
                 Else { 
                     $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers - no data"
@@ -853,7 +849,7 @@ $LegacyGUIbuttonPause.Add_Click(
     }
 )
 $LegacyGUIControls += $LegacyGUIbuttonPause
-$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonPause, "Pause mining processes.`rBackground processes will remain running.")
+$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonPause, "Pause mining processes.`rBrain jobs and balances tracker remain running.")
 
 $LegacyGUIbuttonStart = New-Object System.Windows.Forms.Button
 $LegacyGUIbuttonStart.Enabled = $true
@@ -872,7 +868,7 @@ $LegacyGUIbuttonStart.Add_Click(
     }
 )
 $LegacyGUIControls += $LegacyGUIbuttonStart
-$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStart, "Start the mining process.")
+$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStart, "Start the mining process.`rBrain jobs and balances tracker will also start.")
 
 $LegacyGUIbuttonStop = New-Object System.Windows.Forms.Button
 $LegacyGUIbuttonStop.Enabled = $true
@@ -891,7 +887,7 @@ $LegacyGUIbuttonStop.Add_Click(
     }
 )
 $LegacyGUIControls += $LegacyGUIbuttonStop
-$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStop, "Stop mining processes.`rBackground processes will also stop.")
+$LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStop, "Stop mining processes.`rBrain jobs and balances tracker will also stop.")
 
 $LegacyGUIeditConfigLink = New-Object System.Windows.Forms.LinkLabel
 $LegacyGUIeditConfigLink.ActiveLinkColor = [System.Drawing.Color]::Blue
@@ -1725,7 +1721,10 @@ $LegacyGUIswitchingDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIswitchingDGV.Add_Sorted(
     { 
         If ($Config.UseColorForMinerStatus) { 
-            ForEach ($Row in $LegacyGUIswitchingDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $LegacyGUIcolors[$Row.DataBoundItem.Action] }
+            ForEach ($Row in $LegacyGUIswitchingDGV.Rows) { 
+                $Row.DefaultCellStyle.Backcolor = $Row.DefaultCellStyle.SelectionBackColor = $LegacyGUIcolors[$Row.DataBoundItem.Action]
+                $Row.DefaultCellStyle.SelectionForeColor = $LegacyGUIswitchingDGV.DefaultCellStyle.ForeColor
+            }
         }
      }
 )
@@ -1794,6 +1793,8 @@ $LegacyGUIwatchdogTimersDGV.ColumnHeadersDefaultCellStyle.BackColor = [System.Dr
 $LegacyGUIwatchdogTimersDGV.ColumnHeadersDefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIwatchdogTimersDGV.ColumnHeadersHeightSizeMode = "AutoSize"
 $LegacyGUIwatchdogTimersDGV.ColumnHeadersVisible = $true
+$LegacyGUIwatchdogTimersDGV.DefaultCellStyle.SelectionBackColor = $LegacyGUIwatchdogTimersDGV.DefaultCellStyle.BackColor
+$LegacyGUIwatchdogTimersDGV.DefaultCellStyle.SelectionForeColor = $LegacyGUIwatchdogTimersDGV.DefaultCellStyle.ForeColor
 $LegacyGUIwatchdogTimersDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIwatchdogTimersDGV.EnableHeadersVisualStyles = $false
 $LegacyGUIwatchdogTimersDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)

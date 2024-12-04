@@ -1,7 +1,33 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
-Changelog UG-Miner 6.3.17 2024/11/??
+Changelog UG-Miner 6.3.19 2024/12/04
+====================================
+
+Enhancements:
+- Added configuration item 'PoolAllow0Price'
+
+Fixes:
+- Brains: Brain price got reset on each loop
+- Core: Error creating miners when more than one pool with same algorithm (mark pools as 'Second best algorithm')
+
+Improvements:
+- WebGUI / All miners: Also show hourglass
+- Update 7-Zip to version 24.09
+
+Miner changes:
+- Wildrig-v0.41.5
+
+
+Changelog UG-Miner 6.3.18 2024/11/30
+====================================
+
+Miner updates:
+- SRBMinerMulti-v2.7.2
+- Wildrig-v0.41.4
+
+
+Changelog UG-Miner 6.3.17 2024/11/26
 ====================================
 
 Fixes:
@@ -12,7 +38,7 @@ Improvements:
 
 Miner updates:
 - lolMiner-v1.92
-- Wildrig-v0.41
+- Wildrig-v0.41.2
 
 
 Changelog UG-Miner 6.3.16 2024/11/20
@@ -148,7 +174,7 @@ Changelog UG-Miner 6.3.6 2024/10/01
 ===================================
 
 Enhancements:
-- Added configuration item 'Ignore0HashrateSample'.
+- Added configuration item 'Ignore0HashrateSample'
 - Web GUI: Change some icons
 
 Miner changes:

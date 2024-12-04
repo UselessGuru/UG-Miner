@@ -182,10 +182,13 @@
             <div style="padding-top: 0.5rem" title="Minimum workers mining the algorithm at the pool&#10;If less miners are mining the algorithm then the pool will be disabled&#10;&#10;(min: 0, max: 99; default: 10)&#10;Set to 0 to disable this check&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Minimum
               <input type="number" step=1 min=0 max=99 value=10 size=3 id="MinWorker" name="MinWorker"> workers at pool
             </div>
-            <div style="padding-top: 0.4rem" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
-              <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if 0 hashrate@pool
+            <div style="padding-top: 0.4rem" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')&#10;This may cause a lot of miners to fail.">
+              <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if hashrate@pool is 0 (not recommended)
             </div>
-            <div style="padding-top: 0.8rem" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This can impact profitability, but is less CPU heavy">
+            <div style="padding-top: 0.8rem" title="Allow using the pool even if the price reported in the pool API is 0&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')&#10;This may cause a lot of miners to fail.">
+              <input type="checkbox" id="PoolAllow0Price" class="toggle-switch" name="PoolAllow0Price"> Use pool even if price@pool is 0 (not recommended)
+            </div>
+            <div style="padding-top: 0.8rem" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This may affect profitability, but is less CPU heavy">
               <input type="checkbox" class="toggle-switch" id="MinerUseBestPoolsOnly" name="MinerUseBestPoolsOnly"> Only use the pools in the best pool list (not recommended)
             </div>
             <br>
@@ -785,6 +788,7 @@
     });
     document.getElementById('MinWorker').value = parseInt(config.MinWorker);
     if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
+    if (config.PoolAllow0Price) document.getElementById('PoolAllow0Price').checked = true;
     if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
 
     // Select the region closest to your location
@@ -1301,6 +1305,7 @@
         config.SSLallowSelfSignedCertificate = document.getElementById('SSLallowSelfSignedCertificate').checked;
         config.MinWorker = parseInt(document.getElementById('MinWorker').value);
         config.PoolAllow0Hashrate = document.getElementById('PoolAllow0Hashrate').checked;
+        config.PoolAllow0Price = document.getElementById('PoolAllow0Price').checked;
         config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
 
         // Select the region closest to your location
@@ -1439,6 +1444,8 @@
         }
       }
     });
+    updateSummary();
+    updateButtonStatus();
   });
 </script>
 <!-- End of page scripts 'configedit.html' -->
