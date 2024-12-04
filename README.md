@@ -44,17 +44,19 @@ UG-Miner code is partly based on
    - [HashCryptos](<https://hashcryptos.com/>)
    - [Hiveon](<https://hiveon.net/>)<sup>(2)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
-   - [NiceHash](<https://www.nicehash.com/>)
+   - [NiceHash](<https://www.nicehash.com/>)<sup>(3)</sup>
    - [ProHashing](<https://prohashing.com/>)
-   - [ZergPool](<https://zergpool.com/>)<sup>(3)</sup>
-   - [ZPool](<https://zpool.ca/>)<sup>(3)</sup>
+   - [ZergPool](<https://zergpool.com/>)<sup>(4)</sup>
+   - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
 
 <sup>(1)</sup> Optional installation of HWiNFO required, see [ConfigHWinfo64.pdf](<https://github.com/UselessGuru/UG-Miner/blob/main/ConfigHWinfo64.pdf>)
 
 <sup>(2)</sup> Pool does not support auto-exchange to BTC or other currencies.  
     You need to configure a wallet address for each currency you want to mine.
 
-<sup>(3)</sup> Pool does not support auto-exchange for some currencies.  
+<sup>(3)</sup> Registration with NiceHash is re3quired. For some countries private usage is not longer possible.  
+
+<sup>(4)</sup> Pool does not support auto-exchange for some currencies.  
     You need to configure a wallet address for each non-auto-exchangable currency you want to mine.
 
 ## Easy configuration, easy start
