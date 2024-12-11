@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.19
-Version date:   2024/12/04
+Version:        6.3.20
+Version date:   2024/12/11
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1230,18 +1230,20 @@ $LegacyGUIactiveMinersDGV.ReadOnly = $true
 $LegacyGUIactiveMinersDGV.RowHeadersVisible = $false
 $LegacyGUIactiveMinersDGV.ScrollBars = "None"
 $LegacyGUIactiveMinersDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIactiveMinersDGV.Add_MouseUP(
+$LegacyGUIactiveMinersDGV.Add_MouseUp(
     { 
         If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
             $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$this.SelectedRows
         }
     }
 )
+
 $LegacyGUIactiveMinersDGV.Add_Sorted(
     { 
         Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
     }
 )
+
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIactiveMinersDGV -Enabled $true
 $LegacyGUIstatusPageControls += $LegacyGUIactiveMinersDGV
 
@@ -1398,7 +1400,7 @@ $LegacyGUIminersDGV.Name = "MinersDGV"
 $LegacyGUIminersDGV.ReadOnly = $true
 $LegacyGUIminersDGV.RowHeadersVisible = $false
 $LegacyGUIminersDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIminersDGV.Add_MouseUP(
+$LegacyGUIminersDGV.Add_MouseUp(
     { 
         If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
             $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$this.SelectedRows
@@ -1510,7 +1512,7 @@ $LegacyGUIpoolsDGV.Name = "PoolsDGV"
 $LegacyGUIpoolsDGV.ReadOnly = $true
 $LegacyGUIpoolsDGV.RowHeadersVisible = $false
 $LegacyGUIpoolsDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIpoolsDGV.Add_MouseUP(
+$LegacyGUIpoolsDGV.Add_MouseUp(
     { 
         If ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
             $LegacyGUIcontextMenuStrip.Enabled = [Boolean]$this.SelectedRows
