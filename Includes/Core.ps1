@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.20
-Version date:   2024/12/11
+Version:        6.3.21
+Version date:   2024/12/16
 #>
 
 using module .\Include.psm1
@@ -277,7 +277,7 @@ Try {
                             End   = $Variables.DonationEnd
                             Name  = $Variables.DonationRandom.Name
                         }
-                        $Variables.DonationLog | ConvertTo-Json | Out-File -LiteralPath ".\Logs\DonateLog.json" -Force -ErrorAction Ignore
+                        $Variables.DonationLog | Export-CSV -LiteralPath ".\Logs\DonationLog.csv" -Force -ErrorAction Ignore
                         $Variables.DonationRandomPoolsConfig = $null
                         $Variables.DonationStart = $null
                         $Variables.DonationEnd = $null

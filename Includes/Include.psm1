@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.20
-Version date:   2024/12/11
+Version:        6.3.21
+Version date:   2024/12/16
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1536,18 +1536,19 @@ Function Read-Config {
 
     $Variables.ShowAccuracy = $Config.ShowAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
+    $Variables.ShowCoinName = $Config.ShowCoinName
+    $Variables.ShowCurrency = $Config.ShowCurrency
     $Variables.ShowEarning = $Config.ShowEarning
     $Variables.ShowEarningBias = $Config.ShowEarningBias
+    $Variables.ShowHashrate = $Config.ShowHashrate
     $Variables.ShowMinerFee = $Config.ShowMinerFee
     $Variables.ShowPool = $Config.ShowPool
     $Variables.ShowPoolBalances = $Config.ShowPoolBalances
     $Variables.ShowPoolFee = $Config.ShowPoolFee
-    $Variables.ShowPowerCost = $Config.ShowPowerCost
-    $Variables.ShowPowerConsumption = $Config.ShowPowerConsumption
     $Variables.ShowProfit = $Config.ShowProfit
     $Variables.ShowProfitBias = $Config.ShowProfitBias
-    $Variables.ShowCoinName = $Config.ShowCoinName
-    $Variables.ShowCurrency = $Config.ShowCurrency
+    $Variables.ShowPowerConsumption = $Config.ShowPowerConsumption
+    $Variables.ShowPowerCost = $Config.ShowPowerCost
     $Variables.ShowUser = $Config.ShowUser
     $Variables.UIStyle = $Config.UIStyle
 
@@ -1653,11 +1654,12 @@ Function Write-Config {
     $Variables.ShowCurrency = $Config.ShowCurrency
     $Variables.ShowEarning = $Config.ShowEarning
     $Variables.ShowEarningBias = $Config.ShowEarningBias
+    $Variables.ShowHashrate = $Config.ShowHashrate
+    $Variables.ShowMinerFee = $Config.ShowMinerFee
     $Variables.ShowMinerFee = $Config.ShowMinerFee
     $Variables.ShowPool = $Config.ShowPool
     $Variables.ShowPoolBalances = $Config.ShowPoolBalances
     $Variables.ShowPoolFee = $Config.ShowPoolFee
-    $Variables.ShowPowerConsumption = $Config.ShowPowerConsumption
     $Variables.ShowPowerCost = $Config.ShowPowerCost
     $Variables.ShowProfit = $Config.ShowProfit
     $Variables.ShowProfitBias = $Config.ShowProfitBias
@@ -3725,7 +3727,7 @@ Function Initialize-Environment {
     Write-Host "Loaded donation data."
 
     # Load donation log
-    $Variables.DonationLog = [System.IO.File]::ReadAllLines("$PWD\Logs\DonateLog.json") | ConvertFrom-Json -NoEnumerate
+    $Variables.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore)
     If (-not $Variables.DonationLog) { $Variables.DonationLog = @() }
     Else { Write-Host "Loaded donation log." }
 

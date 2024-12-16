@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.3.20 / Updated 2024/12/11
+Version 6.3.21 / Updated 2024/12/16
 
 
 Copyright (c) 2018-2024 UselessGuru
@@ -216,10 +216,10 @@ A separate section can be added for each pool. If a pool is listed in this file,
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
 - Exclude region: One or more of 'Europe', 'HongKong', 'India', 'Japan', 'Russia', 'Singapore', 'USA East', 'USA West'
 - MinWorker: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
-- PayoutThreshold[Currency]: pool will allow payout if this amount is reached
-- SSL: Either 'Prefer' (use SSL pool connections where available), 'Never' (pools that do only support SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL connections are marked as unavailable)
-- SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
-- Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
+- PayoutThreshold[Currency]: Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
+- SSL: Either 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Always' (pools that do not allow SSL connection are marked as unavailable)
+- SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
+- Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon, require wallets in each supported currency
 
 See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
 
@@ -230,11 +230,11 @@ See 'Data\PoolsConfig-Template.json' for all available pool configuration option
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
 - Add the pool specific configuration items
 
-Note: The configuration editor in the Web GUI only updates generic pool settings. Pool specific settings override the generic settings.
+Note: The configuration editor in the Web GUI only updates the generic pool settings. Pool specific settings override the generic settings.
 
 ## Balances tracking
 
-UG-Miner displays available balances and calculates an estimation of when the pool payment threshold will be reached.
+UG-Miner displays the available balances and calculates an estimation of when the pool payment threshold will be reached.
 
 Supported pools:
 
@@ -328,7 +328,7 @@ Example for default parameters (15 minutes):
 - When donation start time is reached it will then donate for 15 minutes, then mine for you again until the next donation run.
 
 The donation data is stored in 'Data\DonationData.json'.  
-All donation time and addresses are recorded in the donation log file 'Log\DonateLog.json'.
+All donation time and addresses are recorded in the donation log file 'Log\DonationLog.csv'.
 
 ## Known issues
 

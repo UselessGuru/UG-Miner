@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.20
-Version date:   2024/12/11
+Version:        6.3.21
+Version date:   2024/12/16
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -127,7 +127,7 @@ $Algorithms = @(
     @{ Algorithms = @("YespowerTide");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespowertide") }
     @{ Algorithms = @("YespowerUrx");          Type = "CPU"; Fee = @(0);      MinerSet = 1; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespowerurx") }
     @{ Algorithms = @("Yescrypt");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yescrypt") }
-    @{ Algorithms = @("XelisHashV2");          Type = "CPU"; Fee = @(0.015);  MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm xelishashv2") }
+    @{ Algorithms = @("XelisHashV2");          Type = "CPU"; Fee = @(0.015);  MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@("NiceHash"), @());    Arguments = @(" --disable-gpu --algorithm xelishashv2") }
     @{ Algorithms = @("XelisV2PepePow");       Type = "CPU"; Fee = @(0.015);  MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm xelishashv2_pepew") }
 
     @{ Algorithms = @("AstrixHash");                             Type = "INTEL"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());             Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm astrixhash") }

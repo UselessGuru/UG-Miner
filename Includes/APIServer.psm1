@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.3.20
-Version date:   2024/12/11
+Version:        6.3.21
+Version date:   2024/12/16
 #>
 
 Function Start-APIServer { 
@@ -815,7 +815,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/donationlog" { 
-                                $Data = ConvertTo-Json $Variables.DonationLog
+                                $Data = ConvertTo-Json -Depth 10 @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore)
                                 Break
                             }
                             "/driverversion" { 
@@ -1007,7 +1007,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/switchinglog" { 
-                                $Data = ConvertTo-Json -Depth 10 @([System.IO.File]::ReadAllLines("$PWD\Logs\switchinglog.csv") | ConvertFrom-Csv | Select-Object -Last 1000 | Sort-Object -Property DateTime -Descending)
+                                $Data = ConvertTo-Json -Depth 10 @([System.IO.File]::ReadAllLines("$PWD\Logs\SwitchingLog.csv") | ConvertFrom-Csv | Select-Object -Last 1000 | Sort-Object -Property DateTime -Descending)
                                 Break
                             }
                             "/unprofitablealgorithms" { 
