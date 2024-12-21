@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -70,7 +70,7 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightXao";       Type = "AMD"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
     @{ Algorithm = "CryptonightHeavyXhv";  Type = "AMD"; MinMemGiB = 4;    MinerSet = 1; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
     @{ Algorithm = "CryptonightZls";       Type = "AMD"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "AMD"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo kawpow" }
+    @{ Algorithm = "KawPow";               Type = "AMD"; MinMemGiB = 0.97; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo kawpow" }
 #   @{ Algorithm = "Randomx";              Type = "AMD"; MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxArq";           Type = "AMD"; MinMemGiB = 4;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxKeva";          Type = "AMD"; MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
@@ -134,7 +134,7 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightXao";       Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
     @{ Algorithm = "CryptonightHeavyXhv";  Type = "INTEL"; MinMemGiB = 4;    MinerSet = 1; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
     @{ Algorithm = "CryptonightZls";       Type = "INTEL"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "INTEL"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" }
+    @{ Algorithm = "KawPow";               Type = "INTEL"; MinMemGiB = 0.97; MinerSet = 1; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" }
 #   @{ Algorithm = "Randomx";              Type = "INTEL"; MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxArq";           Type = "INTEL"; MinMemGiB = 4;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxKeva";          Type = "INTEL"; MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
@@ -195,7 +195,7 @@ If ($Algorithms) {
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm] | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.MemoryGiB -gt $MinMemGiB })) { 
+                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
@@ -219,7 +219,7 @@ If ($Algorithms) {
                                 Port        = $MinerAPIPort
                                 Type        = $_.Type
                                 URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })
                             }
                         }

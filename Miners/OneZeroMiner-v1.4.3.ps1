@@ -17,20 +17,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "NVIDIA" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { Return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.4.2/onezerominer-win64-1.4.2.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.4.3/onezerominer-win64-1.4.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
-$DeviceEnumerator = "Type_Vendor_Slot"
+$DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @( 
-    @{ Algorithm = "DynexSolve"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
-    @{ Algorithm = "XelisHash";  Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "XelisHashV2";  Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @("NiceHash"); Arguments = @(" --algo xelis") }
+
+    @{ Algorithm = "DynexSolve"; Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @();             Arguments = @(" --algo dynex") }
+    @{ Algorithm = "XelisHashV2";  Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @("NiceHash"); Arguments = @(" --algo xelis") }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -38,13 +40,14 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
-            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
+            $Type = $_.Type
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-            $Algorithms.ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $MinMemGiB = $_.MinMemGiB
@@ -53,9 +56,8 @@ If ($Algorithms) {
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                        # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+                        $ExcludePools = $_.ExcludePools
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
                             [PSCustomObject]@{ 
                                 API         = "OneZero"
@@ -68,7 +70,7 @@ If ($Algorithms) {
                                 Port        = $MinerAPIPort
                                 Type        = "NVIDIA"
                                 URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })
                             }
                         }

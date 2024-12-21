@@ -94,8 +94,8 @@
         timeout: 1,
         url: '/summary',
         success: function(result) {
-          $('#summary').empty().append(result);
-          document.getElementById('summary').title = result.toString().replaceAll('\&ensp;', ' ').replace('<br>', '\n');
+          document.getElementById('summary').innerHTML = result.toString();
+          document.getElementById('summary').title = result.toString();
         }
       });
     }

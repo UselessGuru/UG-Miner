@@ -106,7 +106,7 @@ If ($Algorithms) {
                                     Port        = $MinerAPIPort
                                     Type        = $_.Type
                                     URI         = $URI
-                                    WarmupTimes = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    WarmupTimes = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                     Workers     = @(@{ Pool = $Pool })
                                 }
                             }

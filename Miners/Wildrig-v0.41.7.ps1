@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.41.5/wildrig-multi-windows-0.41.5.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.41.7/wildrig-multi-windows-0.41.7.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -50,7 +50,7 @@ $Algorithms = @(
     @{ Algorithm = "Hex";              Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo hex" }
     @{ Algorithm = "HMQ1725";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo hmq1725" } # CryptoDredge-v0.27.0 is fastest
     @{ Algorithm = "JeongHash";        Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo glt-jeonghash" }
-    @{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo kawpow" } # TeamRedMiner-v0.10.21 is fastest on Navi
+    @{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @("NiceHash"); Arguments = " --algo kawpow" } # TeamRedMiner-v0.10.21 is fastest on Navi
 #   @{ Algorithm = "Lyra2RE2";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo lyra2v2" } # ASIC
 #   @{ Algorithm = "Lyra2RE3";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo lyra2v3" } # ASIC
     @{ Algorithm = "Lyra2TDC";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo lyra2tdc" }
@@ -131,7 +131,7 @@ $Algorithms = @(
 #   @{ Algorithm = "HeavyHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo heavyhash" } # FPGA, Not yet supported on Nvidia
     @{ Algorithm = "HMQ1725";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo hmq1725 --watchdog" } # CryptoDredge-v0.27.0 is fastest
     @{ Algorithm = "JeongHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
-    @{ Algorithm = "KawPow";           Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.90; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo kawpow --watchdog" }
+    @{ Algorithm = "KawPow";           Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.90; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); Arguments = " --algo kawpow --watchdog" }
 #   @{ Algorithm = "Lyra2RE2";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo lyra2v2 --watchdog" } # ASIC
 #   @{ Algorithm = "Lyra2RE3";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
     @{ Algorithm = "Lyra2TDC";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
@@ -212,7 +212,7 @@ $Algorithms = @(
     @{ Algorithm = "Hex";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo hex --watchdog" }
     @{ Algorithm = "HMQ1725";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo hmq1725 --watchdog" } # CryptoDredge-v0.27.0 is fastest
     @{ Algorithm = "JeongHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
-    @{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo kawpow --watchdog" }
+    @{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo kawpow --watchdog" }
 #   @{ Algorithm = "Lyra2RE2";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo lyra2v2 --watchdog" } # ASIC
 #   @{ Algorithm = "Lyra2RE3";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
     @{ Algorithm = "Lyra2TDC";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
@@ -311,7 +311,7 @@ If ($Algorithms) {
                                     Port        = $MinerAPIPort
                                     Type        = $_.Type
                                     URI         = $URI
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                     Workers     = @(@{ Pool = $Pool })
                                 }
                             }

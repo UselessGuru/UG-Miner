@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" }))) { Return }
@@ -69,9 +69,9 @@ $Algorithms = @(
 #   @{ Algorithms = @("EthashSHA256", "HeavyHashKaspa");   Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=abel" } # ASIC
     @{ Algorithms = @("EthashSHA256", "HeavyHashPyrin");   Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=abel" }
     @{ Algorithms = @("EthashSHA256", "FishHash");         Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo=abel" }
-    @{ Algorithms = @("FiroPow");                          Fee = @(0.02);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @("RDNA3");                           ExcludePools = @(@(), @());           Arguments = " --algo=firopow" } # Wildrig-v0.41.5 is fastest on Polaris
+    @{ Algorithms = @("FiroPow");                          Fee = @(0.02);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @("RDNA3");                           ExcludePools = @(@(), @());           Arguments = " --algo=firopow" } # Wildrig-v0.41.7 is fastest on Polaris
     @{ Algorithms = @("FishHash");                         Fee = @(0.01);       MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@("NiceHash"), @()); Arguments = " --algo=ironfish" } # Pools with support at this time are Herominers, Flexpool and Kryptex
-    @{ Algorithms = @("KawPow");                           Fee = @(0.02);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=kawpow" } # Wildrig-v0.41.5 is fastest on Polaris
+    @{ Algorithms = @("KawPow");                           Fee = @(0.02);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=kawpow" } # Wildrig-v0.41.7 is fastest on Polaris
     @{ Algorithms = @("HeavyHashKarlsen");                 Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=karlsen" }
 #   @{ Algorithms = @("HeavyHashKaspa");                   Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=kas" } # ASIC
     @{ Algorithms = @("HeavyHashPyrin");                   Fee = @(0.01);       MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();                                  ExcludePools = @(@(), @());           Arguments = " --algo=pyrin" }
@@ -165,7 +165,7 @@ If ($Algorithms) {
                                         PrerequisiteURI  = $PrerequisiteURI
                                         Type             = "AMD"
                                         URI              = $URI
-                                        WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                         Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                     }
                                 }

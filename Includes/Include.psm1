@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -327,7 +327,7 @@ Class Miner : IDisposable {
     [String]$URI
     [DateTime]$ValidDataSampleTimestamp = 0
     [String]$Version
-    [UInt16[]]$WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+    [UInt16[]]$WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
     [String]$WindowStyle
     [Worker[]]$Workers = @()
     [Worker[]]$WorkersRunning = @()
@@ -417,14 +417,14 @@ Class Miner : IDisposable {
         $this.PowerConsumption_Live = [Double]::NaN
 
         If ($this.Status -eq [MinerStatus]::DryRun) { 
-            $this.StatusInfo = "Dry run '$($this.Info)'"
-            $this.SubStatus = "idle"
             Write-Message -Level Info "Dry run for miner '$($this.Info)'..."
+            $this.StatusInfo = "$($this.Info) (Dry run)"
+            $this.SubStatus = "idle"
             $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
         }
         Else { 
-            $this.StatusInfo = "Starting '$($this.Info)'"
             Write-Message -Level Info "Starting miner '$($this.Info)'..."
+            $this.StatusInfo = "$($this.Info) is starting"
         }
 
         Write-Message -Level Verbose $this.CommandLine
@@ -457,7 +457,7 @@ Class Miner : IDisposable {
 
         If ($this.Status -ne [MinerStatus]::DryRun) { 
 
-            $this.ProcessJob = Invoke-CreateProcess -InformationVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile
+            $this.ProcessJob = Invoke-CreateProcess -InformationVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile -Status $this.StatusInfo
 
             # Sometimes the process cannot be found instantly
             $Loops = 100
@@ -483,8 +483,8 @@ Class Miner : IDisposable {
 
     hidden [Void]StopMining() { 
         If ([MinerStatus]::Running, [MinerStatus]::Disabled, [MinerStatus]::DryRun -contains $this.Status) { 
-            $this.StatusInfo = "Stopping miner '$($this.Info)'..."
-            Write-Message -Level Info $this.StatusInfo
+            Write-Message -Level Info "Stopping miner '$($this.Info)'..."
+            $this.StatusInfo = "$($this.Info) is stopping..."
         }
         Else { 
             $this.SubStatus = [MinerStatus]::Failed
@@ -2647,18 +2647,20 @@ Function Invoke-CreateProcess {
         [Parameter(Mandatory = $false)]
         [String]$JobName,
         [Parameter(Mandatory = $false)]
-        [String]$LogFile
+        [String]$LogFile,
+        [Parameter(Mandatory = $false)]
+        [String]$StatusInfo
     )
 
     # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and miners remain running
-    Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID { 
-        Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID)
+    Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $StatusInfo { 
+        Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $StatusInfo)
 
         $ControllerProcess = Get-Process -Id $ControllerProcessID
         If ($null -eq $ControllerProcess) { Return }
 
         # Define all the structures for CreateProcess
-        Add-Type -TypeDefinition @"
+    Add-Type -TypeDefinition @"
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -2672,7 +2674,7 @@ public struct PROCESS_INFORMATION
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 public struct STARTUPINFO
 { 
-    public uint cb; public string lpReserved; public string lpDesktop; [MarshalAs(UnmanagedType.LPWStr)] public string lpTitle;
+    public uint cb; public string lpReserved; public string lpDesktop; [MarshalAs(UnmanagedType.LPUTF8Str)] public string lpTitle;
     public uint dwX; public uint dwY; public uint dwXSize; public uint dwYSize; public uint dwXCountChars;
     public uint dwYCountChars; public uint dwFillAttribute; public uint dwFlags; public short wShowWindow;
     public short cbReserved2; public IntPtr lpReserved2; public IntPtr hStdInput; public IntPtr hStdOutput;
@@ -2705,11 +2707,12 @@ public static class Kernel32
         # Set local environment
         ($EnvBlock | Select-Object).ForEach({ Set-Item -Path "Env:$(($_ -split "=")[0])" "$(($_ -split "=")[1])" -Force })
 
-        # StartupInfo Struct
+        # StartupInfo struct
         $StartupInfo = New-Object STARTUPINFO
         $StartupInfo.dwFlags = $StartF # StartupInfo.dwFlag
         $StartupInfo.wShowWindow = $ShowWindow # StartupInfo.ShowWindow
-        $StartupInfo.cb = [System.Runtime.InteropServices.Marshal]::SizeOf($StartupInfo) # Struct Size
+        $StartupInfo.lpTitle = $StatusInfo
+        $StartupInfo.cb = [System.Runtime.InteropServices.Marshal]::SizeOf($StartupInfo) # Struct size
 
         # SECURITY_ATTRIBUTES Struct (Process & Thread)
         $SecAttr = New-Object SECURITY_ATTRIBUTES
@@ -2718,7 +2721,7 @@ public static class Kernel32
         # CreateProcess --> lpCurrentDirectory
         If (-not $WorkingDirectory) { $WorkingDirectory = [IntPtr]::Zero }
 
-        # ProcessInfo Struct
+        # ProcessInfo struct
         $ProcessInfo = New-Object PROCESS_INFORMATION
 
         # Call CreateProcess

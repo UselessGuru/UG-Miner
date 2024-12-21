@@ -82,6 +82,7 @@
   "COCO": "Scrypt",
   "CPMK": "Yespower",
   "CPU": "CpuPower",
+  "CRC": "Scrypt",
   "CRM": "Skein",
   "CRNC": "YespowerLtncg",
   "CTXC": "Cuckaroo30ctx",

@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v24.6/cpuminer-opt-24.6-windows.zip"
+$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v27.4/cpuminer-opt-24.7-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\cpuminer-aes-sse42.exe" # Intel
 
@@ -112,7 +112,7 @@ If ($Algorithms) {
                     PrerequisiteURI  = $PrerequisiteURI
                     Type             = "CPU"
                     URI              = $URI
-                    WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                    WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                     Workers          = @(@{ Pool = $Pool })
                 }
             }

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
@@ -41,7 +41,7 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsenV2", "JanusHash"); Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a karlsen", " --a2 warthog") }
 #   @{ Algorithms = @("HeavyHashKaspa");                  Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a kaspa") } # ASIC
     @{ Algorithms = @("JanusHash");                       Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a warthog") }
-    @{ Algorithms = @("KawPow");                          Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("GCN4");           ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a rvn") } # https://github.com/bzminer/bzminer/issues/264
+    @{ Algorithms = @("KawPow");                          Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("GCN4");           ExcludeGPUmodel = ""; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a rvn") } # https://github.com/bzminer/bzminer/issues/264
     @{ Algorithms = @("NexaPow");                         Type = "AMD"; Fee = @(0.02);  MinMemGiB = 3;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a nexa") }
     @{ Algorithms = @("SHA512256d");                      Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("GCN1");           ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a radiant") }
     @{ Algorithms = @("SHA256dt");                        Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a novo") }
@@ -82,7 +82,7 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsenV2");              Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a karlsen") }
     @{ Algorithms = @("HeavyHashKarlsenV2", "JanusHash"); Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a karlsen", " --a2 warthog") }
 #   @{ Algorithms = @("HeavyHashKaspa");                  Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a kaspa") } # ASIC
-    @{ Algorithms = @("JanusHash");                       Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a warthog") }
+    @{ Algorithms = @("JanusHash");                       Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a warthog") }
     @{ Algorithms = @("KawPow");                          Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());           Arguments = @(" -a rvn") }
     @{ Algorithms = @("NexaPow");                         Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 3;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a nexa") }
     @{ Algorithms = @("SHA512256d");                      Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());           Arguments = @(" -a radiant") }
@@ -169,7 +169,7 @@ If ($Algorithms) {
                                         Port             = $MinerAPIPort
                                         Type             = $_.Type
                                         URI              = $URI
-                                        WarmupTimes      = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; Second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        WarmupTimes      = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                         Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                     }
                                 }

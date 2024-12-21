@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.21"
+    Version      = [System.Version]"6.3.22"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -929,7 +929,7 @@ Function MainLoop {
         If ($Config.WebGUI) { Start-APIServer } Else { Stop-APIServer }
 
         If ($Config.ShowConsole) { 
-            If ($Variables.MinersRunning) { Clear-Host }
+            If ($Variables.Miners) { Clear-Host }
 
             # Get and display earnings stats
             If ($Variables.Balances -and $Variables.ShowPoolBalances) { 
@@ -1103,7 +1103,7 @@ Function MainLoop {
 
                 If ($Variables.MiningStatus -eq "Running") { 
                     If ($Variables.Timer) { 
-                        Write-Host ($Variables.Summary -replace "\.\.\.<br>", "... " -replace "<br>", $nl -replace "&ensp;", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
+                        Write-Host ($Variables.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
                     }
                     If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                         If ($Variables.MiningProfit -lt 0) { 
@@ -1114,9 +1114,6 @@ Function MainLoop {
                             # Mining profit is below the configured threshold
                             Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.FIATcurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.ProfitabilityThreshold)
                         }
-                    }
-
-                    If ($Variables.MinersBest) { 
                         $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString("G")) } Else { 'n/a (Mining is suspended)' })   |   Hot keys: $(If ($Variables.CalculatePowerCost) { "[123acefimnprstuwy]" } Else { "[123aefimnrsuwy]" })   |   Press 'h' for help"
                         Write-Host ("-" * $StatusInfo.Length)
                         Write-Host -ForegroundColor Yellow $StatusInfo

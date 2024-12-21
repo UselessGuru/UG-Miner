@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.21
-Version date:   2024/12/16
+Version:        6.3.22
+Version date:   2024/12/21
 #>
 
 using module .\Include.psm1
@@ -499,7 +499,7 @@ Try {
                     # At least one port (SSL or non-SSL) must be available
                     $Pools.Where({ -not ($_.PoolPorts | Select-Object) }).ForEach({ $_.Reasons.Add("No ports available") })
                     # Apply watchdog to pools
-                    $Pools = Update-PoolWatchdog -Pools $Pools
+                    If ($Pools) { $Pools = Update-PoolWatchdog -Pools $Pools }
                     # Second best pools per algorithm
                     ($Pools.Where({ -not $_.Reasons }) | Group-Object -Property AlgorithmVariant, Name).ForEach({ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach({ $_.Reasons = "Second best algorithm" }) })
 
@@ -567,7 +567,10 @@ Try {
             $Variables.PoolsBest = $Variables.Pools.Where({ $_.Best }) | Sort-Object -Property Algorithm
 
             If (-not $Variables.PoolsBest) { 
-                Write-Message -Level Warn "No available pools - retrying in $($Config.Interval) seconds..."
+                $Message = "No available pools - retrying in $($Config.Interval) seconds..."
+                Write-Message -Level Warn $Message
+                $Variables.Summary = $Message
+                Remove-Variable Message
                 Start-Sleep -Seconds $Config.Interval
                 Write-Message -Level Info "Ending cycle (No available pools)."
                 Continue
@@ -623,7 +626,7 @@ Try {
                             If ($Shares = ($Miner.Data | Select-Object -Last 1).Shares) { 
                                 ForEach ($Algorithm in $Miner.Algorithms) { 
                                     If ($Shares.$Algorithm -and $Shares.$Algorithm[1] -gt 0 -and $Shares.$Algorithm[3] -gt [Math]::Floor(1 / $Config.BadShareRatioThreshold) -and $Shares.$Algorithm[1] / $Shares.$Algorithm[3] -gt $Config.BadShareRatioThreshold) { 
-                                        $Miner.StatusInfo = "'$($Miner.Info)' stopped. Too many bad shares: ($($Algorithm): A$($Shares.$Algorithm[0])+R$($Shares.$Algorithm[1])+I$($Shares.$Algorithm[2])=T$($Shares.$Algorithm[3]))"
+                                        $Miner.StatusInfo = "$($Miner.Info) stopped. Too many bad shares: ($($Algorithm): A$($Shares.$Algorithm[0])+R$($Shares.$Algorithm[1])+I$($Shares.$Algorithm[2])=T$($Shares.$Algorithm[3]))"
                                         $Miner.SetStatus([MinerStatus]::Failed)
                                         $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                     }
@@ -633,7 +636,7 @@ Try {
                         }
                     }
                     Else { 
-                        $Miner.StatusInfo = "'$($Miner.Info)' ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
                         $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                     }
@@ -684,7 +687,7 @@ Try {
                             }
                             ElseIf ($MinerHashrates.$Algorithm -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and $Stat.Week -and ($MinerHashrates.$Algorithm -gt $Stat.Week * 2 -or $MinerHashrates.$Algorithm -lt $Stat.Week / 2)) { 
                                 # Stop miner if new value is outside ±200% of current value
-                                $Miner.StatusInfo = "'$($Miner.Info)' reported hashrate is unreal ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
+                                $Miner.StatusInfo = "$($Miner.Info) reported hashrate is unreal ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
                                 $Miner.SetStatus([MinerStatus]::Failed)
                                 $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                             }
@@ -701,7 +704,7 @@ Try {
                             }
                             ElseIf ($MinerPowerConsumption -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and $Stat.Week -and ($MinerPowerConsumption -gt $Stat.Week * 2 -or $MinerPowerConsumption -lt $Stat.Week / 2)) { 
                                 # Stop miner if new value is outside ±200% of current value
-                                $Miner.StatusInfo = "'$($Miner.Info)' reported power consumption is unreal ($($PowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
+                                $Miner.StatusInfo = "$($Miner.Info) reported power consumption is unreal ($($PowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
                                 $Miner.SetStatus([MinerStatus]::Failed)
                                 $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                             }
@@ -1061,85 +1064,74 @@ Try {
         $Variables.MinersNeedingBenchmark = $Miners.Where({ $_.Available -and $_.Benchmark }) | Sort-Object -Property Name -Unique
         $Variables.MinersNeedingPowerConsumptionMeasurement = $Miners.Where({ $_.Available -and $_.MeasurePowerConsumption }) | Sort-Object -Property Name -Unique
 
-        $Miners.ForEach({ $_.Best = $false })
-
-        # ProfitabilityThreshold check - OK to run miners?
+        $Summary = ""
         If ($Variables.Rates.($Config.PayoutCurrency)) { 
-            If ($Variables.DonationRunning -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement -or -not $Variables.CalculatePowerCost -or $Variables.MiningProfit -ge ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.FIATcurrency))) { 
-                $MinersBest.ForEach({ $_.Best = $true })
-                If ($Variables.MinersNeedingBenchmark.Count) { 
-                    $Variables.Summary = "Earning / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
-                }
-                ElseIf ($Variables.MiningEarning -gt 0) { 
-                    $Variables.Summary = "Earning / day: {0:n} {1}" -f ($Variables.MiningEarning * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
-                }
-                Else { 
-                    $Variables.Summary = ""
-                }
-
-                If ($Variables.CalculatePowerCost -and $Variables.PoolsBest) { 
-                    If ($Variables.Summary -ne "") { $Variables.Summary += "&ensp;&ensp;&ensp;" }
-
-                    If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
-                        $Variables.Summary += "Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
-                    }
-                    ElseIf ($Variables.MinersNeedingBenchmark.Count) { 
-                        $Variables.Summary += "Profit / day: n/a"
-                    }
-                    ElseIf ($Variables.MiningPowerConsumption -gt 0) { 
-                        $Variables.Summary += "Profit / day: {0:n} {1}" -f ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
-                    }
-                    Else { 
-                        $Variables.Summary += "Profit / day: n/a (no power data)"
-                    }
-
-                    If ($Variables.CalculatePowerCost) { 
-                        If ($Variables.Summary -ne "") { $Variables.Summary += "&ensp;&ensp;&ensp;" }
-
-                        If ([Double]::IsNaN($Variables.MiningEarning) -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
-                            $Variables.Summary += "Power cost / day: n/a&ensp;[Miner$(If ($MinersBest.Count -ne 1) { "s" }): n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.FIATcurrency, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
-                        }
-                        ElseIf ($Variables.MiningPowerConsumption -gt 0) { 
-                            $Variables.Summary += "Power cost / day: {1:n} {0}&ensp;[Miner$(If ($MinersBest.Count -ne 1) { "s" }): {2:n} {0} ({3:n2} W); Base: {4:n} {0} ({5:n2} W)]" -f $Config.FIATcurrency, (($Variables.MiningPowerCost + $Variables.BasePowerCost) * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), ($Variables.MiningPowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.MiningPowerConsumption, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
-                        }
-                        Else { 
-                            $Variables.Summary += "Power cost / day: n/a&ensp;[Miner: n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.FIATcurrency, ($Variables.BasePowerCost * $Variables.Rates.BTC.($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
-                        }
-                    }
-                }
-                If ($Variables.Summary -ne "") { $Variables.Summary += "<br>" }
-
-                # Add currency conversion rates
-                ((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
-                    { 
-                        $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.FIATcurrency)
-                    }
-                )
-            }
-            Else { 
+            # ProfitabilityThreshold check - OK to run miners?
+            If ($Variables.CalculatePowerCost -and $Variables.MiningProfit -lt ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.FIATcurrency))) { 
                 # Mining earning/profit is below threshold
                 $MinersBest = [Miner[]]@()
-                $Variables.Summary = "Mining profit {0} {1:n$($Config.DecimalsMax)} / day is below the configured threshold of {0} {2:n$($Config.DecimalsMax)} / day. Mining is suspended until threshold is reached." -f $Config.FIATcurrency, (($Variables.MiningEarning - $(If ($Config.CalculatePowerCost) { $Variables.MiningPowerCost - $Variables.BasePowerCost } Else { 0 })) * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.ProfitabilityThreshold
-                Write-Message -Level Warn ($Variables.Summary -replace "<br>", " " -replace " / day", "/day")
-                If ($Variables.Rates) { 
-                    # Add currency conversion rates
-                    If ($Variables.Summary -ne "") { $Variables.Summary += "<br>" }
-                    ((@(If ($Config.UsemBTC) { "mBTC" } Else { $Config.PayoutCurrency }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
-                        { 
-                            $Variables.Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Variables.Rates.$_.($Config.FIATcurrency)
-                        }
-                    )
+                $Text = "Mining profit {0} {1:n} / day is below the configured threshold of {0} {2:n} / day. Mining is suspended until threshold is reached." -f $Config.FIATcurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.ProfitabilityThreshold
+                Write-Message -Level Warn ($Text -replace " / day", "/day")
+                $Summary += "$Text`n"
+                Remove-Variable Text
+            }
+            Else { 
+                $MinersBest.ForEach({ $_.Best = $true })
+            }
+
+            If ($Variables.MinersNeedingBenchmark.Count) { 
+                $Summary += "Earning / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
+            }
+            ElseIf ($Variables.MiningEarning -gt 0) { 
+                $Summary += "Earning / day: {0:n} {1}" -f ($Variables.MiningEarning * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
+            }
+
+            If ($Variables.CalculatePowerCost) { 
+                If ($Summary -ne "") { $Summary += "   " }
+                If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
+                    $Summary += "Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
+                }
+                ElseIf ($Variables.MinersNeedingBenchmark.Count) { 
+                    $Summary += "Profit / day: n/a"
+                }
+                ElseIf ($Variables.MiningPowerConsumption -gt 0) { 
+                    $Summary += "Profit / day: {0:n} {1}" -f ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
+                }
+                Else { 
+                    $Summary += "Profit / day: n/a (no power data)"
+                }
+
+                If ($Summary -ne "") { $Summary += "   " }
+                If ([Double]::IsNaN($Variables.MiningEarning) -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
+                    $Summary += "Power cost / day: n/a [Miner$(If ($MinersBest.Count -ne 1) { "s" }): n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.FIATcurrency, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
+                }
+                ElseIf ($Variables.MiningPowerConsumption -gt 0) { 
+                    $Summary += "Power cost / day: {1:n} {0} [Miner$(If ($MinersBest.Count -ne 1) { "s" }): {2:n} {0} ({3:n2} W); Base: {4:n} {0} ({5:n2} W)]" -f $Config.FIATcurrency, (($Variables.MiningPowerCost + $Variables.BasePowerCost) * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), ($Variables.MiningPowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.MiningPowerConsumption, ($Variables.BasePowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
+                }
+                Else { 
+                    $Summary += "Power cost / day: n/a [Miner: n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Config.FIATcurrency, ($Variables.BasePowerCost * $Variables.Rates.BTC.($Config.FIATcurrency)), $Variables.PowerConsumptionIdleSystemW
                 }
             }
+
+            # Add currency conversion rates
+            If ($Summary -ne "") { $Summary += "`n" }
+            ((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
+                { 
+                    $Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)   " -f $Variables.Rates.$_.($Config.FIATcurrency)
+                }
+            )
         }
         Else { 
-            $Variables.Summary = "Error:<br>Could not get BTC exchange rate from min-api.cryptocompare.com"
+            $Summary = "Error: Could not get BTC exchange rate from min-api.cryptocompare.com"
+            $MinersBest = [Miner[]]@()
         }
+        $Variables.Summary = $Summary
+        Remove-Variable $Summary
 
         # Stop running miners
         ForEach ($Miner in @($Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { [String]$_.DeviceNames })) { 
             If ($Miner.Status -eq [MinerStatus]::Running -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
-                $Miner.StatusInfo = "'$($Miner.Info)' ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                 $Miner.SetStatus([MinerStatus]::Failed)
             }
             Else { 
@@ -1224,17 +1216,26 @@ Try {
             $Variables.Miners = [Miner[]]@()
             $Variables.RefreshNeeded = $true
             If (-not $Variables.EnabledDevices) { 
-                Write-Message -Level Warn "No enabled devices - retrying in $($Config.Interval) seconds..."
+                $Message = "No enabled devices - retrying in $($Config.Interval) seconds..."
+                Write-Message -Level Warn $Message
+                $Variables.Summary = $Message
+                Remove-Variable Message
                 Start-Sleep -Seconds $Config.Interval
                 Write-Message -Level Info "Ending cycle (No enabled devices)."
             }
             ElseIf (-not $Variables.PoolName) { 
-                Write-Message -Level Warn "No configured pools - retrying in $($Config.Interval) seconds..."
+                $Message = "No configured pools - retrying in $($Config.Interval) seconds..."
+                Write-Message -Level Warn $Message
+                $Variables.Summary = $Message
+                Remove-Variable Message
                 Start-Sleep -Seconds $Config.Interval
                 Write-Message -Level Info "Ending cycle (No configured pools)."
             }
             Else { 
-                Write-Message -Level Warn "No available miners - retrying in $($Config.Interval) seconds..."
+                $Message = "No available miners - retrying in $($Config.Interval) seconds..."
+                Write-Message -Level Warn $Message
+                $Variables.Summary = $Message
+                Remove-Variable Message
                 Start-Sleep -Seconds $Config.Interval
                 Write-Message -Level Info "Ending cycle (No available miners)."
             }
@@ -1307,9 +1308,6 @@ Try {
                 }
                 $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
 
-                # Set window title
-                If ($Miner.Process.MainWindowHandle) { [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo) }
-
                 # Add watchdog timer
                 If ($Config.Watchdog) { 
                     ForEach ($Worker in $Miner.Workers) { 
@@ -1336,21 +1334,11 @@ Try {
                 $Miner.DataCollectInterval = $DataCollectInterval
                 $Miner.RestartDataReader()
             }
-        }
-        Remove-Variable DataCollectInterval
-
-        ForEach ($Miner in $Variables.MinersBest) { 
             If ($Message = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [Attempt $($Miner.Activated) of $($Variables.WatchdogCount + 1); min. $($Miner.MinDataSample) sample$(If ($Miner.MinDataSample -ne 1) { "s" })]..."
             }
-            Try { 
-                $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
-                # Set window title
-                [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
-            }
-            Catch { }
         }
-        Remove-Variable Miner, Message -ErrorAction Ignore
+        Remove-Variable DataCollectInterval, Miner, Message -ErrorAction Ignore
 
         ($Variables.Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
             { 
@@ -1392,13 +1380,13 @@ Try {
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
-                        $Miner.StatusInfo = "'$($Miner.Info)' ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
                         $Variables.MinersFailed += $Miner
                     }
                     ElseIf ($Miner.DataReaderJob.State -ne [MinerStatus]::Running) { 
                         # Miner data reader process failed
-                        $Miner.StatusInfo = "'$($Miner.Info)' ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) miner data reader exited unexpectedly"
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) miner data reader exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
                         $Variables.MinersFailed += $Miner
                     }
@@ -1415,17 +1403,17 @@ Try {
                                     $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp -and $_.Hashrate.PSObject.Properties.Value -notcontains 0 }).ForEach({ $Miner.Data.Add($_) })
                                     Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
                                     If ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
-                                        $Miner.StatusInfo = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" }) '$($Miner.Info)'"
+                                        $Miner.StatusInfo = " '$($Miner.Info)' is $(If ($Miner.Benchmark) { "benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
                                         $Miner.SubStatus = "benchmarking"
                                     }
                                     Else { 
-                                        $Miner.StatusInfo = "Mining '$($Miner.Info)'"
+                                        $Miner.StatusInfo = "$($Miner.Info) is mining"
                                         $Miner.SubStatus = "running"
                                     }
                                 }
                                 ElseIf (-not $Config.Ignore0HashrateSample -or $Miner.ValidDataSampleTimestamp -ne [DateTime]0) { 
                                     Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(If ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])" })"
-                                    $Miner.StatusInfo = "Warming up '$($Miner.Info)'"
+                                    $Miner.StatusInfo = "$($Miner.Info) is warming up"
                                     $Miner.SubStatus = "warmingup"
                                 }
                             }
@@ -1433,24 +1421,21 @@ Try {
                         If ($Variables.NewMiningStatus -eq "Running") { 
                             # Stop miner, it has not provided hash rate on time
                             If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.BeginTime.AddSeconds($Miner.WarmupTimes[0])) { 
-                                $Miner.StatusInfo = "'$($Miner.Info)' has not provided first valid data sample in $($Miner.WarmupTimes[0]) seconds"
+                                $Miner.StatusInfo = "$($Miner.Info) has not provided first valid data sample in $($Miner.WarmupTimes[0]) seconds"
                                 $Miner.SetStatus([MinerStatus]::Failed)
                                 $Variables.MinersFailed += $Miner
                             }
                             # Miner stuck - no sample received in last few data collect intervals
                             ElseIf ($Miner.ValidDataSampleTimestamp -gt [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.DataSampleTimestamp.AddSeconds((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count)) { 
-                                $Miner.StatusInfo = "'$($Miner.Info)' has not updated data for more than $((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count) seconds"
+                                $Miner.StatusInfo = "$($Miner.Info) has not updated data for more than $((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count) seconds"
                                 $Miner.SetStatus([MinerStatus]::Failed)
                                 $Variables.MinersFailed += $Miner
                             }
                         }
                     }
-                    Try { 
-                        $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
-                        # Set window title
-                        [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
-                    }
-                    Catch { }
+                    Try { $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority) } Catch { }
+                    # Set window title
+                    Try { [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo) } Catch { }
                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                 }
                 Remove-Variable Miner, Sample, Samples -ErrorAction Ignore
