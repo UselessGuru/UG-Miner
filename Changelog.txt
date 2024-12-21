@@ -3,6 +3,19 @@ Known issues:
 - UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
   -> It is recommended to set it to 'Windows Console Host'
 
+Changelog UG-Miner 6.3.22 2024/12/21
+====================================
+
+Improvements:
+- Core: Optimize miner window title display
+- Remove obsolete code & minor code optimizations (summary & footer)
+
+Miner updates:
+- JayddeeCpu-v24.7
+- OneZeroMiner-v1.4.3
+- Wildrig-v0.41.7
+
+
 Changelog UG-Miner 6.3.21 2024/12/16
 ====================================
 
@@ -451,7 +464,7 @@ Improvements:
 
 Miner updates:
 - SCCminer-v1.1.0 (new)
-- XLAarig-v5.2.4 (new)
+- XLArig-v5.2.4 (new)
 
 
 Changelog UG-Miner 6.2.19 2024/07/21
