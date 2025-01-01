@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.22
-Version date:   2024/12/21
+Version:        6.3.23
+Version date:   2025/01/01
 #>
 
 using module .\Include.psm1
@@ -996,7 +996,7 @@ Try {
             $Miners.ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique); $_.Available = -not [Boolean]$_.Reasons })
 
             # Gone miners are no longer available
-            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false })
+            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false; $_.Best = $false })
 
             Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
 
@@ -1070,7 +1070,7 @@ Try {
             If ($Variables.CalculatePowerCost -and $Variables.MiningProfit -lt ($Config.ProfitabilityThreshold / $Variables.Rates.BTC.($Config.FIATcurrency))) { 
                 # Mining earning/profit is below threshold
                 $MinersBest = [Miner[]]@()
-                $Text = "Mining profit {0} {1:n} / day is below the configured threshold of {0} {2:n} / day. Mining is suspended until threshold is reached." -f $Config.FIATcurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.ProfitabilityThreshold
+                $Text = "Mining profit of {0} {1:n} / day is below the configured threshold of {0} {2:n} / day. Mining is suspended until the threshold is reached." -f $Config.FIATcurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.ProfitabilityThreshold
                 Write-Message -Level Warn ($Text -replace " / day", "/day")
                 $Summary += "$Text`n"
                 Remove-Variable Text
@@ -1157,31 +1157,28 @@ Try {
 
         # Kill stuck miners on subsequent cycles when not in dry run mode
         If (-not $Config.DryRun) { 
+            $MinerPaths = ($Miners.Path | Sort-Object -Unique).ForEach({ "$PWD\$($_)" })
             $Loops = 0
-            # Some miners, e.g. BzMiner spawn a second executable
-            While ($StuckMinerProcessIDs = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and ($Miners.Path | Sort-Object -Unique) -contains $_.ExecutablePath -and (Get-CimInstance win32_process -Filter "ParentProcessId = $($_.ProcessId)") -and $Miners.ProcessID -notcontains $_.ProcessID }) | Select-Object -ExpandProperty ProcessID) { 
-                $StuckMinerProcessIDs.ForEach(
-                    { 
-                        If ($Miner = $Miners | Where-Object ProcessID -EQ $_) { Write-Message -Level Verbose "Killing stuck miner '$($Miner.Name)'." }
-                        If ($ChildProcessID = (Get-CimInstance win32_process -Filter "ParentProcessId = $_").ProcessID) { Stop-Process -Id $ChildProcessID -Force -ErrorAction Ignore }
-                        Stop-Process -Id $_ -Force -ErrorAction Ignore | Out-Null
-                    }
-                )
-                Start-Sleep -Milliseconds 500
+            While ($StuckMinerProcesses = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID})) { 
+                ForEach ($StuckMinerProcess in $StuckMinerProcesses) { 
+                    If ($Miner = $Miners.Where({ $_.ProcessID -eq $StuckMinerProcess.ProcessId })) { Write-Message -Level Verbose "Killing stuck miner '$($Miner.Name)'." }
+                    Stop-Process -Id $StuckMinerProcess.ProcessId -Force -ErrorAction Ignore | Out-Null
+                }
+                Start-Sleep -Milliseconds 1000
                 $Loops ++
                 If ($Loops -gt 50) { 
                     If ($Config.AutoReboot) { 
-                        Write-Message -Level Error "$(If ($StuckMinerProcessIDs.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. Restarting computer in 30 seconds..."
-                        shutdown.exe /r /t 30 /c "$($Variables.Branding.ProductLabel) detected stuck miner$(If ($StuckMinerProcessIDs.Count -ne 1) { "s" }) and will reboot the computer in 30 seconds."
+                        Write-Message -Level Error "$(If ($StuckMinerProcesses.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. Restarting computer in 30 seconds..."
+                        shutdown.exe /r /t 30 /c "$($Variables.Branding.ProductLabel) detected stuck miner$(If ($StuckMinerProcesses.Count -ne 1) { "s" }) and will reboot the computer in 30 seconds."
                         Start-Sleep -Seconds 60
                     }
                     Else { 
-                        Write-Message -Level Error "$(If ($StuckMinerProcessIDs.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. It is recommended to restart the computer."
+                        Write-Message -Level Error "$(If ($StuckMinerProcesses.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. It is recommended to restart the computer."
                         Start-Sleep -Seconds 30
                     }
                 }
             }
-            Remove-Variable ChildProcessID, Loops, Message, Miner, StuckMinerProcessIDs -ErrorAction Ignore
+            Remove-Variable ChildProcess, ChildProcesses, Loops, Message, Miner, MinerPaths, StuckMinerProcess, StuckMinerProcesses -ErrorAction Ignore
         }
 
         $Miners.ForEach(
@@ -1403,7 +1400,7 @@ Try {
                                     $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp -and $_.Hashrate.PSObject.Properties.Value -notcontains 0 }).ForEach({ $Miner.Data.Add($_) })
                                     Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
                                     If ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
-                                        $Miner.StatusInfo = " '$($Miner.Info)' is $(If ($Miner.Benchmark) { "benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
+                                        $Miner.StatusInfo = "$($Miner.Info) is $(If ($Miner.Benchmark) { "benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
                                         $Miner.SubStatus = "benchmarking"
                                     }
                                     Else { 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.3.22
-Version date:   2024/12/21
+Version:        6.3.23
+Version date:   2025/01/01
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.3.22"
+    Version      = [System.Version]"6.3.23"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -381,7 +381,7 @@ If (-not $Variables.MyIP) {
 # Start transcript log
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
-# Start Log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
+# Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
 Start-LogReader
 
 # Update config file to include all new config items
@@ -444,7 +444,7 @@ If ( -not (Get-Command Get-PnpDevice)) {
 Write-Message -Level Verbose "Pre-requisites verification OK - Running PWSH version $($PSVersionTable.PSVersion)$(If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { " (recommended version is $($RecommendedPWSHversion))"})."
 Remove-Variable RecommendedPWSHversion
 
-# Check if new version is available
+# Check if a new version is available
 Get-Version
 
 $Variables.VerthashDatPath = ".\Cache\VertHash.dat"
@@ -544,7 +544,7 @@ If ((Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) -and ([
 $Variables.DriverVersion | ConvertTo-Json | Out-File -LiteralPath ".\Cache\DriverVersion.json" -Force
 
 # Rename existing switching log
-If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Rename-Item -NewName { "SwitchingLog$($_.LastWriteTime.toString("_yyyy-MM-dd_HH-mm-ss")).csv" } }
+If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Rename-Item -NewName { "SwitchingLog_$($_.LastWriteTime.toString("yyyy-MM-dd_HH-mm-ss")).csv" } }
 
 If ($VertHashDatCheckJob | Wait-Job -Timeout 60 | Receive-Job -Wait -AutoRemoveJob) { 
     Write-Message -Level Verbose "VertHash data file integrity check: OK."
@@ -735,7 +735,7 @@ Function MainLoop {
                     "c" { 
                         If ($Variables.CalculatePowerCost) { 
                             $Variables.ShowPowerCost = -not $Variables.ShowPowerCost
-                            Write-Host "`n'Power " -NoNewline; Write-Host "C" -ForegroundColor Cyan -NoNewline; Write-Host "ost' column visibility set to [" -NoNewline; If ($Variables.ShowPowerCost) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
+                            Write-Host "`n'Power " -NoNewline; Write-Host "c" -ForegroundColor Cyan -NoNewline; Write-Host "ost' column visibility set to [" -NoNewline; If ($Variables.ShowPowerCost) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                             Start-Sleep -Seconds 2
                             $Variables.RefreshNeeded = $true
                         }
@@ -750,7 +750,7 @@ Function MainLoop {
                     }
                     "f" { 
                         $Variables.ShowPoolFee = -not $Variables.ShowPoolFee
-                        Write-Host "`n'Pool "-NoNewline; Write-Host "F" -ForegroundColor Cyan -NoNewline; Write-Host "ees' column visibility set to [" -NoNewline; If ($Variables.ShowPoolFee) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
+                        Write-Host "`nPool '"-NoNewline; Write-Host "F" -ForegroundColor Cyan -NoNewline; Write-Host "ees' column visibility set to [" -NoNewline; If ($Variables.ShowPoolFee) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         Start-Sleep -Seconds 2
                         $Variables.RefreshNeeded = $true
                         Break
@@ -768,7 +768,7 @@ Function MainLoop {
                         Write-Host "e: Toggle '" -NoNewline; Write-Host "E" -ForegroundColor Cyan -NoNewline; Write-Host "arnings' column visibility             [" -NoNewline; If ($Variables.ShowEarning) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         Write-Host "f: Toggle pool '" -NoNewline; Write-Host "F" -ForegroundColor Cyan -NoNewline; Write-Host "ees' column visibility            [" -NoNewline; If ($Variables.ShowPoolFee) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         Write-Host "i: Toggle 'Earning b" -NoNewline; Write-Host "i" -ForegroundColor Cyan -NoNewline; Write-Host "as' column visibility         [" -NoNewline; If ($Variables.ShowEarningBias) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
-                        Write-Host "m: Toggle " -NoNewline; Write-Host "m" -ForegroundColor Cyan -NoNewline; Write-Host "iner 'fees' column visibility           [" -NoNewline; If ($Variables.ShowMinerFee) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
+                        Write-Host "m: Toggle " -NoNewline; Write-Host "m" -ForegroundColor Cyan -NoNewline; Write-Host "iner 'Fees' column visibility           [" -NoNewline; If ($Variables.ShowMinerFee) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         Write-Host "n: Toggle 'Coin" -NoNewline; Write-Host "N" -ForegroundColor Cyan -NoNewline; Write-Host "ame' column visibility             [" -NoNewline; If ($Variables.ShowCoinName) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         Write-Host "p: Toggle '" -NoNewline; Write-Host "P" -ForegroundColor Cyan -NoNewline; Write-Host "ool' column visibility                 [" -NoNewline; If ($Variables.ShowPool) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         If ($Variables.CalculatePowerCost) { 
@@ -780,7 +780,7 @@ Function MainLoop {
                         }
                         Write-Host "u: Toggle '" -NoNewline; Write-Host "U" -ForegroundColor Cyan -NoNewline; Write-Host "ser' column visibility                 [" -NoNewline; If ($Variables.ShowUser) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         If ($Variables.CalculatePowerCost) { 
-                            Write-Host "w: Toggle 'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er consumption' column visibility    [" -NoNewline; If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
+                            Write-Host "w: Toggle 'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er (W)' column visibility    [" -NoNewline; If ($Config.CalculatePowerCost -and $Variables.ShowPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         }
                         Write-Host "y: Toggle 'Currenc" -NoNewline; Write-Host "y" -ForegroundColor Cyan -NoNewline; Write-Host "' column visibility             [" -NoNewline; If ($Variables.ShowCurrency) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         Break
@@ -848,7 +848,7 @@ Function MainLoop {
                     "w" { 
                         If ($Variables.CalculatePowerCost) { 
                             $Variables.ShowPowerConsumption = -not $Variables.ShowPowerConsumption
-                            Write-Host "`n'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er consumption' column visibility set to [" -NoNewline; If ($Variables.ShowPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
+                            Write-Host "`n'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er (W)' column visibility set to [" -NoNewline; If ($Variables.ShowPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                             Start-Sleep -Seconds 2
                             $Variables.RefreshNeeded = $true
                         }

@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.22
-Version date:   2024/12/21
+Version:        6.3.23
+Version date:   2025/01/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
 
-$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.92/lolMiner_v1.92_Win64.zip"
+$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.93/lolMiner_v1.93_Win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\lolminer.exe"
 $DeviceEnumerator = "Bus"
@@ -83,7 +83,7 @@ $Algorithms = @(
     @{ Algorithms = @("Cuckaroo30CTX");                          Type = "NVIDIA"; Fee = @(0.025);       MinMemGiB = 8.0;  MinerSet = 2; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo C30CTX" }
 #   @{ Algorithms = @("Cuckatoo31");                             Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo C31" } # ASIC
 #   @{ Algorithms = @("Cuckatoo32");                             Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo C32" } # ASIC
-    @{ Algorithms = @("Equihash1254");                           Type = "NVIDIA"; Fee = @(0.015);       MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ZEL --pers ZelProof" } # MiniZ-v2.4.d is fastest, but has 2% miner fee
+    @{ Algorithms = @("Equihash1254");                           Type = "NVIDIA"; Fee = @(0.015);       MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ZEL --pers ZelProof" } # MiniZ-v2.4e is fastest, but has 2% miner fee
     @{ Algorithms = @("Equihash1445");                           Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo EQUI144_5" } # FPGA
     @{ Algorithms = @("Equihash2109");                           Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo EQUI210_9" }
     @{ Algorithms = @("EtcHash");                                Type = "NVIDIA"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ETCHASH" } # PhoenixMiner-v6.2c is faster

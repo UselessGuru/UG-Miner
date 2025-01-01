@@ -425,7 +425,6 @@ Class Miner : IDisposable {
         Else { 
             Write-Message -Level Info "Starting miner '$($this.Info)'..."
             $this.StatusInfo = "$($this.Info) is starting"
-            $this.SubStatus = "starting"
         }
 
         Write-Message -Level Verbose $this.CommandLine
@@ -467,6 +466,7 @@ Class Miner : IDisposable {
                     $this.Activated ++
                     $this.DataSampleTimestamp = [DateTime]0
                     $this.Status = [MinerStatus]::Running
+                    $this.SubStatus = "starting"
                     $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
                     $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                     $this.StartDataReader()
@@ -495,19 +495,17 @@ Class Miner : IDisposable {
 
         $this.EndTime = [DateTime]::Now.ToUniversalTime()
 
+        If ($this.ProcessId) { 
+            If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore | Out-Null }
+            If (-not (Get-Process -Id $this.ProcessId -ErrorAction Ignore)) { $this.ProcessId = $null }
+        }
+
         If ($this.Process) { 
             [Void]$this.Process.CloseMainWindow()
             [Void]$this.Process.WaitForExit(100)
             [Void]$this.Process.Kill()
             [Void]$this.Process.Dispose()
             $this.Process = $null
-        }
-
-        If ($this.ProcessId) { 
-            If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { 
-                Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore | Out-Null
-            }
-            $this.ProcessId = $null
         }
 
         If ($this.ProcessJob) { 
@@ -2245,6 +2243,45 @@ Function Get-GPUArchitectureNvidia {
 
 Function Get-Device { 
 
+    Param (
+        [Parameter(Mandatory = $false)]
+        [String[]]$Name = @(),
+        [Parameter(Mandatory = $false)]
+        [String[]]$ExcludeName = @()
+    )
+
+    If ($Name) { 
+        $DeviceList = [System.IO.File]::ReadAllLines("$PWD\Data\Devices.json") | ConvertFrom-Json
+        $Name_Devices = $Name.ForEach(
+            { 
+                $Name_Split = $_ -split "#"
+                $Name_Split = @($Name_Split | Select-Object -First 1) + @(($Name_Split | Select-Object -Skip 1).ForEach({ [Int]$_ }))
+                $Name_Split += @("*") * (100 - $Name_Split.Count)
+
+                $Name_Device = $DeviceList.("{0}" -f $Name_Split) | Select-Object *
+                ($Name_Device | Get-Member -MemberType NoteProperty).Name.ForEach({ $Name_Device.$_ = $Name_Device.$_ -f $Name_Split })
+
+                $Name_Device
+            }
+        )
+    }
+
+    If ($ExcludeName) { 
+        If (-not $DeviceList) { $DeviceList = [System.IO.File]::ReadAllLines("$PWD\Data\Devices.json") | ConvertFrom-Json }
+        $ExcludeName_Devices = $ExcludeName.ForEach(
+            { 
+                $ExcludeName_Split = $_ -split "#"
+                $ExcludeName_Split = @($ExcludeName_Split | Select-Object -First 1) + @(($ExcludeName_Split | Select-Object -Skip 1).ForEach({ [Int]$_ }))
+                $ExcludeName_Split += @("*") * (100 - $ExcludeName_Split.Count)
+
+                $ExcludeName_Device = $DeviceList.("{0}" -f $ExcludeName_Split) | Select-Object *
+                ($ExcludeName_Device | Get-Member -MemberType NoteProperty).Name.ForEach({ $ExcludeName_Device.$_ = $ExcludeName_Device.$_ -f $ExcludeName_Split })
+
+                $ExcludeName_Device
+            }
+        )
+    }
+
     $Devices = @()
 
     $Id = 0
@@ -2515,7 +2552,11 @@ Function Get-Device {
             $Device.Bus_Vendor_Index = @($Devices.Where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
             $Device.Bus_Platform_Index = @($Devices.Where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
 
-            $Device
+            If (-not $Name -or ($Name_Devices.Where({ ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) }))) { 
+                If (-not $ExcludeName -or -not ($ExcludeName_Devices.Where({ ($Device | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) -like ($_ | Select-Object (($_ | Get-Member -MemberType NoteProperty).Name)) }))) { 
+                    $Device
+                }
+            }
         }
     )
 }
@@ -2664,7 +2705,7 @@ public static class Kernel32
         }
 
         # Set local environment
-        ($EnvBlock | Select-Object).ForEach({ New-Item -Path "Env:\$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force | Out-Null })
+        ($EnvBlock | Select-Object).ForEach({ Set-Item -Path "Env:$(($_ -split "=")[0])" "$(($_ -split "=")[1])" -Force })
 
         # StartupInfo struct
         $StartupInfo = New-Object STARTUPINFO
@@ -2690,6 +2731,7 @@ public static class Kernel32
             [PSCustomObject]@{ ProcessId = $null }
             Return 
         }
+
         [PSCustomObject]@{ ProcessId = $Proc.Id }
 
         $ControllerProcess.Handle | Out-Null
@@ -2702,12 +2744,6 @@ public static class Kernel32
                 [Void]$Proc.Kill()
                 [Void]$Proc.Dispose()
                 $Proc = $null
-                # Some miners, e.g. BzMiner spawn a second executable
-                If ($ParentProcessId = (Get-CimInstance win32_process -Filter "ProcessId = $($this.ProcessId)")[0].ParentProcessId) { 
-                    If ($ParentProcess = (Get-CimInstance win32_process -Filter "ProcessId = $ParentProcessId")) { 
-                        If ($ParentProcess.Name -ne "pwsh.exe") { Stop-Process -Id $ParentProcess.ProcessId -Force }
-                    }
-                }
             }
         } While ($Proc.HasExited -eq $false)
     }

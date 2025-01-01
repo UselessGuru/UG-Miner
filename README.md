@@ -3,10 +3,10 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.3.22 / Updated 2024/12/21
+Version 6.3.23 / Updated 2025/01/01
 
 
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 This is free software, and you are welcome to redistribute it under certain conditions.  
 https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE

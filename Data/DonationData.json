@@ -2,13 +2,11 @@
   {
     "Name": "uselessguru",
     "MiningDutchUserName": "UselessGuru",
-    "MiningPoolHubUserName": "UselessGuru",
     "ProHashingUserName": "UselessGuru",
     "PoolName": [
       "HashCryptos",
       "Hiveon",
       "MiningDutch",
-      "NiceHash",
       "ProHashing",
       "ZergPool",
       "ZPool"

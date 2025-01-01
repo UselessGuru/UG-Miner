@@ -18,19 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.3.22
-Version date:   2024/12/21
+Version date:   2025/01/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/BzMiner/bzminer_v21.5.3_windows.zip"
+$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/BzMiner/bzminer_v22.0.0_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"
 
 $Algorithms = @(
     @{ Algorithms = @("Autolykos2");                      Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a ergo") }
-    @{ Algorithms = @("Blake3");                          Type = "AMD"; Fee = @(0.005); MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a alph") } #https://github.com/bzminer/bzminer/issues
+    @{ Algorithms = @("Blake3");                          Type = "AMD"; Fee = @(0.005); MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a alph") }
     @{ Algorithms = @("DynexSolve");                      Type = "AMD"; Fee = @(0.005); MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a dynex") }
     @{ Algorithms = @("EtcHash");                         Type = "AMD"; Fee = @(0.005); MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = @("GCN4");           ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a etchash") } # https://github.com/bzminer/bzminer/issues/264
     @{ Algorithms = @("Ethash");                          Type = "AMD"; Fee = @(0.005); MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 20); ExcludeGPUarchitectures = @("GCN4");           ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a ethash") } # https://github.com/bzminer/bzminer/issues/264
@@ -63,6 +63,7 @@ $Algorithms = @(
 
     @{ Algorithms = @("Autolykos2");                      Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a ergo") }
 #   @{ Algorithms = @("Autolykos2", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a ergo", " --a2 kaspa") } # ASIC
+    @{ Algorithms = @("Autolykos2", "DynexSolve");        Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a ergo", " --a2 dynex") }
     @{ Algorithms = @("Autolykos2", "SHA512256d");        Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a ergo", " --a2 radiant") }
 #   @{ Algorithms = @("Blake3");                          Type = "NVIDIA"; Fee = @(0.005);      MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = @();        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a alph") } # https://github.com/bzminer/bzminer/issues
     @{ Algorithms = @("DynexSolve");                      Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = @("Other"); ExcludeGPUmodel = "";            ExcludePools = @(@(), @());           Arguments = @(" -a dynex") }
