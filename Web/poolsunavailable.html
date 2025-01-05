@@ -28,6 +28,7 @@
             data-response-handler="formatPools"
             data-show-button-text="true"
             data-show-columns="true"
+            data-show-columns-toggle-all="true"
             data-show-fullscreen="false"
             data-show-refresh="true"
             data-show-search-clear-button="true"
@@ -85,8 +86,11 @@
             $table.bootstrapTable({
               async: 'true',
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
-              height: $(window).height() - $table.offset().top + 50,
+              height: $(window).height() - $table.offset().top + 30,
               onColumnSwitch: function() {
+                $('*').css('cursor', 'default');
+              },
+              onColumnSwitchAll: function() {
                 $('*').css('cursor', 'default');
               },
               onCreatedControls: function() {

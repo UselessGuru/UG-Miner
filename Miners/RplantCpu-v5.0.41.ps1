@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.23
-Version date:   2025/01/01
+Version:        6.3.24
+Version date:   2025/01/05
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -108,7 +108,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerRes";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yespowerRes" }
     @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 15);  ExcludePools = @();           Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yespowerTIDE" }
-    @{ Algorithm = "YespowerUrx";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yespowerURX" } # JayddeeCpu-v24.8 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerUrx";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yespowerURX" } # JayddeeCpu-v25.1 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

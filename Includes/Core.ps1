@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.23
-Version date:   2025/01/01
+Version:        6.3.24
+Version date:   2025/01/05
 #>
 
 using module .\Include.psm1
@@ -904,8 +904,8 @@ Try {
                         If (Get-Command Get-NetFirewallRule) { 
                             If ($MissingFirewallRules = (Compare-Object @(Get-NetFirewallApplicationFilter | Select-Object -ExpandProperty Program -Unique) @(($Miners | Select-Object -ExpandProperty Path -Unique).ForEach({ "$PWD\$($_)" })) -PassThru).Where({ $_.SideIndicator -eq "=>" })) { 
                                 Try { 
-                                    If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to add $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" })..." }
-                                    Start-Process "pwsh" ("-Command Write-Host 'Adding $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" })...'; Start-Sleep -Seconds 3; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json) | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' }" -replace '"', '\"') -Verb runAs
+                                    If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to add inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })..." }
+                                    Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })...'; Start-Sleep -Seconds 3; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json) | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' }" -replace '"', '\"') -Verb runAs
                                     Write-Message -Level Info "Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) to Windows Defender Inbound Rules Group '$($Variables.Branding.ProductLabel)'."
                                 }
                                 Catch { 

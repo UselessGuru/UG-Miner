@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.23
-Version date:   2025/01/01
+Version:        6.3.24
+Version date:   2025/01/05
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v24.8/cpuminer-opt-24.8-windows.zip"
+$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.1/cpuminer-opt-25.1-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\cpuminer-aes-sse42.exe" # Intel
 
@@ -68,7 +68,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerIots";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
     @{ Algorithm = "YespowerLitb";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"' }
     @{ Algorithm = "YespowerLtncg"; MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LTNCGYES"' }
-    @{ Algorithm = "YespowerMGPC";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Magpies are birds of the Corvidae family."' } # Magpiecoin
+    @{ Algorithm = "YespowerMGPC";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Magpies are birds of the Corvidae family."' } # MagpieCoin
     @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerTIDE";  MinerSet = 1; WarmupTimes = @(45, 55); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
     @{ Algorithm = "YespowerUrx";   MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
