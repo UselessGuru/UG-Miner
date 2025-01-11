@@ -1,6 +1,10 @@
 {
   "HashCryptos": {
-    "Algorithm": [],
+    "Algorithm": [
+      "-Yescrypt",
+      "-YescryptR16",
+      "-YescryptR32"
+    ],
     "AutoExchange": true,
     "BalancesKeepAlive": 90, // Inactive accounts are purged after 90 days
     "BrainConfig": {
@@ -88,7 +92,9 @@
   },
   "MiningDutch": {
     "Algorithm": [
-      "-YescryptR16"
+      "-Yescrypt",
+      "-YescryptR16",
+      "-YescryptR32"
     ],
     "AutoExchange": true,
     "BalancesKeepAlive": 180, // https://www.mining-dutch.nl/index.php?page=wallets
@@ -131,11 +137,7 @@
     }
   },
   "MiningPoolHub": {
-    "Algorithm": [
-      "-Neoscrypt",
-      "-Skein",
-      "-VertHash"
-    ],
+    "Algorithm": [],
     "AutoExchange": true,
     "BalancesKeepAlive": 90, // No expiration communicated by pool
     "EarningsAdjustmentFactor": 0.1, // Lower projected earnings until pool resolves its payout issues (https://bitcointalk.org/index.php?topic=472510.msg61523969#msg61523969)
@@ -229,7 +231,7 @@
       "ASIA",
       "US"
     ],
-    "Region_All": [  // 2024/11/11 EU ppols broken
+    "Region_All": [ 
       "ASIA",
       "EU",
       "US"
@@ -250,7 +252,10 @@
     }
   },
   "ZergPool": {
-    "Algorithm": [],
+    "Algorithm": [
+      "-Yescrypt",
+      "-YescryptR32"
+    ],
     "AutoExchange": true,
     "BalancesKeepAlive": 90, // Accounts with no mining activity for 3 months are purged 
     "BrainConfig": {

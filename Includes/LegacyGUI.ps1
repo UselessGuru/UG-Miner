@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.3.24
-Version date:   2025/01/05
+Version:        6.4.0
+Version date:   2025/01/11
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -38,6 +38,9 @@ $null = [ProcessDPI]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 Function CheckBoxSwitching_Click { 
+    $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+    $LegacyGUIswitchingDGV.ClearSelection()
+
     $SwitchingDisplayTypes = @()
     $LegacyGUIswitchingPageControls.ForEach({ If ($_.Checked) { $SwitchingDisplayTypes += $_.Tag } })
     If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
@@ -56,7 +59,6 @@ Function CheckBoxSwitching_Click {
             $LegacyGUIswitchingDGV.Columns[9].FillWeight = 30
             $LegacyGUIswitchingLogClearButton.Enabled = $true
         }
-        $LegacyGUIswitchingDGV.ClearSelection()
         $LegacyGUIswitchingDGV.EndInit()
     }
     Else { 
@@ -66,6 +68,7 @@ Function CheckBoxSwitching_Click {
     If ($Config.UseColorForMinerStatus) { 
         ForEach ($Row in $LegacyGUIswitchingDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $LegacyGUIcolors[$Row.DataBoundItem.Action] }
     }
+    $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
 
 Function Resize-Form { 
@@ -914,7 +917,7 @@ $LegacyGUIcopyrightLabel.LinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIcopyrightLabel.Size = New-Object System.Drawing.Size(380, 26)
 $LegacyGUIcopyrightLabel.Text = "Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru"
 $LegacyGUIcopyrightLabel.TextAlign = "MiddleRight"
-$LegacyGUIcopyrightLabel.Add_Click({ Start-Process "https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE" })
+$LegacyGUIcopyrightLabel.Add_Click({ Start-Process "https://github.com/UselessGuru/UG-Miner" })
 $LegacyGUIControls += $LegacyGUIcopyrightLabel
 $LegacyGUItooltip.SetToolTip($LegacyGUIcopyrightLabel, "Click to go to the $($Variables.Branding.ProductLabel) Github page")
 
@@ -1623,10 +1626,7 @@ $LegacyGUIcheckShowSwitchingCPU.ForEach(
     { 
         $_.Add_Click(
             { 
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-                $LegacyGUIswitchingDGV.ClearSelection()
                 CheckBoxSwitching_Click($this)
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
             }
         )
     }
@@ -1646,10 +1646,7 @@ $LegacyGUIcheckShowSwitchingAMD.ForEach(
     { 
         $_.Add_Click(
             { 
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-                $LegacyGUIswitchingDGV.ClearSelection()
-                LegacyGUIswitchingDGV($this)
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
+                CheckBoxSwitching_Click($this)
             }
         )
     }
@@ -1669,10 +1666,7 @@ $LegacyGUIcheckShowSwitchingINTEL.ForEach(
     { 
         $_.Add_Click(
             { 
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-                $LegacyGUIswitchingDGV.ClearSelection()
                 CheckBoxSwitching_Click($this)
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
             }
         )
     }
@@ -1692,10 +1686,7 @@ $LegacyGUIcheckShowSwitchingNVIDIA.ForEach(
     { 
         $_.Add_Click(
             { 
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-                $LegacyGUIswitchingDGV.ClearSelection()
                 CheckBoxSwitching_Click($this)
-                $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
             }
         )
     }

@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.3.24 / Updated 2025/01/05
+Version 6.4.0 / Updated 2025/01/11
 
 
 Copyright (c) 2018-2025 UselessGuru
@@ -93,11 +93,11 @@ UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin
 \+ show less switching than following current estimate and more switching than following the 24hr actual  
 \+ better estimated profitability
 
-#### Poolnames without *24h/plus
+#### Poolnames without *24h/Plus
 
 \+ use current price data in pool API to calculate profit (no estimates or advanced calculations)  
 \- are sensible to price spikes  
-\- show more switching  
+\- show more switching
 
 ### Algorithm selection
 

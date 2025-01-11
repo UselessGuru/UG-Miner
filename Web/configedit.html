@@ -79,12 +79,12 @@
           <!-- Currency settings -->
           <legend class=h6><b>Currency settings</b></legend>
           <div title="Currency used for BTC conversion&#10;Power cost, profit and earnings are shown in this currency">Main (FIAT) currency
-            <select id="FIATcurrency" name="FIATcurrency" style="margin-top: 0.2rem"></select>
+            <select id="FIATcurrency" name="FIATcurrency" style="margin-top: 0.2rem;"></select>
           </div>
           <div title="Default payout currency for all pools&#10;Important: Not all pools allow payouts in currencies other than BTC&#10;Consult the pool API for more information&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Default payout currency
-            <select id="PayoutCurrency" name="PayoutCurrency" style="margin-top: 0.2rem"></select>
+            <select id="PayoutCurrency" name="PayoutCurrency" style="margin-top: 0.2rem;"></select>
           </div>
-          <div title="Extra currencies to be shown in balances summary&#10;Values must be separated by commas&#10;&#10;Enter FIAT or crypto currencies&#10;mBTC (milli BTC) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem">Extra currencies</label>
+          <div title="Extra currencies to be shown in balances summary&#10;Values must be separated by commas&#10;&#10;Enter FIAT or crypto currencies&#10;mBTC (milli BTC) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem;">Extra currencies</label>
             <input type="text" id="ExtraCurrencies" name="ExtraCurrencies" maxlength=45 size=50 value="USD, ETC">
           </div>
           <div style="padding-top: 0.5rem" title="If enabled UG-Miner will display BTC values in milli BTC">
@@ -107,7 +107,7 @@
           <label for="StartupMode" title="Defines UG-Miner startup mode">mode</label>
           <div title="Mining will start when system is idle, e.g. no mouse&#10;or keyboard activity is detected for n seconds&#10;&#10;(min: 0, max: 3600; default: 120)&#10;&#10;Mining will stop when mouse or keyboard activity is detected">
             <input type="checkbox" class="toggle-switch" id="IdleDetection" name="IdleDetection"> Idle detection: Start mining when system is idle for
-            <input type="number" id="IdleSec" name="IdleSec" min=0 max=3600 value=120 step=1 size=4 style="width: 4em"> seconds
+            <input type="number" id="IdleSec" name="IdleSec" min=0 max=3600 value=120 step=1 size=4 style="width: 3.8em; text-align:right;"> seconds
           </div>
           <div style="padding-top: 0.5rem" title="Start the legacy GUI&#10;&#10;Note: You must keep the console window open when you disable the legacy GUI">
             <input type="checkbox" class="toggle-switch" id="LegacyGUI" name="LegacyGUI"> Start legacy GUI
@@ -120,7 +120,7 @@
             <input type="checkbox" class="toggle-switch" id="UseColorForMinerStatus" name="UseColorForMinerStatus"> Use colors for miner & rig status
           </div>
           <div style="padding-top: 0.4rem" title="Display numbers with maximal n decimal digits&#10;(larger numbers are shown with less decimal digits)&#10;&#10;(min: 0, max: 10; default: 6)" for="DecimalsMax">Display numbers with maximal
-            <input type="number" id="DecimalsMax" name="DecimalsMax" min=0 max=10 value=6 step=1 size=4 style="width: 2.5em"> decimal digits
+            <input type="number" id="DecimalsMax" name="DecimalsMax" min=0 max=10 value=6 step=1 size=4 style="width: 2.7em; text-align:right;"> decimal digits
           </div>
           <div style="padding-top: 0.5rem" title="Watchdog will monitor pools & miners for frequent failures&#10;and suspend failing pools or miners for some cycles">
             <input type="checkbox" class="toggle-switch" id="Watchdog" name="Watchdog"> Activate watchdog (recommended)
@@ -129,16 +129,16 @@
             <input type="checkbox" class="toggle-switch" id="AutoReboot" name="AutoReboot"> Restart computer on dead miners
           </div>
           <div style="padding-top: 0.5rem" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60, default 13 &#8792; 0.9%)"> Donation 
-            <input type="number" id="Donation" name="Donation" min=0 max=60 value=13 style="width: 2.5em"> minutes per day
+            <input type="number" id="Donation" name="Donation" min=0 max=60 value=13 style="width: 2.7em; text-align:right;"> minutes per day
           </div>
           <div style="padding-top: 0.3rem" title="Cycle duration&#10;This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
-            <input type="number" id="Interval" name="Interval" min=30 max=3600 step=1 value=90 style="width: 4em"> seconds
+            <input type="number" id="Interval" name="Interval" min=30 max=3600 step=1 value=90 style="width: 3.8em; text-align:right;"> seconds
           </div>
           <div style="padding-top: 0.3rem" title="Minimum number of continous cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
-            <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 style="width: 2.5em"> cycles before switching
+            <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 style="width: 2.7em; text-align:right;"> cycles before switching
           </div>
           <div style="padding-top: 0.3rem" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
-            <input type="number" id="MinDataSample" name="MinDataSample" min=10 max=100 value=20 step=1 size=4 style="width: 3em"> data samples while benchmarking
+            <input type="number" id="MinDataSample" name="MinDataSample" min=10 max=100 value=20 step=1 size=4 style="width: 2.8em; text-align:right;"> data samples while benchmarking
           </div>
           <div style="padding-top: 0.2rem" title="Enter Proxy IP address and port&#10;e.g. 192.168.1.1:3128"> Proxy address:port
             <input type="text" id="Proxy" name="Proxy" maxlength=22 size=30>
@@ -181,7 +181,7 @@
               <input type="checkbox" class="toggle-switch" id="SSLallowSelfSignedCertificate" name="SSLallowSelfSignedCertificate"> Allow SSL/TLS connections with self signed certificates
             </div>
             <div style="padding-top: 0.5rem" title="Minimum workers mining the algorithm at the pool&#10;If less miners are mining the algorithm then the pool will be disabled&#10;&#10;(min: 0, max: 100; default: 10)&#10;Set to 0 to disable this check&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Minimum
-              <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinWorker" name="MinWorker" style="width: 3em"> workers at pool
+              <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinWorker" name="MinWorker" style="width: 3em; text-align:right;"> workers at pool
             </div>
             <div style="padding-top: 0.4rem" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if hashrate@pool is 0 (not recommended)
@@ -288,7 +288,7 @@
           </div>
           <div title="Power consumption of idle system. Part of profit calculation&#10;&#10;(min: 0, max: 999; default: 60)&#10;&#10;Note: When CPU miners are running their&#10;power consumption is deducted from this value">
             <label style="margin-left:20px" for="PowerConsumptionIdleSystemW">Power consumption of idle system</label>
-            <input type="number" step=1 min=0 max=999 value=60 size=3 id="PowerConsumptionIdleSystemW" name="PowerConsumptionIdleSystemW" style="width: 3em"> W
+            <input type="number" step=1 min=0 max=999 value=60 size=3 id="PowerConsumptionIdleSystemW" name="PowerConsumptionIdleSystemW" style="width: 3.2em; text-align:right;"> W
           </div>
           <div style="padding-top: 0.2rem" title="UG-Miner will ignore power cost in best miner selection&#10;and will select miners with best earnings (and not best profit)">
             <input style="margin-left:20px" type="checkbox" class="toggle-switch" id="IgnorePowerCost" name="IgnorePowerCost"> Ignore power cost
@@ -298,22 +298,22 @@
           <!-- Calculation settings -->
           <legend title="These settings are used to calculate the best miners" class=h6><b>Calculation settings</b></legend>
           <div style="padding-top: 0.3rem" title="Mark a pool as unavailable if price is x times higher than&#10;the average price of all pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at two least pools"> Unreal pool price factor
-            <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealPoolPriceFactor" name="UnrealPoolPriceFactor" style="width: 3em">
+            <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealPoolPriceFactor" name="UnrealPoolPriceFactor" style="width: 3em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem" title="Mark pool as unavailable if accuracy is below this value&#10;&#10;(min: 0%, max 100%; default: 50%)"> Minimum accuracy
-            <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinAccuracy" name="MinAccuracy" style="width: 3em"> %
+            <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinAccuracy" name="MinAccuracy" style="width: 3em; text-align:right;"> %
           </div>
           <div style="padding-top: 0.5rem" title="UG-Miner will ignore the pool fee when calculating earning & profit">
             <input type="checkbox" class="toggle-switch" id="IgnorePoolFee" name="IgnorePoolFee"> Ignore pool fees
           </div>
           <div style="padding-top: 0.3rem" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings Adjustment Factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')"> Earnings adjustment factor
-            <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=4 style="width: 3.2em">
+            <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=4 style="width: 3.2em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem" title="Mark a miner as unavailable if earning is x times higher than the&#10;next best 10% or at least 5 miners with same algorithm&#10;&#10;(min: 1, max: 99.9; default: 5)&#10;Set to 1 to disable this check">Unreal miner earning factor
-            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealMinerEarningFactor" name="UnrealMinerEarningFactor" style="width: 3.2em">
+            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealMinerEarningFactor" name="UnrealMinerEarningFactor" style="width: 3.2em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem" title="UG-Miner will not switch miners&#10;unless another miner has n% higher earnings / profit&#10;&#10;Smaller numbers will cause more switching&#10;&#10;(min: 0%, max: 100%; default: 5%)" for="MinerSwitchingThreshold">Miner switching threshold
-            <input type="number" id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" min=0 max=100 value=5 step=0.1 size=3 style="width: 3.2em"> %
+            <input type="number" id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" min=0 max=100 value=5 step=0.1 size=3 style="width: 3.2em; text-align:right;"> %
           </div>
           <div style="padding-top: 0.5rem" title="UG-Miner will ignore the miner fee when calculating earning & profit">
             <input type="checkbox" class="toggle-switch" id="IgnoreMinerFee" name="IgnoreMinerFee"> Ignore miner fees
@@ -322,14 +322,14 @@
             <input type="checkbox" class="toggle-switch" id="ShowShares" name="ShowShares"> Show shares information
           </div>
           <div style="padding-top: 0.3rem" title="Acceptable bad shares threshold ((invalid + rejected + stale) / total) as reported by the miner&#10;If the threshold is exceeded then the miner will get stopped&#10;&#10;(min: 0%, max 100%; default=5%)&#10;Set to 0 to disable this check"> Acceptable bad shares threshold
-            <input type="number" step=1 min=0 max=100 value=5 size=3 id="BadShareRatioThreshold" name="BadShareRatioThreshold" style="width: 3em"> %
+            <input type="number" step=1 min=0 max=100 value=5 size=3 id="BadShareRatioThreshold" name="BadShareRatioThreshold" style="width: 3em; text-align:right;"> %
           </div>
           <div style="padding-top: 0.5rem" title="UG-Miner will deduct bad shares (e.g. invalid, rejected or stale) when calculating effective hashrates&#10;This will lower stored hashrates and increase earnings accuracy">
             <input type="checkbox" class="toggle-switch" id="SubtractBadShares" name="SubtractBadShares"> Deduct bad shares when calculating effective hashrates
           </div>
           <div style="padding-top: 0.5rem" id="ProfitabilityThresholdTitle">
             <label for="ProfitabilityThreshold">Profitability threshold</label>
-            <input type="number" step="0.001" min=-999999 max=999999 id="ProfitabilityThreshold" name="ProfitabilityThreshold" value=0.0>
+            <input type="number" step="0.001" min=-999999 max=999999 id="ProfitabilityThreshold" name="ProfitabilityThreshold" value=0.0 style="text-align:right;">
             <label id="ProfitabilityThresholdCurrency" for="ProfitabilityThreshold">
           </div>
           <br>
@@ -338,7 +338,7 @@
           <fieldset>
             <legend class=h6><b>Balances tracker settings</b></legend>
             <div style="padding-top: 0.3rem" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the Web GUI dashboard and API"> Poll pools for balances & earnings every
-              <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.5em"> minutes
+              <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
             <div style="padding-top: 0.6rem" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earning sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
               <input type="checkbox" class="toggle-switch" id="BalancesShowSums" name="BalancesShowSums" style="margin-left:20px"> Show earning sums for each pool
             </div>
@@ -370,51 +370,51 @@
               </select>
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Accuracy' column in the console window&#10;&#10;Can be toggled by pressing 'a' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowAccuracy" name="ShowAccuracy"> Show 'Accuracy' column
+              <input type="checkbox" class="toggle-switch" id="ShowAccuracyColumn" name="ShowAccuracyColumn"> Show 'Accuracy' column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'CoinName' column in the console window&#10;&#10;Can be toggled by pressing 'n' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowCoinName" name="ShowCoinName"> Show 'Coin name' column 
+            <div style="padding-top: 0.5rem" title="Show the 'Coin name' column in the console window&#10;&#10;Can be toggled by pressing 'n' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowCoinNameColumn" name="ShowCoinNameColumn"> Show 'Coin name' column 
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Currency' column in the console window&#10;&#10;Can be toggled by pressing 'y' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowCurrency" name="ShowCurrency"> Show 'Currency' column
+              <input type="checkbox" class="toggle-switch" id="ShowCurrencyColumn" name="ShowCurrencyColumn"> Show 'Currency' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Earning' column in the console window&#10;&#10;Can be toggled by pressing 'e' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowEarning" name="ShowEarning"> Show 'Earning' column
+              <input type="checkbox" class="toggle-switch" id="ShowEarningColumn" name="ShowEarningColumn"> Show 'Earning' column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'EarningBias' column in the console window&#10;&#10;Can be toggled by pressing 'i' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowEarningBias" name="ShowEarningBias"> Show 'Earning bias' column
+            <div style="padding-top: 0.5rem" title="Show the 'Earning bias' column in the console window&#10;&#10;Can be toggled by pressing 'i' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowEarningBiasColumn" name="ShowEarningBiasColumn"> Show 'Earning bias' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Hashrate(s)' column in the console window&#10;&#10;Can be toggled by pressing 's' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowHashrate" name="ShowHashrate"> Show 'Hashrates(s)' column
+              <input type="checkbox" class="toggle-switch" id="ShowHashrateColumn" name="ShowHashrateColumn"> Show 'Hashrates(s)' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the miner 'Fee' column in the console window&#10;&#10;Can be toggled by pressing 'm' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowMinerFee" name="ShowMinerFee"> Show miner 'Fee' column
+              <input type="checkbox" class="toggle-switch" id="ShowMinerFeeColumn" name="ShowMinerFeeColumn"> Show miner 'Fee' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Pool' column in the console window&#10;&#10;Can be toggled by pressing 'p' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowPool" name="ShowPool"> Show 'Pool' column
+              <input type="checkbox" class="toggle-switch" id="ShowPoolColumn" name="ShowPoolColumn"> Show 'Pool' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the pool 'Fee' column in the console window&#10;&#10;Can be toggled by pressing 'f' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowPoolFee" name="ShowPoolFee"> Show pool 'Fee' column
+              <input type="checkbox" class="toggle-switch" id="ShowPoolFeeColumn" name="ShowPoolFeeColumn"> Show pool 'Fee' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Profit' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 't' in the console window while waiting for the next cycle&#10;">
-              <input type="checkbox" class="toggle-switch" id="ShowProfit" name="ShowProfit"> Show 'Profit' column
+              <input type="checkbox" class="toggle-switch" id="ShowProfitColumn" name="ShowProfitColumn"> Show 'Profit' column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'ProfitBias' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'r' in the console window while waiting for the next cycle&#10;">
-              <input type="checkbox" class="toggle-switch" id="ShowProfitBias" name="ShowProfitBias"> Show 'Profit bias' column
+            <div style="padding-top: 0.5rem" title="Show the 'Profit bias' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'r' in the console window while waiting for the next cycle&#10;">
+              <input type="checkbox" class="toggle-switch" id="ShowProfitBiasColumn" name="ShowProfitBiasColumn"> Show 'Profit bias' column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'PowerConsumption' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'w' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowPowerConsumption" name="ShowPowerConsumption"> Show 'Power consumption' column
+            <div style="padding-top: 0.5rem" title="Show the 'Power (W)' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'w' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowPowerConsumptionColumn" name="ShowPowerConsumptionColumn"> Show 'Power (W)' column
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'PowerCost' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'c' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowPowerCost" name="ShowPowerCost"> Show 'Power cost' column
+            <div style="padding-top: 0.5rem" title="Show the 'Power Cost' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'c' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowPowerCostColumn" name="ShowPowerCostColumn"> Show 'Power cost' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'User' column in the console window&#10;&#10;Can be toggled by pressing 'u' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowUser" name="ShowUser"> Show 'User' column
+              <input type="checkbox" class="toggle-switch" id="ShowUserColumn" name="ShowUserColumn"> Show 'User' column
             </div>
             <br>
 
             <div title="Show the pool balances in the console window&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;Can be toggled by pressing '1' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowPoolBalances" name="ShowPoolBalances" > Show pool balances
+              <input type="checkbox" class="toggle-switch" id="ShowPoolColumnBalances" name="ShowPoolColumnBalances" > Show pool balances
             </div>
             <div style="padding-top: 0.5rem" title="When disabled only the best 5 miners per device are shown&#10;except while not benchmarking or measuring power consumption&#10;&#10;Can be toggled by pressing '2' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowAllMiners" name="ShowAllMiners"> Show all optimal miners
@@ -438,7 +438,7 @@
             <!-- Auto update settings -->
             <legend class=h6><b>Auto update settings</b></legend>
             <div style="padding-top: 0.3rem" title="UG-Miner will periodically check for a new program version&#10;&#10;(min: 0, max: 30; default: 1)&#10;Set to 0 to disable checking for new versions"> Check for new version every
-              <input type="number" id="AutoUpdateCheckInterval" name="AutoUpdateCheckInterval" min=0 max=50 step=1 value=15 style="width: 2.5em"> days
+              <input type="number" id="AutoUpdateCheckInterval" name="AutoUpdateCheckInterval" min=0 max=50 step=1 value=15 style="width: 2.7em; text-align:right;"> days
             </div>
             <div style="padding-top: 0.4rem" title="Automatically update UG-Miner to the newest program version&#10;UG-Miner will check for a new version on each start&#10;and every n days as configured by 'AutoUpdateCheckInterval'">
               <input type="checkbox" class="toggle-switch" id="AutoUpdate" name="AutoUpdate"> Automatically install newest version
@@ -878,12 +878,12 @@
     $(document.getElementById('FIATcurrency')).trigger('change');
 
     // Calculation settings
-    document.getElementById('UnrealPoolPriceFactor').value = parseFloat(config.UnrealPoolPriceFactor);
+    document.getElementById('UnrealPoolPriceFactor').value = parseFloat(config.UnrealPoolPriceFactor).toFixed(1);
     document.getElementById('MinAccuracy').value = parseFloat(config.MinAccuracy) * 100;
     if (config.IgnorePoolFee) document.getElementById('IgnorePoolFee').checked = true;
-    document.getElementById('EarningsAdjustmentFactor').value = parseFloat(config.EarningsAdjustmentFactor);
-    document.getElementById('UnrealMinerEarningFactor').value = parseFloat(config.UnrealMinerEarningFactor);
-    document.getElementById('MinerSwitchingThreshold').value = parseFloat(config.MinerSwitchingThreshold);
+    document.getElementById('EarningsAdjustmentFactor').value = parseFloat(config.EarningsAdjustmentFactor).toFixed(1);
+    document.getElementById('UnrealMinerEarningFactor').value = parseFloat(config.UnrealMinerEarningFactor).toFixed(1);
+    document.getElementById('MinerSwitchingThreshold').value = parseFloat(config.MinerSwitchingThreshold).toFixed(1);
     if (config.ShowShares) document.getElementById('ShowShares').checked = true;
     document.getElementById('BadShareRatioThreshold').value = parseFloat(config.BadShareRatioThreshold) * 100;
     if (config.SubtractBadShares) document.getElementById('SubtractBadShares').checked = true;
@@ -904,7 +904,7 @@
       document.getElementById('BalancesShowInAllCurrencies').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesKeepAlive').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesTrackerLog').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
-      document.getElementById('ShowPoolBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
+      document.getElementById('ShowPoolColumnBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
     });
     if (config.BalancesShowSums) document.getElementById('BalancesShowSums').checked = true;
     if (config.BalancesShowAverages) document.getElementById('BalancesShowAverages').checked = true;
@@ -917,21 +917,21 @@
     // Console display settings
     $(document.getElementById('ShowConsole')).change(function (event) {
       document.getElementById('UIStyle').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowAccuracy').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowCoinName').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowCurrency').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowEarning').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowEarningBias').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowHashrate').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowMinerFee').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowProfit').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowProfitBias').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowPowerConsumption').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowPowerCost').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowPool').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowPoolFee').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowUser').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowPoolBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
+      document.getElementById('ShowAccuracyColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowCoinNameColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowCurrencyColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowEarningColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowEarningBiasColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowHashrateColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowMinerFeeColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowProfitColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowProfitBiasColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowPowerConsumptionColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowPowerCostColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowPoolColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowPoolFeeColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowUserColumn').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowPoolColumnBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('ShowAllMiners').disabled = !(document.getElementById('ShowConsole').checked);
       if (!(document.getElementById('ShowConsole').checked)) {
         document.getElementById('LegacyGUI').checked = true;
@@ -942,29 +942,29 @@
 
     if (config.UIStyle.trim().toLowerCase() == 'full') document.getElementById('UIStyle').value = 'full';
     else document.getElementById('UIStyle').value = 'light';
-    if (config.ShowAccuracy) document.getElementById('ShowAccuracy').checked = true;
-    if (config.ShowCoinName) document.getElementById('ShowCoinName').checked = true;
-    if (config.ShowCurrency) document.getElementById('ShowCurrency').checked = true;
-    if (config.ShowEarning) document.getElementById('ShowEarning').checked = true;
-    if (config.ShowEarningBias) document.getElementById('ShowEarningBias').checked = true;
-    if (config.ShowHashrate) document.getElementById('ShowHashrate').checked = true;
-    if (config.ShowMinerFee) document.getElementById('ShowMinerFee').checked = true;
-    if (config.ShowProfit) document.getElementById('ShowProfit').checked = true;
-    if (config.ShowProfitBias) document.getElementById('ShowProfitBias').checked = true;
-    if (config.ShowPool) document.getElementById('ShowPool').checked = true;
-    if (config.ShowPoolFee) document.getElementById('ShowPoolFee').checked = true;
-    if (config.ShowPowerConsumption) document.getElementById('ShowPowerConsumption').checked = true;
-    if (config.ShowPowerCost) document.getElementById('ShowPowerCost').checked = true;
-    if (config.ShowUser) document.getElementById('ShowUser').checked = true;
-    if (config.ShowPoolBalances) document.getElementById('ShowPoolBalances').checked = true;
+    if (config.ShowAccuracyColumn) document.getElementById('ShowAccuracyColumn').checked = true;
+    if (config.ShowCoinNameColumn) document.getElementById('ShowCoinNameColumn').checked = true;
+    if (config.ShowCurrencyColumn) document.getElementById('ShowCurrencyColumn').checked = true;
+    if (config.ShowEarningColumn) document.getElementById('ShowEarningColumn').checked = true;
+    if (config.ShowEarningBiasColumn) document.getElementById('ShowEarningBiasColumn').checked = true;
+    if (config.ShowHashrateColumn) document.getElementById('ShowHashrateColumn').checked = true;
+    if (config.ShowMinerFeeColumn) document.getElementById('ShowMinerFeeColumn').checked = true;
+    if (config.ShowProfitColumn) document.getElementById('ShowProfitColumn').checked = true;
+    if (config.ShowProfitBiasColumn) document.getElementById('ShowProfitBiasColumn').checked = true;
+    if (config.ShowPoolColumn) document.getElementById('ShowPoolColumn').checked = true;
+    if (config.ShowPoolFeeColumn) document.getElementById('ShowPoolFeeColumn').checked = true;
+    if (config.ShowPowerConsumptionColumn) document.getElementById('ShowPowerConsumptionColumn').checked = true;
+    if (config.ShowPowerCostColumn) document.getElementById('ShowPowerCostColumn').checked = true;
+    if (config.ShowUserColumn) document.getElementById('ShowUserColumn').checked = true;
+    if (config.ShowPoolColumnBalances) document.getElementById('ShowPoolColumnBalances').checked = true;
     if (config.ShowAllMiners) document.getElementById('ShowAllMiners').checked = true;
 
     // CalculatePowerCost click
     $(document.getElementById('CalculatePowerCost')).click(function (event) {
-      document.getElementById('ShowPowerConsumption').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
-      document.getElementById('ShowPowerCost').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
-      document.getElementById('ShowProfit').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
-      document.getElementById('ShowProfitBias').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
+      document.getElementById('ShowPowerConsumptionColumn').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
+      document.getElementById('ShowPowerCostColumn').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
+      document.getElementById('ShowProfitColumn').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
+      document.getElementById('ShowProfitBiasColumn').disabled = !(document.getElementById('ShowConsole').checked) || !(document.getElementById('CalculatePowerCost').checked);
     });
 
     // Log to file settings
@@ -1132,7 +1132,7 @@
         },
         Proxy: {
           required: false,
-          pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+          pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){4}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
         },
         ExcludeMinerName: {
           required: false,
@@ -1145,6 +1145,10 @@
           minlength: 3,
           maxlength: 1024,
           pattern: '^[+|-]([A-Za-z0-9\(\))]{2,}?)+(?:,[+|-]([A-Za-z0-9\(\)]{2,})+)*$'
+        },
+        PowerPricekWh: {
+          maxlength: 256,
+          pattern: '^\{"([01][0-9]|2[0-3]):[0-5][0-9]":([0-9]+|[0-9]\.+[0-9]+)(?:,"([01][0-9]|2[0-3]):[0-5][0-9]":([0-9]+|[0-9]\.+[0-9]+))*\}$'
         },
         PowerConsumptionIdleSystemW: {
           digits: true,
@@ -1237,7 +1241,7 @@
           pattern: "<br>Workername must be between 2 and 32 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
         },
         Proxy: {
-          pattern: "<br>Enter Proxy IP V4 address and port<br>;e.g. 192.168.1.1:3128"
+          pattern: "<br>Enter Proxy IP V4 address and port<br>e.g. 192.168.1.1:3128"
         },
         ExcludeMinerName: {
           minlength: "<br>Miner Name is too short",
@@ -1245,6 +1249,9 @@
         },
         Algorithm: {
           pattern: "<br>Algorithms must be prefixed with '+' or '-' and separated by commas"
+        },
+        PowerPricekWh: {
+          pattern: '<br>Enter a compressed json, e.g. {"00:00":0.26,"12:00":0.3} (max. 256 chars)'
         }
       },
       invalidHandler: function(event, validator) {
@@ -1350,10 +1357,10 @@
         config.CalculatePowerCost = document.getElementById('CalculatePowerCost').checked;
         document.getElementById('PowerPricekWh').value = document.getElementById('PowerPricekWh').value.replace('[', '').replace(']', '');
         if (document.getElementById('PowerPricekWh').value.toString().trim() === '') document.getElementById('PowerPricekWh').value = '{"00:00":0.0}';
-        if (document.getElementById('PowerPricekWh').value.toString().trim().match(/^{"(([0-1]|)[0-9]|[2][0-3]):([0-5][0-9])":(\d+(\.\d+)?)+(?:,"(([0-1]|)[0-9]|[2][0-3]):([0-5][0-9])":(\d+(\.\d+)?)+)*\}$/)) config.PowerPricekWh = JSON.parse(document.getElementById('PowerPricekWh').value.toString().trim());
+        if (document.getElementById('PowerPricekWh').value.toString().trim().match(/^\{"([01][0-9]|2[0-3]):[0-5][0-9]":([0-9]+|[0-9]\.+[0-9]+)(?:,"([01][0-9]|2[0-3]):[0-5][0-9]":([0-9]+|[0-9]\.+[0-9]+))*\}$/)) config.PowerPricekWh = JSON.parse(document.getElementById('PowerPricekWh').value.toString().trim());
         else {
           $('.modal-title').text('Invalid Power Price data');
-          $('.modal-body').text('Enter a compressed json, e.g. {"00:00":0.26,"12:00":0.3}');
+          $('.modal-body').text('Enter a compressed json, e.g. {"00:00":0.26,"12:00":0.3} (max. 256 chars)');
           $('#myModal').modal({ show: true });
           return false;
         }
@@ -1384,21 +1391,21 @@
 
         // Console display settings
         config.UIStyle = document.getElementById('UIStyle').value;
-        config.ShowAccuracy =  document.getElementById('ShowAccuracy').checked;
-        config.ShowCoinName =  document.getElementById('ShowCoinName').checked;
-        config.ShowCurrency =  document.getElementById('ShowCurrency').checked;
-        config.ShowEarning = document.getElementById('ShowEarning').checked;
-        config.ShowEarningBias = document.getElementById('ShowEarningBias').checked;
-        config.ShowHashrate = document.getElementById('ShowHashrate').checked;
-        config.ShowMinerFee = document.getElementById('ShowMinerFee').checked;
-        config.ShowPool = document.getElementById('ShowPool').checked;
-        config.ShowPoolFee = document.getElementById('ShowPoolFee').checked;
-        config.ShowProfit = document.getElementById('ShowProfit').checked;
-        config.ShowProfitBias = document.getElementById('ShowProfitBias').checked;
-        config.ShowPowerConsumption = document.getElementById('ShowPowerConsumption').checked;
-        config.ShowPowerCost = document.getElementById('ShowPowerCost').checked;
-        config.ShowUser =  document.getElementById('ShowUser').checked;
-        config.ShowPoolBalances = document.getElementById('ShowPoolBalances').checked;
+        config.ShowAccuracyColumn =  document.getElementById('ShowAccuracyColumn').checked;
+        config.ShowCoinNameColumn =  document.getElementById('ShowCoinNameColumn').checked;
+        config.ShowCurrencyColumn =  document.getElementById('ShowCurrencyColumn').checked;
+        config.ShowEarningColumn = document.getElementById('ShowEarningColumn').checked;
+        config.ShowEarningBiasColumn = document.getElementById('ShowEarningBiasColumn').checked;
+        config.ShowHashrateColumn = document.getElementById('ShowHashrateColumn').checked;
+        config.ShowMinerFeeColumn = document.getElementById('ShowMinerFeeColumn').checked;
+        config.ShowPoolColumn = document.getElementById('ShowPoolColumn').checked;
+        config.ShowPoolFeeColumn = document.getElementById('ShowPoolFeeColumn').checked;
+        config.ShowProfitColumn = document.getElementById('ShowProfitColumn').checked;
+        config.ShowProfitBiasColumn = document.getElementById('ShowProfitBiasColumn').checked;
+        config.ShowPowerConsumptionColumn = document.getElementById('ShowPowerConsumptionColumn').checked;
+        config.ShowPowerCostColumn = document.getElementById('ShowPowerCostColumn').checked;
+        config.ShowUserColumn =  document.getElementById('ShowUserColumn').checked;
+        config.ShowPoolColumnBalances = document.getElementById('ShowPoolColumnBalances').checked;
         config.ShowAllMiners = document.getElementById('ShowAllMiners').checked;
 
         // Log to file settings

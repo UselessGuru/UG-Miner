@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.3.24
-Version date:   2025/01/05
+Version:        6.4.0
+Version date:   2025/01/11
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1536,22 +1536,22 @@ Function Read-Config {
     # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
     $ConfigFromFile.psBase.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
 
-    $Variables.ShowAccuracy = $Config.ShowAccuracy
+    $Variables.ShowAccuracyColumn = $Config.ShowAccuracyColumn
     $Variables.ShowAllMiners = $Config.ShowAllMiners
-    $Variables.ShowCoinName = $Config.ShowCoinName
-    $Variables.ShowCurrency = $Config.ShowCurrency
-    $Variables.ShowEarning = $Config.ShowEarning
-    $Variables.ShowEarningBias = $Config.ShowEarningBias
-    $Variables.ShowHashrate = $Config.ShowHashrate
-    $Variables.ShowMinerFee = $Config.ShowMinerFee
-    $Variables.ShowPool = $Config.ShowPool
-    $Variables.ShowPoolBalances = $Config.ShowPoolBalances
-    $Variables.ShowPoolFee = $Config.ShowPoolFee
-    $Variables.ShowProfit = $Config.ShowProfit
-    $Variables.ShowProfitBias = $Config.ShowProfitBias
-    $Variables.ShowPowerConsumption = $Config.ShowPowerConsumption
-    $Variables.ShowPowerCost = $Config.ShowPowerCost
-    $Variables.ShowUser = $Config.ShowUser
+    $Variables.ShowCoinNameColumn = $Config.ShowCoinNameColumn
+    $Variables.ShowCurrencyColumn = $Config.ShowCurrencyColumn
+    $Variables.ShowEarningColumn = $Config.ShowEarningColumn
+    $Variables.ShowEarningBiasColumn = $Config.ShowEarningBiasColumn
+    $Variables.ShowHashrateColumn = $Config.ShowHashrateColumn
+    $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
+    $Variables.ShowPoolColumn = $Config.ShowPoolColumn
+    $Variables.ShowPoolColumnBalances = $Config.ShowPoolColumnBalances
+    $Variables.ShowPoolFeeColumn = $Config.ShowPoolFeeColumn
+    $Variables.ShowProfitColumn = $Config.ShowProfitColumn
+    $Variables.ShowProfitBiasColumn = $Config.ShowProfitBiasColumn
+    $Variables.ShowPowerConsumptionColumn = $Config.ShowPowerConsumptionColumn
+    $Variables.ShowPowerCostColumn = $Config.ShowPowerCostColumn
+    $Variables.ShowUserColumn = $Config.ShowUserColumn
     $Variables.UIStyle = $Config.UIStyle
 
     $Variables.ConfigReadTimestamp = [DateTime]::Now.ToUniversalTime()
@@ -1615,6 +1615,20 @@ Function Update-ConfigFile {
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_) }
                 "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_) }
                 "MinerInstancePerDeviceModel" { $Config.Remove($_) }
+                "ShowAccuracy" { $Config.ShowAccuracyColumn = $Config.$_; $Config.Remove($_) }
+                "ShowCoinName" { $Config.ShowCoinNameColumn = $Config.$_; $Config.Remove($_) }
+                "ShowCurrency" { $Config.ShowCurrencyColumn = $Config.$_; $Config.Remove($_) }
+                "ShowEarning" { $Config.ShowEarningColumn = $Config.$_; $Config.Remove($_) }
+                "ShowEarningBias" { $Config.ShowEarningBiasColumn = $Config.$_; $Config.Remove($_) }
+                "ShowHashrate" { $Config.ShowHashrateColumn = $Config.$_; $Config.Remove($_) }
+                "ShowMinerFee" { $Config.ShowMinerFeeColumn = $Config.$_; $Config.Remove($_) }
+                "ShowPool" { $Config.ShowPoolColumn = $Config.$_; $Config.Remove($_) }
+                "ShowPoolFee" { $Config.ShowPoolFeeColumn = $Config.$_; $Config.Remove($_) }
+                "ShowProfit" { $Config.ShowProfitColumn = $Config.$_; $Config.Remove($_) }
+                "ShowProfitBias" { $Config.ShowProfitBiasColumn = $Config.$_; $Config.Remove($_) }
+                "ShowPowerConsumption" { $Config.ShowPowerConsumptionColumn = $Config.$_; $Config.Remove($_) }
+                "ShowPowerCost" { $Config.ShowPowerCostColumn = $Config.$_; $Config.Remove($_) }
+                "ShowUser" { $Config.ShowUserColumn = $Config.$_; $Config.Remove($_) }
                 Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
             }
         }
@@ -1650,23 +1664,23 @@ Function Write-Config {
 "
     "$Header$($NewConfig | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $ConfigFile -Force
 
-    $Variables.ShowAccuracy = $Config.ShowAccuracy
+    $Variables.ShowAccuracyColumn = $Config.ShowAccuracyColumn
     $Variables.ShowAllMiners = $Config.ShowAllMiners
-    $Variables.ShowCoinName = $Config.ShowCoinName
-    $Variables.ShowCurrency = $Config.ShowCurrency
-    $Variables.ShowEarning = $Config.ShowEarning
-    $Variables.ShowEarningBias = $Config.ShowEarningBias
-    $Variables.ShowHashrate = $Config.ShowHashrate
-    $Variables.ShowMinerFee = $Config.ShowMinerFee
-    $Variables.ShowMinerFee = $Config.ShowMinerFee
-    $Variables.ShowPool = $Config.ShowPool
-    $Variables.ShowPoolBalances = $Config.ShowPoolBalances
-    $Variables.ShowPoolFee = $Config.ShowPoolFee
-    $Variables.ShowPowerCost = $Config.ShowPowerCost
-    $Variables.ShowProfit = $Config.ShowProfit
-    $Variables.ShowProfitBias = $Config.ShowProfitBias
+    $Variables.ShowCoinNameColumn = $Config.ShowCoinNameColumn
+    $Variables.ShowCurrencyColumn = $Config.ShowCurrencyColumn
+    $Variables.ShowEarningColumn = $Config.ShowEarningColumn
+    $Variables.ShowEarningBiasColumn = $Config.ShowEarningBiasColumn
+    $Variables.ShowHashrateColumn = $Config.ShowHashrateColumn
+    $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
+    $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
+    $Variables.ShowPoolColumn = $Config.ShowPoolColumn
+    $Variables.ShowPoolColumnBalances = $Config.ShowPoolColumnBalances
+    $Variables.ShowPoolFeeColumn = $Config.ShowPoolFeeColumn
+    $Variables.ShowPowerCostColumn = $Config.ShowPowerCostColumn
+    $Variables.ShowProfitColumn = $Config.ShowProfitColumn
+    $Variables.ShowProfitBiasColumn = $Config.ShowProfitBiasColumn
     $Variables.ShowShares = $Config.ShowShares
-    $Variables.ShowUser = $Config.ShowUser
+    $Variables.ShowUserColumn = $Config.ShowUserColumn
     $Variables.UIStyle = $Config.UIStyle
 }
 
@@ -2683,14 +2697,26 @@ public static class Kernel32
         # ProcessInfo struct
         $ProcessInfo = New-Object PROCESS_INFORMATION
 
+        # Force to use conhost, sometimes miners would get started using windows terminal
+        $ConHost = "$($ENV:SystemRoot)\System32\conhost.exe"
+
         # Call CreateProcess
-        [Void][Kernel32]::CreateProcess($BinaryPath, "$BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
+        [Void][Kernel32]::CreateProcess($ConHost, "$ConHost $BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
+
         $Proc = Get-Process -Id $ProcessInfo.dwProcessId
         If ($null -eq $Proc) { 
             [PSCustomObject]@{ ProcessId = $null }
             Return 
         }
-        [PSCustomObject]@{ ProcessId = $Proc.Id }
+
+        $ProcessId = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)") | Select-Object -ExpandProperty ProcessId
+        $Proc = Get-Process -Id $ProcessId
+        If ($null -eq $Proc) { 
+            [PSCustomObject]@{ ProcessId = $null }
+            Return 
+        }
+
+        [PSCustomObject]@{ ProcessId = $ProcessId }
 
         $ControllerProcess.Handle | Out-Null
         $Proc.Handle | Out-Null

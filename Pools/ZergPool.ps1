@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.3.24
-Version date:   2025/01/05
+Version:        6.4.0
+Version date:   2025/01/11
 #>
 
 Param(
@@ -61,7 +61,7 @@ If ($DivisorMultiplier -and $Regions) {
     ForEach ($Pool in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
         $Algorithm = $Request.$Pool.algo
         $AlgorithmNorm = Get-Algorithm $Algorithm
-        $Currency = [String]$Request.$Pool.Currency
+        $Currency = If ([String]$Request.$Pool.Currency) { [String]$Request.$Pool.Currency } Else { "" }
         $Divisor = [Double]$Request.$Pool.mbtc_mh_factor * $DivisorMultiplier
 
         $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Pool -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
@@ -96,7 +96,7 @@ If ($DivisorMultiplier -and $Regions) {
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
                     Algorithm                = $AlgorithmNorm
-                    Currency                 = If ($Currency) { $Currency } Else { "" }
+                    Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
                     Fee                      = $Request.$Pool.Fees / 100
@@ -107,7 +107,7 @@ If ($DivisorMultiplier -and $Regions) {
                     Port                     = [UInt16]$Request.$Pool.port
                     PortSSL                  = [UInt16]$Request.$Pool.tls_port
                     PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"
-                    Price                    = $Stat.Live
+                    Price                    = If ($Request.$Pool.estimate_current -eq 0) { [Double]::NaN } Else { $Stat.Live }
                     Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $RegionNorm

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.3.24
-Version date:   2025/01/05
+Version:        6.4.0
+Version date:   2025/01/11
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -26,7 +26,7 @@ If (($Variables.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { Return }
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"11.0" } { "https://github.com/TrailingStop/TT-Miner-beta/releases/download/2024.3.3-beta5/TT-Miner-2024.3.3b5.zip" }
+    { $_ -ge [System.Version]"11.0" } { "http://www.tradeproject.de/download/Miner/TT-Miner-2024.3.3b6.zip" }
     Default                           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -94,7 +94,7 @@ If ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Model -eq $Model -and $_.Type -eq $Type})
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
@@ -129,7 +129,6 @@ If ($Algorithms) {
                                 $Arguments += " -u $($Pool.User)"
                                 If ($Pool.Pass) { $Arguments += " -p $($Pool.Pass)" }
                                 If ($Pool.WorkerName) { $Arguments += " -w $($Pool.WorkerName)" }
-
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes

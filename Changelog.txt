@@ -1,7 +1,34 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
-- UG-Miner has issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
-  -> It is recommended to set it to 'Windows Console Host'
+
+
+Changelog UG-Miner 6.4.0 2025/01/11
+===================================
+
+Changes:
+- Changed the names of configurations items to better reflect their purpose:
+    ShowAccuracy -> ShowAccuracyColumn
+    ShowCoinName -> ShowCoinNameColumn
+    ShowCurrency -> ShowCurrencyColumn
+    ShowEarning -> ShowEarningColumn
+    ShowEarningBias -> ShowEarningBiasColumn
+    ShowHashrate -> ShowHashrateColumn
+    ShowMinerFee -> ShowMinerFeeColumn
+    ShowPool -> ShowPoolColumn
+    ShowPoolFee -> ShowPoolFeeColumn
+    ShowProfit -> ShowProfitColumn
+    ShowProfitBias -> ShowProfitBiasColumn
+    ShowPowerConsumption -> ShowPowerConsumptionColumn
+    ShowPowerCost -> ShowPowerCostColumn
+    ShowUser -> ShowUserColumn
+  Note: The configuration file gets automatically updated during update
+
+Fixes:
+- Core: Do not allow NULL valued hashrate values as valid samples
+- Resolved issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
+
+Miner updates:
+- TTMiner-v2024.3.3b6
 
 
 Changelog UG-Miner 6.3.24 2025/01/05

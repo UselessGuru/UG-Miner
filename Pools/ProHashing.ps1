@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.3.24
-Version date:   2025/01/05
+Version:        6.4.0
+Version date:   2025/01/11
 #>
 
 Param(
@@ -94,7 +94,7 @@ If ($DivisorMultiplier -and $PriceField) {
                         Pass                     = $Pass
                         Port                     = [UInt16]$Request.$_.port
                         PortSSL                  = 0
-                        Price                    = $Stat.Live
+                        Price                    = If ($Request.$_.actual_last24h -eq 0) { [Double]::NaN } Else { $Stat.Live }
                         Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                         Reasons                  = $Reasons
                         Region                   = $RegionNorm

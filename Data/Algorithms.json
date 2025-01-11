@@ -270,6 +270,7 @@
   "theopennetwork": "SHA256ton",
   "toncoin": "SHA256ton",
   "tonpow": "SHA256ton",
+  "tuskev1": "RandomTuske",
   "ubq": "UbqHash",
   "ubqhash": "UbqHash",
   "veil": "ProgPowVeil",

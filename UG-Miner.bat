@@ -18,15 +18,5 @@ if ERRORLEVEL 1 (
   if not "%GPU_SINGLE_ALLOC_PERCENT%"=="100" (setx GPU_SINGLE_ALLOC_PERCENT 100) > nul
   if not "%CUDA_DEVICE_ORDER%"=="PCI_BUS_ID" (setx CUDA_DEVICE_ORDER PCI_BUS_ID) > nul
 
-  where /q WT.exe
-
-  if ERRORLEVEL 1 (
-
-    PWSH -WorkingDirectory "%~dp0" -ExecutionPolicy bypass -WindowStyle maximized -Command "%~dp0UG-Miner.ps1" -ConfigFile "%~dp0Config\config.json"
-
-  ) else (
-
-    conhost.exe PWSH -ExecutionPolicy bypass -WindowStyle maximized -Command "%~dp0UG-Miner.ps1" -ConfigFile "%~dp0Config\config.json"
-
-  )
+  conhost.exe PWSH -ExecutionPolicy bypass -WindowStyle maximized -Command "%~dp0UG-Miner.ps1" -ConfigFile "%~dp0Config\config.json"
 )

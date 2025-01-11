@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.3.24
-Version date:   2025/01/05
+Version:        6.4.0
+Version date:   2025/01/11
 #>
 
 using module .\Include.psm1
@@ -452,7 +452,7 @@ Try {
                     # Pool price 0
                     $Pools.Where({ $_.Price -eq 0 -and -not ($Variables.PoolsConfig[$_.Name].PoolAllow0Price -or $Config.PoolAllow0Price) }).ForEach({ $_.Reasons.Add("Price -eq 0") })
                     # No price data
-                    $Pools.Where({ $_.Price -eq [Double]::NaN }).ForEach({ $_.Reasons.Add("No price data") })
+                    $Pools.Where({ [Double]::IsNaN($_.Price) }).ForEach({ $_.Reasons.Add("Price information not available") })
                     # Ignore pool if price is more than $Config.UnrealPoolPriceFactor higher than average of all pools with same algorithm & currency; NiceHash & MiningPoolHub are always right
                     If ($Config.UnrealPoolPriceFactor -gt 1 -and ($Pools.Name | Sort-Object -Unique).Count -gt 1) { 
                         ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm, Currency).Where({ $_.Count -ge 2 }).ForEach(
@@ -998,7 +998,12 @@ Try {
             # Gone miners are no longer available
             $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false; $_.Best = $false })
 
-            Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
+            If ($Variables.Miners) { 
+                Write-Message -Level Info "Had $($Variables.Miners.Count) miner$(If ($Variables.Miners.Count -ne 1) { "s" }) from previous run,$(If ($Miners.Where({ $_.SideIndicator -eq "=>" }).Count) { " added $($Miners.Where({ $_.SideIndicator -eq "=>" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "=>" }).Count -ne 1) { "s" })," }) updated $($Miners.Where({ $_.SideIndicator -eq "==" }).Count) existing miner$(If ($Miners.Where({ $_.SideIndicator -ne "==" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
+            }
+            Else { 
+                Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
+            }
 
             $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
             If ($Miners.Where({ $_.Available })) { 
@@ -1395,10 +1400,10 @@ Try {
                                 $Miner.DataSampleTimestamp = $Sample.Date
                                 If ($Miner.ReadPowerConsumption) { $Miner.PowerConsumption_Live = $Sample.PowerConsumption }
                                 # Need hashrates for all algorithms to count as a valid sample
-                                If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and $Sample.Hashrate.PSObject.Properties.Value -notcontains 0) { $Miner.ValidDataSampleTimestamp = $Sample.Date.AddSeconds($Miner.WarmupTimes[1]) }
+                                If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and [Double]$Sample.Hashrate.PSObject.Properties.Value -notcontains 0) { $Miner.ValidDataSampleTimestamp = $Sample.Date.AddSeconds($Miner.WarmupTimes[1]) }
                                 If (($Miner.ValidDataSampleTimestamp -ne [DateTime]0 -and ($Sample.Date - $Miner.ValidDataSampleTimestamp) -ge 0)) { 
-                                    $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp -and $_.Hashrate.PSObject.Properties.Value -notcontains 0 }).ForEach({ $Miner.Data.Add($_) })
-                                    Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
+                                    $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp -and [Double]$_.Hashrate.PSObject.Properties.Value -notcontains 0 }).ForEach({ $Miner.Data.Add($_) })
+                                    Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
                                     If ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
                                         $Miner.StatusInfo = "$($Miner.Info) is $(If ($Miner.Benchmark) { "benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
                                         $Miner.SubStatus = "benchmarking"
@@ -1409,7 +1414,7 @@ Try {
                                     }
                                 }
                                 ElseIf (-not $Config.Ignore0HashrateSample -or $Miner.ValidDataSampleTimestamp -ne [DateTime]0) { 
-                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(If ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])" })"
+                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(If ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])" })"
                                     $Miner.StatusInfo = "$($Miner.Info) is warming up"
                                     $Miner.SubStatus = "warmingup"
                                 }
@@ -1460,14 +1465,13 @@ Try {
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
             # Exit loop when
-            # - a miner crashed
-            # - a benchmarking miner has collected enough samples
-            # - WarmupTimes[0] is reached and no readout from miner
+            # - end cycle message is set
             # - when not benchmnarking: Interval time is over
+            # - no more runninge miners
         } While ($Variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and ((-not $Config.DryRun -and [DateTime]::Now.ToUniversalTime() -le $Variables.EndCycleTime) -or $Variables.MinersBenchmarkingOrMeasuring))
         Remove-Variable LoopEnd
 
-        # Expire brains loop to collect data
+        # Set end cycle time to end brains loop to collect data
         If ($Variables.EndCycleMessage -or $Config.DryRun) { 
             $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime()
             Start-Sleep -Seconds 1

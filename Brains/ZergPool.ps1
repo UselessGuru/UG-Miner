@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.3.24
-Version date:   2025/01/05
+Version:        6.4.0
+Version date:   2025/01/11
 #>
 
 using module ..\Includes\Include.psm1
@@ -67,8 +67,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $AlgoData.PSObject.Properties.Name.Where({ $AlgoData.$_.algo -eq "Token" -or $_ -like "*-*" }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })
             $AlgoData.PSObject.Properties.Name.Where({ $AlgoData.$_.algo }).ForEach(
                 { 
-                    $AlgoData.$_ | Add-Member Currency $(If ($AlgoData.$_.symbol) { $AlgoData.$_.symbol })
-                    $AlgoData.$_ | Add-Member CoinName $(If ($AlgoData.$_.name) { $AlgoData.$_.name })
+                    $AlgoData.$_ | Add-Member Currency [String]$AlgoData.$_.symbol
+                    $AlgoData.$_ | Add-Member CoinName [String]$AlgoData.$_.name
                     $AlgoData.$_.PSObject.Properties.Remove("symbol")
                     $AlgoData.$_.PSObject.Properties.Remove("name")
                 }
@@ -154,7 +154,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 # Reset history if current estimate is not within +/- 1000% of 24hr stat price
                 If ($Stat = Get-Stat -Name $StatName) { 
                     $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algo.mbtc_mh_factor
-                    If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algo.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algo.estimate_current / $Divisor-gt $Stat.Day * 10)) { 
+                    If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algo.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algo.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
                         Remove-Stat -Name $StatName
                         $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algo })
                         $PlusPrice = $LastPrice
