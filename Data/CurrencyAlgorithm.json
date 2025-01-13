@@ -392,7 +392,7 @@
   "VRSC": "VerusHash",
   "VTC": "VertHash",
   "WAF": "Aurum",
-  "WALA": "Walahash",
+  "WALA": "WalaHash",
   "WART": "JanusHash",
   "WCN": "SHA256",
   "WDC": "Scrypt",
@@ -433,5 +433,6 @@
   "ZEPH": "RandomX",
   "ZER": "Equihash1927",
   "ZET": "Scrypt",
-  "ZOC": "Neoscrypt"
+  "ZOC": "Neoscrypt",
+  "ZTH": "Ethash4g"
 }

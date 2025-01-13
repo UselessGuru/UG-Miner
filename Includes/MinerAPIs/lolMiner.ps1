@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.4.0
-Version date:   2025/01/11
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 Class lolMiner : Miner { 
@@ -35,7 +35,7 @@ Class lolMiner : Miner {
             Return $null
         }
 
-        If (-not $Data.Algorithms) { Return $null }
+        If (-not $Data.Algorithms -or $Data.Algorithms[0].Total_Performance -eq $null) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
@@ -62,6 +62,7 @@ Class lolMiner : Miner {
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+            If ($Data.Algorithms[1].Total_Performance -eq $null) { Return $null }
             $HashrateUnit = [Int64]1
             Switch ($Data.Algorithms[1].Performance_Unit) { 
                 "kh/s"  { $HashrateUnit = [Math]::Pow(10,3) }

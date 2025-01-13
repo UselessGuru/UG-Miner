@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Xgminer.ps1
-Version:        6.4.0
-Version date:   2025/01/11
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 Class XgMiner : Miner { 
@@ -60,6 +60,7 @@ Class XgMiner : Miner {
         ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
         ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
         ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
+        If ($HashrateValue -eq $null) { Return $null }
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
@@ -87,6 +88,7 @@ Class XgMiner : Miner {
             ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
             ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
             ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
+            If ($HashrateValue -eq $null) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]$DataSummary.accepted

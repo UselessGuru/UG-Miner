@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\CCminer.ps1
-Version:        6.4.0
-Version date:   2025/01/11
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 Class CcMiner : Miner { 
@@ -37,12 +37,13 @@ Class CcMiner : Miner {
             Return $null
         }
 
-        If (-not $Data.Keys) { Return $null }
+        If (-not $Data) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
         $HashrateValue = [Double]$Data.HS
         If (-not $HashrateValue) { $HashrateValue = [Double]$Data.KHS * 1000 }
+        If ($HashrateValue -eq $null) { Return $null }
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }

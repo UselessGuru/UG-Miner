@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.4.0
-Version date:   2025/01/11
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 Class BzMiner : Miner { 
@@ -48,6 +48,7 @@ Class BzMiner : Miner {
         $Shares = [PSCustomObject]@{ }
 
         $HashrateValue = [Double]($Devices.ForEach({ $_.hashrate[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        If (-not $HashrateValue -and $Devices.hashrate -contains $null) { Return $null }
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $SharesAccepted = [Int64]($Devices.ForEach({ $_.valid_solutions[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
@@ -57,6 +58,7 @@ Class BzMiner : Miner {
 
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
             $HashrateValue = [Double]($Devices.ForEach({ $_.hashrate[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            If (-not $HashrateValue -and $Devices.hashrate -contains $null) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]($Devices.ForEach({ $_.valid_solutions[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)

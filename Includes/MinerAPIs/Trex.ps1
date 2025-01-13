@@ -18,12 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.4.0
-Version date:   2025/01/11
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 Class Trex : Miner { 
-    [Object]GetMinerData () { 
+    [Object]GetMinerData () {  
         $Timeout = 5 #seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/summary"
@@ -35,13 +35,14 @@ Class Trex : Miner {
             Return $null
         }
 
-        If (-not $Data) { Return $null }
+        If ($Data.hashrate_minute -eq $null) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = [Double]$Data.hashrate_minute
-        If (-not $Data.hashrate_minute) { $HashrateValue = [Double]$Data.hashrate }
-        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+        $HashrateValue = $Data.hashrate_minute
+        If (-not $Data.hashrate_minute) { $HashrateValue = $Data.hashrate }
+        If ($HashrateValue -eq $null) { Return $null }
+        $Hashrate | Add-Member @{ $HashrateName = [Double]$HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
         $SharesAccepted = [Int64]$Data.accepted_count
@@ -50,9 +51,10 @@ Class Trex : Miner {
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            $HashrateValue = [Double]$Data.dual_stat.hashrate_minute
-            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.dual_stat.hashrate }
-            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+            $HashrateValue = $Data.dual_stat.hashrate_minute
+            If (-not $HashrateValue) { $HashrateValue = $Data.dual_stat.hashrate }
+            If ($HashrateValue -eq $null) { Return $null }
+            $Hashrate | Add-Member @{ $HashrateName = [Double]$HashrateValue }
 
             $SharesAccepted = [Int64]$Data.dual_stat.accepted_count
             $SharesRejected = [Int64]$Data.dual_stat.rejected_count

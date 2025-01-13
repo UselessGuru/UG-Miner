@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.4.0
-Version date:   2025/01/11
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 Class MiniZ : Miner { 
@@ -37,7 +37,7 @@ Class MiniZ : Miner {
             Return $null
         }
 
-        If (-not $Data) { Return $null }
+        If (-not $Data -or $Data.result.speed_sps -eq $null) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]

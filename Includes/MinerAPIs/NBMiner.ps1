@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NBMiner.ps1
-Version:        6.4.0
-Version date:   2025/01/11
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 Class NBMiner : Miner { 
@@ -35,7 +35,7 @@ Class NBMiner : Miner {
             Return $null
         }
 
-        If (-not $Data) { Return $null }
+        If ($Data.miner.total_hashrate_raw -eq $null) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
@@ -49,6 +49,7 @@ Class NBMiner : Miner {
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($Data.stratum.dual_mine) { 
+            If ($Data.miner.total_hashrate2_raw -eq $null) { Return $null }
             $HashrateName = [String]($this.Algorithms -ne $HashrateName)
             $Hashrate | Add-Member @{ $HashrateName = [Double]$Data.miner.total_hashrate2_raw }
 
