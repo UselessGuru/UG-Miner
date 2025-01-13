@@ -1142,12 +1142,12 @@ If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) {
     If ($Variables.FreshConfig) { 
         Write-Message -Level Warn "No configuration file found. Edit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
         $Variables.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
-        $Global:WscriptShell.Popup("No configuration file found.`nEdit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No configuration file found.`nEdit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", (4096 + 48)) | Out-Null
     }
     Else { 
         Write-Message -Level Warn "Configuration has changed during update. Verify and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
         $Variables.Summary = "Verify your settings and save the configuration.<br>Then click the 'Start mining' button."
-        $Global:WscriptShell.Popup("The configuration has changed during update:`n`n$($Variables.ConfigurationHasChangedDuringUpdate -join $nl)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Variables.Branding.ProductLabel) v$($Variables.Branding.Version) - configuration has changed", 4112) | Out-Null
+        $Global:WscriptShell.Popup("The configuration has changed during update:`n`n$($Variables.ConfigurationHasChangedDuringUpdate -join $nl)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Variables.Branding.ProductLabel) v$($Variables.Branding.Version) - configuration has changed", (4096 + 64)) | Out-Null
     }
 }
 
