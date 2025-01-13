@@ -2,6 +2,20 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.2 2025/01/??
+===================================
+
+
+Changelog UG-Miner 6.4.1 2025/01/13
+===================================
+
+Fixes:
+- Core: Dual miners broken (Regression from 6.4.0 / Do not allow NULL valued hashrate values as valid samples)
+
+Miner changes:
+- SRBMinerMulti-v2.7.5
+
+
 Changelog UG-Miner 6.4.0 2025/01/11
 ===================================
 
