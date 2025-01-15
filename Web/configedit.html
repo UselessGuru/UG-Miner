@@ -109,8 +109,8 @@
             <input type="checkbox" class="toggle-switch" id="IdleDetection" name="IdleDetection"> Idle detection: Start mining when system is idle for
             <input type="number" id="IdleSec" name="IdleSec" min=0 max=3600 value=120 step=1 size=4 style="width: 3.8em; text-align:right;"> seconds
           </div>
-          <div style="padding-top: 0.5rem" title="Start the legacy GUI&#10;&#10;Note: You must keep the console window open when you disable the legacy GUI">
-            <input type="checkbox" class="toggle-switch" id="LegacyGUI" name="LegacyGUI"> Start legacy GUI
+          <div style="padding-top: 0.5rem" title="Show the legacy GUI&#10;&#10;Note: You must keep the console window open when you disable the legacy GUI">
+            <input type="checkbox" class="toggle-switch" id="LegacyGUI" name="LegacyGUI"> Show legacy GUI
             <input type="checkbox" style="margin-left:20px" class="toggle-switch" id="LegacyGUIStartMinimized" name="LegacyGUIStartMinimized"> Start legacy GUI minimized
           </div>
           <div style="padding-top: 0.7rem" title="Show the console window&#10;&#10;Note: You must keep the legacy GUI open when you disable the console window">
@@ -288,7 +288,7 @@
           </div>
           <div title="Power consumption of idle system. Part of profit calculation&#10;&#10;(min: 0, max: 999; default: 60)&#10;&#10;Note: When CPU miners are running their&#10;power consumption is deducted from this value">
             <label style="margin-left:20px" for="PowerConsumptionIdleSystemW">Power consumption of idle system</label>
-            <input type="number" step=1 min=0 max=999 value=60 size=3 id="PowerConsumptionIdleSystemW" name="PowerConsumptionIdleSystemW" style="width: 3.2em; text-align:right;"> W
+            <input type="number" step=1 min=0 max=999 value=60 size=3 id="PowerConsumptionIdleSystemW" name="PowerConsumptionIdleSystemW" style="width: 3.4em; text-align:right;"> W
           </div>
           <div style="padding-top: 0.2rem" title="UG-Miner will ignore power cost in best miner selection&#10;and will select miners with best earnings (and not best profit)">
             <input style="margin-left:20px" type="checkbox" class="toggle-switch" id="IgnorePowerCost" name="IgnorePowerCost"> Ignore power cost
@@ -307,13 +307,13 @@
             <input type="checkbox" class="toggle-switch" id="IgnorePoolFee" name="IgnorePoolFee"> Ignore pool fees
           </div>
           <div style="padding-top: 0.3rem" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings Adjustment Factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')"> Earnings adjustment factor
-            <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=4 style="width: 3.2em; text-align:right;">
+            <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=4 style="width: 3.4em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem" title="Mark a miner as unavailable if earning is x times higher than the&#10;next best 10% or at least 5 miners with same algorithm&#10;&#10;(min: 1, max: 99.9; default: 5)&#10;Set to 1 to disable this check">Unreal miner earning factor
-            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealMinerEarningFactor" name="UnrealMinerEarningFactor" style="width: 3.2em; text-align:right;">
+            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealMinerEarningFactor" name="UnrealMinerEarningFactor" style="width: 3.4em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem" title="UG-Miner will not switch miners&#10;unless another miner has n% higher earnings / profit&#10;&#10;Smaller numbers will cause more switching&#10;&#10;(min: 0%, max: 100%; default: 5%)" for="MinerSwitchingThreshold">Miner switching threshold
-            <input type="number" id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" min=0 max=100 value=5 step=0.1 size=3 style="width: 3.2em; text-align:right;"> %
+            <input type="number" id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" min=0 max=100 value=5 step=0.1 size=3 style="width: 3.4em; text-align:right;"> %
           </div>
           <div style="padding-top: 0.5rem" title="UG-Miner will ignore the miner fee when calculating earning & profit">
             <input type="checkbox" class="toggle-switch" id="IgnoreMinerFee" name="IgnoreMinerFee"> Ignore miner fees
@@ -360,9 +360,9 @@
           </fieldset>
         </td>
         <td style="vertical-align: top; line-height: 125%">
-          <!-- Console display settings -->
+          <!-- Console window display settings -->
           <div class="col-md-12">
-            <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console display settings</b></legend>
+            <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console window display settings</b></legend>
             <div style="padding-top: 0.3rem" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle"> UI Style
               <select name="UIStyle" id="UIStyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>

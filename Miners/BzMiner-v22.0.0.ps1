@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.3.22
-Version date:   2025/01/13
+Version date:   2025/01/15
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
@@ -42,7 +42,7 @@ $Algorithms = @(
 #   @{ Algorithms = @("HeavyHashKaspa");                  Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a kaspa") } # ASIC
     @{ Algorithms = @("JanusHash");                       Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a warthog") }
     @{ Algorithms = @("KawPow");                          Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("GCN4");           ExcludeGPUmodel = ""; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a rvn") } # https://github.com/bzminer/bzminer/issues/264
-    @{ Algorithms = @("NexaPow");                         Type = "AMD"; Fee = @(0.02);  MinMemGiB = 3;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a nexa") }
+    @{ Algorithms = @("NexaPow");                         Type = "AMD"; Fee = @(0.02);  MinMemGiB = 3;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a larissa") }
     @{ Algorithms = @("SHA512256d");                      Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @("GCN1");           ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a radiant") }
     @{ Algorithms = @("SHA256dt");                        Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a novo") }
     @{ Algorithms = @("SHA3d");                           Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    MinerSet = 1; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @();                 ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a kylacoin") }

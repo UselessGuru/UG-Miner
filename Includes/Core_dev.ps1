@@ -36,6 +36,9 @@ Try {
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
         Write-Message -Level Info "Started new cycle."
+
+        If ($LegacyGUIform) { $host.UI.RawUI.WindowTitle }
+
         $Variables.EndCycleMessage = ""
 
         $Variables.BeginCycleTime = $Variables.Timer
@@ -246,6 +249,7 @@ Try {
                             If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                                 $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                             }
+                            # $Variables.DonationStart = [DateTime]::Now
                         }
                     }
 
@@ -371,14 +375,23 @@ Try {
                         }
                     ).ForEach(
                         { 
-                            $Pool = [Pool]$_
-                            $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
-                            $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
-                            $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
-                            $Pool.Price *= $Factor
-                            $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
-                            $Pool.StablePrice *= $Factor
-                            $Pool
+                            $Pool = $_
+                            Try { 
+                                $Pool = [Pool]$_
+                                $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
+                                $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
+                                $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
+                                $Pool.Price *= $Factor
+                                $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
+                                $Pool.StablePrice *= $Factor
+                                $Pool
+                            }
+                            Catch { 
+                                Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                $_.Exception | Format-List -Force >> $ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            }
                         }
                     )
                     Remove-Variable Factor, Pool, PoolDataCollectedTimeStamp, PoolName -ErrorAction Ignore
@@ -1167,6 +1180,11 @@ Try {
             While ($StuckMinerProcesses = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID})) { 
                 ForEach ($StuckMinerProcess in $StuckMinerProcesses) { 
                     If ($Miner = $Miners.Where({ $_.ProcessID -eq $StuckMinerProcess.ProcessId })) { Write-Message -Level Verbose "Killing stuck miner '$($Miner.Name)'." }
+                    # Some miners, e.g. BzMiner spawn a second executable
+                    # $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($StuckMinerProcess.ProcessId)")
+                    # ForEach ($ChildProcess in $ChildProcesses) { 
+                    #     Stop-Process -Id $ChildProcess.ProcessID -Force -ErrorAction Ignore
+                    # }
                     Stop-Process -Id $StuckMinerProcess.ProcessId -Force -ErrorAction Ignore | Out-Null
                 }
                 Start-Sleep -Milliseconds 1000
@@ -1380,15 +1398,16 @@ Try {
             $LoopEnd = If ($Config.DryRun -and $Config.BenchmarkAllPoolAlgorithmCombinations) { [DateTime]::Now.AddSeconds(0.5) } Else { [DateTime]::Now.AddSeconds(1) }
             Try { 
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
+                    Write-Host "$($Miner.BaseName_Version_Device): $($Miner.GetMinerData() | ConvertTo-Json -Compress)"
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
-                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
                         $Variables.MinersFailed += $Miner
                     }
                     ElseIf ($Miner.DataReaderJob.State -ne [MinerStatus]::Running) { 
                         # Miner data reader process failed
-                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) miner data reader exited unexpectedly"
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) miner data reader exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
                         $Variables.MinersFailed += $Miner
                     }
@@ -1400,7 +1419,12 @@ Try {
                                 $Miner.DataSampleTimestamp = $Sample.Date
                                 If ($Miner.ReadPowerConsumption) { $Miner.PowerConsumption_Live = $Sample.PowerConsumption }
                                 # Need hashrates for all algorithms to count as a valid sample
-                                If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and [Double[]]$Sample.Hashrate.PSObject.Properties.Value -notcontains 0) { $Miner.ValidDataSampleTimestamp = $Sample.Date.AddSeconds($Miner.WarmupTimes[1]) }
+                                Try { 
+                                    If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and [Double[]]$Sample.Hashrate.PSObject.Properties.Value -notcontains 0) { $Miner.ValidDataSampleTimestamp = $Sample.Date.AddSeconds($Miner.WarmupTimes[1]) }
+                                }
+                                Catch { 
+                                    Start-Sleep 0
+                                }
                                 If (($Miner.ValidDataSampleTimestamp -ne [DateTime]0 -and ($Sample.Date - $Miner.ValidDataSampleTimestamp) -ge 0)) { 
                                     $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp -and [Double[]]$_.Hashrate.PSObject.Properties.Value -notcontains 0 }).ForEach({ $Miner.Data.Add($_) })
                                     Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"

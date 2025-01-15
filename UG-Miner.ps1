@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.1
-Version date:   2025/01/13
+Version:        6.4.2
+Version date:   2025/01/15
 #>
 
 using module .\Includes\Include.psm1
@@ -203,7 +203,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$Proxy = "", # i.e http://192.0.0.1:8080
     [Parameter(Mandatory = $false)]
-    [String]$Region = "Europe", # Used to determine pool nearest to you. One of "Asia", "Europe", "HongKong", "Japan", "Russia", "USA East", "USA West"
+    [String]$Region = "Europe", # Used to determine pool nearest to you. One of "Australia", "Asia", "Brazil", "Canada", "Europe", "HongKong", "India", "Japan", "Kazakhstan", "Russia", "USA East", "USA West"
     [Parameter(Mandatory = $false)]
     [Switch]$ReportToServer = $false, # If true will report worker status to central monitoring server
     [Parameter(Mandatory = $false)]
@@ -317,7 +317,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.1"
+    Version      = [System.Version]"6.4.2"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell

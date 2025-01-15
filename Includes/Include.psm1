@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.4.1
-Version date:   2025/01/13
+Version:        6.4.2
+Version date:   2025/01/15
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1564,6 +1564,8 @@ Function Update-ConfigFile {
         [String]$ConfigFile
     )
 
+    Write-Message -Level Verbose "Updating configuration file '$($ConfigFile)' to version $($Variables.Branding.Version.ToString())..."
+
     $Variables.ConfigurationHasChangedDuringUpdate = [System.Collections.Generic.List[String]]@()
 
     # NiceHash Internal is no longer available as of November 12, 2024
@@ -1580,7 +1582,7 @@ Function Update-ConfigFile {
     # MiningPoolHub is no longer available
     If ($Config.PoolName -contains "MiningPoolHub") { 
         Write-Message -Level Warn "Pool configuration changed during update (MiningPoolHub removed)."
-        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'MiningPoolHub' removed")
+        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'MiningPoolHub' removed (Pool is no longer trustworthy)")
         $Config.PoolName = $Config.PoolName -notmatch "MiningPoolHub"
     }
 
@@ -1596,10 +1598,8 @@ Function Update-ConfigFile {
         $OldRegion = $Config.Region
         # Write message about new mining regions
         $Config.Region = Switch ($OldRegion) { 
-            "Brazil"       { "USA West" }
             "Europe East"  { "Europe" }
             "Europe North" { "Europe" }
-            "India"        { "Asia" }
             "US"           { "USA West" }
             Default        { "Europe" }
         }
@@ -1636,7 +1636,6 @@ Function Update-ConfigFile {
 
     $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
     Write-Config -ConfigFile $ConfigFile -Config $Config
-    Write-Message -Level Verbose "Updated configuration file '$($ConfigFile)' to version $($Variables.Branding.Version.ToString())."
 }
 
 Function Write-Config { 

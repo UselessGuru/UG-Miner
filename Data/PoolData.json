@@ -114,10 +114,14 @@
     "PoolAPIretryInterval": 15, // Only 1 request every 10 seconds allowed
     "PoolAPItimeout": 3,
     "Region": [
+      "australia",
       "americas",
+      "brazil",
+      "canada",
       "europe",
       "hongkong",
       "india",
+      "kazakhstan",
       "moscow",
       "singapore"
     ],
