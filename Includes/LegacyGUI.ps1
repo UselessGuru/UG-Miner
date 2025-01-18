@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.2
-Version date:   2025/01/15
+Version:        6.4.3
+Version date:   2025/01/18
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -187,6 +187,11 @@ Function Update-TabControl {
 
     Switch ($LegacyGUItabControl.SelectedTab.Text) { 
         "System status" { 
+            $LegacyGUIbalancesDGV.ClearSelection()
+            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIpoolsDGV.ClearSelection()
+            # $LegacyGUIworkersDGV.ClearSelection()
+
             $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark"
             $LegacyGUIcontextMenuStripItem1.Visible = $true
             $LegacyGUIcontextMenuStripItem2.Text = "Re-measure power consumption"
@@ -263,6 +268,11 @@ Function Update-TabControl {
             Break
         }
         "Earnings and balances" { 
+            $LegacyGUIactiveMinersDGV.ClearSelection()
+            $LegacyGUIbalancesDGV.ClearSelection()
+            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIpoolsDGV.ClearSelection()
+            # $LegacyGUIworkersDGV.ClearSelection()
 
             Function Get-NextColor { 
                 Param (
@@ -421,6 +431,11 @@ Function Update-TabControl {
             Break
         }
         "Miners" { 
+            $LegacyGUIactiveMinersDGV.ClearSelection()
+            $LegacyGUIbalancesDGV.ClearSelection()
+            $LegacyGUIpoolsDGV.ClearSelection()
+            # $LegacyGUIworkersDGV.ClearSelection()
+
             $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark"
             $LegacyGUIcontextMenuStripItem1.Visible = $true
             $LegacyGUIcontextMenuStripItem2.Enabled = $Config.CalculatePowerCost
@@ -503,6 +518,11 @@ Function Update-TabControl {
             Break
         }
         "Pools" { 
+            $LegacyGUIactiveMinersDGV.ClearSelection()
+            $LegacyGUIbalancesDGV.ClearSelection()
+            $LegacyGUIminersDGV.BeginInit()
+            # $LegacyGUIworkersDGV.ClearSelection()
+
             $LegacyGUIcontextMenuStripItem1.Visible = $false
             $LegacyGUIcontextMenuStripItem2.Visible = $false
             $LegacyGUIcontextMenuStripItem3.Enabled = $true
@@ -584,6 +604,11 @@ Function Update-TabControl {
             Break
         }
         # "Rig monitor" { 
+        #     $LegacyGUIactiveMinersDGV.ClearSelection()
+        #     $LegacyGUIbalancesDGV.ClearSelection()
+        #     $LegacyGUIminersDGV.BeginInit()
+        #     $LegacyGUIpoolsDGV.ClearSelection()
+        # 
         #     $LegacyGUIworkersDGV.Visible = $Config.ShowWorkerStatus
         #     $LegacyGUIeditMonitoringLink.Visible = $Variables.APIRunspace.APIport
         #
@@ -644,10 +669,22 @@ Function Update-TabControl {
         #     Break
         # }
         "Switching Log" { 
+            $LegacyGUIactiveMinersDGV.ClearSelection()
+            $LegacyGUIbalancesDGV.ClearSelection()
+            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIpoolsDGV.ClearSelection()
+            # $LegacyGUIworkersDGV.ClearSelection()
+
             CheckBoxSwitching_Click
             Break
         }
         "Watchdog timers" { 
+            $LegacyGUIactiveMinersDGV.ClearSelection()
+            $LegacyGUIbalancesDGV.ClearSelection()
+            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIpoolsDGV.ClearSelection()
+            $LegacyGUIworkersDGV.ClearSelection()
+
             $LegacyGUIwatchdogTimersRemoveButton.Visible = $Config.Watchdog
             $LegacyGUIwatchdogTimersDGV.Visible = $Config.Watchdog
 
@@ -655,7 +692,6 @@ Function Update-TabControl {
                 If ($Variables.WatchdogTimers) { 
                     $LegacyGUIwatchdogTimersLabel.Text = "Watchdog timers updated $(($Variables.WatchdogTimers.Kicked | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
                     $LegacyGUIwatchdogTimersDGV.BeginInit()
-                    $LegacyGUIwatchdogTimersDGV.ClearSelection()
                     $LegacyGUIwatchdogTimersDGV.DataSource = $Variables.WatchdogTimers | Sort-Object -Property MinerName, Kicked | Select-Object @(
                         @{ Name = "Name"; Expression = { $_.MinerName } },
                         @{ Name = "Algorithm"; Expression = { $_.Algorithm } },
@@ -917,7 +953,7 @@ $LegacyGUIcopyrightLabel.LinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIcopyrightLabel.Size = New-Object System.Drawing.Size(380, 26)
 $LegacyGUIcopyrightLabel.Text = "Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru"
 $LegacyGUIcopyrightLabel.TextAlign = "MiddleRight"
-$LegacyGUIcopyrightLabel.Add_Click({ Start-Process "https://github.com/UselessGuru/UG-Miner" })
+$LegacyGUIcopyrightLabel.Add_Click({ Start-Process "$($Variables.Branding.BrandWebSite)" })
 $LegacyGUIControls += $LegacyGUIcopyrightLabel
 $LegacyGUItooltip.SetToolTip($LegacyGUIcopyrightLabel, "Click to go to the $($Variables.Branding.ProductLabel) Github page")
 
@@ -1240,13 +1276,11 @@ $LegacyGUIactiveMinersDGV.Add_MouseUp(
         }
     }
 )
-
 $LegacyGUIactiveMinersDGV.Add_Sorted(
     { 
         Set-TableColor -DataGridView $LegacyGUIactiveMinersDGV
     }
 )
-
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIactiveMinersDGV -Enabled $true
 $LegacyGUIstatusPageControls += $LegacyGUIactiveMinersDGV
 
@@ -1296,6 +1330,8 @@ $LegacyGUIbalancesDGV.AutoSizeColumnsMode = "Fill"
 $LegacyGUIbalancesDGV.ColumnHeadersDefaultCellStyle.BackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIbalancesDGV.ColumnHeadersDefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIbalancesDGV.ColumnHeadersHeightSizeMode = "AutoSize"
+$LegacyGUIbalancesDGV.DefaultCellStyle.SelectionBackColor = $LegacyGUIbalancesDGV.DefaultCellStyle.BackColor
+$LegacyGUIbalancesDGV.DefaultCellStyle.SelectionForeColor = $LegacyGUIbalancesDGV.DefaultCellStyle.ForeColor
 $LegacyGUIbalancesDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIbalancesDGV.EnableHeadersVisualStyles = $false
 $LegacyGUIbalancesDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
@@ -1385,6 +1421,7 @@ $LegacyGUIminersPageControls += $LegacyGUIminersPanel
 
 $LegacyGUIminersDGV = New-Object System.Windows.Forms.DataGridView
 $LegacyGUIminersDGV.AllowUserToAddRows = $false
+$LegacyGUIminersDGV.AllowUserToDeleteRows = $false
 $LegacyGUIminersDGV.AllowUserToOrderColumns = $true
 $LegacyGUIminersDGV.AllowUserToResizeColumns = $true
 $LegacyGUIminersDGV.AllowUserToResizeRows = $false
@@ -1414,7 +1451,7 @@ $LegacyGUIminersDGV.Add_Sorted(
     { 
         Set-TableColor -DataGridView $LegacyGUIminersDGV
     }
-    )
+)
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIminersDGV -Enabled $true
 $LegacyGUIminersPageControls += $LegacyGUIminersDGV
 
@@ -1497,6 +1534,7 @@ $LegacyGUIpoolsPageControls += $LegacyGUIpoolsPanel
 
 $LegacyGUIpoolsDGV = New-Object System.Windows.Forms.DataGridView
 $LegacyGUIpoolsDGV.AllowUserToAddRows = $false
+$LegacyGUIpoolsDGV.AllowUserToDeleteRows = $false
 $LegacyGUIpoolsDGV.AllowUserToOrderColumns = $true
 $LegacyGUIpoolsDGV.AllowUserToResizeColumns = $true
 $LegacyGUIpoolsDGV.AllowUserToResizeRows = $false
@@ -1538,6 +1576,7 @@ $LegacyGUIrigMonitorPageControls += $LegacyGUIworkersLabel
 
 $LegacyGUIworkersDGV = New-Object System.Windows.Forms.DataGridView
 $LegacyGUIworkersDGV.AllowUserToAddRows = $false
+$LegacyGUIworkersDGV.AllowUserToDeleteRows = $false
 $LegacyGUIworkersDGV.AllowUserToOrderColumns = $true
 $LegacyGUIworkersDGV.AllowUserToResizeColumns = $true
 $LegacyGUIworkersDGV.AllowUserToResizeRows = $false
@@ -1694,6 +1733,7 @@ $LegacyGUIcheckShowSwitchingNVIDIA.ForEach(
 
 $LegacyGUIswitchingDGV = New-Object System.Windows.Forms.DataGridView
 $LegacyGUIswitchingDGV.AllowUserToAddRows = $false
+$LegacyGUIswitchingDGV.AllowUserToDeleteRows = $false
 $LegacyGUIswitchingDGV.AllowUserToOrderColumns = $true
 $LegacyGUIswitchingDGV.AllowUserToResizeColumns = $true
 $LegacyGUIswitchingDGV.AllowUserToResizeRows = $false
@@ -1778,6 +1818,7 @@ $LegacyGUItooltip.SetToolTip($LegacyGUIwatchdogTimersRemoveButton, "This will re
 
 $LegacyGUIwatchdogTimersDGV = New-Object System.Windows.Forms.DataGridView
 $LegacyGUIwatchdogTimersDGV.AllowUserToAddRows = $false
+$LegacyGUIwatchdogTimersDGV.AllowUserToDeleteRows = $false
 $LegacyGUIwatchdogTimersDGV.AllowUserToOrderColumns = $true
 $LegacyGUIwatchdogTimersDGV.AllowUserToResizeColumns = $true
 $LegacyGUIwatchdogTimersDGV.AllowUserToResizeRows = $false
@@ -1797,7 +1838,6 @@ $LegacyGUIwatchdogTimersDGV.Name = "WatchdogTimersDGV"
 $LegacyGUIwatchdogTimersDGV.ReadOnly = $true
 $LegacyGUIwatchdogTimersDGV.RowHeadersVisible = $false
 $LegacyGUIwatchdogTimersDGV.SelectionMode = "FullRowSelect"
-
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIwatchdogTimersDGV -Enabled $true
 $LegacyGUIwatchdogTimersPageControls += $LegacyGUIwatchdogTimersDGV
 
@@ -1928,7 +1968,6 @@ $LegacyGUIform.Add_KeyDown(
             $LegacyGUIminersDGV.ClearSelection()
             $LegacyGUIpoolsDGV.ClearSelection()
             # $LegacyGUIworkersDGV.ClearSelection()
-            $LegacyGUIwatchdogTimersDGV.ClearSelection()
 
             Update-TabControl
             $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal

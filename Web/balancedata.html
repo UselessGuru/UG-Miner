@@ -79,6 +79,10 @@
             });
 
             $(document).ready(function () {
+
+              // Fix, button text is wrong
+              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+
               $('#btn-remove-entry').click(function () {
                 $('*').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');

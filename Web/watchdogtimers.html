@@ -64,6 +64,8 @@
             $(document).ready(function () {
               if (config.Watchdog) { 
                 document.getElementById('watchdog').style.visibility='visible';
+                // Fix, button text is wrong
+                document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
                 // Get watchdog expiry time
                 $.ajax({
                   async: false,

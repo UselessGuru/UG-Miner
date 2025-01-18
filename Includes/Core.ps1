@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.2
-Version date:   2025/01/15
+Version:        6.4.3
+Version date:   2025/01/18
 #>
 
 using module .\Include.psm1
@@ -91,8 +91,8 @@ Try {
                 }
             }
         }
-
-        $Variables.PoolsConfig = $Config.PoolsConfig.Clone()
+        $Variables.PoolName = $Config.PoolName
+        $Variables.PoolsConfig = $Config.PoolsConfig
 
         # Tuning parameters require local admin rights
         $Variables.ApplyMinerTweaks = $Variables.IsLocalAdmin -and $Config.UseMinerTweaks
@@ -281,7 +281,6 @@ Try {
                         $Variables.DonationRandomPoolsConfig = $null
                         $Variables.DonationStart = $null
                         $Variables.DonationEnd = $null
-                        $Variables.PoolsConfig = $Config.PoolsConfig.Clone()
                         Write-Message -Level Info "Donation run complete - thank you! Mining for you again. :-)"
                         $Variables.DonationRunning = $false
                     }
@@ -292,7 +291,6 @@ Try {
                     [Void](Stop-Brain $BrainsToStop)
                 }
                 Remove-Variable BrainsToStop
-                $Variables.PoolName = $Config.PoolName
                 [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
@@ -1131,7 +1129,7 @@ Try {
             $MinersBest = [Miner[]]@()
         }
         $Variables.Summary = $Summary
-        Remove-Variable $Summary
+        Remove-Variable Summary
 
         # Stop running miners
         ForEach ($Miner in @($Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { [String]$_.DeviceNames })) { 
@@ -1160,31 +1158,32 @@ Try {
         }
         Remove-Variable Miner, WatchdogTimers, Worker -ErrorAction Ignore
 
-        # Kill stuck miners on subsequent cycles when not in dry run mode
-        If (-not $Config.DryRun) { 
-            $MinerPaths = ($Miners.Path | Sort-Object -Unique).ForEach({ "$PWD\$($_)" })
-            $Loops = 0
-            While ($StuckMinerProcesses = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID})) { 
-                ForEach ($StuckMinerProcess in $StuckMinerProcesses) { 
-                    If ($Miner = $Miners.Where({ $_.ProcessID -eq $StuckMinerProcess.ProcessId })) { Write-Message -Level Verbose "Killing stuck miner '$($Miner.Name)'." }
-                    Stop-Process -Id $StuckMinerProcess.ProcessId -Force -ErrorAction Ignore | Out-Null
+        # Kill stuck miners on subsequent cycles
+        $MinerPaths = ($Miners.Path | Sort-Object -Unique).ForEach({ "$PWD\$($_)" })
+        $Loops = 0
+        While ($StuckMinerProcesses = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID}).ProcessId.ForEach({ (Get-Process -Id $_).Where({ $_.MainWindowTitle -match ".+ \{.+@.+\}" })})) { 
+            ForEach ($StuckMinerProcess in $StuckMinerProcesses) { 
+                Write-Message -Level Warn "Found stuck miner '$($StuckMinerProcess.MainWindowTitle -replace "\} .+", "}")', trying to stop it..."
+                Stop-Process -Id $StuckMinerProcess.Id -Force -ErrorAction Ignore | Out-Null
+                # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
+                $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($StuckMinerProcess.Id)")
+                $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+            }
+            Start-Sleep -Milliseconds 1000
+            $Loops ++
+            If ($Loops -gt 50) { 
+                If ($Config.AutoReboot) { 
+                    Write-Message -Level Error "$(If ($StuckMinerProcesses.Count -eq 1) { "A miner is" } Else { "Some miners are" }) stuck and cannot get stopped graciously. Restarting computer in 30 seconds..."
+                    shutdown.exe /r /t 30 /c "$($Variables.Branding.ProductLabel) detected stuck miner$(If ($StuckMinerProcesses.Count -ne 1) { "s" }) and will reboot the computer in 30 seconds."
+                    Start-Sleep -Seconds 60
                 }
-                Start-Sleep -Milliseconds 1000
-                $Loops ++
-                If ($Loops -gt 50) { 
-                    If ($Config.AutoReboot) { 
-                        Write-Message -Level Error "$(If ($StuckMinerProcesses.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. Restarting computer in 30 seconds..."
-                        shutdown.exe /r /t 30 /c "$($Variables.Branding.ProductLabel) detected stuck miner$(If ($StuckMinerProcesses.Count -ne 1) { "s" }) and will reboot the computer in 30 seconds."
-                        Start-Sleep -Seconds 60
-                    }
-                    Else { 
-                        Write-Message -Level Error "$(If ($StuckMinerProcesses.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. It is recommended to restart the computer."
-                        Start-Sleep -Seconds 30
-                    }
+                Else { 
+                    Write-Message -Level Error "$(If ($StuckMinerProcesses.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. It is recommended to restart the computer."
+                    Start-Sleep -Seconds 30
                 }
             }
-            Remove-Variable ChildProcess, ChildProcesses, Loops, Message, Miner, MinerPaths, StuckMinerProcess, StuckMinerProcesses -ErrorAction Ignore
         }
+        Remove-Variable ChildProcesses, Loops, MinerPaths, StuckMinerProcess, StuckMinerProcesses -ErrorAction Ignore
 
         $Miners.ForEach(
             { 

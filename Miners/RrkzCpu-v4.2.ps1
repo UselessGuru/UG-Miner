@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.2
-Version date:   2025/01/15
+Version:        6.4.3
+Version date:   2025/01/18
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 $URI = "https://github.com/RickillerZ/cpuminer-RKZ/releases/download/V4.2b/cpuminer-RKZ.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$Path = ".\Bin\$($Name)\cpuminer.exe"
+$Path = "Bin\$($Name)\cpuminer.exe"
 
 $Algorithms = @(
     @{ Algorithm = "Blakecoin";  MinerSet = 3; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blakecoin" } # FPGA

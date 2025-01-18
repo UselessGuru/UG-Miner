@@ -116,6 +116,10 @@
             });
 
             $(document).ready(function () {
+
+              // Fix, button text is wrong
+              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+ 
               $('#btn-clear-log').click(function () {
                 $url = '/functions/switchinglog/clear';
                 $('.modal-body').load($url, function() {

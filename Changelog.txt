@@ -2,8 +2,27 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
-Changelog UG-Miner 6.4.2 2025/01/??
+Changelog UG-Miner 6.4.3 2025/01/18
 ===================================
+
+Fixes:
+- Core: Rework process handling, no more forgotten miner processes
+- Core: Trex API not returning any valid hashrate samples (regression from 6.4.1)
+- TeamBlackMiner: Out of memory error for Nvidia dual algorithm combos
+- Web GUI: Button text 'Toggle' changed to 'Show card view'
+
+Miner updates:
+- JayddeeCpu-v25.3
+
+
+Changelog UG-Miner 6.4.2 2025/01/15
+===================================
+
+Enhancements:
+- Added region 'Autralia', 'Brazil', 'Canada' & 'Kazakhstan' (used by MiningDutch)
+
+Miner updates:
+- JayddeeCpu-v25.2
 
 
 Changelog UG-Miner 6.4.1 2025/01/13

@@ -278,6 +278,12 @@
             });
 
             $(document).ready(function () {
+
+            // Fix, button text is wrong
+            document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            document.getElementsByName('toggle')[1].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            document.getElementsByName('toggle')[2].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+
               $(function () {
                 $('#btn-disable-device').click(function () {
                   $('*').css('cursor', 'wait');

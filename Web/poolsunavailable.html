@@ -116,6 +116,10 @@
             });
 
             $(document).ready(function () {
+
+              // Fix, button text is wrong
+              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+
               $('#pools').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
                 document.getElementById('btn-reset-data').disabled = !Boolean($table.bootstrapTable('getSelections').length);
                 document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);

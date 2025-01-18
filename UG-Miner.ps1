@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.2
-Version date:   2025/01/15
+Version:        6.4.3
+Version date:   2025/01/18
 #>
 
 using module .\Includes\Include.psm1
@@ -287,12 +287,11 @@ Param(
 $RecommendedPWSHversion = [Version]"7.4.6"
 
 # Close useless empty cmd window that comes up when starting from bat file
-If ($ParentProcessId = (Get-CimInstance win32_process -Filter "ProcessId = $PID")[0].ParentProcessId) { 
-    If ($RootProcess = (Get-CimInstance win32_process -Filter "ProcessId = $ParentProcessId")[0]) { 
-        If ($RootProcess[0].Name -eq "conhost.exe") { Stop-Process -Id $RootProcess[0].ParentProcessId -Force }
-    }
+If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
+    $ConhostProcessId = (Get-Process -Id $PID).Parent.Id
+    If ((Get-Process -Id $ConHostProcessId).Parent.ProcessName -eq "cmd") { Stop-Process -Id (Get-Process -Id $ConhostProcessId).Parent.Id -Force -ErrorAction Ignore }
+    Remove-Variable ConhostProcessId
 }
-Remove-Variable ParentProcessId, RootProcess -ErrorAction Ignore
 
 $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 
@@ -317,7 +316,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.2"
+    Version      = [System.Version]"6.4.3"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell

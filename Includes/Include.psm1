@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.4.2
-Version date:   2025/01/15
+Version:        6.4.1
+Version date:   2025/01/13
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -460,22 +460,32 @@ Class Miner : IDisposable {
 
             $this.ProcessJob = Invoke-CreateProcess -InformationVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile -Status $this.StatusInfo
 
-            # Sometimes the process cannot be found instantly
-            $Loops = 100
-            Do { 
-                If ($this.ProcessId = ($this.ProcessJob | Receive-Job | Select-Object -ExpandProperty ProcessId)) { 
-                    $this.Activated ++
-                    $this.DataSampleTimestamp = [DateTime]0
-                    $this.Status = [MinerStatus]::Running
-                    $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
-                    $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
-                    $this.StartDataReader()
-                    Break
-                }
-                $Loops --
-                Start-Sleep -Milliseconds 50
-            } While ($Loops -gt 0)
-            Remove-Variable Loops
+            Try { 
+                # Sometimes the process cannot be found instantly
+                $Loops = 100
+                Do { 
+                    Start-Sleep -Milliseconds 50
+                    $this.ProcessId = $this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId
+                    If ($this.ProcessId) { 
+                        $this.Activated ++
+                        $this.DataSampleTimestamp = [DateTime]0
+                        $this.Status = [MinerStatus]::Running
+                        $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
+                        $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
+                        $this.StartDataReader()
+                        Break
+                    }
+                    Else { 
+                        Start-Sleep 0
+                    }
+                    $Loops --
+                    # Start-Sleep -Milliseconds 50
+                } While ($Loops -gt 0)
+                Remove-Variable Loops
+            }
+            Catch { 
+                Start-Sleep 0
+            }
         }
 
         $this.WorkersRunning = $this.Workers
@@ -491,30 +501,26 @@ Class Miner : IDisposable {
             Write-Message -Level Error $this.StatusInfo
         }
 
+        If ($this.ProcessJob) { 
+            If ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
+            Try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } Catch { }
+            # Jobs are getting removed in core loop (removing immediately after stopping process here may take several seconds)
+            $this.ProcessJob = $null
+        }
+
         $this.StopDataReader()
 
         $this.EndTime = [DateTime]::Now.ToUniversalTime()
 
-        If ($this.Process) { 
-            [Void]$this.Process.CloseMainWindow()
-            [Void]$this.Process.WaitForExit(100)
-            [Void]$this.Process.Kill()
-            [Void]$this.Process.Dispose()
-            $this.Process = $null
+        If ($this.Process.Id) { 
+            If ($this.Process.Parent.Id) { Stop-Process -Id $this.Process.Parent.Id | Out-Null }
+            Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
+            # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
+            $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)")
+            $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
         }
-
-        If ($this.ProcessId) { 
-            If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { 
-                Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore | Out-Null
-            }
-            $this.ProcessId = $null
-        }
-
-        If ($this.ProcessJob) { 
-            Try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } Catch { }
-            # Jobs are getting removed in core loop (stopping immediately after stopping process here may take several seconds)
-            $this.ProcessJob = $null
-        }
+        $this.Process = $null
+        $this.ProcessId = $null
 
         $this.Status = If ([MinerStatus]::Running, [MinerStatus]::DryRun -contains $this.Status) { [MinerStatus]::Idle } Else { [MinerStatus]::Failed }
 
@@ -620,7 +626,7 @@ Class Miner : IDisposable {
         # Read power consumption from HwINFO64 reg key, otherwise use hardconfigured value
         $RegistryData = Get-ItemProperty "HKCU:\Software\HWiNFO64\VSB"
         ForEach ($Device in $this.Devices) { 
-            If ($RegistryEntry = $RegistryData.PSObject.Properties.Where({ $_.Value -split " " -contains $Device.Name })) { 
+            If ($RegistryEntry = $RegistryData.PSObject.Properties.Where({ $_.Name -like "Label*" -and $_.Value -split " " -contains $Device.Name })) { 
                 $TotalPowerConsumption += [Double](($RegistryData.($RegistryEntry.Name -replace "Label", "Value") -split " ")[0])
             }
             Else { 
@@ -1564,8 +1570,6 @@ Function Update-ConfigFile {
         [String]$ConfigFile
     )
 
-    Write-Message -Level Verbose "Updating configuration file '$($ConfigFile)' to version $($Variables.Branding.Version.ToString())..."
-
     $Variables.ConfigurationHasChangedDuringUpdate = [System.Collections.Generic.List[String]]@()
 
     # NiceHash Internal is no longer available as of November 12, 2024
@@ -1582,7 +1586,7 @@ Function Update-ConfigFile {
     # MiningPoolHub is no longer available
     If ($Config.PoolName -contains "MiningPoolHub") { 
         Write-Message -Level Warn "Pool configuration changed during update (MiningPoolHub removed)."
-        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'MiningPoolHub' removed (Pool is no longer trustworthy)")
+        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'MiningPoolHub' removed")
         $Config.PoolName = $Config.PoolName -notmatch "MiningPoolHub"
     }
 
@@ -1598,8 +1602,10 @@ Function Update-ConfigFile {
         $OldRegion = $Config.Region
         # Write message about new mining regions
         $Config.Region = Switch ($OldRegion) { 
+            "Brazil"       { "USA West" }
             "Europe East"  { "Europe" }
             "Europe North" { "Europe" }
+            "India"        { "Asia" }
             "US"           { "USA West" }
             Default        { "Europe" }
         }
@@ -1636,6 +1642,7 @@ Function Update-ConfigFile {
 
     $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
     Write-Config -ConfigFile $ConfigFile -Config $Config
+    Write-Message -Level Verbose "Updated configuration file '$($ConfigFile)' to version $($Variables.Branding.Version.ToString())."
 }
 
 Function Write-Config { 
@@ -2598,7 +2605,7 @@ Function Get-Combination {
     }
 }
 
-Function Invoke-CreateProcess { 
+Function Invoke-CreateProcess {  
     # Based on https://github.com/FuzzySecurity/PowerShell-Suite/blob/master/Invoke-CreateProcess.ps1
 
     Param (
@@ -2625,8 +2632,8 @@ Function Invoke-CreateProcess {
     )
 
     # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and miners remain running
-    Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $StatusInfo { 
-        Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $StatusInfo)
+    Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $JobName, $StatusInfo { 
+        Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $JobName, $StatusInfo)
 
         $ControllerProcess = Get-Process -Id $ControllerProcessID
         If ($null -eq $ControllerProcess) { Return }
@@ -2677,7 +2684,8 @@ public static class Kernel32
         }
 
         # Set local environment
-        ($EnvBlock | Select-Object).ForEach({ New-Item -Path "Env:\$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force | Out-Null })
+        New-Item -Path "Env:UGMINER_JOBNAME" -Value $JobName -Force | Out-Null
+        ($EnvBlock | Select-Object).ForEach({ New-Item -Path "Env:$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force | Out-Null })
 
         # StartupInfo struct
         $StartupInfo = New-Object STARTUPINFO
@@ -2702,39 +2710,39 @@ public static class Kernel32
         # Call CreateProcess
         [Void][Kernel32]::CreateProcess($ConHost, "$ConHost $BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
 
-        $Proc = Get-Process -Id $ProcessInfo.dwProcessId
-        If ($null -eq $Proc) { 
-            [PSCustomObject]@{ ProcessId = $null }
+        If ($ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore) { 
+            If ($MinerProcessId = (Get-CimInstance CIM_Process).Where({ $_.ParentProcessId -eq $ConhostProcess.Id -and $_.ExecutablePath -like $BinaryPath }) | Select-Object -ExpandProperty ProcessId) { 
+                $MinerProcess = Get-Process -Id $MinerProcessId -ErrorAction Ignore
+            }
+        }
+
+        If ($null -eq $MinerProcess.Count) { 
+            [PSCustomObject]@{ 
+                ConhostProcessId = $ProcessInfo.dwProcessId
+                MinerProcessId = $null
+            }
             Return 
         }
 
-        $ProcessId = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)") | Select-Object -ExpandProperty ProcessId
-        $Proc = Get-Process -Id $ProcessId
-        If ($null -eq $Proc) { 
-            [PSCustomObject]@{ ProcessId = $null }
-            Return 
+        [PSCustomObject]@{ 
+            ConhostProcessId = $ProcessInfo.dwProcessId
+            MinerProcessId = $MinerProcessId
         }
 
-        [PSCustomObject]@{ ProcessId = $ProcessId }
-
+        $ConhostProcess.Handle | Out-Null
         $ControllerProcess.Handle | Out-Null
-        $Proc.Handle | Out-Null
+        $MinerProcess.Handle | Out-Null
 
         Do { 
             If ($ControllerProcess.WaitForExit(1000)) { 
-                [Void]$Proc.CloseMainWindow()
-                [Void]$Proc.WaitForExit(100)
-                [Void]$Proc.Kill()
-                [Void]$Proc.Dispose()
-                $Proc = $null
-                # Some miners, e.g. BzMiner spawn a second executable
-                If ($ParentProcessId = (Get-CimInstance win32_process -Filter "ProcessId = $($this.ProcessId)")[0].ParentProcessId) { 
-                    If ($ParentProcess = (Get-CimInstance win32_process -Filter "ProcessId = $ParentProcessId")) { 
-                        If ($ParentProcess.Name -ne "pwsh.exe") { Stop-Process -Id $ParentProcess.ProcessId -Force }
-                    }
-                }
+                Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore
+                Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
+                # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
+                $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId")
+                $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                $MinerProcess = $null
             }
-        } While ($Proc.HasExited -eq $false)
+        } While ($ControllerProcess.HasExited -eq $false)
     }
 }
 
