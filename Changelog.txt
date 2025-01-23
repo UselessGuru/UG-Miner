@@ -2,6 +2,13 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.4 2025/01/23
+===================================
+
+Fixes:
+- Core: Ensure cycle will not get stuck when a miner benchmark / power usage measurement is triggered
+
+
 Changelog UG-Miner 6.4.3 2025/01/18
 ===================================
 

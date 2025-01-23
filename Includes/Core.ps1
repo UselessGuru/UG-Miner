@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.3
-Version date:   2025/01/18
+Version:        6.4.4
+Version date:   2025/01/23
 #>
 
 using module .\Include.psm1
@@ -221,8 +221,11 @@ Try {
             If ($Config.Watchdog) { $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.Kicked -ge $Variables.Timer.AddSeconds( - $Variables.WatchdogReset) })) }
             Else { $Variables.WatchdogTimers = [PSCustomObject[]]@() }
 
-            # Skip some stuff when previous cycle was shorter than one cycle duration
-            If (-not ($Variables.ConfigReadTimestamp -lt $Variables.Timer -and $Variables.Miners -and $Variables.Pools -and ($Variables.PoolDataCollectedTimeStamp.AddSeconds($Config.Interval) -ge [DateTime]::Now.ToUniversalTime() -and (Compare-Object @($Config.ExtraCurrencies | Select-Object) @($Variables.AllCurrencies | Select-Object)).Where({ $_.SideIndicator -ne "<=" })))) { 
+            # Skip some stuff when
+            # - Configuration unchanged
+            # - and we have pools
+            # - and the previous cycle was less than half a cycle duration
+            If ($Variables.ConfigReadTimestamp -gt $Variables.Timer -or -not $Variables.Pools -or $Variables.PoolDataCollectedTimeStamp.AddSeconds($Config.Interval / 2) -lt $Variables.Timer) { 
 
                 # Check for new version
                 If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { Get-Version }
@@ -317,14 +320,10 @@ Try {
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
-            }
 
-            # Collect pool data
-            $Variables.PoolsCount = $Variables.Pools.Count
-
-            If ($Variables.PoolName) { 
-                # Skip some stuff when previous cycle was shorter than one cycle duration
-                If (-not ($Variables.ConfigReadTimestamp -lt $Variables.Timer -and $Variables.Miners -and $Variables.Pools -and ($Variables.PoolDataCollectedTimeStamp.AddSeconds($Config.Interval) -ge [DateTime]::Now.ToUniversalTime() -and (Compare-Object @($Config.ExtraCurrencies | Select-Object) @($Variables.AllCurrencies | Select-Object)).Where({ $_.SideIndicator -ne "<=" })))) { 
+                # Collect pool data
+                If ($Variables.PoolName) { 
+                    $Variables.PoolsCount = $Variables.Pools.Count
 
                     # Wait for pool data message
                     If ($Variables.Brains.psBase.Keys.Where({ $Variables.Brains[$_].StartTime -gt $Variables.Timer.AddSeconds(- $Config.Interval) })) { 
@@ -386,184 +385,176 @@ Try {
                     }
                     Remove-Variable PoolsWithoutData
                     $Variables.PoolDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
-                }
-                Else { 
-                    $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime().AddSeconds($Config.Interval)
-                    $Variables.PoolsNew = [Pool[]]@()
-                }
 
-                # Expire pools that have not been updated for 1 day
-                $Timestamp = [DateTime]::Now.ToUniversalTime().AddHours(-24)
-                $Variables.PoolsExpired = $Variables.Pools.Where({ $_.Updated -lt $Timestamp })
-                $Variables.Pools = $Variables.Pools.Where({ $_.Updated -ge $Timestamp })
-                Remove-Variable Timestamp
+                    # Expire pools that have not been updated for 1 day
+                    $Timestamp = [DateTime]::Now.ToUniversalTime().AddHours(-24)
+                    $Variables.PoolsExpired = $Variables.Pools.Where({ $_.Updated -lt $Timestamp })
+                    $Variables.Pools = $Variables.Pools.Where({ $_.Updated -ge $Timestamp })
+                    Remove-Variable Timestamp
 
-                # Count deconfigured pools
-                $PoolsDeconfiguredCount = $Variables.Pools.Where({ $_.Variant -notin $Variables.PoolName }).Count
+                    # Count deconfigured pools
+                    $PoolsDeconfiguredCount = $Variables.Pools.Where({ $_.Variant -notin $Variables.PoolName }).Count
 
-                If ($Pools = Compare-Object @($Variables.PoolsNew | Select-Object) @($Variables.Pools.Where({ $Variables.PoolName -contains $_.Variant }) | Select-Object) -Property Algorithm, Variant -IncludeEqual -PassThru) { 
-                    # Find added & updated pools
-                    $Variables.PoolsAdded = $Pools.Where({ $_.SideIndicator -eq "<=" })
-                    $Variables.PoolsUpdated = $Pools.Where({ $_.SideIndicator -eq "==" })
+                    If ($Pools = Compare-Object @($Variables.PoolsNew | Select-Object) @($Variables.Pools.Where({ $Variables.PoolName -contains $_.Variant }) | Select-Object) -Property Algorithm, Variant -IncludeEqual -PassThru) { 
+                        # Find added & updated pools
+                        $Variables.PoolsAdded = $Pools.Where({ $_.SideIndicator -eq "<=" })
+                        $Variables.PoolsUpdated = $Pools.Where({ $_.SideIndicator -eq "==" })
 
-                    $Pools.ForEach(
-                        { 
-                            $_.Best = $false
-                            $_.Prioritize = $false
-
-                            # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL
-                            $_.PoolPorts = $(If ($Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } Else { $null }), $(If ($Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } Else { $null })
-
-                            If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { 
-                                If (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
-                                    $_.BlockHeight = $Variables.DAGdata.Currency.($_.Currency).BlockHeight
-                                    $_.Epoch       = $Variables.DAGdata.Currency.($_.Currency).Epoch
-                                    $_.DAGSizeGiB  = $Variables.DAGdata.Currency.($_.Currency).DAGsize / 1GB 
-                                }
-                                ElseIf ($Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight) { 
-                                    $_.BlockHeight = $Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight
-                                    $_.Epoch       = $Variables.DAGdata.Algorithm.($_.Algorithm).Epoch
-                                    $_.DAGSizeGiB  = $Variables.DAGdata.Algorithm.($_.Algorithm).DAGsize / 1GB
-                                }
-                            }
-                            If ($_.Algorithm -match $Variables.RegexAlgoHasDynamicDAG -and $_.DAGSizeGiB) { 
-                                $_.AlgorithmVariant = "$($_.Algorithm)($([Math]::Ceiling($_.DAGSizeGiB))GiB)"
-                            }
-                            Else { 
-                                $_.AlgorithmVariant = $_.Algorithm
-                            }
-                        }
-                    )
-
-                    # Skip some stuff when previous cycle was shorter than one cycle duration
-                    If (-not ($Variables.ConfigReadTimestamp -lt $Variables.Timer -and $Variables.Miners -and $Variables.Pools -and ($Variables.PoolDataCollectedTimeStamp.AddSeconds($Config.Interval) -ge [DateTime]::Now.ToUniversalTime() -and (Compare-Object @($Config.ExtraCurrencies | Select-Object) @($Variables.AllCurrencies | Select-Object)).Where({ $_.SideIndicator -ne "<=" })))) { 
-                        # Lower accuracy on older pool data
-                        $Pools.Where({ $_.Updated -lt $Variables.CycleStarts[0] }).ForEach({ $_.Price_Bias *= [Math]::Pow(0.9, ($Variables.CycleStarts[0] - $_.Updated).TotalMinutes) })
-                    }
-
-                    # Pool disabled by stat file
-                    $Pools.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled (by Stat file)") })
-                    # Min accuracy not reached
-                    $Pools.Where({ $_.Accuracy -lt $Config.MinAccuracy }).ForEach({ $_.Reasons.Add("MinAccuracy ($($Config.MinAccuracy * 100)%) not reached") })
-                    # Filter unavailable algorithms
-                    If ($Config.MinerSet -lt 3) { $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq "*" }).ForEach({ $_.Reasons.Add("Unprofitable Algorithm") }) }
-                    # Pool price 0
-                    $Pools.Where({ $_.Price -eq 0 -and -not ($Variables.PoolsConfig[$_.Name].PoolAllow0Price -or $Config.PoolAllow0Price) }).ForEach({ $_.Reasons.Add("Price -eq 0") })
-                    # No price data
-                    $Pools.Where({ [Double]::IsNaN($_.Price) }).ForEach({ $_.Reasons.Add("Price information not available") })
-                    # Ignore pool if price is more than $Config.UnrealPoolPriceFactor higher than average of all pools with same algorithm & currency; NiceHash & MiningPoolHub are always right
-                    If ($Config.UnrealPoolPriceFactor -gt 1 -and ($Pools.Name | Sort-Object -Unique).Count -gt 1) { 
-                        ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm, Currency).Where({ $_.Count -ge 2 }).ForEach(
+                        $Pools.ForEach(
                             { 
-                                If ($PriceThreshold = ($_.Group.Price_Bias | Measure-Object -Average).Average * $Config.UnrealPoolPriceFactor) { 
-                                    $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") -and $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than average price)") })
+                                $_.Best = $false
+                                $_.Prioritize = $false
+
+                                # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL
+                                $_.PoolPorts = $(If ($Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } Else { $null }), $(If ($Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } Else { $null })
+
+                                If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { 
+                                    If (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
+                                        $_.BlockHeight = $Variables.DAGdata.Currency.($_.Currency).BlockHeight
+                                        $_.Epoch       = $Variables.DAGdata.Currency.($_.Currency).Epoch
+                                        $_.DAGSizeGiB  = $Variables.DAGdata.Currency.($_.Currency).DAGsize / 1GB 
+                                    }
+                                    ElseIf ($Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight) { 
+                                        $_.BlockHeight = $Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight
+                                        $_.Epoch       = $Variables.DAGdata.Algorithm.($_.Algorithm).Epoch
+                                        $_.DAGSizeGiB  = $Variables.DAGdata.Algorithm.($_.Algorithm).DAGsize / 1GB
+                                    }
+                                }
+                                If ($_.Algorithm -match $Variables.RegexAlgoHasDynamicDAG -and $_.DAGSizeGiB) { 
+                                    $_.AlgorithmVariant = "$($_.Algorithm)($([Math]::Ceiling($_.DAGSizeGiB))GiB)"
+                                }
+                                Else { 
+                                    $_.AlgorithmVariant = $_.Algorithm
                                 }
                             }
                         )
-                        Remove-Variable PriceThreshold -ErrorAction Ignore
-                    }
-                    # Per pool config algorithm filter
-                    $Pools.Where({ $Config.PoolsConfig[$_.Name].Algorithm -like "+*" -and $Config.PoolsConfig[$_.Name].Algorithm -split ',' -notcontains "+$($_.AlgorithmVariant)" -and $Config.PoolsConfig[$_.Name].Algorithm -split ',' -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
-                    $Pools.Where({ $Config.PoolsConfig[$_.Name].Algorithm -split ',' -contains "-$($_.Algorithm)" -or $Config.PoolsConfig[$_.Name].Algorithm -split ',' -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in $($_.Name) pool config)") })
-                    # Filter non-enabled algorithms
-                    If ($Config.Algorithm -like "+*") { 
-                        $Pools.Where({ $Config.Algorithm -split ',' -notcontains "+$($_.Algorithm)" -and $Config.Algorithm -split ',' -notcontains "+$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in generic config") })
-                    }
-                    # Filter disabled algorithms
-                    ElseIf ($Config.Algorithm -like "-*") { 
-                        $Pools.Where({ $Config.Algorithm -split ',' -contains "-$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in generic config)") })
-                        $Pools.Where({ $Config.Algorithm -split ',' -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.AlgorithmVariant)`` in generic config)") })
-                    }
-                    # Per pool config currency filter
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -like "+*" -and $Variables.PoolsConfig[$_.Name].Currency -split ',' -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -split ',' -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in $($_.Name) pool config)") })
-                    # Filter non-enabled currencies
-                    If ($Config.Currency -like "+*") { $Pools.Where({ $Config.Currency -split ',' -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in generic config") }) }
-                    # Filter disabled currencies
-                    ElseIf ($Config.Currency -like "-*") { $Pools.Where({ $Config.Currency -split ',' -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in generic config)") }) }
-                    # MinWorkers
-                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Variables.PoolsConfig[$_.Name].MinWorkers }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Variables.PoolsConfig[$_.Name].MinWorker)`` in $($_.Name) pool config)") })
-                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Config.MinWorker -and $Variables.PoolsConfig[$_.Name].MinWorkers -ne 0 -and $Variables.PoolsConfig[$_.Name].MinWorkers -lt $Config.MinWorker }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Config.MinWorker)`` in generic config)") })
-                    # SSL
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Never" }).ForEach({ $_.PoolPorts[1] = $null })
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Always" }).ForEach({ $_.PoolPorts[0] = $null })
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Never" -and -not $_.PoolPorts[0] }).ForEach({ $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in $($_.Name) pool config)") })
-                    $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Always" -and -not $_.PoolPorts[1] }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in $($_.Name) pool config)") })
-                    If ($Config.SSL -eq "Never") { $Pools.Where({ -not $_.PoolPorts[0] -and $_.Reasons -notmatch "Non-SSL port not available .+" }).ForEach({ $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in generic config)") }) }
-                    ElseIf ($Config.SSL -eq "Always") { $Pools.Where({ -not $_.PoolPorts[1] -and $_.Reasons -notmatch "SSL port not available .+" }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in generic config)") }) }
-                    # SSL Allow selfsigned certificate
-                    $Pools.Where({ $_.SSLselfSignedCertificate -and $null -ne $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $false }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in $($_.Name) pool config)") })
-                    If (-not $Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $null -eq $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") }) }
-                    # At least one port (SSL or non-SSL) must be available
-                    $Pools.Where({ -not ($_.PoolPorts | Select-Object) }).ForEach({ $_.Reasons.Add("No ports available") })
-                    # Apply watchdog to pools
-                    If ($Pools) { $Pools = Update-PoolWatchdog -Pools $Pools }
-                    # Second best pools per algorithm
-                    ($Pools.Where({ -not $_.Reasons }) | Group-Object -Property AlgorithmVariant, Name).ForEach({ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach({ $_.Reasons = "Second best algorithm" }) })
 
-                    # Make pools unavailable
-                    $Pools.ForEach({ $_.Available = -not [Boolean]$_.Reasons })
-
-                    # Filter pools on miner set
-                    If ($Config.MinerSet -lt 2) { 
-                        $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 1 }).ForEach({ $_.Reasons.Add("Unprofitable primary algorithm") })
-                        $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 2 }).ForEach({ $_.Reasons.Add("Unprofitable secondary algorithm") })
-                    }
-
-                    If ($Variables.Pools.Count -gt 0) { 
-                        Write-Message -Level Info "Had $($Variables.PoolsCount) pool$(If ($Variables.PoolsCount -ne 1) { "s" }) from previous run$(If ($Variables.PoolsExpired.Count) { ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" })$(If ($PoolsDeconfiguredCount) { ", removed $PoolsDeconfiguredCount deconfigured pool$(If ($PoolsDeconfiguredCount -gt 1) { "s" })" })$(If ($Variables.PoolsAdded.Count) { ", found $($Variables.PoolsAdded.Count) new pool$(If ($Variables.PoolsAdded.Count -ne 1) { "s" })" })$(If ($Variables.PoolsNew) { ", updated $($Variables.PoolsUpdated.Count) existing pool$(If ($Variables.PoolsUpdated.Count -ne 1) { "s" })" })$(If ($Pools.Where({ -not $_.Available })) { ", filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }). $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
-                    }
-                    Else { 
-                        Write-Message -Level Info "Found $($Variables.PoolsNew.Count) pool$(If ($Variables.PoolsNew.Count -ne 1) { "s" })$(If ($Variables.PoolsExpired.Count) { ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" }), filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" }). $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
-                    }
-
-                    # Keep pool balances alive; force mining at pool even if it is not the best for the algo
-                    If ($Config.BalancesKeepAlive -and $Global:BalancesTrackerRunspace -and $Variables.PoolsLastEarnings.Count -gt 0 -and $Variables.PoolsLastUsed) { 
-                        $Variables.PoolNamesToKeepBalancesAlive = @()
-                        ForEach ($Pool in @($Pools.Where({ $_.Name -notin $Config.BalancesTrackerExcludePool }) | Sort-Object -Property Name -Unique)) { 
-                            If ($Variables.PoolsLastEarnings[$Pool.Name] -and $Variables.PoolsConfig[$Pool.Name].BalancesKeepAlive -gt 0 -and ([DateTime]::Now.ToUniversalTime() - $Variables.PoolsLastEarnings[$Pool.Name]).Days -ge ($Variables.PoolsConfig[$Pool.Name].BalancesKeepAlive - 10)) { 
-                                $Variables.PoolNamesToKeepBalancesAlive += $Pool.Name
-                                Write-Message -Level Warn "Pool '$($Pool.Name)' prioritized to avoid forfeiting balance (pool would clear balance in 10 days)."
-                            }
-                        }
-                        Remove-Variable Pool
-
-                        If ($Variables.PoolNamesToKeepBalancesAlive) { 
-                            $Pools.ForEach(
+                        # Reduce accuracy on older pool data
+                        $Pools.Where({ $_.Updated -lt $Variables.CycleStarts[0] }).ForEach({ $_.Price_Bias *= [Math]::Pow(0.9, ($Variables.CycleStarts[0] - $_.Updated).TotalMinutes) })
+                        # Pool disabled by stat file
+                        $Pools.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled (by Stat file)") })
+                        # Min accuracy not reached
+                        $Pools.Where({ $_.Accuracy -lt $Config.MinAccuracy }).ForEach({ $_.Reasons.Add("MinAccuracy ($($Config.MinAccuracy * 100)%) not reached") })
+                        # Filter unavailable algorithms
+                        If ($Config.MinerSet -lt 3) { $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq "*" }).ForEach({ $_.Reasons.Add("Unprofitable Algorithm") }) }
+                        # Pool price 0
+                        $Pools.Where({ $_.Price -eq 0 -and -not ($Variables.PoolsConfig[$_.Name].PoolAllow0Price -or $Config.PoolAllow0Price) }).ForEach({ $_.Reasons.Add("Price -eq 0") })
+                        # No price data
+                        $Pools.Where({ [Double]::IsNaN($_.Price) }).ForEach({ $_.Reasons.Add("Price information not available") })
+                        # Ignore pool if price is more than $Config.UnrealPoolPriceFactor higher than average of all pools with same algorithm & currency; NiceHash & MiningPoolHub are always right
+                        If ($Config.UnrealPoolPriceFactor -gt 1 -and ($Pools.Name | Sort-Object -Unique).Count -gt 1) { 
+                            ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm, Currency).Where({ $_.Count -ge 2 }).ForEach(
                                 { 
-                                    If ($Variables.PoolNamesToKeepBalancesAlive -contains $_.Name) { $_.Available = $true; $_.Prioritize = $true }
-                                    Else { $_.Reasons.Add("BalancesKeepAlive prioritizes other pools") }
+                                    If ($PriceThreshold = ($_.Group.Price_Bias | Measure-Object -Average).Average * $Config.UnrealPoolPriceFactor) { 
+                                        $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") -and $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than average price)") })
+                                    }
                                 }
                             )
+                            Remove-Variable PriceThreshold -ErrorAction Ignore
                         }
+                        # Per pool config algorithm filter
+                        $Pools.Where({ $Config.PoolsConfig[$_.Name].Algorithm -like "+*" -and $Config.PoolsConfig[$_.Name].Algorithm -split ',' -notcontains "+$($_.AlgorithmVariant)" -and $Config.PoolsConfig[$_.Name].Algorithm -split ',' -notcontains "+$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
+                        $Pools.Where({ $Config.PoolsConfig[$_.Name].Algorithm -split ',' -contains "-$($_.Algorithm)" -or $Config.PoolsConfig[$_.Name].Algorithm -split ',' -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in $($_.Name) pool config)") })
+                        # Filter non-enabled algorithms
+                        If ($Config.Algorithm -like "+*") { 
+                            $Pools.Where({ $Config.Algorithm -split ',' -notcontains "+$($_.Algorithm)" -and $Config.Algorithm -split ',' -notcontains "+$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm not enabled in generic config") })
+                        }
+                        # Filter disabled algorithms
+                        ElseIf ($Config.Algorithm -like "-*") { 
+                            $Pools.Where({ $Config.Algorithm -split ',' -contains "-$($_.Algorithm)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in generic config)") })
+                            $Pools.Where({ $Config.Algorithm -split ',' -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.AlgorithmVariant)`` in generic config)") })
+                        }
+                        # Per pool config currency filter
+                        $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -like "+*" -and $Variables.PoolsConfig[$_.Name].Currency -split ',' -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
+                        $Pools.Where({ $Variables.PoolsConfig[$_.Name].Currency -split ',' -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in $($_.Name) pool config)") })
+                        # Filter non-enabled currencies
+                        If ($Config.Currency -like "+*") { $Pools.Where({ $Config.Currency -split ',' -notcontains "+$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency not enabled in generic config") }) }
+                        # Filter disabled currencies
+                        ElseIf ($Config.Currency -like "-*") { $Pools.Where({ $Config.Currency -split ',' -contains "-$($_.Currency)" }).ForEach({ $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in generic config)") }) }
+                        # MinWorkers
+                        $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Variables.PoolsConfig[$_.Name].MinWorkers }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Variables.PoolsConfig[$_.Name].MinWorker)`` in $($_.Name) pool config)") })
+                        $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Config.MinWorker -and $Variables.PoolsConfig[$_.Name].MinWorkers -ne 0 -and $Variables.PoolsConfig[$_.Name].MinWorkers -lt $Config.MinWorker }).ForEach({ $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Config.MinWorker)`` in generic config)") })
+                        # SSL
+                        $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Never" }).ForEach({ $_.PoolPorts[1] = $null })
+                        $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Always" }).ForEach({ $_.PoolPorts[0] = $null })
+                        $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Never" -and -not $_.PoolPorts[0] }).ForEach({ $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in $($_.Name) pool config)") })
+                        $Pools.Where({ $Variables.PoolsConfig[$_.Name].SSL -eq "Always" -and -not $_.PoolPorts[1] }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in $($_.Name) pool config)") })
+                        If ($Config.SSL -eq "Never") { $Pools.Where({ -not $_.PoolPorts[0] -and $_.Reasons -notmatch "Non-SSL port not available .+" }).ForEach({ $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in generic config)") }) }
+                        ElseIf ($Config.SSL -eq "Always") { $Pools.Where({ -not $_.PoolPorts[1] -and $_.Reasons -notmatch "SSL port not available .+" }).ForEach({ $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in generic config)") }) }
+                        # SSL Allow selfsigned certificate
+                        $Pools.Where({ $_.SSLselfSignedCertificate -and $null -ne $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -and $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $false }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in $($_.Name) pool config)") })
+                        If (-not $Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $null -eq $Variables.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") }) }
+                        # At least one port (SSL or non-SSL) must be available
+                        $Pools.Where({ -not ($_.PoolPorts | Select-Object) }).ForEach({ $_.Reasons.Add("No ports available") })
+                        # Apply watchdog to pools
+                        If ($Pools) { $Pools = Update-PoolWatchdog -Pools $Pools }
+                        # Second best pools per algorithm
+                        ($Pools.Where({ -not $_.Reasons }) | Group-Object -Property AlgorithmVariant, Name).ForEach({ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach({ $_.Reasons = "Second best algorithm" }) })
+
+                        # Make pools unavailable
+                        $Pools.ForEach({ $_.Available = -not [Boolean]$_.Reasons })
+
+                        # Filter pools on miner set
+                        If ($Config.MinerSet -lt 2) { 
+                            $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 1 }).ForEach({ $_.Reasons.Add("Unprofitable primary algorithm") })
+                            $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 2 }).ForEach({ $_.Reasons.Add("Unprofitable secondary algorithm") })
+                        }
+
+                        If ($Variables.Pools.Count -gt 0) { 
+                            Write-Message -Level Info "Had $($Variables.PoolsCount) pool$(If ($Variables.PoolsCount -ne 1) { "s" }) from previous run$(If ($Variables.PoolsExpired.Count) { ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" })$(If ($PoolsDeconfiguredCount) { ", removed $PoolsDeconfiguredCount deconfigured pool$(If ($PoolsDeconfiguredCount -gt 1) { "s" })" })$(If ($Variables.PoolsAdded.Count) { ", found $($Variables.PoolsAdded.Count) new pool$(If ($Variables.PoolsAdded.Count -ne 1) { "s" })" })$(If ($Variables.PoolsNew) { ", updated $($Variables.PoolsUpdated.Count) existing pool$(If ($Variables.PoolsUpdated.Count -ne 1) { "s" })" })$(If ($Pools.Where({ -not $_.Available })) { ", filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }). $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
+                        }
+                        Else { 
+                            Write-Message -Level Info "Found $($Variables.PoolsNew.Count) pool$(If ($Variables.PoolsNew.Count -ne 1) { "s" })$(If ($Variables.PoolsExpired.Count) { ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" }), filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" }). $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
+                        }
+
+                        # Keep pool balances alive; force mining at pool even if it is not the best for the algo
+                        If ($Config.BalancesKeepAlive -and $Global:BalancesTrackerRunspace -and $Variables.PoolsLastEarnings.Count -gt 0 -and $Variables.PoolsLastUsed) { 
+                            $Variables.PoolNamesToKeepBalancesAlive = @()
+                            ForEach ($Pool in @($Pools.Where({ $_.Name -notin $Config.BalancesTrackerExcludePool }) | Sort-Object -Property Name -Unique)) { 
+                                If ($Variables.PoolsLastEarnings[$Pool.Name] -and $Variables.PoolsConfig[$Pool.Name].BalancesKeepAlive -gt 0 -and ([DateTime]::Now.ToUniversalTime() - $Variables.PoolsLastEarnings[$Pool.Name]).Days -ge ($Variables.PoolsConfig[$Pool.Name].BalancesKeepAlive - 10)) { 
+                                    $Variables.PoolNamesToKeepBalancesAlive += $Pool.Name
+                                    Write-Message -Level Warn "Pool '$($Pool.Name)' prioritized to avoid forfeiting balance (pool would clear balance in 10 days)."
+                                }
+                            }
+                            Remove-Variable Pool
+
+                            If ($Variables.PoolNamesToKeepBalancesAlive) { 
+                                $Pools.ForEach(
+                                    { 
+                                        If ($Variables.PoolNamesToKeepBalancesAlive -contains $_.Name) { $_.Available = $true; $_.Prioritize = $true }
+                                        Else { $_.Reasons.Add("BalancesKeepAlive prioritizes other pools") }
+                                    }
+                                )
+                            }
+                        }
+                        $Pools.Where({ $_.Reasons }).ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique) })
+
+                        # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
+                        ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
+
+                        $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
                     }
-                    $Pools.Where({ $_.Reasons }).ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique) })
 
-                    # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
-                    ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
+                    # Update data in API
+                    $Variables.Pools = $Pools
+                    $Variables.PoolsBest = $Variables.Pools.Where({ $_.Best }) | Sort-Object -Property Algorithm
 
-                    $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
+                    Remove-Variable Pools, PoolsDeconfiguredCount, PoolsExpiredCount -ErrorAction Ignore
+
+                    # Core suspended with <Ctrl><Alt>P in MainLoop
+                    While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
+
                 }
-
-                # Update data in API
-                $Variables.Pools = $Pools
-
-                Remove-Variable Pools, PoolsDeconfiguredCount, PoolsExpiredCount -ErrorAction Ignore
-
-                # Core suspended with <Ctrl><Alt>P in MainLoop
-                While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
+                Else { 
+                    # No configured pools, clear all pools
+                    $Variables.Pools = [Pool[]]@()
+                    $Variables.PoolsAdded = [Pool[]]@()
+                    $Variables.PoolsBest = [Pool[]]@()
+                    $Variables.PoolsExpired = [Pool[]]@()
+                    $Variables.PoolsNew = [Pool[]]@()
+                    $Variables.PoolsUpdated = [Pool[]]@()
+                }
             }
-            Else { 
-                # No configured pools, clear all pools
-                $Variables.Pools = [Pool[]]@()
-                $Variables.PoolsAdded = [Pool[]]@()
-                $Variables.PoolsExpired = [Pool[]]@()
-                $Variables.PoolsNew = [Pool[]]@()
-                $Variables.PoolsUpdated = [Pool[]]@()
-            }
-
-            $Variables.PoolsBest = $Variables.Pools.Where({ $_.Best }) | Sort-Object -Property Algorithm
-
             If (-not $Variables.PoolsBest) { 
                 $Message = "No available pools - retrying in $($Config.Interval) seconds..."
                 Write-Message -Level Warn $Message
@@ -572,6 +563,9 @@ Try {
                 Start-Sleep -Seconds $Config.Interval
                 Write-Message -Level Info "Ending cycle (No available pools)."
                 Continue
+            }
+            If ($Variables.DonationRunning) { 
+                $Variables.EndCycleTime = ($Variables.DonationEnd).ToUniversalTime()
             }
 
             # Ensure we get the hashrate for running miners prior looking for best miner
@@ -683,11 +677,14 @@ Try {
                                 $Variables.AlgorithmsLastUsed.($Worker.Pool.Algorithm) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; MinerName = $Miner.Name }
                                 $Variables.PoolsLastUsed.($Worker.Pool.Name) = $Stat.Updated # most likely this will count at the pool to keep balances alive
                             }
-                            ElseIf ($MinerHashrates.$Algorithm -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and $Stat.Week -and ($MinerHashrates.$Algorithm -gt $Stat.Week * 2 -or $MinerHashrates.$Algorithm -lt $Stat.Week / 2)) { 
-                                # Stop miner if new value is outside ±200% of current value
-                                $Miner.StatusInfo = "$($Miner.Info) reported hashrate is unreal ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
-                                $Miner.SetStatus([MinerStatus]::Failed)
-                                $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                            ElseIf ($Stat.Week) { 
+                                If ($MinerHashrates.$Algorithm -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and ($MinerHashrates.$Algorithm -gt $Stat.Week * 2 -or $MinerHashrates.$Algorithm -lt $Stat.Week / 2)) { 
+                                    # Stop miner if new value is outside ±200% of current value
+                                    Write-Message -Level Warn "Reported hashrate by '$($Miner.Info)' is unreal ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
+                                    $Miner.SetStatus([MinerStatus]::Idle)
+                                    $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { Remove-Stat $StatName }
+                                }
                             }
                         }
                         Remove-Variable Factor -ErrorAction Ignore
@@ -700,11 +697,14 @@ Try {
                             If ($Stat.Updated -gt $Miner.StatStart) { 
                                 Write-Message -Level Info "Saved power consumption for '$($StatName -replace "_PowerConsumption$")': $($Stat.Live.ToString("N2"))W ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.MeasurePowerConsumption) { " [Power consumption measurement done]" })."
                             }
-                            ElseIf ($MinerPowerConsumption -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and $Stat.Week -and ($MinerPowerConsumption -gt $Stat.Week * 2 -or $MinerPowerConsumption -lt $Stat.Week / 2)) { 
-                                # Stop miner if new value is outside ±200% of current value
-                                $Miner.StatusInfo = "$($Miner.Info) reported power consumption is unreal ($($PowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
-                                $Miner.SetStatus([MinerStatus]::Failed)
-                                $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                            ElseIf ($Stat.Week) { 
+                                If ($MinerPowerConsumption -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and ($MinerPowerConsumption -gt $Stat.Week * 2 -or $MinerPowerConsumption -lt $Stat.Week / 2)) { 
+                                    # Stop miner if new value is outside ±200% of current value
+                                    Write-Message -Level Warn "Reported power consumption by '$($Miner.Info)' is unreal ($($PowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
+                                    $Miner.SetStatus([MinerStatus]::Idle)
+                                    $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { Remove-Stat $StatName }
+                                }
                             }
                         }
                     }
@@ -1465,9 +1465,9 @@ Try {
 
             # Exit loop when
             # - end cycle message is set
-            # - when not benchmnarking: Interval time is over
-            # - no more runninge miners
-        } While ($Variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and ((-not $Config.DryRun -and [DateTime]::Now.ToUniversalTime() -le $Variables.EndCycleTime) -or $Variables.MinersBenchmarkingOrMeasuring))
+            # - when not benchmarking: Interval time is over
+            # - no more running miners
+        } While ($Variables.NewMiningStatus -eq "Running" -and -not $Variables.EndCycleMessage -and (([DateTime]::Now.ToUniversalTime() -le $Variables.EndCycleTime) -or $Variables.MinersBenchmarkingOrMeasuring.Where({ $_.Status -ne [MinerStatus]::DryRun })))
         Remove-Variable LoopEnd
 
         # Set end cycle time to end brains loop to collect data

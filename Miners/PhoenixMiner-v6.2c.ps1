@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.3
-Version date:   2025/01/18
+Version:        6.4.4
+Version date:   2025/01/23
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -90,8 +90,8 @@ If ($Algorithms) {
                         If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 })) { 
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $_.Epoch -lt 602 -and $_.Algorithm -ne "EtcHash" -or $_.Epoch -lt 302 })) { 
+                        # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and (($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302) })) { 
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ ($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302 })) { 
                             # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] })) { 
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
@@ -117,7 +117,7 @@ If ($Algorithms) {
                                             "qtminer"      { " -proto 3" }
                                             Default        { " -proto 1" }
                                         }
-                                        If ($Pool0.PoolPorts[1]) { $Arguments += " -weakssl" }
+                                        If ($Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                         If ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }
                                         $Arguments += " -pass $($Pool0.Pass)"
 
@@ -134,7 +134,7 @@ If ($Algorithms) {
 
                                         If ($_.Algorithms[1]) { 
                                             $Arguments += " -dpool $(If ($Pool1.PoolPorts[1]) { "ssl://" })$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
-                                            # If ($Pool0.PoolPorts[1]) { $Arguments += " -dweakssl" } #https://bitcointalk.org/index.php?topic=2647654.msg60898131#msg60898131
+                                            If ($Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments += " -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                             If ($Pool1.WorkerName) { $Arguments += " -dworker $($Pool1.WorkerName)" }
                                             If ($_.Intensity) { $Arguments += " -sci $($_.Intensity)" }
                                         }

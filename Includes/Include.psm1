@@ -513,7 +513,7 @@ Class Miner : IDisposable {
         $this.EndTime = [DateTime]::Now.ToUniversalTime()
 
         If ($this.Process.Id) { 
-            If ($this.Process.Parent.Id) { Stop-Process -Id $this.Process.Parent.Id | Out-Null }
+            If ($this.Process.Parent.Id) { Stop-Process -Id $this.Process.Parent.Id -Force -ErrorAction Ignore | Out-Null }
             Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
             $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)")
@@ -843,7 +843,6 @@ Function Stop-Core {
 
         $Variables.Remove("Timer")
         $Global:CoreRunspace.PSObject.Properties.Remove("StartTime")
-
     }
 
     If ($Variables.Miners) { 
@@ -1584,7 +1583,7 @@ Function Update-ConfigFile {
     $Config.Remove("NiceHashWalletIsInternal")
 
     # MiningPoolHub is no longer available
-    If ($Config.PoolName -contains "MiningPoolHub") { 
+    If ([System.Version]::Parse($Config.ConfigFileVersion) -lt [System.Version]"6.3.0.0" -and $Config.PoolName -contains "MiningPoolHub") { 
         Write-Message -Level Warn "Pool configuration changed during update (MiningPoolHub removed)."
         $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'MiningPoolHub' removed")
         $Config.PoolName = $Config.PoolName -notmatch "MiningPoolHub"
@@ -1887,7 +1886,7 @@ Function Set-Stat {
             ElseIf ($Name -match ".+_PowerConsumption") { 
                 Write-Message -Level Warn "Error saving power consumption for '$($Name -replace "_PowerConsumption$")'. $($Value.ToString("N2"))W is outside fault tolerance ($($ToleranceMin.ToString("N2"))W to $($ToleranceMax.ToString("N2"))W) [Iteration $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
             }
-            Return
+            Return $Stat
         }
         Else { 
             If (-not $Stat.Disabled -and ($Value -eq 0 -or $Stat.ToleranceExceeded -ge $ToleranceExceeded -or $Stat.Week_Fluctuation -ge 1)) { 

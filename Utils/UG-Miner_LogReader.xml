@@ -15,7 +15,7 @@
       <BookmarkTextColor>Yellow</BookmarkTextColor>
       <BookmarkBackColor>DarkGreen</BookmarkBackColor>
       <Modeless>false</Modeless>
-      <Title>UG-Miner_2024-10-04.log</Title>
+      <Title>UG-Miner_2025-01-20.log</Title>
       <WindowState>Maximized</WindowState>
       <WindowSize>
         <Width>1886</Width>
@@ -162,7 +162,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+ GUI: </Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (Web |)GUI: </Keyword>
           <MatchCaseSensitive>true</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -211,8 +211,8 @@
     <Height>1163</Height>
   </WindowSize>
   <WindowPosition>
-    <X>75</X>
-    <Y>132</Y>
+    <X>1301</X>
+    <Y>672</Y>
   </WindowPosition>
   <MinimizedToTray>false</MinimizedToTray>
   <AlwaysOnTop>false</AlwaysOnTop>

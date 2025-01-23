@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.3
-Version date:   2025/01/18
+Version:        6.4.4
+Version date:   2025/01/23
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { Return }
@@ -29,10 +29,10 @@ $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @( 
-    @{ Algorithm = "XelisHashV2";  Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @("NiceHash"); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "XelisHashV2";  Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
 
-    @{ Algorithm = "DynexSolve"; Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @();             Arguments = @(" --algo dynex") }
-    @{ Algorithm = "XelisHashV2";  Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @("NiceHash"); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "DynexSolve";   Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
+    @{ Algorithm = "XelisHashV2";  Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
