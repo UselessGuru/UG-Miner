@@ -350,4 +350,4 @@ and modifications, which include larger works using a licensed work, under the s
 Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.  
 https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 
-**Happy mining :-)**
+## Happy mining :-)
