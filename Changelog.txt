@@ -2,6 +2,17 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.5 2025/01/26
+===================================
+
+Fixes:
+- Core: TotalMiningDuration is always 0 (Regression from v6.2.6)
+
+Miner updates:
+- lolMiner-v1.94
+- Wildrig-v0.42.0
+
+
 Changelog UG-Miner 6.4.4 2025/01/23
 ===================================
 

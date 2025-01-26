@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.4
-Version date:   2025/01/23
+Version:        6.4.5
+Version date:   2025/01/26
 #>
 
 using module .\Include.psm1

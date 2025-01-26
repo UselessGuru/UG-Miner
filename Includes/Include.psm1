@@ -690,8 +690,6 @@ Class Miner : IDisposable {
         $this.Reasons = [System.Collections.Generic.List[String]]@()
         If ($this.ReadPowerConsumption -ne $this.Devices.ReadPowerConsumption -notcontains $false) { $this.Restart = $true }
         $this.ReadPowerConsumption = $this.Devices.ReadPowerConsumption -notcontains $false
-        $this.Updated = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
-        $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
         $this.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
 
         $this.Workers.ForEach(
@@ -719,6 +717,8 @@ Class Miner : IDisposable {
         )
         $this.Benchmark = [Boolean]($this.Workers.Hashrate -match [Double]::NaN)
         $this.Disabled = $this.Workers.Disabled -contains $true
+        $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
+        $this.Updated = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
 
         If ($this.Benchmark -eq $true) { 
             $this.Earning = [Double]::NaN

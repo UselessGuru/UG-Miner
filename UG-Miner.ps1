@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.4
-Version date:   2025/01/23
+Version:        6.4.5
+Version date:   2025/01/26
 #>
 
 using module .\Includes\Include.psm1
@@ -316,7 +316,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.4"
+    Version      = [System.Version]"6.4.5"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
