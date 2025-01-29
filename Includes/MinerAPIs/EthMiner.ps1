@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.4.5
-Version date:   2025/01/26
+Version:        6.4.6
+Version date:   2025/01/29
 #>
 
 Class EthMiner : Miner { 
@@ -37,7 +37,7 @@ Class EthMiner : Miner {
             Return $null
         }
 
-        If (-not $Data.result -or ($Data.result[2] -split ";")[0] -eq $null) { Return $null }
+        If (-not $Data.result -or ($null -eq ($Data.result[2] -split ";")[0])) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
@@ -53,7 +53,7 @@ Class EthMiner : Miner {
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            If (($Data.result[4] -split ";")[0] -eq $null) { Return $null }
+            If ($null -eq (($Data.result[4] -split ";")[0])) { Return $null }
             $HashrateValue = [Double]($Data.result[4] -split ";")[0]
             If ($this.Algorithms[0] -match "^Blake2s|^Keccak") { $HashrateValue *= 1000 }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }

@@ -208,7 +208,7 @@
     ],
     "Variant": {
       "NiceHash": {
-        "Fee": 0.05,
+        "Fee": 0.02,
         "PayoutThreshold": {
           "mBTC": 1
         }

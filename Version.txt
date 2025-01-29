@@ -1,6 +1,6 @@
 {
   "Product": "UG-Miner",
-  "Version": "6.4.5",
+  "Version": "6.4.6",
   "AutoUpdate": true,
   "Uri": "https://github.com/UselessGuru/UG-Miner/archive/refs/heads/master.zip",
   "Message": "https://github.com/UselessGuru/UG-Miner/releases"

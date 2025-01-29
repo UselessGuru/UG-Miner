@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.4.5 / Updated 2025/01/26
+Version 6.4.6 / Updated 2025/01/29
 
 
 Copyright (c) 2018-2025 UselessGuru
@@ -287,8 +287,8 @@ UIStyle automatically switches to full during benchmarking or when measuring pow
 
 Windows 10.x and PowerShell Version 7.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.4.6.  
-[Download Installer for version 7.4.5](https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.5.0.  
+[Download Installer for version 7.5.0](https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/PowerShell-7.5.0-win-x64.msi)  
 
 Some miners may need 'Visual C+ RunTimes. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
@@ -311,7 +311,7 @@ UG-Miner is currently tested on the following rigs:
 
 ## Developer donation
 
-The donation fee is approx. 1% (15 minutes per day). It can be increased or decreased in the configuration editor.
+The default donation fee is approx. 1% (15 minutes per day). It can be increased or decreased in the configuration editor.
 
 Please help support the great team behind UG-Miner by leaving mining donations turned on.
 

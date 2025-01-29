@@ -2,6 +2,20 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.6 2025/01/??
+===================================
+
+Changes:
+- Core: Remove obsolete code
+
+Enhancements:
+- Optimize dual algorithm miners code
+
+Fixes:
+- EthMiner API broken (Regression from v6.4.1)
+- NiceHash fee is 2%
+
+
 Changelog UG-Miner 6.4.5 2025/01/26
 ===================================
 

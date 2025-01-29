@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.5
-Version date:   2025/01/26
+Version:        6.4.6
+Version date:   2025/01/29
 #>
 
 using module .\Includes\Include.psm1
@@ -284,7 +284,10 @@ Param(
     [String]$WorkerName = [System.Net.Dns]::GetHostName()
 )
 
-$RecommendedPWSHversion = [Version]"7.4.6"
+Set-Location (Split-Path $MyInvocation.MyCommand.Path)
+
+$ErrorLogFile = ".\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
+$RecommendedPWSHversion = [Version]"7.5.0"
 
 # Close useless empty cmd window that comes up when starting from bat file
 If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -292,11 +295,6 @@ If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") {
     If ((Get-Process -Id $ConHostProcessId).Parent.ProcessName -eq "cmd") { Stop-Process -Id (Get-Process -Id $ConhostProcessId).Parent.Id -Force -ErrorAction Ignore }
     Remove-Variable ConhostProcessId
 }
-
-$ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
-
-Set-Location (Split-Path $MyInvocation.MyCommand.Path)
-$ProcessName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 @"
 UG-Miner
@@ -316,7 +314,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.5"
+    Version      = [System.Version]"6.4.6"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -444,7 +442,7 @@ If ( -not (Get-Command Get-PnpDevice)) {
     Exit
 }
 
-Write-Message -Level Verbose "Pre-requisites verification OK - Running PWSH version $($PSVersionTable.PSVersion)$(If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { " (recommended version is $($RecommendedPWSHversion))"})."
+Write-Message -Level Verbose "Pre-requisites verification OK - running PWSH version $($PSVersionTable.PSVersion)$(If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { " (recommended version is $($RecommendedPWSHversion))" })."
 Remove-Variable RecommendedPWSHversion
 
 # Check if a new version is available
@@ -946,7 +944,7 @@ Function MainLoop {
                             If ($_.PayoutThresholdCurrency -and $Variables.Rates.($_.Currency) -and $Variables.Rates.($_.PayoutThresholdCurrency)) {
                                 $Percentage = ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)).toString("P2")
                             }
-                            Else { $Percentage = "Unknown %"}
+                            Else { $Percentage = "Unknown %" }
                         }
                         Else { $Percentage = ($_.Balance / $_.PayoutThreshold).ToString("P2") }
 
@@ -980,7 +978,7 @@ Function MainLoop {
                             }
                             Write-Host "Balance:                " -NoNewline; Write-Host ("{0:n$($Config.DecimalsMax)} {1}" -f ($_.Balance * $mBTCfactor), $_.Currency) -ForegroundColor Yellow
                         }
-                        Write-Host ("                        {0} of {1:n$($Config.DecimalsMax)} {2} payment threshold; projected payment date: $(If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } Else { $_.ProjectedPayDate })`n" -f $Percentage, ($_.PayoutThreshold * $mBTCfactor), $PayoutCurrency)
+                        Write-Host ("{0} of {1:n$($Config.DecimalsMax)} {2} payment threshold; projected payment date: $(If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } Else { $_.ProjectedPayDate })`n" -f $Percentage, ($_.PayoutThreshold * $mBTCfactor), $PayoutCurrency)
                     }
                 )
                 Remove-Variable Currency, mBTCfactor, Percentage -ErrorAction Ignore

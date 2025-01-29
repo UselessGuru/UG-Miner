@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.4.5
-Version date:   2025/01/26
+Version:        6.4.6
+Version date:   2025/01/29
 #>
 
 Class NanoMiner : Miner { 
@@ -66,7 +66,7 @@ Class NanoMiner : Miner {
         ForEach ($Algorithm in $Algorithms) { 
             $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
             $HashrateValue = [Double]($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            If ($HashrateValue -eq $null) { Return $null }
+            If ($null -eq $HashrateValue) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum | Select-Object -ExpandProperty Sum)

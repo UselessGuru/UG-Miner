@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\SRBminer.ps1
-Version:        6.4.5
-Version date:   2025/01/26
+Version:        6.4.6
+Version date:   2025/01/29
 #>
 
 Class SRBMiner : Miner { 
@@ -39,7 +39,7 @@ Class SRBMiner : Miner {
 
         $Type = If ($Data.total_cpu_workers -gt 0) { "cpu" } Else { "gpu" }
 
-        If (-not $Data.algorithms -or $Data.algorithms[0].hashrate.$Type.total -eq $null) { Return $null }
+        If (-not $Data.algorithms -or $null -eq $Data.algorithms[0].hashrate.$Type.total) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.algorithms[0]

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.5
-Version date:   2025/01/26
+Version:        6.4.6
+Version date:   2025/01/29
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") }))) { Return }
@@ -78,7 +78,7 @@ If ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "CcMiner"
-                                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach({ '{0:x}' -f ($_ + 1)})) -join ',')"
+                                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach({ '{0:x}' -f ($_ + 1) })) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @(0) # Dev fee
                                 MinerSet    = $_.MinerSet

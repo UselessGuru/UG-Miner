@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.4.5
-Version date:   2025/01/26
+Version:        6.4.6
+Version date:   2025/01/29
 #>
 
 Class OneZero : Miner { 
@@ -35,7 +35,7 @@ Class OneZero : Miner {
             Return $null
         }
 
-        If (-not $Data.algos -or $Data.algos[0].total_hashrate -eq $null) { Return $null }
+        If (-not $Data.algos -or $null -eq $Data.algos[0].total_hashrate) { Return $null }
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
