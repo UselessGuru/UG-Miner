@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.3.22
-Version date:   2025/01/29
+Version date:   2025/02/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
@@ -130,9 +130,9 @@ If ($Algorithms) {
                                     }
                                     $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                     $Arguments += "$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " -w $($Pool0.User)"
+                                    $Arguments += " -w $($Pool0.User -replace "\..*")"
                                     $Arguments += " --pool_password $($Pool0.Pass)"
-                                    $Arguments += " -r $($Config.WorkerName)"
+                                    $Arguments += " -r $(If ($Pool0.WorkerName) { $Pool0.WorkerName } ElseIf ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } Else { $Config.WorkerName })"
 
                                     If ($_.Algorithms[1]) { 
                                         $Arguments += $_.Arguments[1]
@@ -145,9 +145,9 @@ If ($Algorithms) {
                                         }
                                         $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                         $Arguments += "$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --w2 $($Pool1.User)"
+                                        $Arguments += " --w2 $($Pool1.User  -replace "\..*")"
                                         $Arguments += " --pool_password2 $($Pool1.Pass)"
-                                        $Arguments += " --r2 $($Config.WorkerName)"
+                                        $Arguments += " --r2 $(If ($Pool1.WorkerName) { $Pool1.WorkerName } ElseIf ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } Else { $Config.WorkerName })"
                                     }
 
                                     # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -167,7 +167,7 @@ If ($Algorithms) {
                                         Name             = $MinerName
                                         Path             = $Path
                                         Port             = $MinerAPIPort
-                                        Type             = $_.Type
+                                        Type             = $Type
                                         URI              = $URI
                                         WarmupTimes      = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                         Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))

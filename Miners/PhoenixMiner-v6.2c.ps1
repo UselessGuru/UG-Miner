@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -152,7 +152,7 @@ If ($Algorithms) {
                                             Name        = $MinerName
                                             Path        = $Path
                                             Port        = $MinerAPIPort
-                                            Type        = $_.Type
+                                            Type        = $Type
                                             URI         = $URI
                                             WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                             Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))

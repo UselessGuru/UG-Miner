@@ -2,7 +2,20 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
-Changelog UG-Miner 6.4.6 2025/01/??
+Changelog UG-Miner 6.4.7 2025/02/01
+===================================
+
+Changes:
+- Changed the names of configurations items to better reflect their purpose:
+    ShowPoolColumnBalances - > ShowPoolBalances
+
+
+
+Fixes:
+- Core: Do not donate multiple times per day
+
+
+Changelog UG-Miner 6.4.6 2025/01/29
 ===================================
 
 Changes:

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
@@ -206,10 +206,11 @@ If ($Algorithms) {
                             If (-not $Variables.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
 
                             $MinerPath = If ("Ghostrider", "Flex",  "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
+                            $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Config.WorkerName }
 
                             [PSCustomObject]@{ 
                                 API         = "XmRig"
-                                Arguments   = "$Arguments$(If ($Pool.Name -eq "NiceHash") { " --nicehash" })$(If ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where({ $null -ne $_ })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$($Config.WorkerName) --api-id=$($MinerName) --retries=90 --retry-pause=1"
+                                Arguments   = "$Arguments$(If ($Pool.Name -eq "NiceHash") { " --nicehash" })$(If ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where({ $null -ne $_ })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --retries=90 --retry-pause=1"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @($Fee) # Dev fee
                                 MinerSet    = $_.MinerSet
@@ -217,7 +218,7 @@ If ($Algorithms) {
                                 Name        = $MinerName
                                 Path        = $MinerPath
                                 Port        = $MinerAPIPort
-                                Type        = $_.Type
+                                Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })

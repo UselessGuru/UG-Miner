@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 Function Start-APIServer { 
@@ -225,7 +225,7 @@ Function Start-APIServer {
                                     $Variables.BalancesData | ConvertTo-Json | Out-File ".\Data\BalancesTrackerData.json"
                                     $RemovedEntriesCount = $BalanceDataEntries.Count - $Variables.BalancesData.Count
                                     If ($RemovedEntriesCount -gt 0) { 
-                                        $Message = "$RemovedEntriesCount $(If ($RemovedEntriesCount -eq 1) { "balance data entry" } Else { "balance data entries" }) removed."
+                                        $Message = "$RemovedEntriesCount balance data $(If ($RemovedEntriesCount -eq 1) { "entry" } Else { "entries" }) removed."
                                         Write-Message -Level Verbose "Web GUI: $Message"
                                         $Data = $Message
                                     }
@@ -242,24 +242,22 @@ Function Start-APIServer {
                                         Try { 
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @((@($Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
-                                            Write-Config -ConfigFile $Variables.ConfigFile -Config $Config
+                                            [Void](Write-Config -ConfigFile $Variables.ConfigFile -Config $Config)
                                             $Data = "Device configuration changed`n`nOld values:"
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
                                             $Data += "`nExcludeDeviceName: '[$($Config."ExcludeDeviceName" -join ", ")]'"
                                             $Data += "`n`nConfiguration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
-                                            ForEach ($DeviceName in $Values) { 
-                                                $Variables.Devices.Where({ $_.Name -eq $DeviceName }).ForEach(
-                                                    { 
-                                                        $_.State = [DeviceState]::Disabled
-                                                        If ("Benchmarking", "Running", "WarmingUp" -contains $_.SubStatus) { $_.StatusInfo = "$($_.StatusInfo); will get disabled at end of cycle" }
-                                                        Else { 
-                                                            $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')"
-                                                            $_.Status = "Idle"
-                                                        }
+                                            $Variables.Devices.Where({ $Values -contains $_.Name }).ForEach(
+                                                { 
+                                                    $_.State = [DeviceState]::Disabled
+                                                    If ("Benchmarking", "Running", "WarmingUp" -contains $_.SubStatus) { $_.StatusInfo = "$($_.StatusInfo); will get disabled at end of cycle" }
+                                                    Else { 
+                                                        $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')"
+                                                        $_.Status = "Idle"
                                                     }
-                                                )
-                                            }
+                                                }
+                                            )
                                             Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' disabled. Configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' updated."
                                         }
                                         Catch { 
@@ -270,7 +268,7 @@ Function Start-APIServer {
                                         $Data = "No configuration change."
                                     }
                                 }
-                                Remove-Variable DeviceName, ExcludeDeviceName, Key, Values -ErrorAction Ignore
+                                Remove-Variable DeviceName, Key, Values -ErrorAction Ignore
                                 Break
                             }
                             "/functions/config/device/enable" { 
@@ -279,7 +277,7 @@ Function Start-APIServer {
                                         Try { 
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @($Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
-                                            Write-Config -ConfigFile $Variables.ConfigFile -Config $Config
+                                            [Void](Write-Config -ConfigFile $Variables.ConfigFile -Config $Config)
                                             $Variables.ConfigurationHasChangedDuringUpdate = $false
                                             $Data = "Device configuration changed`n`nOld values:"
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
@@ -289,7 +287,7 @@ Function Start-APIServer {
                                             $Variables.Devices.Where({ $Values -contains $_.Name }).ForEach(
                                                 { 
                                                     $_.State = [DeviceState]::Enabled
-                                                    If ($_.StatusInfo -like "* {*@*}; will get disabled at end of cycle") { $_.StatusInfo = $_.StatusInfo -replace "; will get enabled at end of cycle" }
+                                                    If ($_.StatusInfo -like "* {*@*}; will get enabled at end of cycle") { $_.StatusInfo = $_.StatusInfo -replace "; will get enabled at end of cycle" }
                                                     Else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
                                                 }
                                             )
@@ -309,7 +307,7 @@ Function Start-APIServer {
                             "/functions/config/set" { 
                                 Try { 
                                     $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
-                                    Write-Config -ConfigFile $Variables.ConfigFile -Config $TempConfig
+                                    [Void](Write-Config -ConfigFile $Variables.ConfigFile -Config $TempConfig)
                                     Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
                                     $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
 
@@ -426,7 +424,7 @@ Function Start-APIServer {
                                             { 
                                                 $Data += $_.Name
                                                 ForEach ($Worker in $_.Workers) { 
-                                                    Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
+                                                    [Void](Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                                     $Worker.Disabled = $false
                                                 }
                                                 $_.Disabled = $true
@@ -454,7 +452,7 @@ Function Start-APIServer {
                                             { 
                                                 $Data += $_.Name
                                                 ForEach ($Worker in $_.Workers) { 
-                                                    Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
+                                                    [Void](Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                                 }
                                                 $_.Disabled = $false
                                                 $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
@@ -498,7 +496,7 @@ Function Start-APIServer {
                                             { 
                                                 $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
                                                 $Data += $StatName
-                                                Remove-Stat -Name "$($StatName)_Profit"
+                                                [Void](Remove-Stat -Name "$($StatName)_Profit")
                                                 $_.Available = $true
                                                 $_.Disabled = $false
                                                 $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
@@ -529,7 +527,7 @@ Function Start-APIServer {
                                                 $_.Earning_Accuracy = [Double]::NaN
                                                 $Data += $_.Name
                                                 ForEach ($Worker in $_.Workers) { 
-                                                    Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
+                                                    [Void](Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                                     $Worker.Hashrate = [Double]::NaN
                                                     $Worker.Disabled = $false
                                                     $Worker.Earning = [Double]::NaN
@@ -541,7 +539,7 @@ Function Start-APIServer {
                                                 }
 
                                                 # Clear power consumption
-                                                Remove-Stat -Name "$($_.Name)_PowerConsumption"
+                                                [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
                                                 $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
 
                                                 # Remove watchdog
@@ -577,7 +575,7 @@ Function Start-APIServer {
                                                 }
                                                 $_.PowerConsumption = [Double]::NaN
                                                 $Data += $_.Name
-                                                Remove-Stat -Name "$($_.Name)_PowerConsumption"
+                                                [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
                                                 $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
                                                 If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                                             }
@@ -597,7 +595,7 @@ Function Start-APIServer {
                                     $Data = @()
                                     ($TempStats | Sort-Object -Property Name).ForEach(
                                         { 
-                                            Remove-Stat -Name $_.Name
+                                            [Void](Remove-Stat -Name $_.Name)
                                             $Data += $_.Name -replace "(_Hashrate|_PowerConsumption)$"
                                         }
                                     )
@@ -626,7 +624,7 @@ Function Start-APIServer {
                                                     $StatName = "$($_.Name)_$($Algorithm)_$($Parameters.Type)"
                                                     If ($Parameters.Value -eq 0) { 
                                                         # Miner failed
-                                                        Remove-Stat -Name $StatName
+                                                        [Void](Remove-Stat -Name $StatName)
                                                         Set-Stat -Name $StatName -Value $Parameters.Value -FaultDetection $false | Out-Null
                                                         $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
                                                         $_.Available = $false
@@ -1141,8 +1139,9 @@ Function Start-APIServer {
             # Wait for API to get ready
             $RetryCount = 3
             While (-not ($Variables.APIVersion) -and $RetryCount -gt 0) { 
+                Start-Sleep -Seconds 1
                 Try { 
-                    If ($Variables.APIVersion = (Invoke-RestMethod "http://localhost:$($Variables.APIRunspace.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
+                    If ($Variables.APIVersion = (Invoke-RestMethod "http://localhost:$($Variables.APIRunspace.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop )) { 
                         Write-Message -Level Info "Web GUI and API (version $($Variables.APIVersion)) running on http://localhost:$($Variables.APIRunspace.APIport)."
                         # Start Web GUI (show configuration edit if no existing config)
                         If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIRunspace.APIport)$(If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
@@ -1151,7 +1150,6 @@ Function Start-APIServer {
                 }
                 Catch { }
                 $RetryCount--
-                Start-Sleep -Seconds 1
             }
             If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API & Web GUI on port $($Config.APIport)." }
         }

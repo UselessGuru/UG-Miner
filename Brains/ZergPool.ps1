@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 using module ..\Includes\Include.psm1
@@ -48,18 +48,21 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     Try { 
 
         Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
-
         Do { 
             Try { 
-                $AlgoData = Invoke-RestMethod -Uri "https://zergpool.com/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-
+                If (-not $AlgoData) { 
+                    $AlgoData = Invoke-RestMethod -Uri "https://zergpool.com/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                }
+                If (-not $CurrenciesData) { 
+                    $CurrenciesData = Invoke-RestMethod -Uri "https://zergpool.com/api/currencies" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                }
                 $APICallFails = 0
             }
             Catch { 
                 If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
                 Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
             }
-        } While (-not $AlgoData -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
+        } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
         $Timestamp = [DateTime]::Now.ToUniversalTime()
 
@@ -82,20 +85,24 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
             # Change numeric string to numbers, some values are null
             $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+            $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+
+            # Add currency and coin name to database
+            $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.name -and $CurrenciesData.$_.symbol}).ForEach(
+                { 
+                    Try { 
+                        # Add coin name
+                        [Void](Add-CoinName -Algorithm $CurrenciesData.$_.algo -Currency $CurrenciesData.$_.symbol -CoinName $CurrenciesData.$_.name)
+                    }
+                    Catch { }
+                }
+            )
 
             ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
                 $AlgorithmNorm = Get-Algorithm $AlgoData.$Algo.algo
                 $Currency = [String]$AlgoData.$Algo.Currency
                 If ($AlgoData.$Algo.actual_last24h_shared) { $AlgoData.$Algo.actual_last24h_shared /= 1000 }
                 $BasePrice = If ($AlgoData.$Algo.actual_last24h_shared) { $AlgoData.$Algo.actual_last24h_shared } Else { $AlgoData.$Algo.estimate_last24h }
-
-                # Add currency and coin name to database
-                If ($AlgoData.$Algo.CoinName) { 
-                    Try { 
-                        [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $AlgoData.$Algo.CoinName)
-                    }
-                    Catch { }
-                }
 
                 # Keep DAG data up to date
                 If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG -and $AlgoData.$Algo.height -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
@@ -155,7 +162,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 If ($Stat = Get-Stat -Name $StatName) { 
                     $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algo.mbtc_mh_factor
                     If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algo.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algo.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
-                        Remove-Stat -Name $StatName
+                        [Void](Remove-Stat -Name $StatName)
                         $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algo })
                         $PlusPrice = $LastPrice
                         Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit') (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algo.estimate_current / $Divisor))"

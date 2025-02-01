@@ -369,7 +369,14 @@
                 <option value='light' title="Information about miners run in the past, failed miners & watchdog timers will not be shown">light</option>
               </select>
             </div>
-            <div style="padding-top: 0.5rem" title="Show the 'Accuracy' column in the console window&#10;&#10;Can be toggled by pressing 'a' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem" title="Show the pool balances in the console window&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;Can be toggled by pressing '1' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowPoolBalances" name="ShowPoolBalances" > Show pool balances
+            </div>
+            <div style="padding-top: 0.5rem" title="When disabled only the best 5 miners per device are shown&#10;except while not benchmarking or measuring power consumption&#10;&#10;Can be toggled by pressing '2' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowAllMiners" name="ShowAllMiners"> Show all optimal miners
+            </div>
+
+            <div style="padding-top: 0.8rem" title="Show the 'Accuracy' column in the console window&#10;&#10;Can be toggled by pressing 'a' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowAccuracyColumn" name="ShowAccuracyColumn"> Show 'Accuracy' column
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'Coin name' column in the console window&#10;&#10;Can be toggled by pressing 'n' in the console window while waiting for the next cycle">
@@ -410,14 +417,6 @@
             </div>
             <div style="padding-top: 0.5rem" title="Show the 'User' column in the console window&#10;&#10;Can be toggled by pressing 'u' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowUserColumn" name="ShowUserColumn"> Show 'User' column
-            </div>
-            <br>
-
-            <div title="Show the pool balances in the console window&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;Can be toggled by pressing '1' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowPoolColumnBalances" name="ShowPoolColumnBalances" > Show pool balances
-            </div>
-            <div style="padding-top: 0.5rem" title="When disabled only the best 5 miners per device are shown&#10;except while not benchmarking or measuring power consumption&#10;&#10;Can be toggled by pressing '2' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowAllMiners" name="ShowAllMiners"> Show all optimal miners
             </div>
             <br>
 
@@ -905,7 +904,7 @@
       document.getElementById('BalancesShowInAllCurrencies').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesKeepAlive').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesTrackerLog').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
-      document.getElementById('ShowPoolColumnBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
+      document.getElementById('ShowPoolBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
     });
     if (config.BalancesShowSums) document.getElementById('BalancesShowSums').checked = true;
     if (config.BalancesShowAverages) document.getElementById('BalancesShowAverages').checked = true;
@@ -918,6 +917,8 @@
     // Console display settings
     $(document.getElementById('ShowConsole')).change(function (event) {
       document.getElementById('UIStyle').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowPoolBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
+      document.getElementById('ShowAllMiners').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowAccuracyColumn').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowCoinNameColumn').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowCurrencyColumn').disabled = !(document.getElementById('ShowConsole').checked);
@@ -932,8 +933,6 @@
       document.getElementById('ShowPoolColumn').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowPoolFeeColumn').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowUserColumn').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowPoolColumnBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
-      document.getElementById('ShowAllMiners').disabled = !(document.getElementById('ShowConsole').checked);
       if (!(document.getElementById('ShowConsole').checked)) {
         document.getElementById('LegacyGUI').checked = true;
         $(document.getElementById('LegacyGUI')).trigger('change');
@@ -943,6 +942,8 @@
 
     if (config.UIStyle.trim().toLowerCase() == 'full') document.getElementById('UIStyle').value = 'full';
     else document.getElementById('UIStyle').value = 'light';
+    if (config.ShowPoolBalances) document.getElementById('ShowPoolBalances').checked = true;
+    if (config.ShowAllMiners) document.getElementById('ShowAllMiners').checked = true;
     if (config.ShowAccuracyColumn) document.getElementById('ShowAccuracyColumn').checked = true;
     if (config.ShowCoinNameColumn) document.getElementById('ShowCoinNameColumn').checked = true;
     if (config.ShowCurrencyColumn) document.getElementById('ShowCurrencyColumn').checked = true;
@@ -957,8 +958,6 @@
     if (config.ShowPowerConsumptionColumn) document.getElementById('ShowPowerConsumptionColumn').checked = true;
     if (config.ShowPowerCostColumn) document.getElementById('ShowPowerCostColumn').checked = true;
     if (config.ShowUserColumn) document.getElementById('ShowUserColumn').checked = true;
-    if (config.ShowPoolColumnBalances) document.getElementById('ShowPoolColumnBalances').checked = true;
-    if (config.ShowAllMiners) document.getElementById('ShowAllMiners').checked = true;
 
     // CalculatePowerCost click
     $(document.getElementById('CalculatePowerCost')).click(function (event) {
@@ -1392,6 +1391,8 @@
 
         // Console display settings
         config.UIStyle = document.getElementById('UIStyle').value;
+        config.ShowPoolBalances = document.getElementById('ShowPoolBalances').checked;
+        config.ShowAllMiners = document.getElementById('ShowAllMiners').checked;
         config.ShowAccuracyColumn =  document.getElementById('ShowAccuracyColumn').checked;
         config.ShowCoinNameColumn =  document.getElementById('ShowCoinNameColumn').checked;
         config.ShowCurrencyColumn =  document.getElementById('ShowCurrencyColumn').checked;
@@ -1406,8 +1407,6 @@
         config.ShowPowerConsumptionColumn = document.getElementById('ShowPowerConsumptionColumn').checked;
         config.ShowPowerCostColumn = document.getElementById('ShowPowerCostColumn').checked;
         config.ShowUserColumn =  document.getElementById('ShowUserColumn').checked;
-        config.ShowPoolColumnBalances = document.getElementById('ShowPoolColumnBalances').checked;
-        config.ShowAllMiners = document.getElementById('ShowAllMiners').checked;
 
         // Log to file settings
         values = ["Info", "Warn", "Error", "Verbose", "Debug"];

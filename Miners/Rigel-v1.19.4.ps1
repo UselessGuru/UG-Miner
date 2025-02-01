@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 # Return 
@@ -132,9 +132,10 @@ If ($Algorithms) {
                                         }
                                         $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                         $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --username [$Index]$($Pool.User -replace "\.$($Config.Workername)$")"
+                                        $Arguments += " --username [$Index]$($Pool.User -replace "\..*")"
                                         $Arguments += " --password [$Index]$($Pool.Pass)"
-                                        $Arguments += " --worker [$Index]$($Config.WorkerName)"
+                                        $Arguments += " --worker [$Index]$(If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Config.WorkerName })"
+
                                         $Index ++
                                     }
                                     Remove-Variable Pool

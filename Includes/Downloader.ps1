@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 using module .\Includes\Include.psm1
@@ -45,7 +45,7 @@ $ProgressPreference = "SilentlyContinue"
                     Invoke-WebRequest $URI -OutFile $Path -ErrorAction Stop
                 }
                 Else { 
-                    Expand-WebRequest $URI $Path -ErrorAction Stop
+                    [Void](Expand-WebRequest $URI $Path -ErrorAction Stop)
                 }
                 Write-Message -Level Info "Downloader:<br>Installed downloaded miner binary '$($Path.Replace("$($Variables.MainPath)\", ''))'."
                 If (Get-Command "Unblock-File" -ErrorAction Ignore) { $Path | Unblock-File }

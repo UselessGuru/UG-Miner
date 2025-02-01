@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -307,7 +307,7 @@ If ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API              = "SRBMiner"
-                                        Arguments        = "$Arguments --api-rig-name $($Config.WorkerName) --api-enable --api-port $MinerAPIPort"
+                                        Arguments        = "$Arguments --api-rig-name $(If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Config.WorkerName }) --api-enable --api-port $MinerAPIPort"
                                         DeviceNames      = $AvailableMinerDevices.Name
                                         Fee              = $_.Fee # Dev fee
                                         MinerSet         = $_.MinerSet
@@ -317,7 +317,7 @@ If ($Algorithms) {
                                         Port             = $MinerAPIPort
                                         PrerequisitePath = $PrerequisitePath
                                         PrerequisiteURI  = $PrerequisiteURI
-                                        Type             = $_.Type
+                                        Type             = $Type
                                         URI              = $URI
                                         WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                         Workers          = @($Pools.ForEach({ @{ Pool = $_ } }))

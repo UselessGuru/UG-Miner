@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 using module ..\Includes\Include.psm1
@@ -133,7 +133,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 If ($Stat = Get-Stat -Name $StatName) { 
                     $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algo.mbtc_mh_factor
                     If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algo.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algo.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
-                        Remove-Stat -Name $StatName
+                        [Void](Remove-Stat -Name $StatName)
                         $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algo })
                         $PlusPrice = $LastPrice
                         Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit') (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algo.estimate_current / $Divisor))"

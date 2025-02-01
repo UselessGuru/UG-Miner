@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 using module .\Include.psm1
@@ -228,7 +228,7 @@ Try {
             If ($Variables.ConfigReadTimestamp -gt $Variables.Timer -or -not $Variables.Pools -or $Variables.PoolDataCollectedTimeStamp.AddSeconds($Config.Interval / 2) -lt $Variables.Timer) { 
 
                 # Check for new version
-                If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { Get-Version }
+                If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { [Void](Get-Version) }
 
                 # Load unprofitable algorithms
                 Try { 
@@ -245,7 +245,7 @@ Try {
                 If ($Config.Donation -gt 0) { 
                     If (-not $Variables.DonationStart) { 
                         # Re-Randomize donation start and data once per day, do not donate if remaing time for today is less than donation duration
-                        If (($Variables.DonationLog.Start | Sort-Object -Bottom 1).Date -ne [DateTime]::Today) { 
+                        If (($Variables.DonationLog.Start | Select-Object -Last 1) -ne [DateTime]::Today) { 
                             If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                                 $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                             }
@@ -683,7 +683,7 @@ Try {
                                     Write-Message -Level Warn "Reported hashrate by '$($Miner.Info)' is unreal ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
                                     $Miner.SetStatus([MinerStatus]::Idle)
                                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { Remove-Stat $StatName }
+                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { [Void](Remove-Stat $StatName) }
                                 }
                             }
                         }
@@ -703,7 +703,7 @@ Try {
                                     Write-Message -Level Warn "Reported power consumption by '$($Miner.Info)' is unreal ($($PowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
                                     $Miner.SetStatus([MinerStatus]::Idle)
                                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { Remove-Stat $StatName }
+                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { [Void](Remove-Stat $StatName) }
                                 }
                             }
                         }
@@ -1483,7 +1483,7 @@ Try {
         Get-Job -State "Stopped" | Receive-Job | Out-Null
         Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
 
-        $Error.Clear()
+        # $Error.Clear()
         [System.GC]::Collect()
 
         # Core suspended with <Ctrl><Alt>P in MainLoop

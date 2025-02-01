@@ -777,7 +777,7 @@ Function Close-CoreRunspace {
 
     If ($Global:CoreRunspace) { 
 
-        Stop-Core
+        [void](Stop-Core)
         
         $Variables.Pools.ForEach({ $_.Dispose() })
         $Variables.Pools = [Pool[]]@()
@@ -821,7 +821,7 @@ Function Close-CoreRunspace {
 Function Start-Core { 
 
     Try { 
-        Open-CoreRunspace
+        [Void](Open-CoreRunspace)
 
         If ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
             $Global:CoreRunspace | Add-Member Job ($Global:CoreRunspace.PowerShell.BeginInvoke()) -Force
@@ -972,7 +972,7 @@ Function Close-BalancesTrackerRunspace {
 
     If ($Global:BalancesTrackerRunspace) { 
 
-        Stop-BalancesTracker
+        [Void](Stop-BalancesTracker)
 
         $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("Job")
 
@@ -989,7 +989,7 @@ Function Close-BalancesTrackerRunspace {
 
 Function Start-BalancesTracker { 
 
-    Open-BalancesTrackerRunspace
+    [Void](Open-BalancesTrackerRunspace)
 
     If ($Global:BalancesTrackerRunspace) { 
         Try { 
@@ -1278,6 +1278,8 @@ Function Read-MonitoringData {
             Write-Message -Level Warn "Monitoring: Unable to retrieve worker data from '$($Config.MonitoringServer)' [ID $($Config.MonitoringUser)]."
         }
     }
+
+    Return $null
 }
 
 Function Get-TimeSince { 
@@ -1327,6 +1329,7 @@ Function Merge-Hashtable {
             }
         }
     )
+
     Return $HT1
 }
 
@@ -1363,6 +1366,7 @@ Function Get-RandomDonationPoolsConfig {
             }
         }
     )
+
     Return $DonationRandomPoolsConfig
 }
 
@@ -1541,8 +1545,11 @@ Function Read-Config {
     # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
     $ConfigFromFile.psBase.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
 
-    $Variables.ShowAccuracyColumn = $Config.ShowAccuracyColumn
     $Variables.ShowAllMiners = $Config.ShowAllMiners
+    $Variables.ShowPoolBalances = $Config.ShowPoolBalances
+    $Variables.UIStyle = $Config.UIStyle
+
+    $Variables.ShowAccuracyColumn = $Config.ShowAccuracyColumn
     $Variables.ShowCoinNameColumn = $Config.ShowCoinNameColumn
     $Variables.ShowCurrencyColumn = $Config.ShowCurrencyColumn
     $Variables.ShowEarningColumn = $Config.ShowEarningColumn
@@ -1550,14 +1557,12 @@ Function Read-Config {
     $Variables.ShowHashrateColumn = $Config.ShowHashrateColumn
     $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
     $Variables.ShowPoolColumn = $Config.ShowPoolColumn
-    $Variables.ShowPoolColumnBalances = $Config.ShowPoolColumnBalances
     $Variables.ShowPoolFeeColumn = $Config.ShowPoolFeeColumn
-    $Variables.ShowProfitColumn = $Config.ShowProfitColumn
     $Variables.ShowProfitBiasColumn = $Config.ShowProfitBiasColumn
+    $Variables.ShowProfitColumn = $Config.ShowProfitColumn
     $Variables.ShowPowerConsumptionColumn = $Config.ShowPowerConsumptionColumn
     $Variables.ShowPowerCostColumn = $Config.ShowPowerCostColumn
     $Variables.ShowUserColumn = $Config.ShowUserColumn
-    $Variables.UIStyle = $Config.UIStyle
 
     $Variables.ConfigReadTimestamp = [DateTime]::Now.ToUniversalTime()
 }
@@ -1581,6 +1586,12 @@ Function Update-ConfigFile {
         }
     }
     $Config.Remove("NiceHashWalletIsInternal")
+
+    # WorkerName must not contain '.'
+    If ($Config.WorkerName -match  "\.") { 
+        $Config.WorkerName = $Config.WorkerName -replace "\."
+        $Variables.ConfigurationHasChangedDuringUpdate.Add("- WorkerName adjusted (no '.' allowed)")
+    }
 
     # MiningPoolHub is no longer available
     If ([System.Version]::Parse($Config.ConfigFileVersion) -lt [System.Version]"6.3.0.0" -and $Config.PoolName -contains "MiningPoolHub") { 
@@ -1633,6 +1644,7 @@ Function Update-ConfigFile {
                 "ShowProfitBias" { $Config.ShowProfitBiasColumn = $Config.$_; $Config.Remove($_) }
                 "ShowPowerConsumption" { $Config.ShowPowerConsumptionColumn = $Config.$_; $Config.Remove($_) }
                 "ShowPowerCost" { $Config.ShowPowerCostColumn = $Config.$_; $Config.Remove($_) }
+                "ShowPoolColumnBalances" { $Config.ShowPoolBalances = $Config.$_; $Config.Remove($_) }
                 "ShowUser" { $Config.ShowUserColumn = $Config.$_; $Config.Remove($_) }
                 Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
             }
@@ -1640,7 +1652,7 @@ Function Update-ConfigFile {
     )
 
     $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
-    Write-Config -ConfigFile $ConfigFile -Config $Config
+    [Void](Write-Config -ConfigFile $ConfigFile -Config $Config)
     Write-Message -Level Verbose "Updated configuration file '$($ConfigFile)' to version $($Variables.Branding.Version.ToString())."
 }
 
@@ -1679,7 +1691,7 @@ Function Write-Config {
     $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
     $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
     $Variables.ShowPoolColumn = $Config.ShowPoolColumn
-    $Variables.ShowPoolColumnBalances = $Config.ShowPoolColumnBalances
+    $Variables.ShowPoolBalances = $Config.ShowPoolBalances
     $Variables.ShowPoolFeeColumn = $Config.ShowPoolFeeColumn
     $Variables.ShowPowerCostColumn = $Config.ShowPowerCostColumn
     $Variables.ShowProfitColumn = $Config.ShowProfitColumn
@@ -1729,9 +1741,8 @@ Function Edit-File {
         Write-Message -Level Verbose "Saved '$FileName'. Changes will become active in the next cycle."
         Return "Saved '$FileName'.`nChanges will become active in the next cycle."
     }
-    Else { 
-        Return "No changes to '$FileName' made."
-    }
+
+    Return "No changes to '$FileName' made."
 }
 
 Function Get-SortedObject { 
@@ -1899,7 +1910,7 @@ Function Set-Stat {
                     }
                 }
 
-                Remove-Stat -Name $Name
+                [Void](Remove-Stat -Name $Name)
                 $Stat = Set-Stat -Name $Name -Value $Value
             }
             Else { 
@@ -2021,7 +2032,7 @@ Function Get-Stat {
                 }
                 Catch { 
                     Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
-                    Remove-Stat $Name
+                    [Void](Remove-Stat $Name)
                 }
             }
 
@@ -2831,7 +2842,7 @@ Function Add-CoinName {
         [String]$CoinName
     )
 
-    If (-not ($Variables.CoinNames[$Currency] -and $Variables.CurrencyAlgorithm[$Currency])) { 
+    If ($Algorithm -and -not (($Variables.CoinNames[$Currency] -and $Variables.CurrencyAlgorithm[$Currency]))) { 
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
@@ -2846,7 +2857,7 @@ Function Add-CoinName {
             }
         }
         If (-not $Variables.CoinNames[$Currency]) { 
-            If ($CoinName = ((Get-Culture).TextInfo.ToTitleCase($CoinName.Trim().ToLower()) -replace "[^A-Z0-9\$\.]" -replace "coin$", "Coin" -replace "bitcoin$", "Bitcoin")) { 
+            If ($CoinName = ($CoinName.Trim() -replace "[^A-Z0-9\$\.]" -replace "coin$", "Coin" -replace "bitcoin$", "Bitcoin")) { 
                 $Variables.CoinNames[$Currency] = $CoinName
                 # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the  file and release mutex
                 If ($Mutex.WaitOne(1000)) { 
@@ -2883,8 +2894,6 @@ Function Get-AlgorithmFromCurrency {
 
         If ($Variables.CurrencyAlgorithm[$Currency]) { Return $Variables.CurrencyAlgorithm[$Currency] }
     }
-
-    Return $null
 }
 
 Function Get-CurrencyFromAlgorithm { 
@@ -2899,8 +2908,6 @@ Function Get-CurrencyFromAlgorithm {
             Return $Currencies
         }
     }
-
-    Return $null
 }
 
 Function Get-EquihashCoinPers { 
@@ -2950,7 +2957,7 @@ Function Get-Version {
             If ($UpdateVersion.AutoUpdate) { 
                 If ($Config.AutoUpdate) { 
                     Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Starting update..."
-                    Initialize-Autoupdate -UpdateVersion $UpdateVersion
+                    [Void](Initialize-Autoupdate -UpdateVersion $UpdateVersion)
                 }
                 Else { 
                     Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
@@ -3123,7 +3130,7 @@ Function Get-AllDAGdata {
                     { 
                         $AlgorithmNorm = Get-Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm
                         $Currency = $CurrencyDAGdataResponse.coins.$_.tag
-                        If (-not $Variables.CoinNames[$Currency]) { [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $_) }
+                        [Void](Add-CoinName -Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm -Currency $Currency -CoinName $_)
                         If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG) { 
                             If ($CurrencyDAGdataResponse.coins.$_.last_block -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
@@ -3452,7 +3459,8 @@ Function Get-DAGdata {
             Epoch       = [UInt16]$Epoch
         }
     }
-    Return $null
+
+    Return [PSCustomObject]@{ }
 }
 
 Function Get-DAGsize { 

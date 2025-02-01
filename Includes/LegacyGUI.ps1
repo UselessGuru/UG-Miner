@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.6
-Version date:   2025/01/29
+Version:        6.4.7
+Version date:   2025/02/01
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -184,7 +184,7 @@ Function Update-TabControl {
     Switch ($LegacyGUItabControl.SelectedTab.Text) { 
         "System status" { 
             $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIminersDGV.ClearSelection()
             $LegacyGUIpoolsDGV.ClearSelection()
             # $LegacyGUIworkersDGV.ClearSelection()
 
@@ -266,7 +266,7 @@ Function Update-TabControl {
         "Earnings and balances" { 
             $LegacyGUIactiveMinersDGV.ClearSelection()
             $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIminersDGV.ClearSelection()
             $LegacyGUIpoolsDGV.ClearSelection()
             # $LegacyGUIworkersDGV.ClearSelection()
 
@@ -375,9 +375,9 @@ Function Update-TabControl {
                             @{ Name = "$($Config.FIATcurrency) in past 24 hrs"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth24 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
                             @{ Name = "$($Config.FIATcurrency) in past 7 days"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth168 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
                             @{ Name = "$($Config.FIATcurrency) in past 30 days"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.Growth720 * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "Avg. $($Config.FIATcurrency) / 1 hr"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgHourlyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "Avg. $($Config.FIATcurrency) / 24 hrs"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
-                            @{ Name = "Avg. $($Config.FIATcurrency) / 7 days"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "Avg. $($Config.FIATcurrency)/1 hr"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgHourlyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "Avg. $($Config.FIATcurrency)/24 hrs"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
+                            @{ Name = "Avg. $($Config.FIATcurrency)/7 days"; Expression = { "{0:n$($Config.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Variables.Rates.($_.Currency).($Config.FIATcurrency)) } },
                             @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
                             @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Variables.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String]($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } } # Cast to string to avoid extra decimal places
                         ) | Out-DataTable
@@ -516,7 +516,7 @@ Function Update-TabControl {
         "Pools" { 
             $LegacyGUIactiveMinersDGV.ClearSelection()
             $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIminersDGV.ClearSelection()
             # $LegacyGUIworkersDGV.ClearSelection()
 
             $LegacyGUIcontextMenuStripItem1.Visible = $false
@@ -602,7 +602,7 @@ Function Update-TabControl {
         # "Rig monitor" { 
         #     $LegacyGUIactiveMinersDGV.ClearSelection()
         #     $LegacyGUIbalancesDGV.ClearSelection()
-        #     $LegacyGUIminersDGV.BeginInit()
+        #     $LegacyGUIminersDGV.ClearSelection()
         #     $LegacyGUIpoolsDGV.ClearSelection()
         # 
         #     $LegacyGUIworkersDGV.Visible = $Config.ShowWorkerStatus
@@ -667,7 +667,7 @@ Function Update-TabControl {
         "Switching Log" { 
             $LegacyGUIactiveMinersDGV.ClearSelection()
             $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIminersDGV.ClearSelection()
             $LegacyGUIpoolsDGV.ClearSelection()
             # $LegacyGUIworkersDGV.ClearSelection()
 
@@ -677,7 +677,7 @@ Function Update-TabControl {
         "Watchdog timers" { 
             $LegacyGUIactiveMinersDGV.ClearSelection()
             $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.BeginInit()
+            $LegacyGUIminersDGV.ClearSelection()
             $LegacyGUIpoolsDGV.ClearSelection()
             # $LegacyGUIworkersDGV.ClearSelection()
 
@@ -992,12 +992,12 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $_.Restart = $true
                             $Data += $_.Name
                             ForEach ($Worker in $_.Workers) { 
-                                Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
+                                [Void](Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                 $Worker.Hashrate = [Double]::NaN
                             }
                             Remove-Variable Worker
                             # Also clear power consumption
-                            Remove-Stat -Name "$($_.Name)_PowerConsumption"
+                            [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
                             $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
                             If ($_.Status -eq [MinerStatus]::Idle) { 
                                 $_.SubStatus = "idle"
@@ -1037,7 +1037,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $_.PowerConsumption = [Double]::NaN
                             $StatName = $_.Name
                             $Data += "$StatName"
-                            Remove-Stat -Name "$($StatName)_PowerConsumption"
+                            [Void](Remove-Stat -Name "$($StatName)_PowerConsumption")
                             $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
                             If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                         }
@@ -1087,7 +1087,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         { 
                             $Data += $_.Name
                             ForEach ($Worker in $_.Workers) { 
-                                Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
+                                [Void](Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                 $Worker.Hashrate = [Double]::NaN
                             }
                             Remove-Variable Worker
@@ -1111,7 +1111,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         { 
                             $Data += $_.Name
                             ForEach ($Worker in $_.Workers) { 
-                                Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate"
+                                [Void](Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                 $Worker.Hashrate = [Double]::NaN
                             }
                             Remove-Variable Worker
@@ -1171,7 +1171,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                                 { 
                                     $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
                                     $Data += $StatName
-                                    Remove-Stat -Name "$($StatName)_Profit"
+                                    [Void](Remove-Stat -Name "$($StatName)_Profit")
                                     $_.Reasons = [System.Collections.Generic.List[String]]@()
                                     $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
                                     $_.Available = $true
@@ -1915,9 +1915,9 @@ $LegacyGUIform.Add_FormClosing(
             Write-Message -Level Info "Shutting down $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"
 
-            Close-CoreRunspace
-            Stop-Brain
-            Close-BalancesTrackerRunspace
+            [Void](Close-CoreRunspace)
+            [Void](Stop-Brain)
+            [Void](Close-BalancesTrackerRunspace)
 
             # Save window settings
             If ($LegacyGUIform.DesktopBounds.Width -ge 0) { $LegacyGUIform.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
