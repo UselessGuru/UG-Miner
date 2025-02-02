@@ -244,8 +244,9 @@ Try {
 
                 If ($Config.Donation -gt 0) { 
                     If (-not $Variables.DonationStart) { 
-                        # Re-Randomize donation start and data once per day, do not donate if remaing time for today is less than donation duration
-                        If (($Variables.DonationLog.Start | Select-Object -Last 1) -ne [DateTime]::Today) { 
+                        # Re-Randomize donation start and data once per day
+                        If ((Get-Item -Path "$PWD\Logs\DonationLog.csv" -ErrorAction Ignore).LastWriteTime -lt [DateTime]::Today) { 
+                            # Do not donate if remaing time for today is less than donation duration
                             If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                                 $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                             }
