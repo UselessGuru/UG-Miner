@@ -112,18 +112,20 @@ If '-' is used, then all algorithms except the disabled ones are used
 
 Do not combine '+' and '-' for the same algorithm.
 
+This parameter is case insensitive. 
+
 #### Examples:
-Algorithm list = '-ethash'  
+Algorithm list = '-Ethash'  
 Will mine anything but ethash
 
-Algorithm list = '-ethash,-kawpow'  
-Will mine anything but ethash and kawpow
+Algorithm list = '-Ethash(3GB),-Kawpow'  
+Will mine anything but Ethash (3GB DAG size only) or Kawpow (any DAG size)
 
-Algorithm list = +ethash  
-Will mine only ethash
+Algorithm list = +Ethash  
+Will mine only Ethash (any DAG size)
 
-Algorithm list = '+ethash,+kawpow'  
-Will mine only ethash and kawpow
+Algorithm list = '+Ethash,+Kawpow(4GB)'  
+Will mine only Ethash and Kawpow (only 4GB DAG size)
 
 Algorithm list blank  
 Will mine all available algorithms
@@ -137,6 +139,8 @@ If '+' is used, then only the explicitly enabled currencies are used
 If '-' is used, then all currencies except the disabled ones are used
 
 Do not combine '+' and '-' for the same currency.
+
+This parameter is case insensitive. 
 
 #### Examples:
 Currency list = '-EVR'  
