@@ -112,7 +112,7 @@ If '-' is used, then all algorithms except the disabled ones are used
 
 Do not combine '+' and '-' for the same algorithm.
 
-This parameter is case insensitive. 
+This parameter is not case sensitive. 
 
 #### Examples:
 Algorithm list = '-Ethash'  
@@ -140,7 +140,7 @@ If '-' is used, then all currencies except the disabled ones are used
 
 Do not combine '+' and '-' for the same currency.
 
-This parameter is case insensitive. 
+This parameter is not case sensitive. 
 
 #### Examples:
 Currency list = '-EVR'  
