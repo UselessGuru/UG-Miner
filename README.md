@@ -79,7 +79,7 @@ It is recommended to run UG-Miner with local computer administrator rights (UG-M
 UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin availablilty data.  
 You must select at least one pool.  
 If you select several pools, then your earnings might be split across differnt pools. UG-Miner will always direct the miners to the pools with the highest earnings.  
-It is recommended to keep the number of configured pools to a minimum as this will might your earnings and it could take longer to reach the pools payout thresholds.
+It is recommended to keep the number of configured pools to a minimum as this might dilute your earnings and it could take longer to reach the pools payout thresholds.
 
 #### Poolnames ending in *24h:
 
