@@ -70,7 +70,7 @@ UG-Miner code is partly based on
 
    <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username
 
-It is recommended to run UG-Miner with local computer administrator rights to ensure file permissions and firewall rules can be set without user intervention. 
+It is recommended to run UG-Miner with local computer administrator rights (UG-Miner_AsAdmin.bat) to ensure file permissions and firewall rules can be set without user intervention. 
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
 
