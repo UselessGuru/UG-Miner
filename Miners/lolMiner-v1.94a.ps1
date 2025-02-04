@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.7
-Version date:   2025/02/01
+Version:        6.4.8
+Version date:   2025/02/04
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
 
-$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.94/lolMiner_v1.94_Win64.zip"
+$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.94a/lolMiner_v1.94a_Win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\lolminer.exe"
 $DeviceEnumerator = "Bus"

@@ -242,22 +242,22 @@
                 else $('body').css('cursor', 'default');
               });
 
-              $('#btn-enable').click(function () {
+              $('#btn-remove-watchdog').click(function () {
                 $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
-                  $url = '/functions/stat/enable';
+                  $url = '/functions/watchdogtimers/remove';
                   $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                    'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
                   };
                   $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-enable').text());
+                    $('.modal-title').text($('#btn-remove-watchdog').text());
                     $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $table.bootstrapTable('refresh');
                 }
-                else $('body').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               });
             });
 

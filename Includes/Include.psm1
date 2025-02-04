@@ -3337,34 +3337,60 @@ Function Get-AllDAGdata {
         }
     }
 
-    # # Update on script start, once every 24hrs or if unable to get data from source
-    # $Currency = "PHI"
-    # $Url = "https://explorer.phicoin.net/api/getblockcount"
-    # If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-    #     # Get block data from EVR block explorer
-    #     Try { 
-    #         Write-Message -Level Info "Loading DAG data from '$Url'..."
-    #         $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-    #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-    #             $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
-    #             If ($CurrencyDAGdata.Epoch) { 
-    #                 $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-    #                 $CurrencyDAGdata | Add-Member Url $Url -Force
-    #                 $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-    #                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-    #             }
-    #             Else { 
-    #                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
-    #             }
-    #         }
-    #     }
-    #     Catch { 
-    #         Write-Message -Level Warn "Failed to load DAG data from '$Url'."
-    #     }
-    # }
+    # Update on script start, once every 24hrs or if unable to get data from source
+    $Currency = "PHI"
+    $Url = "https://explorer.phicoin.net/api/getblockcount"
+    If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        # Get block data from PHI block explorer
+        Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
+            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
+                If ($CurrencyDAGdata.Epoch -ge 0) { 
+                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                    $CurrencyDAGdata | Add-Member Url $Url -Force
+                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                    $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                }
+                Else { 
+                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                }
+            }
+        }
+        Catch { 
+            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+        }
+    }
 
-    # ZergPool (Coins) also supplies MEWC DAG data
-    If ($Variables.PoolName -match "ZergPoolCoins.*") { 
+    # Update on script start, once every 24hrs or if unable to get data from source
+    $Currency = "TLS"
+    $Url = "https://telestai.cryptoscope.io/api/getblockcount/?legacy=1"
+    If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        # Get block data from TLS block explorer
+        Try { 
+            Write-Message -Level Info "Loading DAG data from '$Url'..."
+            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
+                If ($CurrencyDAGdata.Epoch) { 
+                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                    $CurrencyDAGdata | Add-Member Url $Url -Force
+                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                    $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                }
+                Else { 
+                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                }
+            }
+        }
+        Catch { 
+            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+        }
+    }
+
+    # ZergPool also supplies MEWC DAG data
+    If ($Variables.PoolName -match "ZergPool.*") { 
         $Currency = "MEWC"
         $Url = "https://mewc.cryptoscope.io/api/getblockcount"
         If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3374,7 +3400,7 @@ Function Get-AllDAGdata {
                 $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
                 If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
-                    If ($CurrencyDAGdata.Epoch) { 
+                    If ($CurrencyDAGdata.Epoch -ge 0) { 
                         $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                         $CurrencyDAGdata | Add-Member Url $Url -Force
                         $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
@@ -3527,17 +3553,12 @@ Function Get-DAGsize {
             }
             Break
         }
-        # "PHI" { 
-        #     If ($Epoch -ge 110) { $Epoch *= 4 } # https://phicoin.net/docs/Phicoin/algorithm#improved-dag-growth-mechanism
-        #     $DatasetBytesInit = 1GB
-        #     $DatasetBytesGrowth = 8MB
-        #     $MixBytes = 128
-        #     $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
-        #     While (-not (Test-Prime ($Size / $MixBytes))) { 
-        #         $Size -= 2 * $MixBytes
-        #     }
-        #     Break
-        # }
+        "PHI" { 
+            # https://phicoin.net/docs/Phicoin/algorithm#improved-dag-growth-mechanism
+            $DatasetBytesInit = 4GB
+            $Size = $DatasetBytesInit * [Math]::Pow(1.25, $Epoch)
+            Break
+        }
         Default { 
             $DatasetBytesInit = 1GB
             $DatasetBytesGrowth = 8MB
@@ -3566,7 +3587,7 @@ Function Get-DAGepoch {
     Switch ($Algorithm) { 
         "Autolykos2" { $BlockHeight -= 416768 } # Epoch 0 starts @ 417792
         "FishHash"   { Return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
-        # "PhiHash"    { }
+        "PhiHash"    { Return [math]::Floor(((Get-Date) - [DateTime]::ParseExact("11/06/2023", "MM/dd/yyyy", $null)).TotalDays / 365.25) -1 }
         Default      { }
     }
 

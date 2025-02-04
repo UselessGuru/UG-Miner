@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.7
-Version date:   2025/02/01
+Version:        6.4.8
+Version date:   2025/02/04
 #>
 
 # Return 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.19.4/rigel-1.19.4-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.20.1/rigel-1.20.1-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -85,6 +85,7 @@ $Algorithms = @(
 #   @{ Algorithms = @("Octopus", "HeavyHashPyrinV2");            Fee = @(0.02, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+pyrinhashv2" } # Not supported yet
     @{ Algorithms = @("Octopus", "SHA512256d");                  Fee = @(0.02, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+sha512256d" }
     @{ Algorithms = @("PowBlocks", "");                          Fee = @(0.007);       MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm powblocks" }
+    @{ Algorithms = @("ProgPowQuai", "");                        Fee = @(0.01);        MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm quai" }
     @{ Algorithms = @("SHA512256d", "");                         Fee = @(0.01);        MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm sha512256d" }
     @{ Algorithms = @("XelisHash", "");                          Fee = @(0.02);        MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = @(); ExcludePools = @(@(), @()); Arguments = " --algorithm xelishash2" }
 )

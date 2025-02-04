@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.7
-Version date:   2025/02/01
+Version:        6.4.8
+Version date:   2025/02/04
 #>
 
 using module .\Include.psm1
@@ -95,9 +95,9 @@ Try {
         $Variables.PoolsConfig = $Config.PoolsConfig
 
         # Tuning parameters require local admin rights
-        $Variables.ApplyMinerTweaks = $Variables.IsLocalAdmin -and $Config.UseMinerTweaks
+        $Variables.ApplyMinerTweaks = $Config.UseMinerTweaks -and $Variables.IsLocalAdmin
 
-        # Must clear all existing miners & watchdog timers due to different miner names
+        # Miner naming scheme has changed. Must clear all existing miners & watchdog timers due to different miner names
         If ($Variables.Miners -and $Config.BenchmarkAllPoolAlgorithmCombinations -ne $Variables.BenchmarkAllPoolAlgorithmCombinations) { 
             Write-Message -Level Info "Miner naming scheme has changed. Stopping all running miners..."
             # Stop all running miners
@@ -197,9 +197,7 @@ Try {
                 }
                 Else { $Variables.CalculatePowerCost = $false }
             }
-            If (-not $Variables.CalculatePowerCost ) { 
-                $Variables.EnabledDevices.ForEach({ $_.ReadPowerConsumption = $false })
-            }
+            If (-not $Variables.CalculatePowerCost ) { $Variables.EnabledDevices.ForEach({ $_.ReadPowerConsumption = $false }) }
 
             # Power price
             If (-not $Config.PowerPricekWh.psBase.Keys) { $Config.PowerPricekWh."00:00" = 0 }
@@ -1484,7 +1482,7 @@ Try {
         Get-Job -State "Stopped" | Receive-Job | Out-Null
         Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
 
-        # $Error.Clear()
+        $Error.Clear()
         [System.GC]::Collect()
 
         # Core suspended with <Ctrl><Alt>P in MainLoop

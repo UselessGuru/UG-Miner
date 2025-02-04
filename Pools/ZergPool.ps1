@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.4.7
-Version date:   2025/02/01
+Version:        6.4.8
+Version date:   2025/02/04
 #>
 
 Param(

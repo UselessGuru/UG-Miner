@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.7
-Version date:   2025/02/01
+Version:        6.4.8
+Version date:   2025/02/04
 #>
 
 Function Start-APIServer { 
@@ -666,7 +666,7 @@ Function Start-APIServer {
                                 $Data = @()
                                 ForEach ($Miner in @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore)) { 
                                     # Update miner
-                                    $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $_.Reasons -like "Miner suspended by watchdog *" }).ForEach(
+                                    $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name }) }).ForEach(
                                         { 
                                             $Data += "$($_.Name)"
                                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
@@ -680,7 +680,7 @@ Function Start-APIServer {
 
                                 ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
                                     # Update pool
-                                    $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $_.Reasons -like "Pool suspended by watchdog *" }).ForEach(
+                                    $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }).ForEach(
                                         { 
                                             $Data += "$($_.Key) ($($_.Region))"
                                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)

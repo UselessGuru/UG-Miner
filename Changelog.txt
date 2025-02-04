@@ -2,14 +2,25 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.8 2025/02/04
+===================================
+
+Fixes:
+- Web GUI: 'Remove watchdog' for miners not working
+
+Miner updates:
+- lolMiner-v1.94a
+- Rigel-v1.20.0
+- SRBMinerMulti-v2.7.6
+- Wildrig-v0.42.2
+
+
 Changelog UG-Miner 6.4.7 2025/02/01
 ===================================
 
 Changes:
 - Changed the names of configurations items to better reflect their purpose:
-    ShowPoolColumnBalances - > ShowPoolBalances
-
-
+    ShowPoolColumnBalances -> ShowPoolBalances
 
 Fixes:
 - Core: Do not donate multiple times per day

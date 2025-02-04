@@ -256,6 +256,7 @@
   },
   "ZergPool": {
     "Algorithm": [
+      "-ScryptN2",
       "-Yescrypt",
       "-YescryptR32"
     ],

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.7
-Version date:   2025/02/01
+Version:        6.4.8
+Version date:   2025/02/04
 #>
 
 using module .\Include.psm1
@@ -80,7 +80,7 @@ Do {
             { 
                 $BalanceObjects += @(
                     & ".\Balances\$($_).ps1"
-                    Write-Message -Level Info "Balances tracker retrieved data for pool '$_'."
+                    # Write-Message -Level Info "Balances tracker retrieved data for pool '$_'."
                 )
             }
         )
@@ -406,6 +406,8 @@ Do {
 
     If ($Variables.BalancesData.Count -ge 1) { $Variables.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
     If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }
+
+    If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')." }
 
     # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
     While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
