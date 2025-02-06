@@ -75,9 +75,9 @@ It is recommended to run UG-Miner with local computer administrator rights (UG-M
 
 ### Pools
 
-UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin availablilty data.  
+UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin availability data.  
 You must select at least one pool.  
-If you select several pools, then your earnings might be split across differnt pools. UG-Miner will always direct the miners to the pools with the highest earnings.  
+If you select several pools, then your earnings might be split across different pools. UG-Miner will always direct the miners to the pools with the highest earnings.  
 It is recommended to keep the number of configured pools to a minimum as this might dilute your earnings and it could take longer to reach the pools payout thresholds.
 
 #### Poolnames ending in *24h:
@@ -171,7 +171,7 @@ BalancesTracker will still run in the background to keep the pool balances up to
 ### Web GUI
 
 UG-Miner can be controlled & configured through the Web GUI.  
-For most scenarios there is no need to edit configration files manually.  
+For most scenarios there is no need to edit configuration files manually.  
 Some settings can be configured per [advanced pool configuration](<https://github.com/UselessGuru/UG-Miner?tab=readme-ov-file#advanced-per-pool-configuration>).
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
@@ -287,7 +287,7 @@ UI style can be set to 'light' or 'full':
 - full  
   Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be shown
 
-UIStyle automatically switches to full during benchmarking or when measuring power cunsumption.
+UIStyle automatically switches to full during benchmarking or when measuring power consumption.
 
 ## Requirements
 
