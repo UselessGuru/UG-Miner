@@ -845,20 +845,18 @@ Function Stop-Core {
         $Global:CoreRunspace.PSObject.Properties.Remove("StartTime")
     }
 
-    If ($Variables.Miners) { 
-        ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status })) { 
-            ForEach ($Worker in $Miner.WorkersRunning) { 
-                If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
-                    # Remove Watchdog timers
-                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
-                }
+    ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status })) { 
+        ForEach ($Worker in $Miner.WorkersRunning) { 
+            If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
+                # Remove Watchdog timers
+                $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
             }
-            Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
-            $Miner.SetStatus([MinerStatus]::Idle)
         }
-
-        [System.GC]::Collect()
+        Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
+        $Miner.SetStatus([MinerStatus]::Idle)
     }
+
+    [System.GC]::Collect()
 }
 
 Function Start-Brain { 

@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           Core.ps1
 Version:        6.4.8
-Version date:   2025/02/04
+Version date:   2025/02/06
 #>
 
 using module .\Include.psm1
@@ -440,12 +440,12 @@ Try {
                         $Pools.Where({ $_.Price -eq 0 -and -not ($Variables.PoolsConfig[$_.Name].PoolAllow0Price -or $Config.PoolAllow0Price) }).ForEach({ $_.Reasons.Add("Price -eq 0") })
                         # No price data
                         $Pools.Where({ [Double]::IsNaN($_.Price) }).ForEach({ $_.Reasons.Add("Price information not available") })
-                        # Ignore pool if price is more than $Config.UnrealPoolPriceFactor higher than average of all pools with same algorithm & currency; NiceHash & MiningPoolHub are always right
+                        # Ignore pool if price is more than $Config.UnrealPoolPriceFactor higher than the medium price of all pools with same algorithm; NiceHash & MiningPoolHub are always right
                         If ($Config.UnrealPoolPriceFactor -gt 1 -and ($Pools.Name | Sort-Object -Unique).Count -gt 1) { 
-                            ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm, Currency).Where({ $_.Count -ge 2 }).ForEach(
+                            ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm).Where({ $_.Count -ge 2 }).ForEach(
                                 { 
-                                    If ($PriceThreshold = ($_.Group.Price_Bias | Measure-Object -Average).Average * $Config.UnrealPoolPriceFactor) { 
-                                        $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") -and $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than average price)") })
+                                    If ($PriceThreshold = (Get-Median $_.Group.Price_Bias) * $Config.UnrealPoolPriceFactor) { 
+                                        $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") -and $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than median price)") })
                                     }
                                 }
                             )
