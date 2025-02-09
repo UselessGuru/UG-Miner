@@ -2,15 +2,30 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
-Changelog UG-Miner 6.4.8 2025/02/04
+Changelog UG-Miner 6.4.9 2025/02/09
 ===================================
+
+Fixes:
+
+Temp. fix for incorrect price information for Neoscrypt in HashCryptos & MiningDutch pool API data
+Web GUI: Miner and Pool list not shown when price data was far too high (error in 'utilities.js/getDecimalsFromValue()')
+Miner updates:
+
+SRBMinerMulti-v2.7.7
+
+
+Changelog UG-Miner 6.4.8 2025/02/06
+===================================
+
+Changes:
+- Core: Use median (instead of average) price to detect unreal pool price
 
 Fixes:
 - Web GUI: 'Remove watchdog' for miners not working
 
 Miner updates:
 - lolMiner-v1.94a
-- Rigel-v1.20.0
+- Rigel-v1.20.1
 - SRBMinerMulti-v2.7.6
 - Wildrig-v0.42.2
 
