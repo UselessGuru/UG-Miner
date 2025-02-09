@@ -168,6 +168,7 @@ function getDecimalsFromValue(value) {
   var decimals;
   decimals = 1 + config.DecimalsMax - parseInt(value).toString().length
   if (decimals > config.DecimalsMax) decimals = 0;
+  if (decimals <= 0) decimals = 0;
   return decimals;
 };
 

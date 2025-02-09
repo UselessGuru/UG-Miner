@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.4.8
-Version date:   2025/02/06
+Version:        6.4.9
+Version date:   2025/02/09
 #>
 
 using module ..\Includes\Include.psm1
@@ -73,6 +73,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
             ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
                 $AlgorithmNorm = Get-Algorithm $Algo
+
+                # Temp fix, incorrect data in API
+                If ($AlgorithmNorm -eq "Neoscrypt" -and $AlgoData.$Algo.mbtc_mh_factor -eq 1) { $AlgoData.$Algo.mbtc_mh_factor = 1000 }
+
                 $BasePrice = If ($AlgoData.$Algo.actual_last24h) { $AlgoData.$Algo.actual_last24h } Else { $AlgoData.$Algo.estimate_last24h }
 
                 $AlgoData.$Algo | Add-Member Updated $Timestamp -Force
