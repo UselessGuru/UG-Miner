@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 # Return 
@@ -135,7 +135,7 @@ If ($Algorithms) {
                                         $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
                                         $Arguments += " --username [$Index]$($Pool.User -replace "\..*")"
                                         $Arguments += " --password [$Index]$($Pool.Pass)"
-                                        $Arguments += " --worker [$Index]$(If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Config.WorkerName })"
+                                        $Arguments += " --worker [$Index]$(If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } Else { $Config.WorkerName })"
 
                                         $Index ++
                                     }

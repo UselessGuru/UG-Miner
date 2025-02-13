@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
 Version:        6.3.13
-Version date:   2025/02/09
+Version date:   2025/02/13
 #>
 
 Param(
@@ -44,7 +44,8 @@ $APICallFails = 0
 
 Do { 
     Try { 
-        $Request = Invoke-RestMethod -Uri "https://miningpoolhub.com/index.php?page=api&action=getminingandprofitsstatistics" -Headers $Headers -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout -UserAgent $UserAgent 
+        $Request = Invoke-RestMethod -Uri "https://miningpoolhub.com/index.php?page=api&action=getminingandprofitsstatistics" -Headers $Headers -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout -UserAgent $UserAgent
+        If ($Request -like "<!DOCTYPE html>*") { $Request = $null }
     }
     Catch { 
         $APICallFails ++

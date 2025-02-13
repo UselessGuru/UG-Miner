@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.28"
+    $APIVersion = "0.5.4.30"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -680,9 +680,9 @@ Function Start-APIServer {
 
                                 ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
                                     # Update pool
-                                    $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }).ForEach(
+                                    $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }) }).ForEach(
                                         { 
-                                            $Data += "$($_.Key) ($($_.Region))"
+                                            $Data += "$($_.Key) [$($_.Region)]"
                                             $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
                                             If (-not $_.Reasons) { $_.Available = $true }
                                         }

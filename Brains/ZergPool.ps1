@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 using module ..\Includes\Include.psm1
@@ -52,9 +52,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             Try { 
                 If (-not $AlgoData) { 
                     $AlgoData = Invoke-RestMethod -Uri "https://zergpool.com/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                    If ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                 }
                 If (-not $CurrenciesData) { 
                     $CurrenciesData = Invoke-RestMethod -Uri "https://zergpool.com/api/currencies" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                    If ($CurrenciesData -like "<!DOCTYPE html>*") { $CurrenciesData = $null }
                 }
                 $APICallFails = 0
             }
@@ -66,7 +68,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-        If ($AlgoData.PSObject.Properties.Name) { 
+        If ($AlgoData.PSObject.Properties.Count -ge 1) { 
             $AlgoData.PSObject.Properties.Name.Where({ $AlgoData.$_.algo -eq "Token" -or $_ -like "*-*" }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })
             $AlgoData.PSObject.Properties.Name.Where({ $AlgoData.$_.algo }).ForEach(
                 { 
@@ -175,6 +177,9 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
                 ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
             }
+        }
+        Else {
+            $AlgoData = [PSCustomObject]@{ }
         }
 
         $Variables.BrainData.$BrainName = $AlgoData

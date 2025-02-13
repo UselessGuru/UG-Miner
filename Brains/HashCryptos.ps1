@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 using module ..\Includes\Include.psm1
@@ -55,6 +55,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Do { 
             Try { 
                 $AlgoData = Invoke-RestMethod -Uri "https://hashcryptos.com/api/status" -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                If ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                 $APICallFails = 0
             }
             Catch { 
@@ -141,6 +142,9 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
                 ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
             }
+        }
+        Else {
+            $AlgoData = [PSCustomObject]@{ }
         }
 
         $Variables.BrainData.$BrainName = $AlgoData

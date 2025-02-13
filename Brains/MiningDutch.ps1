@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 using module ..\Includes\Include.psm1
@@ -57,9 +57,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             Try { 
                 If (-not $AlgoData) { 
                     $AlgoData = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                    If ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                 }
                 If (-not $TotalStats) { 
                     $TotalStats = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                    If ($TotalStats -like "<!DOCTYPE html>*") { $AlgTotalStatsoData = $null }
                 }
                 $APICallFails = 0
             }
@@ -149,6 +151,9 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
                 ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
             }
+        }
+        Else {
+            $AlgoData = [PSCustomObject]@{ }
         }
 
         $Variables.BrainData.$BrainName = $AlgoData

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 Param(
@@ -45,9 +45,11 @@ Do {
     Try { 
         If (-not $Request) { 
             $Request = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+            If ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
         }
         If (-not $RequestAlgodetails) { 
             $RequestAlgodetails = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/mining/algorithms/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+            If ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
         }
     }
     Catch { 

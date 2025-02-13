@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 Param(
@@ -48,7 +48,7 @@ If ($PriceField) {
             $Request = $Variables.BrainData.$Name
         }
         Else { 
-            $Request = $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
+            $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
         }
     }
     Catch { Return }

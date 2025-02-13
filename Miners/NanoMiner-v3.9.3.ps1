@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
@@ -111,15 +111,13 @@ If ($Algorithms) {
                                     ForEach ($Pool in $Pools) { 
                                         $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)])"
                                         $Arguments += If ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { " -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } Else { " -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
-                                        $Arguments += " -wallet $($Pool.User -replace '\..+')"
-                                        $Arguments += " -rigName $($Pool.User)$(If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Pool.WorkerName })"
-                                        $Arguments += " -rigPassword $($Pool.Pass)"
+                                        $Arguments += " -wallet $($Pool.User)"
                                         If ($_.Type -ne "CPU") { $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
                                     }
                                     Remove-Variable Pool
 
                                     If ($_.Type -eq "CPU") { $Arguments += " -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Config.CPUMiningReserveCPUcore))" }
-                                    $Arguments += " -mport 0 -webPort $MinerAPIPort -checkForUpdates false -noLog true -watchdog false"
+                                    $Arguments += " -mport 0 -webPort $MinerAPIPort -rigName $($Config.PoolsConfig.($Pool0.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
 
                                     # Apply tuning parameters
                                     If ($Variables.ApplyMinerTweaks) { $Arguments += $_.Tuning }

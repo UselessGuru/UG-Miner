@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.9
-Version date:   2025/02/09
+Version:        6.4.10
+Version date:   2025/02/13
 #>
 
 using module .\Includes\Include.psm1
@@ -314,7 +314,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.9"
+    Version      = [System.Version]"6.4.10"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -505,9 +505,9 @@ $Variables.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 $Variables.SuspendCycle = $false
 $Variables.WatchdogTimers = [PSCustomObject[]]@()
 
-$Variables.RegexAlgoIsEthash = "^Autolykos2$|^Ethash$|^EtcHash$|^UbqHash$"
+$Variables.RegexAlgoIsEthash = "^Autolykos2$|^Ethash$|^EthashB3$|^EtcHash$|^UbqHash$"
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^PhiHash$|^ProgPow|^SCCpow$"
-$Variables.RegexAlgoHasDynamicDAG = "^Autolykos2$|^Ethash$|^EtcHash$|^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^Octopus$|^PhiHash$|^ProgPow|^SCCpow$|^UbqHash$"
+$Variables.RegexAlgoHasDynamicDAG = "^Autolykos2$|^Ethash$|^EtcHash$|^EthashB3$|^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^Octopus$|^PhiHash$|^ProgPow|^SCCpow$|^UbqHash$"
 $Variables.RegexAlgoHasStaticDAG = "^FishHash$|^HeavyHashKarlsenV2$"
 $Variables.RegexAlgoHasDAG = (($Variables.RegexAlgoHasDynamicDAG -split '\|') + ($Variables.RegexAlgoHasStaticDAG) | Sort-Object) -join '|'
 
