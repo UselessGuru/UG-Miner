@@ -7,7 +7,7 @@ Changelog UG-Miner 6.4.10 2025/02/13
 Fixes:
 - Brains & Pools: No more error when pool API is in maintenance ('No data for pool' message is still expected)
 - Core: Fix DAG size information for EthashB3
-- Web GUI: Clearing pool watchdog timers counting too many remove watchdog timers
+- Web GUI: Clearing pool watchdog timers counting too many removed watchdog timers
 
 Miner updates:
 - SRBMinerMulti-v2.7.8
