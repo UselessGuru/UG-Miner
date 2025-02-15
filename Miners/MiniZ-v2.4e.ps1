@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -82,8 +82,6 @@ If ($Algorithms) {
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
-                        # Apply tuning parameters
-                        If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                         $ExcludePools = $_.ExcludePools
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
@@ -98,6 +96,9 @@ If ($Algorithms) {
                                 $Arguments += " --pass=$($Pool.Pass)"
                                 If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments += " --worker=$($Pool.WorkerName)" }
                                 If ($_.AutoCoinPers) { $Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers) }
+
+                                # Apply tuning parameters
+                                If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API          = "MiniZ"

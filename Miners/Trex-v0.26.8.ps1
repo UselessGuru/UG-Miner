@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -53,7 +53,8 @@ $Algorithms = @(
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 $Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -eq $false -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -eq $false)) })
 
 If ($Algorithms) { 
@@ -66,9 +67,6 @@ If ($Algorithms) {
 
             $Algorithms.ForEach(
                 { 
-                    # Apply tuning parameters
-                    If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
-
                     # $ExcludePools = $_.ExcludePools
                     # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
                     ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
@@ -114,6 +112,9 @@ If ($Algorithms) {
                                 }
 
                                 If ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
+
+                                # Apply tuning parameters
+                                If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "Trex"

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -297,7 +297,12 @@ If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") {
 }
 
 @"
-UG-Miner
+ _   _  ____       __  __ _
+| | | |/ ___|     |  \/  (_)_ __   ___ _ __
+| | | | |  _ _____| |\/| | | '_ \ / _ \ '__|
+| |_| | |_| |_____| |  | | | | | |  __/ |
+ \___/ \____|     |_|  |_|_|_| |_|\___|_|
+
 Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru
 This is free software, and you are welcome to redistribute it under certain conditions.
 https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
@@ -314,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.10"
+    Version      = [System.Version]"6.4.11"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell

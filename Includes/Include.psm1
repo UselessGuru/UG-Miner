@@ -2742,7 +2742,7 @@ public static class Kernel32
         $MinerProcess.Handle | Out-Null
 
         Do { 
-            If ($ControllerProcess.WaitForExit(1000)) { 
+            If ($ControllerProcess.WaitForExit(2000)) { 
                 Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore
                 Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing

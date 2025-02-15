@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -1873,13 +1873,12 @@ $LegacyGUIform.Add_Load(
     { 
         # Restore window size
         If ((Test-Path -LiteralPath ".\Config\WindowSettings.json" -PathType Leaf) -and ($WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable)) { 
+            # Ensure form is displayed inside the available screen space
+            If ($WindowSettings.Top -gt 0 -and $WindowSettings.Top -lt [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Height * 0.95) { $LegacyGUIform.Top = $WindowSettings.Top }
+            If ($WindowSettings.Left -gt 0 -and $WindowSettings.Left -lt [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Width * 0.95) { $LegacyGUIform.Left = $WindowSettings.Left }
             If ($WindowSettings.Width -gt $LegacyGUIform.MinimumSize.Width) { $LegacyGUIform.Width = $WindowSettings.Width }
             If ($WindowSettings.Height -gt $LegacyGUIform.MinimumSize.Height) { $LegacyGUIform.Height = $WindowSettings.Height }
-            If ($WindowSettings.Top -gt 0) { $LegacyGUIform.Top = $WindowSettings.Top }
-            If ($WindowSettings.Left -gt 0) { $LegacyGUIform.Left = $WindowSettings.Left }
         }
-
-        $LegacyGUIform.WindowState = If ($Config.LegacyGUIStartMinimized) { [System.Windows.Forms.FormWindowState]::Minimized } Else { [System.Windows.Forms.FormWindowState]::Normal }
 
         $TimerUI = New-Object System.Windows.Forms.Timer
         $TimerUI.Interval = 50
@@ -1906,10 +1905,22 @@ $LegacyGUIform.Add_FormClosing(
     { 
         If ($Config.LegacyGUI) { 
             $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Variables.Branding.ProductLabel)?", "$($Variables.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
+            If ($MsgBoxInput -eq "No") { 
+                $_.Cancel = $true
+                Return
+            }
         }
         Else { 
             $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you also want to shut down $($Variables.Branding.ProductLabel)?", "$($Variables.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNoCancel, 32, "Button3")
+            If ($MsgBoxInput -eq "Cancel") { 
+                $_.Cancel = $true
+                Return
+            }
         }
+
+        # Save window settings
+        If ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
+
         If ($MsgBoxInput -eq "Yes") { 
             $TimerUI.Stop()
             Write-Message -Level Info "Shutting down $($Variables.Branding.ProductLabel)..."
@@ -1919,14 +1930,10 @@ $LegacyGUIform.Add_FormClosing(
             [Void](Stop-Brain)
             [Void](Close-BalancesTrackerRunspace)
 
-            # Save window settings
-            If ($LegacyGUIform.DesktopBounds.Width -ge 0) { $LegacyGUIform.DesktopBounds | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
-
             Write-Message -Level Info "$($Variables.Branding.ProductLabel) has shut down."
             Start-Sleep -Seconds 2
             Stop-Process $PID -Force
         }
-        If ($Config.LegacyGUI -or $MsgBoxInput -eq "Cancel") { $_.Cancel = $true }
     }
 )
 

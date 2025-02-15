@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -45,7 +45,8 @@ $Algorithms = @(
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] -and $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
@@ -85,8 +86,6 @@ If ($Algorithms) {
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
-                        # Apply tuning parameters
-                        If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                         # $ExcludePools = $_.ExcludePools
                         # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and (($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302) })) { 
@@ -141,6 +140,9 @@ If ($Algorithms) {
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                         $WarmupTimes = [UInt16[]]$_.WarmupTimes
                                         $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
+
+                                        # Apply tuning parameters
+                                        If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                         [PSCustomObject]@{ 
                                             API         = "EthMiner"

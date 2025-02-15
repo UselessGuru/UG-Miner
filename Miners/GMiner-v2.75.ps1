@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -48,9 +48,6 @@ If ($Algorithms) {
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
-                    # Apply tuning parameters
-                    If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
-
                     # $ExcludePools = $_.ExcludePools
                     # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
@@ -71,6 +68,9 @@ If ($Algorithms) {
 
                             # Contest ETH address (if ETH wallet is specified in config)
                             # $Arguments += If ($Config.Wallets.ETH) { " --contest_wallet $($Config.Wallets.ETH)" } Else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
+
+                            # Apply tuning parameters
+                            If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                             [PSCustomObject]@{ 
                                 API         = "Gminer"

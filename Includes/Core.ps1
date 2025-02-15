@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -351,7 +351,9 @@ Try {
                             $PoolName = Get-PoolBaseName $_
                             If (Test-Path -LiteralPath ".\Pools\$PoolName.ps1") { 
                                 Try { 
+                                    Write-Message -Level Debug "Pool definition file '$MinerFileName': Start building pool objects"
                                     & ".\Pools\$PoolName.ps1" -Config $Config -PoolVariant $_ -Variables $Variables
+                                    Write-Message -Level Debug "Pool definition file '$MinerFileName': End building pool objects"
                                 }
                                 Catch { 
                                     Write-Message -Level Error "Error in pool file 'Pools\$PoolName.ps1'."

@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.10
+Version:        6.4.11
 Version date:   2025/02/13
 #>
 
@@ -30,7 +30,7 @@ $Path = "Bin\$($Name)\cpuminer.exe"
 $Algorithms = @(
     @{ Algorithm = "Blakecoin";  MinerSet = 3; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blakecoin" } # FPGA
 #   @{ Algorithm = "CpuPower";   MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @(); Arguments = " --algo cpupower" } # ASIC
-    @{ Algorithm = "Yespower2b"; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo power2b" }
+    @{ Algorithm = "Yespower2b"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo power2b" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
