@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.11
-Version date:   2025/02/13
+Version:        6.4.12
+Version date:   2025/02/18
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.11"
+    Version      = [System.Version]"6.4.12"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -896,6 +896,10 @@ Function MainLoop {
                 If ($LegacyGUIform) { 
                     [Void](Update-GUIstatus)
 
+                    $Variables.MinersBest = [Miner[]]@()
+                    $Variables.MinersRunning = [Miner[]]@()
+                    $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
+
                     $LegacyGUIminingSummaryLabel.Text = ""
                     ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
@@ -906,7 +910,7 @@ Function MainLoop {
             }
         }
         ElseIf ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
-            If ($Variables.Timer) { 
+            If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
                 Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
                 [Void](Close-CoreRunspace)
             }
@@ -918,6 +922,7 @@ Function MainLoop {
             Write-Message -Level Warn "Core cycle is stuck - restarting..."
             [Void](Stop-Core)
             [Void](Start-Core)
+            If ($LegacyGUIform) { [Void](Update-GUIstatus) }
         }
     }
     ElseIf ((Test-Path -Path $Variables.PoolsConfigFile) -and (Test-Path -Path $Variables.ConfigFile)) { 
@@ -956,18 +961,18 @@ Function MainLoop {
 
                         Write-Host "$($_.Pool) [$($_.Wallet)]" -ForegroundColor Green
                         If ($Config.BalancesShowSums) { 
-                            Write-Host ("Earnings last 1 hour:   {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth1 * $mBTCfactorCurrency), $Currency, ($_.Growth1 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth1 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
-                            Write-Host ("Earnings last 6 hours:  {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth6 * $mBTCfactorCurrency), $Currency, ($_.Growth6 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth6 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
-                            Write-Host ("Earnings last 24 hours: {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth24 * $mBTCfactorCurrency), $Currency, ($_.Growth24 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth24 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
-                            Write-Host ("Earnings last 7 days:   {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth168 * $mBTCfactorCurrency), $Currency, ($_.Growth168 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth168 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
-                            Write-Host ("Earnings last 30 days:  {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth720 * $mBTCfactorCurrency), $Currency, ($_.Growth720 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth720 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Earnings last 1 hour:   {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth1 * $mBTCfactorCurrency), $Currency, ($_.Growth1 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth1 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Earnings last 6 hours:  {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth6 * $mBTCfactorCurrency), $Currency, ($_.Growth6 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth6 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Earnings last 24 hours: {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth24 * $mBTCfactorCurrency), $Currency, ($_.Growth24 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth24 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Earnings last 7 days:   {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth168 * $mBTCfactorCurrency), $Currency, ($_.Growth168 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth168 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Earnings last 30 days:  {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Growth720 * $mBTCfactorCurrency), $Currency, ($_.Growth720 * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Growth720 * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
                         }
                         If ($Config.BalancesShowAverages) { 
-                            Write-Host ("Average/hour:           {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.AvgHourlyGrowth * $mBTCfactorCurrency), $Currency, ($_.AvgHourlyGrowth * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.AvgHourlyGrowth * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
-                            Write-Host ("Average/day:            {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.AvgDailyGrowth * $mBTCfactorCurrency), $Currency, ($_.AvgDailyGrowth * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.AvgDailyGrowth * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
-                            Write-Host ("Average/week:           {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.AvgWeeklyGrowth * $mBTCfactorCurrency), $Currency, ($_.AvgWeeklyGrowth * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.AvgWeeklyGrowth * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Average/hour:           {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.AvgHourlyGrowth * $mBTCfactorCurrency), $Currency, ($_.AvgHourlyGrowth * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.AvgHourlyGrowth * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Average/day:            {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.AvgDailyGrowth * $mBTCfactorCurrency), $Currency, ($_.AvgDailyGrowth * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.AvgDailyGrowth * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
+                            Write-Host ("Average/week:           {0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.AvgWeeklyGrowth * $mBTCfactorCurrency), $Currency, ($_.AvgWeeklyGrowth * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.AvgWeeklyGrowth * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
                         }
-                        Write-Host "Balance:                " -NoNewline; Write-Host ("{0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " ( ≈ {2:n$($Config.DecimalsMax)} {3} $(If ($Currency -ne $PayoutCurrency) { "≈ {4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Balance * $mBTCfactorCurrency), $Currency, ($_.Balance * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Balance * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency) -ForegroundColor Yellow
+                        Write-Host "Balance:                " -NoNewline; Write-Host ("{0:n$($Config.DecimalsMax)} {1}$(If ($Variables.Rates.$Currency.($Config.FIATcurrency)) { " (≈{2:n$($Config.DecimalsMax)} {3}$(If ($Currency -ne $PayoutCurrency) { "≈{4:n$($Config.DecimalsMax)} {5}" }))" })" -f ($_.Balance * $mBTCfactorCurrency), $Currency, ($_.Balance * $Variables.Rates.$Currency.($Config.FIATcurrency)), $Config.FIATcurrency, ($_.Balance * $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency), $PayoutCurrency) -ForegroundColor Yellow
                         Write-Host ("{0} of {1:n$($Config.DecimalsMax)} {2} payment threshold; projected payment date: $(If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } Else { $_.ProjectedPayDate })`n" -f $Percentage, ($_.PayoutThreshold * $mBTCfactorPayoutCurrency), $PayoutCurrency)
                     }
                 )

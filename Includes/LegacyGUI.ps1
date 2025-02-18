@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.11
-Version date:   2025/02/13
+Version:        6.4.12
+Version date:   2025/02/18
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -208,7 +208,7 @@ Function Update-TabControl {
                 $LegacyGUIactiveMinersLabel.Text = "No miners running - mining is paused"
                 $LegacyGUIactiveMinersDGV.DataSource = $null
             }
-            ElseIf ($Variables.NewMiningStatus -eq "Running" -and $Variables.MiningStatus -eq "Running" -and -not $Variables.MinersBest -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+            ElseIf ($Variables.NewMiningStatus -eq "Running" -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIactiveMinersLabel.Text = "No data - mining is suspended"
                 $LegacyGUIactiveMinersDGV.DataSource = $null
             }
@@ -235,9 +235,9 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.Sort($LegacyGUIactiveMinersDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIactiveMinersDGV.ClearSelection()
 
+                    $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
+                    $LegacyGUIactiveMinersDGV.Columns[1].Visible = $false
                     If (-not $LegacyGUIactiveMinersDGV.ColumnWidthChanged -and $LegacyGUIactiveMinersDGV.Columns) { 
-                        $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
-                        $LegacyGUIactiveMinersDGV.Columns[1].Visible = $false
                         $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 35 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                         $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 190
                         $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
@@ -384,8 +384,8 @@ Function Update-TabControl {
                         $LegacyGUIbalancesDGV.Sort($LegacyGUIbalancesDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
                         $LegacyGUIbalancesDGV.ClearSelection()
 
+                        $LegacyGUIbalancesDGV.Columns[0].Visible = $false
                         If ($LegacyGUIbalancesDGV.Columns) { 
-                            $LegacyGUIbalancesDGV.Columns[0].Visible = $false
                             $LegacyGUIbalancesDGV.Columns[1].FillWeight = 120
                             $LegacyGUIbalancesDGV.Columns[2].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[2].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
                             $LegacyGUIbalancesDGV.Columns[3].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[3].Visible = $Config.BalancesShowSums
@@ -487,9 +487,9 @@ Function Update-TabControl {
                     $LegacyGUIminersDGV.ClearSelection()
                     $LegacyGUIminersLabel.Text = "Miner data updated $(($Variables.Miners.Updated | Sort-Object -Bottom 1).ToLocalTime().ToString("G")) ($($LegacyGUIminersDGV.Rows.count) miner$(If ($LegacyGUIminersDGV.Rows.count -ne 1) { "s" }))"
 
+                    $LegacyGUIminersDGV.Columns[0].Visible = $false
+                    $LegacyGUIminersDGV.Columns[1].Visible = $false
                     If (-not $LegacyGUIminersDGV.ColumnWidthChanged -and $LegacyGUIminersDGV.Columns) { 
-                        $LegacyGUIminersDGV.Columns[0].Visible = $false
-                        $LegacyGUIminersDGV.Columns[1].Visible = $false
                         $LegacyGUIminersDGV.Columns[2].FillWeight = 160
                         $LegacyGUIminersDGV.Columns[3].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
                         $LegacyGUIminersDGV.Columns[4].FillWeight = 40; $LegacyGUIminersDGV.Columns[4].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked
@@ -609,7 +609,7 @@ Function Update-TabControl {
         #     $LegacyGUIeditMonitoringLink.Visible = $Variables.APIRunspace.APIport
         #
         #     If ($Config.ShowWorkerStatus) { 
-        #         If (-not $LegacyGUIactiveMinersDGV.SelectedRows) { 
+        #         If (-not $LegacyGUIworkersDGV.SelectedRows) { 
         #
         #             Read-MonitoringData | Out-Null
         #

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.11
-Version date:   2025/02/13
+Version:        6.4.12
+Version date:   2025/02/18
 #>
 
 using module .\Include.psm1
@@ -585,8 +585,8 @@ Try {
                 }
                 If ($Miner.Data.Count -gt $Miner.MinDataSample * 5) { $Miner.Data = [System.Collections.Generic.List[PSCustomObject]]($Miner.Data | Select-Object -Last ($Miner.MinDataSample * 5)) } # Reduce data to MinDataSample * 5
 
-                If ([MinerStatus]::Running, [MinerStatus]::DryRun -contains $Miner.Status) { 
-                    If ($Miner.Status -eq [MinerStatus]::DryRun -or $Miner.GetStatus() -eq [MinerStatus]::Running) { 
+                If ($Miner.Status -eq [MinerStatus]::Running) { 
+                    If ($Miner.GetStatus() -eq [MinerStatus]::Running) { 
                         $Miner.ContinousCycle ++
                         If ($Config.Watchdog) { 
                             ForEach ($Worker in $Miner.WorkersRunning) { 
@@ -1438,6 +1438,7 @@ Try {
                     Try { $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority) } Catch { }
                     # Set window title
                     Try { [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo) } Catch { }
+
                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                 }
                 Remove-Variable Miner, Sample, Samples -ErrorAction Ignore

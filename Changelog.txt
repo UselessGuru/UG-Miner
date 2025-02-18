@@ -1,6 +1,31 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+
+Changelog UG-Miner 6.4.12 2025/02/18
+====================================
+
+Fixes:
+- Legacy GUI: Keep hidden columns hidden when switching tabs
+
+Improvements:
+- Core: Miner code improvements
+
+
+Changelog UG-Miner 6.4.11 2025/02/15
+====================================
+
+Enhancements:
+- Core: Add Banner
+- Optimze dual algorithm miner code
+
+Fixes:
+- Legacy GUI: Window size & location not getting saved when only closing form but UG-Miner is left running
+
+Miner updates:
+- SRBMinerMulti-v2.7.9
+
+
 Changelog UG-Miner 6.4.10 2025/02/13
 ====================================
 
