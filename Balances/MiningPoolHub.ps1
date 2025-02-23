@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningPoolHub.ps1
-Version:        6.4.12
-Version date:   2025/02/18
+Version:        6.4.13
+Version date:   2025/02/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -37,7 +37,7 @@ While (-not $UserAllBalances -and $RetryCount -gt 0 -and $Config.MiningPoolHubAP
         $WebResponse = Invoke-WebRequest -Uri $Url -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
 
         # PWSH 6+ no longer supports basic parsing -> parse text
-        $CoinList = [System.Collections.Generic.List[PSCustomObject]]@()
+        $CoinList = [System.Collections.Generic.HashSet[PSCustomObject]]@()
         $InCoinList = $false
 
         If ($WebResponse.statuscode -eq 200) { 

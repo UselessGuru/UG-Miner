@@ -222,7 +222,7 @@ Class Pool : IDisposable {
     [Double]$Price_Bias
     [Boolean]$Prioritize = $false # derived from BalancesKeepAlive
     [String]$Protocol
-    [System.Collections.Generic.List[String]]$Reasons
+    [System.Collections.Generic.HashSet[String]]$Reasons = @() # Why is the pool not available?
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
     [Boolean]$SSLselfSignedCertificate
@@ -314,7 +314,7 @@ Class Miner : IDisposable {
     [Double]$Profit = [Double]::NaN
     [Double]$Profit_Bias = [Double]::NaN
     [Boolean]$ReadPowerConsumption
-    [System.Collections.Generic.List[String]]$Reasons = @() # Why is a miner not available?
+    [System.Collections.Generic.HashSet[String]]$Reasons = @() # Why is the miner not available?
     [Boolean]$Restart = $false 
     hidden [DateTime]$StatStart
     hidden [DateTime]$StatEnd
@@ -332,7 +332,7 @@ Class Miner : IDisposable {
     [Worker[]]$Workers = @()
     [Worker[]]$WorkersRunning = @()
 
-    hidden [System.Collections.Generic.List[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
+    hidden [System.Collections.Generic.HashSet[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
     hidden [System.Management.Automation.Job]$DataReaderJob = $null
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [System.Diagnostics.Process]$Process = $null
@@ -435,20 +435,20 @@ Class Miner : IDisposable {
             DateTime                = (Get-Date -Format o)
             Action                  = If ($this.Status -eq [MinerStatus]::DryRun) { "DryRun" } Else { "Launched" }
             Name                    = $this.Name
-            Accounts                = $this.Workers.Pool.User -join " "
+            Accounts                = $this.Workers.Pool.User -join ";"
             Activated               = $this.Activated
-            Algorithms              = $this.Workers.Pool.AlgorithmVariant -join " "
+            Algorithms              = $this.Workers.Pool.AlgorithmVariant -join ";"
             Benchmark               = $this.Benchmark
             CommandLine             = $this.CommandLine
             Cycle                   = ""
-            DeviceNames             = $this.DeviceNames -join " "
+            DeviceNames             = $this.DeviceNames -join ";"
             Duration                = ""
             Earning                 = $this.Earning
             Earning_Bias            = $this.Earning_Bias
             Hashrates               = ""
             LastDataSample          = $null
             MeasurePowerConsumption = $this.MeasurePowerConsumption
-            Pools                   = ($this.Workers.Pool.Name | Select-Object -Unique) -join " "
+            Pools                   = $this.Workers.Pool.Name -join ";"
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
             PowerConsumption        = ""
@@ -540,7 +540,7 @@ Class Miner : IDisposable {
             Earning                 = $this.Earning
             Earning_Bias            = $this.Earning_Bias
             Hashrates               = $this.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & "
-            LastDataSample          = If ($this.Data.Count -ge 1) { $this.Data.Item($this.Data.Count - 1 ) | ConvertTo-Json -Compress } Else { "" }
+            LastDataSample          = If ($this.Data.Count -ge 1) { $this.Data.Item | Select-Object -Last 1 | ConvertTo-Json -Compress } Else { "" }
             MeasurePowerConsumption = $this.MeasurePowerConsumption
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
             PowerConsumption        = "$($this.PowerConsumption.ToString("N2"))W"
@@ -687,7 +687,7 @@ Class Miner : IDisposable {
         $this.MinDataSample = $Config.MinDataSample
         $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
         $this.ProcessPriority = If ($this.Type -eq "CPU") { $Config.CPUMinerProcessPriority } Else { $Config.GPUMinerProcessPriority }
-        $this.Reasons = [System.Collections.Generic.List[String]]@()
+        $this.Reasons = @()
         If ($this.ReadPowerConsumption -ne $this.Devices.ReadPowerConsumption -notcontains $false) { $this.Restart = $true }
         $this.ReadPowerConsumption = $this.Devices.ReadPowerConsumption -notcontains $false
         $this.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
@@ -847,9 +847,9 @@ Function Stop-Core {
 
     ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status })) { 
         ForEach ($Worker in $Miner.WorkersRunning) { 
-            If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
+            If ($WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames })) { 
                 # Remove Watchdog timers
-                $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
+                $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers })
             }
         }
         Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
@@ -1572,7 +1572,7 @@ Function Update-ConfigFile {
         [String]$ConfigFile
     )
 
-    $Variables.ConfigurationHasChangedDuringUpdate = [System.Collections.Generic.List[String]]@()
+    $Variables.ConfigurationHasChangedDuringUpdate = @()
 
     # NiceHash Internal is no longer available as of November 12, 2024
     If ($Config.PoolName -contains "NiceHash") { 
@@ -1772,7 +1772,7 @@ Function Get-SortedObject {
             )
         }
         Default { 
-            $SortedObject = $Object
+            $SortedObject = $Object | Sort-Object
         }
     }
 
@@ -2639,7 +2639,7 @@ Function Invoke-CreateProcess {
         [String]$StatusInfo
     )
 
-    # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(500) would not work and miners remain running
+    # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(250) would not work and miners remain running
     Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $JobName, $StatusInfo { 
         Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $JobName, $StatusInfo)
 
@@ -2718,10 +2718,9 @@ public static class Kernel32
         # Call CreateProcess
         [Void][Kernel32]::CreateProcess($ConHost, "$ConHost $BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
 
-        If ($ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore) { 
-            If ($MinerProcessId = (Get-CimInstance CIM_Process).Where({ $_.ParentProcessId -eq $ConhostProcess.Id -and $_.ExecutablePath -like $BinaryPath }) | Select-Object -ExpandProperty ProcessId) { 
-                $MinerProcess = Get-Process -Id $MinerProcessId -ErrorAction Ignore
-            }
+        $ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore 
+        If ($MinerProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq "$BinaryPath$ArgumentList" }) | Select-Object -ExpandProperty ProcessId) { 
+            $MinerProcess = Get-Process -Id $MinerProcessId -ErrorAction Ignore
         }
 
         If ($null -eq $MinerProcess.Count) { 
@@ -2742,7 +2741,7 @@ public static class Kernel32
         $MinerProcess.Handle | Out-Null
 
         Do { 
-            If ($ControllerProcess.WaitForExit(2000)) { 
+            If ($ControllerProcess.WaitForExit(250)) { 
                 Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore
                 Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing

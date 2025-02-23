@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Pools\MiningPoolHub.ps1
 Version:        6.3.13
-Version date:   2025/02/18
+Version date:   2025/02/23
 #>
 
 Param(
@@ -69,7 +69,7 @@ ForEach ($Pool in $Request.return) {
     # Temp fix
     $Regions = If ($Pool.host_list.split(";").count -eq 1) { @("n/a") } Else { $PoolConfig.Region }
 
-    $Reasons = [System.Collections.Generic.List[String]]@()
+    $Reasons = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     If (-not $PoolConfig.UserName) { $Reasons.Add("No username") }
     If ($Pool.pool_hash -eq "-" -or $_.pool_hash -eq "0" -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
     If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") }

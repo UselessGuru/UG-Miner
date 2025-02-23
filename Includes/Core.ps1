@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.12
-Version date:   2025/02/18
+Version:        6.4.13
+Version date:   2025/02/23
 #>
 
 using module .\Include.psm1
@@ -36,6 +36,8 @@ Try {
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
         Write-Message -Level Info "Started new cycle."
+
+        $Variables.CoreLoopCounter ++
         $Variables.EndCycleMessage = ""
 
         $Variables.BeginCycleTime = $Variables.Timer
@@ -118,7 +120,7 @@ Try {
             $Variables.MinersMissingPrerequisite = [Miner[]]@()
             $Variables.MinersOptimal = [Miner[]]@()
             $Variables.MinersRunning = [Miner[]]@()
-            $Variables.WatchdogTimers = [PSCustomObject[]]@()
+            $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
 
             $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
         }
@@ -216,8 +218,8 @@ Try {
             $Variables.WatchdogReset = $Variables.WatchdogCount * $Variables.WatchdogCount * $Variables.WatchdogCount * $Variables.WatchdogCount * $Config.Interval
 
             # Expire watchdog timers
-            If ($Config.Watchdog) { $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.Kicked -ge $Variables.Timer.AddSeconds( - $Variables.WatchdogReset) })) }
-            Else { $Variables.WatchdogTimers = [PSCustomObject[]]@() }
+            If ($Config.Watchdog) { $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.Kicked -ge $Variables.Timer.AddSeconds( - $Variables.WatchdogReset) }) }
+            Else { $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new() }
 
             # Skip some stuff when
             # - Configuration unchanged
@@ -490,10 +492,10 @@ Try {
                         # Apply watchdog to pools
                         If ($Pools) { $Pools = Update-PoolWatchdog -Pools $Pools }
                         # Second best pools per algorithm
-                        ($Pools.Where({ -not $_.Reasons }) | Group-Object -Property AlgorithmVariant, Name).ForEach({ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach({ $_.Reasons = "Second best algorithm" }) })
+                        ($Pools.Where({ -not $_.Reasons.Count }) | Group-Object -Property AlgorithmVariant, Name).ForEach({ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach({ $_.Reasons.Add("Second best algorithm") }) })
 
                         # Make pools unavailable
-                        $Pools.ForEach({ $_.Available = -not [Boolean]$_.Reasons })
+                        $Pools.ForEach({ $_.Available = -not $_.Reasons.Count })
 
                         # Filter pools on miner set
                         If ($Config.MinerSet -lt 2) { 
@@ -528,7 +530,7 @@ Try {
                                 )
                             }
                         }
-                        $Pools.Where({ $_.Reasons }).ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique) })
+
 
                         # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
                         ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
@@ -585,8 +587,8 @@ Try {
                 }
                 If ($Miner.Data.Count -gt $Miner.MinDataSample * 5) { $Miner.Data = [System.Collections.Generic.List[PSCustomObject]]($Miner.Data | Select-Object -Last ($Miner.MinDataSample * 5)) } # Reduce data to MinDataSample * 5
 
-                If ($Miner.Status -eq [MinerStatus]::Running) { 
-                    If ($Miner.GetStatus() -eq [MinerStatus]::Running) { 
+                If ( [MinerStatus]::DryRun, [MinerStatus]::Running -contains $Miner.Status) { 
+                    If ($Miner.Status -eq [MinerStatus]::DryRun -or $Miner.GetStatus() -eq [MinerStatus]::Running) { 
                         $Miner.ContinousCycle ++
                         If ($Config.Watchdog) { 
                             ForEach ($Worker in $Miner.WorkersRunning) { 
@@ -596,21 +598,23 @@ Try {
                                 }
                                 Else { 
                                     # Create watchdog timer in case it got cleared
-                                    $Variables.WatchdogTimers += [PSCustomObject]@{ 
-                                        Algorithm                    = $Worker.Pool.Algorithm
-                                        AlgorithmVariant             = $Worker.Pool.AlgorithmVariant
-                                        CommandLine                  = $Miner.CommandLine
-                                        DeviceNames                  = $Miner.DeviceNames
-                                        Kicked                       = [DateTime]::Now.ToUniversalTime()
-                                        MinerBaseName                = $Miner.BaseName
-                                        MinerBaseName_Version        = $Miner.BaseName, $Miner.Version -join '-'
-                                        MinerBaseName_Version_Device = $Miner.BaseName_Version_Device
-                                        MinerName                    = $Miner.Name
-                                        MinerVersion                 = $Miner.Version
-                                        PoolName                     = $Worker.Pool.Name
-                                        PoolRegion                   = $Worker.Pool.Region
-                                        PoolVariant                  = $Worker.Pool.Variant
-                                    }
+                                    $Variables.WatchdogTimers.Add(
+                                        [PSCustomObject]@{ 
+                                            Algorithm                    = $Worker.Pool.Algorithm
+                                            AlgorithmVariant             = $Worker.Pool.AlgorithmVariant
+                                            CommandLine                  = $Miner.CommandLine
+                                            DeviceNames                  = $Miner.DeviceNames
+                                            Kicked                       = [DateTime]::Now.ToUniversalTime()
+                                            MinerBaseName                = $Miner.BaseName
+                                            MinerBaseName_Version        = $($Miner.BaseName, $Miner.Version -join '-')
+                                            MinerBaseName_Version_Device = $Miner.BaseName_Version_Device
+                                            MinerName                    = $Miner.Name
+                                            MinerVersion                 = $Miner.Version
+                                            PoolName                     = $Worker.Pool.Name
+                                            PoolRegion                   = $Worker.Pool.Region
+                                            PoolVariant                  = $Worker.Pool.Variant
+                                        }
+                                    )
                                 }
                             }
                             Remove-Variable WatchdogTimer, Worker -ErrorAction Ignore
@@ -852,7 +856,7 @@ Try {
 
             # Add reason 'Unreal profit data...' for miners with unreal earning > x times higher than average of the next best 10% or at least 5 miners
             If ($Config.UnrealMinerEarningFactor -gt 1) { 
-                ($Miners.Where({ -not $_.Reasons }) | Group-Object { [String]$_.DeviceNames }).ForEach(
+                ($Miners.Where({ -not $_.Reasons.Count }) | Group-Object { [String]$_.DeviceNames }).ForEach(
                     { 
                         If ($ReasonableEarning = [Double]($_.Group | Sort-Object -Descending -Property Earning_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earning -Average).Average * $Config.UnrealMinerEarningFactor) { 
                             ($_.Group.Where({ $_.Earning -gt $ReasonableEarning })).ForEach(
@@ -865,7 +869,7 @@ Try {
             }
 
             $Variables.MinersMissingBinary = [Miner[]]@()
-            ($Miners.Where({ -not $_.Reasons }) | Group-Object Path).Where({ -not (Test-Path -LiteralPath $_.Name -Type Leaf) }).Group.ForEach(
+            ($Miners.Where({ -not $_.Reasons.Count }) | Group-Object Path).Where({ -not (Test-Path -LiteralPath $_.Name -Type Leaf) }).Group.ForEach(
                 { 
                     $_.Reasons.Add("Binary missing")
                     $Variables.MinersMissingBinary += $_
@@ -873,7 +877,7 @@ Try {
             )
 
             $Variables.MinersMissingPrerequisite = [Miner[]]@()
-            $Miners.Where({ -not $_.Reasons -and $_.PrerequisitePath }).ForEach(
+            $Miners.Where({ -not $_.Reasons.Count -and $_.PrerequisitePath }).ForEach(
                 { 
                     $_.Reasons.Add("Prerequisite missing ($(Split-Path -Path $_.PrerequisitePath -Leaf))")
                     $Variables.MinersMissingPrerequisite += $_
@@ -992,7 +996,8 @@ Try {
                 Remove-Variable RelevantWatchdogTimers -ErrorAction Ignore
             }
 
-            $Miners.ForEach({ $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons | Sort-Object -Unique); $_.Available = -not [Boolean]$_.Reasons })
+            # $Miners.ForEach({ $_.Reasons = @($_.Reasons | Sort-Object -Unique); $_.Available = -not $_.Reasons.Count })
+            $Miners.ForEach({ $_.Available = -not $_.Reasons.Count })
 
             # Gone miners are no longer available
             $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false; $_.Best = $false })
@@ -1146,9 +1151,9 @@ Try {
                 ElseIf (-not $Config.DryRun -and $Miner.Status -eq [MinerStatus]::DryRun) { $Miner.Restart = $true }
                 If ($Miner.Restart -or -not $Miner.Best -or $Variables.NewMiningStatus -ne "Running") { 
                     ForEach ($Worker in $Miner.WorkersRunning) { 
-                        If ($WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames }))) { 
+                        If ($WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames })) { 
                             # Remove Watchdog timers
-                            $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers }))
+                            $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers })
                         }
                     }
                     $Miner.SetStatus([MinerStatus]::Idle)
@@ -1313,21 +1318,23 @@ Try {
                 # Add watchdog timer
                 If ($Config.Watchdog) { 
                     ForEach ($Worker in $Miner.Workers) { 
-                        $Variables.WatchdogTimers += [PSCustomObject]@{ 
-                            Algorithm                    = $Worker.Pool.Algorithm
-                            AlgorithmVariant             = $Worker.Pool.AlgorithmVariant
-                            CommandLine                  = $Miner.CommandLine
-                            DeviceNames                  = $Miner.DeviceNames
-                            Kicked                       = [DateTime]::Now.ToUniversalTime()
-                            MinerBaseName                = $Miner.BaseName
-                            MinerBaseName_Version        = $Miner.BaseName, $Miner.Version -join '-'
-                            MinerBaseName_Version_Device = $Miner.BaseName_Version_Device
-                            MinerName                    = $Miner.Name
-                            MinerVersion                 = $Miner.Version
-                            PoolName                     = $Worker.Pool.Name
-                            PoolRegion                   = $Worker.Pool.Region
-                            PoolVariant                  = $Worker.Pool.Variant
-                        }
+                        $Variables.WatchdogTimers.Add(
+                            [PSCustomObject]@{ 
+                                Algorithm                    = $Worker.Pool.Algorithm
+                                AlgorithmVariant             = $Worker.Pool.AlgorithmVariant
+                                CommandLine                  = $Miner.CommandLine
+                                DeviceNames                  = $Miner.DeviceNames
+                                Kicked                       = [DateTime]::Now.ToUniversalTime()
+                                MinerBaseName                = $Miner.BaseName
+                                MinerBaseName_Version        = $($Miner.BaseName, $Miner.Version -join '-')
+                                MinerBaseName_Version_Device = $Miner.BaseName_Version_Device
+                                MinerName                    = $Miner.Name
+                                MinerVersion                 = $Miner.Version
+                                PoolName                     = $Worker.Pool.Name
+                                PoolRegion                   = $Worker.Pool.Region
+                                PoolVariant                  = $Worker.Pool.Variant
+                            }
+                        )
                     }
                     Remove-Variable Worker -ErrorAction Ignore
                 }
@@ -1493,9 +1500,8 @@ Try {
 
         $Variables.RestartCycle = $true
 
-        $Variables.CoreLoopCounter ++
-
         If ($Variables.NewMiningStatus -eq "Running" -and $Variables.EndCycleTime) { Write-Message -Level Info "Ending cycle$($Variables.EndCycleMessage)." }
+
     } While ($Variables.NewMiningStatus -eq "Running")
 }
 Catch { 

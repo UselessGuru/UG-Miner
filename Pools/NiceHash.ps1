@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.4.12
-Version date:   2025/02/18
+Version:        6.4.13
+Version date:   2025/02/23
 #>
 
 Param(
@@ -67,7 +67,7 @@ If ($Request.miningAlgorithms) {
             $Currency = If ($Currencies.Count -eq 1) { [String]$Currencies } Else { "" }
             $Divisor = 100000000
 
-            $Reasons = [System.Collections.Generic.List[String]]@()
+            $Reasons = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") }
             If ($RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }).order -eq 0) { $Reasons.Add("No orders at pool") }
             If ($_.speed -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }

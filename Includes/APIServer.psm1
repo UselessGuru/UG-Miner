@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.12
-Version date:   2025/02/18
+Version:        6.4.13
+Version date:   2025/02/23
 #>
 
 Function Start-APIServer { 
@@ -165,11 +165,11 @@ Function Start-APIServer {
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)" | Sort-Object -Unique)
-                                            $Pool.Reasons = [System.Collections.Generic.List[String]]@($Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Sort-Object -Unique)
+                                            $Pool.Reasons = @($Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Sort-Object -Unique)
                                         }
                                         Else { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "+$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                                            $Pool.Reasons = [System.Collections.Generic.List[String]]@($Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config") | Sort-Object -Unique)
+                                            $Pool.Reasons = @($Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config") | Sort-Object -Unique)
                                         }
                                         $Pool.Available = $false
                                         $Data += "$($Pool.Algorithm)@$($Pool.Name)"
@@ -194,11 +194,11 @@ Function Start-APIServer {
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
-                                            $Pool.Reasons = [System.Collections.Generic.List[String]]@($Pool.Reasons.Where({ $_ -ne "Algorithm not enabled in $($Pool.Name) pool config" }) | Sort-Object -Unique)
+                                            $Pool.Reasons = @($Pool.Reasons.Where({ $_ -ne "Algorithm not enabled in $($Pool.Name) pool config" }) | Sort-Object -Unique)
                                         }
                                         Else { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "-$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                                            $Pool.Reasons = [System.Collections.Generic.List[String]]@($Pool.Reasons.Where({ $_ -ne "Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)" }) | Sort-Object -Unique)
+                                            $Pool.Reasons = @($Pool.Reasons.Where({ $_ -ne "Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)" }) | Sort-Object -Unique)
                                         }
                                         If (-not $Pool.Reasons) { $Pool.Available = $true }
                                         $Data += "$($Pool.Algorithm)@$($Pool.Name)"
@@ -429,7 +429,7 @@ Function Start-APIServer {
                                                 }
                                                 $_.Disabled = $true
                                                 $_.Reasons += "Disabled by user"
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
+                                                $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
                                             }
                                         )
                                         $Data = $Data | Sort-Object -Unique
@@ -455,7 +455,7 @@ Function Start-APIServer {
                                                     [Void](Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                                 }
                                                 $_.Disabled = $false
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
+                                                $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
                                                 If (-not $_.Reasons) { $_.Available = $true }
                                             }
                                         )
@@ -500,7 +500,7 @@ Function Start-APIServer {
                                                 $_.Available = $true
                                                 $_.Disabled = $false
                                                 $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@()
+                                                $_.Reasons = @()
                                             }
                                         )
                                         $Data = $Data | Sort-Object -Unique
@@ -522,7 +522,7 @@ Function Start-APIServer {
                                                 $_.Activated = 0 # To allow 3 attempts
                                                 $_.Available = $true
                                                 $_.Benchmark = $true
-                                                $_.Data = New-Object System.Collections.Generic.List[PSCustomObject]
+                                                $_.Data = New-Object System.Collections.Generic.HashSet[PSCustomObject]
                                                 $_.Disabled = $false
                                                 $_.Earning_Accuracy = [Double]::NaN
                                                 $Data += $_.Name
@@ -543,11 +543,11 @@ Function Start-APIServer {
                                                 $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
 
                                                 # Remove watchdog
-                                                $Variables.WatchdogTimers = @($Variables.WatchdogTimers | Where-Object MinerName -NE $_.Name)
+                                                $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -NE $_.Name
 
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
-                                                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "0 H/s Stat file" }))
-                                                $_.Reasons = [System.Collections.Generic.List[String]] @($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
+                                                $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }))
+                                                $_.Reasons = @($_.Reasons.Where({ $_ -ne "0 H/s Stat file" }))
+                                                $_.Reasons =  @($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
                                                 If (-not $_.Reasons) { $_.Available = $true }
                                                 If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                                             }
@@ -630,7 +630,7 @@ Function Start-APIServer {
                                                         $_.Available = $false
                                                         $_.Disabled = $false
                                                         If ($_.Reasons -notcontains "0 H/s Stat file") { $_.Reasons.Add("0 H/s Stat file") }
-                                                        $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
+                                                        $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
                                                         $_.Status = [MinerStatus]::Failed
                                                     }
                                                 }
@@ -669,13 +669,13 @@ Function Start-APIServer {
                                     $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name }) }).ForEach(
                                         { 
                                             $Data += "$($_.Name)"
-                                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
                                             If (-not $_.Reasons) { $_.Available = $true }
                                         }
                                     )
 
                                     # Remove Watchdog timers
-                                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name }))
+                                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
                                 }
 
                                 ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
@@ -683,13 +683,13 @@ Function Start-APIServer {
                                     $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }) }).ForEach(
                                         { 
                                             $Data += "$($_.Key) [$($_.Region)]"
-                                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
+                                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
                                             If (-not $_.Reasons) { $_.Available = $true }
                                         }
                                     )
 
                                     # Remove Watchdog timers
-                                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm }))
+                                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm })
                                 }
                                 If ($Data) { 
                                     $Data = $Data | Sort-Object -Unique
@@ -704,17 +704,17 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/watchdogtimers/reset" { 
-                                $Variables.WatchDogTimers = @()
+                                $Variables.WatchDogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
                                 $Variables.Miners.ForEach(
                                     { 
-                                        $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                                        $_.Where({ -not $_.Reasons }).ForEach({ $_.Available = $true })
+                                        $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                                        $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
                                     }
                                 )
                                 $Variables.Pools.ForEach(
                                     { 
-                                        $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
-                                        $_.Where({ -not $_.Reasons }).ForEach({ $_.Available = $true })
+                                        $_.Reasons = @($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
+                                        $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
                                     }
                                 )
                                 Write-Message -Level Verbose "Web GUI: All watchdog timers reset."

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.12
-Version date:   2025/02/18
+Version:        6.4.13
+Version date:   2025/02/23
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -48,7 +48,7 @@ $Algorithms = @(
     @{ Algorithm = "ProgPowVeil";      Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -c VEIL" }
     @{ Algorithm = "ProgPowZ";         Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -c ZANO" }
     @{ Algorithm = "ProgPowVeriblock"; Type = "AMD"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -a vProgPow" }
-    @{ Algorithm = "SCCpow";           Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -c SCC" }
+    @{ Algorithm = "SCCpow";           Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -c SCC" }
 #   @{ Algorithm = "SHA256d";          Type = "AMD"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -a SHA256D" } # ASIC
     @{ Algorithm = "SHA256dt";         Type = "AMD"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -a SHA256DT" }
     @{ Algorithm = "SHA3D";            Type = "AMD"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = @();       ExcludePools = @(); Arguments = " -a Sha3D" }

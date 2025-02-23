@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.12
-Version date:   2025/02/18
+Version:        6.4.13
+Version date:   2025/02/23
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1010,9 +1010,9 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                                 $_.Status = "Idle"
                                 $_.SubStatus = "idle"
                             }
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }))
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "0 H/s stat file" }))
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
+                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }))
+                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "0 H/s stat file" }))
+                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
                             If (-not $_.Reasons) { $_.Available = $true }
                         }
                     )
@@ -1069,7 +1069,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $_.SubStatus = "failed"
                             $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
                             If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") }
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
+                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
@@ -1094,7 +1094,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             If ($_.GetStatus() -eq [MinerStatus]::Running) { $_.SetStatus([MinerStatus]::Idle) }
                             $_.Disabled = $true
                             $_.Reasons += "Disabled by user"
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
+                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
@@ -1116,7 +1116,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             }
                             Remove-Variable Worker
                             $_.Disabled = $false
-                            $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
+                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
                             If (-not $_.Reasons) { $_.Available = $true }
                         }
                     )
@@ -1135,11 +1135,11 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $Variables.Miners.Where({ $_.Name -in $this.SourceControl.SelectedRows.ForEach({ $_.Cells[2].Value }) }).Where({ $Variables.WatchdogTimers.MinerName -contains $_.Name }).ForEach(
                                 { 
                                     $Data += "$($_.Name)"
-                                    $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                                    $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
                                     # Update miner
                                     If (-not $_.Reasons) { $_.Available = $true }
                                     # Remove Watchdog timers
-                                    $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name }))
+                                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
                                 }
                             )
                         }
@@ -1172,7 +1172,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                                     $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
                                     $Data += $StatName
                                     [Void](Remove-Stat -Name "$($StatName)_Profit")
-                                    $_.Reasons = [System.Collections.Generic.List[String]]@()
+                                    $_.Reasons = @()
                                     $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
                                     $_.Available = $true
                                     $_.Disabled = $false
@@ -1199,13 +1199,13 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $Variables.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm -and $_.Reason -like "Pool suspended by watchdog *" }).ForEach(
                                 { 
                                     $Data += "$($_.Key) ($($_.Region))"
-                                    $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
+                                    $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
                                     If (-not $_.Reasons) { $_.Available = $true }
                                 }
                             )
 
                             # Remove Watchdog timers
-                            $Variables.WatchdogTimers = @($Variables.WatchdogTimers.Where({ $_.PoolName -ne $SelectedPoolName -or $_.Algorithm -ne $SelectedPoolAlgorithm }))
+                            $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.PoolName -ne $SelectedPoolName -or $_.Algorithm -ne $SelectedPoolAlgorithm })
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
@@ -1787,18 +1787,18 @@ $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
 
-        $Variables.WatchDogTimers = @()
+        $Variables.WatchDogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
         $LegacyGUIwatchdogTimersDGV.DataSource = $null
         $Variables.Miners.ForEach(
             { 
-                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                $_.Where({ -not $_.Reasons }).ForEach({ $_.Available = $true })
+                $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
             }
         )
         $Variables.Pools.ForEach(
             { 
-                $_.Reasons = [System.Collections.Generic.List[String]]@($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
-                $_.Where({ -not $_.Reasons }).ForEach({ $_.Available = $true })
+                $_.Reasons = @($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
+                $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
             }
         )
         Write-Message -Level Verbose "GUI: All watchdog timers reset."
