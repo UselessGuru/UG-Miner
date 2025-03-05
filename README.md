@@ -109,7 +109,7 @@ It is recommended to keep the number of configured pools to a minimum as this mi
 If '+' is used, then only the explicitly enabled algorithms are used  
 If '-' is used, then all algorithms except the disabled ones are used
 
-Do not combine '+' and '-' for the same algorithm.
+Do not combine '+' and '-' concurrently.
 
 This parameter is not case sensitive. 
 
@@ -124,7 +124,7 @@ Algorithm list = +Ethash
 Will mine only Ethash (any DAG size)
 
 Algorithm list = '+Ethash,+Kawpow(4GB)'  
-Will mine only Ethash and Kawpow (only 4GB DAG size)
+Will mine only Ethash (any DAG size) and Kawpow (only 4GB DAG size)
 
 Algorithm list blank  
 Will mine all available algorithms
@@ -137,7 +137,7 @@ Will mine all available algorithms
 If '+' is used, then only the explicitly enabled currencies are used  
 If '-' is used, then all currencies except the disabled ones are used
 
-Do not combine '+' and '-' for the same currency.
+Do not combine '+' and '-' concurrently.
 
 This parameter is not case sensitive. 
 
@@ -184,24 +184,24 @@ Some settings can be configured per [advanced pool configuration](<https://githu
 
 UG-Miner can run a batch script prior switching to a specific miner and/or algorithm.
 
-The prerun scripts can be used to apply per miner/algorithm overclocking settings via nvidiaInspector or OverdriveNTool.  
+The prerun scripts can be used to apply overclocking settings via any OC tool that can be parameterized via batch file commands (e.g. nvidiaInspector or OverdriveNTool).  
 
 Before starting a miner executable UG-Miner wiil try to launch one of the following 3 prerun scripts (in this order):
 
 1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\\Utils\\prerun' folder, e.g.  
-   'MiniZ-v2.4.d-1xRadeonRX5808GB_EtcHash.bat'  
-   'BzMiner-v21.4.0-1xRTX306012GB_Ethash&SHA512256d.bat'  
+   'MiniZ-v2.4e-1xRadeonRX5808GB_EtcHash.bat'  
+   'BzMiner-v23.0.2-1xRTX306012GB_Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
-3. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
+2. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<AlgorithmName\>.bat in the '[UG-Miner directory]\\Utils\\prerun' folder, e.g.  
    'Ethash.bat'  
    'Ethash&SHA512256d.bat'  
-   (use the algorithm base name, not the algorithm variant name)    
+   (use the algorithm base name, not the algorithm variant name)  
 
-5. default.bat  
-   If neither of the two above exist UG-Miner will try to launch '[UG-Miner directory]\\Utils\\prerun\default.bat'
+3. default.bat  
+   If neither of the first two above exists UG-Miner will try to launch the generic '[UG-Miner directory]\\Utils\\prerun\default.bat'
 
 **Use overclock with caution!**
 
