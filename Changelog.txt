@@ -2,6 +2,32 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.14 2025/03/05
+====================================
+
+Fixes:
+- Core: Memory leak (regression from 6.4.13)
+- Errir in algorithm mapping: Phi and PhiHash are separate algorithms
+
+Miner updates:
+- BzMiner-v23.0.2 (keep v22.0.2 for Etc & Ethash)
+- OneZeroMiner-v1.4.4
+- Wildrig-v0.42.3
+
+
+Changelog UG-Miner 6.4.13 2025/02/23
+====================================
+
+Fixes:
+- Core: Update watchdog timers for dryrun miners
+
+Improvements:
+- Core: Minor performance improvements and optimize memory footprint
+
+Miner updates
+- Rigel-v1.21.0
+
+
 Changelog UG-Miner 6.4.12 2025/02/18
 ====================================
 
@@ -17,7 +43,7 @@ Changelog UG-Miner 6.4.11 2025/02/15
 
 Enhancements:
 - Core: Add Banner
-- Optimze dual algorithm miner code
+- Optimize dual algorithm miner code
 
 Fixes:
 - Legacy GUI: Window size & location not getting saved when only closing form but UG-Miner is left running
