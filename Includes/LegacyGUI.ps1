@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.13
-Version date:   2025/02/23
+Version:        6.4.14
+Version date:   2025/03/05
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1068,7 +1068,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $_.Status = "Idle"
                             $_.SubStatus = "failed"
                             $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
-                            If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") }
+                            If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") | Out-Null }
                             $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
                         }
                     )
@@ -1787,7 +1787,7 @@ $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
 
-        $Variables.WatchDogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
+        $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
         $LegacyGUIwatchdogTimersDGV.DataSource = $null
         $Variables.Miners.ForEach(
             { 

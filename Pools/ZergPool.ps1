@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.4.13
-Version date:   2025/02/23
+Version:        6.4.14
+Version date:   2025/03/05
 #>
 
 Param(
@@ -71,10 +71,10 @@ If ($DivisorMultiplier -and $Regions) {
         If ($PayoutThreshold) { $PayoutThresholdParameter = ",pl=$([Double]$PayoutThreshold)" }
 
         $Reasons = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-        If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") }
-        If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Pool] (conversion disabled at pool)") }
-        If ($Request.$Pool.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
-        If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") }
+        If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
+        If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Pool] (conversion disabled at pool)") | Out-Null }
+        If ($Request.$Pool.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
 
         # Cannot cast negative values to [UInt]
         If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 }

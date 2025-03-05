@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.13
-Version date:   2025/02/23
+Version:        6.4.14
+Version date:   2025/03/05
 #>
 
 Function Start-APIServer { 
@@ -164,12 +164,12 @@ Function Start-APIServer {
                                     $PoolsConfig = [System.IO.File]::ReadAllLines($Config.PoolsConfigFile) | ConvertFrom-Json
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
-                                            $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)" | Sort-Object -Unique)
-                                            $Pool.Reasons = @($Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Sort-Object -Unique)
+                                            $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
+                                            $Pool.Reasons = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
                                         }
                                         Else { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "+$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                                            $Pool.Reasons = @($Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config") | Sort-Object -Unique)
+                                            $Pool.Reasons = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")
                                         }
                                         $Pool.Available = $false
                                         $Data += "$($Pool.Algorithm)@$($Pool.Name)"
@@ -629,7 +629,7 @@ Function Start-APIServer {
                                                         $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
                                                         $_.Available = $false
                                                         $_.Disabled = $false
-                                                        If ($_.Reasons -notcontains "0 H/s Stat file") { $_.Reasons.Add("0 H/s Stat file") }
+                                                        If ($_.Reasons -notcontains "0 H/s Stat file") { $_.Reasons.Add("0 H/s Stat file") | Out-Null }
                                                         $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
                                                         $_.Status = [MinerStatus]::Failed
                                                     }
@@ -704,7 +704,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/watchdogtimers/reset" { 
-                                $Variables.WatchDogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
+                                $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
                                 $Variables.Miners.ForEach(
                                     { 
                                         $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
@@ -1121,6 +1121,8 @@ Function Start-APIServer {
 
                         If ($GCstopWatch.Elapsed.TotalMinutes -gt 10) { 
                             [System.GC]::Collect()
+                            [System.GC]::WaitForPendingFinalizers()
+                            [System.GC]::Collect()
                             $GCstopWatch.Restart()
                         }
                     }
@@ -1172,6 +1174,8 @@ Function Stop-APIServer {
         $Variables.Remove("APIVersion")
 
         $Error.Clear()
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
         [System.GC]::Collect()
     }
 }

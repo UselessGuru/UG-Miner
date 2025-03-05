@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.4.13
-Version date:   2025/02/23
+Version:        6.4.14
+Version date:   2025/03/05
 #>
 
 Param(
@@ -67,10 +67,10 @@ If ($DivisorMultiplier -and $PriceField) {
         }
 
         $Reasons = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-        If (-not $PoolConfig.UserName) { $Reasons.Add("No username") }
+        If (-not $PoolConfig.UserName) { $Reasons.Add("No username") | Out-Null }
         # Sometimes pool returns $null hashrate for all algorithms
-        If (-not $Request.$Algorithm.hashrate_shared -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") }
-        If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") }
+        If (-not $Request.$Algorithm.hashrate_shared -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false

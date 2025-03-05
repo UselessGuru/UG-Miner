@@ -391,7 +391,7 @@ Class Miner : IDisposable {
         If ($this.DataReaderJob) { 
             $this.DataReaderJob | Stop-Job
             # Get data before removing read data
-            If ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).Where({ $_.Date }).ForEach({ $this.Data.Add($_) }) }
+            If ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).Where({ $_.Date }).ForEach({ $this.Data.Add($_) | Out-Null }) }
             $this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore | Out-Null
             $this.DataReaderJob = $null
         }
@@ -1588,20 +1588,29 @@ Function Update-ConfigFile {
     # WorkerName must not contain '.'
     If ($Config.WorkerName -match  "\.") { 
         $Config.WorkerName = $Config.WorkerName -replace "\."
-        $Variables.ConfigurationHasChangedDuringUpdate.Add("- WorkerName adjusted (no '.' allowed)")
+        $Variables.ConfigurationHasChangedDuringUpdate += "- WorkerName adjusted (no '.' allowed)"
     }
 
-    # MiningPoolHub is no longer available
-    If ([System.Version]::Parse($Config.ConfigFileVersion) -lt [System.Version]"6.3.0.0" -and $Config.PoolName -contains "MiningPoolHub") { 
-        Write-Message -Level Warn "Pool configuration changed during update (MiningPoolHub removed)."
-        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'MiningPoolHub' removed")
-        $Config.PoolName = $Config.PoolName -notmatch "MiningPoolHub"
-    }
+    # Removed pools
+    ("AHashPool", "BlockMasters", "NLPool", "MiningPoolHub").ForEach(
+        { 
+            If ($Config.PoolName -like "$_*") { 
+                Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName -like "$_*" -join "; ")) removed)."
+                $Variables.ConfigurationHasChangedDuringUpdate += "- Pool '$($Config.PoolName -like "$_*" -join "; ")' removed"
+                $Config.PoolName = $Config.PoolName -notlike "$_*"
+            }
+            If ($Config.BalancesTrackerExcludePools -like "$_*") { 
+                Write-Message -Level Warn "BalancesTrackerExcludePools changed during update ($($Config.PoolName -like "$_*" -join "; ") removed)."
+                $Variables.ConfigurationHasChangedDuringUpdate += "- BalancesTrackerExcludePools '$($Config.PoolName -like "$_*" -join "; ")' removed"
+                $Config.BalancesTrackerExcludePools = $Config.BalancesTrackerExcludePools -notlike "$_*"
+            }
+        }
+    )
 
     # ZergPoolCoins is no longer available
     If ($Config.PoolName -like "ZergPoolCoins*") { 
         Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' ))."
-        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' ))")
+        $Variables.ConfigurationHasChangedDuringUpdate += "- Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' ))"
         $Config.PoolName = $Config.PoolName -replace 'Coins'
     }
 
@@ -1618,7 +1627,7 @@ Function Update-ConfigFile {
             Default        { "Europe" }
         }
         Write-Message -Level Warn "Available mining locations have changed during update ($OldRegion -> $($Config.Region))".
-        $Variables.ConfigurationHasChangedDuringUpdate.Add("- Mining locations have changed ($OldRegion -> $($Config.Region))")
+        $Variables.ConfigurationHasChangedDuringUpdate += "- Mining locations have changed ($OldRegion -> $($Config.Region))"
     }
 
     # Changed config items
@@ -1651,7 +1660,8 @@ Function Update-ConfigFile {
 
     $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
     [Void](Write-Config -ConfigFile $ConfigFile -Config $Config)
-    Write-Message -Level Verbose "Updated configuration file '$($ConfigFile)' to version $($Variables.Branding.Version.ToString())."
+    Write-Message -Level Verbose "Updated configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' to version $($Variables.Branding.Version.ToString())."
+    Write-Host ""
 }
 
 Function Write-Config { 
@@ -3053,7 +3063,7 @@ Function Update-PoolWatchdog {
                         If ($_.Count -ge (2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
                             $Group = $_.Group
                             If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName })) { 
-                                $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") })
+                                $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") | Out-Null })
                                 Write-Message -Level Warn "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                             }
                         }
@@ -3068,7 +3078,7 @@ Function Update-PoolWatchdog {
                             If ($_.Count -ge 2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count - 1) { 
                                 $Group = $_.Group
                                 If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm })) { 
-                                    $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") })
+                                    $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") | Out-Null })
                                     Write-Message -Level Warn "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Variables.WatchdogReset).ToLocalTime().ToString("T"))."
                                 }
                             }
@@ -3146,11 +3156,11 @@ Function Get-AllDAGdata {
                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
             }
             Else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
@@ -3185,11 +3195,11 @@ Function Get-AllDAGdata {
                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
             }
             Else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
@@ -3222,11 +3232,11 @@ Function Get-AllDAGdata {
                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
             }
             Else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
@@ -3252,35 +3262,35 @@ Function Get-AllDAGdata {
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
-    # Update on script start, once every 24hrs or if unable to get data from source
-    $Currency = "SCC"
-    $Url = "https://scc.ccore.online/api/getblockcount"
-    If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from StakeCube block explorer
-        Try { 
-            Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
-                If ($CurrencyDAGdata.Epoch) { 
-                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                    $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                }
-                Else { 
-                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
-                }
-            }
-        }
-        Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
-        }
-    }
+    # # Update on script start, once every 24hrs or if unable to get data from source
+    # $Currency = "SCC"
+    # $Url = "https://scc.ccore.online/api/getblockcount"
+    # If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    #     # Get block data from StakeCube block explorer
+    #     Try { 
+    #         Write-Message -Level Info "Loading DAG data from '$Url'..."
+    #         $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+    #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+    #             $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
+    #             If ($CurrencyDAGdata.Epoch) { 
+    #                 $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+    #                 $CurrencyDAGdata | Add-Member Url $Url -Force
+    #                 $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+    #                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+    #             }
+    #             Else { 
+    #                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+    #             }
+    #         }
+    #     }
+    #     Catch { 
+    #         Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+    #     }
+    # }
 
     # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "BLOCX"
@@ -3304,7 +3314,7 @@ Function Get-AllDAGdata {
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
@@ -3330,7 +3340,7 @@ Function Get-AllDAGdata {
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
@@ -3356,7 +3366,7 @@ Function Get-AllDAGdata {
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
@@ -3382,7 +3392,7 @@ Function Get-AllDAGdata {
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
         }
     }
 
@@ -3409,7 +3419,7 @@ Function Get-AllDAGdata {
                 }
             }
             Catch { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url'."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
             }
         }
     }
@@ -3497,8 +3507,8 @@ Function Get-DAGsize {
 
     Switch ($Currency) { 
         "CFX" { 
-            $DatasetBytesInit = 4294967296
-            $DatasetBytesGrowth = 16777216
+            $DatasetBytesInit = 4GB
+            $DatasetBytesGrowth = 16MB
             $MixBytes = 256
             $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
@@ -3508,7 +3518,7 @@ Function Get-DAGsize {
         }
         "ERG" { 
             # https://github.com/RainbowMiner/RainbowMiner/issues/2102
-            $Size = [Math]::Pow(2, 26)
+            $Size = 64MB
             $BlockHeight = [Math]::Min($BlockHeight, 4198400)
             If ($BlockHeight -ge 614400) { 
                 $P = [Math]::Floor(($BlockHeight - 614400) / 51200) + 1

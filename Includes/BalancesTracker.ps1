@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.13
-Version date:   2025/02/23
+Version:        6.4.14
+Version date:   2025/03/05
 #>
 
 using module .\Include.psm1
@@ -413,6 +413,8 @@ Do {
     While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
 
     $Error.Clear()
+    [System.GC]::Collect()
+    [System.GC]::WaitForPendingFinalizers()
     [System.GC]::Collect()
 
 } While ($true)

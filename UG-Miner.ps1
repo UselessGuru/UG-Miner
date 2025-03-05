@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.13
-Version date:   2025/02/23
+Version:        6.4.14
+Version date:   2025/03/05
 #>
 
 using module .\Includes\Include.psm1
@@ -183,7 +183,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$PoolsConfigFile = ".\Config\PoolsConfig.json", # PoolsConfig file name
     [Parameter(Mandatory = $false)]
-    [String[]]$PoolName = @("Hiveon", "MiningDutch", "NiceHash", "NLPool", "ProHashing", "ZergPoolCoins", "ZPool"),
+    [String[]]$PoolName = @("HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "Hiveon", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ProHashing", "ProHashing24hr", "ProHashingPlus", "ZergPool", "ZergPool24hr", "ZergPoolPlus", "ZPool", "ZPool24hr", "ZPoolPlus"),
     [Parameter(Mandatory = $false)]
     [Int]$PoolTimeout = 20, # Time (in seconds) until it aborts the pool request (useful if a pool's API is stuck). Note: do not set this value too small or UG-Miner will not be able to get any pool data
     [Parameter(Mandatory = $false)]
@@ -310,16 +310,16 @@ https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 Write-Host "`nCopyright and license notices must be preserved.`n" -ForegroundColor Yellow
 
 # Initialize thread safe global variables
-$Global:Config = [Hashtable]::Synchronized(@{ })
-$Global:Stats = [Hashtable]::Synchronized(@{ })
-$Global:Variables = [Hashtable]::Synchronized(@{ })
+$Global:Config = [System.Collections.Hashtable]::Synchronized(@{ })
+$Global:Stats = [System.Collections.Hashtable]::Synchronized(@{ })
+$Global:Variables = [System.Collections.Hashtable]::Synchronized(@{ })
 
 # Branding data
 $Variables.Branding = [PSCustomObject]@{ 
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.13"
+    Version      = [System.Version]"6.4.14"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -430,7 +430,7 @@ $Prerequisites = @(
     "$env:SystemRoot\System32\VCRUNTIME140.dll",
     "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
 )
-If ($PrerequisitesMissing = @($Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) }))) { 
+If ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) })) { 
     $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "$_ is missing." })
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
@@ -893,12 +893,13 @@ Function MainLoop {
                 $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                 Write-Message -Level Verbose ($Message -replace "<br>", " ")
                 [Void](Stop-Core)
+
+                $Variables.MinersBest = [Miner[]]@()
+                $Variables.MinersRunning = [Miner[]]@()
+                $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
+
                 If ($LegacyGUIform) { 
                     [Void](Update-GUIstatus)
-
-                    $Variables.MinersBest = [Miner[]]@()
-                    $Variables.MinersRunning = [Miner[]]@()
-                    $Variables.MiningEarning = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
 
                     $LegacyGUIminingSummaryLabel.Text = ""
                     ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
@@ -1125,6 +1126,8 @@ Function MainLoop {
         }
 
         $Error.Clear()
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
         [System.GC]::Collect()
     }
 }
