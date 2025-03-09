@@ -1,6 +1,18 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.15 2025/03/09
+====================================
+
+Enhancements:
+- Core: Support for AMD RDNA4 architecture
+
+Fixes:
+- Core / Includes.psm1: Function 'Get-AllDAGdata' querying 'telestai.cryptoscope.io' twice for TLS block data
+
+Miner updates:
+- SRBMinerMulti-v2.8.0
+
 
 Changelog UG-Miner 6.4.14 2025/03/05
 ====================================
