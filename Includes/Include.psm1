@@ -3370,32 +3370,6 @@ Function Get-AllDAGdata {
         }
     }
 
-    # Update on script start, once every 24hrs or if unable to get data from source
-    $Currency = "TLS"
-    $Url = "https://telestai.cryptoscope.io/api/getblockcount/?legacy=1"
-    If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from TLS block explorer
-        Try { 
-            Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
-                If ($CurrencyDAGdata.Epoch) { 
-                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                    $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                }
-                Else { 
-                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
-                }
-            }
-        }
-        Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
-        }
-    }
-
     # ZergPool also supplies MEWC DAG data
     If ($Variables.PoolName -match "ZergPool.*") { 
         $Currency = "MEWC"

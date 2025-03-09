@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.14
-Version date:   2025/03/05
+Version:        6.4.15
+Version date:   2025/03/09
 #>
 
 using module .\Includes\Include.psm1
@@ -27,7 +27,7 @@ using module .\Includes\APIServer.psm1
 
 Param(
     [Parameter(Mandatory = $false)]
-    [String[]]$Algorithm = @(), # i.e. @("Equihash1445", "Ethash", "KawPow") etc. If '+' is used, then only the explicitly enabled algorithms are used. If '-' is used, then all algorithms except the disabled ones are used. Do not combine '+' and '-' for the same algorithm.
+    [String[]]$Algorithm = @(), # i.e. @("Equihash1445", "Ethash", "KawPow") etc. If '+' is used, then only the explicitly enabled algorithms are used. If '-' is used, then all algorithms except the disabled ones are used. Do not combine '+' and '-' concurrently.
     [Parameter(Mandatory = $false)]
     [String]$APILogfile = "", # API will log all requests to this file, leave empty to disable
     [Parameter(Mandatory = $false)]
@@ -69,7 +69,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Int]$CPUMinerProcessPriority = "-2", # Process priority for CPU miners
     [Parameter(Mandatory = $false)]
-    [String[]]$Currency = @(), # i.e. @("+ETC", +EVR", "+KIIRO") etc. If '+' is used, then only the explicitly enabled currencies are used. If '-' is used, then all currencies except the disabled ones are used. Do not combine '+' and '-' for the same currency.
+    [String[]]$Currency = @(), # i.e. @("+ETC", +EVR", "+KIIRO") etc. If '+' is used, then only the explicitly enabled currencies are used. If '-' is used, then all currencies except the disabled ones are used. Do not combine '+' and '-' concurrently.
     [Parameter(Mandatory = $false)]
     [Int]$DecimalsMax = 6, # Display numbers with maximal n decimal digits (larger numbers are shown with less decimal digits)
     [Parameter(Mandatory = $false)]
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.14"
+    Version      = [System.Version]"6.4.15"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell

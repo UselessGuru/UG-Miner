@@ -140,6 +140,57 @@
       }
     }
   },
+  "MiningPoolHub": {
+    "Algorithm": [],
+    "AutoExchange": true,
+    "BalancesKeepAlive": 90, // No expiration communicated by pool
+    "EarningsAdjustmentFactor": 0.1, // Lower projected earnings until pool resolves its payout issues (https://bitcointalk.org/index.php?topic=472510.msg61523969#msg61523969)
+    "Fee": 0.009,
+    "GuaranteedPayoutCurrencies": [
+      "ADZ",
+      "AUR",
+      "BCH",
+      "BSTY",
+      "BTC",
+      "BTG",
+      "DASH",
+      "DGB",
+      "ESN",
+      "ETC",
+      "ETH",
+      "ETN",
+      "EXP",
+      "FTC",
+      "GAME",
+      "GRS",
+      "LTC",
+      "MAX",
+      "MONA",
+      "MUSIC",
+      "RVN",
+      "SC",
+      "START",
+      "SXC",
+      "VTC",
+      "XMR",
+      "XMY",
+      "XVG",
+      "XZC",
+      "ZCL",
+      "ZEC",
+      "ZEN"
+    ],
+    "PoolAPIAllowedFailureCount": 3,
+    "PoolAPIretryInterval": 3,
+    "PoolAPItimeout": 20,    "Region": [
+      "asia",
+      "europe",
+      "us-east"
+    ],
+    "Variant": {
+      "MiningPoolHub": {}
+    }
+  },
   "NiceHash": {
     "Algorithm": [],
     "AutoExchange": true,

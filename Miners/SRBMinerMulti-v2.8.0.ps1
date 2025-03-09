@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.14
-Version date:   2025/03/05
+Version:        6.4.15
+Version date:   2025/03/09
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Model -notmatch "^GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/2.7.9/SRBMiner-Multi-2-7-9-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/2.8.0/SRBMiner-Multi-2-8-0-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
