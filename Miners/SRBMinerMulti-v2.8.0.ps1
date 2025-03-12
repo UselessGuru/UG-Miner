@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.15
-Version date:   2025/03/09
+Version:        6.4.16
+Version date:   2025/03/12
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -234,7 +234,7 @@ $Algorithms = @(
     @{ Algorithms = @("SCCpow", "");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());                         Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm firopow") }
     @{ Algorithms = @("SHA256dt", "");                  Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());                         Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm sha256dt") }
     @{ Algorithms = @("VertHash", "");                  Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());                         Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm verthash --verthash-dat-path ..\.$($Variables.VerthashDatPath)") }
-    @{ Algorithms = @("WalaHash", "");                  Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "";                 ExcludePools = @(@(), @());                         Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm walahash") }
+    @{ Algorithms = @("WalaHash", "");                  Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());                         Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm walahash") }
     @{ Algorithms = @("XeChain", "");                   Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());                         Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm xechain") }
 )
 

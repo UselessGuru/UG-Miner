@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.15
-Version date:   2025/03/09
+Version:        6.4.16
+Version date:   2025/03/12
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -29,7 +29,7 @@ $Path = "Bin\$Name\telemerakiminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "ProgPowTelestai"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = @("Pascal"); ExcludePools = @(); Arguments = "" }
+    @{ Algorithm = "ProgPowTelestai"; MinMemGiB = 0.77; MinerSet = 1; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = "^Pascal$"; ExcludePools = @(); Arguments = "" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -46,7 +46,7 @@ If ($Algorithms) {
             $Algorithms.ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
+                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         # $ExcludePools = $_.ExcludePools
                         # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 

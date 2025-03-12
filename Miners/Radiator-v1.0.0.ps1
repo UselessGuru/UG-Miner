@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.15
-Version date:   2025/03/09
+Version:        6.4.16
+Version date:   2025/03/12
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -33,8 +33,8 @@ $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "SHA512256d"; MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo=rad" }
-    @{ Algorithm = "SHA256dt";   MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = " --algo=novo" }
+    @{ Algorithm = "SHA512256d"; MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludePools = @(); Arguments = " --algo=rad" }
+    @{ Algorithm = "SHA256dt";   MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(90, 0); ExcludePools = @(); Arguments = " --algo=novo" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -51,10 +51,8 @@ If ($Algorithms) {
 
             $Algorithms.ForEach(
                 { 
-                    # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $MinMemGiB = $_.MinMemGiB
                     If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
-                    # If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.15
-Version date:   2025/03/09
+Version:        6.4.16
+Version date:   2025/03/12
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
@@ -104,12 +104,12 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsenV2", "");                 Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2" }
     @{ Algorithms = @("HeavyHashKarlsenV2", "HeavyHashPyrinV2"); Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2 --dualmode PYRINV2DUAL --maxdualimpact *" }
     @{ Algorithms = @("HeavyHashPyrinV2", "");                   Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo PYRINV2 " }
-    @{ Algorithms = @("NexaPow", "");                            Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo NEXA" }
-    @{ Algorithms = @("Octopus", "");                            Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo OCTOPUS --mode a" }
-    @{ Algorithms = @("SHA512256d", "");                         Type = "NVIDIA"; Fee = @(0.0075);      MinMemGiB = 1.0;  MinerSet = 2; WarmupTimes = @(60, 20);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo RADIANT" }
-    @{ Algorithms = @("UbqHash", "");                            Type = "NVIDIA"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH" }
-    @{ Algorithms = @("UbqHash", "Blake3");                      Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo UBQHASH --dualmode ALEPHDUAL --maxdualimpact *" }
-#   @{ Algorithms = @("UbqHash", "HeavyHashKarlsenV2");          Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH --dualmode KARLSENV2DUAL --maxdualimpact *" } # No hashrate for second algorithm
+    @{ Algorithms = @("NexaPow", "");                            Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @());           Arguments = " --algo NEXA" }
+    @{ Algorithms = @("Octopus", "");                            Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @());           Arguments = " --algo OCTOPUS --mode a" }
+    @{ Algorithms = @("SHA512256d", "");                         Type = "NVIDIA"; Fee = @(0.0075);      MinMemGiB = 1.0;  MinerSet = 2; WarmupTimes = @(60, 20);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @());           Arguments = " --algo RADIANT" }
+    @{ Algorithms = @("UbqHash", "");                            Type = "NVIDIA"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH" }
+    @{ Algorithms = @("UbqHash", "Blake3");                      Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo UBQHASH --dualmode ALEPHDUAL --maxdualimpact *" }
+#   @{ Algorithms = @("UbqHash", "HeavyHashKarlsenV2");          Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH --dualmode KARLSENV2DUAL --maxdualimpact *" } # No hashrate for second algorithm
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -147,7 +147,7 @@ If ($Algorithms) {
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
-                    $ExcludeGPUarchitectures = $_.ExcludeGPUArchitectures
+                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         $ExcludePools = $_.ExcludePools

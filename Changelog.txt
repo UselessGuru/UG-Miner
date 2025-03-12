@@ -1,6 +1,17 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.16 2025/03/12
+====================================
+
+Enhancements:
+- Optimize miner code
+
+Miner updates:
+- Rigel-v1.21.2
+- Wildrig-v0.42.2
+
+
 Changelog UG-Miner 6.4.15 2025/03/09
 ====================================
 

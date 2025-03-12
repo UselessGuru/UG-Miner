@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.15
-Version date:   2025/03/09
+Version:        6.4.16
+Version date:   2025/03/12
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { Return }
@@ -29,10 +29,10 @@ $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @( 
-    @{ Algorithm = "XelisHashV2";  Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "XelisHashV2";  Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo xelis") }
 
-    @{ Algorithm = "DynexSolve";   Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo dynex") }
-    @{ Algorithm = "XelisHashV2";  Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = @(); ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "DynexSolve";   Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo dynex") }
+    @{ Algorithm = "XelisHashV2";  Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo xelis") }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -49,10 +49,9 @@ If ($Algorithms) {
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
-                    # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     $MinMemGiB = $_.MinMemGiB
+
                     If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
-                    # If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB -and $ExcludeGPUarchitectures -notcontains $_.Architecture })) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
