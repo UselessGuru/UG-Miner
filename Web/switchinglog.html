@@ -4,7 +4,7 @@
           </div>
           <div class="alert alert-info" role="alert">Lists the executed miners and the command lines used (last 1000 entries).</div>
           <div id="toolbar">
-            <button id="btn-clear-log" class="btn btn-info">Clear switching log</button>
+            <button id="btn-clear-log" class="btn btn-info" disabled>Clear switching log</button>
           </div>
           <table id="switchinglog" class="table"
             data-auto-refresh-status="true"
@@ -74,6 +74,10 @@
               });
               return data;
             }
+
+            $('#switchinglog').on('load-success.bs.table', function () {
+              document.getElementById('btn-clear-log').disabled = !Boolean($table.bootstrapTable('getData').length);
+            });
 
             $table.bootstrapTable({
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds

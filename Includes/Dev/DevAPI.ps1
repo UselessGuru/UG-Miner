@@ -573,7 +573,7 @@ Switch ($Path) {
         }
         Break
     }
-    "/functions/watchdogtimers/reset" { 
+    "/functions/watchdogtimers/remove" { 
         $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
         $Variables.Miners.ForEach(
             { 
@@ -587,8 +587,8 @@ Switch ($Path) {
                 $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
             }
         )
-        Write-Message -Level Verbose "Web GUI: All watchdog timers reset."
-        $Data = "Watchdog timers will be recreated in next cycle."
+        Write-Message -Level Verbose "Web GUI: All watchdog timers removed."
+        $Data = "All watchdog timers removed.`nWatchdog timers will be recreated in the next cycle."
         Break
     }
     "/algorithms" { 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.16
-Version date:   2025/03/12
+Version:        6.4.17
+Version date:   2025/03/19
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1801,16 +1801,16 @@ $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
                 $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
             }
         )
-        Write-Message -Level Verbose "GUI: All watchdog timers reset."
+        Write-Message -Level Verbose "GUI: All watchdog timers removed."
         $LegacyGUIwatchdogTimersRemoveButton.Enabled = $false
 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 
-        [Void][System.Windows.Forms.MessageBox]::Show("Watchdog timers will be recreated in next cycle.", "$($Variables.Branding.ProductLabel) $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64)
+        [Void][System.Windows.Forms.MessageBox]::Show("All watchdog timers removed.`nWatchdog timers will be recreated in the next cycle.", "$($Variables.Branding.ProductLabel) $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64)
     }
 )
 $LegacyGUIwatchdogTimersPageControls += $LegacyGUIwatchdogTimersRemoveButton
-$LegacyGUItooltip.SetToolTip($LegacyGUIwatchdogTimersRemoveButton, "This will remove all watchdog timers.`rWatchdog timers will be recreated in next cycle.")
+$LegacyGUItooltip.SetToolTip($LegacyGUIwatchdogTimersRemoveButton, "This will remove all watchdog timers.`rWatchdog timers will be recreated in the next cycle.")
 
 $LegacyGUIwatchdogTimersDGV = New-Object System.Windows.Forms.DataGridView
 $LegacyGUIwatchdogTimersDGV.AllowUserToAddRows = $false

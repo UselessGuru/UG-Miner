@@ -1,6 +1,13 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.17 2025/03/19
+====================================
+
+Miner updates:
+- NanoMiner-v3.10.0
+
+
 Changelog UG-Miner 6.4.16 2025/03/12
 ====================================
 

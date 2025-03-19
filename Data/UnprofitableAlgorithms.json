@@ -9,6 +9,7 @@
   "Bitcore":  "*",
   "BCD":  "*",
   "Blake2s":  "1",
+  "Blake3":  "1",
   "BlakeCoin":  "*",
   "BlakeVanilla":  "*",
   "Bmw512":  "*",

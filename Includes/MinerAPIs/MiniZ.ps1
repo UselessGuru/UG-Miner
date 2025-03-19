@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.4.16
-Version date:   2025/03/12
+Version:        6.4.17
+Version date:   2025/03/19
 #>
 
 Class MiniZ : Miner { 

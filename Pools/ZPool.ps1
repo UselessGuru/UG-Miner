@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.4.16
-Version date:   2025/03/12
+Version:        6.4.17
+Version date:   2025/03/19
 #>
 
 Param(
@@ -67,7 +67,7 @@ If ($PriceField) {
         If ($Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
         If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
 
-        # SCC firo variant is a separate algorithm
+        # SCC firo variant is a separate algorithm (SCCPow)
         If ($Algorithm -eq "firopow" -and $Currency -eq "SCC") { continue }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"

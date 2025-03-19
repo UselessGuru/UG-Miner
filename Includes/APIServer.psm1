@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.16
-Version date:   2025/03/12
+Version:        6.4.17
+Version date:   2025/03/19
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.30"
+    $APIVersion = "0.5.4.32"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -651,6 +651,7 @@ Function Start-APIServer {
                             "/functions/switchinglog/clear" { 
                                 Get-ChildItem -Path ".\Logs\switchinglog.csv" -File | Remove-Item -Force
                                 Write-Message -Level Verbose "Web GUI: Switching log '.\Logs\switchinglog.csv' cleared."
+                                $Data = "Switching log '.\Logs\switchinglog.csv' cleared."
                                 Break
                             }
                             "/functions/variables/get" { 
@@ -663,62 +664,63 @@ Function Start-APIServer {
                                 Break
                             }
                             "/functions/watchdogtimers/remove" { 
-                                $Data = @()
-                                ForEach ($Miner in @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore)) { 
-                                    # Update miner
-                                    $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name }) }).ForEach(
-                                        { 
-                                            $Data += "$($_.Name)"
-                                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                                            If (-not $_.Reasons) { $_.Available = $true }
-                                        }
-                                    )
+                                If ($Parameters.Miners -or $Parameters.Pools) { 
+                                    $Data = @()
+                                    ForEach ($Miner in @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore)) { 
+                                        # Update miner
+                                        $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name }) }).ForEach(
+                                            { 
+                                                $Data += "$($_.Name)"
+                                                $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                                                If (-not $_.Reasons) { $_.Available = $true }
+                                            }
+                                        )
 
-                                    # Remove Watchdog timers
-                                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
-                                }
+                                        # Remove Watchdog timers
+                                        $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
+                                    }
 
-                                ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
-                                    # Update pool
-                                    $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }) }).ForEach(
-                                        { 
-                                            $Data += "$($_.Key) [$($_.Region)]"
-                                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
-                                            If (-not $_.Reasons) { $_.Available = $true }
-                                        }
-                                    )
+                                    ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
+                                        # Update pool
+                                        $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }) }).ForEach(
+                                            { 
+                                                $Data += "$($_.Key) [$($_.Region)]"
+                                                $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
+                                                If (-not $_.Reasons) { $_.Available = $true }
+                                            }
+                                        )
 
-                                    # Remove Watchdog timers
-                                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm })
-                                }
-                                If ($Data) { 
-                                    $Data = $Data | Sort-Object -Unique
-                                    $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
-                                    Write-Message -Level Verbose "Web GUI: $Message"
-                                    $Data = "$($Data -join "`n")`n`n$Message"
+                                        # Remove Watchdog timers
+                                        $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm })
+                                    }
+                                    If ($Data) { 
+                                        $Data = $Data | Sort-Object -Unique
+                                        $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
+                                        Write-Message -Level Verbose "Web GUI: $Message"
+                                        $Data = "$($Data -join "`n")`n`n$Message"
+                                    }
+                                    Else { 
+                                        $Data = "No matching watchdog timer found."
+                                    }
+                                    Remove-Variable Message, Miner, Pool -ErrorAction Ignore
                                 }
                                 Else { 
-                                    $Data = "No matching watchdog timer found."
+                                    $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
+                                    $Variables.Miners.ForEach(
+                                        { 
+                                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                                            $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
+                                        }
+                                    )
+                                    $Variables.Pools.ForEach(
+                                        { 
+                                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
+                                            $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
+                                        }
+                                    )
+                                    Write-Message -Level Verbose "Web GUI: All watchdog timers removed."
+                                    $Data = "All watchdog timers removed.`nWatchdog timers will be recreated in the next cycle."
                                 }
-                                Remove-Variable Message, Miner, Pool -ErrorAction Ignore
-                                Break
-                            }
-                            "/functions/watchdogtimers/reset" { 
-                                $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
-                                $Variables.Miners.ForEach(
-                                    { 
-                                        $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                                        $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
-                                    }
-                                )
-                                $Variables.Pools.ForEach(
-                                    { 
-                                        $_.Reasons = @($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
-                                        $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
-                                    }
-                                )
-                                Write-Message -Level Verbose "Web GUI: All watchdog timers reset."
-                                $Data = "Watchdog timers will be recreated in next cycle."
                                 Break
                             }
                             "/algorithms" { 

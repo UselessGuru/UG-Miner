@@ -5,7 +5,7 @@
           <div id="watchdogalert" class="alert alert-info" role="alert"></div>
           <div id="watchdog" style="visibility:hidden">
             <div id="toolbar">
-              <button id="btn-removewatchdogs" class="btn btn-info">Remove all watchdog timers</button>
+              <button id="btn-removewatchdogs" class="btn btn-info" disabled>Remove all watchdog timers</button>
             </div>
             <table id="watchdogtimers" class="table"
               data-auto-refresh="true"
@@ -61,6 +61,10 @@
               height: $(window).height() - $table.offset().top - 35
             });
 
+            $('#watchdogtimers').on('load-success.bs.table', function () {
+              document.getElementById('btn-removewatchdogs').disabled = !Boolean($table.bootstrapTable('getData').length);
+            });
+
             $(document).ready(function () {
               if (config.Watchdog) { 
                 document.getElementById('watchdog').style.visibility='visible';
@@ -81,7 +85,7 @@
               };
               $('#btn-removewatchdogs').click(function () {
                 $('*').css('cursor', 'wait');
-                $url = '/functions/watchdogtimers/reset';
+                $url = '/functions/watchdogtimers/remove';
                 $('.modal-body').load($url, function() {
                   $('.modal-title').text($('#btn-removewatchdogs').text());
                   $('*').css('cursor', 'default');

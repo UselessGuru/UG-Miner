@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.16
-Version date:   2025/03/12
+Version:        6.4.17
+Version date:   2025/03/19
 #>
 
 using module .\Include.psm1
@@ -1044,7 +1044,7 @@ Try {
                     Remove-Variable DeviceNames, MinerDeviceNamesCombination -ErrorAction Ignore
 
                     # Get smallest $Bias
-                    # Hack: Temporarily make all bias -ge 0 by adding smallest bias, MinerBest produces wrong sort order when some profits are negative
+                    # Hack: Temporarily make all bias -ge 0 by adding smallest bias, MinersBest produces wrong sort order when some profits are negative
                     $SmallestBias = $Variables.MinersBestPerDevice.$Bias | Sort-Object -Top 1
                     $MinerCombinations.ForEach({ $_.Combination.ForEach({ $_.$Bias += $SmallestBias }) })
                     $MinersBest = ($MinerCombinations | Sort-Object -Descending { $_.Combination.Where({ [Double]::IsNaN($_.$Bias) }).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination
@@ -1131,7 +1131,8 @@ Try {
             )
         }
         Else { 
-            $Summary = "Error: Could not get BTC exchange rate from min-api.cryptocompare.com"
+            $Summary = "Error: Could not get BTC exchange rate from 'min-api.cryptocompare.com'. Cannot determine best miners to run."
+            Write-Message -Level Warn $Summary
             $MinersBest = [Miner[]]@()
         }
         $Variables.Summary = $Summary
