@@ -122,7 +122,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>System activity detected. Mining is suspended until system is idle for|System was idle for .*Resuming mining.</Keyword>
+          <Keyword>System activity detected.|Mining is suspended until system is idle for|System was idle for|System was idle .+ Resuming mining.</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>

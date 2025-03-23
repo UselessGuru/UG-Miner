@@ -358,6 +358,14 @@ Write-Host "Preparing environment and loading data files..." -ForegroundColor Ye
 Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru..."
 Write-Host ""
 
+# Start transcript log
+If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
+
+# Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
+[Void](Start-LogReader)
+
+If (-not $Variables.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'." }
+
 If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
     Write-Host "Verifying that no other instance of $($Variables.Branding.ProductLabel) is running..."
@@ -378,20 +386,11 @@ If (-not $Variables.MyIP) {
     Exit
 }
 
-# Start transcript log
-If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
-
-# Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
-[Void](Start-LogReader)
-
-If (-not $Variables.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'." }
-
 # Update config file to include all new config items
 If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
     [Void](Update-ConfigFile -ConfigFile $Variables.ConfigFile)
 }
-
-ElseIf ((Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
+ElseIf ($Variables.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
     # Exclude from AV scanner
     Try { 
         If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..."; Start-Sleep -Seconds 5 }
@@ -410,9 +409,9 @@ ElseIf ((Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) {
         }
     }
 }
-Write-Host ""
 
 #Prerequisites check
+Write-Host ""
 Write-Message -Level Verbose "Verifying pre-requisites..."
 If ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") { 
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
@@ -862,31 +861,48 @@ Function MainLoop {
         If ($Config.IdleDetection) { 
             If ([Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Config.IdleSec) { 
                 # System was idle long enough, start mining
-                If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
-                    $Variables.Summary = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining..."
-                    Write-Message -Level Verbose ($Variables.Summary -replace "<br>", " ")
+                If (-not $Global:CoreRunspace) { 
+                    $Message = "System was idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" }).<br>Resuming mining..."
+                    Write-Message -Level Verbose ($Message -replace "<br>", " ")
+                    $Variables.Summary = $Message
+
                     [Void](Start-Core)
-                    If ($LegacyGUIform) { [Void](Update-GUIstatus) }
+
+                    If ($LegacyGUIform) { 
+                        [Void](Update-GUIstatus)
+                        $LegacyGUIminingSummaryLabel.Text = ""
+                        ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                        $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+                    }
                 }
+
+                Remove-Variable Message
             }
             ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false -and $Global:CoreRunspace.StartTime -lt [DateTime]::Now.ToUniversalTime().AddSeconds( 1 )) { 
-                $Message = "System activity detected.<br>Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
-                Write-Message -Level Verbose ($Message -replace "<br>", " ")
-                [Void](Stop-Core)
-
-                $Variables.MinersBest = [Miner[]]@()
-                $Variables.MinersRunning = [Miner[]]@()
-                $Variables.MiningEarnings = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
+                $Message = "System activity detected."
+                Write-Message -Level Verbose $Message
+                $Variables.Summary = $Message
 
                 If ($LegacyGUIform) { 
                     [Void](Update-GUIstatus)
-
                     $LegacyGUIminingSummaryLabel.Text = ""
                     ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
 
+                [Void](Stop-Core)
+
+                $Message = "Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
+                Write-Message -Level Verbose $Message
                 $Variables.Summary = $Message
+
+                If ($LegacyGUIform) { 
+                    [Void](Update-GUIstatus)
+                    $LegacyGUIminingSummaryLabel.Text = ""
+                    ($Message -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+                }
+
                 Remove-Variable Message
             }
         }

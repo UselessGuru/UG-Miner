@@ -23,8 +23,11 @@ Changes:
     ShowUserColumn -> ShowColumnUser
 
 Enhancements:
+- Web GUI: Reworked layout, eliminate clutter
+
+Improvements:
+- Core: Minor performance improvements and optimize memory footprint
 - Optimize miner code
-- Web GUI: Revorked layout, eliminate clutter
 
 Fixes:
 - Brains 'ZergPool' & 'ZPool' not updating DAG data from API information
