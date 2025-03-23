@@ -40,7 +40,6 @@ Miner updates:
 - PhoenixMiner-v6.2c (fix download link)
 
 
-
 Changelog UG-Miner 6.4.17 2025/03/19
 ====================================
 
