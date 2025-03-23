@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.4.18
-Version date:   2025/03/19
+Version date:   2025/03/23
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -102,7 +102,7 @@ If ($Algorithms) {
 
                                     If ($AvailableMinerDevices) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })$(If ($_.Intensity) { "-Intensity$($_.Intensity)" })"
+                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)$(If ($_.Intensity) { "-$($_.Intensity)" })"})"
 
                                         $Arguments = $_.Arguments
                                         $Arguments += " -pool $(If ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User)"

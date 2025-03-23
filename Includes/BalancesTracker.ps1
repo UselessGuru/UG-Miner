@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 BalancesTrackerJob.ps1 Written by MrPlusGH https://github.com/MrPlusGH & UseLessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.17
-Version date:   2025/03/19
+Version:        6.4.18
+Version date:   2025/03/23
 #>
 
 using module .\Include.psm1
@@ -40,7 +40,7 @@ Do {
     $Variables.PoolsLastEarnings = If (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
     If (-not $Variables.PoolsLastEarnings.Keys) { $Variables.PoolsLastEarnings = @{ } }
 
-    # Read existing earning data, use data from last file
+    # Read existing earnings data, use data from last file
     ForEach ($Filename in (Get-ChildItem ".\Data\BalancesTrackerData*.json" | Sort-Object -Descending)) { 
         $Variables.BalancesData = ([System.IO.File]::ReadAllLines($Filename) | ConvertFrom-Json)
         If ($Variables.BalancesData.Count -gt ($Variables.PoolData.Count / 2)) { Break }
@@ -49,7 +49,7 @@ Do {
     If ($Variables.BalancesData -isnot [Array]) { $Variables.BalancesData = @() }
     $Variables.BalancesData.ForEach({ $_.DateTime = [DateTime]$_.DateTime })
 
-    # Read existing earning data, use data from last file
+    # Read existing earnings data, use data from last file
     ForEach($Filename in (Get-ChildItem ".\Data\DailyEarnings*.csv" | Sort-Object -Descending)) { 
         $Earnings = @(Import-Csv $FileName -ErrorAction Ignore)
         If ($Earnings.Count -gt $Variables.PoolData.Count / 2) { Break }
@@ -201,7 +201,7 @@ Do {
                     }
                 }
                 Else { 
-                    # HashCryptos, Hiveon, MiningDutch, ZergPool, ZPool
+                    # HashCryptos, HiveON, MiningDutch, ZergPool, ZPool
                     $Delta = $PoolBalanceObject.Unpaid - ($PoolBalanceObjects[-1]).Unpaid
                     # Current 'Unpaid' is smaller
                     If ($Delta -lt 0) { 
@@ -292,15 +292,15 @@ Do {
                 $EarningsObject | Export-Csv -NoTypeInformation -Append ".\Logs\BalancesTrackerLog.csv" -Force -ErrorAction Ignore
             }
 
-            $PoolTodaysEarning = $Earnings.Where({ $_.Pool -eq $PoolBalanceObject.Pool -and $_.Currency -eq $PoolBalanceObject.Currency -and $_.Wallet -eq $PoolBalanceObject.Wallet })[-1]
+            $PoolTodaysEarnings = $Earnings.Where({ $_.Pool -eq $PoolBalanceObject.Pool -and $_.Currency -eq $PoolBalanceObject.Currency -and $_.Wallet -eq $PoolBalanceObject.Wallet })[-1]
 
-            If ([String]$PoolTodaysEarning.Date -eq $Now.ToString("yyyy-MM-dd")) { 
-                $PoolTodaysEarning.DailyEarnings = [Double]$GrowthToday
-                $PoolTodaysEarning.EndTime = $Now.ToString("T")
-                $PoolTodaysEarning.EndValue = [Double]$PoolBalanceObject.Earnings
-                $PoolTodaysEarning.Balance = [Double]$PoolBalanceObject.Balance
-                $PoolTodaysEarning.Unpaid = [Double]$PoolBalanceObject.Unpaid
-                $PoolTodaysEarning.Payout = [Double]$PoolTodaysEarning.Payout + [Double]$PoolBalanceObject.Payout
+            If ([String]$PoolTodaysEarnings.Date -eq $Now.ToString("yyyy-MM-dd")) { 
+                $PoolTodaysEarnings.DailyEarnings = [Double]$GrowthToday
+                $PoolTodaysEarnings.EndTime = $Now.ToString("T")
+                $PoolTodaysEarnings.EndValue = [Double]$PoolBalanceObject.Earnings
+                $PoolTodaysEarnings.Balance = [Double]$PoolBalanceObject.Balance
+                $PoolTodaysEarnings.Unpaid = [Double]$PoolBalanceObject.Unpaid
+                $PoolTodaysEarnings.Payout = [Double]$PoolTodaysEarnings.Payout + [Double]$PoolBalanceObject.Payout
             }
             Else { 
                 $Earnings += [PSCustomObject]@{ 
@@ -310,7 +310,7 @@ Do {
                     Wallet        = $PoolBalanceObject.Wallet
                     DailyEarnings = [Double]$GrowthToday
                     StartTime     = $Now.ToString("T")
-                    StartValue    = If ($PoolTodaysEarning) { [Double]$PoolTodaysEarning.EndValue } Else { [Double]$EarningsObject.Earnings }
+                    StartValue    = If ($PoolTodaysEarnings) { [Double]$PoolTodaysEarnings.EndValue } Else { [Double]$EarningsObject.Earnings }
                     EndTime       = $Now.ToString("T")
                     EndValue      = [Double]$EarningsObject.Earnings
                     Balance       = [Double]$EarningsObject.Balance
@@ -355,7 +355,7 @@ Do {
             }
         )
     }
-    Remove-Variable PoolEarnings, PoolTodaysEarning -ErrorAction Ignore
+    Remove-Variable PoolEarnings, PoolTodaysEarnings -ErrorAction Ignore
 
     $LegacyGUIearningsChartData = [PSCustomObject]@{ 
         Labels = @(

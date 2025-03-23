@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -242,9 +242,9 @@ Class Pool : IDisposable {
 [NoRunspaceAffinity()]
 Class Worker : IDisposable { 
     [Boolean]$Disabled = $false
-    [Double]$Earning = [Double]::NaN
-    [Double]$Earning_Bias = [Double]::NaN
-    [Double]$Earning_Accuracy = [Double]::NaN
+    [Double]$Earnings = [Double]::NaN
+    [Double]$Earnings_Bias = [Double]::NaN
+    [Double]$Earnings_Accuracy = [Double]::NaN
     [Double]$Fee = 0
     [Double]$Hashrate = [Double]::NaN
     [Pool]$Pool
@@ -286,16 +286,16 @@ Class Miner : IDisposable {
     [String[]]$DeviceNames = @() # derived from devices
     [PSCustomObject[]]$Devices
     [Boolean]$Disabled = $false
-    [Double]$Earning = [Double]::NaN # derived from pool and stats
-    [Double]$Earning_Bias = [Double]::NaN # derived from pool and stats
-    [Double]$Earning_Accuracy = 0 # derived from pool and stats
+    [Double]$Earnings = [Double]::NaN # derived from pool and stats
+    [Double]$Earnings_Bias = [Double]::NaN # derived from pool and stats
+    [Double]$Earnings_Accuracy = 0 # derived from pool and stats
     [DateTime]$EndTime # UniversalTime
     [String[]]$EnvVars = @()
     [Double[]]$Hashrates_Live = @()
     [String]$Info
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
     [String]$LogFile
-    [Boolean]$MeasurePowerConsumption = $false
+    [Boolean]$MeasurePowerConsumption = $false # derived from stats
     [UInt16]$MinDataSample # for safe hashrate values
     [UInt16]$MinerSet
     [String]$MinerUri
@@ -443,8 +443,8 @@ Class Miner : IDisposable {
             Cycle                   = ""
             DeviceNames             = $this.DeviceNames -join ";"
             Duration                = ""
-            Earning                 = $this.Earning
-            Earning_Bias            = $this.Earning_Bias
+            Earnings                = $this.Earnings
+            Earnings_Bias           = $this.Earnings_Bias
             Hashrates               = ""
             LastDataSample          = $null
             MeasurePowerConsumption = $this.MeasurePowerConsumption
@@ -496,10 +496,6 @@ Class Miner : IDisposable {
             Write-Message -Level Info "Stopping miner '$($this.Info)'..."
             $this.StatusInfo = "$($this.Info) is stopping..."
         }
-        Else { 
-            $this.SubStatus = [MinerStatus]::Failed
-            Write-Message -Level Error $this.StatusInfo
-        }
 
         If ($this.ProcessJob) { 
             If ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
@@ -537,8 +533,8 @@ Class Miner : IDisposable {
             Cycle                   = $this.ContinousCycle
             DeviceNames             = $this.DeviceNames -join " "
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
-            Earning                 = $this.Earning
-            Earning_Bias            = $this.Earning_Bias
+            Earnings                = $this.Earnings
+            Earnings_Bias           = $this.Earnings_Bias
             Hashrates               = $this.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & "
             LastDataSample          = If ($this.Data.Count -ge 1) { $this.Data.Item | Select-Object -Last 1 | ConvertTo-Json -Compress } Else { "" }
             MeasurePowerConsumption = $this.MeasurePowerConsumption
@@ -698,17 +694,17 @@ Class Miner : IDisposable {
                     $_.Disabled = $Stat.Disabled
                     $_.Hashrate = $Stat.Hour
                     $Factor = $_.Hashrate * (1 - $_.Fee - $_.Pool.Fee)
-                    $_.Earning = $_.Pool.Price * $Factor
-                    $_.Earning_Accuracy = $_.Pool.Accuracy
-                    $_.Earning_Bias = $_.Pool.Price_Bias * $Factor
+                    $_.Earnings = $_.Pool.Price * $Factor
+                    $_.Earnings_Accuracy = $_.Pool.Accuracy
+                    $_.Earnings_Bias = $_.Pool.Price_Bias * $Factor
                     $_.TotalMiningDuration = $Stat.Duration
                     $_.Updated = $Stat.Updated
                 }
                 Else { 
                     $_.Disabled = $false
-                    $_.Earning = [Double]::NaN
-                    $_.Earning_Accuracy = [Double]::NaN
-                    $_.Earning_Bias = [Double]::NaN
+                    $_.Earnings = [Double]::NaN
+                    $_.Earnings_Accuracy = [Double]::NaN
+                    $_.Earnings_Bias = [Double]::NaN
                     $_.Fee = 0
                     $_.Hashrate = [Double]::NaN
                     $_.TotalMiningDuration = [TimeSpan]0
@@ -721,26 +717,26 @@ Class Miner : IDisposable {
         $this.Updated = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
 
         If ($this.Benchmark -eq $true) { 
-            $this.Earning = [Double]::NaN
-            $this.Earning_Accuracy = [Double]::NaN
-            $this.Earning_Bias = [Double]::NaN
+            $this.Earnings = [Double]::NaN
+            $this.Earnings_Accuracy = [Double]::NaN
+            $this.Earnings_Bias = [Double]::NaN
         }
         Else { 
-            $this.Earning = 0
-            $this.Earning_Bias = 0
+            $this.Earnings = 0
+            $this.Earnings_Bias = 0
             $this.Workers.ForEach({ 
-                $this.Earning += $_.Earning
-                $this.Earning_Bias += $_.Earning_Bias
+                $this.Earnings += $_.Earnings
+                $this.Earnings_Bias += $_.Earnings_Bias
             })
-            $this.Earning_Accuracy = 0
-            If ($this.Earning) { $this.Workers.ForEach({ $this.Earning_Accuracy += $_.Earning_Accuracy * $_.Earning / $this.Earning }) }
+            $this.Earnings_Accuracy = 0
+            If ($this.Earnings) { $this.Workers.ForEach({ $this.Earnings_Accuracy += $_.Earnings_Accuracy * $_.Earnings / $this.Earnings }) }
         }
 
         If ($Stat = Get-Stat -Name "$($this.Name)_PowerConsumption") { 
             $this.PowerConsumption = $Stat.Week
             $this.PowerCost = $this.PowerConsumption * $PowerCostBTCperW
-            $this.Profit = $this.Earning - $this.PowerCost
-            $this.Profit_Bias = $this.Earning_Bias - $this.PowerCost
+            $this.Profit = $this.Earnings - $this.PowerCost
+            $this.Profit_Bias = $this.Earnings_Bias - $this.PowerCost
             $this.MeasurePowerConsumption = $false
         }
         Else { 
@@ -752,76 +748,26 @@ Class Miner : IDisposable {
     }
 }
 
-Function Open-CoreRunspace { 
-
-    If (-not $Global:CoreRunspace) { 
-        $Global:CoreRunspace = [RunspaceFactory]::CreateRunspace()
-        $Global:CoreRunspace.ApartmentState = "STA"
-        $Global:CoreRunspace.Name = "Core"
-        $Global:CoreRunspace.ThreadOptions = "ReuseThread"
-        $Global:CoreRunspace.Open()
-
-        $Global:CoreRunspace.SessionStateProxy.SetVariable("Config", $Config)
-        $Global:CoreRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
-        $Global:CoreRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
-        [Void]$Global:CoreRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
-
-        $PowerShell = [PowerShell]::Create()
-        $PowerShell.Runspace = $Global:CoreRunspace
-        [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
-        $Global:CoreRunspace | Add-Member PowerShell $PowerShell
-    }
-}
-
-Function Close-CoreRunspace { 
-
-    If ($Global:CoreRunspace) { 
-
-        [void](Stop-Core)
-        
-        $Variables.Pools.ForEach({ $_.Dispose() })
-        $Variables.Pools = [Pool[]]@()
-        $Variables.PoolsAdded = [Pool[]]@()
-        $Variables.PoolsExpired = [Pool[]]@()
-        $Variables.PoolsNew = [Pool[]]@()
-        $Variables.PoolsUpdated = [Pool[]]@()
-
-        $Variables.Miners.ForEach({ $_.Dispose() })
-        $Variables.Miners = [Miner[]]@()
-        $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
-        $Variables.MinersBest = [Miner[]]@()
-        $Variables.MinersBestPerDevice = [Miner[]]@()
-        $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
-        $Variables.MinersFailed = [Miner[]]@()
-        $Variables.MinersMissingBinary = [Miner[]]@()
-        $Variables.MinerMissingFirewallRule = [Miner[]]@()
-        $Variables.MinersMissingPrerequisite = [Miner[]]@()
-        $Variables.MinersOptimal = [Miner[]]@()
-        $Variables.MinersRunning = [Miner[]]@()
-
-        $Variables.MiningEarning = [Double]0
-        $Variables.MiningPowerConsumption = [Double]0
-        $Variables.MiningPowerCost = [Double]0
-        $Variables.MiningProfit = [Double]0
-
-        $Global:CoreRunspace.PSObject.Properties.Remove("Job")
-
-        # Must close runspace after miners were stopped, otherwise methods don't work any longer
-        $Global:CoreRunspace.PowerShell.Dispose()
-        $Global:CoreRunspace.PowerShell = $null
-        $Global:CoreRunspace.Close()
-        $Global:CoreRunspace.Dispose()
-
-        Remove-Variable CoreRunspace -Scope global
-
-        [System.GC]::Collect()
-    }
-}
-
 Function Start-Core { 
 
     Try { 
-        [Void](Open-CoreRunspace)
+        If (-not $Global:CoreRunspace) { 
+            $Global:CoreRunspace = [RunspaceFactory]::CreateRunspace()
+            $Global:CoreRunspace.ApartmentState = "STA"
+            $Global:CoreRunspace.Name = "Core"
+            $Global:CoreRunspace.ThreadOptions = "ReuseThread"
+            $Global:CoreRunspace.Open()
+    
+            $Global:CoreRunspace.SessionStateProxy.SetVariable("Config", $Config)
+            $Global:CoreRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+            $Global:CoreRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
+            [Void]$Global:CoreRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
+    
+            $PowerShell = [PowerShell]::Create()
+            $PowerShell.Runspace = $Global:CoreRunspace
+            [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
+            $Global:CoreRunspace | Add-Member PowerShell $PowerShell
+        }
 
         If ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
             $Global:CoreRunspace | Add-Member Job ($Global:CoreRunspace.PowerShell.BeginInvoke()) -Force
@@ -845,7 +791,7 @@ Function Stop-Core {
         $Global:CoreRunspace.PSObject.Properties.Remove("StartTime")
     }
 
-    ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status })) { 
+    ForEach ($Miner in $Variables.Miners) { 
         ForEach ($Worker in $Miner.WorkersRunning) { 
             If ($WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames })) { 
                 # Remove Watchdog timers
@@ -855,8 +801,46 @@ Function Stop-Core {
         Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
         $Miner.SetStatus([MinerStatus]::Idle)
     }
+    Remove-Variable Miner -ErrorAction Ignore
 
-    [System.GC]::Collect()
+    If ($Global:CoreRunspace) { 
+        $Variables.Pools.ForEach({ $_.Dispose() })
+        $Variables.Pools = [Pool[]]@()
+        $Variables.PoolsAdded = [Pool[]]@()
+        $Variables.PoolsExpired = [Pool[]]@()
+        $Variables.PoolsNew = [Pool[]]@()
+        $Variables.PoolsUpdated = [Pool[]]@()
+
+        $Variables.Miners.ForEach({ $_.Dispose() })
+        $Variables.Miners = [Miner[]]@()
+        $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
+        $Variables.MinersBest = [Miner[]]@()
+        $Variables.MinersBestPerDevice = [Miner[]]@()
+        $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
+        $Variables.MinersFailed = [Miner[]]@()
+        $Variables.MinersMissingBinary = [Miner[]]@()
+        $Variables.MinerMissingFirewallRule = [Miner[]]@()
+        $Variables.MinersMissingPrerequisite = [Miner[]]@()
+        $Variables.MinersOptimal = [Miner[]]@()
+        $Variables.MinersRunning = [Miner[]]@()
+
+        $Variables.MiningEarnings = [Double]0
+        $Variables.MiningPowerConsumption = [Double]0
+        $Variables.MiningPowerCost = [Double]0
+        $Variables.MiningProfit = [Double]0
+
+        $Global:CoreRunspace.PSObject.Properties.Remove("Job")
+
+        # Must close runspace after miners were stopped, otherwise methods don't work any longer
+        $Global:CoreRunspace.PowerShell.Dispose()
+        $Global:CoreRunspace.PowerShell = $null
+        $Global:CoreRunspace.Close()
+        $Global:CoreRunspace.Dispose()
+
+        Remove-Variable CoreRunspace -Scope global
+
+        [System.GC]::Collect()
+    }
 }
 
 Function Start-Brain { 
@@ -940,69 +924,41 @@ Function Stop-Brain {
     }
 }
 
-Function Open-BalancesTrackerRunspace { 
-
-    If (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
-        If (-not $Global:BalancesTrackerRunspace) { 
-            $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
-            $Global:BalancesTrackerRunspace.ApartmentState = "STA"
-            $Global:BalancesTrackerRunspace.Name = "BalancesTracker"
-            $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
-            $Global:BalancesTrackerRunspace.Open()
-
-            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Config", $Config)
-            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
-            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
-            [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
-
-            $PowerShell = [PowerShell]::Create()
-            $PowerShell.Runspace = $Global:BalancesTrackerRunspace
-            [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1")
-            $Global:BalancesTrackerRunspace | Add-Member PowerShell $PowerShell
-        }
-    }
-    Else { 
-        Write-Message -Level Error "Failed to start Balances tracker. Directory '.\Balances' is missing."
-    }
-}
-
-Function Close-BalancesTrackerRunspace { 
-
-    If ($Global:BalancesTrackerRunspace) { 
-
-        [Void](Stop-BalancesTracker)
-
-        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("Job")
-
-        $Global:BalancesTrackerRunspace.PowerShell.Dispose()
-        $Global:BalancesTrackerRunspace.PowerShell = $null
-        $Global:BalancesTrackerRunspace.Close()
-        $Global:BalancesTrackerRunspace.Dispose()
-
-        Remove-Variable BalancesTrackerRunspace -Scope global
-
-        [System.GC]::Collect()
-    }
-}
-
 Function Start-BalancesTracker { 
 
-    [Void](Open-BalancesTrackerRunspace)
+    Try { 
+        If (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
+            If (-not $Global:BalancesTrackerRunspace) { 
+                $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
+                $Global:BalancesTrackerRunspace.ApartmentState = "STA"
+                $Global:BalancesTrackerRunspace.Name = "BalancesTracker"
+                $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
+                $Global:BalancesTrackerRunspace.Open()
 
-    If ($Global:BalancesTrackerRunspace) { 
-        Try { 
+                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Config", $Config)
+                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
+                [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
-            If ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
-                $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
-                $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
-
-                $Variables.Summary = "Balances tracker background process started."
-                Write-Message -Level Info $Variables.Summary
+                $PowerShell = [PowerShell]::Create()
+                $PowerShell.Runspace = $Global:BalancesTrackerRunspace
+                [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\BalancesTracker.ps1")
+                $Global:BalancesTrackerRunspace | Add-Member PowerShell $PowerShell
             }
+                If ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
+                    $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
+                    $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+
+                    $Variables.Summary = "Balances tracker background process started."
+                    Write-Message -Level Info $Variables.Summary
+                }
+            }
+        Else { 
+            Write-Message -Level Error "Failed to start Balances tracker. Directory '.\Balances' is missing."
         }
-        Catch { 
-            Write-Message -Level Error "Failed to start Balances tracker [$($Error[0])]."
-        }
+    }
+    Catch { 
+        Write-Message -Level Error "Failed to start Balances tracker [$($Error[0])]."
     }
 }
 
@@ -1018,6 +974,18 @@ Function Stop-BalancesTracker {
 
         $Variables.Summary = "Balances tracker background process stopped."
         Write-Message -Level Info $Variables.Summary
+    }
+
+    If ($Global:BalancesTrackerRunspace) { 
+
+        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("Job")
+
+        $Global:BalancesTrackerRunspace.PowerShell.Dispose()
+        $Global:BalancesTrackerRunspace.PowerShell = $null
+        $Global:BalancesTrackerRunspace.Close()
+        $Global:BalancesTrackerRunspace.Dispose()
+
+        Remove-Variable BalancesTrackerRunspace -Scope global
 
         [System.GC]::Collect()
     }
@@ -1216,7 +1184,7 @@ Function Write-MonitoringData {
                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
                     Currency       = $Config.FIATcurrency
                     CurrentSpeed   = $_.Hashrates_Live
-                    Earning        = ($_.WorkersRunning.Earning | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+                    Earnings        = ($_.WorkersRunning.Earnings | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
                     EstimatedSpeed = $_.WorkersRunning.Hashrate
                     Name           = $_.Name
                     Path           = Resolve-Path -Relative $_.Path
@@ -1378,9 +1346,7 @@ Function Read-Config {
     Function Get-DefaultConfig { 
 
         $DefaultConfig = @{ }
-
         $DefaultConfig.ConfigFileVersion = $Variables.Branding.Version.ToString()
-        $Variables.FreshConfig = $true
 
         # Add default config items
         $Variables.AllCommandLineParameters.psBase.Keys.Where({ $_ -notin $DefaultConfig.psBase.Keys }).ForEach(
@@ -1393,7 +1359,6 @@ Function Read-Config {
 
         $RandomDonationData = $Variables.DonationData | Get-Random
         $DefaultConfig.MiningDutchUserName = $RandomDonationData.MiningDutchUserName
-        $DefaultConfig.NiceHashWallet = $RandomDonationData.Wallets.BTC
         $DefaultConfig.ProHashingUserName = $RandomDonationData.ProHashingUserName
         $DefaultConfig.Wallets.BTC = $RandomDonationData.Wallets.BTC
 
@@ -1406,9 +1371,10 @@ Function Read-Config {
         If (-not $Variables.PoolData) { 
             $Variables.PoolData = [System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
             $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
+            $Variables.PoolBaseNames = @($Variables.PoolData.psBase.Keys)
             If (-not $Variables.PoolVariants) { 
                 Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-                $Global:WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+                $Global:WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
                 Exit
             }
         }
@@ -1441,7 +1407,7 @@ Function Read-Config {
                     $PoolConfig.Region = $PoolConfig.Region.Where({ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) })
 
                     Switch ($PoolName) { 
-                        "Hiveon" { 
+                        "HiveON" { 
                             If (-not $PoolConfig.Wallets) { 
                                 $PoolConfig.Wallets = [Ordered]@{ }
                                 $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach({ $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_ })
@@ -1534,8 +1500,12 @@ Function Read-Config {
         }
         Catch { 
             $Variables.PoolsConfigData = [Ordered]@{ }
-            Write-Message -Level Warn "Pools configuration file '$($Variables.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt and will be ignored."
+            Write-Message -Level Warn "Pools configuration file '$($Variables.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt. Will use default values."
+            $Variables.Remove("PoolsConfigFileTimestamp")
         }
+    }
+    Else { 
+        $Variables.Remove("PoolsConfigFileTimestamp")
     }
 
     $ConfigFromFile.PoolsConfig = Get-PoolsConfig
@@ -1547,22 +1517,29 @@ Function Read-Config {
     $Variables.ShowPoolBalances = $Config.ShowPoolBalances
     $Variables.UIStyle = $Config.UIStyle
 
-    $Variables.ShowAccuracyColumn = $Config.ShowAccuracyColumn
-    $Variables.ShowCoinNameColumn = $Config.ShowCoinNameColumn
-    $Variables.ShowCurrencyColumn = $Config.ShowCurrencyColumn
-    $Variables.ShowEarningColumn = $Config.ShowEarningColumn
-    $Variables.ShowEarningBiasColumn = $Config.ShowEarningBiasColumn
-    $Variables.ShowHashrateColumn = $Config.ShowHashrateColumn
-    $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
-    $Variables.ShowPoolColumn = $Config.ShowPoolColumn
-    $Variables.ShowPoolFeeColumn = $Config.ShowPoolFeeColumn
-    $Variables.ShowProfitBiasColumn = $Config.ShowProfitBiasColumn
-    $Variables.ShowProfitColumn = $Config.ShowProfitColumn
-    $Variables.ShowPowerConsumptionColumn = $Config.ShowPowerConsumptionColumn
-    $Variables.ShowPowerCostColumn = $Config.ShowPowerCostColumn
-    $Variables.ShowUserColumn = $Config.ShowUserColumn
+    $Variables.ShowColumnAccuracy = $Config.ShowColumnAccuracy
+    $Variables.ShowColumnCoinName = $Config.ShowColumnCoinName
+    $Variables.ShowColumnCurrency = $Config.ShowColumnCurrency
+    $Variables.ShowColumnEarnings = $Config.ShowColumnEarnings
+    $Variables.ShowColumnEarningsBias = $Config.ShowColumnEarningsBias
+    $Variables.ShowColumnHashrate = $Config.ShowColumnHashrate
+    $Variables.ShowColumnMinerFee = $Config.ShowColumnMinerFee
+    $Variables.ShowColumnPool = $Config.ShowColumnPool
+    $Variables.ShowColumnPoolFee = $Config.ShowColumnPoolFee
+    $Variables.ShowColumnProfitBias = $Config.ShowColumnProfitBias
+    $Variables.ShowColumnProfit = $Config.ShowColumnProfit
+    $Variables.ShowColumnPowerConsumption = $Config.ShowColumnPowerConsumption
+    $Variables.ShowColumnPowerCost = $Config.ShowColumnPowerCost
+    $Variables.ShowColumnUser = $Config.ShowColumnUser
 
     $Variables.ConfigReadTimestamp = [DateTime]::Now.ToUniversalTime()
+
+    # Write config file in case they do not exist already
+    If (-not (Test-Path -LiteralPath $Variables.ConfigFile -PathType Leaf)) { 
+        [Void](Write-Config -Config $Config)
+        $Variables.FreshConfig = $true
+        $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
+    }
 }
 
 Function Update-ConfigFile { 
@@ -1638,28 +1615,43 @@ Function Update-ConfigFile {
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_) }
                 "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_) }
                 "MinerInstancePerDeviceModel" { $Config.Remove($_) }
-                "ShowAccuracy" { $Config.ShowAccuracyColumn = $Config.$_; $Config.Remove($_) }
-                "ShowCoinName" { $Config.ShowCoinNameColumn = $Config.$_; $Config.Remove($_) }
-                "ShowCurrency" { $Config.ShowCurrencyColumn = $Config.$_; $Config.Remove($_) }
-                "ShowEarning" { $Config.ShowEarningColumn = $Config.$_; $Config.Remove($_) }
-                "ShowEarningBias" { $Config.ShowEarningBiasColumn = $Config.$_; $Config.Remove($_) }
-                "ShowHashrate" { $Config.ShowHashrateColumn = $Config.$_; $Config.Remove($_) }
-                "ShowMinerFee" { $Config.ShowMinerFeeColumn = $Config.$_; $Config.Remove($_) }
-                "ShowPool" { $Config.ShowPoolColumn = $Config.$_; $Config.Remove($_) }
-                "ShowPoolFee" { $Config.ShowPoolFeeColumn = $Config.$_; $Config.Remove($_) }
-                "ShowProfit" { $Config.ShowProfitColumn = $Config.$_; $Config.Remove($_) }
-                "ShowProfitBias" { $Config.ShowProfitBiasColumn = $Config.$_; $Config.Remove($_) }
-                "ShowPowerConsumption" { $Config.ShowPowerConsumptionColumn = $Config.$_; $Config.Remove($_) }
-                "ShowPowerCost" { $Config.ShowPowerCostColumn = $Config.$_; $Config.Remove($_) }
-                "ShowPoolColumnBalances" { $Config.ShowPoolBalances = $Config.$_; $Config.Remove($_) }
-                "ShowUser" { $Config.ShowUserColumn = $Config.$_; $Config.Remove($_) }
-                Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
+                "ShowAccuracy" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_) }
+                "ShowAccuracyColumn" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_) }
+                "ShowCoinName" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_) }
+                "ShowCoinNameColumn" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_) }
+                "ShowCurrency" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_) }
+                "ShowCurrencyColumn" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_) }
+                "ShowEarning" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_) }
+                "ShowEarningColumn" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_) }
+                "ShowEarningBias" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_) }
+                "ShowEarningBiasColumn" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_) }
+                "ShowHashrate" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_) }
+                "ShowHashrateColumn" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_) }
+                "ShowMinerFee" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_) }
+                "ShowMinerFeeColumn" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_) }
+                "ShowPool" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_) }
+                "ShowPoolColumn" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_) }
+                "ShowPoolFee" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_) }
+                "ShowPoolFeeColumn" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_) }
+                "ShowProfit" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_) }
+                "ShowProfitColumn" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_) }
+                "ShowProfitBias" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_) }
+                "ShowProfitBiasColumn" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_) }
+                "ShowPowerConsumption" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_) }
+                "ShowPowerConsumptionColumn" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_) }
+                "ShowPowerCost" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_) }
+                "ShowPowerCostColumn" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_) }
+                "ShowPoolBalances" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_) }
+                "ShowPoolBalancesColumn" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_) }
+                "ShowUser" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_) }
+                "ShowUserColumn" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_) }
+                Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
             }
         }
     )
 
     $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
-    [Void](Write-Config -ConfigFile $ConfigFile -Config $Config)
+    [Void](Write-Config -Config $Config)
     Write-Message -Level Verbose "Updated configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' to version $($Variables.Branding.Version.ToString())."
     Write-Host ""
 }
@@ -1668,14 +1660,14 @@ Function Write-Config {
 
     Param (
         [Parameter(Mandatory = $true)]
-        [String]$ConfigFile,
-        [Parameter(Mandatory = $true)]
         [PSCustomObject]$Config
     )
 
-    If (Test-Path -LiteralPath $ConfigFile -PathType Leaf) { 
-        Copy-Item -Path $ConfigFile -Destination "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").backup"
-        Get-ChildItem -Path "$($ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
+    If (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { New-Item -Path . -Name "Config" -ItemType Directory | Out-Null }
+
+    If (Test-Path -LiteralPath $Variables.ConfigFile -PathType Leaf) { 
+        Copy-Item -Path $Variables.ConfigFile -Destination "$($Variables.ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").backup"
+        Get-ChildItem -Path "$($Variables.ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
     }
 
     $NewConfig = $Config.Clone()
@@ -1687,60 +1679,64 @@ Function Write-Config {
 "// This file was generated by $($Variables.Branding.ProductLabel)
 // $($Variables.Branding.ProductLabel) will automatically add / convert / rename / update new settings when updating to a new version
 "
-    "$Header$($NewConfig | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $ConfigFile -Force
+    "$Header$($NewConfig | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $Variables.ConfigFile -Force
 
-    $Variables.ShowAccuracyColumn = $Config.ShowAccuracyColumn
+    $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
+
+    $Variables.ShowColumnAccuracy = $Config.ShowColumnAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
-    $Variables.ShowCoinNameColumn = $Config.ShowCoinNameColumn
-    $Variables.ShowCurrencyColumn = $Config.ShowCurrencyColumn
-    $Variables.ShowEarningColumn = $Config.ShowEarningColumn
-    $Variables.ShowEarningBiasColumn = $Config.ShowEarningBiasColumn
-    $Variables.ShowHashrateColumn = $Config.ShowHashrateColumn
-    $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
-    $Variables.ShowMinerFeeColumn = $Config.ShowMinerFeeColumn
-    $Variables.ShowPoolColumn = $Config.ShowPoolColumn
+    $Variables.ShowColumnCoinName = $Config.ShowColumnCoinName
+    $Variables.ShowColumnCurrency = $Config.ShowColumnCurrency
+    $Variables.ShowColumnEarnings = $Config.ShowColumnEarnings
+    $Variables.ShowColumnEarningsBias = $Config.ShowColumnEarningsBias
+    $Variables.ShowColumnHashrate = $Config.ShowColumnHashrate
+    $Variables.ShowColumnMinerFee = $Config.ShowColumnMinerFee
+    $Variables.ShowColumnMinerFee = $Config.ShowColumnMinerFee
+    $Variables.ShowColumnPool = $Config.ShowColumnPool
     $Variables.ShowPoolBalances = $Config.ShowPoolBalances
-    $Variables.ShowPoolFeeColumn = $Config.ShowPoolFeeColumn
-    $Variables.ShowPowerCostColumn = $Config.ShowPowerCostColumn
-    $Variables.ShowProfitColumn = $Config.ShowProfitColumn
-    $Variables.ShowProfitBiasColumn = $Config.ShowProfitBiasColumn
+    $Variables.ShowColumnPoolFee = $Config.ShowColumnPoolFee
+    $Variables.ShowColumnPowerCost = $Config.ShowColumnPowerCost
+    $Variables.ShowColumnProfit = $Config.ShowColumnProfit
+    $Variables.ShowColumnProfitBias = $Config.ShowColumnProfitBias
     $Variables.ShowShares = $Config.ShowShares
-    $Variables.ShowUserColumn = $Config.ShowUserColumn
+    $Variables.ShowColumnUser = $Config.ShowColumnUser
     $Variables.UIStyle = $Config.UIStyle
 }
 
 Function Edit-File { 
     # Opens file in notepad. Notepad will remain in foreground until closed.
-
     Param (
         [Parameter(Mandatory = $false)]
         [String]$FileName
     )
 
-    $FileWriteTime = (Get-Item -Path $FileName).LastWriteTime
+    $FileWriteTime = (Get-Item -LiteralPath $FileName).LastWriteTime
+
     If (-not $FileWriteTime) { 
-        If ($FileName -eq $Variables.PoolsConfigFile -and (Test-Path -LiteralPath ".\Data\PoolsConfig-Template.json" -PathType Leaf)) { 
-            Copy-Item ".\Data\PoolsConfig-Template.json" $FileName
+        If ($FileName -eq $Variables.PoolsConfigFile -and -not (Test-Path -LiteralPath $Variables.PoolsConfigFile -PathType Leaf)) { 
+            Copy-Item -LiteralPath "$PWD\Data\PoolsConfig-Template.json" -Destination $FileName -ErrorAction Ignore
         }
     }
 
-    If (-not ($NotepadProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -Like "*\Notepad.exe* $($FileName)" }))) { 
-        $NotepadProcess = Start-Process -FilePath Notepad.exe -ArgumentList $FileName -PassThru
+    If (-not ($NotepadProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -Like "*\Notepad.exe* $($FileName)" })[0].ProcessId)) { 
+        $NotepadProcessId = (Start-Process -FilePath Notepad.exe -ArgumentList $FileName -PassThru).Id
     }
+
     # Check if the window is not already in foreground
-    While ($NotepadProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -Like "*\Notepad.exe* $($FileName)" })) { 
+    $FGWindowPid = [IntPtr]::Zero
+    While (Get-Process -Id $NotepadProcessId) { 
         Try { 
-            If ($MainWindowHandle = (Get-Process -Id $NotepadProcess.ProcessId).MainWindowHandle) { 
-                $FGWindowPid = [IntPtr]::Zero
-                [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid) | Out-Null
-                If ($NotepadProcess.ProcessId -ne $FGWindowPid) { 
-                    If ([Win32]::GetForegroundWindow() -ne $MainWindowHandle) { 
-                        [Win32]::ShowWindowAsync($MainWindowHandle, 6) | Out-Null # SW_MINIMIZE 
-                        [Win32]::ShowWindowAsync($MainWindowHandle, 9) | Out-Null # SW_RESTORE
-                    }
+            If ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process -Id $NotepadProcessId).MainWindowHandle }
+            If ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process).Where({ $_.Parent.Id -eq $NotepadProcessId }).MainWindowHandle }
+
+            [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid) | Out-Null
+            If ($NotepadProcessId -ne $FGWindowPid) { 
+                If ([Win32]::GetForegroundWindow() -ne $MainWindowHandle) { 
+                    [Win32]::ShowWindowAsync($MainWindowHandle, 6) | Out-Null # SW_MINIMIZE 
+                    [Win32]::ShowWindowAsync($MainWindowHandle, 9) | Out-Null # SW_RESTORE
                 }
-                Start-Sleep -Milliseconds 100
             }
+            Start-Sleep -Milliseconds 100
         }
         Catch { }
     }
@@ -1750,7 +1746,7 @@ Function Edit-File {
         Return "Saved '$FileName'.`nChanges will become active in the next cycle."
     }
 
-    Return "No changes to '$FileName' made."
+    Return "No changes to '$FileName' were made."
 }
 
 Function Get-SortedObject { 
@@ -3036,6 +3032,7 @@ Function Start-LogReader {
 }
 
 Function Get-ObsoleteMinerStats { 
+    # Used in AutoUpdate.ps1
 
     $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_Hashrate.txt", "*_PowerConsumption.txt").BaseName
     $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
@@ -3057,10 +3054,10 @@ Function Update-PoolWatchdog {
             # Only pools with a corresponding watchdog timer object are of interest
             If ($RelevantPools = $Pools.Where({ $RelevantWatchdogTimers.PoolName -contains $_.Name })) { 
 
-                # Add miner reason "Pool suspended by watchdog 'all algorithms'"
+                # Add miner reason "Pool suspended by watchdog 'all algorithms'", only if more than one pool
                 ($RelevantWatchdogTimers | Group-Object -Property PoolName).ForEach(
                     { 
-                        If ($_.Count -ge (2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
+                        If ($Config.PoolName.Count -gt 1 -and $_.Count -ge (2 * $Variables.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
                             $Group = $_.Group
                             If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName })) { 
                                 $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") | Out-Null })
@@ -3266,30 +3263,33 @@ Function Get-AllDAGdata {
         }
     }
 
-    # # Update on script start, once every 24hrs or if unable to get data from source
-    # $Currency = "SCC"
-    # $Url = "https://scc.ccore.online/api/getblockcount"
-    # If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-    #     # Get block data from StakeCube block explorer
-    #     Try { 
-    #         Write-Message -Level Info "Loading DAG data from '$Url'..."
-    #         $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-    #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-    #             $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
-    #             If ($CurrencyDAGdata.Epoch) { 
-    #                 $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-    #                 $CurrencyDAGdata | Add-Member Url $Url -Force
-    #                 $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-    #                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-    #             }
-    #             Else { 
-    #                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
-    #             }
-    #         }
-    #     }
-    #     Catch { 
-    #         Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
-    #     }
+    # Update on script start, once every 24hrs or if unable to get data from source
+    # ZPool also supplies SCC DAG data. ZPool is the only pool with SCC, so we don't need a separate way to get SCC DAG information
+    # If ($Variables.PoolName -notmatch "ZPool.*") { 
+        # $Currency = "SCC"
+        # $Url = "https://scc.ccore.online/api/getblockcount"
+        # If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        #     # Get block data from StakeCube block explorer
+        #     Try { 
+        #         Write-Message -Level Info "Loading DAG data from '$Url'..."
+        #         $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+        #         If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+        #             $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
+        #             If ($CurrencyDAGdata.Epoch) { 
+        #                 $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+        #                 $CurrencyDAGdata | Add-Member Url $Url -Force
+        #                 $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+        #                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+        #             }
+        #             Else { 
+        #                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+        #             }
+        #         }
+        #     }
+        #     Catch { 
+        #         Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+        #     }
+        # }
     # }
 
     # Update on script start, once every 24hrs or if unable to get data from source
@@ -3371,7 +3371,7 @@ Function Get-AllDAGdata {
     }
 
     # ZergPool also supplies MEWC DAG data
-    If ($Variables.PoolName -match "ZergPool.*") { 
+    If ($Variables.PoolName -notmatch "ZergPool.*") { 
         $Currency = "MEWC"
         $Url = "https://mewc.cryptoscope.io/api/getblockcount"
         If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3411,8 +3411,8 @@ Function Get-AllDAGdata {
                         Epoch       = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
                     }
                 ) -Force
-                $DAGdata.Algorithm.$Algorithm | Add-Member Currency ($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
-                $DAGdata.Algorithm.$Algorithm | Add-Member CoinName ($Variables.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency]) -Force
+                $DAGdata.Algorithm.$Algorithm | Add-Member Currency [String]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
+                $DAGdata.Algorithm.$Algorithm | Add-Member CoinName [String]($Variables.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency]) -Force
             }
             Catch { 
                 Start-Sleep 0
@@ -3694,154 +3694,160 @@ Function Get-MemoryUsage {
 
 Function Initialize-Environment { 
 
+    # Create directories
+    If (-not (Test-Path -LiteralPath ".\Cache" -PathType Container)) { New-Item -Path . -Name "Cache" -ItemType Directory | Out-Null }
+    If (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { New-Item -Path . -Name "Config" -ItemType Directory | Out-Null }
+    If (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { New-Item -Path . -Name "Logs" -ItemType Directory | Out-Null }
+    If (-not (Test-Path -LiteralPath ".\Stats" -PathType Container)) { New-Item "Stats" -ItemType Directory -Force | Out-Null }
+
     # Check if all required files are present
     If (-not (Get-ChildItem -LiteralPath $PWD\Balances)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Balances'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Brains)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Brains'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Data)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Data'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Miners)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Miners'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Pools)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Pools'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Web)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Web'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
 
     # Verify donation data
-    $Variables.DonationData = [System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -NoEnumerate
+    If (Test-Path -LiteralPath "$PWD\Data\DonationData.json") { $Variables.DonationData = [System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -NoEnumerate }
     If (-not $Variables.DonationData) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded donation data."
 
     # Load donation log
-    $Variables.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore)
+    If (Test-Path -LiteralPath "$PWD\Logs\DonationLog.csv") { $Variables.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) }
     If (-not $Variables.DonationLog) { $Variables.DonationLog = @() }
     Else { Write-Host "Loaded donation log." }
 
     # Load algorithm list
     $Variables.Algorithms = [Ordered]@{ } # as case insensitive hash table
-    (([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Algorithms[$_.Name] = $_.Value })
+    iF (Test-Path -LiteralPath "$PWD\Data\Algorithms.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Algorithms[$_.Name] = $_.Value }) }
     If (-not $Variables.Algorithms.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
 
     # Load coin names
     $Variables.CoinNames = [Ordered]@{ } # as case insensitive hash table
-    (([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CoinNames[$_.Name] = $_.Value })
+    If (Test-Path -LiteralPath "$PWD\Data\CoinNames.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CoinNames[$_.Name] = $_.Value }) }
     If (-not $Variables.CoinNames.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
 
     # Load currency algorithm data
     $Variables.CurrencyAlgorithm = [Ordered]@{ } # as case insensitive hash table
-    (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value })
+    If (Test-Path -LiteralPath "$PWD\Data\CurrencyAlgorithm.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value }) }
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Start-Sleep -Seconds 10
         Exit
     }
 
     # Load EquihashCoinPers data
     $Variables.EquihashCoinPers = [Ordered]@{ } # as case insensitive hash table
-    (([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value })
+    If (Test-Path -LiteralPath "$PWD\Data\EquihashCoinPers.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value }) }
     If (-not $Variables.EquihashCoinPers) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
-        $WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded algorithm & coin database."
 
     # Load regions list
     $Variables.Regions = [Ordered]@{ } # as case insensitive hash table
-    (([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Regions[$_.Name] = @($_.Value) })
+    If (Test-Path -LiteralPath "$PWD\Data\Regions.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Regions[$_.Name] = @($_.Value) }) }
     If (-not $Variables.Regions.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded regions database."
 
     # Load FIAT currencies list
-    $Variables.FIATcurrencies = [System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
+    If (Test-Path -LiteralPath "$PWD\Data\FIATcurrencies.json") { $Variables.FIATcurrencies = [System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject }
     If (-not $Variables.FIATcurrencies) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded fiat currencies database."
 
     # Load unprofitable algorithms
-    $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Stop -AsHashtable | Get-SortedObject
+    If (Test-Path -LiteralPath "$PWD\Data\UnprofitableAlgorithms.json") { $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable | Get-SortedObject }
     If (-not $Variables.UnprofitableAlgorithms.Count) { 
         Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Write-Host "Loaded list of unprofitable algorithms."
 
     # Load DAG data, if not available it will get recreated
-    $Variables.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json | Get-SortedObject
+    If (Test-Path -LiteralPath "$PWD\Data\DAGdata.json" ) { $Variables.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject }
     If ($Variables.DAGdata) { Write-Host "Loaded DAG database." }
 
     # Load PoolsLastUsed data
-    $Variables.PoolsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable
+    If (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json" ) { $Variables.PoolsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable }
     If (-not $Variables.PoolsLastUsed.psBase.Keys) { $Variables.PoolsLastUsed = @{ } }
     Else { Write-Host "Loaded pools last used data." }
 
     # Load AlgorithmsLastUsed data
-    $Variables.AlgorithmsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastUsed.json") | ConvertFrom-Json -AsHashtable
+    If (Test-Path -LiteralPath "$PWD\Data\AlgorithmsLastUsed.json" ) { $Variables.AlgorithmsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastUsed.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable }
     If (-not $Variables.AlgorithmsLastUsed.psBase.Keys) { $Variables.AlgorithmsLastUsed = @{ } }
     Else { Write-Host "Loaded algorithm last used data." }
 
     # Load EarningsChart data to make it available early in GUI
-    If (Test-Path -LiteralPath ".\Data\EarningsChartData.json" -PathType Leaf) { $Variables.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Data\EarningsChartData.json") | ConvertFrom-Json }
+    If (Test-Path -LiteralPath "$PWD\Data\EarningsChartData.json" -PathType Leaf) { $Variables.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Data\EarningsChartData.json") | ConvertFrom-Json }
     Else { Write-Host "Loaded earnings chart data." }
 
     # Load Balances data to make it available early in GUI
-    If (Test-Path -LiteralPath ".\Data\Balances.json" -PathType Leaf) { $Variables.Balances = [System.IO.File]::ReadAllLines("$PWD\Data\Balances.json") | ConvertFrom-Json }
+    If (Test-Path -LiteralPath "$PWD\Data\Balances.json" -PathType Leaf) { $Variables.Balances = [System.IO.File]::ReadAllLines("$PWD\Data\Balances.json") | ConvertFrom-Json }
     Else { Write-Host "Loaded balances data." }
 
     # Load NVidia GPU architecture table
-    $Variables.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore
+    If (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureNvidia.json") { $Variables.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore }
     If (-not $Variables.GPUArchitectureDbNvidia) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Else { Write-Host "Loaded NVidia GPU architecture table." }
 
     # Load AMD GPU architecture table
-    $Variables.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore
+    If (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureAMD.json") { $Variables.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore }
     If (-not $Variables.GPUArchitectureDbAMD) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
         Exit
     }
     Else { Write-Host "Loaded AMD GPU architecture table." }

@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 
 UG-Miner is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.4.17
-Version date:   2025/03/19
+Version:        6.4.18
+Version date:   2025/03/23
 #>
 
 Param(

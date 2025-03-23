@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.17
-Version date:   2025/03/19
+Version:        6.4.18
+Version date:   2025/03/23
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -222,7 +222,7 @@ Function Update-TabControl {
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
                         @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join " " } }
                         @{ Name = "Status Info"; Expression = { $_.StatusInfo } }
-                        @{ Name = "Earning (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
+                        @{ Name = "Earnings (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                         @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                         @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                         @{ Name = "Power consumption (live)"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
@@ -475,7 +475,7 @@ Function Update-TabControl {
                         @{ Name = "Miner"; Expression = { $_.Name } },
                         @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
                         @{ Name = "Status"; Expression = { $_.Status } },
-                        @{ Name = "Earning (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earning_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earning * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
+                        @{ Name = "Earnings (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                         @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                         @{ Name = "Profit (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                         @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
@@ -627,7 +627,7 @@ Function Update-TabControl {
         #                 @{ Name = "Last seen"; Expression = { (Get-TimeSince $_.date) } },
         #                 @{ Name = "Version"; Expression = { $_.version } },
         #                 @{ Name = "Currency"; Expression = { $_.data.Currency | Select-Object -Unique } },
-        #                 @{ Name = "Estimated earning/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Config.DecimalsMax)}" -f (($_.Data.Earning.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
+        #                 @{ Name = "Estimated earnings/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Config.DecimalsMax)}" -f (($_.Data.EarningsWhere({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
         #                 @{ Name = "Estimated profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Config.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
         #                 @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } },
         #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join $nl } },
@@ -984,8 +984,8 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                 "Re-benchmark" { 
                     $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
-                            If ($_.Earning -eq 0) { $_.Available = $true }
-                            $_.Earning_Accuracy = [Double]::NaN
+                            If ($_.Earnings -eq 0) { $_.Available = $true }
+                            $_.Earnings_Accuracy = [Double]::NaN
                             $_.Activated = 0 # To allow 3 attempts
                             $_.Disabled = $false
                             $_.Benchmark = $true
@@ -998,7 +998,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             Remove-Variable Worker
                             # Also clear power consumption
                             [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
-                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
+                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
                             If ($_.Status -eq [MinerStatus]::Idle) { 
                                 $_.SubStatus = "idle"
                             }
@@ -1029,7 +1029,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                 "Re-measure power consumption" { 
                     $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
-                            If ($_.Earning -eq 0) { $_.Available = $true }
+                            If ($_.Earnings -eq 0) { $_.Available = $true }
                             If ($Variables.CalculatePowerCost) { 
                                 $_.MeasurePowerConsumption = $true
                                 $_.Activated = 0 # To allow 3 attempts
@@ -1038,7 +1038,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             $StatName = $_.Name
                             $Data += "$StatName"
                             [Void](Remove-Stat -Name "$($StatName)_PowerConsumption")
-                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
+                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
                             If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                         }
                     )
@@ -1067,7 +1067,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             If ($_.GetStatus() -eq [MinerStatus]::Running) { $_.SetStatus([MinerStatus]::Idle) }
                             $_.Status = "Idle"
                             $_.SubStatus = "failed"
-                            $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
+                            $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = $_.Earnings_Accuracy = [Double]::NaN
                             If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") | Out-Null }
                             $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
                         }
@@ -1926,9 +1926,9 @@ $LegacyGUIform.Add_FormClosing(
             Write-Message -Level Info "Shutting down $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"
 
-            [Void](Close-CoreRunspace)
+            [Void](Stop-Core)
             [Void](Stop-Brain)
-            [Void](Close-BalancesTrackerRunspace)
+            [Void](Stop-BalancesTracker)
 
             Write-Message -Level Info "$($Variables.Branding.ProductLabel) has shut down."
             Start-Sleep -Seconds 2

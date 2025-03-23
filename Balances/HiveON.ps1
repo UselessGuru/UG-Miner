@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-File:           \Balances\Hiveon.ps1
-Version:        6.4.17
-Version date:   2025/03/19
+File:           \Balances\HiveON.ps1
+Version:        6.4.18
+Version date:   2025/03/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -33,7 +33,7 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
         $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
         $RetryInterval = $PoolConfig.PoolAPIretryInterval
 
-        $Request = "https://Hiveon.net/api/v1/stats/miner/$Wallet/$Currency/billing-acc"
+        $Request = "https://HiveON.net/api/v1/stats/miner/$Wallet/$Currency/billing-acc"
 
         While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
@@ -57,7 +57,7 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
                         Unpaid   = [Double]$APIResponse.totalUnpaid
                         # Paid     = [Double]$APIResponse.stats.totalPaid
                         # Total    = [Double]$APIResponse.stats.balance + [Decimal]$APIResponse.stats.penddingBalance
-                        Url      = "https://Hiveon.net/$($Currency.ToLower())?miner=$Wallet"
+                        Url      = "https://HiveON.net/$($Currency.ToLower())?miner=$Wallet"
                     }
                 }
             }

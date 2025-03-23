@@ -48,8 +48,8 @@ function formatMiners(data) {
       if (item.Reasons.length <= 0) item.Reasons = [" "];
 
       // Format margin of error
-      if (isNaN(item.Earning_Accuracy)) item.Earning_Accuracy = 'n/a'; 
-      else item.Earning_Accuracy = formatPercent(item.Earning_Accuracy);
+      if (isNaN(item.Earnings_Accuracy)) item.Earnings_Accuracy = 'n/a'; 
+      else item.Earnings_Accuracy = formatPercent(item.Earnings_Accuracy);
 
       // Format the live speed(s)
       item.PrimaryHashrateLive = item.Hashrates_Live[0];
@@ -331,7 +331,14 @@ function formatGiBDigits10(value) {
 
 function detailFormatter(index, row) {
   var html = [];
-  $.each(row, function (key, value) {
+  const sortedObj = {};
+  const keys = Object.keys(row).sort(); // Get keys and sort them
+
+  for (const key of keys) {
+    sortedObj[key] = row[key];
+  }
+
+  $.each(sortedObj, function (key, value) {
     if (typeof value === 'string') {
       if (key === 'PoolUri') { 
         var target = JSON.stringify(value).replaceAll('\\\\', '\\').replaceAll('"', '');

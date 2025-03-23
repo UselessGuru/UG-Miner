@@ -260,7 +260,3 @@ input[type=checkbox].toggle-switch::after {
 input[type=checkbox].toggle-switch:checked::after {
   left: 3em;
 }
-
-select {
-  height: 1.75em;
-}

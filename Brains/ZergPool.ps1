@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 
 UG-Miner is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.4.17
-Version date:   2025/03/19
+Version:        6.4.18
+Version date:   2025/03/23
 #>
 
 using module ..\Includes\Include.psm1
@@ -100,29 +100,29 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 }
             )
 
-            ForEach ($Algo in $AlgoData.PSObject.Properties.Name) { 
-                $AlgorithmNorm = Get-Algorithm $AlgoData.$Algo.algo
-                $Currency = [String]$AlgoData.$Algo.Currency
-                If ($AlgoData.$Algo.actual_last24h_shared) { $AlgoData.$Algo.actual_last24h_shared /= 1000 }
-                $BasePrice = If ($AlgoData.$Algo.actual_last24h_shared) { $AlgoData.$Algo.actual_last24h_shared } Else { $AlgoData.$Algo.estimate_last24h }
+            ForEach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
+                $AlgorithmNorm = Get-Algorithm $AlgoData.$Algorithm.algo
+                $Currency = [String]$AlgoData.$Algorithm.Currency
+                If ($AlgoData.$Algorithm.actual_last24h_shared) { $AlgoData.$Algorithm.actual_last24h_shared /= 1000 }
+                $BasePrice = If ($AlgoData.$Algorithm.actual_last24h_shared) { $AlgoData.$Algorithm.actual_last24h_shared } Else { $AlgoData.$Algorithm.estimate_last24h }
 
                 # Keep DAG data up to date
-                If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG -and $AlgoData.$Algo.height -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
-                    $DAGdata = (Get-DAGData -BlockHeight $AlgoData.$Algo.height -Currency $Algo -EpochReserve 2)
+                If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG -and $CurrenciesData.$Currency.height -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                    $DAGdata = (Get-DAGData -BlockHeight $CurrenciesData.$Currency.height -Currency $Currency -EpochReserve 2)
                     $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                    $DAGdata | Add-Member Url $Uri
-                    $Variables.DAGdata.Currency | Add-Member $Algo $DAGdata -Force
-                    $Variables.DAGdata.Updated | Add-Member $Uri ([DateTime]::Now).ToUniversalTime() -Force
+                    $DAGdata | Add-Member Url "https://zergpool.com/api/currencies"
+                    $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                    $Variables.DAGdata.Updated | Add-Member "https://zergpool.com/api/currencies" ([DateTime]::Now).ToUniversalTime() -Force
                 }
 
-                $AlgoData.$Algo | Add-Member Fees $Config.PoolsConfig.$BrainName.DefaultFee -Force
-                $AlgoData.$Algo | Add-Member Updated $Timestamp -Force
+                $AlgoData.$Algorithm | Add-Member Fees $Config.PoolsConfig.$BrainName.DefaultFee -Force
+                $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
 
                 # Reset history when stat file got removed
                 If ($PoolVariant -like "*Plus") { 
                     $StatName = If ($Currency) { "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)_Profit" } Else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }
                     If (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
-                        $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algo })
+                        $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                         Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit')"
                     }
                 }
@@ -131,12 +131,12 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     actual_last24h      = $BasePrice
                     currency            = $Currency
                     Date                = $Timestamp
-                    estimate_current    = $AlgoData.$Algo.estimate_current
-                    estimate_last24h    = $AlgoData.$Algo.estimate_last24h
-                    Last24hDrift        = $AlgoData.$Algo.estimate_current - $BasePrice
-                    Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algo.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
-                    Last24hDriftSign    = If ($AlgoData.$Algo.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
-                    Name                = $Algo
+                    estimate_current    = $AlgoData.$Algorithm.estimate_current
+                    estimate_last24h    = $AlgoData.$Algorithm.estimate_last24h
+                    Last24hDrift        = $AlgoData.$Algorithm.estimate_current - $BasePrice
+                    Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algorithm.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
+                    Last24hDriftSign    = If ($AlgoData.$Algorithm.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
+                    Name                = $Algorithm
                 }
             }
 
@@ -150,27 +150,27 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $GroupMedSampleSizeHalf = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
             $GroupMedSampleSizeNoPercent = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDrift } }
 
-            ForEach ($Algo in ($PoolObjects.Name | Select-Object -Unique).Where({ $AlgoData.PSObject.Properties.Name -contains $_ })) { 
-                $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algo + ", Up" })).Count - ($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algo + ", Down" })).Count) / (($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algo })).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algo })).Median)
-                $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where({ $_.Name -eq $Algo + ", Up" })).Count - ($GroupAvgSampleSize.Where({ $_.Name -eq $Algo + ", Down" })).Count) / (($GroupMedSampleSize.Where({ $_.Name -eq $Algo })).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where({ $_.Name -eq $Algo })).Median)
+            ForEach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where({ $AlgoData.PSObject.Properties.Name -contains $_ })) { 
+                $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algorithm })).Median)
+                $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSize.Where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSize.Where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where({ $_.Name -eq $Algorithm })).Median)
                 $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)
-                $CurPoolObject = $CurrentPoolObjects.Where({ $_.Name -eq $Algo })
+                $CurPoolObject = $CurrentPoolObjects.Where({ $_.Name -eq $Algorithm })
                 $Currency = $CurPoolObject.currency
                 $LastPrice = [Double]$CurPoolObject.estimate_current
                 $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
 
-                $StatName = If ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algo)-$($Currency)_Profit" } Else { "$($PoolVariant)_$(Get-Algorithm $Algo)_Profit" }
+                $StatName = If ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } Else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
                 # Reset history if current estimate is not within +/- 1000% of 24hr stat price
                 If ($Stat = Get-Stat -Name $StatName) { 
-                    $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algo.mbtc_mh_factor
-                    If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algo.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algo.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
+                    $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
+                    If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
                         [Void](Remove-Stat -Name $StatName)
-                        $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algo })
+                        $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                         $PlusPrice = $LastPrice
-                        Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit') (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algo.estimate_current / $Divisor))"
+                        Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit') (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
                     }
                 }
-                $AlgoData.$Algo | Add-Member PlusPrice $PlusPrice -Force
+                $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
             }
             Remove-Variable Algo, AlgorithmNorm, BasePrice, CurPoolObject, Currency, CurrentPoolObjects, DAGdata, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 

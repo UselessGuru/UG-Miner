@@ -539,7 +539,7 @@
                     var BTCvalue = [];
                     for (var index in earningsdata.Earnings[pool]) BTCvalue.push(btc * earningsdata.Earnings[pool][index]);
                     var earnings = {
-                      label: pool.replace('Internal', '(Internal)').replace('External', '(External)'),
+                      label: pool,
                       data: BTCvalue,
                       backgroundColor: GetColor(Object.keys(earningsdata.Earnings).length, datasets.length)
                     };

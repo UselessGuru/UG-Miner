@@ -57,7 +57,7 @@
       }
     }
   },
-  "Hiveon": {
+  "HiveON": {
     "Algorithm": [],
     "AutoExchange": false,
     "BalancesKeepAlive": 90, // No expiration communicated by pool, use 90 days just to be sure
@@ -87,7 +87,7 @@
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 20,
     "Variant": {
-      "Hiveon": {}
+      "HiveON": {}
     }
   },
   "MiningDutch": {

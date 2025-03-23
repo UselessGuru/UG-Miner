@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.17
-Version date:   2025/03/19
+Version:        6.4.18
+Version date:   2025/03/23
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "0.5.4.32"
+    $APIVersion = "5.4.34"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -242,7 +242,7 @@ Function Start-APIServer {
                                         Try { 
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @((@($Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
-                                            [Void](Write-Config -ConfigFile $Variables.ConfigFile -Config $Config)
+                                            [Void](Write-Config -Config $Config)
                                             $Data = "Device configuration changed`n`nOld values:"
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                                             $Data += "`n`nNew values:"
@@ -277,7 +277,7 @@ Function Start-APIServer {
                                         Try { 
                                             $ExcludeDeviceName = $Config.ExcludeDeviceName
                                             $Config.ExcludeDeviceName = @($Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
-                                            [Void](Write-Config -ConfigFile $Variables.ConfigFile -Config $Config)
+                                            [Void](Write-Config -Config $Config)
                                             $Variables.ConfigurationHasChangedDuringUpdate = $false
                                             $Data = "Device configuration changed`n`nOld values:"
                                             $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
@@ -294,7 +294,7 @@ Function Start-APIServer {
                                             Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' enabled. Configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' updated."
                                         }
                                         Catch { 
-                                            $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
+                                            $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
                                         }
                                     }
                                     Else { 
@@ -307,9 +307,9 @@ Function Start-APIServer {
                             "/functions/config/set" { 
                                 Try { 
                                     $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
-                                    [Void](Write-Config -ConfigFile $Variables.ConfigFile -Config $TempConfig)
-                                    Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
+                                    [Void](Write-Config -Config $TempConfig)
                                     $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
+                                    Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
 
                                     $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                                         { 
@@ -325,18 +325,20 @@ Function Start-APIServer {
                                         }
                                     )
                                     $Variables.Remove("ConfigurationHasChangedDuringUpdate")
-                                    $Variables.FreshConfig = $false
                                     $Variables.RestartCycle = $true
                                     $Data = "Configuration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become fully active in the next cycle."
                                 }
                                 Catch { 
-                                    $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]."
+                                    $Data = "Error saving configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
                                 }
                                 Remove-Variable Key, TempConfig -ErrorAction Ignore
                                 Break
                             }
                             "/functions/file/edit" { 
                                 $Data = Edit-File $Parameters.FileName
+                                If (Test-Path -LiteralPath $Parameters.FileName) { 
+                                    If ($Parameters.FileName -eq $Variables.ConfigFile -or $Parameters.FileName -eq $Variables.PoolsConfigFile) { [Void](Read-Config) }
+                                }
                                 Break
                             }
                             "/functions/file/showcontent" { 
@@ -524,15 +526,15 @@ Function Start-APIServer {
                                                 $_.Benchmark = $true
                                                 $_.Data = New-Object System.Collections.Generic.HashSet[PSCustomObject]
                                                 $_.Disabled = $false
-                                                $_.Earning_Accuracy = [Double]::NaN
+                                                $_.Earnings_Accuracy = [Double]::NaN
                                                 $Data += $_.Name
                                                 ForEach ($Worker in $_.Workers) { 
                                                     [Void](Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                                                     $Worker.Hashrate = [Double]::NaN
                                                     $Worker.Disabled = $false
-                                                    $Worker.Earning = [Double]::NaN
-                                                    $Worker.Earning_Accuracy = [Double]::NaN
-                                                    $Worker.Earning_Bias = [Double]::NaN
+                                                    $Worker.Earnings = [Double]::NaN
+                                                    $Worker.Earnings_Accuracy = [Double]::NaN
+                                                    $Worker.Earnings_Bias = [Double]::NaN
                                                     $Worker.Fee = 0
                                                     $Worker.Hashrate = [Double]::NaN
                                                     $Worker.TotalMiningDuration = [TimeSpan]0
@@ -540,7 +542,7 @@ Function Start-APIServer {
 
                                                 # Clear power consumption
                                                 [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
-                                                $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
+                                                $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
 
                                                 # Remove watchdog
                                                 $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -NE $_.Name
@@ -568,7 +570,7 @@ Function Start-APIServer {
                                         $Data = @()
                                         $Miners.ForEach(
                                             { 
-                                                If ($_.Earning -eq 0) { $_.Available = $true }
+                                                If ($_.Earnings -eq 0) { $_.Available = $true }
                                                 If ($Variables.CalculatePowerCost) { 
                                                     $_.MeasurePowerConsumption = $true
                                                     $_.Activated = 0 # To allow 3 attempts
@@ -576,7 +578,7 @@ Function Start-APIServer {
                                                 $_.PowerConsumption = [Double]::NaN
                                                 $Data += $_.Name
                                                 [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
-                                                $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = [Double]::NaN
+                                                $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
                                                 If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                                             }
                                         )
@@ -626,7 +628,7 @@ Function Start-APIServer {
                                                         # Miner failed
                                                         [Void](Remove-Stat -Name $StatName)
                                                         Set-Stat -Name $StatName -Value $Parameters.Value -FaultDetection $false | Out-Null
-                                                        $_.Profit = $_.Profit_Bias = $_.Earning = $_.Earning_Bias = $_.Earning_Accuracy = [Double]::NaN
+                                                        $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = $_.Earnings_Accuracy = [Double]::NaN
                                                         $_.Available = $false
                                                         $_.Disabled = $false
                                                         If ($_.Reasons -notcontains "0 H/s Stat file") { $_.Reasons.Add("0 H/s Stat file") | Out-Null }
@@ -791,7 +793,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/dagdata" { 
-                                $Data = ConvertTo-Json -Depth 10 ($Variables.DAGdata | Select-Object)
+                                $Data = ConvertTo-Json -Depth 10 ($Variables.DAGdata | Get-SortedObject)
                                 Break
                             }
                             "/devices" { 
@@ -843,7 +845,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners/available" { 
-                                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
+                                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
                                 $Data = ConvertTo-Json -Depth 4 @($Variables.Miners.Where({ $_.Available }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object DeviceNames, @{ Expression = $Bias; Descending = $true })
                                 Remove-Variable Bias
                                 Break
@@ -881,7 +883,7 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners/optimal" { 
-                                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earning_Bias" }
+                                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
                                 $Data = ConvertTo-Json -Depth 4 @($Variables.MinersOptimal | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp)
                                 Remove-Variable Bias
                                 Break
@@ -898,8 +900,8 @@ Function Start-APIServer {
                                 $Data = $Variables.MiningPowerCost
                                 Break
                             }
-                            "/miningearning" { 
-                                $Data = $Variables.MiningEarning
+                            "/miningearnings" { 
+                                $Data = $Variables.MiningEarnings
                                 Break
                             }
                             "/miningprofit" { 
@@ -1039,7 +1041,7 @@ Function Start-APIServer {
                             #             @{ Name = "Algorithm"; Expression = { ($_.data.ForEach({ $_.Algorithm -split "," -join " & " })) -join "<br>" } },
                             #             @{ Name = "Benchmark Hashrate"; Expression = { ($_.data.ForEach({ ($_.Hashrate.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },
                             #             @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
-                            #             @{ Name = "EstimatedEarning"; Expression = { [Decimal](($_.Data.Earning | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                            #             @{ Name = "EstimatedEarnings"; Expression = { [Decimal](($_.Data.Earnings | Measure-Object -Sum).Sum * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
                             #             @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
                             #             @{ Name = "LastSeen"; Expression = { "$($_.date)" } },
                             #             @{ Name = "Live Hashrate"; Expression = { ($_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " })) -join "<br>" } },

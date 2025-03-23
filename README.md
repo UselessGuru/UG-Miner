@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.4.17 / Updated 2025/03/19
+Version 6.4.18 / Updated 2025/03/23
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -216,16 +216,17 @@ A separate section can be added for each pool. If a pool is listed in this file,
 
 **Available per pool configuration options**
 
-- Algorithm: List of included or excluded algorithms per pool
-- Currency: List of included or excluded currencies per pool
-- EarningsAdjustmentFactor: This adds a multiplicator on estimations presented by the pool  
+- Algorithm [ALGORITHM]: List of included or excluded algorithms per pool
+- Currency [CURRENCY]: List of included or excluded currencies per pool
+- EarningsAdjustmentFactor [Number]: This adds a multiplicator on estimations presented by the pool  
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
-- Exclude region: One or more of 'Europe', 'HongKong', 'India', 'Japan', 'Russia', 'Singapore', 'USA East', 'USA West'
-- MinWorker: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
-- PayoutThreshold[Currency]: Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
-- SSL: Either 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Always' (pools that do not allow SSL connection are marked as unavailable)
+- ExcludeRegion [REGION]: One or more of 'Australia', 'Brazil', 'Canada', 'Europe', 'Hongkong', 'India', 'Japan', 'Kazakhstan', 'Russia', 'Singapore', 'USA East', 'USA West'
+- MinWorker [Number]: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
+- PayoutThreshold [CURRENCY: Value]: Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
+- PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hashrate reported in the API
+- SSL [ALWAYS|NEVER|PREFER]: One of 'Always' (pools that do not allow SSL connection are marked as unavailable), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection)
 - SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
-- Wallets[Currency]: Your wallet address for [Currency]; some pools, e.g. Hiveon, require wallets in each supported currency
+- Wallet [CURRENCY: Wallet address]: Your wallet address for [CURRENCY]; some pools, e.g. Hiveon, require wallets in each supported currency
 
 See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
 

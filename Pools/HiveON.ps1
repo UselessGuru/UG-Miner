@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2024 UselessGuru
+Copyright (c) 2018-2025 UselessGuru
 
 
 UG-Miner is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-File:           \Pools\Hiveon.ps1
-Version:        6.4.17
-Version date:   2025/03/19
+File:           \Pools\HiveON.ps1
+Version:        6.4.18
+Version date:   2025/03/23
 #>
 
 Param(
@@ -41,7 +41,7 @@ $APICallFails = 0
 
 Do { 
     Try { 
-        $Request = Invoke-RestMethod -Uri "https://Hiveon.net/api/v1/stats/pool" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+        $Request = Invoke-RestMethod -Uri "https://HiveON.net/api/v1/stats/pool" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
         If ($Request -like "<!DOCTYPE html>*") { $Request = $null }
     }
     Catch { 

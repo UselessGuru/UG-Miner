@@ -1,6 +1,43 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.18 2025/03/23
+====================================
+
+Changes:
+- Changed the names of configurations items:
+    ShowAccuracyColumn -> ShowColumnAccuracy
+    ShowCoinNameColumn -> ShowColumnCoinName
+    ShowCurrencyColumn -> ShowColumnCurrency
+    ShowEarningColumn -> ShowColumnEarnings
+    ShowEarningBiasColumn -> ShowColumnEarningsBias
+    ShowHashrateColumn -> ShowColumnHashrate
+    ShowMinerFeeColumn -> ShowColumnMinerFee
+    ShowPoolColumn -> ShowColumnPool
+    ShowPoolFeeColumn -> ShowColumnPoolFee
+    ShowProfitColumn -> ShowColumnProfit
+    ShowProfitBiasColumn -> ShowColumnProfitBias
+    ShowPowerConsumptionColumn -> ShowColumnPowerConsumption
+    ShowPowerCostColumn -> ShowColumnPowerCost
+    ShowPoolBalancesColumn -> ShowColumnPoolBalances
+    ShowUserColumn -> ShowColumnUser
+
+Enhancements:
+- Optimize miner code
+- Web GUI: Revorked layout, eliminate clutter
+
+Fixes:
+- Brains 'ZergPool' & 'ZPool' not updating DAG data from API information
+- Core / Include.psm1: Watchdog no longer sets reason 'Pool suspended by watchdog [all algorithms]' if only one pool is configured
+- Core: Hidden 'file not found' errors on first start
+- Core: Read changed config on each loop, even when there is no pools config file
+- Miners SRBMinerMulti-v2.6.8 & SRBMinerMulti-v2.8.0: Fix error creating double miner objects craching core
+
+Miner updates:
+- PhoenixMiner-v6.2c (fix download link)
+
+
+
 Changelog UG-Miner 6.4.17 2025/03/19
 ====================================
 
@@ -37,7 +74,7 @@ Changelog UG-Miner 6.4.14 2025/03/05
 
 Fixes:
 - Core: Memory leak (regression from 6.4.13)
-- Errir in algorithm mapping: Phi and PhiHash are separate algorithms
+- Error in algorithm mapping: Phi and PhiHash are separate algorithms
 
 Miner updates:
 - BzMiner-v23.0.2 (keep v22.0.2 for Etc & Ethash)
