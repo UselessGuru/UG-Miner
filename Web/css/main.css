@@ -23,6 +23,10 @@ footer {
 /*
  * Sidebar
  */
+.nav-link {
+  font-weight: bold;
+}
+
 .sidebar {
   width: 260px;
   position: fixed;
@@ -138,7 +142,7 @@ footer {
   clear: both;
 }
 
-.hidden{
+.hidden {
   display: none;
   visibility: hidden;
 }
@@ -188,7 +192,8 @@ legend {
   background-color: rgb(255, 243, 231);
 }
 .color-dryrun {
-  background-color: rgb(230, 248, 252);}
+  background-color: rgb(212, 244, 212);
+}
 .color-failed {
   background-color: rgb(255, 230, 230);
 }

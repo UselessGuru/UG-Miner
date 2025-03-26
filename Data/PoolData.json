@@ -268,27 +268,17 @@
       "UseTransferFile": false
     },
     "Currency": [],
-    "DefaultFee": 0.5,
+    "DefaultFee": 0.5, // %
     "GuaranteedPayoutCurrencies": [
       "BCH",
-      "BNB",
-      "CAKE",
-      "DASH",
+      "BTC",
       "DOGE",
       "ETH",
-      "FLUX",
-      "KAS",
-      "KLV",
       "LTC",
       "RTM",
       "RVN",
-      "SHIB",
-      "TRX",
-      "USDC",
-      "USDT",
-      "WIN",
       "XMR"
-    ],
+    ], // as of 2025/03/2025 
     "PayoutCurrency": "[Default]",
     "PayoutThreshold": { // PayoutThreshold is retrieved from API data, but can be set here to override value set by pool (can only set higher)
       // e.g. "mBTC": 5
@@ -303,7 +293,6 @@
       "n/a (Anycast)",
       "na"
     ],
-    "SSL": "Never",
     "Variant": {
       "ZergPool": {
         "DivisorMultiplier": 1000000,

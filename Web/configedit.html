@@ -1408,7 +1408,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if (config.FIATcurrency && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount) {
+        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0) && config.FIATcurrency && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1416,6 +1416,12 @@
             $('body').css('cursor', 'default');
             $('#myModal').on('hidden.bs.modal', function () { location.reload(true) })
           });
+        } else if (!(Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0)) {
+          // No wallet or username
+          $('.modal-title').html('Error: Invalid configuration');
+          $('.modal-body').html('Cannot save configuration - you must set at least one wallet address or username.');
+          $('body').css('cursor', 'default');
+          $('#myModal').modal({ show: true });
         } else if (!config.Region) {
           // No FIAT currency
           $('.modal-title').html('Error: Invalid configuration');

@@ -29,6 +29,7 @@ function formatMiners(data) {
       item.PrimaryMinerFee = item.Workers[0].Fee;
       item.PrimaryPool = item.Workers[0].Pool.Name;
       item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
+      item.PrimaryPoolPort = item.Workers[0].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
       item.PrimaryPoolUser = item.Workers[0].Pool.User;
       item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
       if (item.Workers.length > 1) {
@@ -40,6 +41,7 @@ function formatMiners(data) {
         item.SecondaryMinerFee = item.Workers[1].Fee;
         item.SecondaryPool = item.Workers[1].Pool.Name;
         item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
+        item.SecondaryPoolPort = item.Workers[1].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
         item.SecondaryPoolUser = item.Workers[1].Pool.User;
         item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
       }
@@ -333,7 +335,6 @@ function detailFormatter(index, row) {
   var html = [];
   const sortedObj = {};
   const keys = Object.keys(row).sort(); // Get keys and sort them
-
   for (const key of keys) {
     sortedObj[key] = row[key];
   }

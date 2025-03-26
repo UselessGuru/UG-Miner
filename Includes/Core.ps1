@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.18
-Version date:   2025/03/23
+Version:        6.4.19
+Version date:   2025/03/26
 #>
 
 using module .\Include.psm1
@@ -53,35 +53,17 @@ Try {
         $Global:DebugPreference = "Continue"
         Remove-Variable NetworkInterface
         If (-not $Variables.MyIP) { 
-            $Variables.Summary = "No internet connection - will retry in 60 seconds..."
-            Write-Message -Level Error $Variables.Summary
-            $Variables.RefreshNeeded = $true
-            $Variables.RestartCycle = $true
+            $Message = "No internet connection - will retry in $($Config.Interval) seconds..."
+            Write-Message -Level Error $Message
+            $Variables.Summary = $Message
+            Remove-Variable Message
 
-            #Stop all miners
-            ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status })) { 
-                $Miner.SetStatus([MinerStatus]::Idle)
-                $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-            }
-            Remove-Variable Miner -ErrorAction Ignore
+            Clear-PoolData
+            Clear-MinerData
 
-            $Variables.Miners.ForEach({ $_.Dispose() })
-            $Variables.Miners = [Miner[]]@()
-            $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
-            $Variables.MinersBest = [Miner[]]@()
-            $Variables.MinersBestPerDevice = [Miner[]]@()
-            $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
-            $Variables.MinersFailed = [Miner[]]@()
-            $Variables.MinersMissingBinary = [Miner[]]@()
-            $Variables.MinerMissingFirewallRule = [Miner[]]@()
-            $Variables.MinersMissingPrerequisite = [Miner[]]@()
-            $Variables.MinersOptimal = [Miner[]]@()
-            $Variables.MinersRunning = [Miner[]]@()
-
-            $Variables.MiningEarnings = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
-            $Variables.Remove("EndCycleTime")
-            Start-Sleep -Seconds 60
+            Start-Sleep -Seconds $Config.Interval
             Continue
+            Write-Message -Level Info "Ending cycle."
         }
 
         # Read config only if config files have changed
@@ -91,6 +73,22 @@ Try {
                 Write-Message -Level Verbose "Activated changed configuration."
             }
         }
+
+        If (-not $Config.PoolName) { 
+            $Message = "No configured pools - retrying in $($Config.Interval) seconds..."
+            Write-Message -Level Warn $Message
+            $Variables.Summary = $Message
+            Remove-Variable Message
+
+            Clear-PoolData
+            Clear-MinerData
+
+            Start-Sleep -Seconds $Config.Interval
+
+            Write-Message -Level Info "Ending cycle."
+            Continue
+        }
+
         $Variables.PoolName = $Config.PoolName
         $Variables.PoolsConfig = $Config.PoolsConfig
 
@@ -100,27 +98,8 @@ Try {
         # Miner naming scheme has changed. Must clear all existing miners & watchdog timers due to different miner names
         If ($Variables.Miners -and $Config.BenchmarkAllPoolAlgorithmCombinations -ne $Variables.BenchmarkAllPoolAlgorithmCombinations) { 
             Write-Message -Level Info "Miner naming scheme has changed. Stopping all running miners..."
-            # Stop all running miners
-            ForEach ($Miner in $Variables.Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status })) { 
-                $Miner.SetStatus([MinerStatus]::Idle)
-                $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-            }
 
-            $Variables.Miners.ForEach({ $_.Dispose })
-            $Variables.Miners = [Miner[]]@()
-            $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
-            $Variables.MinersBest = [Miner[]]@()
-            $Variables.MinersBestPerDevice = [Miner[]]@()
-            $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
-            $Variables.MinersFailed = [Miner[]]@()
-            $Variables.MinersMissingBinary = [Miner[]]@()
-            $Variables.MinerMissingFirewallRule = [Miner[]]@()
-            $Variables.MinersMissingPrerequisite = [Miner[]]@()
-            $Variables.MinersOptimal = [Miner[]]@()
-            $Variables.MinersRunning = [Miner[]]@()
-            $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
-
-            $Variables.MiningEarnings = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
+            Clear-MinerData
         }
 
         # Use values from config
@@ -329,10 +308,8 @@ Try {
                         # Newly started brains, allow extra time for brains to get ready
                         $Variables.PoolTimeout = 60
                         $Message = "Requesting initial pool data from $((Get-PoolBaseName $Variables.PoolName) -join ", " -replace ",([^,]*)$", ' &$1').<br>This may take up to $($Variables.PoolTimeout) seconds..."
-                        If ($Variables.CycleStarts.Count -le 1) { 
-                            $Variables.Summary = $Message
-                            $Variables.RefreshNeeded = $true
-                        }
+                        $Variables.Summary = $Message
+                        If ($Variables.CycleStarts.Count -le 1) { $Variables.RefreshNeeded = $true }
                         Write-Message -Level Info ($Message -replace "<br>", " ")
                         Remove-Variable Message
                     }
@@ -406,8 +383,8 @@ Try {
                                 $_.Best = $false
                                 $_.Prioritize = $false
 
-                                # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL
-                                $_.PoolPorts = $(If ($Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } Else { $null }), $(If ($Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } Else { $null })
+                                # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL; must cast to array
+                                $_.PoolPorts = @($(If ($Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } Else { $null }), $(If ($Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } Else { $null }))
 
                                 If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { 
                                     If (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
@@ -546,25 +523,22 @@ Try {
                     While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
                 }
-                Else { 
-                    # No configured pools, clear all pools
-                    $Variables.Pools = [Pool[]]@()
-                    $Variables.PoolsAdded = [Pool[]]@()
-                    $Variables.PoolsBest = [Pool[]]@()
-                    $Variables.PoolsExpired = [Pool[]]@()
-                    $Variables.PoolsNew = [Pool[]]@()
-                    $Variables.PoolsUpdated = [Pool[]]@()
-                }
             }
             If (-not $Variables.PoolsBest) { 
-                $Message = "No available pools - retrying in $($Config.Interval) seconds..."
+                $Message = "No minable pools - retrying in $($Config.Interval) seconds..."
                 Write-Message -Level Warn $Message
                 $Variables.Summary = $Message
                 Remove-Variable Message
+
+                Clear-PoolData
+                Clear-MinerData
+
                 Start-Sleep -Seconds $Config.Interval
-                Write-Message -Level Info "Ending cycle (No available pools)."
+
+                Write-Message -Level Info "Ending cycle."
                 Continue
             }
+
             If ($Variables.DonationRunning) { 
                 $Variables.EndCycleTime = ($Variables.DonationEnd).ToUniversalTime()
             }
@@ -621,8 +595,9 @@ Try {
                             If ($Shares = ($Miner.Data | Select-Object -Last 1).Shares) { 
                                 ForEach ($Algorithm in $Miner.Algorithms) { 
                                     If ($Shares.$Algorithm -and $Shares.$Algorithm[1] -gt 0 -and $Shares.$Algorithm[3] -gt [Math]::Floor(1 / $Config.BadShareRatioThreshold) -and $Shares.$Algorithm[1] / $Shares.$Algorithm[3] -gt $Config.BadShareRatioThreshold) { 
-                                        $Miner.StatusInfo = "$($Miner.Info) stopped. Too many bad shares: ($($Algorithm): A$($Shares.$Algorithm[0])+R$($Shares.$Algorithm[1])+I$($Shares.$Algorithm[2])=T$($Shares.$Algorithm[3]))"
                                         $Miner.SetStatus([MinerStatus]::Failed)
+                                        $Miner.StatusInfo = "$($Miner.Info) stopped. Too many bad shares: ($($Algorithm): A$($Shares.$Algorithm[0])+R$($Shares.$Algorithm[1])+I$($Shares.$Algorithm[2])=T$($Shares.$Algorithm[3]))"
+                                        Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                                         $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                     }
                                 }
@@ -631,8 +606,9 @@ Try {
                         }
                     }
                     Else { 
-                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                        Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                         $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                     }
                 }
@@ -994,8 +970,21 @@ Try {
                 Remove-Variable RelevantWatchdogTimers -ErrorAction Ignore
             }
 
-            # $Miners.ForEach({ $_.Reasons = @($_.Reasons | Sort-Object -Unique); $_.Available = -not $_.Reasons.Count })
-            $Miners.ForEach({ $_.Available = -not $_.Reasons.Count })
+            If ($Miners) { $Miners.ForEach({ $_.Available = -not $_.Reasons.Count }) }
+
+            If (-not $Miners.Where({ $_.Available })) { 
+                $Message = "No available miners - retrying in $($Config.Interval) seconds..."
+                Write-Message -Level Warn $Message
+                $Variables.Summary = $Message
+                Remove-Variable Message
+
+                Clear-MinerData
+
+                Start-Sleep -Seconds $Config.Interval
+
+                Write-Message -Level Info "Ending cycle."
+                Continue
+            }
 
             # Gone miners are no longer available
             $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false; $_.Best = $false })
@@ -1067,6 +1056,20 @@ Try {
                 $Variables.MiningEarnings = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
             }
         }
+        Else { 
+            $Message = "No enabled devices - retrying in $($Config.Interval) seconds..."
+            Write-Message -Level Warn $Message
+            $Variables.Summary = $Message
+            Remove-Variable Message
+
+            Clear-PoolData
+            Clear-MinerData
+
+            Start-Sleep -Seconds $Config.Interval
+
+            Write-Message -Level Info "Ending cycle."
+            Continue
+        }
 
         $Variables.MinersNeedingBenchmark = $Miners.Where({ $_.Available -and $_.Benchmark }) | Sort-Object -Property Name -Unique
         $Variables.MinersNeedingPowerConsumptionMeasurement = $Miners.Where({ $_.Available -and $_.MeasurePowerConsumption }) | Sort-Object -Property Name -Unique
@@ -1127,20 +1130,31 @@ Try {
                     $Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)   " -f $Variables.Rates.$_.($Config.FIATcurrency)
                 }
             )
+            $Variables.Summary = $Summary
+            Remove-Variable Summary
         }
         Else { 
-            $Summary = "Error: Could not get BTC exchange rate from 'min-api.cryptocompare.com' for currency '$($Config.PayoutCurrency)'. Cannot determine best miners to run."
-            Write-Message -Level Warn $Summary
-            $MinersBest = [Miner[]]@()
+            $Message = "Error: Could not get BTC exchange rate from 'min-api.cryptocompare.com' for currency '$($Config.PayoutCurrency)'. Cannot determine best miners to run - retrying in $($Config.Interval) seconds..."
+            Write-Message -Level Warn $Message
+            $Variables.Summary = $Message
+            Remove-Variable Message
+
+            Clear-PoolData
+            Clear-MinerData
+
+            Start-Sleep -Seconds $Config.Interval
+
+            Write-Message -Level Info "Ending cycle."
+            Continue
         }
-        $Variables.Summary = $Summary
-        Remove-Variable Summary
 
         # Stop running miners
         ForEach ($Miner in @($Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { [String]$_.DeviceNames })) { 
             If ($Miner.Status -eq [MinerStatus]::Running -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
-                $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                 $Miner.SetStatus([MinerStatus]::Failed)
+                $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                Write-Message -Level Error "Miner $($Miner.StatusInfo)"
+                $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
             }
             Else { 
                 If ($Miner.Benchmark -or $Miner.MeasurePowerConsumption) { 
@@ -1168,12 +1182,16 @@ Try {
         $Loops = 0
         While ($StuckMinerProcesses = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID}).ProcessId.ForEach({ (Get-Process -Id $_ -ErrorAction Ignore).Where({ $_.MainWindowTitle -match ".+ \{.+@.+\}" })})) { 
             ForEach ($StuckMinerProcess in $StuckMinerProcesses) { 
-                Write-Message -Level Warn "Found stuck miner '$($StuckMinerProcess.MainWindowTitle -replace "\} .+", "}")', trying to stop it..."
                 Stop-Process -Id $StuckMinerProcess.Id -Force -ErrorAction Ignore | Out-Null
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
                 $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($StuckMinerProcess.Id)")
                 $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
-                If (-not (Get-Process -Id $StuckMinerProcess.Id -ErrorAction Ignore)) { Write-Message -Level Warn "Successfully stopped miner '$($StuckMinerProcess.MainWindowTitle -replace "\} .+", "}")'." }
+                If (-not (Get-Process -Id $StuckMinerProcess.Id -ErrorAction Ignore)) { 
+                    Write-Message -Level Warn "Successfully stopped stuck miner '$($StuckMinerProcess.MainWindowTitle -replace "\} .+", "}")'."
+                }
+                Else { 
+                    Write-Message -Level Warn "Found stuck miner '$($StuckMinerProcess.MainWindowTitle -replace "\} .+", "}")', trying to stop it..."
+                }
             }
             Start-Sleep -Milliseconds 1000
             $Loops ++
@@ -1208,6 +1226,12 @@ Try {
                 ElseIf ($_.Status -eq [MinerStatus]::Idle) { 
                     $_.SubStatus = "idle"
                 }
+                ElseIf ($_.Status -eq [MinerStatus]::Failed) { 
+                    $_.Status = [MinerStatus]::Idle
+                    $_.StatusInfo = "Idle"
+                    $_.SubStatus = "idle"
+                    $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                }
             }
         )
 
@@ -1219,43 +1243,18 @@ Try {
 
         $Variables.Miners.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
 
-        If (-not ($Variables.EnabledDevices -and $Variables.Miners.Where({ $_.Available }))) { 
-            $Variables.Miners = [Miner[]]@()
-            $Variables.RefreshNeeded = $true
-            If (-not $Variables.EnabledDevices) { 
-                $Message = "No enabled devices - retrying in $($Config.Interval) seconds..."
-                Write-Message -Level Warn $Message
-                $Variables.Summary = $Message
-                Remove-Variable Message
-                Start-Sleep -Seconds $Config.Interval
-                Write-Message -Level Info "Ending cycle (No enabled devices)."
-            }
-            ElseIf (-not $Variables.PoolName) { 
-                $Message = "No configured pools - retrying in $($Config.Interval) seconds..."
-                Write-Message -Level Warn $Message
-                $Variables.Summary = $Message
-                Remove-Variable Message
-                Start-Sleep -Seconds $Config.Interval
-                Write-Message -Level Info "Ending cycle (No configured pools)."
-            }
-            Else { 
-                $Message = "No available miners - retrying in $($Config.Interval) seconds..."
-                Write-Message -Level Warn $Message
-                $Variables.Summary = $Message
-                Remove-Variable Message
-                Start-Sleep -Seconds $Config.Interval
-                Write-Message -Level Info "Ending cycle (No available miners)."
-            }
-            Continue
-        }
-
         If (-not $Variables.MinersBest) { 
-            $Variables.Miners.ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
-            $Variables.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).ForEach({ $_.Status = [MinerStatus]::Idle; $_.StatusInfo = "Idle" })
-            $Variables.RefreshNeeded = $true
-            Write-Message -Level Warn "No profitable miners - retrying in $($Config.Interval) seconds..."
+            $Message = "No profitable miners - retrying in $($Config.Interval) seconds..."
+            Write-Message -Level Warn $Message
+            $Variables.Summary = $Message
+            Remove-Variable Message
+
+            Clear-PoolData
+            Clear-MinerData
+
             Start-Sleep -Seconds $Config.Interval
-            Write-Message -Level Info "Ending cycle (No profitable miners)."
+
+            Write-Message -Level Info "Ending cycle."
             Continue
         }
 
@@ -1375,7 +1374,7 @@ Try {
         $Variables.RefreshTimestamp = [DateTime]::Now.ToUniversalTime()
         $Variables.RefreshNeeded = $true
 
-        Write-Message -Level Info "Collecting miner data while waiting for next cycle..."
+        Write-Message -Level Info "Collecting miner data while waiting for end of cycle..."
 
         # Ensure a cycle on first loop
         If ($Variables.CycleStarts.Count -eq 1) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime().AddSeconds($Config.Interval) }
@@ -1389,14 +1388,18 @@ Try {
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
-                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                        Write-Message -Level Error "Miner $($Miner.StatusInfo)"
+                        $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                         $Variables.MinersFailed += $Miner
                     }
                     ElseIf ($Miner.DataReaderJob.State -ne [MinerStatus]::Running) { 
                         # Miner data reader process failed
-                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) miner data reader exited unexpectedly"
                         $Miner.SetStatus([MinerStatus]::Failed)
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) data reader exited unexpectedly"
+                        Write-Message -Level Error "Miner $($Miner.StatusInfo)"
+                        $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                         $Variables.MinersFailed += $Miner
                     }
                     Else { 
@@ -1429,14 +1432,18 @@ Try {
                         }
                         # Stop miner, it has not provided hash rate on time
                         If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.BeginTime.AddSeconds($Miner.WarmupTimes[0])) { 
-                            $Miner.StatusInfo = "$($Miner.Info) has not provided first valid data sample in $($Miner.WarmupTimes[0]) seconds"
                             $Miner.SetStatus([MinerStatus]::Failed)
+                            $Miner.StatusInfo = "$($Miner.Info) has not provided first valid data sample in $($Miner.WarmupTimes[0]) seconds"
+                            Write-Message -Level Error "Miner $($Miner.StatusInfo)"
+                            $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                             $Variables.MinersFailed += $Miner
                         }
                         # Miner stuck - no sample received in last few data collect intervals
                         ElseIf ($Miner.ValidDataSampleTimestamp -gt [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.DataSampleTimestamp.AddSeconds((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count)) { 
-                            $Miner.StatusInfo = "$($Miner.Info) has not updated data for more than $((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count) seconds"
                             $Miner.SetStatus([MinerStatus]::Failed)
+                            $Miner.StatusInfo = "$($Miner.Info) has not updated data for more than $((($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count) seconds"
+                            Write-Message -Level Error "Miner $($Miner.StatusInfo)"
+                            $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                             $Variables.MinersFailed += $Miner
                         }
                     }

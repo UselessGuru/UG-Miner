@@ -419,12 +419,12 @@ Class Miner : IDisposable {
         If ($this.Status -eq [MinerStatus]::DryRun) { 
             Write-Message -Level Info "Dry run for miner '$($this.Info)'..."
             $this.StatusInfo = "$($this.Info) (Dry run)"
-            $this.SubStatus = "idle"
+            $this.SubStatus = "dryrun"
             $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
         }
         Else { 
             Write-Message -Level Info "Starting miner '$($this.Info)'..."
-            $this.StatusInfo = "$($this.Info) is starting"
+            $this.StatusInfo = "$($this.Info) is getting ready"
             $this.SubStatus = "starting"
         }
 
@@ -465,8 +465,7 @@ Class Miner : IDisposable {
                 $Loops = 100
                 Do { 
                     Start-Sleep -Milliseconds 50
-                    $this.ProcessId = $this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId
-                    If ($this.ProcessId) { 
+                    If ($this.ProcessId = $this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId) { 
                         $this.Activated ++
                         $this.DataSampleTimestamp = [DateTime]0
                         $this.Status = [MinerStatus]::Running
@@ -518,12 +517,10 @@ Class Miner : IDisposable {
         $this.Process = $null
         $this.ProcessId = $null
 
-        $this.Status = If ([MinerStatus]::Running, [MinerStatus]::DryRun -contains $this.Status) { [MinerStatus]::Idle } Else { [MinerStatus]::Failed }
-
         # Log switching information to .\Logs\SwitchingLog
         [PSCustomObject]@{ 
             DateTime                = (Get-Date -Format o)
-            Action                  = If ($this.Status -eq [MinerStatus]::Idle) { "Stopped" } Else { "Failed" }
+            Action                  = If ($this.Status -eq [MinerStatus]::Failed) { "Failed" } Else { "Stopped" }
             Name                    = $this.Name
             Activated               = $this.Activated
             Accounts                = $this.WorkersRunning.Pool.User -join " "
@@ -549,6 +546,7 @@ Class Miner : IDisposable {
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
+        $this.Status = [MinerStatus]::Idle
         $this.StatusInfo = "Idle"
         $this.SubStatus = $this.Status
         $this.WorkersRunning = [Worker[]]@()
@@ -779,6 +777,55 @@ Function Start-Core {
     }
 }
 
+Function Clear-MinerData { 
+    # # Remove Watchdog timers
+    # ForEach ($Miner in $Variables.Miners) { 
+    #     ForEach ($Worker in $Miner.WorkersRunning) { 
+    #         If ($WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames })) { 
+    #             $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers })
+    #         }
+    #     }
+    #     Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
+    #     If ($Miner.ProcessJob -or $Miner.Status -eq [MinerStatus]::DryRun) { $Miner.SetStatus([MinerStatus]::Idle) }
+    # }
+
+    # Stop all miners
+    ForEach ($Miner in $Variables.Miners.Where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
+        $Miner.SetStatus([MinerStatus]::Idle)
+        $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+    }
+    Remove-Variable Miner -ErrorAction Ignore
+
+    $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    $Variables.Miners.ForEach({ $_.Dispose() })
+    $Variables.Miners = [Miner[]]@()
+    $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
+    $Variables.MinersBest = [Miner[]]@()
+    $Variables.MinersBestPerDevice = [Miner[]]@()
+    $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
+    $Variables.MinersFailed = [Miner[]]@()
+    $Variables.MinersMissingBinary = [Miner[]]@()
+    $Variables.MinerMissingFirewallRule = [Miner[]]@()
+    $Variables.MinersMissingPrerequisite = [Miner[]]@()
+    $Variables.MinersOptimal = [Miner[]]@()
+    $Variables.MinersRunning = [Miner[]]@()
+
+    $Variables.MiningEarnings = [Double]0
+    $Variables.MiningPowerConsumption = [Double]0
+    $Variables.MiningPowerCost = [Double]0
+    $Variables.MiningProfit = [Double]0
+}
+
+Function Clear-PoolData { 
+    $Variables.Pools.ForEach({ $_.Dispose() })
+    $Variables.Pools = [Pool[]]@()
+    $Variables.PoolsAdded = [Pool[]]@()
+    $Variables.PoolsExpired = [Pool[]]@()
+    $Variables.PoolsNew = [Pool[]]@()
+    $Variables.PoolsUpdated = [Pool[]]@()
+}
+
 Function Stop-Core { 
 
     If ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
@@ -791,44 +838,26 @@ Function Stop-Core {
         $Global:CoreRunspace.PSObject.Properties.Remove("StartTime")
     }
 
-    ForEach ($Miner in $Variables.Miners) { 
-        ForEach ($Worker in $Miner.WorkersRunning) { 
-            If ($WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames })) { 
-                # Remove Watchdog timers
-                $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers })
-            }
-        }
-        Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
-        $Miner.SetStatus([MinerStatus]::Idle)
+    If ($Variables.NewMiningStatus -eq "Idle") { 
+        Clear-PoolData
+        Clear-MinerData
     }
-    Remove-Variable Miner -ErrorAction Ignore
-
-    If ($Global:CoreRunspace) { 
-        $Variables.Pools.ForEach({ $_.Dispose() })
-        $Variables.Pools = [Pool[]]@()
-        $Variables.PoolsAdded = [Pool[]]@()
-        $Variables.PoolsExpired = [Pool[]]@()
-        $Variables.PoolsNew = [Pool[]]@()
-        $Variables.PoolsUpdated = [Pool[]]@()
-
-        $Variables.Miners.ForEach({ $_.Dispose() })
-        $Variables.Miners = [Miner[]]@()
-        $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
+    Else { 
+        # Stop all miners
+        ForEach ($Miner in $Variables.Miners.Where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
+            $Miner.SetStatus([MinerStatus]::Idle)
+            $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+        }
+        Remove-Variable Miner -ErrorAction Ignore
         $Variables.MinersBest = [Miner[]]@()
         $Variables.MinersBestPerDevice = [Miner[]]@()
-        $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
-        $Variables.MinersFailed = [Miner[]]@()
-        $Variables.MinersMissingBinary = [Miner[]]@()
-        $Variables.MinerMissingFirewallRule = [Miner[]]@()
-        $Variables.MinersMissingPrerequisite = [Miner[]]@()
-        $Variables.MinersOptimal = [Miner[]]@()
-        $Variables.MinersRunning = [Miner[]]@()
-
         $Variables.MiningEarnings = [Double]0
         $Variables.MiningPowerConsumption = [Double]0
         $Variables.MiningPowerCost = [Double]0
         $Variables.MiningProfit = [Double]0
+    }
 
+    If ($Global:CoreRunspace) { 
         $Global:CoreRunspace.PSObject.Properties.Remove("Job")
 
         # Must close runspace after miners were stopped, otherwise methods don't work any longer
@@ -1070,7 +1099,7 @@ Function Get-Rate {
                     }
                 )
             }
-            Write-Message -Level Info "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", ' &$1'). $($Variables.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(If ($Variables.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
+            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", ' &$1'). $($Variables.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(If ($Variables.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
             $Variables.Rates = $Rates
             $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
 
@@ -1448,13 +1477,21 @@ Function Read-Config {
     # Load the configuration
     $ConfigFromFile = @{ }
     If (Test-Path -LiteralPath $ConfigFile -PathType Leaf) { 
-        $ConfigFromFile = [System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject
+        Try { $ConfigFromFile = [System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject } Catch {}
         If ($ConfigFromFile.psBase.Keys.Count -eq 0) { 
             $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
             Move-Item -Path $ConfigFile $CorruptConfigFile -Force
-            $Message = "Configuration file '$ConfigFile' is corrupt and was renamed to '$CorruptConfigFile'."
-            Write-Message -Level Warn $Message
-            $ConfigFromFile = Get-DefaultConfig
+            If ($Config.psBase.Keys.Count -gt 0) { 
+                $Message = "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
+                [Void](Write-Config -Config $Config)
+                $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
+                Continue
+            }
+            Else { 
+                Write-Host "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Creating a new configuration using default values." -ForegroundColor "Red"
+                Write-Host
+                $ConfigFromFile = Get-DefaultConfig
+            }
         }
         Else { 
             $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
@@ -1482,10 +1519,10 @@ Function Read-Config {
                     }
                 }
             )
-        }
-        If ($ConfigFromFile.EarningsAdjustmentFactor -le 0 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 10) { 
-            $ConfigFromFile.EarningsAdjustmentFactor = 1
-            Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.EarningsAdjustmentFactor)) is not within supported range (0 - 10); using default value $($ConfigFromFile.EarningsAdjustmentFactor)."
+            If ($ConfigFromFile.EarningsAdjustmentFactor -le 0 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 10) { 
+                $ConfigFromFile.EarningsAdjustmentFactor = 1
+                Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.EarningsAdjustmentFactor)) is not within supported range (0 - 10); using default value $($ConfigFromFile.EarningsAdjustmentFactor)."
+            }
         }
     }
     Else { 
@@ -1653,7 +1690,6 @@ Function Update-ConfigFile {
     $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
     [Void](Write-Config -Config $Config)
     Write-Message -Level Verbose "Updated configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' to version $($Variables.Branding.Version.ToString())."
-    Write-Host ""
 }
 
 Function Write-Config { 
@@ -1712,9 +1748,20 @@ Function Edit-File {
 
     $FileWriteTime = (Get-Item -LiteralPath $FileName).LastWriteTime
 
-    If (-not $FileWriteTime) { 
-        If ($FileName -eq $Variables.PoolsConfigFile -and -not (Test-Path -LiteralPath $Variables.PoolsConfigFile -PathType Leaf)) { 
+    If ($FileName -eq $Variables.PoolsConfigFile.Replace($PWD, ".")) { 
+        If (Test-Path -LiteralPath $Variables.PoolsConfigFile -PathType Leaf) { 
+            Copy-Item -Path $Variables.PoolsConfigFile -Destination "$($Variables.PoolsConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").backup"
+            Get-ChildItem -Path "$($Variables.PoolsConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
+        }
+        Else { 
             Copy-Item -LiteralPath "$PWD\Data\PoolsConfig-Template.json" -Destination $FileName -ErrorAction Ignore
+        }
+    }
+
+    If ($FileName -eq $Variables.ConfigFile.Replace($PWD, ".")) { 
+        If (Test-Path -LiteralPath $Variables.ConfigFile -PathType Leaf) { 
+            Copy-Item -Path $Variables.ConfigFile -Destination "$($Variables.ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").backup"
+            Get-ChildItem -Path "$($Variables.ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
         }
     }
 
@@ -2724,10 +2771,26 @@ public static class Kernel32
         # Call CreateProcess
         [Void][Kernel32]::CreateProcess($ConHost, "$ConHost $BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
 
-        $ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore 
-        If ($MinerProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq "$BinaryPath$ArgumentList" }) | Select-Object -ExpandProperty ProcessId) { 
-            $MinerProcess = Get-Process -Id $MinerProcessId -ErrorAction Ignore
-        }
+        # Timing issue, some processes are not immediately available on fast computers
+        $Loops = 100
+        Do { 
+            If ($ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore) { Break }
+            Start-Sleep -Milliseconds 50
+            $Loops --
+        } While ($Loops -gt 0)
+        Do { 
+            If ($MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")) { Break }
+            Start-Sleep -Milliseconds 50
+            $Loops --
+        } While ($Loops -gt 0)
+        $MinerProcessId = $MinerProcess.ProcessId
+
+        # If ($MinerProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq "$BinaryPath$ArgumentList" }) | Select-Object -ExpandProperty ProcessId) { 
+        #     $MinerProcess = Get-Process -Id $MinerProcessId -ErrorAction Ignore
+        # }
+        # Else { 
+        #     $MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")
+        # }
 
         If ($null -eq $MinerProcess.Count) { 
             [PSCustomObject]@{ 
@@ -2745,15 +2808,17 @@ public static class Kernel32
         $ConhostProcess.Handle | Out-Null
         $ControllerProcess.Handle | Out-Null
         $MinerProcess.Handle | Out-Null
+        $ChildProcesses.ForEach({ $_.Handle | Out-Null })
 
         Do { 
             If ($ControllerProcess.WaitForExit(250)) { 
-                Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore
-                Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
+                # Kill process in bottum up order
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId")
-                $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
+                Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore
                 $MinerProcess = $null
+                $ControllerProcess = $null
             }
         } While ($ControllerProcess.HasExited -eq $false)
     }
@@ -3120,6 +3185,16 @@ Function Get-AllDAGdata {
     If (-not $DAGdata."Algorithm") { $DAGdata | Add-Member "Algorithm" ([PSCustomObject]@{ }) }
     If (-not $DAGdata."Currency") { $DAGdata | Add-Member "Currency" ([PSCustomObject]@{ }) }
     If (-not $DAGdata."Updated") { $DAGdata | Add-Member "Updated" ([PSCustomObject]@{ }) }
+
+    If (-not $Variables.DAGdata) { 
+        $Message = "Loading DAG data information..."
+        $Variables.Summary = $Message
+        If ($LegacyGUIform) { 
+            $LegacyGUIminingSummaryLabel.Text = $Message
+            $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+        }
+        Remove-Variable Message
+    }
 
     # Update on script start, once every 24hrs or if unable to get data from source
     $Url = "https://whattomine.com/coins.json"
@@ -3704,31 +3779,37 @@ Function Initialize-Environment {
     If (-not (Get-ChildItem -LiteralPath $PWD\Balances)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Balances'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Brains)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Brains'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Data)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Data'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Miners)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Miners'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Pools)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Pools'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Web)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Web'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
 
@@ -3737,6 +3818,7 @@ Function Initialize-Environment {
     If (-not $Variables.DonationData) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     Write-Host "Loaded donation data."
@@ -3752,6 +3834,7 @@ Function Initialize-Environment {
     If (-not $Variables.Algorithms.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
 
@@ -3761,6 +3844,7 @@ Function Initialize-Environment {
     If (-not $Variables.CoinNames.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
 
@@ -3770,7 +3854,7 @@ Function Initialize-Environment {
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-        Start-Sleep -Seconds 10
+        Start-Sleep -Seconds 5
         Exit
     }
 
@@ -3780,6 +3864,7 @@ Function Initialize-Environment {
     If (-not $Variables.EquihashCoinPers) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     Write-Host "Loaded algorithm & coin database."
@@ -3790,6 +3875,7 @@ Function Initialize-Environment {
     If (-not $Variables.Regions.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     Write-Host "Loaded regions database."
@@ -3799,6 +3885,7 @@ Function Initialize-Environment {
     If (-not $Variables.FIATcurrencies) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     Write-Host "Loaded fiat currencies database."
@@ -3808,6 +3895,7 @@ Function Initialize-Environment {
     If (-not $Variables.UnprofitableAlgorithms.Count) { 
         Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     Write-Host "Loaded list of unprofitable algorithms."
@@ -3839,6 +3927,7 @@ Function Initialize-Environment {
     If (-not $Variables.GPUArchitectureDbNvidia) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     Else { Write-Host "Loaded NVidia GPU architecture table." }
@@ -3848,11 +3937,10 @@ Function Initialize-Environment {
     If (-not $Variables.GPUArchitectureDbAMD) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
     Else { Write-Host "Loaded AMD GPU architecture table." }
 
     $Variables.BalancesCurrencies = @($Variables.Balances.PSObject.Properties.Name.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
-
-    Write-Host ""
 }

@@ -59,6 +59,19 @@
   </head>
 <!-- Start of page scripts 'head.html' -->
   <script type='text/javascript'>
+    
+    if (typeof version !== "undefined") {
+      $.ajax({
+        async: false,
+        dataType: 'json',
+        timeout: 1,
+        url: '/version',
+        success: function(result) {
+          version = result;
+        }
+      });
+    }
+
     function updateData() { 
       // Get current config
       $.ajax({

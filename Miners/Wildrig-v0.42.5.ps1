@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.18
-Version date:   2025/03/23
+Version:        6.4.19
+Version date:   2025/03/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.42.4/wildrig-multi-windows-0.42.4.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.42.5/wildrig-multi-windows-0.42.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -210,14 +210,14 @@ $Algorithms = @(
     @{ Algorithm = "X16rv2";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x16rv2 --watchdog" }
     @{ Algorithm = "X16s";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x16s --watchdog" } # FPGA
     @{ Algorithm = "X17";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x17 --watchdog" }
-    @{ Algorithm = "X18";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x18 --watchdog" } # ASIC
-    @{ Algorithm = "X20r";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x20r --watchdog" } # ASIC
+#   @{ Algorithm = "X18";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x18 --watchdog" } # ASIC
+#   @{ Algorithm = "X20r";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @();           Arguments = " --algo x20r --watchdog" } # ASIC
     @{ Algorithm = "X21s";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x21s --watchdog" } # Trex-v0.26.8 is fastest
     @{ Algorithm = "X22";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x22 --watchdog" }
     @{ Algorithm = "X22i";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x22i --watchdog" } # Not yet supported on Nvidia
     @{ Algorithm = "X25x";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x25x --watchdog" } # Not yet supported on Nvidia
     @{ Algorithm = "X33";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x33 --watchdog" }
-    @{ Algorithm = "X7";               Type = "NVIDIA"; Fee = @(0.05);   MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x7 --watchdog" } # ASIC
+#   @{ Algorithm = "X7";               Type = "NVIDIA"; Fee = @(0.05);   MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x7 --watchdog" } # ASIC
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

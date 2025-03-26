@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.18
-Version date:   2025/03/23
+Version:        6.4.19
+Version date:   2025/03/26
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.18"
+    Version      = [System.Version]"6.4.19"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -328,6 +328,7 @@ $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.B
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
     Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
     $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Start-Sleep -Seconds 5
     Exit
 }
 
@@ -349,22 +350,27 @@ $Variables.AllCommandLineParameters = [Ordered]@{ }
     }
 )
 
+# Must done before reading config (Get-Region)
 Write-Host "Preparing environment and loading data files..." -ForegroundColor Yellow
 [Void](Initialize-Environment)
+Write-Host ""
 
 # Read configuration
 [Void](Read-Config -ConfigFile $Variables.ConfigFile)
 
 Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru..."
-Write-Host ""
+If (-not $Config.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'." }
+
+# Update config file to include all new config items
+If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
+    [Void](Update-ConfigFile -ConfigFile $Variables.ConfigFile)
+}
 
 # Start transcript log
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
 # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
 [Void](Start-LogReader)
-
-If (-not $Variables.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'." }
 
 If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
@@ -373,6 +379,7 @@ If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command 
     If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
         Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
         $Global:WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
         Exit
     }
 }
@@ -383,42 +390,23 @@ $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $Ne
 If (-not $Variables.MyIP) { 
     Write-Host "Terminating Error - No internet connection." -ForegroundColor "Red"
     $Global:WscriptShell.Popup("No internet connection`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Start-Sleep -Seconds 5
     Exit
 }
 
-# Update config file to include all new config items
-If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
-    [Void](Update-ConfigFile -ConfigFile $Variables.ConfigFile)
-}
-ElseIf ($Variables.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
-    # Exclude from AV scanner
-    Try { 
-        If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..."; Start-Sleep -Seconds 5 }
-        Start-Process "pwsh" "-Command Write-Host 'Excluding UG-Miner directory ''$(Convert-Path .)'' from Microsoft Defender Antivirus scans...'; Import-Module Defender -SkipEditionCheck; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
-        Write-Message -Level Info "Excluded the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans."
-    }
-    Catch { 
-        $Global:WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis may lead to unpredictable results.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-        Exit
-    }
-    # Unblock files
-    If (Get-Command "Unblock-File" -ErrorAction Ignore) { 
-        If (Get-Item .\* -Stream Zone.*) { 
-            Write-Host "Unblocking files that were downloaded from the internet..." -ForegroundColor Yellow
-            Get-ChildItem -Path . -Recurse | Unblock-File
-        }
-    }
-}
-
-#Prerequisites check
 Write-Host ""
+# Check if a new version is available
+[Void](Get-Version)
+
+Write-Host ""
+#Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
 If ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") { 
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
     $Global:WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Start-Sleep -Seconds 5
     Exit
 }
-
 $Prerequisites = @(
     "$env:SystemRoot\System32\MSVCR120.dll",
     "$env:SystemRoot\System32\VCRUNTIME140.dll",
@@ -430,6 +418,7 @@ If ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath 
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
     Write-Message -Level Error "and run 'install_all.bat' (Admin rights are required)."
     $Global:WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Start-Sleep -Seconds 5
     Exit
 }
 Remove-Variable Prerequisites, PrerequisitesMissing
@@ -438,15 +427,35 @@ If ( -not (Get-Command Get-PnpDevice)) {
     Write-Message -Level Error "Windows Management Framework 5.1 is missing."
     Write-Message -Level Error "Please install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616"
     $Global:WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Start-Sleep -Seconds 5
     Exit
 }
-
 Write-Message -Level Verbose "Pre-requisites verification OK - running PWSH version $($PSVersionTable.PSVersion)$(If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { " (recommended version is $($RecommendedPWSHversion))" })."
 Remove-Variable RecommendedPWSHversion
 
-# Check if a new version is available
-[Void](Get-Version)
+Write-Host ""
+# Exclude from AV scanner
+If ($Variables.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
+    Try { 
+        If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..."; Start-Sleep -Seconds 5 }
+        Start-Process "pwsh" "-Command Write-Host 'Excluding UG-Miner directory ''$(Convert-Path .)'' from Microsoft Defender Antivirus scans...'; Import-Module Defender -SkipEditionCheck; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
+        Write-Message -Level Info "Excluded the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans."
+    }
+    Catch { 
+        $Global:WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis may lead to unpredictable results.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
+        Exit
+    }
+    # Unblock files
+    If (Get-Command "Unblock-File" -ErrorAction Ignore) { 
+        If (Get-Item .\* -Stream Zone.*) { 
+            Write-Host "Unblocking files that were downloaded from the internet..." -ForegroundColor Yellow
+            Get-ChildItem -Path . -Recurse | Unblock-File
+        }
+    }
+}
 
+Write-Host ""
 $Variables.VerthashDatPath = ".\Cache\VertHash.dat"
 If (Test-Path -LiteralPath $Variables.VerthashDatPath -PathType Leaf) { 
     Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VerthashDatPath)'..."
@@ -565,7 +574,7 @@ If ($Config.WebGUI) { Start-APIServer }
 Function MainLoop { 
     If ($Variables.ConfigurationHasChangedDuringUpdate) { $Variables.NewMiningStatus = $Variables.MiningStatus = "Idle" }
 
-    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.NewMiningStatus -ne "Idle") { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
+    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.MiningStatus -ne "Idle") { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
 
     If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
         # Update rates every 15 minutes
@@ -597,6 +606,12 @@ Function MainLoop {
 
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 
+                    If ($LegacyGUIform) { 
+                        $LegacyGUIbuttonPause.Enabled = $false
+                        $LegacyGUIbuttonStart.Enabled = $false
+                        $LegacyGUIbuttonStop.Enabled = $false
+                    }
+
                     If ($Variables.MiningStatus) { 
                         $Variables.Summary = "'Stop Mining' button clicked."
                         Write-Host ""
@@ -604,8 +619,14 @@ Function MainLoop {
 
                         [Void](Stop-Core)
                         [Void](Stop-Brain)
+                        [Void](Stop-BalancesTracker)
 
                         # If ($Config.ReportToServer) { Write-MonitoringData }
+
+                        If ($LegacyGUIform) { 
+                            $LegacyGUIbuttonPause.Enabled = $true
+                            $LegacyGUIbuttonStart.Enabled = $true
+                        }
                     }
 
                     If (-not $Variables.ConfigurationHasChangedDuringUpdate) { 
@@ -617,6 +638,12 @@ Function MainLoop {
                     Break
                 }
                 "Paused" { 
+                    If ($LegacyGUIform) { 
+                        $LegacyGUIbuttonPause.Enabled = $false
+                        $LegacyGUIbuttonStart.Enabled = $false
+                        $LegacyGUIbuttonStop.Enabled = $false
+                    }
+
                     $Variables.Summary = "'Pause Mining' button clicked."
                     Write-Host ""
                     Write-Message -Level Info $Variables.Summary
@@ -625,6 +652,11 @@ Function MainLoop {
                     [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
 
                     # If ($Config.ReportToServer) { Write-MonitoringData }
+
+                    If ($LegacyGUIform) { 
+                        $LegacyGUIbuttonStart.Enabled = $true
+                        $LegacyGUIbuttonStop.Enabled = $true
+                    }
 
                     Write-Host ""
                     $Variables.Summary = "$($Variables.Branding.ProductLabel) is paused.<br>"
@@ -639,6 +671,12 @@ Function MainLoop {
                     Break
                 }
                 "Running" { 
+                    If ($LegacyGUIform) { 
+                        $LegacyGUIbuttonPause.Enabled = $false
+                        $LegacyGUIbuttonStart.Enabled = $false
+                        $LegacyGUIbuttonStop.Enabled = $false
+                    }
+
                     If ($Variables.MiningStatus) { 
                         $Variables.Summary = "'Start Mining' button clicked. Mining processes are starting..."
                         Write-Host ""
@@ -646,6 +684,11 @@ Function MainLoop {
                     }
                     [Void](Start-Brain @(Get-PoolBaseName $Config.PoolName))
                     [Void](Start-Core)
+
+                    If ($LegacyGUIform) { 
+                        $LegacyGUIbuttonPause.Enabled = $true
+                        $LegacyGUIbuttonStop.Enabled = $true
+                    }
 
                     Break
                 }

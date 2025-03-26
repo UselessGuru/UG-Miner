@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.4.18
-Version date:   2025/03/23
+Version:        6.4.19
+Version date:   2025/03/26
 #>
 
 using module ..\Includes\Include.psm1
@@ -80,7 +80,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 { 
                     $CurrenciesData.$_ | Add-Member Currency $(If ($CurrenciesData.$_.symbol) { $CurrenciesData.$_.symbol -replace '-.+$' } Else { $_ -replace '-.+$' })
                     $CurrenciesData.$_ | Add-Member CoinName ([String]$Variables.CoinNames[$CurrenciesData.$_.Currency]) -Force
-                    $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($PoolConfig.Wallets.($CurrenciesData.$_.Currency) -or -not $CurrenciesData.$_.conversion_disabled))
+                    $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($PoolConfig.Wallets.($CurrenciesData.$_.Currency) -or -not $CurrenciesData.$_.only_direct))
 
                     $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
                     $CurrenciesData.$_.PSObject.Properties.Remove("name")
@@ -94,11 +94,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 }
             )
 
-            # Get best currency, prefer currencies that can be converted
-            ($CurrenciesArray | Group-Object Algorithm).ForEach(
+            # Get best currency
+            ($CurrenciesArray | Group-Object Algo).ForEach(
                 { 
                     If ($AlgoData.($_.name)) { 
-                        $BestCurrency = ($_.Group | Sort-Object -Property conversion_supported, estimate -Descending | Select-Object -First 1)
+                        $BestCurrency = ($_.Group | Sort-Object -Property conversion_supported ,estimate -Descending -Top 1)
                         $AlgoData.($_.name) | Add-Member Currency $BestCurrency.currency -Force
                         $AlgoData.($_.name) | Add-Member CoinName $BestCurrency.coinname -Force
                         $AlgoData.($_.name) | Add-Member conversion_supported $BestCurrency.conversion_supported -Force
@@ -120,7 +120,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                         $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
                         $DAGdata.Updated | Add-Member "https://www.zpool.ca/api/currencies" ([DateTime]::Now.ToUniversalTime()) -Force
                     }
-                    $AlgoData.$Algorithm | Add-Member conversion_disabled $CurrenciesData.$Currency.conversion_disabled -Force
+                    $AlgoData.$Algorithm | Add-Member conversion_supported $CurrenciesData.$Currency.conversion_supported -Force
                     If ($CurrenciesData.$Currency.error) { 
                         $AlgoData.$Algorithm | Add-Member error "Pool error msg: $($CurrenciesData.$Currency.error)" -Force
                     }
@@ -130,7 +130,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 }
                 Else { 
                     $AlgoData.$Algorithm | Add-Member error "" -Force
-                    $AlgoData.$Algorithm | Add-Member conversion_disabled 0 -Force
+                    $AlgoData.$Algorithm | Add-Member conversion_supported 0 -Force
 
                 }
                 $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force

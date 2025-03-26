@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.18
-Version date:   2025/03/23
+Version:        6.4.19
+Version date:   2025/03/26
 #>
 
 Function Start-APIServer { 
@@ -57,17 +57,15 @@ Function Start-APIServer {
             $Runspace.ThreadOptions = "ReuseThread"
             $Runspace.Open()
 
+            $Runspace.SessionStateProxy.SetVariable("APIVersion", $APIVersion)
             $Runspace.SessionStateProxy.SetVariable("Config", $Config)
             $Runspace.SessionStateProxy.SetVariable("Stats", $Stats)
             $Runspace.SessionStateProxy.SetVariable("Variables", $Variables)
             [Void]$Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
-            $Runspace.SessionStateProxy.SetVariable("APIVersion", $APIVersion)
-            $Runspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
-
             $PowerShell = [PowerShell]::Create()
             $PowerShell.Runspace = $Runspace
-            $Powershell.AddScript(
+            [Void]$Powershell.AddScript(
                 { 
                     $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
                     Remove-Variable Script, ScriptBody
@@ -841,59 +839,57 @@ Function Start-APIServer {
                                 Break
                             }
                             "/miners" { 
-                                $Data = ConvertTo-Json -Depth 4 -Compress @(($Variables.Miners | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 5 -Compress @(($Variables.Miners | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/available" { 
                                 $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.Miners.Where({ $_.Available }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object DeviceNames, @{ Expression = $Bias; Descending = $true })
+                                $Data = ConvertTo-Json -Depth 5 @($Variables.Miners.Where({ $_.Available }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object DeviceNames, @{ Expression = $Bias; Descending = $true })
                                 Remove-Variable Bias
                                 Break
                             }
                             "/miners/bestperdevice" { 
-                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersBestPerDevice | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty WorkersRunning | Sort-Object -Property DeviceName)
+                                $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersBestPerDevice | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty WorkersRunning | Sort-Object -Property DeviceName)
                                 Break
                             }
                             "/miners/best" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersBest | Sort-Object -Property DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, SideIndicator, ValidDataSampleTimestamp)
+                                $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersBest | Sort-Object -Property DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/disabled" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.Miners.Where({ $_.Status -eq [MinerStatus]::Disabled }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property { $_.DeviceNames }, EndTime)
+                                $Data = ConvertTo-Json -Depth 5 @($Variables.Miners.Where({ $_.Status -eq [MinerStatus]::Disabled }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property { $_.DeviceNames }, EndTime)
                                 Break
                             }
                             "/miners/failed" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.Miners.Where({ $_.Status -eq [MinerStatus]::Failed }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property { $_.DeviceNames }, EndTime)
+                                $Data = ConvertTo-Json -Depth 5 @($Variables.Miners.Where({ $_.Status -eq [MinerStatus]::Failed }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property { $_.DeviceNames }, EndTime)
                                 Break
                             }
                             "/miners/launched" { 
-                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersBest | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersBest | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/missingbinary" { 
-                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersMissingBinary | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersMissingBinary | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/missingfirewallrule" { 
-                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersMissingFirewallRule | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersMissingFirewallRule | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/missingprerequisite" { 
-                                $Data = ConvertTo-Json -Depth 4 @(($Variables.MinersMissingPrerequisite | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersMissingPrerequisite | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/optimal" { 
-                                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.MinersOptimal | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp)
-                                Remove-Variable Bias
+                                $Data = ConvertTo-Json -Depth 5 @($Variables.MinersOptimal | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp)
                                 Break
                             }
                             "/miners/running" { 
-                                $Data = ConvertTo-Json -Depth 4 @(($Variables.Miners.Where({ $_.Status -eq [MinerStatus]::Running }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
+                                $Data = ConvertTo-Json -Depth 5 @(($Variables.Miners.Where({ $_.Status -eq [MinerStatus]::Running }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
                                 Break
                             }
                             "/miners/unavailable" { 
-                                $Data = ConvertTo-Json -Depth 4 @($Variables.Miners.Where({ $_.Available -ne $true }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property { $_.DeviceNames }, Name, Algorithm)
+                                $Data = ConvertTo-Json -Depth 5 @($Variables.Miners.Where({ $_.Available -ne $true }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property { $_.DeviceNames }, Name, Algorithm)
                                 Break
                             }
                             "/miningpowercost" { 

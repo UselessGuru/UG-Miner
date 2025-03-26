@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.18
-Version date:   2025/03/23
+Version:        6.4.19
+Version date:   2025/03/26
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -735,10 +735,6 @@ Function Update-GUIstatus {
             $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is stopped"
             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
             $LegacyGUIminingSummaryLabel.Text = "Click the 'Start mining' button to make money."
-
-            $LegacyGUIbuttonPause.Enabled = $true
-            $LegacyGUIbuttonStart.Enabled = $true
-            $LegacyGUIbuttonStop.Enabled = $false
         }
         "Paused" { 
             $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
@@ -751,10 +747,6 @@ Function Update-GUIstatus {
                 }
             )
             $LegacyGUIminingSummaryLabel.Text += "`r`n`r`nClick the 'Start mining' button to make money."
-
-            $LegacyGUIbuttonPause.Enabled = $false
-            $LegacyGUIbuttonStart.Enabled = $true
-            $LegacyGUIbuttonStop.Enabled = $true
         }
         "Running" { 
             If ($Variables.MiningStatus -eq "Running" -and -$Global:CoreRunspace.Job.IsCompleted -eq $true) { 
@@ -770,7 +762,7 @@ Function Update-GUIstatus {
                     If ($Variables.MinersRunning -and $Variables.MiningProfit -gt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
                     ElseIf ($Variables.MinersRunning -and $Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
                     Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
-    
+
                     $LegacyGUIminingSummaryLabel.Text = ""
                     (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
                     $LegacyGUIminingSummaryLabel.Text += "`r`n "
@@ -781,25 +773,21 @@ Function Update-GUIstatus {
                     $LegacyGUIminingSummaryLabel.Text = "Error: $($Variables.Summary)"
                 }
             }
-
-            $LegacyGUIbuttonPause.Enabled = $true
-            $LegacyGUIbuttonStart.Enabled = $false
-            $LegacyGUIbuttonStop.Enabled = $true
         }
     }
     Update-TabControl
 }
 
 $LegacyGUIcolors = @{ }
-$LegacyGUIcolors["benchmarking"]                                                    = [System.Drawing.Color]::FromArgb(241, 255, 229)
-$LegacyGUIcolors["disabled"]                                                        = [System.Drawing.Color]::FromArgb(255, 243, 231)
-$LegacyGUIcolors["failed"]                                                          = [System.Drawing.Color]::FromArgb(255, 230, 230)
-$LegacyGUIcolors["idle"] = $LegacyGUIcolors["stopped"] = $LegacyGUIcolors["dryrun"] = [System.Drawing.Color]::FromArgb(230, 248, 252)
-$LegacyGUIcolors["launched"]                                                        = [System.Drawing.Color]::FromArgb(229, 255, 229)
-$LegacyGUIcolors["running"]                                                         = [System.Drawing.Color]::FromArgb(212, 244, 212)
-$LegacyGUIcolors["starting"] = $LegacyGUIcolors["stopping"]                         = [System.Drawing.Color]::FromArgb(245, 255, 245)
-$LegacyGUIcolors["unavailable"]                                                     = [System.Drawing.Color]::FromArgb(254, 245, 220)
-$LegacyGUIcolors["warmingup"]                                                       = [System.Drawing.Color]::FromArgb(231, 255, 230)
+$LegacyGUIcolors["benchmarking"]                            = [System.Drawing.Color]::FromArgb(241, 255, 229)
+$LegacyGUIcolors["disabled"]                                = [System.Drawing.Color]::FromArgb(255, 243, 231)
+$LegacyGUIcolors["failed"]                                  = [System.Drawing.Color]::FromArgb(255, 230, 230)
+$LegacyGUIcolors["idle"] = $LegacyGUIcolors["stopped"]      = [System.Drawing.Color]::FromArgb(230, 248, 252)
+$LegacyGUIcolors["launched"]                                = [System.Drawing.Color]::FromArgb(229, 255, 229)
+$LegacyGUIcolors["dryrun"] = $LegacyGUIcolors["running"]    = [System.Drawing.Color]::FromArgb(212, 244, 212)
+$LegacyGUIcolors["starting"] = $LegacyGUIcolors["stopping"] = [System.Drawing.Color]::FromArgb(245, 255, 245)
+$LegacyGUIcolors["unavailable"]                             = [System.Drawing.Color]::FromArgb(254, 245, 220)
+$LegacyGUIcolors["warmingup"]                               = [System.Drawing.Color]::FromArgb(231, 255, 230)
 
 $LegacyGUItooltip = New-Object System.Windows.Forms.ToolTip
 
@@ -868,7 +856,7 @@ $LegacyGUIControls += $LegacyGUIminingSummaryLabel
 $LegacyGUItooltip.SetToolTip($LegacyGUIminingSummaryLabel, "Color legend:`rBlack: Mining profitability is unknown`rGreen: Mining is profitable`rRed: Mining is NOT profitable")
 
 $LegacyGUIbuttonPause = New-Object System.Windows.Forms.Button
-$LegacyGUIbuttonPause.Enabled = $true
+$LegacyGUIbuttonPause.Enabled = $false
 $LegacyGUIbuttonPause.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonPause.Height = 24
 $LegacyGUIbuttonPause.Text = "Pause mining"
@@ -887,7 +875,7 @@ $LegacyGUIControls += $LegacyGUIbuttonPause
 $LegacyGUItooltip.SetToolTip($LegacyGUIbuttonPause, "Pause mining processes.`rBrain jobs and balances tracker remain running.")
 
 $LegacyGUIbuttonStart = New-Object System.Windows.Forms.Button
-$LegacyGUIbuttonStart.Enabled = $true
+$LegacyGUIbuttonStart.Enabled = $false
 $LegacyGUIbuttonStart.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonStart.Height = 24
 $LegacyGUIbuttonStart.Text = "Start mining"
@@ -906,7 +894,7 @@ $LegacyGUIControls += $LegacyGUIbuttonStart
 $LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStart, "Start the mining process.`rBrain jobs and balances tracker will also start.")
 
 $LegacyGUIbuttonStop = New-Object System.Windows.Forms.Button
-$LegacyGUIbuttonStop.Enabled = $true
+$LegacyGUIbuttonStop.Enabled = $false
 $LegacyGUIbuttonStop.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonStop.Height = 24
 $LegacyGUIbuttonStop.Text = "Stop mining"
@@ -1064,7 +1052,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                             Remove-Variable Worker
                             $_.Available = $false
                             $_.Disabled = $false
-                            If ($_.GetStatus() -eq [MinerStatus]::Running) { $_.SetStatus([MinerStatus]::Idle) }
+                            If ($_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun) { $_.SetStatus([MinerStatus]::Idle) }
                             $_.Status = "Idle"
                             $_.SubStatus = "failed"
                             $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = $_.Earnings_Accuracy = [Double]::NaN
@@ -1091,7 +1079,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                                 $Worker.Hashrate = [Double]::NaN
                             }
                             Remove-Variable Worker
-                            If ($_.GetStatus() -eq [MinerStatus]::Running) { $_.SetStatus([MinerStatus]::Idle) }
+                            If ({ $_.ProcessJobb -or $_.Status -eq [MinerStatus]::DryRun }) { $_.SetStatus([MinerStatus]::Idle) }
                             $_.Disabled = $true
                             $_.Reasons += "Disabled by user"
                             $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)

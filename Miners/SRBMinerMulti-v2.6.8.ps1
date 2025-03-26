@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.18
-Version date:   2025/03/23
+Version:        6.4.19
+Version date:   2025/03/26
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]|RDNA4" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -56,6 +56,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA3d", "");                              Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm sha3d") } # FPGA
     @{ Algorithms = @("SHA512256d", "");                         Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm sha512_256d_radiant") }
     @{ Algorithms = @("UbqHash", "");                            Type = "AMD"; Fee = @(0.0065);         MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm ubqhash") }
+    @{ Algorithms = @("VerusHash", "");                          Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm verushash") }
 
     @{ Algorithms = @("Panthera", "");       Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm panthera") } # Broken with 2.7.1
     @{ Algorithms = @("Pufferfish2BMB", ""); Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm pufferfish2bmb") }
@@ -63,6 +64,7 @@ $Algorithms = @(
     @{ Algorithms = @("RandomNevo", "");     Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm randomnevo --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomxKeva", "");    Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm randomkeva --Randomx-use-1gb-pages") }
 #   @{ Algorithms = @("SHA3d", "");          Type = "CPU"; Fee = @(0.02);   MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm flex") } # Not profitable with CPU
+    @{ Algorithms = @("VerusHash", "");      Type = "CPU"; Fee = @(0.0085); MinerSet = 0; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm verushash") }
 
     @{ Algorithms = @("Autolykos2", "Blake3");                   Type = "INTEL"; Fee = @(0.01, 0.0085);   MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm autolykos2 --autolykos2-preload", " --algorithm blake3_alephium") }
     @{ Algorithms = @("Blake3", "");                             Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm blake3_alephium") }
@@ -82,6 +84,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA3d", "");                              Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm sha3d") } # FPGA
     @{ Algorithms = @("SHA512256d", "");                         Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm sha512_256d_radiant") }
     @{ Algorithms = @("UbqHash", "");                            Type = "INTEL"; Fee = @(0.0065);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm ubqhash") }
+    @{ Algorithms = @("VerusHash", "");                          Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm verushash") }
 
     @{ Algorithms = @("Autolykos2", "Blake3");     Type = "NVIDIA"; Fee = @(0.01, 0.0085);   MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 20); ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm autolykos2 --autolykos2-preload", " --algorithm blake3_alephium") }
     @{ Algorithms = @("Autolykos2", "SHA512256d"); Type = "NVIDIA"; Fee = @(0.01, 0.0085);   MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 10); ExcludeGPUarchitectures = "^Pascal$";         ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm autolykos2 --autolykos2-preload", " --algorithm sha512_256d_radiant") }
@@ -99,6 +102,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA3d", "");                Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm sha3d") } # FPGA
     @{ Algorithms = @("SHA512256d", "");           Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm sha512_256d_radiant") }
     @{ Algorithms = @("UbqHash", "");              Type = "NVIDIA"; Fee = @(0.0065);         MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm ubqhash") }
+    @{ Algorithms = @("VerusHash", "");            Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm verushash") }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

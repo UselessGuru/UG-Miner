@@ -1,6 +1,22 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.19 2025/03/26
+====================================
+
+Enhancements:
+- Web GUI / Miner tables: add columns 'Primary pool port' & 'Secondary pool port'
+
+Fixes:
+- All ZPool algorithms marked as unavailable; Reason:'(No wallet address for [] (conversion disabled at pool))' (Pool API had changed)
+- Core / Includes.psm1: Frequent failed / stuck miners on fast PCs (Thanks to Szentigrade)
+- Core: Crash in main cycle when no miner devices are selected
+
+Miner changes:
+- SRBMinerMulti-v2.8.1
+- Wildrig-v0.42.5
+
+
 Changelog UG-Miner 6.4.18 2025/03/23
 ====================================
 
