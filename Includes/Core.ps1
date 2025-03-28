@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.19
-Version date:   2025/03/26
+Version:        6.4.20
+Version date:   2025/03/28
 #>
 
 using module .\Include.psm1
@@ -209,7 +209,7 @@ Try {
 
                 # Load unprofitable algorithms
                 Try { 
-                    If (-not $Variables.UnprofitableAlgorithms -or (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime -gt $Variables.Timer.AddSeconds( - $Config.Interval)) { 
+                    If (-not $Variables.UnprofitableAlgorithms.Keys -or (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime -gt $Variables.Timer.ToLocalTime().AddSeconds( - $Config.Interval)) { 
                         $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Stop -AsHashtable | Get-SortedObject
                         Write-Message -Level Info "Loaded list of unprofitable algorithms ($($Variables.UnprofitableAlgorithms.Count) $(If ($Variables.UnprofitableAlgorithms.Count -ne 1) { "entries" } Else { "entry" }))."
                     }
@@ -1093,7 +1093,7 @@ Try {
                 $Summary += "Earnings / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
             }
             ElseIf ($Variables.MiningEarnings -gt 0) { 
-                $Summary += "Earnings / day: {0:n} {1}" -f ($Variables.MiningEarnings * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
+                $Summary += "Earnings / day: {0:n} {1}" -f ($Variables.MiningEarnings * $Variables.Rates.BTC.($Config.FIATcurrency)), $Config.FIATcurrency
             }
 
             If ($Variables.CalculatePowerCost) { 
@@ -1105,7 +1105,7 @@ Try {
                     $Summary += "Profit / day: n/a"
                 }
                 ElseIf ($Variables.MiningPowerConsumption -gt 0) { 
-                    $Summary += "Profit / day: {0:n} {1}" -f ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.FIATcurrency
+                    $Summary += "Profit / day: {0:n} {1}" -f ($Variables.MiningProfit * $Variables.Rates.BTC.($Config.FIATcurrency)), $Config.FIATcurrency
                 }
                 Else { 
                     $Summary += "Profit / day: n/a (no power data)"

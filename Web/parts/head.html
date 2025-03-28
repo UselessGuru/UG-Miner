@@ -59,18 +59,6 @@
   </head>
 <!-- Start of page scripts 'head.html' -->
   <script type='text/javascript'>
-    
-    if (typeof version !== "undefined") {
-      $.ajax({
-        async: false,
-        dataType: 'json',
-        timeout: 1,
-        url: '/version',
-        success: function(result) {
-          version = result;
-        }
-      });
-    }
 
     function updateData() { 
       // Get current config
@@ -93,6 +81,18 @@
           btc = result;
         }
       });
+      // version info needs to be read only once
+      if (typeof version == "undefined") {
+        $.ajax({
+          async: false,
+          dataType: 'json',
+          timeout: 1,
+          url: '/version',
+          success: function(result) {
+            version = result;
+          }
+        });
+      }
     }
 
     function updateSummary() {

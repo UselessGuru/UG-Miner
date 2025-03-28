@@ -74,7 +74,8 @@
         updateButtonStatus();
         if (typeof updatePoolBalances === "function") updatePoolBalances();
       }, config.Interval * 1000);
-      document.getElementById('footer').innerHTML = sessionStorage.getItem("version").replaceAll(',', ' / ') + ' / All earnings and profit numbers are estimates based on data provided by the pools APIs / &copy; UselessGuru'
+
+      document.getElementById('footer').innerHTML = version.join(' / ') + ' / All earnings and profit numbers are estimates based on data provided by the pools APIs / &copy; UselessGuru'
     });
 </script>
 <!-- End of page scripts 'foot.html'-->

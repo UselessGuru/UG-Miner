@@ -334,7 +334,8 @@ function formatGiBDigits10(value) {
 function detailFormatter(index, row) {
   var html = [];
   const sortedObj = {};
-  const keys = Object.keys(row).sort(); // Get keys and sort them
+  const keys = Object.keys(row).sort();
+  // Get keys and sort them
   for (const key of keys) {
     sortedObj[key] = row[key];
   }

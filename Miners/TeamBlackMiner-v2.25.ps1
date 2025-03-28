@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.19
-Version date:   2025/03/26
+Version:        6.4.20
+Version date:   2025/03/28
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.CUDAversion -ge [System.Version]"11.6" -and $_.CUDAversion -lt [System.Version]"12.6" }))) { Return }
@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\TBMiner.exe"
 
 $DeviceSelector = @{ AMD = " --cl-devices"; NVIDIA = " --cuda-devices" }
-$DeviceEnumerator = "Vendor_ID"
+$DeviceEnumerator = "Type_Vendor_Id"
 
 $Algorithms = @(
     @{ Algorithms = @("EtcHash", "");            Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 15);  ExcludePools = @(@(), @());                             Arguments = " --algo etchash" }

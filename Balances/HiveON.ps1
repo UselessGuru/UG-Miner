@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.4.19
-Version date:   2025/03/26
+Version:        6.4.20
+Version date:   2025/03/28
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
