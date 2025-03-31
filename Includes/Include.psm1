@@ -1609,7 +1609,7 @@ Function Update-ConfigFile {
     ("AHashPool", "BlockMasters", "NLPool", "MiningPoolHub").ForEach(
         { 
             If ($Config.PoolName -like "$_*") { 
-                Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName -like "$_*" -join "; ")) removed)."
+                Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName -like "$_*" -join "; ") removed)."
                 $Variables.ConfigurationHasChangedDuringUpdate += "- Pool '$($Config.PoolName -like "$_*" -join "; ")' removed"
                 $Config.PoolName = $Config.PoolName -notlike "$_*"
             }

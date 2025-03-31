@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.20
-Version date:   2025/03/28
+Version:        6.4.21
+Version date:   2025/03/31
 #>
 
 using module .\Include.psm1
@@ -986,15 +986,15 @@ Try {
                 Continue
             }
 
-            # Gone miners are no longer available
-            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false; $_.Best = $false })
-
             If ($Variables.Miners) { 
-                Write-Message -Level Info "Had $($Variables.Miners.Count) miner$(If ($Variables.Miners.Count -ne 1) { "s" }) from previous run,$(If ($Miners.Where({ $_.SideIndicator -eq "=>" }).Count) { " added $($Miners.Where({ $_.SideIndicator -eq "=>" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "=>" }).Count -ne 1) { "s" })," }) updated $($Miners.Where({ $_.SideIndicator -eq "==" }).Count) existing miner$(If ($Miners.Where({ $_.SideIndicator -ne "==" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
+                Write-Message -Level Info "Had $($Variables.Miners.Count) miner$(If ($Variables.Miners.Count -ne 1) { "s" }) from previous run$(If ($Miners.Where({ $_.SideIndicator -eq "=>" }).Count) { ", added $($Miners.Where({ $_.SideIndicator -eq "=>" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "=>" }).Count -ne 1) { "s" })" })$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) { ", removed $($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) miner$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count -ne 1) { "s" })" } )$(If ($Miners.Where({ $_.SideIndicator -eq "==" }).Count) { ", updated $($Miners.Where({ $_.SideIndicator -eq "==" }).Count) existing miner$(If ($Miners.Where({ $_.SideIndicator -ne "==" }).Count -ne 1) { "s" })" })$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" })) { ", filtered out $($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" })" }). $($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count) available miner$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -eq 1) { "s" })."
             }
             Else { 
-                Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }), filtered out $($Miners.Where({ -not $_.Available }).Count) miner$(If ($Miners.Where({ -not $_.Available }).Count -ne 1) { "s" }). $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
+                Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" })$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) { ", removed $($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) miner$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count -ne 1) { "s" })" } )$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" })) { ", filtered out $($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" })" }). $($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count) available miner$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -eq 1) { "s" })."
             }
+
+            # Gone miners are no longer available
+            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false; $_.Best = $false })
 
             $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
             If ($Miners.Where({ $_.Available })) { 

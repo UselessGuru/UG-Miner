@@ -159,8 +159,7 @@
 
             <!-- Pool settings -->
             <legend class=h6><b>Pool settings</b></legend>
-            <!-- Select the region closest to your Location -->
-            <label title="For best network performance UG-Miner will use&#10;the pools closest to the selected region" for="Region">The region closest to my location is </label>
+            <label title="For best network performance UG-Miner will use&#10;the pools closest to the selected region" for="Region">Region </label>
             <select style="height: 1.6em;" id="Region" name="Region" style="margin-top: 0.2rem;"></select>
             <div style="padding-top: 0.2rem;" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature">
               <input type="checkbox" class="toggle-switch" id="UseAnycast" name="UseAnycast"> Use anycast for best network performance and ping times
@@ -1295,7 +1294,6 @@
         });
 
         // Pool settings
-        // Select the region closest to your location
         config.Region = document.getElementById('Region').value.trim();
         config.UseAnycast = document.getElementById('UseAnycast').checked;
         if (document.getElementById('SSL').value.match('Never|Prefer|Always')) config.SSL = document.getElementById('SSL').value;

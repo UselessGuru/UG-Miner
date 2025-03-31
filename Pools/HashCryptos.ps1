@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.4.20
-Version date:   2025/03/28
+Version:        6.4.21
+Version date:   2025/03/31
 #>
 
 Param(

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.20
-Version date:   2025/03/28
+Version:        6.4.21
+Version date:   2025/03/31
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.20"
+    Version      = [System.Version]"6.4.21"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -433,9 +433,9 @@ If ( -not (Get-Command Get-PnpDevice)) {
 Write-Message -Level Verbose "Pre-requisites verification OK - running PWSH version $($PSVersionTable.PSVersion)$(If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { " (recommended version is $($RecommendedPWSHversion))" })."
 Remove-Variable RecommendedPWSHversion
 
-Write-Host ""
 # Exclude from AV scanner
 If ($Variables.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
+    Write-Host ""
     Try { 
         If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..."; Start-Sleep -Seconds 5 }
         Start-Process "pwsh" "-Command Write-Host 'Excluding UG-Miner directory ''$(Convert-Path .)'' from Microsoft Defender Antivirus scans...'; Import-Module Defender -SkipEditionCheck; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
