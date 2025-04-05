@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.4.21
-Version date:   2025/03/31
+Version:        6.4.22
+Version date:   2025/04/05
 #>
 
 Class XmRig : Miner { 
@@ -52,7 +52,8 @@ Class XmRig : Miner {
                     # Sometimes the process cannot be found instantly
                     $Loops = 100
                     Do { 
-                        If ($this.ProcessId = ($this.ProcessJob | Receive-Job -Keep | Select-Object -ExpandProperty ProcessId)) { 
+                        If ($this.ProcessId = ($this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore | Select-Object -ExpandProperty ProcessId)) { 
+                            $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                             If (Test-Path -LiteralPath $ThreadsConfigFile -PathType Leaf) { 
                                 If ($ThreadsConfig = @([System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads) { 
                                     If ($this.Type -contains "CPU") { 
@@ -71,7 +72,7 @@ Class XmRig : Miner {
                     Remove-Variable Loops
                 }
 
-                If (-not (([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads)) { 
+                If ((Test-Path -LiteralPath $ConfigFile -PathType Leaf) -and -not (([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads)) { 
                     #Threads config in config file is invalid, retrieve from threads config file
                     $ThreadsConfig = [System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json
                     If ($ThreadsConfig.Count -ge 1) { 
@@ -90,7 +91,25 @@ Class XmRig : Miner {
                         Return
                     }
                 }
+                If ($this.ProcessJob) { 
+                    If ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
+                    # Jobs are getting removed in core loop (removing immediately after stopping process here may take several seconds)
+                    $this.ProcessJob = $null
+                }
+
+                If ($this.Process) { 
+                    If ($this.Process.ParentId) { Stop-Process -Id $this.Process.ParentId -Force -ErrorAction Ignore | Out-Null }
+                    Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
+                    # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
+                    (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                }
             }
+            Else { 
+                Write-Message -Level Error "Running temporary miner failed - cannot create threads config file '$($this.Info)' [Error: '$($Error | Select-Object -First 1)']."
+                Return
+            }
+            $this.Process = $null
+            $this.ProcessId = $null
         }
         Catch { 
             Write-Message -Level Error "Creating miner config files for '$($this.Info)' failed [Error: '$($Error | Select-Object -First 1)']."

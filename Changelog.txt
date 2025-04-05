@@ -2,6 +2,16 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.22 2025/04/05
+====================================
+
+Improvements:
+- Core & Legacy GUI: Optimize status message handling
+
+Fixes:
+- Core / FireIce API: Miner not closing (thanks to Szentigrade)
+
+
 Changelog UG-Miner 6.4.21 2025/03/31
 ====================================
 

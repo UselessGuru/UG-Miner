@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.21
-Version date:   2025/03/31
+Version:        6.4.22
+Version date:   2025/04/05
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -78,9 +78,9 @@ Function Resize-Form {
         $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
         $LegacyGUItabControl.Height = $LegacyGUIform.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - 72
 
-        $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 60), 6)
-        $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 50), 6)
-        $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - 40), 6)
+        $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 60), 3)
+        $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 50), 3)
+        $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - 40), 3)
 
         # $LegacyGUIminingSummaryLabel.Width = $Variables.TextBoxSystemLog.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIworkersDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.Width - 26
         $LegacyGUIminingSummaryLabel.Width = $Variables.TextBoxSystemLog.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.Width - 26
@@ -214,7 +214,6 @@ Function Update-TabControl {
             }
             ElseIf ($Variables.MinersBest) { 
                 If (-not $LegacyGUIactiveMinersDGV.SelectedRows) { 
-                    $LegacyGUIactiveMinersLabel.Text = "Active miners updated $(($Variables.MinersBest.Updated | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
                     $LegacyGUIactiveMinersDGV.BeginInit()
                     $LegacyGUIactiveMinersDGV.ClearSelection()
                     $LegacyGUIactiveMinersDGV.DataSource = $Variables.MinersBest | Select-Object @(
@@ -234,6 +233,7 @@ Function Update-TabControl {
                     ) | Out-DataTable
                     $LegacyGUIactiveMinersDGV.Sort($LegacyGUIactiveMinersDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIactiveMinersDGV.ClearSelection()
+                    $LegacyGUIactiveMinersLabel.Text = "Active miners updated $($Variables.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIactiveMinersDGV.Rows.count) miner$(If ($LegacyGUIactiveMinersDGV.Rows.count -ne 1) { "s" }))"
 
                     $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
                     $LegacyGUIactiveMinersDGV.Columns[1].Visible = $false
@@ -485,7 +485,7 @@ Function Update-TabControl {
                         If ($LegacyGUIradioButtonMinersUnavailable.checked -or $LegacyGUIradioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
                     $LegacyGUIminersDGV.ClearSelection()
-                    $LegacyGUIminersLabel.Text = "Miner data updated $(($Variables.Miners.Updated | Sort-Object -Bottom 1).ToLocalTime().ToString("G")) ($($LegacyGUIminersDGV.Rows.count) miner$(If ($LegacyGUIminersDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIminersLabel.Text = "Miner data updated $($Variables.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIminersDGV.Rows.count) miner$(If ($LegacyGUIminersDGV.Rows.count -ne 1) { "s" }))"
 
                     $LegacyGUIminersDGV.Columns[0].Visible = $false
                     $LegacyGUIminersDGV.Columns[1].Visible = $false
@@ -572,7 +572,7 @@ Function Update-TabControl {
                     ) | Out-DataTable
                     $LegacyGUIpoolsDGV.Sort($LegacyGUIpoolsDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIpoolsDGV.ClearSelection()
-                    $LegacyGUIpoolsLabel.Text = "Pool data updated $(($Variables.Pools.Updated | Sort-Object -Bottom 1).ToLocalTime().ToString("G")) ($($LegacyGUIpoolsDGV.Rows.Count) pool$(If ($LegacyGUIpoolsDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIpoolsLabel.Text = "Pool data updated $($Variables.PoolsUpdatedTimestamp) ($($LegacyGUIpoolsDGV.Rows.Count) pool$(If ($LegacyGUIpoolsDGV.Rows.count -ne 1) { "s" }))"
 
                     If (-not $LegacyGUIpoolsDGV.ColumnWidthChanged -and $LegacyGUIpoolsDGV.Columns) { 
                         $LegacyGUIpoolsDGV.Columns[0].FillWeight = 80
@@ -734,19 +734,11 @@ Function Update-GUIstatus {
             $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Red
             $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is stopped"
             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-            $LegacyGUIminingSummaryLabel.Text = "Click the 'Start mining' button to make money."
         }
         "Paused" { 
             $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
             $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is paused"
             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-            $LegacyGUIminingSummaryLabel.Text = ""
-            ((@(If ($Config.UsemBTC) { "mBTC" } Else { ($Config.PayoutCurrency) }) + @($Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Variables.Rates.$_.($Config.FIATcurrency) }).ForEach(
-                { 
-                    $LegacyGUIminingSummaryLabel.Text += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Variables.Rates.$_.($Config.FIATcurrency) -DecimalsMax $Config.DecimalsMax)} $($Config.FIATcurrency)   " -f $Variables.Rates.$_.($Config.FIATcurrency)
-                }
-            )
-            $LegacyGUIminingSummaryLabel.Text += "`r`n`r`nClick the 'Start mining' button to make money."
         }
         "Running" { 
             If ($Variables.MiningStatus -eq "Running" -and -$Global:CoreRunspace.Job.IsCompleted -eq $true) { 
@@ -762,10 +754,6 @@ Function Update-GUIstatus {
                     If ($Variables.MinersRunning -and $Variables.MiningProfit -gt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
                     ElseIf ($Variables.MinersRunning -and $Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
                     Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
-
-                    $LegacyGUIminingSummaryLabel.Text = ""
-                    (($Variables.Summary -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").ForEach({ $LegacyGUIminingSummaryLabel.Text += "`r`n$_" })
-                    $LegacyGUIminingSummaryLabel.Text += "`r`n "
                 }
                 Else { 
                     Write-Message -Level Error $Variables.Message
@@ -775,6 +763,7 @@ Function Update-GUIstatus {
             }
         }
     }
+    $LegacyGUIminingSummaryLabel.Text = (($Variables.Summary.Replace("$($LegacyGUIminingStatusLabel.Text). ", "") -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>") -join "`r`n"
     Update-TabControl
 }
 
@@ -847,8 +836,8 @@ $LegacyGUIminingSummaryLabel.BackColor = [System.Drawing.Color]::Transparent
 $LegacyGUIminingSummaryLabel.BorderStyle = 'None'
 $LegacyGUIminingSummaryLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-$LegacyGUIminingSummaryLabel.Height = 80
-$LegacyGUIminingSummaryLabel.Location = [System.Drawing.Point]::new(6, $LegacyGUIminingStatusLabel.Bottom)
+$LegacyGUIminingSummaryLabel.Height = 70
+$LegacyGUIminingSummaryLabel.Location = [System.Drawing.Point]::new(6, 25)
 $LegacyGUIminingSummaryLabel.Tag = ""
 $LegacyGUIminingSummaryLabel.TextAlign = "MiddleLeft"
 $LegacyGUIminingSummaryLabel.Visible = $true
@@ -1910,6 +1899,7 @@ $LegacyGUIform.Add_FormClosing(
         If ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
 
         If ($MsgBoxInput -eq "Yes") { 
+            $LegacyGUItabControl.SelectTab(0)
             $TimerUI.Stop()
             Write-Message -Level Info "Shutting down $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"

@@ -507,12 +507,11 @@ Class Miner : IDisposable {
 
         $this.EndTime = [DateTime]::Now.ToUniversalTime()
 
-        If ($this.Process.Id) { 
+        If ($this.Process) { 
             If ($this.Process.Parent.Id) { Stop-Process -Id $this.Process.Parent.Id -Force -ErrorAction Ignore | Out-Null }
             Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-            $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)")
-            $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+            (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
         }
         $this.Process = $null
         $this.ProcessId = $null
@@ -755,12 +754,12 @@ Function Start-Core {
             $Global:CoreRunspace.Name = "Core"
             $Global:CoreRunspace.ThreadOptions = "ReuseThread"
             $Global:CoreRunspace.Open()
-    
+
             $Global:CoreRunspace.SessionStateProxy.SetVariable("Config", $Config)
             $Global:CoreRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
             $Global:CoreRunspace.SessionStateProxy.SetVariable("Variables", $Variables)
             [Void]$Global:CoreRunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
-    
+
             $PowerShell = [PowerShell]::Create()
             $PowerShell.Runspace = $Global:CoreRunspace
             [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
@@ -810,6 +809,7 @@ Function Clear-MinerData {
     $Variables.MinersMissingPrerequisite = [Miner[]]@()
     $Variables.MinersOptimal = [Miner[]]@()
     $Variables.MinersRunning = [Miner[]]@()
+    $Variables.Remove("MinersUpdatedTimestamp")
 
     $Variables.MiningEarnings = [Double]0
     $Variables.MiningPowerConsumption = [Double]0
@@ -818,12 +818,14 @@ Function Clear-MinerData {
 }
 
 Function Clear-PoolData { 
+
     $Variables.Pools.ForEach({ $_.Dispose() })
     $Variables.Pools = [Pool[]]@()
     $Variables.PoolsAdded = [Pool[]]@()
     $Variables.PoolsExpired = [Pool[]]@()
     $Variables.PoolsNew = [Pool[]]@()
     $Variables.PoolsUpdated = [Pool[]]@()
+    $Variables.Remove("PoolsUpdatedTimestamp")
 }
 
 Function Stop-Core { 
@@ -910,7 +912,10 @@ Function Start-Brain {
                 }
             }
         )
-        If ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", ' &$1') started." }
+        $Message = "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", ' &$1') started."
+        If ($BrainsStarted.Count -gt 0) { Write-Message -Level Info $Message }
+        If (-not $Variables.Miners) {$Variables.Summary = $Message }
+        Remove-Variable Message
     }
     Else { 
         Write-Message -Level Error "Failed to start Pool brain backgound jobs. Directory '.\Brains' is missing."
@@ -978,8 +983,7 @@ Function Start-BalancesTracker {
                     $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
                     $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
 
-                    $Variables.Summary = "Balances tracker background process started."
-                    Write-Message -Level Info $Variables.Summary
+                    Write-Message -Level Info "Balances tracker background process started."
                 }
             }
         Else { 
@@ -994,15 +998,12 @@ Function Start-BalancesTracker {
 Function Stop-BalancesTracker { 
 
     If ($Global:BalancesTrackerRunspace.Job.IsCompleted -eq $false) { 
-
         $Global:BalancesTrackerRunspace.PowerShell.Stop()
-
         $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("StartTime")
 
         $Variables.BalancesTrackerRunning = $false
 
-        $Variables.Summary = "Balances tracker background process stopped."
-        Write-Message -Level Info $Variables.Summary
+        Write-Message -Level Info "Balances tracker background process stopped."
     }
 
     If ($Global:BalancesTrackerRunspace) { 
@@ -2666,7 +2667,7 @@ Function Get-Combination {
     }
 }
 
-Function Invoke-CreateProcess {  
+Function Invoke-CreateProcess { 
     # Based on https://github.com/FuzzySecurity/PowerShell-Suite/blob/master/Invoke-CreateProcess.ps1
 
     Param (
@@ -2784,13 +2785,6 @@ public static class Kernel32
             $Loops --
         } While ($Loops -gt 0)
         $MinerProcessId = $MinerProcess.ProcessId
-
-        # If ($MinerProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq "$BinaryPath$ArgumentList" }) | Select-Object -ExpandProperty ProcessId) { 
-        #     $MinerProcess = Get-Process -Id $MinerProcessId -ErrorAction Ignore
-        # }
-        # Else { 
-        #     $MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")
-        # }
 
         If ($null -eq $MinerProcess.Count) { 
             [PSCustomObject]@{ 

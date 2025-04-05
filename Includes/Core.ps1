@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.21
-Version date:   2025/03/31
+Version:        6.4.22
+Version date:   2025/04/05
 #>
 
 using module .\Include.psm1
@@ -308,8 +308,10 @@ Try {
                         # Newly started brains, allow extra time for brains to get ready
                         $Variables.PoolTimeout = 60
                         $Message = "Requesting initial pool data from $((Get-PoolBaseName $Variables.PoolName) -join ", " -replace ",([^,]*)$", ' &$1').<br>This may take up to $($Variables.PoolTimeout) seconds..."
-                        $Variables.Summary = $Message
-                        If ($Variables.CycleStarts.Count -le 1) { $Variables.RefreshNeeded = $true }
+                        If (-not $Variables.Miners) { 
+                            $Variables.Summary = $Message
+                            $Variables.RefreshNeeded = $true
+                        }
                         Write-Message -Level Info ($Message -replace "<br>", " ")
                         Remove-Variable Message
                     }
@@ -512,6 +514,7 @@ Try {
 
                         $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
                     }
+                    $Variables.PoolsUpdatedTimestamp = [DateTime]::Now.ToUniversalTime()
 
                     # Update data in API
                     $Variables.Pools = $Pools
@@ -559,7 +562,7 @@ Try {
                 }
                 If ($Miner.Data.Count -gt $Miner.MinDataSample * 5) { $Miner.Data = [System.Collections.Generic.List[PSCustomObject]]($Miner.Data | Select-Object -Last ($Miner.MinDataSample * 5)) } # Reduce data to MinDataSample * 5
 
-                If ( [MinerStatus]::DryRun, [MinerStatus]::Running -contains $Miner.Status) { 
+                If ([MinerStatus]::DryRun, [MinerStatus]::Running -contains $Miner.Status) { 
                     If ($Miner.Status -eq [MinerStatus]::DryRun -or $Miner.GetStatus() -eq [MinerStatus]::Running) { 
                         $Miner.ContinousCycle ++
                         If ($Config.Watchdog) { 
@@ -969,6 +972,7 @@ Try {
                 }
                 Remove-Variable RelevantWatchdogTimers -ErrorAction Ignore
             }
+            $Variables.MinersUpdatedTimestamp = [DateTime]::Now.ToUniversalTime()
 
             If ($Miners) { $Miners.ForEach({ $_.Available = -not $_.Reasons.Count }) }
 

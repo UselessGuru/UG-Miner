@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.4.21
-Version date:   2025/03/31
+Version:        6.4.22
+Version date:   2025/04/05
 #>
 
 Class Fireice : Miner { 
@@ -51,8 +51,9 @@ Class Fireice : Miner {
                 # Sometimes the process cannot be found instantly
                 $Loops = 100
                 Do { 
-                    If ($this.ProcessId = ($this.ProcessJob | Receive-Job -Keep | Select-Object -ExpandProperty ProcessId)) { 
+                    If ($this.ProcessId = $this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId) { 
                         If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
+                            $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                             # Read hw config created by miner
                             $ThreadsConfig = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) -replace '^\s*//.*' | Out-String
                             # Set bfactor to 11 (default is 6 which makes PC unusable)
@@ -72,20 +73,25 @@ Class Fireice : Miner {
                 Remove-Variable Loops
 
                 If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
-                    If ($this.ProcessId) { 
-                        If (Get-Process -Id $this.ProcessId -ErrorAction Ignore) { Stop-Process -Id $this.ProcessId -Force -ErrorAction Ignore | Out-Null }
-                        $this.ProcessId = $null
+                    If ($this.ProcessJob) { 
+                        If ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
+                        # Jobs are getting removed in core loop (removing immediately after stopping process here may take several seconds)
+                        $this.ProcessJob = $null
                     }
 
                     If ($this.Process) { 
-                        [Void]$this.Process.CloseMainWindow()
-                        $this.Process = $null
+                        If ($this.Process.ParentId) { Stop-Process -Id $this.Process.ParentId -Force -ErrorAction Ignore | Out-Null }
+                        Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
+                        # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
+                        (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
                     }
                 }
                 Else { 
                     Write-Message -Level Error "Running temporary miner failed - cannot create threads config file '$($this.Info)' [Error: '$($Error | Select-Object -First 1)']."
                     Return
                 }
+                $this.Process = $null
+                $this.ProcessId = $null
             }
             If (-not (Test-Path $MinerThreadsConfigFile -PathType Leaf)) { 
                 # Retrieve hw config from platform config file
@@ -98,7 +104,7 @@ Class Fireice : Miner {
                 ($ThreadsConfigJson | ConvertTo-Json -Depth 10) -replace '^{' -replace '}$' | Out-File -LiteralPath $MinerThreadsConfigFile -Force -ErrorAction Ignore
             }
         }
-        catch { 
+        Catch { 
             Write-Message -Level Error "Creating miner config files for '$($this.Info)' failed [Error: '$($Error | Select-Object -First 1)']."
             Return
         }

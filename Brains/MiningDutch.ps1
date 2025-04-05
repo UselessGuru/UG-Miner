@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.4.21
-Version date:   2025/03/31
+Version:        6.4.22
+Version date:   2025/04/05
 #>
 
 using module ..\Includes\Include.psm1
@@ -52,7 +52,6 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
         Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
-        
         Do { 
             Try { 
                 If (-not $AlgoData) { 

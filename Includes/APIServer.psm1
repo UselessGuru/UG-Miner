@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.21
-Version date:   2025/03/31
+Version:        6.4.22
+Version date:   2025/04/05
 #>
 
 Function Start-APIServer { 
@@ -163,11 +163,11 @@ Function Start-APIServer {
                                     ForEach ($Pool in $Pools) { 
                                         If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
-                                            $Pool.Reasons = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
+                                            $Pool.Reasons = @($Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")) | Out-Null
                                         }
                                         Else { 
                                             $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "+$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                                            $Pool.Reasons = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")
+                                            $PoolReasons = @($Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")) | Out-Null
                                         }
                                         $Pool.Available = $false
                                         $Data += "$($Pool.Algorithm)@$($Pool.Name)"
