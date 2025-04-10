@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.4.22
-Version date:   2025/04/05
+Version:        6.4.23
+Version date:   2025/04/10
 #>
 
 Class BzMiner : Miner { 

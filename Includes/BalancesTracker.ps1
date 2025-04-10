@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.22
-Version date:   2025/04/05
+Version:        6.4.23
+Version date:   2025/04/10
 #>
 
 using module .\Include.psm1
@@ -73,8 +73,9 @@ Do {
     # Get pools to track
     $PoolsToTrack = @((Get-ChildItem -File ".\Balances\*.ps1" -ErrorAction Ignore | Select-Object -ExpandProperty BaseName).Where({ (Get-PoolBaseName $_) -notin $Config.BalancesTrackerExcludePools }))
 
-    # Fetch balances data from pools
-    If ($PoolsToTrack) { 
+    If ($Variables.MyIP) { 
+        # Fetch balances data from pools
+        If ($PoolsToTrack) { 
         Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')..."
         $PoolsToTrack.ForEach(
             { 
@@ -89,7 +90,7 @@ Do {
         $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object -Property DateTime -Bottom 1 }))
 
         # Read exchange rates
-        [Void](Get-Rate)
+        Get-Rate
 
         ForEach ($PoolBalanceObject in $BalanceObjects) { 
             $PoolBalanceObjects = @($Variables.BalancesData.Where({ $_.Pool -eq $PoolBalanceObject.Pool -and $_.Currency -eq $PoolBalanceObject.Currency -and $_.Wallet -eq $PoolBalanceObject.Wallet }) | Sort-Object -Property DateTime)
@@ -320,94 +321,95 @@ Do {
                 }
             }
         }
-    }
-
-    # Always keep pools sorted, even when new pools were added
-    $Variables.Balances = [Ordered]@{ }
-    ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -notin $Config.BalancesTrackerExcludePool }) | Sort-Object).ForEach(
-        { 
-            $Variables.Balances.Remove($_)
-            $Variables.Balances.$_ = $Balances.$_
-            $Variables.PoolsLastEarnings.($_ -replace ' \(.+') = ($Balances.$_.LastEarnings | Measure-Object -Maximum).Maximum
         }
-    )
-    $Variables.BalancesCurrencies = @($Variables.Balances.psBase.Keys.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
 
-    $Variables.PoolsLastEarnings = $Variables.PoolsLastEarnings | Get-SortedObject
-    $Variables.PoolsLastEarnings | ConvertTo-Json | Out-File -LiteralPath ".\Data\PoolsLastEarnings.json" -Force -ErrorAction Ignore
-
-    # Build chart data (used in GUI) for last 30 days
-    $PoolChartData = [PSCustomObject]@{ }
-    $ChartData = $Earnings.Where({ $PoolsToTrack -contains $_.Pool }) | Sort-Object -Property Date | Group-Object -Property Date | Select-Object -Last 30 # days
-
-    # One dataset per pool
-    (($ChartData.Group.Where({ $_.DailyEarnings -gt 0 })).Pool | Sort-Object -Unique).ForEach(
-        { 
-            $PoolChartData | Add-Member @{ $_ = [Double[]]@() }
-        }
-    )
-
-    # Fill dataset
-    ForEach ($PoolEarnings in $ChartData) { 
-        $PoolChartData.PSObject.Properties.Name.ForEach(
+        # Always keep pools sorted, even when new pools were added
+        $Variables.Balances = [Ordered]@{ }
+        ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -notin $Config.BalancesTrackerExcludePool }) | Sort-Object).ForEach(
             { 
-                $PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).ForEach({ [Double]$_.DailyEarnings * $Variables.Rates.($_.Currency).BTC }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+                $Variables.Balances.Remove($_)
+                $Variables.Balances.$_ = $Balances.$_
+                $Variables.PoolsLastEarnings.($_ -replace ' \(.+') = ($Balances.$_.LastEarnings | Measure-Object -Maximum).Maximum
             }
         )
-    }
-    Remove-Variable PoolEarnings, PoolTodaysEarnings -ErrorAction Ignore
+        $Variables.BalancesCurrencies = @($Variables.Balances.psBase.Keys.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
 
-    $LegacyGUIearningsChartData = [PSCustomObject]@{ 
-        Labels = @(
-            ($ChartData.Group.Date | Sort-Object -Unique).ForEach(
-                { 
-                    [DateTime]::parseexact($_, "yyyy-MM-dd", $null).ToShortDateString()
-                }
-            )
+        $Variables.PoolsLastEarnings = $Variables.PoolsLastEarnings | Get-SortedObject
+        $Variables.PoolsLastEarnings | ConvertTo-Json | Out-File -LiteralPath ".\Data\PoolsLastEarnings.json" -Force -ErrorAction Ignore
+
+        # Build chart data (used in GUI) for last 30 days
+        $PoolChartData = [PSCustomObject]@{ }
+        $ChartData = $Earnings.Where({ $PoolsToTrack -contains $_.Pool }) | Sort-Object -Property Date | Group-Object -Property Date | Select-Object -Last 30 # days
+
+        # One dataset per pool
+        (($ChartData.Group.Where({ $_.DailyEarnings -gt 0 })).Pool | Sort-Object -Unique).ForEach(
+            { 
+                $PoolChartData | Add-Member @{ $_ = [Double[]]@() }
+            }
         )
-        # Use dates for x-axis label
-        Earnings = $PoolChartData
-    }
-    Remove-Variable PoolChartData -ErrorAction Ignore
 
-    $Variables.Remove("EarningsChartData")
-    $Variables.EarningsChartData = $LegacyGUIearningsChartData.PSObject.Copy()
-    $Variables.EarningsChartData | ConvertTo-Json | Out-File -LiteralPath ".\Data\EarningsChartData.json" -Force -ErrorAction Ignore
-
-    # Keep earnings for max. 1 year
-    $OldestEarningsDate = [DateTime]::Now.AddYears(-1).ToString("yyyy-MM-dd")
-    $Earnings = $Earnings.Where({ $_.Date -ge $OldestEarningsDate })
-    Remove-Variable OldestEarningsDate
-
-    # At least 31 days are needed for Growth720
-    If ($Variables.BalancesData.Count -gt 1) { 
-        $Variables.BalancesData = @(
-            ($Variables.BalancesData.Where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object Pool, Currency).ForEach(
+        # Fill dataset
+        ForEach ($PoolEarnings in $ChartData) { 
+            $PoolChartData.PSObject.Properties.Name.ForEach(
                 { 
-                    $Record = $null
-                    ($_.Group | Sort-Object -Property DateTime).ForEach(
-                        { 
-                            If ($_.DateTime -ge $Now.AddDays(-1)) { $_ } # Keep all records for 1 day
-                            ElseIf ($_.DateTime -ge $Now.AddDays(-7) -and $_.Delta -gt 0) { $_ } # Keep all records of the last 7 days with delta
-                            ElseIf ($_.DateTime.Date -ne $Record.DateTime.Date) { $Record = $_; $_ } # Keep the newest one per day
-                        }
-                    )
+                    $PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).ForEach({ [Double]$_.DailyEarnings * $Variables.Rates.($_.Currency).BTC }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
                 }
             )
-        ) | Sort-Object -Property DateTime -Descending
-    }
+        }
+        Remove-Variable PoolEarnings, PoolTodaysEarnings -ErrorAction Ignore
 
-    Try { 
-        $Earnings | Export-Csv ".\Data\DailyEarnings.csv" -NoTypeInformation -Force
-    }
-    Catch { 
-        Write-Message -Level Warn "Balances tracker failed to save earnings data to '.\Data\DailyEarnings.csv' (should have $($Earnings.count) entries)."
-    }
+        $LegacyGUIearningsChartData = [PSCustomObject]@{ 
+            Labels = @(
+                ($ChartData.Group.Date | Sort-Object -Unique).ForEach(
+                    { 
+                        [DateTime]::parseexact($_, "yyyy-MM-dd", $null).ToShortDateString()
+                    }
+                )
+            )
+            # Use dates for x-axis label
+            Earnings = $PoolChartData
+        }
+        Remove-Variable PoolChartData -ErrorAction Ignore
 
-    If ($Variables.BalancesData.Count -ge 1) { $Variables.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
-    If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }
+        $Variables.Remove("EarningsChartData")
+        $Variables.EarningsChartData = $LegacyGUIearningsChartData.PSObject.Copy()
+        $Variables.EarningsChartData | ConvertTo-Json | Out-File -LiteralPath ".\Data\EarningsChartData.json" -Force -ErrorAction Ignore
 
-    If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')." }
+        # Keep earnings for max. 1 year
+        $OldestEarningsDate = [DateTime]::Now.AddYears(-1).ToString("yyyy-MM-dd")
+        $Earnings = $Earnings.Where({ $_.Date -ge $OldestEarningsDate })
+        Remove-Variable OldestEarningsDate
+
+        # At least 31 days are needed for Growth720
+        If ($Variables.BalancesData.Count -gt 1) { 
+            $Variables.BalancesData = @(
+                ($Variables.BalancesData.Where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object Pool, Currency).ForEach(
+                    { 
+                        $Record = $null
+                        ($_.Group | Sort-Object -Property DateTime).ForEach(
+                            { 
+                                If ($_.DateTime -ge $Now.AddDays(-1)) { $_ } # Keep all records for 1 day
+                                ElseIf ($_.DateTime -ge $Now.AddDays(-7) -and $_.Delta -gt 0) { $_ } # Keep all records of the last 7 days with delta
+                                ElseIf ($_.DateTime.Date -ne $Record.DateTime.Date) { $Record = $_; $_ } # Keep the newest one per day
+                            }
+                        )
+                    }
+                )
+            ) | Sort-Object -Property DateTime -Descending
+        }
+
+        Try { 
+            $Earnings | Export-Csv ".\Data\DailyEarnings.csv" -NoTypeInformation -Force
+        }
+        Catch { 
+            Write-Message -Level Warn "Balances tracker failed to save earnings data to '.\Data\DailyEarnings.csv' (should have $($Earnings.count) entries)."
+        }
+
+        If ($Variables.BalancesData.Count -ge 1) { $Variables.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
+        If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }
+
+        If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')." }
+    }
 
     # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
     While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }

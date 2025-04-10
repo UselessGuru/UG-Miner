@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.22
-Version date:   2025/04/05
+Version:        6.4.23
+Version date:   2025/04/10
 #>
 
 using module .\Includes\Include.psm1
@@ -204,8 +204,8 @@ Param(
     [String]$Proxy = "", # i.e http://192.0.0.1:8080
     [Parameter(Mandatory = $false)]
     [String]$Region = "Europe", # Used to determine pool nearest to you. One of "Australia", "Asia", "Brazil", "Canada", "Europe", "HongKong", "India", "Japan", "Kazakhstan", "Russia", "USA East", "USA West"
-    [Parameter(Mandatory = $false)]
-    [Switch]$ReportToServer = $false, # If true will report worker status to central monitoring server
+    # [Parameter(Mandatory = $false)]
+    # [Switch]$ReportToServer = $false, # If true will report worker status to central monitoring server
     [Parameter(Mandatory = $false)]
     [Switch]$ShowColumnAccuracy = $true, # Show pool data accuracy column in main text window miner overview
     [Parameter(Mandatory = $false)]
@@ -244,8 +244,8 @@ Param(
     [Switch]$ShowShares = $true, # Show share data in log
     [Parameter(Mandatory = $false)]
     [Switch]$ShowColumnUser = $false, # Show pool user name column in main text window miner overview
-    [Parameter(Mandatory = $false)]
-    [Switch]$ShowWorkerStatus = $true, # Show worker status from other rigs (data retrieved from monitoring server)
+    # [Parameter(Mandatory = $false)]
+    # [Switch]$ShowWorkerStatus = $true, # Show worker status from other rigs (data retrieved from monitoring server)
     [Parameter(Mandatory = $false)]
     [String]$SSL = "Prefer", # SSL pool connections: One of three values: 'Prefer' (use where available), 'Never' (pools that only allow SSL connections are marked as unavailable) or 'Always' (pools that do not allow SSL are marked as unavailable). This is also a per pool setting configurable in 'PoolsConfig.json'
     [Parameter(Mandatory = $false)]
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.22"
+    Version      = [System.Version]"6.4.23"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -572,14 +572,22 @@ If ($Config.WebGUI) { [Void](Start-APIServer) }
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
 Function MainLoop { 
+
+    # Check internet connection
+    $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+    $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+    Remove-Variable NetworkInterface
+
     If ($Variables.ConfigurationHasChangedDuringUpdate) { $Variables.NewMiningStatus = $Variables.MiningStatus = "Idle" }
 
     If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.MiningStatus -ne "Idle") { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
 
     If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
         # Update rates every 15 minutes
-        [Void](Get-Rate)
-        If ($Variables.NewMiningStatus -eq "Paused") { $Variables.RefreshNeeded = $true }
+        If ($Variables.MyIP) { 
+            [Void](Get-Rate)
+            If ($Variables.NewMiningStatus -eq "Paused") { $Variables.RefreshNeeded = $true }
+        }
     }
 
     # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
@@ -659,6 +667,7 @@ Function MainLoop {
 
                     [Void](Stop-Core)
                     [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
 
                     # If ($Config.ReportToServer) { Write-MonitoringData }
 
@@ -700,6 +709,7 @@ Function MainLoop {
 
                     [Void](Start-Brain @(Get-PoolBaseName $Config.PoolName))
                     [Void](Start-Core)
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
 
                     If ($LegacyGUIform) { 
                         $LegacyGUIbuttonPause.Enabled = $true
@@ -1065,21 +1075,12 @@ Function MainLoop {
                             $MinersDeviceGroup.Where(
                                 { 
                                     $Variables.ShowAllMiners -or <# List all miners #>
-                                    $MinersDeviceGroupNeedingBenchmark -contains $_ -or
-                                    $MinersDeviceGroupNeedingPowerConsumptionMeasurement -contains $_ -or
+                                    $MinersDeviceGroupNeedingBenchmark.Count -gt 0 -or
+                                    $MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count -gt 0 -or
                                     $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
                                 }
                             ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
                                 Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ",") [$(($Variables.EnabledDevices.Where({ $MinersDeviceGroup[0].DeviceNames -contains $_.Name })).Model -join ", ")]" } } -AutoSize | Out-Host
-
-                            # Display benchmarking progress
-                            If ($MinersDeviceGroupNeedingBenchmark) { 
-                                "Benchmarking for device$(If (($MinersDeviceGroup.DeviceNames | Select-Object -Unique).Count -gt 1) { " group" }) '$(($MinersDeviceGroup.DeviceNames | Sort-Object -Unique) -join ",")' in progress: $($MinersDeviceGroupNeedingBenchmark.Count) miner$(If ($MinersDeviceGroupNeedingBenchmark.Count -gt 1) { "s" }) left to complete benchmark." | Out-Host
-                            }
-                            # Display power consumption measurement progress
-                            If ($MinersDeviceGroupNeedingPowerConsumptionMeasurement) { 
-                                "Power consumption measurement for device$(If (($MinersDeviceGroup.DeviceNames | Sort-Object -Unique).Count -gt 1) { " group" }) '$(($MinersDeviceGroup.DeviceNames | Sort-Object -Unique) -join ",")' in progress: $($MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count) miner$(If ($MinersDeviceGroupNeedingPowerConsumptionMeasurement.Count -gt 1) { "s" }) left to complete measuring." | Out-Host
-                            }
                         }
                     )
                     Remove-Variable Bias, MinerTable, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
@@ -1102,9 +1103,6 @@ Function MainLoop {
                 }
 
                 If ($Variables.UIStyle -eq "full" -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
-                    If ($Variables.UIStyle -ne "full") { 
-                        Write-Host "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" -ForegroundColor Yellow
-                    }
 
                     $MinersActivatedLast24Hrs = @($Variables.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now }))
 
@@ -1145,16 +1143,29 @@ Function MainLoop {
                     If ($Config.Watchdog) { 
                         # Display watchdog timers
                         $Variables.WatchdogTimers.Where({ $_.Kicked -gt $Variables.Timer.AddSeconds(-$Variables.WatchdogReset) }) | Sort-Object -Property MinerName, Kicked | Format-Table -Wrap (
-                            @{ Label = "Miner Watchdog Timer"; Expression = { $_.MinerName } },
+                            @{ Label = "Miner watchdog timer"; Expression = { $_.MinerName } },
                             @{ Label = "Pool"; Expression = { $_.PoolName } },
                             @{ Label = "Algorithm"; Expression = { $_.Algorithm } },
                             @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } },
-                            @{ Label = "Last Updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
+                            @{ Label = "Last updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
                         ) | Out-Host
                     }
                 }
 
                 If ($Variables.MiningStatus -eq "Running") { 
+                    ($Variables.MinersNeedingBenchmark.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
+                        {
+                            Write-Host -ForegroundColor DarkYellow "Benchmarking for '$($_.Name)' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
+                        }
+                    )
+                    ($Variables.MinersNeedingPowerConsumptionMeasurement.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
+                        { 
+                            Write-Host -ForegroundColor DarkYellow "Power consumption measurement for '$($_.Name)' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete measuring."
+                        }
+                    )
+                    If ($Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement -and $Variables.UIStyle -ne "full") { 
+                        Write-Host -ForegroundColor DarkYellow "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n"
+                    }
 
                     Write-Host ($Variables.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
 
@@ -1175,7 +1186,7 @@ Function MainLoop {
                 }
             }
             Else { 
-                Write-Host -ForegroundColor Red "$((Get-Date).ToString("G")): $($Variables.Summary)"
+                Write-Host -ForegroundColor Red "No internet connection - will retry in $($Config.Interval) seconds..."
             }
         }
 

@@ -131,6 +131,7 @@
   "ELT": "Blakecoin",
   "EMC": "SHA256",
   "EMC2": "Scrypt",
+  "EPIC": "ProgPow",
   "EPN": "X11",
   "ERE": "Ethash",
   "ERG": "Autolykos2",

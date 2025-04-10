@@ -777,16 +777,6 @@ Function Start-Core {
 }
 
 Function Clear-MinerData { 
-    # # Remove Watchdog timers
-    # ForEach ($Miner in $Variables.Miners) { 
-    #     ForEach ($Worker in $Miner.WorkersRunning) { 
-    #         If ($WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames })) { 
-    #             $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_ -notin $WatchdogTimers })
-    #         }
-    #     }
-    #     Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
-    #     If ($Miner.ProcessJob -or $Miner.Status -eq [MinerStatus]::DryRun) { $Miner.SetStatus([MinerStatus]::Idle) }
-    # }
 
     # Stop all miners
     ForEach ($Miner in $Variables.Miners.Where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
@@ -1132,7 +1122,7 @@ Function Write-Message {
     $Message = $Message -replace "<br>", " " -replace "&ensp;", " "
 
     # Make sure we are in main script
-    If ($Host.Name -eq "ConsoleHost" -and (-not $Config.Keys -or $Config.LogToScreen -contains $Level)) { 
+    If ($Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Config.Keys -or $Config.LogToScreen -contains $Level)) { 
         # Write to console
         Switch ($Level) { 
             "Debug"   { Write-Host $Message -ForegroundColor "Blue" }
@@ -3172,23 +3162,9 @@ Function Test-Prime {
 Function Get-AllDAGdata { 
 
     Param (
-        [Parameter(Mandatory = $false)]
-        [PSCustomObject]$DAGdata = [PSCustomObject]@{ }
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]$DAGdata
     )
-
-    If (-not $DAGdata."Algorithm") { $DAGdata | Add-Member "Algorithm" ([PSCustomObject]@{ }) }
-    If (-not $DAGdata."Currency") { $DAGdata | Add-Member "Currency" ([PSCustomObject]@{ }) }
-    If (-not $DAGdata."Updated") { $DAGdata | Add-Member "Updated" ([PSCustomObject]@{ }) }
-
-    If (-not $Variables.DAGdata) { 
-        $Message = "Loading DAG data information..."
-        $Variables.Summary = $Message
-        If ($LegacyGUIform) { 
-            $LegacyGUIminingSummaryLabel.Text = $Message
-            $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-        }
-        Remove-Variable Message
-    }
 
     # Update on script start, once every 24hrs or if unable to get data from source
     $Url = "https://whattomine.com/coins.json"
@@ -3307,34 +3283,37 @@ Function Get-AllDAGdata {
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source
-    $Currency = "TLS"
-    $Url = "https://telestai.cryptoscope.io/api/getblockcount"
-    If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from StakeCube block explorer
-        Try { 
-            Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
-                If ($CurrencyDAGdata.Epoch) { 
-                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                    $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                }
-                Else { 
-                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+    # ZergPool & ZPool also supply TLS DAG data.
+    If (-not ($Variables.PoolName -match "^ZergPool.*|^ZPool.*")) { 
+        $Currency = "TLS"
+        $Url = "https://telestai.cryptoscope.io/api/getblockcount"
+        If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            # Get block data from StakeCube block explorer
+            Try { 
+                Write-Message -Level Info "Loading DAG data from '$Url'..."
+                $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+                If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
+                    If ($CurrencyDAGdata.Epoch) { 
+                        $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                        $CurrencyDAGdata | Add-Member Url $Url -Force
+                        $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                        $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                    }
+                    Else { 
+                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                    }
                 }
             }
-        }
-        Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            Catch { 
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            }
         }
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source
     # ZPool also supplies SCC DAG data. ZPool is the only pool with SCC, so we don't need a separate way to get SCC DAG information
-    # If ($Variables.PoolName -notmatch "ZPool.*") { 
+    # If (-not ($Variables.PoolName -match "ZPool.*")) { 
         # $Currency = "SCC"
         # $Url = "https://scc.ccore.online/api/getblockcount"
         # If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3388,59 +3367,66 @@ Function Get-AllDAGdata {
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source
-    $Currency = "EVR"
-    $Url = "https://evr.cryptoscope.io/api/getblockcount"
-    If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from EVR block explorer
-        Try { 
-            Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
-                If ($CurrencyDAGdata.Epoch) { 
-                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                    $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                }
-                Else { 
-                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+    # ZergPool also supplies EVR DAG data.
+    If (-not ($Variables.PoolName -match "^ZergPool.*")) { 
+        $Currency = "EVR"
+        $Url = "https://evr.cryptoscope.io/api/getblockcount"
+        If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            # Get block data from EVR block explorer
+            Try { 
+                Write-Message -Level Info "Loading DAG data from '$Url'..."
+                $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+                If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
+                    If ($CurrencyDAGdata.Epoch) { 
+                        $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                        $CurrencyDAGdata | Add-Member Url $Url -Force
+                        $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                        $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                    }
+                    Else { 
+                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                    }
                 }
             }
-        }
-        Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            Catch { 
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            }
         }
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source
-    $Currency = "PHI"
-    $Url = "https://explorer.phicoin.net/api/getblockcount"
-    If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from PHI block explorer
-        Try { 
-            Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-            If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
-                If ($CurrencyDAGdata.Epoch -ge 0) { 
-                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                    $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                }
-                Else { 
-                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+    # ZergPool & ZPool also supply PHI DAG data.
+    If (-not ($Variables.PoolName -match "^ZergPool.*|^ZPool.*")) { 
+        $Currency = "PHI"
+        $Url = "https://explorer.phicoin.net/api/getblockcount"
+        If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            # Get block data from PHI block explorer
+            Try { 
+                Write-Message -Level Info "Loading DAG data from '$Url'..."
+                $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+                If ((Get-AlgorithmFromCurrency -Currency $Currency) -and $CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
+                    If ($CurrencyDAGdata.Epoch -ge 0) { 
+                        $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                        $CurrencyDAGdata | Add-Member Url $Url -Force
+                        $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                        $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                    }
+                    Else { 
+                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                    }
                 }
             }
-        }
-        Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            Catch { 
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            }
         }
     }
 
-    # ZergPool also supplies MEWC DAG data
-    If ($Variables.PoolName -notmatch "ZergPool.*") { 
+    # Update on script start, once every 24hrs or if unable to get data from source
+    # Zpool & ZergPool also supply MEWC DAG data
+    If (-not ($Variables.PoolName -match "^ZergPool.*|^ZPool.+")) { 
         $Currency = "MEWC"
         $Url = "https://mewc.cryptoscope.io/api/getblockcount"
         If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Variables.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
@@ -3896,7 +3882,13 @@ Function Initialize-Environment {
 
     # Load DAG data, if not available it will get recreated
     If (Test-Path -LiteralPath "$PWD\Data\DAGdata.json" ) { $Variables.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject }
-    If ($Variables.DAGdata) { Write-Host "Loaded DAG database." }
+    If (-not $Variables.DAGdata) { 
+        Write-Error "Error loading list of DAG data. File '.\Data\DAGdata.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
+        $Global:WscriptShell.Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Start-Sleep -Seconds 5
+        Exit
+    }
+    Write-Host "Loaded DAG database."
 
     # Load PoolsLastUsed data
     If (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json" ) { $Variables.PoolsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable }

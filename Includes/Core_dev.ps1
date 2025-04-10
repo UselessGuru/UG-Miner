@@ -36,6 +36,7 @@ Try {
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
         Write-Message -Level Info "Started new cycle."
+        If ($LegacyGUIform) { [Void](Update-GUIstatus) }
 
         $Variables.CoreLoopCounter ++
         $Variables.EndCycleMessage = ""
@@ -49,8 +50,8 @@ Try {
         # Internet connection must be available
         If (-not $Variables.MyIP) { 
             $Message = "No internet connection - will retry in $($Config.Interval) seconds..."
-            Write-Message -Level Error $Message
-            $Variables.Summary = $Message
+            # $Variables.Summary = $Message
+            # Write-Message -Level Error $Message
             Remove-Variable Message
 
             Clear-PoolData
@@ -227,6 +228,7 @@ Try {
                             If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                                 $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                             }
+                            # $Variables.DonationStart = [DateTime]::Now
                         }
                     }
 
@@ -348,14 +350,23 @@ Try {
                         }
                     ).ForEach(
                         { 
-                            $Pool = [Pool]$_
-                            $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
-                            $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
-                            $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
-                            $Pool.Price *= $Factor
-                            $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
-                            $Pool.StablePrice *= $Factor
-                            $Pool
+                            $Pool = $_
+                            Try { 
+                                $Pool = [Pool]$_
+                                $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
+                                $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
+                                $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
+                                $Pool.Price *= $Factor
+                                $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
+                                $Pool.StablePrice *= $Factor
+                                $Pool
+                            }
+                            Catch { 
+                                Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                $_.Exception | Format-List -Force >> $ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            }
                         }
                     )
                     Remove-Variable Factor, Pool, PoolDataCollectedTimeStamp, PoolName -ErrorAction Ignore
@@ -528,7 +539,7 @@ Try {
                 }
             }
             If (-not $Variables.PoolsBest) { 
-                $Message = "No minable pools - will retry in $($Config.Interval) seconds..."
+                $Message = "No minable pools - wil retry in $($Config.Interval) seconds..."
                 Write-Message -Level Warn $Message
                 $Variables.Summary = $Message
                 Remove-Variable Message
@@ -986,6 +997,8 @@ Try {
 
                 Clear-MinerData
 
+                $Variables.RefreshNeeded = $true
+
                 Start-Sleep -Seconds $Config.Interval
 
                 Write-Message -Level Info "Ending cycle."
@@ -1153,6 +1166,8 @@ Try {
             Clear-PoolData
             Clear-MinerData
 
+            $Variables.RefreshNeeded = $true
+
             Start-Sleep -Seconds $Config.Interval
 
             Write-Message -Level Info "Ending cycle."
@@ -1262,6 +1277,8 @@ Try {
 
             Clear-PoolData
             Clear-MinerData
+
+            $Variables.RefreshNeeded = $true
 
             Start-Sleep -Seconds $Config.Interval
 
@@ -1392,6 +1409,7 @@ Try {
             $LoopEnd = If ($Config.DryRun -and $Config.BenchmarkAllPoolAlgorithmCombinations) { [DateTime]::Now.AddSeconds(0.5) } Else { [DateTime]::Now.AddSeconds(1) }
             Try { 
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
+                    Write-Host "$($Miner.BaseName_Version_Device): $($Miner.GetMinerData() | ConvertTo-Json -Compress)"
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
                         $Miner.SetStatus([MinerStatus]::Failed)

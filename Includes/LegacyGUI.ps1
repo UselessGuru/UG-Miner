@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.22
-Version date:   2025/04/05
+Version:        6.4.23
+Version date:   2025/04/10
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -747,19 +747,12 @@ Function Update-GUIstatus {
                 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
             }
             Else { 
+                $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Green
                 $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is running"
-                If ($Variables.MyIP) { 
-                    $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Green
 
-                    If ($Variables.MinersRunning -and $Variables.MiningProfit -gt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
-                    ElseIf ($Variables.MinersRunning -and $Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
-                    Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
-                }
-                Else { 
-                    Write-Message -Level Error $Variables.Message
-                    $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red
-                    $LegacyGUIminingSummaryLabel.Text = "Error: $($Variables.Summary)"
-                }
+                If ($Variables.MinersRunning -and $Variables.MiningProfit -gt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Green }
+                ElseIf ($Variables.MinersRunning -and $Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
+                Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
             }
         }
     }
@@ -1779,7 +1772,7 @@ $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
             }
         )
         Write-Message -Level Verbose "GUI: All watchdog timers removed."
-        $LegacyGUIwatchdogTimersRemoveButton.Enabled = $false
+        Update-TabControl
 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 

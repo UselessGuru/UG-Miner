@@ -1,6 +1,18 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.23 2025/04/10
+====================================
+
+Improvements:
+- Core / Includes.psm1: Function 'Get-AllDAGdata' only queries some external block explorers if DAG data is not available in pool API data
+- Core: Minor performance improvements and optimize memory footprint
+
+Fixes:
+- TeamBlackMiner-v2.27: Kawpow algorithm is broken, add v2.26 back for kawpow
+- TeamBlackMiner-v2.25 & v2.27: Incorrect OpenCL miner devices selection
+- TTMiner-v2024.3.3b6: Incorrect OpenCL miner devices selection
+
 
 Changelog UG-Miner 6.4.22 2025/04/05
 ====================================
