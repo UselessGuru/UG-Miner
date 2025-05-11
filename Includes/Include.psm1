@@ -3539,7 +3539,7 @@ Function Get-DAGsize {
             $DatasetBytesInit = 4GB
             $DatasetBytesGrowth = 16MB
             $MixBytes = 256
-            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            $Size = $DatasetBytesInit + ($DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
                 $Size -= 2 * $MixBytes
             }
@@ -3562,7 +3562,7 @@ Function Get-DAGsize {
             $DatasetBytesInit = 3GB
             $DatasetBytesGrowth = 8MB
             $MixBytes = 128
-            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            $Size = $DatasetBytesInit + ($DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
                 $Size -= 2 * $MixBytes
             }
@@ -3583,7 +3583,7 @@ Function Get-DAGsize {
             $DatasetBytesInit = 1GB
             $DatasetBytesGrowth = 8MB
             $MixBytes = 128
-            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            $Size = $DatasetBytesInit + ($DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
                 $Size -= 2 * $MixBytes
             }
@@ -3599,7 +3599,7 @@ Function Get-DAGsize {
             $DatasetBytesInit = 1GB
             $DatasetBytesGrowth = 8MB
             $MixBytes = 128
-            $Size = ($DatasetBytesInit + $DatasetBytesGrowth * $Epoch) - $MixBytes
+            $Size = $DatasetBytesInit + ($DatasetBytesGrowth * $Epoch) - $MixBytes
             While (-not (Test-Prime ($Size / $MixBytes))) { 
                 $Size -= 2 * $MixBytes
             }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.23
-Version date:   2025/04/10
+Version:        6.4.24
+Version date:   2025/05/11
 #>
 
 using module .\Include.psm1
@@ -53,6 +53,8 @@ Try {
             $Variables.Summary = $Message
             Remove-Variable Message
 
+            Write-Message -Level Info "Ending cycle."
+
             Clear-PoolData
             Clear-MinerData
 
@@ -60,7 +62,6 @@ Try {
 
             Start-Sleep -Seconds $Config.Interval
 
-            Write-Message -Level Info "Ending cycle."
             Continue
         }
 
@@ -866,7 +867,7 @@ Try {
             If ($DownloadList = @($Variables.MinersMissingPrerequisite | Select-Object @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }) + @($Variables.MinersMissingBinary | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }) | Select-Object * -Unique) { 
                 If ($Variables.Downloader.State -ne "Running") { 
                     # Download miner binaries
-                    Write-Message -Level Info "Some miners binaries are missing ($($DownloadList.Count) item$(If ($DownloadList.Count -ne 1) { "s" })), starting downloader..."
+                    Write-Message -Level Info "Some miner binaries are missing ($($DownloadList.Count) item$(If ($DownloadList.Count -ne 1) { "s" })). Starting downloader..."
                     $DownloaderParameters = @{ 
                         Config       = $Config
                         DownloadList = $DownloadList
@@ -1017,7 +1018,7 @@ Try {
                     # Get the optimal miners per algorithm and device
                     $MinersOptimal = ($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) })
                     # Get the best miners per device
-                    $Variables.MinersBestPerDevice = ($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true } -Top 1 })
+                    $Variables.MinersBestPerDevice = ($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $false } -Top 1 })
 
                     # Hack: Temporarily make all bias -ge 0 by adding smallest bias, MinersBest produces wrong sort order when some profits are negative
                     # Get smallest $Bias

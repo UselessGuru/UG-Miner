@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.23
-Version date:   2025/04/10
+Version:        6.4.24
+Version date:   2025/05/11
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.41/cpuminer-opt-win-5.0.41.zip"
+$URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.42/cpuminer-opt-win-5.0.42c.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 If ($AvailableMinerDevices.CPUfeatures -match "avx512")   { $Path = "Bin\$Name\cpuminer-Avx512.exe" }
@@ -88,8 +88,9 @@ $Algorithms = @(
     @{ Algorithm = "QogeCoin";      MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qogecoin" }
 #   @{ Algorithm = "Quark";         MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo quark" } # ASIC
 #   @{ Algorithm = "Qubit";         MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qubit" } # ASIC
-    @{ Algorithm = "Qureno";        MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qureno" } # GPU
-#   @{ Algorithm = "X11";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Srguments = " --algo x11" } # ASIC, algorithm not supported
+#   @{ Algorithm = "Qureno";        MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qureno" } # GPU
+    @{ Algorithm = "RinHash";       MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @("ZergPool"); Arguments = " --algo rinhash" } # Miner just closes
+#   @{ Algorithm = "X11";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x11" } # ASIC, algorithm not supported
     @{ Algorithm = "X22";           MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x22" }
     @{ Algorithm = "Yescrypt";      MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yescrypt" }
     @{ Algorithm = "YescryptR16";   MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yescryptr16" } # CcminerLyraYesscrypt-v8.21r18v5 is faster

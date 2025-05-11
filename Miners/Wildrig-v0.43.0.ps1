@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.23
-Version date:   2025/04/10
+Version:        6.4.24
+Version date:   2025/05/11
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.42.7/wildrig-multi-windows-0.42.7.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.43.0/wildrig-multi-windows-0.43.0.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -33,6 +33,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Blake2s";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo blake2s" } # ASIC
 #   @{ Algorithm = "Bmw512";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo bmw512" } # ASIC
     @{ Algorithm = "C11";              Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo c11" }
+    @{ Algorithm = "CLCHash";          Type = "AMD"; Fee = @(0.03);   MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @();           Arguments = " --algo clchash" }
     @{ Algorithm = "CurveHash";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @();           Arguments = " --algo curvehash" }
     @{ Algorithm = "EvrProgPow";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo evrprogpow" }
     @{ Algorithm = "FiroPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 45);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo firopow" }
@@ -96,6 +97,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Blake2s";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo blake2s" } # ASIC
 #   @{ Algorithm = "Bmw512";           Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo bmw512 --watchdog" } # ASIC
     @{ Algorithm = "C11";              Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo c11 --watchdog" }
+    @{ Algorithm = "CLCHash";          Type = "INTEL"; Fee = @(0.03);   MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo clchash --watchdog" }
     @{ Algorithm = "CurveHash";        Type = "INTEL"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo curvehash --watchdog" }
     @{ Algorithm = "EvrProgPow";       Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo evrprogpow --watchdog" }
     @{ Algorithm = "FiroPow";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo firopow --watchdog" }
@@ -159,6 +161,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Blake2s";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo blake2s --watchdog" } # ASIC
 #   @{ Algorithm = "Bmw512";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo bmw512 --watchdog" } # ASIC
     @{ Algorithm = "C11";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo c11 --watchdog" }
+    @{ Algorithm = "CLCHash";          Type = "NVIDIA"; Fee = @(0.03);   MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo clchash --watchdog" }
     @{ Algorithm = "CurveHash";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo curvehash --watchdog" }
     @{ Algorithm = "EvrProgPow";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo evrprogpow --watchdog" }
     @{ Algorithm = "FiroPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo firopow --watchdog" }

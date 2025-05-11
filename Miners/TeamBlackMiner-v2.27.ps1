@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.23
-Version date:   2025/04/10
+Version:        6.4.24
+Version date:   2025/05/11
 #>
 
 # V2.27 produces nothing but bad shares with kapwow, use v.26 instead
@@ -41,7 +41,7 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash", "MeowPow");     Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etc+meow" }
     @{ Algorithms = @("EtcHash", "VertHash");    Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = ""; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc --verthash-data ..\.$($Variables.VerthashDatPath)" } # 120 Seconds; https://github.com/sp-hash/TeamBlackMiner/issues/450
     @{ Algorithms = @("Ethash", "");             Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 1; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethash" }
-    @{ Algorithms = @("Ethash", "EthashB3");     Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^RDNA2$"; ExcludePools = @(@(), @()); Arguments = " --algo eth+ethb3" } # https://github.com/sp-hash/TeamBlackMiner/issues/459
+#   @{ Algorithms = @("Ethash", "EthashB3");     Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^RDNA2$"; ExcludePools = @(@(), @()); Arguments = " --algo eth+ethb3" } # https://github.com/sp-hash/TeamBlackMiner/issues/459
     @{ Algorithms = @("Ethash", "EvrProgPow");   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+evr" }
     @{ Algorithms = @("Ethash", "FiroPow");      Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+firo" }
 #   @{ Algorithms = @("Ethash", "KawPow");       Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" } # Invalid shares with Kawpow, use 2.26 instead

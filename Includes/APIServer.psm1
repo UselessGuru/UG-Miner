@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.psm1
-Version:        6.4.23
-Version date:   2025/04/10
+Version:        6.4.24
+Version date:   2025/05/11
 #>
 
 Function Start-APIServer { 
 
-    $APIVersion = "5.4.34"
+    $APIVersion = "5.4.36"
 
     If ($Variables.APIRunspace.AsyncObject.IsCompleted -or $Config.APIport -ne $Variables.APIRunspace.APIport) { 
         Stop-APIServer
@@ -591,7 +591,7 @@ Function Start-APIServer {
                                     Remove-Variable Message, Miners -ErrorAction Ignore
                                     Break
                                 }
-                                If ($TempStats = @(If ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } Else { Get-Stat })) { 
+                                If ($TempStats = @(If ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } Else { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" }) })) { 
                                     $Data = @()
                                     ($TempStats | Sort-Object -Property Name).ForEach(
                                         { 

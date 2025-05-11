@@ -1,6 +1,21 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+
+Changelog UG-Miner 6.4.24 2025/05/11
+====================================
+
+Fixes:
+- Web GUI / Manage stats: 'Reset all pool price data' deleting ALL stats (and not just pool data)
+
+Miner changes:
+- lolMiner-v1.94a
+- MiniZ-v2.5e
+- Rigel-v1.21.3
+- RplantCpu-v5.0.42c
+- SRBMinerMulti-v2.8.6
+- Wildrig-v0.43.0
+
 Changelog UG-Miner 6.4.23 2025/04/10
 ====================================
 
@@ -13,6 +28,8 @@ Fixes:
 - TeamBlackMiner-v2.25 & v2.27: Incorrect OpenCL miner devices selection
 - TTMiner-v2024.3.3b6: Incorrect OpenCL miner devices selection
 
+Miner updates:
+- Wildrig-v0.42.7
 
 Changelog UG-Miner 6.4.22 2025/04/05
 ====================================
