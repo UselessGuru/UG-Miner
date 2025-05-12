@@ -3,7 +3,7 @@
   "ACG": "SHA256",
   "ACM": "Lyra2Z",
   "ADOT": "Argon2d16000",
-  "ADVC": "yespowerADVC",
+  "ADVC": "YespowerADVC",
   "AE": "Cuckoo29",
   "AIB": "Scrypt",
   "AIDP": "KawPow",
