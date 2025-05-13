@@ -1406,7 +1406,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0) && config.FIATcurrency && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount) {
+        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0) && /[a-zA-Z]{3}/.test(config.FIATcurrency) && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1444,10 +1444,22 @@
           $('.modal-body').html('Cannot save configuration - NiceHash address must be different from your general BTC wallet.');
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
-        } else {
+        } else if (!config.PoolName){
           // No pool selected
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must select at least one pool.');
+          $('body').css('cursor', 'default');
+          $('#myModal').modal({ show: true });
+        } else if (!(/[a-zA-Z]{3}/.test(config.Currency))){
+          // Invalid main (FIAT() currency
+          $('.modal-title').html('Error: Invalid configuration');
+          $('.modal-body').html('Cannot save configuration - you must select a valid main (FIAT) currency (exacly 3 characters long).');
+          $('body').css('cursor', 'default');
+          $('#myModal').modal({ show: true });
+        } else {
+          // unknow config error
+          $('.modal-title').html('Error: Invalid configuration');
+          $('.modal-body').html('Cannot save configuration - it is recommended to delete the existing configuration file and start new.');
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         }
