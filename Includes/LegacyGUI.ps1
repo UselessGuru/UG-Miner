@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.24
-Version date:   2025/05/11
+Version:        6.4.25
+Version date:   2025/05/18
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -756,7 +756,7 @@ Function Update-GUIstatus {
             }
         }
     }
-    $LegacyGUIminingSummaryLabel.Text = (($Variables.Summary.Replace("$($LegacyGUIminingStatusLabel.Text). ", "") -replace "Power cost", "<br>Power cost" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>") -join "`r`n"
+    $LegacyGUIminingSummaryLabel.Text = (($Variables.Summary.Replace("$($LegacyGUIminingStatusLabel.Text). ", "") -replace "&ensp;", " " -replace "   ", "  ") -split "<br>") -join "`r`n"
     Update-TabControl
 }
 

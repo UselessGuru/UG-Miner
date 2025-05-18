@@ -1,9 +1,7 @@
 {
   "HashCryptos": {
     "Algorithm": [
-      "-Yescrypt",
-      "-YescryptR16",
-      "-YescryptR32"
+      "-Yescrypt"
     ],
     "AutoExchange": true,
     "BalancesKeepAlive": 90, // Inactive accounts are purged after 90 days
@@ -12,7 +10,7 @@
       "SampleSizeMinutes": 45,
       "UseTransferFile": false
     },
-    "GuaranteedPayoutCurrencies": [
+    "PayoutCurrencies": [
       "BCH",
       "BSV",
       "BTC",
@@ -24,6 +22,7 @@
       "LTC",
       "MONA",
       "PEPEW",
+      "PPC",
       "RVN",
       "VTC",
       "XEC",
@@ -93,8 +92,7 @@
   "MiningDutch": {
     "Algorithm": [
       "-Yescrypt",
-      "-YescryptR16",
-      "-YescryptR32"
+      "-YescryptR16"
     ],
     "AutoExchange": true,
     "BalancesKeepAlive": 180, // https://www.mining-dutch.nl/index.php?page=wallets
@@ -106,9 +104,9 @@
     "ExcludeRegion": [],
     "PayoutThreshold": {
       "*": {
-         "mBTC": 0.00025
+         "BTC": 0.0002
       },
-      "BTC": 0.001
+      "BTC": 0.0002
     },
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 15, // Only 1 request every 10 seconds allowed
@@ -257,11 +255,10 @@
   "ZergPool": {
     "Algorithm": [
       "-ScryptN2",
-      "-Yescrypt",
-      "-YescryptR32"
+      "-Yescrypt"
     ],
     "AutoExchange": true,
-    "BalancesKeepAlive": 90, // Accounts with no mining activity for 3 months are purged 
+    "BalancesKeepAlive": 90, // Accounts with no mining activity for 3 months are purged
     "BrainConfig": {
       "SampleHalfPower": 0,
       "SampleSizeMinutes": 45,
@@ -327,7 +324,7 @@
     ],
     "PayoutCurrency": "[Default]",
     "PayoutThreshold": {
-      "*": 0.0125,
+      "*": 0.05,
       "BTC": 0.00075
     },
     "PoolAPIAllowedFailureCount": 3,
@@ -336,7 +333,6 @@
     "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
     "Region": [
       "eu",
-      "jp",
       "na",
       "sea"
     ],

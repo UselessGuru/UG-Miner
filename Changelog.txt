@@ -2,6 +2,22 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.25 2025/05/18
+====================================
+
+Enhancements:
+- Core: Show warning message when 'HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors' registry key is missing
+
+Fixes:
+- Core: Frequent failed miners on fast PCs (thanks to Szentigrade)
+- Core: On crashed miner an invalid miner exit status written to .\Logs\SwitchingLog.txt
+- HashCryptos pool: Verify validity of payout currency (Add reason 'Payout currency [...] not supported by by pool')
+- Web GUI / Configuration editor: Incorrect error message when invalid main (FIAT) currency was configured (thanks to Szentigrade)
+
+Miner updates:
+- SRBMinerMulti-v2.8.8
+
+
 Changelog UG-Miner 6.4.24 2025/05/11
 ====================================
 
@@ -20,7 +36,7 @@ Changelog UG-Miner 6.4.23 2025/04/10
 ====================================
 
 Improvements:
-- Core / Includes.psm1: Function 'Get-AllDAGdata' only queries some external block explorers if DAG data is not available in pool API data
+- Core / Includes.psm1: Function 'Get-AllDAGdata' will only query external block explorers if DAG data is not available in pool API data
 - Core: Minor performance improvements and optimize memory footprint
 
 Fixes:

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.24
-Version date:   2025/05/11
+Version:        6.4.25
+Version date:   2025/05/18
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -74,7 +74,7 @@ $Algorithms = @(
     @{ Algorithm = "MemeHash";      MinerSet = 0; WarmupTimes = @(90, 35);  ExcludePools = @();           Arguments = " --algo memehashv2" }
     @{ Algorithm = "Mike";          MinerSet = 3; WarmupTimes = @(90, 20);  ExcludePools = @();           Arguments = " --algo mike" } # GPU
     @{ Algorithm = "Minotaur";      MinerSet = 2; WarmupTimes = @(90, 15);  ExcludePools = @();           Arguments = " --algo minotaur" }
-    @{ Algorithm = "MinotaurX";     MinerSet = 0; WarmupTimes = @(90, 0);   ExcludePools = @();           Arguments = " --algo minotaurx" }
+    @{ Algorithm = "MinotaurX";     MinerSet = 0; WarmupTimes = @(90, 0);   ExcludePools = @("ZPool");    Arguments = " --algo minotaurx" } # https://discord.com/channels/376790817811202050/1371515289824530434
 #   @{ Algorithm = "MyriadGroestl"; MinerSet = 3; WarmupTimes = @(90, 15);  ExcludePools = @();           Arguments = " --algo myr-gr" } # ASIC
     @{ Algorithm = "Neoscrypt";     MinerSet = 3; WarmupTimes = @(90, 25);  ExcludePools = @("NiceHash"); Arguments = " --algo neoscrypt" } # FPGA
 #   @{ Algorithm = "Nist5";         MinerSet = 3; WarmupTimes = @(90, 15);  ExcludePools = @();           Arguments = " --algo nist5" } # ASIC
@@ -108,7 +108,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerR16";   MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @();           Arguments = " --algo yespowerr16" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerRes";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yespowerRes" }
     @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 15);  ExcludePools = @();           Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
-    @{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yespowerTIDE" }
+    @{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @("ZPool");    Arguments = " --algo yespowerTIDE" } # https://discord.com/channels/376790817811202050/1371515289824530434
     @{ Algorithm = "YespowerURX";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerURX" } # JayddeeCpu-v25.3 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
@@ -128,7 +128,7 @@ If ($Algorithms) {
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"
-                    Arguments   = "$($_.Arguments) --url $(If ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --cpu-affinity AAAA --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore)) --api-bind=$($MinerAPIPort)"
+                    Arguments   = "$($_.Arguments) --url $(If ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore)) --api-bind=$($MinerAPIPort)"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @(0) # Dev fee
                     MinerSet    = $_.MinerSet

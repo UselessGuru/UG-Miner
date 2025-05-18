@@ -4,23 +4,6 @@ body {
 }
 
 /*
-* Footer
-*/
-footer {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  text-align: right;
-  padding-left: 30px;
-  padding-right: 30px;
-  padding-top: 6px;
-  z-index: 99;
-  background-color: rgb(235, 235, 235);
-  height: 35px;
-}
-
-/*
  * Sidebar
  */
 .nav-link {
@@ -34,7 +17,7 @@ footer {
   bottom: 0;
   left: 0;
   z-index: 10; /* Behind the navbar */
-  padding: 75px 0 0; /* Height of navbar */
+  padding: 6.0rem 0 0; /* Height of navbar */
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
 }
 
@@ -53,7 +36,7 @@ footer {
   padding-left: 1rem;
   padding-top: 1.5rem;
   padding-bottom: 1rem;
-  height: calc(100vh - 75px - 35px);
+  /* height: calc(100vh - 7.0rem - 35px); */
   overflow-x: auto; /* Scrollable contents if viewport is narrower than content. */
   overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
 }
@@ -85,7 +68,7 @@ footer {
  * Content
  */
 [role="main"] {
-  padding-top: 75px; /* Space for fixed navbar */
+  padding-top: 6rem; /* Space for fixed navbar */
 }
 
 /*
@@ -97,10 +80,11 @@ footer {
 }
 
 .navbar-brand {
-  margin-top: 1.1rem;
+  margin-top: 1.4rem;
   margin-bottom: 1.0rem;
   padding-left: 2rem;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
+  height: 3.3rem;
 }
 
 .navbar-button {
@@ -108,15 +92,14 @@ footer {
   left: 290px;
 }
 
-.navbar-summary {
+.navbar .navbar-summary {
   position: absolute;
   padding-right: 30px;
   left: 770px;
   right: -1px;
   color: white;
   font-size: 1.2rem;
-  line-height: 1.5;
-  height: 4.8rem;
+  line-height: 1.3;
   display: flex;
   align-items: center;
   justify-content: left;
@@ -180,6 +163,23 @@ legend {
   background-color: #d1ecf1;
   padding: 6px 6px;
   border-radius: 4px;
+}
+
+/*
+* Footer
+*/
+footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  text-align: right;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 6.0px;
+  z-index: 99;
+  background-color: rgb(235, 235, 235);
+  height: 35px;
 }
 
 /*

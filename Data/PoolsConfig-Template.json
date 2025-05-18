@@ -19,7 +19,7 @@
     ],
     // EarningsAdjustmentFactor: Default factor with which UG-Miner multiplies the prices reported by the pool. Value between 0.01 & 10.00
     "EarningsAdjustmentFactor": 0.9,
-    // Exclude region: One or more of 'Australia', 'Brazil', 'Canada', 'Europe', 'Hongkong', 'India', 'Japan', 'Kazakhstan', 'Russia', 'Singapore', 'USA East', 'USA West'
+    // Exclude region: One or more of 'Australia', 'Brazil', 'Canada', 'Europe', 'Hongkong', 'India', 'Kazakhstan', 'Russia', 'Singapore', 'USA East', 'USA West' (taken from '.\Data\PoolsConfig-Template.json')
     "ExcludeRegion": [ 
       "Australia",
       "Brazil"

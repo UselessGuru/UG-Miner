@@ -1390,8 +1390,8 @@ Function Read-Config {
         # Load pool data
         If (-not $Variables.PoolData) { 
             $Variables.PoolData = [System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
-            $Variables.PoolVariants = @(($Variables.PoolData.psBase.Keys.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
             $Variables.PoolBaseNames = @($Variables.PoolData.psBase.Keys)
+            $Variables.PoolVariants = @(($Variables.PoolBaseNames.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
             If (-not $Variables.PoolVariants) { 
                 Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
                 $Global:WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -3759,36 +3759,42 @@ Function Initialize-Environment {
     If (-not (Get-ChildItem -LiteralPath $PWD\Balances)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Balances'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Brains)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Brains'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Data)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Data'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Miners)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Miners'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Pools)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Pools'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Web)) { 
         Write-Error "Terminating Error - Cannot continue! No files in folder '\Web'. Please restore the folder from your original download."
         $Global:WscriptShell.Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3798,6 +3804,7 @@ Function Initialize-Environment {
     If (-not $Variables.DonationData) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3814,6 +3821,7 @@ Function Initialize-Environment {
     If (-not $Variables.Algorithms.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3824,6 +3832,7 @@ Function Initialize-Environment {
     If (-not $Variables.CoinNames.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3834,6 +3843,7 @@ Function Initialize-Environment {
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3844,6 +3854,7 @@ Function Initialize-Environment {
     If (-not $Variables.EquihashCoinPers) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
         $WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3855,6 +3866,7 @@ Function Initialize-Environment {
     If (-not $Variables.Regions.Keys) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3865,6 +3877,7 @@ Function Initialize-Environment {
     If (-not $Variables.FIATcurrencies) { 
         Write-Error "Terminating Error - Cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3875,6 +3888,7 @@ Function Initialize-Environment {
     If (-not $Variables.UnprofitableAlgorithms.Count) { 
         Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3885,6 +3899,7 @@ Function Initialize-Environment {
     If (-not $Variables.DAGdata) { 
         Write-Error "Error loading list of DAG data. File '.\Data\DAGdata.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3913,6 +3928,7 @@ Function Initialize-Environment {
     If (-not $Variables.GPUArchitectureDbNvidia) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -3923,6 +3939,7 @@ Function Initialize-Environment {
     If (-not $Variables.GPUArchitectureDbAMD) { 
         Write-Message -Level Error "Terminating Error - Cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
         $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }

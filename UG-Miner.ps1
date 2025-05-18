@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.24
-Version date:   2025/05/11
+Version:        6.4.25
+Version date:   2025/05/18
 #>
 
 using module .\Includes\Include.psm1
@@ -203,7 +203,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$Proxy = "", # i.e http://192.0.0.1:8080
     [Parameter(Mandatory = $false)]
-    [String]$Region = "Europe", # Used to determine pool nearest to you. One of "Australia", "Asia", "Brazil", "Canada", "Europe", "HongKong", "India", "Japan", "Kazakhstan", "Russia", "USA East", "USA West"
+    [String]$Region = "Europe", # Used to determine pool nearest to you. One of "Australia", "Asia", "Brazil", "Canada", "Europe", "HongKong", "India", "Kazakhstan", "Russia", "USA East", "USA West"
     # [Parameter(Mandatory = $false)]
     # [Switch]$ReportToServer = $false, # If true will report worker status to central monitoring server
     [Parameter(Mandatory = $false)]
@@ -287,7 +287,7 @@ Param(
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
 $ErrorLogFile = ".\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
-$RecommendedPWSHversion = [Version]"7.5.0"
+$RecommendedPWSHversion = [Version]"7.5.1"
 
 # Close useless empty cmd window that comes up when starting from bat file
 If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.24"
+    Version      = [System.Version]"6.4.25"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -328,6 +328,7 @@ $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.B
 If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
     Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
     $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     Exit
 }
@@ -379,6 +380,7 @@ If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command 
     If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
         Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
         $Global:WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -390,6 +392,7 @@ $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $Ne
 If (-not $Variables.MyIP) { 
     Write-Host "Terminating Error - No internet connection." -ForegroundColor "Red"
     $Global:WscriptShell.Popup("No internet connection`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     Exit
 }
@@ -404,6 +407,7 @@ Write-Message -Level Verbose "Verifying pre-requisites..."
 If ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") { 
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
     $Global:WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     Exit
 }
@@ -417,7 +421,8 @@ If ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath 
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
     Write-Message -Level Error "and run 'install_all.bat' (Admin rights are required)."
-    $Global:WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    $Global:WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     Exit
 }
@@ -427,6 +432,7 @@ If ( -not (Get-Command Get-PnpDevice)) {
     Write-Message -Level Error "Windows Management Framework 5.1 is missing."
     Write-Message -Level Error "Please install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616"
     $Global:WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     Exit
 }
@@ -443,6 +449,7 @@ If ($Variables.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpCom
     }
     Catch { 
         $Global:WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis may lead to unpredictable results.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
@@ -528,6 +535,15 @@ $Variables.GPUArchitectureDbNvidia.PSObject.Properties.ForEach({ $_.Value.Model 
 $Variables.GPUArchitectureDbAMD.PSObject.Properties.ForEach({ $_.Value = $_.Value -join "|" })
 
 $Variables.Devices = Get-Device
+
+If ($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion -and (Get-Item -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors).Property -notlike "*\amdocl64.dll") { 
+    Write-Message -Level Error "OpenCL driver installation for AMD GPU devices is incomplete"
+    Write-Message -Level Error "Please create the missing registry key as described in https://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143"
+    $Global:WscriptShell.Popup("The OpenCL driver installation for AMD GPU devices is incomplete.`nPlease create the missing registry key as described here:`n`nhttps://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    Exit
+}
 
 $Variables.Devices.Where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Variables.SupportedCPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
 $Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Variables.SupportedGPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
@@ -704,8 +720,8 @@ Function MainLoop {
                         $Message += " Mining processes are starting..."
                         $Variables.Summary = $Message
                         Remove-Variable Message
+                        If ($LegacyGUIform) { Update-GUIstatus }
                     }
-                    If ($LegacyGUIform) { Update-GUIstatus }
 
                     [Void](Start-Brain @(Get-PoolBaseName $Config.PoolName))
                     [Void](Start-Core)
@@ -1049,23 +1065,23 @@ Function MainLoop {
                     # Miner list format
                     [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Miner"; Expression = { $_.Name } }
-                        If ($Variables.ShowColumnMinerFee -and ($Variables.Miners.Workers.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Fee }) }; Align = "right" } }
-                        If ($Variables.ShowColumnEarningsBias) { @{ Label = "Earnings bias"; Expression = { If ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
-                        If ($Variables.ShowColumnEarnings) { @{ Label = "Earnings"; Expression = { If ([Double]::IsNaN($_.Earnings)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
-                        If ($Variables.ShowColumnPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "Power cost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
-                        If ($Variables.MiningPowerCost -and $Variables.ShowColumnProfitBias) { @{ Label = "Profit bias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
-                        If ($Variables.MiningPowerCost -and $Variables.ShowColumnProfit) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowColumnMinerFee -and $Variables.Miners.Workers.Fee) { @{ Label = "Fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Fee }) }; Align = "right" } }
+                        If ($Variables.ShowColumnEarningsBias) { @{ Label = "Earnings bias"; Expression = { If ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings_Bias * $Variables.Rates.BTC.($Config.FIATcurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowColumnEarnings) { @{ Label = "Earnings"; Expression = { If ([Double]::IsNaN($_.Earnings)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings * $Variables.Rates.BTC.($Config.FIATcurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowColumnPowerCost -and $Config.CalculatePowerCost -and $Variables.MiningPowerCost) { @{ Label = "Power cost"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "-{0:n$($Config.DecimalsMax)}" -f ($_.PowerCost * $Variables.Rates.BTC.($Config.FIATcurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowColumnProfitBias -and $Variables.MiningPowerCost) { @{ Label = "Profit bias"; Expression = { If ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit_Bias * $Variables.Rates.BTC.($Config.FIATcurrency)) } }; Align = "right" } }
+                        If ($Variables.ShowColumnProfit -and $Variables.MiningPowerCost) { @{ Label = "Profit"; Expression = { If ([Double]::IsNaN($_.Profit)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Profit * $Variables.Rates.BTC.($Config.FIATcurrency)) } }; Align = "right" } }
                         If ($Variables.ShowColumnPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } } }; Align = "right" } }
                         If ($Variables.ShowColumnAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.ForEach({ "{0:P0}" -f [Double]$_.Pool.Accuracy }) }; Align = "right" } }
                         @{ Label = "Algorithm"; Expression = { $_.Workers.Pool.Algorithm } }
                         If ($Variables.ShowColumnPool) { @{ Label = "Pool"; Expression = { $_.Workers.Pool.Name } } }
-                        If ($Variables.ShowColumnPoolFee -and ($Variables.Miners.Workers.Pool.Fee)) { @{ Label = "Fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Pool.Fee }) }; Align = "right" } }
+                        If ($Variables.ShowColumnPoolFee -and $Variables.Miners.Workers.Pool.Fee) { @{ Label = "Fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Pool.Fee }) }; Align = "right" } }
                         If ($Variables.ShowColumnHashrate) { @{ Label = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) } }; Align = "right" } }
                         If ($Variables.ShowColumnUser) { @{ Label = "User"; Expression = { $_.Workers.Pool.User } } }
                         If ($Variables.ShowColumnCurrency) { @{ Label = "Currency"; Expression = { If ($_.Workers.Pool.Currency -match "\w") { $_.Workers.Pool.Currency } } } }
                         If ($Variables.ShowColumnCoinName) { @{ Label = "CoinName"; Expression = { If ($_.Workers.Pool.CoinName -match "\w" ) { $_.Workers.Pool.CoinName } } } }
                     )
-                    # Display top 5 optimal miners and all benchmarking of power consumtion measuring miners
+                    # Display top 5 optimal miners and all benchmarking of power consumption measuring miners
                     $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
                     ($Variables.Miners.Where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { [String]$_.DeviceNames }).ForEach(
                         { 
@@ -1090,7 +1106,7 @@ Function MainLoop {
                     Write-Host "`nRunning miner$(If ($Variables.MinersBest.Count -ne 1) { "s" }):"
                     [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Name"; Expression = { $_.Name } }
-                        If ($Config.CalculatePowerCost -and $Variables.ShowColumnPowerConsumption) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2"))" } }; Align = "right" } }
+                        If ($Variables.ShowColumnPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2"))" } }; Align = "right" } }
                         @{ Label = "Hashrate(s)"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }; Align = "right" }
                         @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
@@ -1110,7 +1126,7 @@ Function MainLoop {
                         Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"
                         [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
-                            If ($Config.CalculatePowerCost -and $Variables.ShowColumnPowerConsumption) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
+                            If ($Variables.ShowColumnPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
                             @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & " }; Align = "right" }
                             @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                             @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
@@ -1127,7 +1143,7 @@ Function MainLoop {
                         Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed miner$(If ($ProcessesFailed.Count -ne 1) { "s" }) (past 24 hrs):"
                         [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
-                            If ($Config.CalculatePowerCost -and $Variables.ShowColumnPowerConsumption) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
+                            If ($Variables.ShowColumnPowerConsumption -and $Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
                             @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & " }; Align = "right" }
                             @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                             @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
@@ -1164,7 +1180,7 @@ Function MainLoop {
                         }
                     )
                     If ($Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement -and $Variables.UIStyle -ne "full") { 
-                        Write-Host -ForegroundColor DarkYellow "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'Full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n"
+                        Write-Host -ForegroundColor DarkYellow "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n"
                     }
 
                     Write-Host ($Variables.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
@@ -1172,11 +1188,11 @@ Function MainLoop {
                     If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                         If ($Variables.MiningProfit -lt 0) { 
                             # Mining causes a loss
-                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and $(If ($Config.DryRun) { "would cause" } Else { "causes" }) a loss of {0} {1:n$($Config.DecimalsMax)}/day (including base power cost)." -f $Config.FIATcurrency, (-$Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)))
+                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and $(If ($Config.DryRun) { "would cause" } Else { "causes" }) a loss of {0} {1:n$($Config.DecimalsMax)}/day (including base power cost)." -f $Config.FIATcurrency, (-$Variables.MiningProfit * $Variables.Rates.BTC.($Config.FIATcurrency)))
                         }
                         If ($Variables.MiningProfit -lt $Config.ProfitabilityThreshold) { 
                             # Mining profit is below the configured threshold
-                            Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Config.DecimalsMax)}/day. Mining is suspended until threshold is reached." -f $Config.FIATcurrency, ($Variables.MiningProfit * $Variables.Rates.($Config.PayoutCurrency).($Config.FIATcurrency)), $Config.ProfitabilityThreshold)
+                            Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Config.DecimalsMax)}/day. Mining is suspended until threshold is reached." -f $Config.FIATcurrency, ($Variables.MiningProfit * $Variables.Rates.BTC.($Config.FIATcurrency)), $Config.ProfitabilityThreshold)
                         }
                         $StatusInfo = "Last refresh: $($Variables.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(If ($Variables.EndCycleTime) { $($Variables.EndCycleTime.ToLocalTime().ToString("G")) } Else { 'n/a (Mining is suspended)' })   |   Hot keys: $(If ($Variables.CalculatePowerCost) { "[123acefimnprstuwy]" } Else { "[123aefimnrsuwy]" })   |   Press 'h' for help"
                         Write-Host ("-" * $StatusInfo.Length)
