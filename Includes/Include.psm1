@@ -30,7 +30,10 @@ $Global:WarningPreference = "SilentlyContinue"
 $Global:VerbosePreference = "SilentlyContinue"
 
 # Fix TLS Version erroring
-[Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls10 }
+If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls11) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls11 }
+If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls12) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls12 }
+
 
 # No native way to check how long the system has been idle in PowerShell. Have to use .NET code.
 Add-Type -TypeDefinition @'
@@ -1475,7 +1478,7 @@ Function Read-Config {
             If ($Config.psBase.Keys.Count -gt 0) { 
                 $Message = "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
                 [Void](Write-Config -Config $Config)
-                $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
+                $Variables.ConfigFileReadTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
                 Continue
             }
             Else { 
@@ -1485,7 +1488,7 @@ Function Read-Config {
             }
         }
         Else { 
-            $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
+            $Variables.ConfigFileReadTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
             ($Variables.AllCommandLineParameters.psBase.Keys | Sort-Object).ForEach(
                 { 
                     If ($ConfigFromFile.psBase.Keys -contains $_) { 
@@ -1524,16 +1527,16 @@ Function Read-Config {
     If ($Variables.PoolsConfigFile -and (Test-Path -LiteralPath $Variables.PoolsConfigFile -PathType Leaf)) { 
         Try { 
             $Variables.PoolsConfigData = [System.IO.File]::ReadAllLines($Variables.PoolsConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject
-            $Variables.PoolsConfigFileTimestamp = (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime
+            $Variables.PoolsConfigFileReadTimestamp = (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime
         }
         Catch { 
             $Variables.PoolsConfigData = [Ordered]@{ }
             Write-Message -Level Warn "Pools configuration file '$($Variables.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt. Will use default values."
-            $Variables.Remove("PoolsConfigFileTimestamp")
+            $Variables.Remove("PoolsConfigFileReadTimestamp")
         }
     }
     Else { 
-        $Variables.Remove("PoolsConfigFileTimestamp")
+        $Variables.Remove("PoolsConfigFileReadTimestamp")
     }
 
     $ConfigFromFile.PoolsConfig = Get-PoolsConfig
@@ -1566,7 +1569,7 @@ Function Read-Config {
     If (-not (Test-Path -LiteralPath $Variables.ConfigFile -PathType Leaf)) { 
         [Void](Write-Config -Config $Config)
         $Variables.FreshConfig = $true
-        $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
+        $Variables.ConfigFileReadTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
     }
 }
 
@@ -1708,8 +1711,6 @@ Function Write-Config {
 "
     "$Header$($NewConfig | Get-SortedObject | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $Variables.ConfigFile -Force
 
-    $Variables.ConfigFileTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
-
     $Variables.ShowColumnAccuracy = $Config.ShowColumnAccuracy
     $Variables.ShowAllMiners = $Config.ShowAllMiners
     $Variables.ShowColumnCoinName = $Config.ShowColumnCoinName
@@ -1770,7 +1771,7 @@ Function Edit-File {
             [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid) | Out-Null
             If ($NotepadProcessId -ne $FGWindowPid) { 
                 If ([Win32]::GetForegroundWindow() -ne $MainWindowHandle) { 
-                    [Win32]::ShowWindowAsync($MainWindowHandle, 6) | Out-Null # SW_MINIMIZE 
+                    [Win32]::ShowWindowAsync($MainWindowHandle, 6) | Out-Null # SW_MINIMIZE
                     [Win32]::ShowWindowAsync($MainWindowHandle, 9) | Out-Null # SW_RESTORE
                 }
             }

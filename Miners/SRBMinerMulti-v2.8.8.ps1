@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.25
-Version date:   2025/05/18
+Version:        6.4.26
+Version date:   2025/05/21
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -128,7 +128,7 @@ $Algorithms = @(
     @{ Algorithms = @("YescryptR8", "");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yescryptr8") }
     @{ Algorithms = @("Yespower", "");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 40);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespower") }
     @{ Algorithms = @("Yespower2b", "");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespower2b") }
-    @{ Algorithms = @("YespowerADVC", "");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 40);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespoweradvc") }
+    @{ Algorithms = @("YespowerAdvc", "");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 40);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespoweradvc") }
     @{ Algorithms = @("YespowerDogemone", "");     Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespowerdogemone") }
     @{ Algorithms = @("YespowerIc", "");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespoweric") }
     @{ Algorithms = @("YespowerLtncg", "");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());              Arguments = @(" --disable-gpu --algorithm yespowerltncg") }

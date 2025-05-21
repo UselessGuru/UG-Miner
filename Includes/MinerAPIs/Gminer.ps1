@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.4.25
-Version date:   2025/05/18
+Version:        6.4.26
+Version date:   2025/05/21
 #>
 
 Class GMiner : Miner { 

@@ -2,6 +2,21 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.26 2025/05/21
+====================================
+
+Enhancements:
+- Core: Minor code optimizations
+
+Fixes:
+- Core: Configuration change not getting applied after a change was made using the web configuration editor
+- Web GUI: 'Start mining' / 'Pause mining' / 'Stop mining' buttons inactive when re-displaying window
+
+Improvements:
+- Core: Reduce CPU load when idle
+- Web GUI / Configuration editor: Better input validation for text fields
+
+
 Changelog UG-Miner 6.4.25 2025/05/18
 ====================================
 

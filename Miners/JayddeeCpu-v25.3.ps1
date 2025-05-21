@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.25
-Version date:   2025/05/18
+Version:        6.4.26
+Version date:   2025/05/21
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -54,15 +54,16 @@ $Algorithms = @(
     @{ Algorithm = "m7m";           MinerSet = 1; WarmupTimes = @(45, 80); ExcludePools = @(); Arguments = " --algo m7m" } # NosuchCpu-v3.8.8.1 is fastest
     @{ Algorithm = "Minotaur";      MinerSet = 1; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo minotaur" }
     @{ Algorithm = "Minotaurx";     MinerSet = 1; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo minotaurx" }
-    @{ Algorithm = "power2b";       MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = ' --algo power2b --param-n 2048 --param-r 32 --param-key "Now I am become Death, the destroyer of worlds"' } # FPGA
 #   @{ Algorithm = "SHA3d";         MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo SHA3d" } # FPGA
 #   @{ Algorithm = "ScryptN11";     MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo scrypt(N,1,1)" } # GPU
-#   @{ Algorithm = "ScryptN2";      MinerSet = 1; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " --algo scrypt --param-n 1048576" } # Drops back to commandline, tested @ zergpoo & zpool
+#   @{ Algorithm = "ScryptN2";      MinerSet = 1; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " --algo scrypt --param-n 1048576" } # Drops back to commandline, tested @ zergpool & zpool
     @{ Algorithm = "VertHash";      MinerSet = 0; WarmupTimes = @(45, 50); ExcludePools = @(); Arguments = " --algo verthash --data-file ..\.$($Variables.VerthashDatPath)" }
     @{ Algorithm = "Yescrypt";      MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescrypt" }
     @{ Algorithm = "YescryptR16";   MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr16" }
     @{ Algorithm = "YescryptR32";   MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr32" }
     @{ Algorithm = "YescryptR8";    MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr8" }
+    @{ Algorithm = "Yespower2b";    MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = ' --algo yespower-b2b --param-n 2048 --param-r 32 --param-key "Now I am become Death, the destroyer of worlds"' } # MicroBitcoin
+    @{ Algorithm = "YespowerAdvc";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Let the quest begin"' } # AdventureCoin
     @{ Algorithm = "YespowerARWN";  MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "ARWN"' } # Arrowana
     @{ Algorithm = "YespowerIc";    MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC"' }
     @{ Algorithm = "YespowerIots";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
@@ -72,7 +73,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 45); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerTIDE";  MinerSet = 1; WarmupTimes = @(45, 55); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
     @{ Algorithm = "YespowerURX";   MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
-    @{ Algorithm = "ZR5";           MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = ' --algo zr5' }
+    @{ Algorithm = "ZR5";           MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo zr5" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })

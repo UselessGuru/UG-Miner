@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.25
-Version date:   2025/05/18
+Version:        6.4.26
+Version date:   2025/05/21
 #>
 
 using module .\Include.psm1
@@ -67,7 +67,7 @@ Try {
 
         # Read config only if config files have changed
         If (Test-Path -Path $Variables.ConfigFile -PathType Leaf) { 
-            If ($Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
+            If ($Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
                 [Void](Read-Config -ConfigFile $Variables.ConfigFile)
                 Write-Message -Level Verbose "Activated changed configuration."
             }
@@ -1392,10 +1392,11 @@ Try {
         If ($Variables.CycleStarts.Count -eq 1) { $Variables.EndCycleTime = [DateTime]::Now.ToUniversalTime().AddSeconds($Config.Interval) }
 
         Do { 
-            # Wait until 1 second since loop start has passed
+            $LoopEnd = If ($Config.DryRun -and $Config.BenchmarkAllPoolAlgorithmCombinations) { [DateTime]::Now.AddSeconds(0.5) } Else { [DateTime]::Now.AddSeconds(1) }
+
+            # Wait until 1 (0.5) second since loop start has passed
             While ([DateTime]::Now -le $LoopEnd) { Start-Sleep -Milliseconds 50 }
 
-            $LoopEnd = If ($Config.DryRun -and $Config.BenchmarkAllPoolAlgorithmCombinations) { [DateTime]::Now.AddSeconds(0.5) } Else { [DateTime]::Now.AddSeconds(1) }
             Try { 
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 

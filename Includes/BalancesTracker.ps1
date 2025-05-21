@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.25
-Version date:   2025/05/18
+Version:        6.4.26
+Version date:   2025/05/21
 #>
 
 using module .\Include.psm1
@@ -73,6 +73,11 @@ Do {
     # Get pools to track
     $PoolsToTrack = @((Get-ChildItem -File ".\Balances\*.ps1" -ErrorAction Ignore | Select-Object -ExpandProperty BaseName).Where({ (Get-PoolBaseName $_) -notin $Config.BalancesTrackerExcludePools }))
 
+    # Check internet connection
+    $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+    $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+    Remove-Variable NetworkInterface
+    
     If ($Variables.MyIP) { 
         # Fetch balances data from pools
         If ($PoolsToTrack) { 

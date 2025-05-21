@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.25
-Version date:   2025/05/18
+Version:        6.4.26
+Version date:   2025/05/21
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -838,7 +838,6 @@ $LegacyGUIControls += $LegacyGUIminingSummaryLabel
 $LegacyGUItooltip.SetToolTip($LegacyGUIminingSummaryLabel, "Color legend:`rBlack: Mining profitability is unknown`rGreen: Mining is profitable`rRed: Mining is NOT profitable")
 
 $LegacyGUIbuttonPause = New-Object System.Windows.Forms.Button
-$LegacyGUIbuttonPause.Enabled = $false
 $LegacyGUIbuttonPause.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonPause.Height = 24
 $LegacyGUIbuttonPause.Text = "Pause mining"
@@ -857,7 +856,6 @@ $LegacyGUIControls += $LegacyGUIbuttonPause
 $LegacyGUItooltip.SetToolTip($LegacyGUIbuttonPause, "Pause mining processes.`rBrain jobs and balances tracker remain running.")
 
 $LegacyGUIbuttonStart = New-Object System.Windows.Forms.Button
-$LegacyGUIbuttonStart.Enabled = $false
 $LegacyGUIbuttonStart.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonStart.Height = 24
 $LegacyGUIbuttonStart.Text = "Start mining"
@@ -876,7 +874,6 @@ $LegacyGUIControls += $LegacyGUIbuttonStart
 $LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStart, "Start the mining process.`rBrain jobs and balances tracker will also start.")
 
 $LegacyGUIbuttonStop = New-Object System.Windows.Forms.Button
-$LegacyGUIbuttonStop.Enabled = $false
 $LegacyGUIbuttonStop.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonStop.Height = 24
 $LegacyGUIbuttonStop.Text = "Stop mining"
@@ -1850,8 +1847,28 @@ $LegacyGUIform.Add_Load(
             If ($WindowSettings.Height -gt $LegacyGUIform.MinimumSize.Height) { $LegacyGUIform.Height = $WindowSettings.Height }
         }
 
+        Update-GUIstatus
+
+        Switch ($Variables.MiningStatus) { 
+            "Idle" { 
+                $LegacyGUIbuttonPause.Enabled = $true
+                $LegacyGUIbuttonStart.Enabled = $true
+                $LegacyGUIbuttonStop.Enabled = $false
+            }
+            "Paused" { 
+                $LegacyGUIbuttonPause.Enabled = $false
+                $LegacyGUIbuttonStart.Enabled = $true
+                $LegacyGUIbuttonStop.Enabled = $true
+            }
+            "Running" { 
+                $LegacyGUIbuttonPause.Enabled = $true
+                $LegacyGUIbuttonStart.Enabled = $false
+                $LegacyGUIbuttonStop.Enabled = $true
+            }
+        }
+
         $TimerUI = New-Object System.Windows.Forms.Timer
-        $TimerUI.Interval = 50
+        $TimerUI.Interval = 500
         $TimerUI.Add_Tick(
             { 
                 If ($Variables.APIRunspace) { 
@@ -1910,7 +1927,8 @@ $LegacyGUIform.Add_FormClosing(
 
 $LegacyGUIform.Add_KeyDown(
     { 
-        If ($Variables.NewMiningStatus -eq "Running" -and $_.KeyCode -eq "P" -and $_.Control -and $_.Alt) { 
+        If ($Variables.NewMiningStatus -eq "Running" -and $_.Control -and $_.Alt -and $_.KeyCode -eq "P") { 
+            # '<Ctrl><Alt>P' pressed
             If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
                 # Core is complete / gone. Cycle cannot be suspended anymore
                 $Variables.SuspendCycle = $false

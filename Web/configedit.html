@@ -84,7 +84,7 @@
           <div style="padding-top: 0.3em;" title="Default payout currency for all pools&#10;Important: Not all pools allow payouts in currencies other than BTC&#10;Consult the pool API for more information&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Default payout currency
             <select style="height: 1.6em;" id="PayoutCurrency" name="PayoutCurrency"></select>
           </div>
-          <div title="Extra currencies to be shown in balances summary&#10;Values must be separated by commas&#10;&#10;Enter FIAT or crypto currencies&#10;mBTC (milli BTC) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem;">Extra currencies</label>
+          <div title="Extra currencies to be shown in balances summary&#10;Currencies must be separated by commas. Do not use special characters.&#10;&#10;Enter FIAT or crypto currencies&#10;mBTC (milli BTC) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem;">Extra currencies</label>
             <input type="text" id="ExtraCurrencies" name="ExtraCurrencies" maxlength=45 size=50 value="USD, ETC">
           </div>
           <div style="padding-top: 0.5rem;" title="If enabled UG-Miner will display BTC values in milli BTC">
@@ -209,14 +209,14 @@
               <option title="This will prolongue benchmarking, but will not improve profitability&#10;(Minerset 3) - not recommended" value=3>all miners (incl. those in UnprofitableAlgorithms.json)</option>
             </select>
           </div>
-          <div style="padding-top: 0.2rem;" title="List of miners to be excluded&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the full miner name, e.g 'GMiner-v3.44' (incl. version information)&#10;"> Exclude miners
+          <div style="padding-top: 0.2rem;" title="List of miners to be excluded (case insensitive)&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the full miner name, e.g 'GMiner-v3.44' (incl. version information)&#10;"> Exclude miners
             <input type="text" id="ExcludeMinerName" name="ExcludeMinerName" size=47>
           </div>
-          <div style="padding-top: 0.2rem;" title="'+[Algorithm]' to enable algorithm or algorithm variant&#10;'-[Algorithm]' to disable algorithm or algorithm variant&#10;Values must be sparated by commas&#10;e.g. '+Ethash,+EtcHash' or '-Ethash(3GB),-Ethash(4GB)'&#10;&#10;Leave empty to use ALL available algorithms&#10;If '+' is used, then only the explicitly enabled algorithms or algorithm variants are used&#10;If '-' is used, then all algorithms or algorithm variants are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude algorithms
+          <div style="padding-top: 0.2rem;" title="'+[Algorithm]' to enable algorithm or algorithm variant&#10;'-[Algorithm]' to disable algorithm or algorithm variant&#10;Values must be sparated by commas&#10;e.g. '+Ethash,+EtcHash' or '-Ethash(3GiB),-Ethash(4GiB)'&#10;&#10;Leave empty to use ALL available algorithms&#10;If '+' is used, then only the explicitly enabled algorithms or algorithm variants are used&#10;If '-' is used, then all algorithms or algorithm variants are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude algorithms
             <input type="text" id="Algorithm" name="Algorithm" size=30>
           </div>
           <div style="padding-top: 0.2rem;" title="'+[Currency]' to enable currency&#10;'-[Currency]' to disable currency&#10;Values must be sparated by commas&#10;e.g. '-SATOX,-PAPRY'&#10;&#10;Leave empty to use ALL available currencies&#10;If '+' is used, then only the explicitly enabled currencies are used&#10;If '-' is used, then all currencies are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude currencies
-            <input type="text" id="Currency" name="Currency" size=30>
+            <input type="text" id="Currency" name="Currency" size=30 style="text-transform:uppercase;">
           </div>
           <div style="padding-top: 0.3rem;" title="UG-Miner will disable all miners which sometimes mine to a miner developer wallet (a.k.a. comission or donation)">
             <input type="checkbox" class="toggle-switch" id="DisableMinersWithFee" name="DisableMinersWithFee"> Disable miners with dev fees
@@ -540,7 +540,7 @@
         if (key === 'BTC' || key === 'LTC') $('<input/>', { type: 'text', id: ('Wallet' + key), value: value, name: ('Wallet' + key), minlength: 26, maxlength: 35, size: 64 }).appendTo(document.getElementById(key));
         else if (key === 'ETC' || key === 'ETH') $('<input/>', { type: 'text', id: ('Wallet' + key), value: value, name: ('Wallet' + key), maxlength: 42, size: 64 }).appendTo(document.getElementById(key));
         else $('<input/>', { type: 'text', id: ('Wallet' + key), value: value, name: ('Wallet' + key), size: 64 }).appendTo(document.getElementById(key));
-        $('<button/>', { text: 'Remove', title: 'Remove currency from wallet list', type: 'button', class: 'btn btn-light btn-sm removewalletbutton', id: ('btn-remove-wallet-' + key), style: 'margin-left:6px; height:28px; ' }).appendTo(document.getElementById(key));
+        $('<button/>', { text: 'Remove', title: 'Remove currency from wallet list', type: 'button', class: 'btn btn-light btn-sm removewalletbutton', id: ('btn-remove-wallet-' + key), style: 'margin-left:6px; height:28px;' }).appendTo(document.getElementById(key));
       $('<div/>').appendTo(walletscontainer);
       $('<option/>', { value: key, text: key }).appendTo(payoutcurrencycontainer);
     })
@@ -548,18 +548,18 @@
     // Add wallet address
     $('.addwalletbutton').click(function () {
       $('<div>', { id: 'newwallet' }).appendTo(walletscontainer);
-        $('<input type="text" title="Enter crypto currency" id="newwalletcurrency" size=2 minlength=1 maxlength=10>').appendTo(newwallet);
-        $('<input type="text" title="Enter wallet address" id="newwalletaddress" size=64 minlength=2 maxlength=100 style=margin-left:6px>').appendTo(newwallet);
-        $('<button/>', { text: 'Add', title: 'Add currency to wallet list', type: 'button', class: 'btn btn-light btn-sm addnewwalletbutton', id: 'btn-addnewwallet', style: 'margin-left:6px; height:28px; ' }).appendTo(newwallet);
-        $('<button/>', { text: 'Cancel', title: '', type: 'button', class: 'btn btn-light btn-sm cancelnewwalletbutton', id: 'btn-cancelnewwallet', style: 'margin-left:6px; height:28px; ' }).appendTo(newwallet);
+        $('<input>', { type: 'text', title: 'Enter crypto currency', id: 'newwalletcurrency', size: 2, minlength: 1, maxlength: 10, style: 'text-transform:uppercase;' }).appendTo(newwallet);
+        $('<input>', { type: 'text', title: 'Enter wallet address', id: 'newwalletaddress', size: 64, minlength: 2, maxlength: 100, style: 'margin-left:6px;' }).appendTo(newwallet);
+        $('<button/>', { text: '✔', title: 'Add currency to wallet list\n\nNote: Currencies must be unique', type: 'button', class: 'btn btn-light btn-sm storenewwalletbutton', id: 'btn-storenewwallet', style: 'margin-left:6px; height:28px;' }).appendTo(newwallet);
+        $('<button/>', { text: '✖', title: 'Remove currency from wallet list', type: 'button', class: 'btn btn-light btn-sm cancelnewwalletbutton', id: 'btn-cancelnewwallet', style: 'margin-left:6px; height:28px;' }).appendTo(newwallet);
       $('<div/>').appendTo(walletscontainer);
       document.getElementById('btn-addwallet').disabled = true;
-      document.getElementById('btn-addnewwallet').disabled = true;
+      document.getElementById('btn-storenewwallet').disabled = true;
       document.getElementById('save-button').disabled = true;
       document.getElementById('reset-button').disabled = true;
 
-      // Add new wallet
-      $('.addnewwalletbutton').click(function () {
+      // Store new wallet
+      $('.storenewwalletbutton').click(function () {
         var key = document.getElementById('newwalletcurrency').value.toUpperCase();
         var value = document.getElementById('newwalletaddress').value;
         config.Wallets[key] = value;
@@ -568,7 +568,7 @@
           if (key === 'BTC' || key === 'LTC') $('<input/>', { type: 'text', id: ('Wallet' + key), value: value, name: ('Wallet' + key), minlength: 26, maxlength: 35, size: 64 }).appendTo(document.getElementById(key));
           else if (key === 'ETC' || key === 'ETH') $('<input/>', { type: 'text', id: ('Wallet' + key), value: value, name: ('Wallet' + key), maxlength: 42, size: 64 }).appendTo(document.getElementById(key));
           else $('<input/>', { type: 'text', id: ('Wallet' + key), value: value, name: ('Wallet' + key), size: 64 }).appendTo(document.getElementById(key));
-          $('<button/>Remove', { text: 'Remove', title: 'Remove currency from wallet list', type: 'button', class: 'btn btn-light btn-sm removewalletbutton', id: ('btn-remove-wallet-' + key), style: 'margin-left:6px; height:28px; ' }).appendTo(document.getElementById(key));
+          $('<button/>Remove', { text: 'Remove', title: 'Remove currency from wallet list', type: 'button', class: 'btn btn-light btn-sm removewalletbutton', id: ('btn-remove-wallet-' + key), style: 'margin-left:6px; height:28px;' }).appendTo(document.getElementById(key));
         $('<div/>').appendTo(walletscontainer);
         $('<option/>', { value: key, text: key }).appendTo(payoutcurrencycontainer);
         document.getElementById('newwallet').remove();
@@ -586,10 +586,10 @@
       });
 
       $('#newwalletcurrency').on('input', function() {
-        document.getElementById('btn-addnewwallet').disabled = !document.getElementById('newwalletcurrency').value.toString().trim() || !document.getElementById('newwalletaddress').value.toString().trim() || config.Wallets.hasOwnProperty(document.getElementById('newwalletcurrency').value.toUpperCase());
+        document.getElementById('btn-storenewwallet').disabled = !document.getElementById('newwalletcurrency').value.toString().trim() || !document.getElementById('newwalletaddress').value.toString().trim() || config.Wallets.hasOwnProperty(document.getElementById('newwalletcurrency').value.toUpperCase());
       });
       $('#newwalletaddress').on('input', function(){
-        document.getElementById('btn-addnewwallet').disabled = !document.getElementById('newwalletcurrency').value.toString().trim() || !document.getElementById('newwalletaddress').value.toString().trim() || config.Wallets.hasOwnProperty(document.getElementById('newwalletcurrency').value.toUpperCase());
+        document.getElementById('btn-storenewwallet').disabled = !document.getElementById('newwalletcurrency').value.toString().trim() || !document.getElementById('newwalletaddress').value.toString().trim() || config.Wallets.hasOwnProperty(document.getElementById('newwalletcurrency').value.toUpperCase());
       });
 
       // Cancel new wallet
@@ -668,6 +668,11 @@
       $('<option/>', { value: key, text: key + ' (' + value + ')' }).appendTo(fiatcurrencycontainer);
     });
     document.getElementById('FIATcurrency').value = config.FIATcurrency.trim();
+
+    $('#ExtraCurrencies').on('focusout', function() {
+      document.getElementById('ExtraCurrencies').value = document.getElementById('ExtraCurrencies').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
+    })
+
     document.getElementById('ExtraCurrencies').value = config.ExtraCurrencies.toString().trim();
     document.getElementById('PayoutCurrency').value = config.PayoutCurrency.trim();
     if (config.UsemBTC) document.getElementById('UsemBTC').checked = config.UsemBTC;
@@ -706,7 +711,7 @@
     if (Number.isInteger(config.Donation)) document.getElementById('Donation').value = parseInt(config.Donation);
     // Donation nag
     if (parseInt(document.getElementById('Donation').value) <= 0) {
-      $('.modal-title').html('&#128546  Donation duration set to 0 minutes  &#128546');
+      $('.modal-title').html('&#128546  Donatio44n duration set to 0 minutes  &#128546');
       $('.modal-body').html('Please help support the great team behind UG-Miner by leaving mining donations turned on&#10;&#10;Thank you!');
       $('#myModal').modal({ show: true });
     };
@@ -806,11 +811,20 @@
     // Miner selection
     if (parseInt(config.MinerSet) >= 0 && parseInt(config.MinerSet) <= 3) document.getElementById('MinerSet').value = config.MinerSet;
     else document.getElementById('MinerSet').value = 2;
+    $('#ExcludeMinerName').on('focusout', function() {
+      document.getElementById('ExcludeMinerName').value = document.getElementById('ExcludeMinerName').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
+    })
     if (config.ExcludeMinerName) document.getElementById('ExcludeMinerName').value = (config.ExcludeMinerName).toString().trim();
+    $('#Algorithm').on('focusout', function() {
+      document.getElementById('Algorithm').value = document.getElementById('Algorithm').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
+    })
     if (config.Algorithm) document.getElementById('Algorithm').value = (config.Algorithm).toString().trim();
     if (config.DisableMinersWithFee) document.getElementById('DisableMinersWithFee').checked = true;
     if (config.DisableDualAlgoMining) document.getElementById('DisableDualAlgoMining').checked = true;
     if (config.DisableSingleAlgoMining) document.getElementById('DisableSingleAlgoMining').checked = true;
+    $('#Currency').on('focusout', function() {
+      document.getElementById('Currency').value = document.getElementById('Currency').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
+    })
     if (config.Currency) document.getElementById('Currency').value = (config.Currency).toString().trim();
 
     // Dual AND single algorithm mining cannot be disabled at the same time
@@ -1127,11 +1141,19 @@
           required: false,
           minlength: 3,
           maxlength: 1024,
-          pattern: '^[+|-]([A-Za-z0-9\(\))]{2,}?)+(?:,[+|-]([A-Za-z0-9\(\)]{2,})+)*$'
+          pattern: '^(?:([+][a-zA-Z0-9]{3,}(?:[(]\\d+GiB[)])?)(?:,[+][a-zA-Z0-9]{3,}(?:[(]\\d+GiB[)])?)*|([-][a-zA-Z0-9]{3,}(?:[(]\\d+GiB[)])?)(?:,[-][a-zA-Z0-9]{3,}(?:[(]\\d+GiB[)])?)*),?$'
+
+        },
+        Currency: {
+          required: false,
+          minlength: 3,
+          maxlength: 1024,
+          pattern: '^(?:([+][a-zA-Z0-9]{3,})(?:,[+][a-zA-Z0-9]{3,})*|([-][a-zA-Z0-9]{3,})(?:,[-][a-zA-Z0-9]{3,})*),?$'
         },
         PowerPricekWh: {
           maxlength: 256,
-          pattern: '^\{"([01][0-9]|2[0-3]):[0-5][0-9]":([0-9]+|[0-9]\.+[0-9]+)(?:,"([01][0-9]|2[0-3]):[0-5][0-9]":([0-9]+|[0-9]\.+[0-9]+))*\}$'
+          // {"00:00":0.26,"12:00":0.3}
+          pattern: '^\{"([01][0-9]|2[0-3]):[0-5][0-9]":(\\d+|\\d+\.\\d+)(?:,"([01][0-9]|2[0-3]):[0-5][0-9]":(\\d+|\\d+\.\\d+))*\}$'
         },
         PowerConsumptionIdleSystemW: {
           digits: true,
@@ -1193,7 +1215,7 @@
         }
       },
       messages: {
-        Wallet: {
+        WalletBTC: {
           pattern: "<br>Bitcoin address must be between 26 and 35 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
         },
         MiningDutchserName: {
@@ -1226,12 +1248,18 @@
         Proxy: {
           pattern: "<br>Enter Proxy IP V4 address and port<br>e.g. 192.168.1.1:3128"
         },
+        ExtraCurrencies: {
+          pattern: "<br>Currencies must be separated by commas.<br>Do not use special characters."
+        },
         ExcludeMinerName: {
-          minlength: "<br>Miner Name is too short",
-          pattern: "<br>Miner names must separated by commas"
+          minlength: "<br>Miner name is too short",
+          pattern: "<br>Invalid miner name.<br>Only use upper and lower case letters, digits, '.' & '-'.<br>Values must be separated by commas."
         },
         Algorithm: {
-          pattern: "<br>Algorithms must be prefixed with '+' or '-' and separated by commas"
+          pattern: "<br>All algorithms must be prefixed with either '+' or '-' and separated by commas.<br>Do not use '+' AND '-' together."
+        },
+        Currency: {
+          pattern: "<br>All currencies must be prefixed with either '+' or '-' and separated by commas.<br>o not use '+' AND '-' together."
         },
         PowerPricekWh: {
           pattern: '<br>Enter a compressed json, e.g. {"00:00":0.26,"12:00":0.3} (max. 256 chars)'

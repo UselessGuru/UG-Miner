@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.25
-Version date:   2025/05/18
+Version:        6.4.26
+Version date:   2025/05/21
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.25"
+    Version      = [System.Version]"6.4.26"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -589,20 +589,23 @@ If ($Config.WebGUI) { [Void](Start-APIServer) }
 
 Function MainLoop { 
 
-    # Check internet connection
-    $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
-    $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
-    Remove-Variable NetworkInterface
-
     If ($Variables.ConfigurationHasChangedDuringUpdate) { $Variables.NewMiningStatus = $Variables.MiningStatus = "Idle" }
 
     If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.MiningStatus -ne "Idle") { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
 
+    # Check internet connection and update rates every 15 minutes
     If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
-        # Update rates every 15 minutes
+        # Check internet connection
+        $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+        $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+        Remove-Variable NetworkInterface
         If ($Variables.MyIP) { 
             [Void](Get-Rate)
             If ($Variables.NewMiningStatus -eq "Paused") { $Variables.RefreshNeeded = $true }
+        }
+        Else { 
+            Write-Message -Level Error "No internet connection - will retry in $($Config.Interval) seconds..."
+            Start-Sleep -Seconds $Config.Interval
         }
     }
 
@@ -618,8 +621,6 @@ Function MainLoop {
             Get-ChildItem -Path ".\Logs\$($Variables.Branding.ProductLabel)_*.log" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
             Get-ChildItem -Path ".\Logs\SwitchingLog_*.csv" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
             Get-ChildItem -Path "$($Variables.ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse
-
-            If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls12) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls12 }
 
             If ($Config.Proxy -eq "") { $PSDefaultParameterValues.Remove("*:Proxy") }
             Else { $PSDefaultParameterValues["*:Proxy"] = $Config.Proxy }
@@ -1007,7 +1008,7 @@ Function MainLoop {
         }
     }
     ElseIf ((Test-Path -Path $Variables.ConfigFile) -and (Test-Path -Path $Variables.PoolsConfigFile)) { 
-        If (-not ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) -and $Variables.ConfigFileTimestamp -ne (Get-Item -Path $Variables.ConfigFile).LastWriteTime -or $Variables.PoolsConfigFileTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime) { 
+            If (-not ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) -and $Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
             [Void](Read-Config -ConfigFile $Variables.ConfigFile)
             Write-Message -Level Verbose "Activated changed configuration."
         }
@@ -1238,6 +1239,6 @@ While ($true) {
     }
     Else { 
         [Void](MainLoop)
-        Start-Sleep -Milliseconds 50
+        Start-Sleep -Milliseconds 500
     }
 }
