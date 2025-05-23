@@ -60,14 +60,13 @@ UG-Miner code is partly based on
 
 ## Easy configuration, easy start
 
-   Download https://github.com/UselessGuru/UG-Miner/archive/refs/heads/main.zip and extract the zip file to a new folder of your choice.
-
-   Run **[UG-Miner directory]\UG-Miner.bat** or **[UG-Miner directory]\UG-Miner_AsAdmin.bat**
-   1. Edit configuration (http://localhost:3999/configedit.html)
-   2. Set your wallet address(es) and username(s) <sup>(*)</sup>
-   3. Select your pool(s)
-   4. Save configuration
-   5. Start mining
+   1. Download https://github.com/UselessGuru/UG-Miner/archive/refs/heads/main.zip and extract the zip file to a new folder of your choice.
+   2. Run **[UG-Miner directory]\UG-Miner.bat** or **[UG-Miner directory]\UG-Miner_AsAdmin.bat**
+   3. Edit configuration (http://localhost:3999/configedit.html)
+   4. Set your wallet address(es) and username(s) <sup>(*)</sup>
+   5. Select your pool(s)
+   6. Save configuration
+   7. Start mining
 
    <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username
 
