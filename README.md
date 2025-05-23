@@ -60,7 +60,9 @@ UG-Miner code is partly based on
 
 ## Easy configuration, easy start
 
-   Run **UG-Miner.bat** or **UG-Miner_AsAdmin.bat**
+   Download https://github.com/UselessGuru/UG-Miner/archive/refs/heads/main.zip and extract the zip file to a new folder of your choice.
+
+   Run **[UG-Miner directory]\UG-Miner.bat** or **[UG-Miner directory]\UG-Miner_AsAdmin.bat**
    1. Edit configuration (http://localhost:3999/configedit.html)
    2. Set your wallet address(es) and username(s) <sup>(*)</sup>
    3. Select your pool(s)
@@ -76,6 +78,7 @@ It is recommended to run UG-Miner with local computer administrator rights (UG-M
 ### Pools
 
 UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin availability data.  
+
 You must select at least one pool.  
 If you select several pools, then your earnings might be split across different pools. UG-Miner will always direct the miners to the pools with the highest earnings.  
 It is recommended to keep the number of configured pools to a minimum as this might dilute your earnings and it could take longer to reach the pools payout thresholds.
@@ -170,7 +173,7 @@ BalancesTracker will still run in the background to keep the pool balances up to
 
 ### Web GUI
 
-UG-Miner can be controlled & configured through the Web GUI.  
+UG-Miner can be controlled & configured through the web GUI.  
 For most scenarios there is no need to edit configuration files manually.  
 Some settings can be configured per [advanced pool configuration](<https://github.com/UselessGuru/UG-Miner?tab=readme-ov-file#advanced-per-pool-configuration>).
 
@@ -189,19 +192,19 @@ The prerun scripts can be used to apply overclocking settings via any OC tool th
 Before starting a miner executable UG-Miner wiil try to launch one of the following 3 prerun scripts (in this order):
 
 1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
-   Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\\Utils\\prerun' folder, e.g.  
+   Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
    'MiniZ-v2.4e-1xRadeonRX5808GB_EtcHash.bat'  
    'BzMiner-v23.0.2-1xRTX306012GB_Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
 2. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
-   Create a file named \<AlgorithmName\>.bat in the '[UG-Miner directory]\\Utils\\prerun' folder, e.g.  
+   Create a file named \<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
    'Ethash.bat'  
    'Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
 3. default.bat  
-   If neither of the first two above exists UG-Miner will try to launch the generic '[UG-Miner directory]\\Utils\\prerun\default.bat'
+   If neither of the first two above exists UG-Miner will try to launch the generic '[UG-Miner directory]\Utils\prerun\default.bat'
 
 **Use overclock with caution!**
 
@@ -209,9 +212,8 @@ Before starting a miner executable UG-Miner wiil try to launch one of the follow
 
 **This is for advanced users. Do not use if you do not know what you are doing.**
 
-The file 'Config\PoolsConfig.json' contains configuration details for the pools.
-
-A separate section can be added for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built-in default values will be used.
+See '[UG-Miner directory]\Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.  
+A separate section can be added to '[UG-Miner directory]\Config\PoolsConfig.json' for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built-in default values will be used.
 
 
 **Available per pool configuration options**
@@ -220,7 +222,7 @@ A separate section can be added for each pool. If a pool is listed in this file,
 - Currency [CURRENCY]: List of included or excluded currencies per pool
 - EarningsAdjustmentFactor [Number]: This adds a multiplicator on estimations presented by the pool  
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
-- ExcludeRegion [REGION]: One or more of 'Australia', 'Brazil', 'Canada', 'Europe', 'Hongkong', 'India', 'Japan', 'Kazakhstan', 'Russia', 'Singapore', 'USA East', 'USA West'
+- ExcludeRegion [REGION]: One or more of 'Australia', 'Asia', 'Brazil', 'Canada', 'Europe', 'HongKong', 'India', 'Kazakhstan', 'Russia', 'USA East', 'USA West'
 - MinWorker [Number]: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
 - PayoutThreshold [CURRENCY: Value]: Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
 - PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hashrate reported in the API
@@ -228,11 +230,9 @@ A separate section can be added for each pool. If a pool is listed in this file,
 - SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
 - Wallet [CURRENCY: Wallet address]: Your wallet address for [CURRENCY]; some pools, e.g. Hiveon, require wallets in each supported currency
 
-See 'Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.
-
 **Usage**
 
-- Edit 'Config\PoolsConfig.json' (**be careful with json formatting!**)
+- Edit '[UG-Miner directory]\Config\PoolsConfig.json' (**be careful with json formatting!**)
 - Add an entry for the pool you want to customize  
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
 - Add the pool specific configuration items
@@ -294,8 +294,8 @@ UIStyle automatically switches to full during benchmarking or when measuring pow
 
 Windows 10.x and PowerShell Version 7.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.5.0.  
-[Download Installer for version 7.5.0](https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/PowerShell-7.5.0-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.5.1.  
+[Download Installer for version 7.5.1](https://github.com/PowerShell/PowerShell/releases/download/v7.5.1/PowerShell-7.5.1-win-x64.msi)  
 
 Some miners may need 'Visual C+ RunTimes. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
