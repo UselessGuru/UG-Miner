@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.26
-Version date:   2025/05/21
+Version:        6.4.27
+Version date:   2025/05/25
 #>
 
 using module .\Include.psm1
@@ -196,8 +196,70 @@ Try {
 
             # Expire watchdog timers
             $Variables.WatchdogReset = $Variables.WatchdogCount * $Variables.WatchdogCount * $Variables.WatchdogCount * $Variables.WatchdogCount * $Config.Interval
-            If ($Config.Watchdog) { $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.Kicked -ge $Variables.Timer.AddSeconds( - $Variables.WatchdogReset) }) }
+            If ($Config.Watchdog) { $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.Kicked -ge $Variables.Timer.AddSeconds(- $Variables.WatchdogReset) }) }
             Else { $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new() }
+
+            # Load unprofitable algorithms
+            Try { 
+                If (-not $Variables.UnprofitableAlgorithmsTimestamp -or (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime -gt $Variables.UnprofitableAlgorithmsTimestamp) { 
+                    $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Stop -AsHashtable | Get-SortedObject
+                    Write-Message -Level Info "$(If ($Variables.UnprofitableAlgorithmsTimestamp) { "Updated" } Else { "Loaded" }) list of unprofitable algorithms ($($Variables.UnprofitableAlgorithms.Count) $(If ($Variables.UnprofitableAlgorithms.Count -ne 1) { "entries" } Else { "entry" }))."
+                    $Variables.UnprofitableAlgorithmsTimestamp = (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime
+                }
+            }
+            Catch { 
+                Write-Message -Level Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
+                $Variables.Remove("UnprofitableAlgorithms")
+                $Variables.Remove("UnprofitableAlgorithmsTimestamp")
+            }
+
+            If ($Config.Donation -gt 0) { 
+                If (-not $Variables.DonationStart) { 
+                    # Re-Randomize donation start and data once per day
+                    If ((Get-Item -Path "$PWD\Logs\DonationLog.csv" -ErrorAction Ignore).LastWriteTime -lt [DateTime]::Today) { 
+                        # Do not donate if remaing time for today is less than donation duration
+                        If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
+                            $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
+                        }
+                    }
+                }
+
+                If ($Variables.DonationStart -and [DateTime]::Now -ge $Variables.DonationStart) { 
+                    If (-not $Variables.DonationEnd) { 
+                        $Variables.DonationStart = [DateTime]::Now
+                        # Add pool config to config (in-memory only)
+                        $Variables.DonationRandomPoolsConfig = Get-RandomDonationPoolsConfig
+                        # Ensure full donation period
+                        $Variables.DonationEnd = $Variables.DonationStart.AddMinutes($Config.Donation)
+                        $Variables.EndCycleTime = ($Variables.DonationEnd).ToUniversalTime()
+                        Write-Message -Level Info "Donation run: Mining for '$($Variables.DonationRandom.Name)' for the next $(If (($Config.Donation - ([DateTime]::Now - $Variables.DonationStart).Minutes) -gt 1) { "$($Config.Donation - ([DateTime]::Now - $Variables.DonationStart).Minutes) minutes" } Else { "minute" })."
+                        $Variables.DonationRunning = $true
+                    }
+                }
+            }
+
+            If ($Variables.DonationRunning) { 
+                If ($Config.Donation -gt 0 -and [DateTime]::Now -lt $Variables.DonationEnd) { 
+                    # Use donation pool config
+                    $Variables.PoolName = $Variables.DonationRandomPoolsConfig.Keys
+                    $Variables.PoolsConfig = $Variables.DonationRandomPoolsConfig
+                }
+                Else { 
+                    # Donation end
+                    $Variables.DonationLog = $Variables.DonationLog | Select-Object -Last 365 # Keep data for one year
+                    [Array]$Variables.DonationLog += [PSCustomObject]@{ 
+                        Start = $Variables.DonationStart
+                        End   = $Variables.DonationEnd
+                        Name  = $Variables.DonationRandom.Name
+                    }
+                    $Variables.DonationLog | Export-CSV -LiteralPath ".\Logs\DonationLog.csv" -Force -ErrorAction Ignore
+                    $Variables.DonationRandomPoolsConfig = $null
+                    $Variables.DonationStart = $null
+                    $Variables.DonationEnd = $null
+                    Write-Message -Level Info "Donation run complete - thank you! Mining for you again. :-)"
+                    $Variables.DonationRunning = $false
+                }
+            }
 
             # Skip some stuff when
             # - Configuration unchanged
@@ -207,66 +269,6 @@ Try {
 
                 # Check for new version
                 If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { [Void](Get-Version) }
-
-                # Load unprofitable algorithms
-                Try { 
-                    If (-not $Variables.UnprofitableAlgorithms.Keys -or (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime -gt $Variables.Timer.ToLocalTime().AddSeconds( - $Config.Interval)) { 
-                        $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Stop -AsHashtable | Get-SortedObject
-                        Write-Message -Level Info "Loaded list of unprofitable algorithms ($($Variables.UnprofitableAlgorithms.Count) $(If ($Variables.UnprofitableAlgorithms.Count -ne 1) { "entries" } Else { "entry" }))."
-                    }
-                }
-                Catch { 
-                    Write-Message -Level Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-                    $Variables.UnprofitableAlgorithms = @{ }
-                }
-
-                If ($Config.Donation -gt 0) { 
-                    If (-not $Variables.DonationStart) { 
-                        # Re-Randomize donation start and data once per day
-                        If ((Get-Item -Path "$PWD\Logs\DonationLog.csv" -ErrorAction Ignore).LastWriteTime -lt [DateTime]::Today) { 
-                            # Do not donate if remaing time for today is less than donation duration
-                            If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
-                                $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
-                            }
-                        }
-                    }
-
-                    If ($Variables.DonationStart -and [DateTime]::Now -ge $Variables.DonationStart) { 
-                        If (-not $Variables.DonationEnd) { 
-                            $Variables.DonationStart = [DateTime]::Now
-                            # Add pool config to config (in-memory only)
-                            $Variables.DonationRandomPoolsConfig = Get-RandomDonationPoolsConfig
-                            # Ensure full donation period
-                            $Variables.DonationEnd = $Variables.DonationStart.AddMinutes($Config.Donation)
-                            $Variables.EndCycleTime = ($Variables.DonationEnd).ToUniversalTime()
-                            Write-Message -Level Info "Donation run: Mining for '$($Variables.DonationRandom.Name)' for the next $(If (($Config.Donation - ([DateTime]::Now - $Variables.DonationStart).Minutes) -gt 1) { "$($Config.Donation - ([DateTime]::Now - $Variables.DonationStart).Minutes) minutes" } Else { "minute" })."
-                            $Variables.DonationRunning = $true
-                        }
-                    }
-                }
-
-                If ($Variables.DonationRunning) { 
-                    If ($Config.Donation -gt 0 -and [DateTime]::Now -lt $Variables.DonationEnd) { 
-                        # Use donation pool config
-                        $Variables.PoolName = $Variables.DonationRandomPoolsConfig.Keys
-                        $Variables.PoolsConfig = $Variables.DonationRandomPoolsConfig
-                    }
-                    Else { 
-                        # Donation end
-                        $Variables.DonationLog = $Variables.DonationLog | Select-Object -Last 365 # Keep data for one year
-                        [Array]$Variables.DonationLog += [PSCustomObject]@{ 
-                            Start = $Variables.DonationStart
-                            End   = $Variables.DonationEnd
-                            Name  = $Variables.DonationRandom.Name
-                        }
-                        $Variables.DonationLog | Export-CSV -LiteralPath ".\Logs\DonationLog.csv" -Force -ErrorAction Ignore
-                        $Variables.DonationRandomPoolsConfig = $null
-                        $Variables.DonationStart = $null
-                        $Variables.DonationEnd = $null
-                        Write-Message -Level Info "Donation run complete - thank you! Mining for you again. :-)"
-                        $Variables.DonationRunning = $false
-                    }
-                }
 
                 # Stop / Start brain background jobs
                 If ($BrainsToStop = (Compare-Object @(Get-PoolBaseName $Config.PoolName | Select-Object) @(Get-PoolBaseName $Variables.PoolName | Select-Object) | Where-Object SideIndicator -EQ "=>").InputObject) { 
@@ -417,7 +419,7 @@ Try {
                         # Min accuracy not reached
                         $Pools.Where({ $_.Accuracy -lt $Config.MinAccuracy }).ForEach({ $_.Reasons.Add("MinAccuracy ($($Config.MinAccuracy * 100)%) not reached") | Out-Null })
                         # Filter unavailable algorithms
-                        If ($Config.MinerSet -lt 3) { $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq "*" }).ForEach({ $_.Reasons.Add("Unprofitable Algorithm") | Out-Null }) }
+                        If ($Config.MinerSet -lt 3) { $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq "*" }).ForEach({ $_.Reasons.Add("Unprofitable algorithm") | Out-Null }) }
                         # Pool price 0
                         $Pools.Where({ $_.Price -eq 0 -and -not ($Variables.PoolsConfig[$_.Name].PoolAllow0Price -or $Config.PoolAllow0Price) }).ForEach({ $_.Reasons.Add("Price -eq 0") | Out-Null })
                         # No price data
@@ -476,7 +478,7 @@ Try {
                         $Pools.ForEach({ $_.Available = -not $_.Reasons.Count })
 
                         # Filter pools on miner set
-                        If ($Config.MinerSet -lt 2) { 
+                        If ($Config.MinerSet -le 2) { 
                             $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 1 }).ForEach({ $_.Reasons.Add("Unprofitable primary algorithm") | Out-Null })
                             $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 2 }).ForEach({ $_.Reasons.Add("Unprofitable secondary algorithm") | Out-Null })
                         }

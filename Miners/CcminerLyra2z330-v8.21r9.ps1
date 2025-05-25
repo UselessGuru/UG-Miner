@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.26
-Version date:   2025/05/21
+Version:        6.4.27
+Version date:   2025/05/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.1" }))) { Return }
@@ -32,8 +32,8 @@ $Algorithms = @(
     @{ Algorithm = "Blakecoin";   MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo blakecoin --intensity 12.3" } # FPGA
 #   @{ Algorithm = "Lyra2z330";   MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2z330 -intensity 12.5" } # Algorithtm is dead
 #   @{ Algorithm = "Yescrypt";    MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(75, 5); ExcludePools = @(); Arguments = " --algo yescrypt" } # Too many bad shares
-    @{ Algorithm = "YescryptR16"; MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescryptr16 --intensity 13.3" } # CcminerLyraYesscrypt-v8.21r18v5 is fastest
-    @{ Algorithm = "YescryptR32"; MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr32 --intensity 12.3" } # CcminerLyraYesscrypt-v8.21r18v5 is fastest
+    @{ Algorithm = "YescryptR16"; MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescryptr16 --intensity 13.3" } # CcminerLyra-v8.21r18v5 is fastest
+    @{ Algorithm = "YescryptR32"; MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr32 --intensity 12.3" } # CcminerLyra-v8.21r18v5 is fastest
     @{ Algorithm = "YescryptR8";  MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescryptr8" }
 )
 

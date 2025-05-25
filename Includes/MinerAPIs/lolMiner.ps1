@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.4.26
-Version date:   2025/05/21
+Version:        6.4.27
+Version date:   2025/05/25
 #>
 
 Class lolMiner : Miner { 

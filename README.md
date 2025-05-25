@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.4.26 / Updated 2025/05/21
+Version 6.4.26 / Updated 2025/05/25
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -68,11 +68,11 @@ UG-Miner code is partly based on
    6. Save configuration
    7. Start mining
 
-   <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username
+   <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username. To mine with NiceHash you must register and use the BTC address provided by NiceHash.
 
 It is recommended to run UG-Miner with local computer administrator rights (UG-Miner_AsAdmin.bat) to ensure file permissions and firewall rules can be set without user intervention. 
 
-![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner Web GUI")
+![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner web GUI")
 
 ### Pools
 
@@ -176,11 +176,11 @@ UG-Miner can be controlled & configured through the web GUI.
 For most scenarios there is no need to edit configuration files manually.  
 Some settings can be configured per [advanced pool configuration](<https://github.com/UselessGuru/UG-Miner?tab=readme-ov-file#advanced-per-pool-configuration>).
 
-![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner Web GUI Dashboard")
+![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_Dashboard.png "UG-Miner web GUI Dashboard")
 
 ### Legacy GUI
 
-![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_LegacyGUI.png "UG-Miner Legacy GUI")
+![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_LegacyGUI.png "UG-Miner legacy GUI")
 
 ## PreRun
 
@@ -236,7 +236,7 @@ A separate section can be added to '[UG-Miner directory]\Config\PoolsConfig.json
   The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
 - Add the pool specific configuration items
 
-Note: The configuration editor in the Web GUI only updates the generic pool settings. Pool specific settings override the generic settings.
+Note: The configuration editor in the web GUI only updates the generic pool settings. Pool specific settings override the generic settings.
 
 ## Balances tracking
 

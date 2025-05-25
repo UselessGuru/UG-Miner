@@ -2,6 +2,16 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.27 2025/05/25
+====================================
+
+Changes:
+- Miners: Rename 'CcminerLyraYesscrypt-v8.21r18v5' to 'CcminerLyraYescrypt-v8.21r18v5'
+
+Fixes:
+- Core: Unprofitable primary & secondary algorithms still available when configuration item 'MinerSet' -lt 2
+
+
 Changelog UG-Miner 6.4.26 2025/05/21
 ====================================
 

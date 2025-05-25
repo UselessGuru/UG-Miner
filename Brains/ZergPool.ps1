@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.4.26
-Version date:   2025/05/21
+Version:        6.4.27
+Version date:   2025/05/25
 #>
 
 using module ..\Includes\Include.psm1
@@ -198,7 +198,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $Variables.Brains.$BrainName | Add-Member "Updated" $Timestamp -Force
 
             # Limit to only sample size + 10 minutes history
-            $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
+            $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes(- ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
         }
         Catch { 
             Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."

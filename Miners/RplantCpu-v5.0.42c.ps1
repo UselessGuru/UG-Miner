@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.26
-Version date:   2025/05/21
+Version:        6.4.27
+Version date:   2025/05/25
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -93,8 +93,8 @@ $Algorithms = @(
 #   @{ Algorithm = "X11";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x11" } # ASIC, algorithm not supported
     @{ Algorithm = "X22";           MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x22" }
     @{ Algorithm = "Yescrypt";      MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yescrypt" }
-    @{ Algorithm = "YescryptR16";   MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yescryptr16" } # CcminerLyraYesscrypt-v8.21r18v5 is faster
-    @{ Algorithm = "YescryptR8";    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yescryptr8" } # CcminerLyraYesscrypt-v8.21r18v5 is faster
+    @{ Algorithm = "YescryptR16";   MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yescryptr16" } # CcminerLyra-v8.21r18v5 is faster
+    @{ Algorithm = "YescryptR8";    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yescryptr8" } # CcminerLyra-v8.21r18v5 is faster
     @{ Algorithm = "YescryptR8g";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yescryptr8g" }
     @{ Algorithm = "YescryptR32";   MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yescryptr32" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "Yespower";      MinerSet = 0; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yespower" }

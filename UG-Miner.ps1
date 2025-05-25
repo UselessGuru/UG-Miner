@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.26
-Version date:   2025/05/21
+Version:        6.4.27
+Version date:   2025/05/25
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.26"
+    Version      = [System.Version]"6.4.27"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -428,7 +428,7 @@ If ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath 
 }
 Remove-Variable Prerequisites, PrerequisitesMissing
 
-If ( -not (Get-Command Get-PnpDevice)) { 
+If (-not (Get-Command Get-PnpDevice)) { 
     Write-Message -Level Error "Windows Management Framework 5.1 is missing."
     Write-Message -Level Error "Please install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616"
     $Global:WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
@@ -594,7 +594,7 @@ Function MainLoop {
     If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.MiningStatus -ne "Idle") { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
 
     # Check internet connection and update rates every 15 minutes
-    If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes( - 15)) { 
+    If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(- 15)) { 
         # Check internet connection
         $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
         $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
@@ -1087,8 +1087,8 @@ Function MainLoop {
                     ($Variables.Miners.Where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { [String]$_.DeviceNames }).ForEach(
                         { 
                             $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
-                            $MinersDeviceGroupNeedingBenchmark = @($MinersDeviceGroup.Where({ $_.Benchmark }))
-                            $MinersDeviceGroupNeedingPowerConsumptionMeasurement = @($MinersDeviceGroup.Where({ $_.MeasurePowerConsumption }))
+                            $MinersDeviceGroupNeedingBenchmark = $MinersDeviceGroup.Where({ $_.Benchmark })
+                            $MinersDeviceGroupNeedingPowerConsumptionMeasurement = $MinersDeviceGroup.Where({ $_.MeasurePowerConsumption })
                             $MinersDeviceGroup.Where(
                                 { 
                                     $Variables.ShowAllMiners -or <# List all miners #>
