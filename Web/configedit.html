@@ -95,7 +95,7 @@
           <!-- General settings -->
           <legend class=h6><b>General settings</b></legend>
           <div style="padding-top: 0.2rem;" title="Identifies your worker&#10;e.g. Computername&#10;(min. 2 and max. 32 characters or numbers)">
-            <label for="WorkerName">Worker name</label>
+            <label for="WorkerName"> Worker name</label>
             <input type="text" id="WorkerName" name="WorkerName" maxlength=33 size=38 value="Workername">
           </div>
           <label style="padding-top: 0.2rem;" for="StartupMode" title="Defines UG-Miner startup mode">UG-Miner starts in</label>
@@ -128,7 +128,7 @@
           <div style="padding-top: 0.7rem;" title="Computer will restart when a dead miner is detected&#10;(e.g. miner cannot get stopped gracefully)">
             <input type="checkbox" class="toggle-switch" id="AutoReboot" name="AutoReboot"> Restart computer on dead miners
           </div>
-          <div style="padding-top: 0.5rem;" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60, default 13 &#8792; 0.9%)"> Donation 
+          <div style="padding-top: 0.5rem;" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60, default 13 &#8792; 0.9%)">Donation 
             <input type="number" id="Donation" name="Donation" min=0 max=60 value=13 style="width: 2.7em; text-align:right;"> minutes per day
           </div>
           <div style="padding-top: 0.3rem;" title="Cycle duration&#10;This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
@@ -140,11 +140,11 @@
           <div style="padding-top: 0.3rem;" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
             <input type="number" id="MinDataSample" name="MinDataSample" min=10 max=100 value=20 step=1 size=4 style="width: 2.8em; text-align:right;"> data samples while benchmarking
           </div>
-          <div style="padding-top: 0.2rem;" title="Enter Proxy IP address and port&#10;e.g. 192.168.1.1:3128"> Proxy address:port
+          <div style="padding-top: 0.2rem;" title="Enter Proxy IP address and port&#10;e.g. 192.168.1.1:3128">Proxy address:port
             <input type="text" id="Proxy" name="Proxy" maxlength=22 size=30>
           </div>
-          <div style="padding-top: 0.4rem;" title="If enabled UG-Miner will open firewall ports for all miners&#10;Admin rights required (or you must accept the UAC prompts)">
-            <input type="checkbox" class="toggle-switch" id="OpenFirewallPorts" name="OpenFirewallPorts"> Open firewall ports (admin rights required)
+          <div style="padding-top: 0.4rem;" title="If enabled UG-Miner will open firewall ports for all miners&#10;Administrator rights required (or you must accept the UAC prompts)">
+            <input type="checkbox" class="toggle-switch" id="OpenFirewallPorts" name="OpenFirewallPorts"> Open firewall ports (administrator rights required)
           </div>
           <br>
         </td>
@@ -159,7 +159,7 @@
 
             <!-- Pool settings -->
             <legend class=h6><b>Pool settings</b></legend>
-            <label title="For best network performance UG-Miner will use&#10;the pools closest to the selected region" for="Region">Region </label>
+            <label title="For best network performance UG-Miner will use&#10;the pools closest to the selected region" for="Region">Region</label>
             <select style="height: 1.6em;" id="Region" name="Region" style="margin-top: 0.2rem;"></select>
             <div style="padding-top: 0.2rem;" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature">
               <input type="checkbox" class="toggle-switch" id="UseAnycast" name="UseAnycast"> Use anycast for best network performance and ping times
@@ -209,13 +209,13 @@
               <option title="This will prolongue benchmarking, but will not improve profitability&#10;(Minerset 3) - not recommended" value=3>all miners (incl. those in UnprofitableAlgorithms.json)</option>
             </select>
           </div>
-          <div style="padding-top: 0.2rem;" title="List of miners to be excluded (case insensitive)&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the full miner name, e.g 'GMiner-v3.44' (incl. version information)&#10;"> Exclude miners
+          <div style="padding-top: 0.2rem;" title="List of miners to be excluded (case insensitive)&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the full miner name, e.g 'GMiner-v3.44' (incl. version information)&#10;">Exclude miners
             <input type="text" id="ExcludeMinerName" name="ExcludeMinerName" size=47>
           </div>
-          <div style="padding-top: 0.2rem;" title="'+[Algorithm]' to enable algorithm or algorithm variant&#10;'-[Algorithm]' to disable algorithm or algorithm variant&#10;Values must be sparated by commas&#10;e.g. '+Ethash,+EtcHash' or '-Ethash(3GiB),-Ethash(4GiB)'&#10;&#10;Leave empty to use ALL available algorithms&#10;If '+' is used, then only the explicitly enabled algorithms or algorithm variants are used&#10;If '-' is used, then all algorithms or algorithm variants are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude algorithms
+          <div style="padding-top: 0.2rem;" title="'+[Algorithm]' to enable algorithm or algorithm variant&#10;'-[Algorithm]' to disable algorithm or algorithm variant&#10;Values must be sparated by commas&#10;e.g. '+Ethash,+EtcHash' or '-Ethash(3GiB),-Ethash(4GiB)'&#10;&#10;Leave empty to use ALL available algorithms&#10;If '+' is used, then only the explicitly enabled algorithms or algorithm variants are used&#10;If '-' is used, then all algorithms or algorithm variants are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Include / exclude algorithms
             <input type="text" id="Algorithm" name="Algorithm" size=30>
           </div>
-          <div style="padding-top: 0.2rem;" title="'+[Currency]' to enable currency&#10;'-[Currency]' to disable currency&#10;Values must be sparated by commas&#10;e.g. '-SATOX,-PAPRY'&#10;&#10;Leave empty to use ALL available currencies&#10;If '+' is used, then only the explicitly enabled currencies are used&#10;If '-' is used, then all currencies are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Include / exclude currencies
+          <div style="padding-top: 0.2rem;" title="'+[Currency]' to enable currency&#10;'-[Currency]' to disable currency&#10;Values must be sparated by commas&#10;e.g. '-SATOX,-PAPRY'&#10;&#10;Leave empty to use ALL available currencies&#10;If '+' is used, then only the explicitly enabled currencies are used&#10;If '-' is used, then all currencies are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Include / exclude currencies
             <input type="text" id="Currency" name="Currency" size=30 style="text-transform:uppercase;">
           </div>
           <div style="padding-top: 0.3rem;" title="UG-Miner will disable all miners which sometimes mine to a miner developer wallet (a.k.a. comission or donation)">
@@ -252,7 +252,7 @@
             <label for="CPUMinerProcessPriority">process priority</label>
           </div>
           <div title="Select the process priority for GPU miners&#10;Higher priorities may lead to fluctuating hashrates with CPU miners">
-            <label for="GPUMinerProcessPriority">Run GPU miners with</label>
+            <label for="GPUMinerProcessPriority"> Run GPU miners with</label>
             <select style="height: 1.6em;" name="" id="GPUMinerProcessPriority">
               <option value = 1>above normal</option>
               <option value = 0>normal</option>
@@ -268,23 +268,23 @@
             <input type="checkbox" class="toggle-switch" id="DisableMinerFee" name="DisableMinerFee"> Disable miner fees (where applicable)
           </div>
           <div style="padding-top: 0.6rem;" title="Enable miner specific tweaks, e.g. sharper memory timings or mild overclock&#10;&#10;Note: This may cause stability issues, use with caution!">
-            <input type="checkbox" class="toggle-switch" id="UseMinerTweaks" name="UseMinerTweaks"> Enable miner tweaks (admin rights required)
+            <input type="checkbox" class="toggle-switch" id="UseMinerTweaks" name="UseMinerTweaks"> Enable miner tweaks (administrator rights required)
           </div>
           <br>
 
           <!-- Calculation settings -->
           <legend title="These settings are used to calculate the best miners" class=h6><b>Calculation settings</b></legend>
-          <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at two least pools"> Unreal pool price factor
+          <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at two least pools">Unreal pool price factor
             <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealPoolPriceFactor" name="UnrealPoolPriceFactor" style="width: 3em; text-align:right;">
           </div>
-          <div style="padding-top: 0.3rem;" title="Mark pool as unavailable if accuracy is below this value&#10;&#10;(min: 0%, max 100%; default: 50%)"> Minimum accuracy
+          <div style="padding-top: 0.3rem;" title="Mark pool as unavailable if accuracy is below this value&#10;&#10;(min: 0%, max 100%; default: 50%)">Minimum accuracy
             <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinAccuracy" name="MinAccuracy" style="width: 3em; text-align:right;"> %
           </div>
           <div style="padding-top: 0.5rem;" title="UG-Miner will ignore the pool fee when calculating earnings & profit">
             <input type="checkbox" class="toggle-switch" id="IgnorePoolFee" name="IgnorePoolFee"> Ignore pool fees
           </div>
-          <div style="padding-top: 0.3rem;" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings Adjustment Factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')"> Earnings adjustment factor
-            <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=4 style="width: 3.4em; text-align:right;">
+          <div style="padding-top: 0.3rem;" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings Adjustment Factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">Earnings adjustment factor
+            <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=34 style="width: 3.4em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem;" title="Mark a miner as unavailable if earnings is x times higher than the&#10;next best 10% or at least 5 miners with same algorithm&#10;&#10;(min: 1, max: 99.9; default: 5)&#10;Set to 1 to disable this check">Unreal miner earnings factor
             <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealMinerEarningFactor" name="UnrealMinerEarningFactor" style="width: 3.4em; text-align:right;">
@@ -298,7 +298,7 @@
           <div style="padding-top: 0.5rem;" title="Show shares information (Total / Rejected / Accepted) in log">
             <input type="checkbox" class="toggle-switch" id="ShowShares" name="ShowShares"> Show shares information
           </div>
-          <div style="padding-top: 0.3rem;" title="Acceptable bad shares threshold ((invalid + rejected + stale) / total) as reported by the miner&#10;If the threshold is exceeded then the miner will get stopped&#10;&#10;(min: 0%, max 100%; default=5%)&#10;Set to 0 to disable this check"> Acceptable bad shares threshold
+          <div style="padding-top: 0.3rem;" title="Acceptable bad shares threshold ((invalid + rejected + stale) / total) as reported by the miner&#10;If the threshold is exceeded then the miner will get stopped&#10;&#10;(min: 0%, max 100%; default=5%)&#10;Set to 0 to disable this check">Acceptable bad shares threshold
             <input type="number" step=1 min=0 max=100 value=5 size=3 id="BadShareRatioThreshold" name="BadShareRatioThreshold" style="width: 3em; text-align:right;"> %
           </div>
           <div style="padding-top: 0.5rem;" title="UG-Miner will deduct bad shares (e.g. invalid, rejected or stale) when calculating effective hashrates&#10;This will lower stored hashrates and increase earnings accuracy">
@@ -313,7 +313,7 @@
             <input type="checkbox" class="toggle-switch" id="CalculatePowerCost" name="CalculatePowerCost"> Calculate power cost
           </div>
           <div style="padding-top: 0.3rem;" id=PowerPricekWhTitle>
-            <label style="margin-left:20px" for="PowerPricekWh">Power price</label>
+            <label style="margin-left:20px" for="PowerPricekWh"> Power price</label>
             <input type="text" id="PowerPricekWh" name="PowerPricekWh" maxlength=128 size=24 value='{"00:00":0.0}'>
             <label id="PowerPricekWhCurrency" for="PowerPricekWh">
           </div>
@@ -322,14 +322,14 @@
             <input type="number" step=1 min=0 max=999 value=60 size=3 id="PowerConsumptionIdleSystemW" name="PowerConsumptionIdleSystemW" style="width: 3.4em; text-align:right;"> W
           </div>
           <div style="padding-top: 0.2rem;" title="UG-Miner will ignore power cost in best miner selection&#10;and will select miners with best earnings (and not best profit)">
-            <input style="margin-left:20px" type="checkbox" class="toggle-switch" id="IgnorePowerCost" name="IgnorePowerCost"> Ignore power cost
+            <input type="checkbox" style="margin-left:20px" class="toggle-switch" id="IgnorePowerCost" name="IgnorePowerCost"> Ignore power cost
           </div>
           <br>
 
           <!-- Balances tracker settings -->
           <fieldset>
             <legend class=h6><b>Balances tracker settings</b></legend>
-            <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the Web GUI dashboard and API"> Poll pools for balances & earnings every
+            <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the Web GUI dashboard and API">Poll pools for balances & earnings every
               <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
             <div style="padding-top: 0.6rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
               <input type="checkbox" class="toggle-switch" id="BalancesShowSums" name="BalancesShowSums" style="margin-left:20px"> Show earnings sums for each pool
@@ -355,7 +355,7 @@
           <!-- Console window display settings -->
           <div class="col-md-12">
             <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console window display settings</b></legend>
-            <div style="padding-top: 0.3rem;" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle"> UI Style
+            <div style="padding-top: 0.3rem;" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle">UI Style
               <select style="height: 1.6em;" name="UIStyle" id="UIStyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>
                 <option value='light' title="Information about miners run in the past, failed miners & watchdog timers will not be shown">light</option>
@@ -428,7 +428,7 @@
 
             <!-- Auto update settings -->
             <legend class=h6><b>Auto update settings</b></legend>
-            <div style="padding-top: 0.3rem;" title="UG-Miner will periodically check for a new program version&#10;&#10;(min: 0, max: 30; default: 1)&#10;Set to 0 to disable checking for new versions"> Check for new version every
+            <div style="padding-top: 0.3rem;" title="UG-Miner will periodically check for a new program version&#10;&#10;(min: 0, max: 30; default: 1)&#10;Set to 0 to disable checking for new versions">Check for new version every
               <input type="number" id="AutoUpdateCheckInterval" name="AutoUpdateCheckInterval" min=0 max=50 step=1 value=15 style="width: 2.7em; text-align:right;"> days
             </div>
             <div style="padding-top: 0.4rem;" title="Automatically update UG-Miner to the newest program version&#10;UG-Miner will check for a new version on each start&#10;and every n days as configured by 'AutoUpdateCheckInterval'">
