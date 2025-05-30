@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.4.27
-Version date:   2025/05/25
+Version:        6.4.28
+Version date:   2025/05/30
 #>
 
 using module .\Includes\Include.psm1
@@ -53,7 +53,11 @@ $ProgressPreference = "SilentlyContinue"
             Catch { 
                 $Path_Old = $null
 
-                If ($URI) { Write-Message -Level Warn "Downloader:<br>Cannot download '$(Split-Path $Path -Leaf)' distributed at '$URI'." }
+                If ($URI) { 
+                    If (-not (Test-Path -LiteralPath "$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
+                        Write-Message -Level Warn "Downloader:<br>Cannot download '$URI'."
+                    }
+                }
                 Else { Write-Message -Level Warn "Downloader:<br>Cannot download '$(Split-Path $Path -Leaf)'." }
 
                 If ($Searchable) { 
@@ -69,7 +73,11 @@ $ProgressPreference = "SilentlyContinue"
                     Write-Message -Level Info "Downloader:<br>Copied '$($Path.Replace("$($Variables.MainPath)\", ''))' from local repository '$PathOld'."
                 }
                 Else { 
-                    If ($URI) { Write-Message -Level Warn "Downloader:<br>Cannot find '$($Path.Replace("$($Variables.MainPath)\", ''))' distributed at '$URI'." }
+                    If ($URI) { 
+                        If (Test-Path -LiteralPath "$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
+                            Write-Message -Level Warn "Downloader:<br>Cannot find '$(Split-Path $Path -Leaf)' in downloaded package '$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
+                        }
+                    }
                     Else { Write-Message -Level Warn "Downloader:<br>Cannot find '$($Path.Replace("$($Variables.MainPath)\", ''))'." }
                 }
             }

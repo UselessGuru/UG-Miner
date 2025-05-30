@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.4.27 / Updated 2025/05/25
+Version 6.4.28 / Updated 2025/05/30
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -304,7 +304,7 @@ Virtual memory settings
 When running multiple cards its recommended to increase Virtual Memory. 16GB is optimal.
 
 Recommended/optimal Windows Nvidia driver  
-[Windows Nvidia driver 537.42](https://us.download.nvidia.com/Windows/537.42/537.42-desktop-win10-win11-64bit-international-dch-whql.exe)  
+[Windows Nvidia driver 576.52](https://us.download.nvidia.com/Windows/576.52/576.52-desktop-win10-win11-64bit-international-dch-whql.exe)  
 If you use older drivers some miners will not be available.
 
 Recommended/optimal Windows AMD driver  
@@ -329,12 +329,11 @@ It will then mine for UselessGuru for the configured duration.
 Example for default parameters (15 minutes):
 
 - UG-Miner was started at 10:00h
-- First donation cycle starts somewhen between 10:01h and 23:45h and will then donate for 15 minutes, then mine for you again until the next donation run.
+- First donation cycle starts somewhen between 10:01h and 23:45h and will then donate for 15 minutes. After that it will mine for you again until the next donation run.
 - After 00:00h the donation start time is randomized again.
-- When donation start time is reached it will then donate for 15 minutes, then mine for you again until the next donation run.
-
+- When donation start time is reached it will then donate for 15 minutes. After that it will mine for you again until the next donation run.
 The donation data is stored in 'Data\DonationData.json'.  
-All donation time and addresses are recorded in the donation log file 'Log\DonationLog.csv'.
+All donation times and addresses are recorded in the donation log file 'Log\DonationLog.csv'.
 
 ## Known issues
 

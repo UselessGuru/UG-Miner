@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.27
-Version date:   2025/05/25
+Version:        6.4.28
+Version date:   2025/05/30
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge [System.Version]"6.0" }))) { Return }
@@ -43,7 +43,7 @@ $Algorithms = @(
     @{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo neoscrypt-xaya --intensity 15.5" } # CryptoDredge-v0.27.0 is fastest
 #   @{ Algorithm = "Skein";         MinMemGiB = 0; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo skein" } # ASIC
     @{ Algorithm = "Veltor";        MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
-#   @{ Algorithm = "Whirlpool";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirl" } # Cuda error in func 'whirlpool512_cpu_finalhash_64' at line 1795 : invalid argument.
+#   @{ Algorithm = "Whirlcoin";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirl" } # Cuda error in func 'whirlpool512_cpu_finalhash_64' at line 1795 : invalid argument.
 #   @{ Algorithm = "Whirlpool";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirlpoolx" }
     @{ Algorithm = "X11evo";        MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
     @{ Algorithm = "X17";           MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo x17 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster

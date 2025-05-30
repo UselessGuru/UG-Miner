@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.27
-Version date:   2025/05/25
+Version:        6.4.28
+Version date:   2025/05/30
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -61,7 +61,7 @@ If ($Algorithms) {
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                             $Arguments = $_.Arguments
-                            If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity .+$" }
+                            If ($_.Algorithm -eq "SHA512256d" -and $AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments += " --intensity 27.1" } # Default intensity is too high for 2GB cards
 
                             [PSCustomObject]@{ 
                                 API         = "CcMiner"

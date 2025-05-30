@@ -268,12 +268,21 @@
     "DefaultFee": 0.5, // %
     "GuaranteedPayoutCurrencies": [
       "BCH",
+      "BNB",
       "BTC",
+      "CAKE",
+      "DASH",
       "DOGE",
       "ETH",
+      "FLUX",
+      "KAS",
+      "KLV",
       "LTC",
       "RTM",
       "RVN",
+      "SHIB",
+      "TRX",
+      "WIN",
       "XMR"
     ], // as of 2025/03/2025 
     "PayoutCurrency": "[Default]",

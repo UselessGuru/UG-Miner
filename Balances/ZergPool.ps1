@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ZergPool.ps1
-Version:        6.4.27
-Version date:   2025/05/25
+Version:        6.4.28
+Version date:   2025/05/30
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

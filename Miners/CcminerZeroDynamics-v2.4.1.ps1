@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.4.28
-Version date:   2025/05/25
+Version date:   2025/05/30
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.CUDAversion -ge "12.8" -and $_.Architecture -ne "Other" }))) { Return }

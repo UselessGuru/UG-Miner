@@ -82,7 +82,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Downloader: Initiated|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Some miners binaries are missing.*starting downloader</Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Downloader: Initiated|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Some miner binaries are missing.*Starting downloader</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>

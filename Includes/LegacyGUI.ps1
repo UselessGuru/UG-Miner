@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.27
-Version date:   2025/05/25
+Version:        6.4.28
+Version date:   2025/05/30
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -75,8 +75,8 @@ Function Resize-Form {
 
     If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smaller than minimum (Why?)
     Try { 
-        $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
         $LegacyGUItabControl.Height = $LegacyGUIform.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - 72
+        $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
 
         $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 60), 2)
         $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 50), 2)
@@ -88,14 +88,14 @@ Function Resize-Form {
         If ($Config.BalancesTrackerPollInterval -gt 0 -and $LegacyGUIbalancesDGV.RowCount -gt 0) { 
             $LegacyGUIbalancesDGVHeight = ($LegacyGUIbalancesDGV.Rows.Height | Measure-Object -Sum | Select-Object -ExpandProperty Sum) + $LegacyGUIbalancesDGV.ColumnHeadersHeight
             If ($LegacyGUIbalancesDGVHeight -gt $LegacyGUItabControl.Height / 2) { 
-                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height / 2
                 $LegacyGUIbalancesDGV.ScrollBars = "Vertical"
                 $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height / 2 - 10))
+                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height / 2
             }
             Else { 
-                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesDGVHeight - 46
                 $LegacyGUIbalancesDGV.ScrollBars = "None"
                 $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIearningsChart.Bottom - 20))
+                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesDGVHeight - 46
             }
         }
         Else { 

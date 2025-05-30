@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.27
-Version date:   2025/05/25
+Version:        6.4.28
+Version date:   2025/05/30
 #>
 
 using module .\Include.psm1
@@ -394,13 +394,13 @@ Try {
                                 If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { 
                                     If (-not $Variables.PoolData.($_.Name).ProfitSwitching -and $Variables.DAGdata.Currency.($_.Currency).BlockHeight) { 
                                         $_.BlockHeight = $Variables.DAGdata.Currency.($_.Currency).BlockHeight
-                                        $_.Epoch       = $Variables.DAGdata.Currency.($_.Currency).Epoch
                                         $_.DAGSizeGiB  = $Variables.DAGdata.Currency.($_.Currency).DAGsize / 1GB 
+                                        $_.Epoch       = $Variables.DAGdata.Currency.($_.Currency).Epoch
                                     }
                                     ElseIf ($Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight) { 
                                         $_.BlockHeight = $Variables.DAGdata.Algorithm.($_.Algorithm).BlockHeight
-                                        $_.Epoch       = $Variables.DAGdata.Algorithm.($_.Algorithm).Epoch
                                         $_.DAGSizeGiB  = $Variables.DAGdata.Algorithm.($_.Algorithm).DAGsize / 1GB
+                                        $_.Epoch       = $Variables.DAGdata.Algorithm.($_.Algorithm).Epoch
                                     }
                                 }
                                 If ($_.Algorithm -match $Variables.RegexAlgoHasDynamicDAG -and $_.DAGSizeGiB) { 
@@ -804,8 +804,8 @@ Try {
                                         }
                                     }
                                     $DeviceNames = $_.DeviceNames
-                                    $_.MeasurePowerConsumption = $Variables.CalculatePowerCost
                                     $_.Devices = $MinerDevices.Where({ $DeviceNames -contains $_.Name })
+                                    $_.MeasurePowerConsumption = $Variables.CalculatePowerCost
                                     $_.Refresh($Variables.PowerCostBTCperW, $Config)
                                 }
                                 Catch { 
