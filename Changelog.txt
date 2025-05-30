@@ -2,6 +2,20 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.28 2025/05/30
+====================================
+
+Improvements:
+- Core: Minor code optimization
+- Downloader: Make error messages more descriptive
+
+Miner updates:
+- AMultiMinerCPU-v1.0.1.ps1 (new)
+- CcminerZeroDynamics-v2.4.1 (new)
+- KudaraideeCPU-v1.2.3 (new)
+- KudaraideeGPU-v1.2.0a (renamed from Kudaraidee-v1.2.0a)
+
+
 Changelog UG-Miner 6.4.27 2025/05/25
 ====================================
 
