@@ -116,32 +116,31 @@
                 {{#if total}}
                 {{else}}
                   <div class="card-body text-center">
-                    <p title="{{#if balanceinFIATcurrency}}{{FIATcurrency}}: {{formatCurrency balanceinFIATcurrency}}{{/if}}" class="card-text currencies">
-                    {{#each balances}}
-                      <b>{{@key}}: {{formatCurrency this}}</b>
-                      <br/>
-                    {{/each}}
-                    <p>
-                    <p class="card-text currencies">
+                    <p title="Total pool balance" class="card-text currencies">
+                      {{#each balances}}
+                        <b>{{@key}}: {{formatCurrency this}}</b>
+                        <br/>
+                      {{/each}}
+                    </p>
                     <div class="payout text-center">
+                      Payout threshold
+                      <br/>
                       {{#if percentage includeZero=true}}
                         <div title="{{percentage}}% of {{convertRate payoutthreshold rates payoutthresholdcurrency FIATcurrency}} {{FIATcurrency}}">
-                          Payout threshold<br/>
                           <b>{{percentage}}%</b> of <b>{{payoutthreshold}} {{payoutthresholdcurrency}}</b>
                         </div>
                       {{else}}
-                        <div title="Exchangerate not available&#10;Threshold percentage can not be determined">
-                          Payout threshold<br/>
-                          <b> ???</b> of <b>{{payoutthreshold}} {{payoutthresholdcurrency}}</b>
+                        <div title="Exchange rate is not available and therefore&#10;the threshold percentage can not be determined.">
+                          <b>???</b> of <b>{{payoutthreshold}} {{payoutthresholdcurrency}}</b>
                         </div>
                       {{/if}}
                       <br/>
                       <div title="Projection is based on the current daily average earnings">
-                        Projected pay date<br/>
+                        Projected pay date
+                        <br/>
                         <b>{{paydate}}</b>
                       </div>
                     </div>
-                    </p>
                   </div>
                 {{/if}}
               </div>
