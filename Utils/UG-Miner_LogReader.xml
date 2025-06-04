@@ -112,7 +112,7 @@
           <BackColor>#FFFF80</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>Starting UG-Miner|Using configuration file|Web GUI and API.+ running|Updated configuration file </Keyword>
+          <Keyword>Starting UG-Miner|Using configuration file|Updated configuration file|API and web GUI</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>

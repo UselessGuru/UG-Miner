@@ -2,6 +2,21 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.4.29 2025/06/04
+====================================
+
+Changes:
+- API & web GUI: Change APIserver.psm1 to APIserver.ps file to reduce memory footprint
+
+Enhancements:
+- API & web GUI: Dynamic reload when API port gets changed
+
+Miner changes:
+- CpuMinerAurum-v3.23.1 (removed, no available pool since July 2024)
+- FrkHashMiner-v1.3.14 (removed, no available pool since July 2024)
+- Rigel-v1.21.3
+
+
 Changelog UG-Miner 6.4.28 2025/05/30
 ====================================
 

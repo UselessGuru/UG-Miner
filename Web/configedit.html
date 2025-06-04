@@ -116,6 +116,9 @@
           <div style="padding-top: 0.7rem;" title="Show the console window&#10;&#10;Note: You must keep the legacy GUI open when you disable the console window">
             <input type="checkbox" class="toggle-switch" id="ShowConsole" name="Show Console"> Show console window
           </div>
+          <div style="padding-top: 0.7rem;" title="Launch web GUI on start (recommended)">
+            <input type="checkbox" class="toggle-switch" id="WebGUI" name="Launch web GUI on start"> Launch web GUI on start (recommended)
+          </div>
           <div style="padding-top: 0.7rem;" title="If enabled miner and rig entries will use different background colors based on status">
             <input type="checkbox" class="toggle-switch" id="UseColorForMinerStatus" name="UseColorForMinerStatus"> Use colors for miner & rig status
           </div>
@@ -704,6 +707,7 @@
     });
     $(document.getElementById('LegacyGUI')).trigger('change');
     if (config.ShowConsole) document.getElementById('ShowConsole').checked = true;
+    if (config.WebGUI) document.getElementById('WebGUI').checked = true;
     if (config.UseColorForMinerStatus) document.getElementById('UseColorForMinerStatus').checked = true;
     document.getElementById('DecimalsMax').value = parseInt(config.DecimalsMax);
     if (config.Watchdog) document.getElementById('Watchdog').checked = true;
@@ -1302,6 +1306,7 @@
         config.LegacyGUI = document.getElementById('LegacyGUI').checked;
         config.LegacyGUIStartMinimized = document.getElementById('LegacyGUIStartMinimized').checked;
         config.ShowConsole = document.getElementById('ShowConsole').checked;
+        config.WebGUI = document.getElementById('WebGUI').checked;
         config.UseColorForMinerStatus = document.getElementById('UseColorForMinerStatus').checked;
         config.DecimalsMax = parseInt(document.getElementById('DecimalsMax').value);
         config.Watchdog = document.getElementById('Watchdog').checked;

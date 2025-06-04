@@ -833,9 +833,10 @@ Function Stop-Core {
         $Global:CoreRunspace.PSObject.Properties.Remove("StartTime")
     }
 
+    Clear-MinerData
+
     If ($Variables.NewMiningStatus -eq "Idle") { 
         Clear-PoolData
-        Clear-MinerData
     }
     Else { 
         # Stop all miners
@@ -2388,7 +2389,6 @@ Function Get-Device {
 
                 # Add raw data
                 $Device.CIM = $Device_CIM
-
             }
         )
 
@@ -3667,6 +3667,7 @@ Function Get-DAGepochLength {
         Default           { Return 30000 }
     }
 }
+
 Function Out-DataTable { 
     # based on http://thepowershellguy.com/blogs/posh/archive/2007/01/21/powershell-gui-scripblock-monitor-script.aspx
 
@@ -3960,4 +3961,112 @@ Function Initialize-Environment {
     Else { Write-Host "Loaded AMD GPU architecture table." }
 
     $Variables.BalancesCurrencies = @($Variables.Balances.PSObject.Properties.Name.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
+}
+
+Function Start-APIserver { 
+
+    If ($Config.APIport -ne $Variables.APIport) { 
+        Stop-APIserver
+    }
+
+    If (-not $Global:APIrunspace) { 
+
+        $TCPclient = New-Object -TypeName System.Net.Sockets.TCPClient
+        $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Config.APIport, $null, $null)
+        If ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
+            Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport). Port is in use."
+            [Void]$TCPclient.EndConnect($AsyncResult)
+            [Void]$TCPclient.Dispose()
+            Remove-Variable AsyncResult, TCPClient
+        }
+        Else { 
+            [Void]$TCPclient.Dispose()
+            Remove-Variable AsyncResult, TCPClient
+
+            # Setup runspace to launch the API server in a separate thread
+            $Global:APIrunspace = [RunspaceFactory]::CreateRunspace()
+            $Global:APIrunspace.ApartmentState = "STA"
+            $Global:APIrunspace.Name = "APIServer"
+            $Global:APIrunspace.ThreadOptions = "ReuseThread"
+            $Global:APIrunspace.Open()
+
+            $Global:APIrunspace.SessionStateProxy.SetVariable("Config", $Config)
+            $Global:APIrunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+            $Global:APIrunspace.SessionStateProxy.SetVariable("Variables", $Variables)
+            [Void]$Global:APIrunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
+
+            $PowerShell = [PowerShell]::Create()
+            $PowerShell.Runspace = $Global:APIrunspace
+            [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\APIServer.ps1")
+            $Global:APIrunspace | Add-Member PowerShell $PowerShell
+
+            # Initialize API and web GUI
+            Write-Message -Level Verbose "Initializing API and web GUI on 'http://localhost:$($Config.APIport)'..."
+            $Global:APIrunspace | Add-Member Job ($Global:APIrunspace.PowerShell.BeginInvoke())
+            $Global:APIrunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
+
+            # Wait for API to get ready
+            $RetryCount = 3
+            While (-not ($Variables.APIVersion) -and $RetryCount -gt 0) { 
+                Start-Sleep -Seconds 1
+                Try { 
+                    If ($Variables.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
+                        $Variables.APIport = $Config.APIport
+                        If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Variables.APIVersion)) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore }
+                        Write-Message -Level Info "API and web GUI (version $($Variables.APIVersion)) running on http://localhost:$($Variables.APIport)."
+                        # Start Web GUI (show configuration edit if no existing config)
+                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIport)$(If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
+                        Break
+                    }
+                }
+                Catch { }
+                $RetryCount--
+            }
+        }
+        If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport)." }
+    }
+}
+
+Function Stop-APIserver { 
+
+    If ($Global:APIrunspace.Job.IsCompleted -eq $false) { 
+
+      If ($Variables.APIserver.IsListening) { 
+
+            # API port has changed; must stop all running miners
+            If ($Variables.MinersRunning){ 
+                Write-Message -Level Info "API and web GUI port has changed. Stopping all running miners..."
+
+                Clear-MinerData
+                Stop-Core
+            }
+
+            $Variables.APIserver.Stop()
+        }
+
+        $Variables.APIserver.Close()
+        $Variables.APIserver.Dispose()
+
+        $Global:APIrunspace.PowerShell.Stop()
+        $Global:APIrunspace.PSObject.Properties.Remove("StartTime")
+
+        Write-Message -Level Verbose "Stopped API and web GUI on port $($Variables.APIport)."
+
+        $Variables.Remove("APIport")
+        $Variables.Remove("APIversion")
+    }
+
+    If ($Global:APIrunspace) { 
+
+        $Global:APIrunspace.PSObject.Properties.Remove("Job")
+
+        $Global:APIrunspace.PowerShell.Dispose()
+        $Global:APIrunspace.PowerShell = $null
+        $Global:APIrunspace.Close()
+        $Global:APIrunspace.Dispose()
+
+        Remove-Variable APIrunspace -Scope global
+
+        [System.GC]::Collect()
+    }
 }

@@ -18,12 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.28
-Version date:   2025/05/30
+Version:        6.4.29
+Version date:   2025/06/04
 #>
 
 using module .\Includes\Include.psm1
-using module .\Includes\APIServer.psm1
 
 Param(
     [Parameter(Mandatory = $false)]
@@ -31,7 +30,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$APILogfile = "", # API will log all requests to this file, leave empty to disable
     [Parameter(Mandatory = $false)]
-    [Int]$APIPort = 3999, # TCP Port for API & Web GUI
+    [Int]$APIPort = 3999, # TCP Port for API and web GUI
     [Parameter(Mandatory = $false)]
     [Switch]$AutoReboot = $true, # If true will reboot computer when a miner is completely dead, e.g. unresponsive
     [Parameter(Mandatory = $false)]
@@ -319,7 +318,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.28"
+    Version      = [System.Version]"6.4.29"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -582,7 +581,7 @@ Else {
 Remove-Variable VertHashDatCheckJob
 
 # Start API server
-If ($Config.WebGUI) { [Void](Start-APIServer) }
+If ($Config.WebGUI) { [Void](Start-APIserver) }
 
 # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
@@ -995,6 +994,7 @@ Function MainLoop {
             If (-not ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) -and $Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
             [Void](Read-Config -ConfigFile $Variables.ConfigFile)
             Write-Message -Level Verbose "Activated changed configuration."
+            $Variables.RefreshNeeded = $true
         }
     }
 
@@ -1004,7 +1004,8 @@ Function MainLoop {
         $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version) - Runtime: {0:dd} days {0:hh} hrs {0:mm} mins - Path: $($Variables.Mainpath)" -f [TimeSpan]([DateTime]::Now.ToUniversalTime() - $Variables.ScriptStartTime)
         If ($LegacyGUIform) { Update-GUIstatus }
 
-        If ($Config.WebGUI) { [Void](Start-APIServer) } Else { [Void](Stop-APIServer) }
+        # API port has changed, Start-APIserver will restart server and stop all running miners when port has changed
+        If ($Config.APIport) { [Void](Start-APIserver) } Else { [Void](Stop-APIserver) }
 
         If ($Config.ShowConsole) { 
             If ($Variables.Miners) { Clear-Host }

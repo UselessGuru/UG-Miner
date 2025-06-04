@@ -5,76 +5,71 @@ function formatMiners(data) {
   // This function can alter the returned data before building the table, formatting it in a way
   // that is easier to display and manipulate in a table
   $.each(data, function(index, item) {
-    try {
-      // Format miner link
-      if (item.MinerUri) {
-        if (item.Best) {
-          if (item.Status == 4) {
-            item.BaseName = '<a href="' + item.MinerUri + '" target="_blank">' + item.BaseName + '</a>';
-            item.Name = '<a href="' + item.MinerUri + '" target="_blank">' + item.Name + '</a>';
-            item.StatusInfo = '<a href="' + item.MinerUri + '" target="_blank">' + item.StatusInfo + '</a>';
-          }
+    // Format miner link
+    if (item.MinerUri) {
+      if (item.Best) {
+        if (item.Status == 4) {
+          item.BaseName = '<a href="' + item.MinerUri + '" target="_blank">' + item.BaseName + '</a>';
+          item.Name = '<a href="' + item.MinerUri + '" target="_blank">' + item.Name + '</a>';
+          item.StatusInfo = '<a href="' + item.MinerUri + '" target="_blank">' + item.StatusInfo + '</a>';
         }
       }
-
-      // Format the device(s)
-      item.Devices = formatArrayAsSortedString(item.DeviceNames);
-
-      // Format the pool and algorithm data
-      item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
-      item.PrimaryAlgorithmVariant = item.Workers[0].Pool.AlgorithmVariant;
-      item.PrimaryCoinName = item.Workers[0].Pool.CoinName;
-      item.PrimaryCurrency = item.Workers[0].Pool.Currency;
-      item.PrimaryHashrate = item.Workers[0].Hashrate;
-      item.PrimaryMinerFee = item.Workers[0].Fee;
-      item.PrimaryPool = item.Workers[0].Pool.Name;
-      item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
-      item.PrimaryPoolPort = item.Workers[0].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
-      item.PrimaryPoolUser = item.Workers[0].Pool.User;
-      item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
-      if (item.Workers.length > 1) {
-        item.SecondaryAlgorithm = item.Workers[1].Pool.Algorithm;
-        item.SecondaryAlgorithmVariant = item.Workers[1].Pool.AlgorithmVariant;
-        item.SecondaryCoinName = item.Workers[1].Pool.CoinName;
-        item.SecondaryCurrency = item.Workers[1].Pool.Currency;
-        item.SecondaryHashrate = item.Workers[1].Hashrate;
-        item.SecondaryMinerFee = item.Workers[1].Fee;
-        item.SecondaryPool = item.Workers[1].Pool.Name;
-        item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
-        item.SecondaryPoolPort = item.Workers[1].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
-        item.SecondaryPoolUser = item.Workers[1].Pool.User;
-        item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
-      }
-
-      // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
-      if (item.Reasons.length <= 0) item.Reasons = [" "];
-
-      // Format margin of error
-      if (isNaN(item.Earnings_Accuracy)) item.Earnings_Accuracy = 'n/a'; 
-      else item.Earnings_Accuracy = formatPercent(item.Earnings_Accuracy);
-
-      // Format the live speed(s)
-      item.PrimaryHashrateLive = item.Hashrates_Live[0];
-      item.SecondaryHashrateLive = item.Hashrates_Live[1];
- 
-      // Format Total Mining Duration (TimeSpan)
-      if (item.TotalMiningDuration.Ticks > 0) item.TotalMiningDuration = formatTimeSpan(item.TotalMiningDuration);
-      else item.TotalMiningDuration = "n/a";
-
-      // Format Mining Duration (DateTime)
-      if (item.BeginTime == "0001-01-01T00:00:00") item.MiningDuration = "n/a";
-      else item.MiningDuration = formatTimeSince(item.BeginTime).replace('&nbsp;ago' ,'').replace('just now', 'just started');
-
-      // Format status
-      item.Status = enumminerstatus[item.Status];
-
-      // Format warmup times
-      item.WarmupTimes0 = item.WarmupTimes[0];
-      item.WarmupTimes1 = item.WarmupTimes[1];
     }
-    catch (error) { 
-      console.error(item);
+
+    // Format the device(s)
+    item.Devices = formatArrayAsSortedString(item.DeviceNames);
+
+    // Format the pool and algorithm data
+    item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
+    item.PrimaryAlgorithmVariant = item.Workers[0].Pool.AlgorithmVariant;
+    item.PrimaryCoinName = item.Workers[0].Pool.CoinName;
+    item.PrimaryCurrency = item.Workers[0].Pool.Currency;
+    item.PrimaryHashrate = item.Workers[0].Hashrate;
+    item.PrimaryMinerFee = item.Workers[0].Fee;
+    item.PrimaryPool = item.Workers[0].Pool.Name;
+    item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
+    item.PrimaryPoolPort = item.Workers[0].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
+    item.PrimaryPoolUser = item.Workers[0].Pool.User;
+    item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
+    if (item.Workers.length > 1) {
+      item.SecondaryAlgorithm = item.Workers[1].Pool.Algorithm;
+      item.SecondaryAlgorithmVariant = item.Workers[1].Pool.AlgorithmVariant;
+      item.SecondaryCoinName = item.Workers[1].Pool.CoinName;
+      item.SecondaryCurrency = item.Workers[1].Pool.Currency;
+      item.SecondaryHashrate = item.Workers[1].Hashrate;
+      item.SecondaryMinerFee = item.Workers[1].Fee;
+      item.SecondaryPool = item.Workers[1].Pool.Name;
+      item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
+      item.SecondaryPoolPort = item.Workers[1].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
+      item.SecondaryPoolUser = item.Workers[1].Pool.User;
+      item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
     }
+
+    // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
+    if (item.Reasons.length <= 0) item.Reasons = [" "];
+
+    // Format margin of error
+    item.Earnings_Accuracy = formatPercent(item.Earnings_Accuracy);
+
+    // Format the live speed(s)
+    item.PrimaryHashrateLive = item.Hashrates_Live[0];
+    item.SecondaryHashrateLive = item.Hashrates_Live[1];
+
+    // Format Total Mining Duration (TimeSpan)
+    if (item.TotalMiningDuration.Ticks <= 0) item.TotalMiningDuration = "n/a"
+    else item.TotalMiningDuration = formatTimeSpan(item.TotalMiningDuration);
+
+    // Format Mining Duration (DateTime)
+    if (item.BeginTime == "0001-01-01T00:00:00") item.MiningDuration = "n/a";
+    else item.MiningDuration = formatTimeSince(item.BeginTime).replace('&nbsp;ago' ,'').replace('just now', 'just started');
+
+    // Format status
+    item.Status = enumminerstatus[item.Status];
+
+    // Format warmup times
+    item.WarmupTimes0 = item.WarmupTimes[0];
+    item.WarmupTimes1 = item.WarmupTimes[1];
+
   });
   return data;
 }
@@ -332,14 +327,14 @@ function formatGiBDigits10(value) {
 };
 
 function detailFormatter(index, row) {
-  var html = [];
-  const sortedObj = {};
-  const keys = Object.keys(row).sort();
   // Get keys and sort them
+  const keys = Object.keys(row).sort();
+  const sortedObj = {};
   for (const key of keys) {
     sortedObj[key] = row[key];
   }
 
+  var html = [];
   $.each(sortedObj, function (key, value) {
     if (typeof value === 'string') {
       if (key === 'PoolUri') { 
@@ -356,12 +351,10 @@ function detailFormatter(index, row) {
 
 function formatBytes(bytes) {
   if (bytes > 0) {
-    decimals = 2;
     var k = 1024;
-    dm = decimals || 2;
-    sizes = [' Bytes', ' kiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB'];
+    sizes = [' bytes', ' kiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB'];
     i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + sizes[i];
   }
   return '-';
 }

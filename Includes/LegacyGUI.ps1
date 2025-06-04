@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.28
-Version date:   2025/05/30
+Version:        6.4.29
+Version date:   2025/06/04
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -984,8 +984,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data) { 
-                        $Data = $Data | Sort-Object -Unique
+                    If ($Data = $Data | Sort-Object -Unique) { 
                         $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
@@ -1010,8 +1009,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data) { 
-                        $Data = $Data | Sort-Object -Unique
+                    If ($Data = $Data | Sort-Object -Unique) { 
                         $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
@@ -1040,8 +1038,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data) { 
-                        $Data = $Data | Sort-Object -Unique
+                    If ($Data = $Data | Sort-Object -Unique) { 
                         $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
@@ -1112,8 +1109,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data) { 
-                        $Data = $Data | Sort-Object -Unique
+                    If ($Data = $Data | Sort-Object -Unique) { 
                         $Message = "$($Data.Count) miner watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
@@ -1148,8 +1144,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data) { 
-                        $Data = $Data | Sort-Object -Unique
+                    If ($Data = $Data | Sort-Object -Unique) { 
                         $Message = "Pool stats for $($Data.Count) pool$(If ($Data.Count -ne 1) { "s" }) reset."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"
@@ -1176,8 +1171,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data) { 
-                        $Data = $Data | Sort-Object -Unique
+                    If ($Data = $Data | Sort-Object -Unique) { 
                         $Message = "$($Data.Count) pool watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
                         Write-Message -Level Verbose "GUI: $Message"
                         $Data = "$($Data -join "`n")`n`n$Message"

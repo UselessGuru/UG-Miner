@@ -471,13 +471,10 @@
                               // Convert balance to other currencies
                               if (rates[item.Currency]) {
                                 $.each(item.Currencies, function(cindex, currency) {
-                                  if (rates[currency]) data['balances'][currency] = item.Balance * rates[item.Currency][currency];
+                                  if (rates[item.Currency] && rates[currency]) data['balances'][currency] = item.Balance * rates[item.Currency][currency];
                                 });
                                 data.balanceinFIATcurrency = item.Balance * rates[item.Currency][config.FIATcurrency];
                               } else { 
-                                if (config.BalancesShowInAllCurrencies) {
-                                  data['balances']['Exchange rates unknown'] = "";
-                                }
                                 data['balances'][item.Currency] = item.Balance;
                               }
 

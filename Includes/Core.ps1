@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.28
-Version date:   2025/05/30
+Version:        6.4.29
+Version date:   2025/06/04
 #>
 
 using module .\Include.psm1
@@ -70,6 +70,7 @@ Try {
             If ($Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
                 [Void](Read-Config -ConfigFile $Variables.ConfigFile)
                 Write-Message -Level Verbose "Activated changed configuration."
+                $Variables.RefreshNeeded = $true
             }
         }
 
