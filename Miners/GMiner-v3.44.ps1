@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -98,9 +98,9 @@ If ($Algorithms) {
                                     $Arguments = $_.Arguments
                                     $Arguments += " --server $($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
                                     Switch ($Pool0.Protocol) { 
-                                        "ethstratum1"  { $Arguments += " --proto stratum" }
-                                        "ethstratum2"  { $Arguments += " --proto stratum" }
-                                        "ethstratumnh" { $Arguments += " --proto stratum" }
+                                        "ethstratum1"  { $Arguments += " --proto stratum"; Break }
+                                        "ethstratum2"  { $Arguments += " --proto stratum"; Break }
+                                        "ethstratumnh" { $Arguments += " --proto stratum"; Break }
                                     }
                                     If ($Pool0.PoolPorts[1]) { $Arguments += " --ssl 1" }
                                     $Arguments += " --user $($Pool0.User)"

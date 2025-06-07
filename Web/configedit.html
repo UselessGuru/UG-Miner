@@ -154,8 +154,8 @@
         <td>
           <div style="line-height: 100%" class="col-md-12">
             <!-- Select mining devices -->
+            <legend class=h6><b>Select mining devices</b></legend>
             <fieldset title="Enable / disable mining devices&#10;&#10;Unsupported devices are greyed out and cannot be enabled">
-              <legend class=h6><b>Select mining devices</b></legend>
               <div id="Devices"></div>
             </fieldset>
             <br>
@@ -234,7 +234,6 @@
 
           <!-- Miner runtime settings -->
           <legend title="Miner runtime settings" class=h6><b>Miner runtime settings</b></legend>
-
           <label for="MinerWindowStyle">Run miner</label>
           <select style="height: 1.6em;" name="" id="MinerWindowStyle">
             <option value = "hidden" title="Miners will run as a hidden background task and are not accessible (not recommended)">as a hidden background task</option>
@@ -330,8 +329,8 @@
           <br>
 
           <!-- Balances tracker settings -->
+          <legend class=h6><b>Balances tracker settings</b></legend>
           <fieldset>
-            <legend class=h6><b>Balances tracker settings</b></legend>
             <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the Web GUI dashboard and API">Poll pools for balances & earnings every
               <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
             <div style="padding-top: 0.6rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
@@ -416,15 +415,15 @@
             <br>
 
             <!-- Log to file settings -->
+            <legend class=h6><b>Log level details (File)</b></legend>
             <fieldset title="Sets the detail level of information written to the log file&#10;&#10;It is recommended to keep at least 'Info' enabled">
-              <legend class=h6><b>Log level details (File)</b></legend>
               <div style="padding-top: 0.3rem;" id="LogToFile"></div>
             </fieldset>
             <br>
 
             <!-- Log to screen settings -->
+            <legend class=h6><b>Log level details (Screen)</b></legend>
             <fieldset title="Sets the detail level of information written to the screen&#10;&#10;It is recommended to keep at least 'Info' enabled">
-              <legend class=h6><b>Log level details (Screen)</b></legend>
               <div style="padding-top: 0.3rem;" id="LogToScreen"></div>
             </fieldset>
             <br>
@@ -854,7 +853,7 @@
     $(document.getElementById('FIATcurrency')).change(function (event) {
       document.getElementById('ProfitabilityThresholdCurrency').innerHTML = document.getElementById('FIATcurrency').value.split(',')[0];
       document.getElementById('PowerPricekWhCurrency').innerHTML = '(time: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' per kW/h)';
-      document.getElementById('PowerPricekWhTitle').title = 'Price of power in ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' per kW⋅h, valid from HH:mm (24hr format)\nData must be in compressed JSON format\n\ne.g. {"00:00":0.26; "12:00":0.3} means\nfrom 00:00h to 11:59h: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 0.26 per kW/h\nfrom 12:00h to 23:59h: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 0.30 per kW/h'
+      document.getElementById('PowerPricekWhTitle').title = 'Price of power in ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' per kW⋅h, valid from HH:mm (24hr format)\nData must be in compressed JSON format\n\ne.g. {"00:00":0.26;"12:00":0.3} means\nfrom 00:00h to 11:59h: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 0.26 per kW/h\nfrom 12:00h to 23:59h: ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 0.30 per kW/h'
       if (document.getElementById('CalculatePowerCost').checked) document.getElementById('ProfitabilityThresholdTitle').title = 'Mining will stop when profit (earnings - power cost) is less than the configured value\n(e.g. ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 1.00). Use negative numbers to allow mining at loss.\n\nNote: This does not apply when benchmarking or measuring power consumption'
       else document.getElementById('ProfitabilityThresholdTitle').title = 'Mining will stop when earnings is less than the configured value\n(e.g. ' + document.getElementById('FIATcurrency').value.split(',')[0] + ' 1.00). Use negative numbers to allow mining at loss.\n\nNote: This does not apply when benchmarking'
     });
@@ -1403,9 +1402,9 @@
         config.UIStyle = document.getElementById('UIStyle').value;
         config.ShowPoolBalances = document.getElementById('ShowPoolBalances').checked;
         config.ShowAllMiners = document.getElementById('ShowAllMiners').checked;
-        config.ShowColumnAccuracy =  document.getElementById('ShowColumnAccuracy').checked;
-        config.ShowColumnCoinName =  document.getElementById('ShowColumnCoinName').checked;
-        config.ShowColumnCurrency =  document.getElementById('ShowColumnCurrency').checked;
+        config.ShowColumnAccuracy = document.getElementById('ShowColumnAccuracy').checked;
+        config.ShowColumnCoinName = document.getElementById('ShowColumnCoinName').checked;
+        config.ShowColumnCurrency = document.getElementById('ShowColumnCurrency').checked;
         config.ShowColumnEarnings = document.getElementById('ShowColumnEarnings').checked;
         config.ShowColumnEarningsBias = document.getElementById('ShowColumnEarningsBias').checked;
         config.ShowColumnHashrate = document.getElementById('ShowColumnHashrate').checked;
@@ -1416,7 +1415,7 @@
         config.ShowColumnProfitBias = document.getElementById('ShowColumnProfitBias').checked;
         config.ShowColumnPowerConsumption = document.getElementById('ShowColumnPowerConsumption').checked;
         config.ShowColumnPowerCost = document.getElementById('ShowColumnPowerCost').checked;
-        config.ShowColumnUser =  document.getElementById('ShowColumnUser').checked;
+        config.ShowColumnUser = document.getElementById('ShowColumnUser').checked;
 
         // Log to file settings
         values = ["Info", "Warn", "Error", "Verbose", "Debug"];

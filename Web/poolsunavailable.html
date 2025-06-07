@@ -88,18 +88,18 @@
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 30,
               onColumnSwitch: function() {
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               },
               onColumnSwitchAll: function() {
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               },
               onCreatedControls: function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
               },
               onLoadSuccess: function() {
                 updateSummary();
                 updateButtonStatus();
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               },
               onPostBody: function () {
                 if (this.data.length > 0) {
@@ -111,7 +111,7 @@
                 };
               },
               onToggle: function() {
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               }
             });
 

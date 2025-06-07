@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 # Add sha3x algorithm for Tari mining (dev fee 1%)
@@ -123,7 +123,7 @@ If ($Algorithms) {
                                         "ethstratum1"  { $Arguments += " --url [$Index]ethstratum"; Break }
                                         "ethstratum2"  { $Arguments += " --url [$Index]ethstratum"; Break }
                                         "ethstratumnh" { $Arguments += " --url [$Index]ethstratum"; Break }
-                                        Default        { $Arguments += " --url [$Index]stratum" }
+                                        Default        { $Arguments += " --url [$Index]stratum"; Break }
                                     }
                                     $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                     $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"

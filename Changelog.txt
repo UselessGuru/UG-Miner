@@ -1,6 +1,21 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.30 2025/06/07
+====================================
+
+Fixes:
+- Core / Includes.psm1: Suppress double error message in function 'Start-APIserver' when API port is in use
+- Web GUI: Restore mouse pointer
+
+Improvements:
+- Core: Minor code optimization
+
+Miner changes:
+- SRBMinerMulti-v2.9.0
+- TeamBlackMiner-v2.28
+- Wildrig-v0.43.1
+
 
 Changelog UG-Miner 6.4.29 2025/06/04
 ====================================

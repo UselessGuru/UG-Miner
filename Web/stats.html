@@ -69,64 +69,64 @@
             $(document).ready(function () {
 
               $('#showzerohashrateminers').on('click',function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 $('.modal-body').load('functions/stat/get?Type=Hashrate&Value=0', function() {
                   $('.modal-title').text($('#showzerohashrateminers').text());
-                  $('*').css('cursor', 'default');
+                  $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
               });
 
               $('#resetzerohashrateminers').on('click',function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 $('.modal-body').load('functions/stat/remove?Type=Hashrate&Value=0', function() {
                   $('.modal-title').text($('#resetzerohashrateminers').text());
-                  $('*').css('cursor', 'default');
+                  $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
               });
 
               $('#showzeropowerconsumptionminers').on('click',function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 $('.modal-body').load('functions/stat/get?Type=PowerConsumption&Value=0', function() {
                   $('.modal-title').text($('#showzeropowerconsumptionminers').text());
-                  $('*').css('cursor', 'default');
+                  $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
               });
 
               $('#resetzeropowerconsumptionminers').on('click',function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 $('.modal-body').load('functions/stat/remove?Type=PowerConsumption&Value=0', function() {
                   $('.modal-title').text($('#resetzeropowerconsumptionminers').text());
-                  $('*').css('cursor', 'default');
+                  $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
               });
 
               $('#resetallpooldata').on('click',function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 $('.modal-body').load('functions/stat/remove?Type=Profit', function() {
                   $('.modal-title').text($('#resetallpooldata').text());
-                  $('*').css('cursor', 'default');
+                  $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
               });
 
               $('#resetallbenchmarks').on('click',function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 $('.modal-body').load('functions/stat/remove?Type=Hashrate', function() {
                   $('.modal-title').text($('#resetallbenchmarks').text());
-                  $('*').css('cursor', 'default');
+                  $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
               });
 
               $('#resetallpowerconsumption').on('click',function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 $('.modal-body').load('functions/stat/remove?Type=PowerConsumption', function() {
                   $('.modal-title').text($('#resetallpowerconsumption').text());
-                  $('*').css('cursor', 'default');
+                  $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
               });

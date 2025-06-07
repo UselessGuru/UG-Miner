@@ -36,6 +36,7 @@ Try {
         $Variables.Timer = [DateTime]::Now.ToUniversalTime()
 
         Write-Message -Level Info "Started new cycle."
+        If ($LegacyGUIform) { [Void](Update-GUIstatus) }
 
         $Variables.CoreLoopCounter ++
         $Variables.EndCycleMessage = ""
@@ -103,6 +104,9 @@ Try {
 
             Clear-MinerData
         }
+
+        # API port has changed, Start-APIserver will restart serverand stop all running miners when port has changed
+        If ($Config.APIport) { [Void](Start-APIserver) } Else { [Void](Start-APIserver) }
 
         # Use values from config
         $Variables.BenchmarkAllPoolAlgorithmCombinations = $Config.BenchmarkAllPoolAlgorithmCombinations
@@ -222,6 +226,7 @@ Try {
                         If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
                             $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
                         }
+                        # $Variables.DonationStart = [DateTime]::Now
                     }
                 }
 
@@ -276,7 +281,6 @@ Try {
                     [Void](Stop-Brain $BrainsToStop)
                 }
                 Remove-Variable BrainsToStop
-
                 [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
@@ -337,14 +341,23 @@ Try {
                         }
                     ).ForEach(
                         { 
-                            $Pool = [Pool]$_
-                            $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
-                            $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
-                            $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
-                            $Pool.Price *= $Factor
-                            $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
-                            $Pool.StablePrice *= $Factor
-                            $Pool
+                            $Pool = $_
+                            Try { 
+                                $Pool = [Pool]$_
+                                $Pool.CoinName = $Variables.CoinNames[$Pool.Currency]
+                                $Pool.Fee = If ($Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } Else { $Pool.Fee }
+                                $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
+                                $Pool.Price *= $Factor
+                                $Pool.Price_Bias = $Pool.Price * $Pool.Accuracy
+                                $Pool.StablePrice *= $Factor
+                                $Pool
+                            }
+                            Catch { 
+                                Write-Message -Level Error "Failed to add pool '$($Pool.Variant) [$($Pool.Algorithm)]' ($($Pool | ConvertTo-Json -Compress))"
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
+                                $_.Exception | Format-List -Force >> $ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            }
                         }
                     )
                     Remove-Variable Factor, Pool, PoolDataCollectedTimeStamp, PoolName -ErrorAction Ignore
@@ -1387,6 +1400,7 @@ Try {
 
             Try { 
                 ForEach ($Miner in $Variables.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
+                    Write-Host "$($Miner.BaseName_Version_Device): $($Miner.GetMinerData() | ConvertTo-Json -Compress)"
                     If ($Miner.GetStatus() -ne [MinerStatus]::Running) { 
                         # Miner crashed
                         $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"

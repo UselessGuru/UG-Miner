@@ -59,18 +59,18 @@
               autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
               height: $(window).height() - $('#balanceobjects').offset().top - 20,
               onColumnSwitch: function() {
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               },
               onColumnSwitchAll: function() {
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               },
               onCreatedControls: function() {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
               },
               onLoadSuccess: function() {
                 updateSummary();
                 updateButtonStatus();
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               }
             });
 
@@ -84,7 +84,7 @@
               if (document.getElementsByName('toggle')[0]) document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
 
               $('#btn-remove-entry').click(function () {
-                $('*').css('cursor', 'wait');
+                $('body').css('cursor', 'wait');
                 var $data = $table.bootstrapTable('getSelections');
                 if ($data.length >= 1) {
                   $url = '/functions/balancedata/remove';
@@ -93,13 +93,13 @@
                   };
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#btn-remove-entry').text());
-                    $('*').css('cursor', 'default');
+                    $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
-                  $('*').css('cursor', 'wait');
+                  $('body').css('cursor', 'wait');
                   $table.bootstrapTable('refresh');
                 };
-                $('*').css('cursor', 'default');
+                $('body').css('cursor', 'default');
               });
             });
 

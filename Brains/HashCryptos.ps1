@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 using module ..\Includes\Include.psm1
@@ -144,7 +144,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }
-            Else {
+            Else { 
                 $AlgoData = [PSCustomObject]@{ }
             }
 

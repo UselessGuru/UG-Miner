@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
@@ -123,11 +123,11 @@ If ($Algorithms) {
 
                                     $Arguments = $_.Arguments[0]
                                     Switch ($Pool0.Protocol) { 
-                                        "ethproxy"     { $Arguments += " -p ethproxy" }
-                                        "ethstratum1"  { $Arguments += " -p ethstratum" }
-                                        "ethstratum2"  { $Arguments += " -p ethstratum2" }
-                                        "ethstratumnh" { $Arguments += " -p ethstratum" }
-                                        Default        { $Arguments += " -p stratum" }
+                                        "ethproxy"     { $Arguments += " -p ethproxy"; Break }
+                                        "ethstratum1"  { $Arguments += " -p ethstratum"; Break }
+                                        "ethstratum2"  { $Arguments += " -p ethstratum2"; Break }
+                                        "ethstratumnh" { $Arguments += " -p ethstratum"; Break }
+                                        Default        { $Arguments += " -p stratum"; Break }
                                     }
                                     $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                     $Arguments += "$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
@@ -138,11 +138,11 @@ If ($Algorithms) {
                                     If ($_.Algorithms[1]) { 
                                         $Arguments += $_.Arguments[1]
                                         Switch ($Pool1.Protocol) { 
-                                            "ethproxy"     { $Arguments += " --p2 ethproxy" }
-                                            "ethstratum1"  { $Arguments += " --p2 ethstratum" }
-                                            "ethstratum2"  { $Arguments += " --p2 ethstratum2" }
-                                            "ethstratumnh" { $Arguments += " --p2 ethstratum" }
-                                            Default        { $Arguments += " --p2 stratum" }
+                                            "ethproxy"     { $Arguments += " --p2 ethproxy"; Break }
+                                            "ethstratum1"  { $Arguments += " --p2 ethstratum"; Break }
+                                            "ethstratum2"  { $Arguments += " --p2 ethstratum2"; Break }
+                                            "ethstratumnh" { $Arguments += " --p2 ethstratum"; Break }
+                                            Default        { $Arguments += " --p2 stratum"; Break}
                                         }
                                         $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                         $Arguments += "$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"

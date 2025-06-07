@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
@@ -164,16 +164,17 @@ If ($Algorithms) {
                                     $Arguments = $_.Arguments
                                     $CoinPers = If ("Equihash1445", "Equihash1927" -contains $_.Algorithms[0]) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" } Else { "" }
                                     If ($CoinPers) { $Arguments += $CoinPers }
+
                                     If ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
                                         $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
                                         $Arguments += " --user $($Pool0.User)$(If ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
                                         $Arguments += " --pass $($Pool0.Pass)"
                                         $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
                                         Switch ($Pool0.Protocol) { 
-                                            "ethproxy"     { $Arguments += " --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY" }
-                                            "ethstratum1"  { $Arguments += " --ethstratum ETHV1" }
-                                            "ethstratum2"  { $Arguments += " --ethstratum ETHV1" }
-                                            "ethstratumnh" { $Arguments += " --ethstratum ETHV1" }
+                                            "ethproxy"     { $Arguments += " --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY"; Break }
+                                            "ethstratum1"  { $Arguments += " --ethstratum ETHV1"; Break }
+                                            "ethstratum2"  { $Arguments += " --ethstratum ETHV1"; Break }
+                                            "ethstratumnh" { $Arguments += " --ethstratum ETHV1"; Break }
                                         }
 
                                         If ($_.Algorithms[1]) { 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -107,13 +107,13 @@ If ($Algorithms) {
                                         $Arguments = $_.Arguments
                                         $Arguments += " -pool $(If ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User)"
                                         $Arguments += Switch ($Pool0.Protocol) { 
-                                            "ethproxy"     { " -proto 2" }
-                                            "minerproxy"   { " -proto 1" }
-                                            "ethstratum1"  { " -proto 4" }
-                                            "ethstratum2"  { " -proto 5" }
-                                            "ethstratumnh" { " -proto 5" }
-                                            "qtminer"      { " -proto 3" }
-                                            Default        { " -proto 1" }
+                                            "ethproxy"     { " -proto 2"; Break }
+                                            "minerproxy"   { " -proto 1"; Break }
+                                            "ethstratum1"  { " -proto 4"; Break }
+                                            "ethstratum2"  { " -proto 5"; Break }
+                                            "ethstratumnh" { " -proto 5"; Break }
+                                            "qtminer"      { " -proto 3"; Break }
+                                            Default        { " -proto 1"; Break }
                                         }
                                         If ($Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                         If ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }

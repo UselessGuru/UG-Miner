@@ -767,6 +767,22 @@ Function Start-Core {
             $PowerShell.Runspace = $Global:CoreRunspace
             [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\Core.ps1")
             $Global:CoreRunspace | Add-Member PowerShell $PowerShell
+            
+            # Remove stats that have been deleted from disk
+            Try { 
+                If ($StatFiles = ([System.IO.DirectoryInfo](".\Stats")).EnumerateFiles("*.txt", [System.IO.SearchOption]::TopDirectoryOnly).BaseName.ForEach({ ($_ -Split ' ')[0] })) { 
+                    If ($Keys = [String[]]($Stats.psBase.Keys)) { 
+                        (Compare-Object $Keys $StatFiles -PassThru).Where({ $_.SideIndicator -eq "<=" }).ForEach(
+                            { 
+                                # Remove stat if deleted on disk
+                                $Stats.Remove($_)
+                            }
+                        )
+                    }
+                }
+            }
+            Catch { }
+            Remove-Variable Keys, StatFiles -ErrorAction Ignore
         }
 
         If ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
@@ -1129,22 +1145,22 @@ Function Write-Message {
     If ($Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Config.Keys -or $Config.LogToScreen -contains $Level)) { 
         # Write to console
         Switch ($Level) { 
-            "Debug"   { Write-Host $Message -ForegroundColor "Blue" }
-            "Error"   { Write-Host $Message -ForegroundColor "Red" }
-            "Info"    { Write-Host $Message -ForegroundColor "White" }
-            "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" }
-            "Verbose" { Write-Host $Message -ForegroundColor "Yello" }
-            "Warn"    { Write-Host $Message -ForegroundColor "Magenta" }
+            "Debug"   { Write-Host $Message -ForegroundColor "Blue"; Break }
+            "Error"   { Write-Host $Message -ForegroundColor "Red"; Break }
+            "Info"    { Write-Host $Message -ForegroundColor "White"; Break }
+            "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan"; Break }
+            "Verbose" { Write-Host $Message -ForegroundColor "Yello"; Break }
+            "Warn"    { Write-Host $Message -ForegroundColor "Magenta"; Break }
         }
     }
 
     Switch ($Level) { 
-        "Debug"   { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
-        "Error"   { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
-        "Info"    { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
-        "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
-        "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
-        "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+        "Debug"   { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+        "Error"   { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+        "Info"    { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+        "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+        "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+        "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
     }
 
     If ($Variables.TextBoxSystemLog) { 
@@ -1628,12 +1644,12 @@ Function Update-ConfigFile {
         $OldRegion = $Config.Region
         # Write message about new mining regions
         $Config.Region = Switch ($OldRegion) { 
-            "Brazil"       { "USA West" }
-            "Europe East"  { "Europe" }
-            "Europe North" { "Europe" }
-            "India"        { "Asia" }
-            "US"           { "USA West" }
-            Default        { "Europe" }
+            "Brazil"       { "USA West"; Break }
+            "Europe East"  { "Europe"; Break }
+            "Europe North" { "Europe"; Break }
+            "India"        { "Asia"; Break }
+            "US"           { "USA West"; Break }
+            Default        { "Europe"; Break }
         }
         Write-Message -Level Warn "Available mining locations have changed during update ($OldRegion -> $($Config.Region))".
         $Variables.ConfigurationHasChangedDuringUpdate += "- Mining locations have changed ($OldRegion -> $($Config.Region))"
@@ -1644,39 +1660,39 @@ Function Update-ConfigFile {
         { 
             Switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
-                "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_) }
-                "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_) }
-                "MinerInstancePerDeviceModel" { $Config.Remove($_) }
-                "ShowAccuracy" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_) }
-                "ShowAccuracyColumn" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_) }
-                "ShowCoinName" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_) }
-                "ShowCoinNameColumn" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_) }
-                "ShowCurrency" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_) }
-                "ShowCurrencyColumn" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_) }
-                "ShowEarning" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_) }
-                "ShowEarningColumn" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_) }
-                "ShowEarningBias" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_) }
-                "ShowEarningBiasColumn" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_) }
-                "ShowHashrate" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_) }
-                "ShowHashrateColumn" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_) }
-                "ShowMinerFee" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_) }
-                "ShowMinerFeeColumn" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_) }
-                "ShowPool" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_) }
-                "ShowPoolColumn" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_) }
-                "ShowPoolFee" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_) }
-                "ShowPoolFeeColumn" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_) }
-                "ShowProfit" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_) }
-                "ShowProfitColumn" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_) }
-                "ShowProfitBias" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_) }
-                "ShowProfitBiasColumn" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_) }
-                "ShowPowerConsumption" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_) }
-                "ShowPowerConsumptionColumn" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_) }
-                "ShowPowerCost" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_) }
-                "ShowPowerCostColumn" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_) }
-                "ShowPoolBalances" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_) }
-                "ShowPoolBalancesColumn" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_) }
-                "ShowUser" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_) }
-                "ShowUserColumn" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_) }
+                "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); Break }
+                "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); Break }
+                "MinerInstancePerDeviceModel" { $Config.Remove($_); Break }
+                "ShowAccuracy" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); Break }
+                "ShowAccuracyColumn" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); Break }
+                "ShowCoinName" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); Break }
+                "ShowCoinNameColumn" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); Break }
+                "ShowCurrency" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); Break }
+                "ShowCurrencyColumn" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); Break }
+                "ShowEarning" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); Break }
+                "ShowEarningColumn" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); Break }
+                "ShowEarningBias" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); Break }
+                "ShowEarningBiasColumn" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); Break }
+                "ShowHashrate" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); Break }
+                "ShowHashrateColumn" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); Break }
+                "ShowMinerFee" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); Break }
+                "ShowMinerFeeColumn" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); Break }
+                "ShowPool" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_); Break }
+                "ShowPoolColumn" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_); Break }
+                "ShowPoolFee" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); Break }
+                "ShowPoolFeeColumn" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); Break }
+                "ShowProfit" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); Break }
+                "ShowProfitColumn" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); Break }
+                "ShowProfitBias" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); Break }
+                "ShowProfitBiasColumn" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); Break }
+                "ShowPowerConsumption" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); Break }
+                "ShowPowerConsumptionColumn" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); Break }
+                "ShowPowerCost" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); Break }
+                "ShowPowerCostColumn" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); Break }
+                "ShowPoolBalances" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); Break }
+                "ShowPoolBalancesColumn" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); Break }
+                "ShowUser" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); Break }
+                "ShowUserColumn" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); Break }
                 Default { If ($_ -notin @(@($Variables.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
             }
         }
@@ -2731,9 +2747,9 @@ public static class Kernel32
 "@
 
         $ShowWindow = Switch ($WindowStyle) { 
-            "hidden" { "0x0000" } # SW_HIDE
-            "normal" { "0x0001" } # SW_SHOWNORMAL
-            Default  { "0x0007" } # SW_SHOWMINNOACTIVE
+            "hidden" { "0x0000"; Break } # SW_HIDE
+            "normal" { "0x0001"; Break } # SW_SHOWNORMAL
+            Default  { "0x0007"; Break } # SW_SHOWMINNOACTIVE
         }
 
         # Set local environment
@@ -4022,8 +4038,8 @@ Function Start-APIserver {
                 Catch { }
                 $RetryCount--
             }
+            If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport)." }
         }
-        If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport)." }
     }
 }
 

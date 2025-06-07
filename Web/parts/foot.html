@@ -14,12 +14,12 @@
       });
 
       $('#btn-miningpause').click(function () {
-        $('*').css('cursor', 'wait');
+        $('body').css('cursor', 'wait');
         $command = '/functions/mining/pause';
         $('.modal-body').load($command, function() {
           if (this.outerText) {
             $('.modal-title').text($('#btn-miningpause').text());
-            $('*').css('cursor', 'default');
+            $('body').css('cursor', 'default');
             $('#myModal').modal({show:true});
           };
         });
@@ -32,12 +32,12 @@
       });
 
       $('#btn-miningstart').click(function () {
-        $('*').css('cursor', 'wait');
+        $('body').css('cursor', 'wait');
         $command = '/functions/mining/start';
         $('.modal-body').load($command, function() {
           if (this.outerText) {
             $('.modal-title').text($('#btn-miningstart').text());
-            $('*').css('cursor', 'default');
+            $('body').css('cursor', 'default');
             $('#myModal').modal({show:true});
           };
         });
@@ -50,12 +50,12 @@
       });
 
       $('#btn-miningstop').click(function () {
-        $('*').css('cursor', 'wait');
+        $('body').css('cursor', 'wait');
         $command = '/functions/mining/stop';
         $('.modal-body').load($command, function() {
           if (this.outerText) {
             $('.modal-title').text($('#btn-miningstop').text());
-            $('*').css('cursor', 'default');
+            $('body').css('cursor', 'default');
             $('#myModal').modal({show:true});
           };
         });

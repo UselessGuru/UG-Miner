@@ -121,7 +121,7 @@
               // Fix, button text is wrong
               document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
 
-              $('*').css('cursor', 'wait');
+              $('body').css('cursor', 'wait');
               // Get config file name
               $.ajax({
                 async: false,
@@ -174,7 +174,7 @@
 
               $('#configuration').validate({
                 submitHandler: function (form) {
-                  $('*').css('cursor', 'wait');
+                  $('body').css('cursor', 'wait');
 
                   config.ReportToServer = document.getElementById('ReportToServer').checked;
                   if ((document.getElementById('MonitoringServer').value).toString().trim() == "") document.getElementById('MonitoringServer').value = 'https://UG-Miner.com';
@@ -187,14 +187,14 @@
                   var $payload = encodeURIComponent(JSON.stringify(config));
                   $('.modal-body').load($url, $payload, function() {
                     $('.modal-title').text($('#save-button').text());
-                    $('*').css('cursor', 'default');
+                    $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                 }
               });
               updateSummary();
               updateButtonStatus();
-              $('*').css('cursor', 'default');
+              $('body').css('cursor', 'default');
             });
 
             $(window).resize(function () {

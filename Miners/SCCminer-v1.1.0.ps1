@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 Return # Bad shares
@@ -68,7 +68,7 @@ If ($Algorithms) {
                                 "ethstratum1"  { "stratum1"; Break }
                                 "ethstratum2"  { "stratum2"; Break }
                                 "ethstratumnh" { "stratum2"; Break }
-                                Default        { "stratum" }
+                                Default        { "stratum"; Break }
                             }
                             $Protocol += If ($Pool.PoolPorts[1]) { "+tls" } Else { "+tcp" }
 

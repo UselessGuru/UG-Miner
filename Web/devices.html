@@ -283,11 +283,11 @@
 
               $(function () {
                 $('#btn-disable-device').click(function () {
-                  $('*').css('cursor', 'wait');
+                  $('body').css('cursor', 'wait');
                   var command = 'functions/config/device/disable?Name=' + encodeURIComponent($('#enableddevices').bootstrapTable('getSelections').map(item => item.Name));
                   $('.modal-body').load(command, function() {
                     $('.modal-title').text($('#btn-disable-device').text());
-                    $('*').css('cursor', 'default');
+                    $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $('#enableddevices').bootstrapTable('refresh');
@@ -299,11 +299,11 @@
 
               $(function () {
                 $('#btn-enable-device').click(function () {
-                  $('*').css('cursor', 'wait');
+                  $('body').css('cursor', 'wait');
                   var command = 'functions/config/device/enable?Name=' + encodeURIComponent($('#disableddevices').bootstrapTable('getSelections').map(item => item.Name));
                   $('.modal-body').load(command, function() {
                     $('.modal-title').text($('#btn-enable-device').text());
-                    $('*').css('cursor', 'default');
+                    $('body').css('cursor', 'default');
                     $('#myModal').modal({show:true});
                   });
                   $('#enableddevices').bootstrapTable('refresh');

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -734,11 +734,13 @@ Function Update-GUIstatus {
             $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Red
             $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is stopped"
             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+            Break
         }
         "Paused" { 
             $LegacyGUIminingStatusLabel.ForeColor = [System.Drawing.Color]::Blue
             $LegacyGUIminingStatusLabel.Text = "$($Variables.Branding.ProductLabel) is paused"
             $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+            Break
         }
         "Running" { 
             If ($Variables.MiningStatus -eq "Running" -and -$Global:CoreRunspace.Job.IsCompleted -eq $true) { 
@@ -754,6 +756,7 @@ Function Update-GUIstatus {
                 ElseIf ($Variables.MinersRunning -and $Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
                 Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
             }
+            Break
         }
     }
     $LegacyGUIminingSummaryLabel.Text = (($Variables.Summary.Replace("$($LegacyGUIminingStatusLabel.Text). ", "") -replace "&ensp;", " " -replace "   ", "  ") -split "<br>") -join "`r`n"
@@ -774,7 +777,7 @@ $LegacyGUIcolors["warmingup"]                               = [System.Drawing.Co
 $LegacyGUItooltip = New-Object System.Windows.Forms.ToolTip
 
 $LegacyGUIform = New-Object System.Windows.Forms.Form
-# For High DPI, First Call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode
+# For High DPI, First call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode
 # SuspendLayout() is very important to correctly size and position all controls!
 $LegacyGUIform.SuspendLayout()
 # $LegacyGUIform.AutoScaleDimensions = New-Object System.Drawing.SizeF(120, 120)
@@ -1848,16 +1851,19 @@ $LegacyGUIform.Add_Load(
                 $LegacyGUIbuttonPause.Enabled = $true
                 $LegacyGUIbuttonStart.Enabled = $true
                 $LegacyGUIbuttonStop.Enabled = $false
+                Break
             }
             "Paused" { 
                 $LegacyGUIbuttonPause.Enabled = $false
                 $LegacyGUIbuttonStart.Enabled = $true
                 $LegacyGUIbuttonStop.Enabled = $true
+                Break
             }
             "Running" { 
                 $LegacyGUIbuttonPause.Enabled = $true
                 $LegacyGUIbuttonStart.Enabled = $false
                 $LegacyGUIbuttonStop.Enabled = $true
+                Break
             }
         }
 

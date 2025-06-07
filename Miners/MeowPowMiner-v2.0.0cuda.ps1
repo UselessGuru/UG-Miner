@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -55,10 +55,10 @@ If ($Algorithms) {
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Protocol = Switch ($Pool.Protocol) { 
-                                "ethproxy"     { "stratum1" }
-                                "ethstratum1"  { "stratum2" }
-                                "ethstratum2"  { "stratum2" }
-                                Default        { "stratum" }
+                                "ethproxy"     { "stratum1"; Break }
+                                "ethstratum1"  { "stratum2"; Break }
+                                "ethstratum2"  { "stratum2"; Break }
+                                Default        { "stratum"; Break }
                             }
                             $Protocol += If ($Pool.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
 

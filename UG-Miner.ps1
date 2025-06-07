@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 using module .\Includes\Include.psm1
@@ -318,7 +318,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.29"
+    Version      = [System.Version]"6.4.30"
 }
 
 $Global:WscriptShell = New-Object -ComObject Wscript.Shell
@@ -1019,7 +1019,7 @@ Function MainLoop {
                         If ($PayoutCurrency -eq "BTC" -and $Config.UsemBTC)  { $PayoutCurrency = "mBTC"; $mBTCfactorPayoutCurrency = 1000 } Else { $mBTCfactorPayoutCurrency = 1}
                         If ($Currency -ne $PayoutCurrency) { 
                             # Payout currency is different from asset currency
-                            If ($Variables.Rates.$Currency -and $Variables.Rates.$Currency.$PayoutCurrency) {
+                            If ($Variables.Rates.$Currency -and $Variables.Rates.$Currency.$PayoutCurrency) { 
                                 $Percentage = ($_.Balance / $_.PayoutThreshold / $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency).toString("P2")
                             }
                             Else { $Percentage = "Unknown %" }
@@ -1156,7 +1156,7 @@ Function MainLoop {
 
                 If ($Variables.MiningStatus -eq "Running") { 
                     ($Variables.MinersNeedingBenchmark.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
-                        {
+                        { 
                             Write-Host -ForegroundColor DarkYellow "Benchmarking for '$($_.Name)' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
                         }
                     )

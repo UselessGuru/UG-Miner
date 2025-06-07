@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.4.29
-Version date:   2025/06/04
+Version:        6.4.30
+Version date:   2025/06/07
 #>
 
 using module .\Include.psm1
@@ -99,7 +99,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 If ($Key -and $Value) { $Parameters.$Key = $Value }
             }
         )
-        Remove-Variable Buffer, Body, Length, Value -ErrorAction Ignore
+        Remove-Variable Buffer, Body, Key, Length, Value -ErrorAction Ignore
     }
 
     # Create a new response and the defaults for associated settings
@@ -222,7 +222,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                     $Data = "No configuration change."
                 }
             }
-            Remove-Variable DeviceName, Key, Values -ErrorAction Ignore
+            Remove-Variable ExcludeDeviceName, Key, Values -ErrorAction Ignore
             Break
         }
         "/functions/config/device/enable" { 
@@ -503,7 +503,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
 
                             $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }))
                             $_.Reasons = @($_.Reasons.Where({ $_ -ne "0 H/s Stat file" }))
-                            $_.Reasons =  @($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
+                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
                             If (-not $_.Reasons) { $_.Available = $true }
                             If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                         }
