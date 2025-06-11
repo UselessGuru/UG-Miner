@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 using module .\Include.psm1
@@ -77,8 +77,11 @@ Do {
     $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
     $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
     Remove-Variable NetworkInterface
-    
+
     If ($Variables.MyIP) { 
+        # Read exchange rates
+        [Void](Get-Rate)
+
         # Fetch balances data from pools
         If ($PoolsToTrack) { 
         Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')..."
@@ -86,16 +89,13 @@ Do {
             { 
                 $BalanceObjects += @(
                     & ".\Balances\$($_).ps1"
-                    # Write-Message -Level Info "Balances tracker retrieved data for pool '$_'."
+                    Write-Message -Level Debug "Balances tracker retrieved data for pool '$_'."
                 )
             }
         )
 
         # Keep most recent balance objects, keep empty balances for 7 days
         $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object -Property DateTime -Bottom 1 }))
-
-        # Read exchange rates
-        Get-Rate
 
         ForEach ($PoolBalanceObject in $BalanceObjects) { 
             $PoolBalanceObjects = @($Variables.BalancesData.Where({ $_.Pool -eq $PoolBalanceObject.Pool -and $_.Currency -eq $PoolBalanceObject.Currency -and $_.Wallet -eq $PoolBalanceObject.Wallet }) | Sort-Object -Property DateTime)

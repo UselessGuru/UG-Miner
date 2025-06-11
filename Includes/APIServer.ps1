@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 using module .\Include.psm1
 
-$APIVersion = "6.0.2"
+$APIVersion = "6.0.4"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -262,8 +262,9 @@ While ($Variables.APIversion -and $Server.IsListening) {
             Try { 
                 $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
                 [Void](Write-Config -Config $TempConfig)
+                Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
+
                 $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
-                Write-Message -Level Verbose "Web GUI: Configuration saved. It will become fully active in the next cycle."
 
                 $Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                     { 

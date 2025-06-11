@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 If ($Config.NiceHashWallet) { 
@@ -91,7 +91,7 @@ If ($Config.NiceHashWallet) {
                 Balance    = [Double]$APIResponse.available
                 Unpaid     = [Double]$APIResponse.totalBalance
                 Withdrawal = [Double]$APIResponse.pendingDetails.withdrawal
-                #Total      = [Double]$APIResponse.pendingDetails.totalBalance
+                # Total      = [Double]$APIResponse.pendingDetails.totalBalance
                 Url        = "https://www.nicehash.com/my/mining/rigs/$($PoolConfig.WorkerName)"
             }
         }

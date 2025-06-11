@@ -1,6 +1,20 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+
+Changelog UG-Miner 6.4.30 2025/06/07
+====================================
+
+Changes:
+- Core: Streamline startup messages
+
+Fixes:
+- Core / Includes.psm1: 'Error 500' when querying for BLOCX DAG data (API at blocxscan.com has changed)
+
+Improvements:
+- Core / Includes.psm1: Function 'Get-Device' is faster
+
+
 Changelog UG-Miner 6.4.30 2025/06/07
 ====================================
 

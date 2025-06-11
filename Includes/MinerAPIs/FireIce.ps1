@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 Class Fireice : Miner { 
@@ -51,7 +51,7 @@ Class Fireice : Miner {
                 # Sometimes the process cannot be found instantly
                 $Loops = 100
                 Do { 
-                    If ($this.ProcessId = $this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId) { 
+                    If ($this.ProcessId = $this.ProcessJob | Receive-Job -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId) { 
                         If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
                             $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                             # Read hw config created by miner
@@ -111,7 +111,7 @@ Class Fireice : Miner {
     }
 
     [Object]GetMinerData () { 
-        $Timeout = 5 #seconds
+        $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/api.json"
 
@@ -127,8 +127,8 @@ Class Fireice : Miner {
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
         $HashrateValue = $Data.hashrate.total[0]
-        If (-not $HashrateValue) { $HashrateValue = $Data.hashrate.total[1] } #fix
-        If (-not $HashrateValue) { $HashrateValue = $Data.hashrate.total[2] } #fix
+        If (-not $HashrateValue) { $HashrateValue = $Data.hashrate.total[1] } # fix
+        If (-not $HashrateValue) { $HashrateValue = $Data.hashrate.total[2] } # fix
         If ($null -eq $HashrateValue) { Return $null }
         $Hashrate | Add-Member @{ $HashrateName = [Double]$HashrateValue }
 

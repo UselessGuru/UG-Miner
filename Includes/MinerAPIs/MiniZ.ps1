@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 Class MiniZ : Miner { 
     [Object]GetMinerData () { 
-        $Timeout = 5 #seconds
+        $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = '{ "id":"0", "method":"getstat" }'
         $Response = ""
@@ -42,7 +42,7 @@ Class MiniZ : Miner {
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
         $HashrateValue = [Double]($Data.result.speed_sps | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        If (-not $HashrateValue) { $HashrateValue = [Double]($Data.result.sol_ps | Measure-Object -Sum | Select-Object -ExpandProperty Sum) } #fix
+        If (-not $HashrateValue) { $HashrateValue = [Double]($Data.result.sol_ps | Measure-Object -Sum | Select-Object -ExpandProperty Sum) } # fix
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }

@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 Class EthMiner : Miner { 
     [Object]GetMinerData () { 
-        $Timeout = 5 #seconds
+        $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = @{ id = 1; jsonrpc = "2.0"; method = "miner_getstat1" } | ConvertTo-Json -Compress
         $Response = ""

@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\CCminer.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 Class CcMiner : Miner { 
     [Object]GetMinerData () { 
-        $Timeout = 5 #seconds
+        $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "summary"
         $Response = ""

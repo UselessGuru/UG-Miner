@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 using module .\Includes\Include.psm1
@@ -306,37 +306,70 @@ Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru
 This is free software, and you are welcome to redistribute it under certain conditions.
 https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 "@
-Write-Host "`nCopyright and license notices must be preserved.`n" -ForegroundColor Yellow
+Write-Host "`nCopyright and license notices must be preserved.`n" -ForegroundColor Green
 
 # Initialize thread safe global variables
 $Global:Config = [System.Collections.Hashtable]::Synchronized(@{ })
 $Global:Stats = [System.Collections.Hashtable]::Synchronized(@{ })
 $Global:Variables = [System.Collections.Hashtable]::Synchronized(@{ })
 
-# Branding data
-$Variables.Branding = [PSCustomObject]@{ 
-    BrandName    = "UG-Miner"
-    BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
-    ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.30"
-}
-
-$Global:WscriptShell = New-Object -ComObject Wscript.Shell
-$host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
-
-If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
-    Write-Host "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0 (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
-    $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version (Recommended is $($RecommendedPWSHversion)) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-    Start-Sleep -Seconds 5
-    Exit
-}
-
 # Expand paths
 $Variables.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
 $Variables.ConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigFile)
 $Variables.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile)
 
+# Branding data
+$Variables.Branding = [PSCustomObject]@{ 
+    BrandName    = "UG-Miner"
+    BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
+    ProductLabel = "UG-Miner"
+    Version      = [System.Version]"6.4.31"
+}
+
+$Global:WscriptShell = New-Object -ComObject Wscript.Shell
+$host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
+
+Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru..."
+
+Write-Host ""
+Write-Host "Checking PWSH version..." -ForegroundColor Yellow -NoNewline
+If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") { 
+    Write-Host " ✖" -ForegroundColor Red
+    Write-Message -Level Error "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected. $($Variables.Branding.BrandName) requires at least PWSH version 7.0.0."
+    Write-Host "The recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
+    $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0.`nThe recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    Exit
+}
+Write-Host " ✔  (running PWSH version $($PSVersionTable.PSVersion)" -ForegroundColor Green -NoNewLine
+If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { Write-Host " [recommended version is $($RecommendedPWSHversion)]" -ForegroundColor DarkYellow -NoNewline }
+Write-Host ")" -ForegroundColor Green
+
+# Another instance might already be running. Wait no more than 20 seconds (previous instance might be from autoupdate)
+Write-Host ""
+$CursorPosition = $Host.UI.RawUI.CursorPosition
+
+$Loops = 20
+While (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
+    $Loops --
+    [Console]::SetCursorPosition(0, $CursorPosition.y)
+    Write-Host "Waiting for a previous instance of $($Variables.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
+    Start-Sleep -Seconds 1
+    If ($Loops -eq 0) { 
+        [Console]::SetCursorPosition(55, $CursorPosition.y)
+        Write-Host " ✖    " -ForegroundColor Red
+        Write-Message -Level Error "Another instance of $($Variables.Branding.ProductLabel) is still running. Cannot continue!"
+        $Global:WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is still running.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        Exit
+    }
+}
+If ($Loops -ne 20 -and $Loops -ne $null) { 
+    [Console]::SetCursorPosition(55, $CursorPosition.y)
+    Write-Host " ✔    " -ForegroundColor Green
+    Write-Host ""
+}
+Remove-Variable Loops
+
+# Convert command line parameters syntax
 $Variables.AllCommandLineParameters = [Ordered]@{ }
 ($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
     { 
@@ -351,63 +384,59 @@ $Variables.AllCommandLineParameters = [Ordered]@{ }
 )
 
 # Must done before reading config (Get-Region)
-Write-Host "Preparing environment and loading data files..." -ForegroundColor Yellow
+Write-Message -Level Verbose "Preparing environment and loading data files..."
 [Void](Initialize-Environment)
-Write-Host ""
+$CursorPosition = $Host.UI.RawUI.CursorPosition
+[Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+Write-Host " ✔" -ForegroundColor Green
+[Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
 
-# Read configuration
+# Read configuration, if no config file exists Read-Config will create an initial running configuration in memory
+Write-Host ""
+If (Test-Path -LiteralPath $Variables.ConfigFile) { 
+     Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'."
+}
+Else { 
+    $Variables.FreshConfig = $true
+    $Variables.NewMiningStatus = $Variables.MiningStatus = "Idle"
+}
 [Void](Read-Config -ConfigFile $Variables.ConfigFile)
 
-Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru..."
-If (-not $Config.FreshConfig) { Write-Message -Level Info "Using configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'." }
+# Start transcript log
+If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
+
+# Check if a new version is available
+Write-Host ""
+[Void](Get-Version)
+
+# Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
+[Void](Start-LogReader)
 
 # Update config file to include all new config items
 If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
     [Void](Update-ConfigFile -ConfigFile $Variables.ConfigFile)
 }
 
-# Start transcript log
-If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
-
-# Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
-[Void](Start-LogReader)
-
-If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
-    # Another instance is already running. Try again in 20 seconds (previous instance might be from autoupdate)
-    Write-Host "Verifying that no other instance of $($Variables.Branding.ProductLabel) is running..."
-    Start-Sleep -Seconds 20
-    If (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
-        Write-Host "Terminating Error - Another instance of $($Variables.Branding.ProductLabel) is already running." -ForegroundColor "Red"
-        $Global:WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is already running.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-        Start-Sleep -Seconds 5
-        Exit
-    }
-}
-
 # Internet connection must be available
+Write-Host ""
+write-Host "Checking internet connection..." -ForegroundColor Yellow -NoNewline
 $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
 $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
 If (-not $Variables.MyIP) { 
-    Write-Host "Terminating Error - No internet connection." -ForegroundColor "Red"
-    $Global:WscriptShell.Popup("No internet connection`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-    Start-Sleep -Seconds 5
+    Write-Host " ✖" -ForegroundColor Red
+    Write-Message -Level Error "Terminating Error - no internet connection. $($Variables.Branding.ProductLabel) will shut down."
+    $Global:WscriptShell.Popup("No internet connection`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
+Write-Host " ✔  (IP address: $($Variables.MyIP))" -ForegroundColor Green
 
-Write-Host ""
-# Check if a new version is available
-[Void](Get-Version)
-
-Write-Host ""
-#Prerequisites check
+# Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
 If ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") { 
-    Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10."
-    $Global:WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-    Start-Sleep -Seconds 5
+    [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+    Write-Host " ✖" -ForegroundColor Red
+    Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10. $($Variables.Branding.ProductLabel) will shut down."
+    $Global:WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 $Prerequisites = @(
@@ -416,59 +445,71 @@ $Prerequisites = @(
     "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
 )
 If ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) })) { 
+    [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+    Write-Host " ✖" -ForegroundColor Red
     $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "$_ is missing." })
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
     Write-Message -Level Error "and run 'install_all.bat' (Admin rights are required)."
-    $Global:WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-    Start-Sleep -Seconds 5
+    $Global:WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 Remove-Variable Prerequisites, PrerequisitesMissing
 
 If (-not (Get-Command Get-PnpDevice)) { 
-    Write-Message -Level Error "Windows Management Framework 5.1 is missing."
-    Write-Message -Level Error "Please install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616"
-    $Global:WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-    Start-Sleep -Seconds 5
+    [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+    Write-Host " ✖" -ForegroundColor Red
+    Write-Message -Level Error "Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616. $($Variables.Branding.ProductLabel) will shut down."
+    $Global:WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
-Write-Message -Level Verbose "Pre-requisites verification OK - running PWSH version $($PSVersionTable.PSVersion)$(If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { " (recommended version is $($RecommendedPWSHversion))" })."
+$CursorPosition = $Host.UI.RawUI.CursorPosition
+[Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+Write-Host " ✔" -ForegroundColor Green
 Remove-Variable RecommendedPWSHversion
 
 # Exclude from AV scanner
 If ($Variables.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
-    Write-Host ""
     Try { 
-        If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to exclude the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..."; Start-Sleep -Seconds 5 }
+        Write-Message -Level Verbose "Excluding the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans to avoid false virus alerts..."
+        If (-not $Variables.IsLocalAdmin) { 
+            Write-Host "You must accept the UAC control dialog to continue." -ForegroundColor Blue -NoNewLine
+            Start-Sleep -Seconds 5
+        }
         Start-Process "pwsh" "-Command Write-Host 'Excluding UG-Miner directory ''$(Convert-Path .)'' from Microsoft Defender Antivirus scans...'; Import-Module Defender -SkipEditionCheck; Add-MpPreference -ExclusionPath '$(Convert-Path .)'" -Verb runAs
-        Write-Message -Level Info "Excluded the $($Variables.Branding.ProductLabel) directory from Microsoft Defender Antivirus scans."
+        [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+        Write-Host " ✔" -ForegroundColor Green
+        Write-Host "                                                    "
+        [Console]::SetCursorPosition(0, $Host.UI.RawUI.CursorPosition.Y - 1)
     }
     Catch { 
-        $Global:WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis may lead to unpredictable results.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-        Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-        Start-Sleep -Seconds 5
+        [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+        Write-Host " ✖" -ForegroundColor Red
+        Write-Message -Level Error "Could not exclude the directory '$PWD' from Microsoft Defender Antivirus scans. $($Variables.Branding.ProductLabel) will shut down."
+        $Global:WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis would lead to unpredictable results.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Exit
     }
     # Unblock files
     If (Get-Command "Unblock-File" -ErrorAction Ignore) { 
         If (Get-Item .\* -Stream Zone.*) { 
-            Write-Host "Unblocking files that were downloaded from the internet..." -ForegroundColor Yellow
+            Write-Message -Level Verbose "Unblocking files that were downloaded from the internet..."
             Get-ChildItem -Path . -Recurse | Unblock-File
+            [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+            Write-Host " ✔" -ForegroundColor Green
         }
     }
 }
 
-Write-Host ""
-$Variables.VerthashDatPath = ".\Cache\VertHash.dat"
-If (Test-Path -LiteralPath $Variables.VerthashDatPath -PathType Leaf) { 
-    Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VerthashDatPath)'..."
+$Variables.VertHashDatPath = ".\Cache\VertHash.dat"
+If (Test-Path -LiteralPath $Variables.VertHashDatPath -PathType Leaf) { 
+    Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VertHashDatPath)'..."
+    $VertHashDatCursorPosition = $Variables.CursorPosition
 }
-$VertHashDatCheckJob = Start-ThreadJob -ScriptBlock { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
+# Needs to be run in any case to set number of threads
+$VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Variables.MainPath)'")) -ScriptBlock { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
 
-Write-Host "Importing modules..." -ForegroundColor Yellow
+Write-Message -Level Verbose "Importing modules..."
 Try { 
     Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Stop
 }
@@ -489,12 +530,11 @@ Catch {
 
 Import-Module NetSecurity -ErrorAction Ignore
 Import-Module Defender -ErrorAction Ignore -SkipEditionCheck
+[Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+Write-Host " ✔" -ForegroundColor Green
 
 Write-Message -Level Verbose "Setting variables..."
 $nl = "`n" # Must use variable, cannot join with "`n" with Write-Host
-
-# Getting exchange rates
-[Void](Get-Rate)
 
 # Align CUDA id with nvidia-smi order
 $env:CUDA_DEVICE_ORDER = "PCI_BUS_ID"
@@ -524,9 +564,12 @@ $Variables.RegexAlgoIsProgPow = "^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^PhiH
 $Variables.RegexAlgoHasDynamicDAG = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^Octopus$|^PhiHash$|^ProgPow|^SCCpow$|^UbqHash$"
 $Variables.RegexAlgoHasStaticDAG = "^FishHash$|^HeavyHashKarlsenV2$"
 $Variables.RegexAlgoHasDAG = (($Variables.RegexAlgoHasDynamicDAG -split '\|') + ($Variables.RegexAlgoHasStaticDAG -split '\|') | Sort-Object) -join '|'
+$CursorPosition = $Host.UI.RawUI.CursorPosition
+[Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+Write-Host " ✔" -ForegroundColor Green
 
 $Variables.Summary = "Loading miner device information.<br>This may take a while..."
-Write-Message -Level Verbose $Variables.Summary
+Write-Message -Level Verbose "$($Variables.Summary)"
 
 $Variables.SupportedCPUDeviceVendors = @("AMD", "INTEL")
 $Variables.SupportedGPUDeviceVendors = @("AMD", "INTEL", "NVIDIA")
@@ -537,10 +580,8 @@ $Variables.Devices = Get-Device
 
 If ($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion -and (Get-Item -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors).Property -notlike "*\amdocl64.dll") { 
     Write-Message -Level Error "OpenCL driver installation for AMD GPU devices is incomplete"
-    Write-Message -Level Error "Please create the missing registry key as described in https://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143"
-    $Global:WscriptShell.Popup("The OpenCL driver installation for AMD GPU devices is incomplete.`nPlease create the missing registry key as described here:`n`nhttps://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - Cannot continue!", 4112) | Out-Null
-    Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-    Start-Sleep -Seconds 5
+    Write-Message -Level Error "Please create the missing registry key as described in https://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143. $($Variables.Branding.ProductLabel) will shut down."
+    $Global:WscriptShell.Popup("The OpenCL driver installation for AMD GPU devices is incomplete.`nPlease create the missing registry key as described here:`n`nhttps://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 
@@ -561,6 +602,9 @@ $Variables.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
 $Variables.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$CursorPosition = $Host.UI.RawUI.CursorPosition
+[Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+Write-Host " ✔  ($($Variables.Devices.count) device$(If ($Variables.Devices.count -ne 1) { "s" }) found)" -ForegroundColor Green
 
 # Driver version changed
 If ((Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) -and ([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Variables.DriverVersion | ConvertTo-Json -Compress)) { Write-Message -Level Warn "Graphics card driver version data has changed. It is recommended to re-benchmark all miners." }
@@ -569,19 +613,30 @@ $Variables.DriverVersion | ConvertTo-Json | Out-File -LiteralPath ".\Cache\Drive
 # Rename existing switching log
 If (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Rename-Item -NewName { "SwitchingLog_$($_.LastWriteTime.toString("yyyy-MM-dd_HH-mm-ss")).csv" } }
 
+$CursorPosition = $Host.UI.RawUI.CursorPosition
 If ($VertHashDatCheckJob | Wait-Job -Timeout 60 | Receive-Job -Wait -AutoRemoveJob) { 
-    Write-Message -Level Verbose "VertHash data file integrity check: OK."
+    [Console]::SetCursorPosition($VertHashDatCursorPosition.X, $VertHashDatCursorPosition.Y)
+    Write-Host " ✔  (checksum ok)" -ForegroundColor Green
 }
 Else { 
-    If (Test-Path -LiteralPath $Variables.VerthashDatPath -PathType Leaf -ErrorAction Ignore) { 
-        Remove-Item -Path $Variables.VerthashDatPath -Force
-        Write-Message -Level Warn "VertHash data file '$($Variables.VerthashDatPath)' is corrupt -> file deleted. It will be re-downloaded if needed."
+    If (Test-Path -LiteralPath $Variables.VertHashDatPath -PathType Leaf -ErrorAction Ignore) { 
+        Remove-Item -Path $Variables.VertHashDatPath -Force
+        [Console]::SetCursorPosition($VertHashDatCursorPosition.X, $VertHashDatCursorPosition.Y)
+        Write-Host " ✖  (VertHash data file '$($Variables.VertHashDatPath)' is corrupt -> file deleted. It will be re-downloaded if needed)" -ForegroundColor Red
     }
 }
-Remove-Variable VertHashDatCheckJob
+Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition
+[Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
+
+# Getting exchange rates
+Write-Host ""
+[Void](Get-Rate)
 
 # Start API server
-If ($Config.WebGUI) { [Void](Start-APIserver) }
+If ($Config.WebGUI) { 
+    Write-Host ""
+    [Void](Start-APIserver)
+}
 
 # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
@@ -991,7 +1046,7 @@ Function MainLoop {
         }
     }
     ElseIf ((Test-Path -Path $Variables.ConfigFile) -and (Test-Path -Path $Variables.PoolsConfigFile)) { 
-            If (-not ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) -and $Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
+        If (-not ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) -and $Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
             [Void](Read-Config -ConfigFile $Variables.ConfigFile)
             Write-Message -Level Verbose "Activated changed configuration."
             $Variables.RefreshNeeded = $true
@@ -1202,10 +1257,10 @@ Function MainLoop {
 If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { 
     $Variables.NewMiningStatus = "Idle" # Must click 'Start mining' in GUI
     If ($Variables.FreshConfig) { 
+        Write-Host ""
         Write-Message -Level Warn "No configuration file found. Edit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
         $Variables.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
         $Global:WscriptShell.Popup("No configuration file found.`n`nEdit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", (4096 + 48)) | Out-Null
-        $Variables.FreshConfig = $false
     }
     Else { 
         Write-Message -Level Warn "Configuration has changed during update. Verify and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
@@ -1214,6 +1269,7 @@ If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) {
     }
 }
 
+Write-Host ""
 While ($true) { 
     If ($Config.LegacyGUI) { 
         If (-not $LegacyGUIform.CanSelect) { 

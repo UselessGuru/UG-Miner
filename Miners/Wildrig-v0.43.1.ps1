@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 # a lot of old algorithms are zero fee now
@@ -90,7 +90,7 @@ $Algorithms = @(
     @{ Algorithm = "X16s";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16s" } # FPGA
     @{ Algorithm = "X17";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x17" }
     @{ Algorithm = "X18";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x18" }
-#   @{ Algorithm = "X21s";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @("ZergPool"); Arguments = " --algo x21s" } # https://github.com/andru-kun/wildrig-multi/issues/323
+#   @{ Algorithm = "X21s";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x21s" } # https://github.com/andru-kun/wildrig-multi/issues/323
     @{ Algorithm = "X22";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x22" }
     @{ Algorithm = "X22i";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x22i" }
     @{ Algorithm = "X25x";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x25x" }
@@ -155,7 +155,7 @@ $Algorithms = @(
     @{ Algorithm = "X16s";             Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x16s --watchdog" } # FPGA
     @{ Algorithm = "X17";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x17 --watchdog" }
     @{ Algorithm = "X18";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x18 --watchdog" }
-#   @{ Algorithm = "X21s";             Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " "; ExcludePools = @("ZergPool"); Arguments = " --algo x21s --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/323
+#   @{ Algorithm = "X21s";             Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x21s --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/323
     @{ Algorithm = "X22";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x22 --watchdog" }
     @{ Algorithm = "X22i";             Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x22i --watchdog" }
     @{ Algorithm = "X25x";             Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x25x --watchdog" }
@@ -221,7 +221,7 @@ $Algorithms = @(
     @{ Algorithm = "X17";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x17 --watchdog" }
 #   @{ Algorithm = "X18";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x18 --watchdog" } # ASIC
 #   @{ Algorithm = "X20r";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @();           Arguments = " --algo x20r --watchdog" } # ASIC
-#   @{ Algorithm = "X21s";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " ";                ExcludePools = @("ZergPool"); Arguments = " --algo x21s --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/323
+#   @{ Algorithm = "X21s";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x21s --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/323
     @{ Algorithm = "X22";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x22 --watchdog" }
     @{ Algorithm = "X22i";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x22i --watchdog" } # Not yet supported on Nvidia
     @{ Algorithm = "X25x";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x25x --watchdog" } # Not yet supported on Nvidia

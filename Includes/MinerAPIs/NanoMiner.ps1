@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.4.30
-Version date:   2025/06/07
+Version:        6.4.31
+Version date:   2025/06/11
 #>
 
 Class NanoMiner : Miner { 
@@ -28,7 +28,7 @@ Class NanoMiner : Miner {
 
         Try { 
             $ConfigFile = "$(Split-Path $this.Path)\$($Parameters.ConfigFile.FileName)"
-            #Write config files. Do not overwrite existing files to preserve optional manual customization
+            # Write config files. Do not overwrite existing files to preserve optional manual customization
             If (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { 
                 $Parameters.ConfigFile.Content | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore
             }
@@ -40,7 +40,7 @@ Class NanoMiner : Miner {
     }
 
     [Object]GetMinerData () { 
-        $Timeout = 5 #seconds
+        $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/stats"
 
