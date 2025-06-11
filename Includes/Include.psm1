@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.4.1
+Version:        6.4.31
 Version date:   2025/01/13
 #>
 
@@ -3077,6 +3077,10 @@ Function Initialize-Autoupdate {
     "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
     Try { 
         Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
+        $CursorPosition = $Host.UI.RawUI.CursorPosition
+        [Console]::SetCursorPosition(55, $CursorPosition.y)
+        Write-Host " ✔    " -ForegroundColor Green
+        $CursorPosition = $Host.UI.RawUI.CursorPosition
         "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
         . $UpdateScript
     }
