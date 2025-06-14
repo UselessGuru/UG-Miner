@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]|RDNA4" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -167,7 +167,7 @@ If ($Algorithms) {
                                             "ethproxy"     { $Arguments += " --esm 0"; Break }
                                             "ethstratum1"  { $Arguments += " --esm 1"; Break }
                                             "ethstratum2"  { $Arguments += " --esm 2"; Break }
-                                            "ethstratumnh" { $Arguments += " --esm 2"; Break }
+                                            "ethstratumnh" { $Arguments += " --esm 2" }
                                         }
                                         $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
                                         $Arguments += " --password $($Pool.Pass)"

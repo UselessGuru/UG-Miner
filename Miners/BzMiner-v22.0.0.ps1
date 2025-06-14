@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03" }))) { Return }
@@ -77,7 +77,7 @@ If ($Algorithms) {
                                         "ethstratum1"  { $Arguments += " -p ethstratum"; Break }
                                         "ethstratum2"  { $Arguments += " -p ethstratum2"; Break }
                                         "ethstratumnh" { $Arguments += " -p ethstratum"; Break }
-                                        Default        { $Arguments += " -p stratum"; Break }
+                                        Default        { $Arguments += " -p stratum" }
                                     }
                                     $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                     $Arguments += "$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
@@ -92,7 +92,7 @@ If ($Algorithms) {
                                             "ethstratum1"  { $Arguments += " --p2 ethstratum"; Break }
                                             "ethstratum2"  { $Arguments += " --p2 ethstratum2"; Break }
                                             "ethstratumnh" { $Arguments += " --p2 ethstratum"; Break}
-                                            Default        { $Arguments += " --p2 stratum"; Break }
+                                            Default        { $Arguments += " --p2 stratum" }
                                         }
                                         $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                         $Arguments += "$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"

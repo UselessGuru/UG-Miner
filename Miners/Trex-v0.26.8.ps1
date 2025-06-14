@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -82,9 +82,9 @@ If ($Algorithms) {
 
                                 $Arguments = $_.Arguments
                                 Switch ($Pool0.Protocol) { 
-                                    "ethstratum1"  { $Arguments += " --url stratum2" }
-                                    "ethstratum2"  { $Arguments += " --url stratum2" }
-                                    "ethstratumnh" { $Arguments += " --url stratum2" }
+                                    "ethstratum1"  { $Arguments += " --url stratum2"; Break }
+                                    "ethstratum2"  { $Arguments += " --url stratum2"; Break }
+                                    "ethstratumnh" { $Arguments += " --url stratum2"; Break }
                                     Default        { $Arguments += " --url stratum" }
                                 }
                                 $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
@@ -99,9 +99,9 @@ If ($Algorithms) {
 
                                 If ($_.Algorithms[1]) { 
                                     Switch ($Pool1.Protocol) { 
-                                        "ethstratum1"  { $Arguments += " --url2 stratum2" }
-                                        "ethstratum2"  { $Arguments += " --url2 stratum2" }
-                                        "ethstratumnh" { $Arguments += " --url2 stratum2" }
+                                        "ethstratum1"  { $Arguments += " --url2 stratum2"; Break }
+                                        "ethstratum2"  { $Arguments += " --url2 stratum2"; Break }
+                                        "ethstratumnh" { $Arguments += " --url2 stratum2"; Break }
                                         Default        { $Arguments += " --url2 stratum" }
                                     }
                                     $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl" } Else { "+tcp" }

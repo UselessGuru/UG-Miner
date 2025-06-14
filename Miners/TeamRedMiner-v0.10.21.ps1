@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" }))) { Return }
@@ -56,7 +56,7 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash", "FishHash");              SecondaryAlgorithmPrefix = "iron";    Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo=etchash" } # Pools with support at this time are Herominers, Flexpool and Kryptex
     @{ Algorithms = @("EtcHash", "HeavyHashKarlsen");      SecondaryAlgorithmPrefix = "karlsen"; Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=etchash" }
 #   @{ Algorithms = @("EtcHash", "HeavyHashKaspa");        SecondaryAlgorithmPrefix = "kas";     Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=etchash" } # ASIC
-    @{ Algorithms = @("EtcHash", "HeavyHashPyrin");        SecondaryAlgorithmPrefix = "iron";    Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=etchash" }
+    @{ Algorithms = @("EtcHash", "HeavyHashPyrin");        SecondaryAlgorithmPrefix = "pyrin";    Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=etchash" }
     @{ Algorithms = @("Ethash", "");                       SecondaryAlgorithmPrefix = "";        Fee = @(0.01);       MinMemGiB = 0.77; MinerSet = 0; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=ethash" } # PhoenixMiner-v6.2c is fastest
     @{ Algorithms = @("Ethash", "Blake3");                 SecondaryAlgorithmPrefix = "alph";    Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo=ethash" }
     @{ Algorithms = @("Ethash", "FishHash");               SecondaryAlgorithmPrefix = "iron";    Fee = @(0.01, 0.01); MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo=ethash" } # Pools with support at this time are Herominers, Flexpool and Kryptex

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 Class lolMiner : Miner { 
@@ -42,14 +42,14 @@ Class lolMiner : Miner {
         $HashrateUnit = [UInt64]1
 
         Switch ($Data.Algorithms[0].Performance_Unit) { 
-            "kh/s"  { $HashrateUnit = [Math]::Pow(10,3) }
-            "Mh/s"  { $HashrateUnit = [Math]::Pow(10,6) }
-            "GH/s"  { $HashrateUnit = [Math]::Pow(10,9) }
-            "TH/s"  { $HashrateUnit = [Math]::Pow(10,12) }
-            "PH/s"  { $HashrateUnit = [Math]::Pow(10,15) }
-            "EH/s"  { $HashrateUnit = [Math]::Pow(10,18) }
-            "ZH/s"  { $HashrateUnit = [Math]::Pow(10,21) }
-            "YH/s"  { $HashrateUnit = [Math]::Pow(10,24) }
+            "kh/s"  { $HashrateUnit = [Math]::Pow(10,3); Break }
+            "Mh/s"  { $HashrateUnit = [Math]::Pow(10,6); Break }
+            "GH/s"  { $HashrateUnit = [Math]::Pow(10,9); Break }
+            "TH/s"  { $HashrateUnit = [Math]::Pow(10,12); Break }
+            "PH/s"  { $HashrateUnit = [Math]::Pow(10,15); Break }
+            "EH/s"  { $HashrateUnit = [Math]::Pow(10,18); Break }
+            "ZH/s"  { $HashrateUnit = [Math]::Pow(10,21); Break }
+            "YH/s"  { $HashrateUnit = [Math]::Pow(10,24); Break }
             Default { $HashrateUnit = [UInt64]1 }
         }
         $HashrateValue = [Double]($Data.Algorithms[0].Total_Performance * $HashrateUnit)
@@ -65,14 +65,14 @@ Class lolMiner : Miner {
             If ($null -eq $Data.Algorithms[1].Total_Performance) { Return $null }
             $HashrateUnit = [Int64]1
             Switch ($Data.Algorithms[1].Performance_Unit) { 
-                "kh/s"  { $HashrateUnit = [Math]::Pow(10,3) }
-                "Mh/s"  { $HashrateUnit = [Math]::Pow(10,6) }
-                "GH/s"  { $HashrateUnit = [Math]::Pow(10,9) }
-                "TH/s"  { $HashrateUnit = [Math]::Pow(10,12) }
-                "PH/s"  { $HashrateUnit = [Math]::Pow(10,15) }
-                "EH/s"  { $HashrateUnit = [Math]::Pow(10,18) }
-                "ZH/s"  { $HashrateUnit = [Math]::Pow(10,21) }
-                "YH/s"  { $HashrateUnit = [Math]::Pow(10,24) }
+                "kh/s"  { $HashrateUnit = [Math]::Pow(10,3); Break }
+                "Mh/s"  { $HashrateUnit = [Math]::Pow(10,6); Break }
+                "GH/s"  { $HashrateUnit = [Math]::Pow(10,9); Break }
+                "TH/s"  { $HashrateUnit = [Math]::Pow(10,12); Break }
+                "PH/s"  { $HashrateUnit = [Math]::Pow(10,15); Break }
+                "EH/s"  { $HashrateUnit = [Math]::Pow(10,18); Break }
+                "ZH/s"  { $HashrateUnit = [Math]::Pow(10,21); Break }
+                "YH/s"  { $HashrateUnit = [Math]::Pow(10,24); Break }
                 Default { $HashrateUnit = 1 }
             }
             $HashrateValue = [Double]($Data.Algorithms[1].Total_Performance * $HashrateUnit)

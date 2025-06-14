@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -26,7 +26,7 @@ If (($Variables.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { Return }
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
 
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"11.0" } { "http://www.tradeproject.de/download/Miner/TT-Miner-2024.3.3b6.zip" }
+    { $_ -ge [System.Version]"11.0" } { "http://www.tradeproject.de/download/Miner/TT-Miner-2024.3.3b6.zip"; Break }
     Default                           { Return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -117,9 +117,9 @@ If ($Algorithms) {
                             If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
                             $Arguments += " -o "
                             Switch ($Pool.Protocol) { 
-                                "ethstratum1"  { $Arguments += "stratum+" }
-                                "ethstratum2"  { $Arguments += "stratum+" }
-                                "ethstratumnh" { $Arguments += "stratum+" }
+                                "ethstratum1"  { $Arguments += "stratum+"; Break }
+                                "ethstratum2"  { $Arguments += "stratum+"; Break }
+                                "ethstratumnh" { $Arguments += "stratum+"; Break }
                                 # Default        { $Arguments += "stratum+" }
                             }
                             $Arguments += "$(If ($Pool.PoolPorts[1]) { "ssl://" } Else { "tcp://" })$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"

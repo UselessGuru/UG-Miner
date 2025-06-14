@@ -2,7 +2,19 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
-Changelog UG-Miner 6.4.30 2025/06/07
+Changelog UG-Miner 6.4.32 2025/06/14
+====================================
+
+Improvements:
+- Core, web & legacy GUI: Replace 'CPU#nn' / 'GPU#nn' with more descriptive text, e.g. '1xGTX1660SUPER6G'
+- Core: Minor code optimization
+
+Miner changes:
+- lolMiner-v1.96a
+- SRBMinerMulti-v2.9.2
+
+
+Changelog UG-Miner 6.4.31 2025/06/11
 ====================================
 
 Changes:

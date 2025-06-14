@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -113,7 +113,7 @@ If ($Algorithms) {
                                             "ethstratum2"  { " -proto 5"; Break }
                                             "ethstratumnh" { " -proto 5"; Break }
                                             "qtminer"      { " -proto 3"; Break }
-                                            Default        { " -proto 1"; Break }
+                                            Default        { " -proto 1" }
                                         }
                                         If ($Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                         If ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }
@@ -146,7 +146,7 @@ If ($Algorithms) {
 
                                         [PSCustomObject]@{ 
                                             API         = "EthMiner"
-                                            Arguments   = "$Arguments -vmdag 0 -log 0 -wdog 0 -cdmport $MinerAPIPort -gpus $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:d}' -f ($_ + 1) }) -join ',')"
+                                            Arguments   = "$Arguments -vmdag 0 -log 0 -wdog 0 -gsi 10 -cdmport $MinerAPIPort -gpus $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:d}' -f ($_ + 1) }) -join ',')"
                                             DeviceNames = $AvailableMinerDevices.Name
                                             Fee         = $_.Fee # Dev fee
                                             MinerSet    = $_.MinerSet

@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.4.31 / Updated 2025/06/11
+Version 6.4.32 / Updated 2025/06/14
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -27,17 +27,16 @@ UG-Miner code is partly based on
 
 ## Main features:
 
-- Web & legacy GUI
 - Easy configuration
-- Automatic benchmark each algorithm to get optimal speeds
+- Automatic benchmarking of all miners
 - Idle detection
 - Fully automated
 - Automatically downloads miner binaries
 - Automatic updates
+- Web & legacy GUI
 - Earnings graph & balances tracker
 - Low developer fee of 1% (can be set to 0%)
 - Calculate power cost<sup>(1)</sup>
-
 - Miner switching log
 - Supported pools: 
    - [HashCryptos](<https://hashcryptos.com/>)

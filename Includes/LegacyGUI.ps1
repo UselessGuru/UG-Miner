@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -55,7 +55,7 @@ Function CheckBoxSwitching_Click {
             $LegacyGUIswitchingDGV.Columns[5].FillWeight = 90 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.Accounts.Count }) | Measure-Object -Maximum).Maximum * 50; $LegacyGUIswitchingDGV.Columns[5].HeaderText = "Account(s)"
             $LegacyGUIswitchingDGV.Columns[6].FillWeight = 30; $LegacyGUIswitchingDGV.Columns[6].HeaderText = "Cycles"; $LegacyGUIswitchingDGV.Columns[6].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"
             $LegacyGUIswitchingDGV.Columns[7].FillWeight = 35; $LegacyGUIswitchingDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIswitchingDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
-            $LegacyGUIswitchingDGV.Columns[8].FillWeight = 30 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIswitchingDGV.Columns[8].HeaderText = "Device"
+            $LegacyGUIswitchingDGV.Columns[8].FillWeight = 30 + ($LegacyGUIswitchingDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIswitchingDGV.Columns[8].HeaderText = "Device(s)"
             $LegacyGUIswitchingDGV.Columns[9].FillWeight = 30
             $LegacyGUIswitchingLogClearButton.Enabled = $true
         }
@@ -117,7 +117,7 @@ Function Resize-Form {
 
         $LegacyGUIsystemLogLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + 25))
         $Variables.TextBoxSystemLog.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + $LegacyGUIsystemLogLabel.Height + 24))
-        $Variables.TextBoxSystemLog.Height = ($LegacyGUItabControl.Height - $LegacyGUIactiveMinersLabel.Height - $LegacyGUIactiveMinersDGV.Height - $LegacyGUIsystemLogLabel.Height - 68)
+        $Variables.TextBoxSystemLog.Height = ($LegacyGUItabControl.Height - $LegacyGUIactiveMinersLabel.Height - $LegacyGUIactiveMinersDGV.Height - $LegacyGUIsystemLogLabel.Height - 95)
         If (-not $Variables.TextBoxSystemLog.SelectionLength) { 
             $Variables.TextBoxSystemLog.ScrollToCaret()
         }
@@ -170,9 +170,9 @@ Function Set-TableColor {
 #     If ($Config.UseColorForMinerStatus) { 
 #         ForEach ($Row in $LegacyGUIworkersDGV.Rows) { 
 #             $Row.DefaultCellStyle.Backcolor = Switch ($Row.DataBoundItem.Status) { 
-#                 "Offline" { $LegacyGUIcolors["disabled"] }
-#                 "Paused"  { $LegacyGUIcolors["idle"] }
-#                 "Running" { $LegacyGUIcolors["running"] }
+#                 "Offline" { $LegacyGUIcolors["disabled"]; Break }
+#                 "Paused"  { $LegacyGUIcolors["idle"]; Break }
+#                 "Running" { $LegacyGUIcolors["running"]; Break }
 #                 Default   { [System.Drawing.Color]::FromArgb(255, 255, 255, 255) }
 #             }
 #         }
@@ -219,7 +219,7 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.DataSource = $Variables.MinersBest | Select-Object @(
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
-                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join " " } }
+                        @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
                         @{ Name = "Status Info"; Expression = { $_.StatusInfo } }
                         @{ Name = "Earnings (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
                         @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Variables.CalculatePowerCost) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } }
@@ -238,7 +238,7 @@ Function Update-TabControl {
                     $LegacyGUIactiveMinersDGV.Columns[0].Visible = $false
                     $LegacyGUIactiveMinersDGV.Columns[1].Visible = $false
                     If (-not $LegacyGUIactiveMinersDGV.ColumnWidthChanged -and $LegacyGUIactiveMinersDGV.Columns) { 
-                        $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 35 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
+                        $LegacyGUIactiveMinersDGV.Columns[2].FillWeight = 45 + ($Variables.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                         $LegacyGUIactiveMinersDGV.Columns[3].FillWeight = 190
                         $LegacyGUIactiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIactiveMinersDGV.Columns[5].FillWeight = 55; $LegacyGUIactiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIactiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIactiveMinersDGV.Columns[5].Visible = $Variables.CalculatePowerCost
@@ -287,14 +287,14 @@ Function Update-TabControl {
                 Try { 
                     $Datasource = [System.IO.File]::ReadAllLines("$PWD\Data\EarningsChartData.json") | ConvertFrom-Json -ErrorAction Ignore
 
-                    $ChartTitle = New-Object System.Windows.Forms.DataVisualization.Charting.Title
+                    $ChartTitle = [System.Windows.Forms.DataVisualization.Charting.Title]::new()
                     $ChartTitle.Alignment = "TopCenter"
                     $ChartTitle.Font = [System.Drawing.Font]::new("Arial", 10)
                     $ChartTitle.Text = "Earnings of the past $($DataSource.Labels.Count) active days"
                     $LegacyGUIearningsChart.Titles.Clear()
                     $LegacyGUIearningsChart.Titles.Add($ChartTitle)
 
-                    $ChartArea = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
+                    $ChartArea = [System.Windows.Forms.DataVisualization.Charting.ChartArea]::new()
                     $ChartArea.AxisX.Enabled = 0
                     $ChartArea.AxisX.Interval = 1
                     $ChartArea.AxisY.IsMarginVisible = $false
@@ -359,7 +359,6 @@ Function Update-TabControl {
                     $ChartArea.AxisY.Maximum = ($DaySum | Measure-Object -Maximum).Maximum * 1.05
                 }
                 Catch { }
-
             }
             If ($Config.BalancesTrackerPollInterval -gt 0) { 
                 $LegacyGUIbalancesLabel.Text = "Balances updated $(($Variables.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())"
@@ -473,7 +472,7 @@ Function Update-TabControl {
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
                         @{ Name = "Miner"; Expression = { $_.Name } },
-                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
+                        @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } },
                         @{ Name = "Status"; Expression = { $_.Status } },
                         @{ Name = "Earnings (biased) $($Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Earnings * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
                         @{ Name = "Power cost $($Config.FIATcurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Config.DecimalsMax)}" -f ($_.Powercost * $Variables.Rates.BTC.($Config.FIATcurrency)) } } },
@@ -491,7 +490,7 @@ Function Update-TabControl {
                     $LegacyGUIminersDGV.Columns[1].Visible = $false
                     If (-not $LegacyGUIminersDGV.ColumnWidthChanged -and $LegacyGUIminersDGV.Columns) { 
                         $LegacyGUIminersDGV.Columns[2].FillWeight = 160
-                        $LegacyGUIminersDGV.Columns[3].FillWeight = 25 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
+                        $LegacyGUIminersDGV.Columns[3].FillWeight = 35 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
                         $LegacyGUIminersDGV.Columns[4].FillWeight = 40; $LegacyGUIminersDGV.Columns[4].Visible = -not $LegacyGUIradioButtonMinersUnavailable.checked
                         $LegacyGUIminersDGV.Columns[5].FillWeight = 40; $LegacyGUIminersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIminersDGV.Columns[6].FillWeight = 40; $LegacyGUIminersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
@@ -596,7 +595,6 @@ Function Update-TabControl {
                 $LegacyGUIpoolsLabel.Text = "Waiting for data..."
                 $LegacyGUIpoolsDGV.DataSource = $null
             }
-
             Break
         }
         # "Rig monitor" { 
@@ -694,7 +692,7 @@ Function Update-TabControl {
                         @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } },
                         @{ Name = "Pool"; Expression = { $_.PoolName } },
                         @{ Name = "Region"; Expression = { $_.PoolRegion } },
-                        @{ Name = "Device(s)"; Expression = { $_.DeviceNames -join ", " } },
+                        @{ Name = "Device(s)"; Expression = { $_.MinerBaseName_Version_Device -replace ".+-" } },
                         @{ Name = "Last updated"; Expression = { (Get-TimeSince $_.Kicked.ToLocalTime()) } }
                     ) | Out-DataTable
                     $LegacyGUIwatchdogTimersDGV.Sort($LegacyGUIwatchdogTimersDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
@@ -706,7 +704,7 @@ Function Update-TabControl {
                         $LegacyGUIwatchdogTimersDGV.Columns[2].FillWeight = 60
                         $LegacyGUIwatchdogTimersDGV.Columns[3].FillWeight = 60
                         $LegacyGUIwatchdogTimersDGV.Columns[4].FillWeight = 44
-                        $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 25 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
+                        $LegacyGUIwatchdogTimersDGV.Columns[5].FillWeight = 35 + ($Variables.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                         $LegacyGUIwatchdogTimersDGV.Columns[6].FillWeight = 55
 
                         $LegacyGUIwatchdogTimersDGV | Add-Member ColumnWidthChanged $true
@@ -756,7 +754,6 @@ Function Update-GUIstatus {
                 ElseIf ($Variables.MinersRunning -and $Variables.MiningProfit -lt 0) { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Red }
                 Else { $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black }
             }
-            Break
         }
     }
     $LegacyGUIminingSummaryLabel.Text = (($Variables.Summary.Replace("$($LegacyGUIminingStatusLabel.Text). ", "") -replace "&ensp;", " " -replace "   ", "  ") -split "<br>") -join "`r`n"
@@ -774,14 +771,14 @@ $LegacyGUIcolors["starting"] = $LegacyGUIcolors["stopping"] = [System.Drawing.Co
 $LegacyGUIcolors["unavailable"]                             = [System.Drawing.Color]::FromArgb(254, 245, 220)
 $LegacyGUIcolors["warmingup"]                               = [System.Drawing.Color]::FromArgb(231, 255, 230)
 
-$LegacyGUItooltip = New-Object System.Windows.Forms.ToolTip
+$LegacyGUItooltip = [System.Windows.Forms.ToolTip]::new()
 
-$LegacyGUIform = New-Object System.Windows.Forms.Form
+$LegacyGUIform = [System.Windows.Forms.Form]::new()
 # For High DPI, First call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode
 # SuspendLayout() is very important to correctly size and position all controls!
 $LegacyGUIform.SuspendLayout()
-# $LegacyGUIform.AutoScaleDimensions = New-Object System.Drawing.SizeF(120, 120)
-$LegacyGUIform.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96)
+# $LegacyGUIform.AutoScaleDimensions = [System.Drawing.SizeF]::new(120, 120)
+$LegacyGUIform.AutoScaleDimensions = [System.Drawing.SizeF]::new(96, 96)
 $LegacyGUIform.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::DPI
 $LegacyGUIform.MaximizeBox = $true
 $LegacyGUIform.MinimumSize = [System.Drawing.Size]::new(800, 600) # best to keep under 800x600
@@ -791,29 +788,29 @@ $LegacyGUIform.TopMost = $false
 # Form Controls
 $LegacyGUIControls = @()
 
-$LegacyGUIstatusPage = New-Object System.Windows.Forms.TabPage
+$LegacyGUIstatusPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIstatusPage.Text = "System status"
 $LegacyGUIstatusPage.ToolTipText = "Show active miners and system log"
-$LegacyGUIearningsPage = New-Object System.Windows.Forms.TabPage
+$LegacyGUIearningsPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIearningsPage.Text = "Earnings and balances"
 $LegacyGUIearningsPage.ToolTipText = "Information about the calculated earnings / profit"
-$LegacyGUIminersPage = New-Object System.Windows.Forms.TabPage
+$LegacyGUIminersPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIminersPage.Text = "Miners"
 $LegacyGUIminersPage.ToolTipText = "Miner data collected in the last cycle"
-$LegacyGUIpoolsPage = New-Object System.Windows.Forms.TabPage
+$LegacyGUIpoolsPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIpoolsPage.Text = "Pools"
 $LegacyGUIpoolsPage.ToolTipText = "Pool data collected in the last cycle"
-$LegacyGUIrigMonitorPage = New-Object System.Windows.Forms.TabPage
+$LegacyGUIrigMonitorPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIrigMonitorPage.Text = "Rig monitor"
 $LegacyGUIrigMonitorPage.ToolTipText = "Consolidated overview of all known mining rigs"
-$LegacyGUIswitchingPage = New-Object System.Windows.Forms.TabPage
+$LegacyGUIswitchingPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIswitchingPage.Text = "Switching log"
 $LegacyGUIswitchingPage.ToolTipText = "List of the previously launched miners"
-$LegacyGUIwatchdogTimersPage = New-Object System.Windows.Forms.TabPage
+$LegacyGUIwatchdogTimersPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIwatchdogTimersPage.Text = "Watchdog timers"
 $LegacyGUIwatchdogTimersPage.ToolTipText = "List of all watchdog timers"
 
-$LegacyGUIminingStatusLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIminingStatusLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIminingStatusLabel.AutoSize = $false
 $LegacyGUIminingStatusLabel.BackColor = [System.Drawing.Color]::Transparent
 $LegacyGUIminingStatusLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 12)
@@ -826,21 +823,22 @@ $LegacyGUIminingStatusLabel.Visible = $true
 $LegacyGUIminingStatusLabel.Width = 360
 $LegacyGUIControls += $LegacyGUIminingStatusLabel
 
-$LegacyGUIminingSummaryLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIminingSummaryLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIminingSummaryLabel.AutoSize = $false
 $LegacyGUIminingSummaryLabel.BackColor = [System.Drawing.Color]::Transparent
 $LegacyGUIminingSummaryLabel.BorderStyle = 'None'
 $LegacyGUIminingSummaryLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
-$LegacyGUIminingSummaryLabel.Height = 70
-$LegacyGUIminingSummaryLabel.Location = [System.Drawing.Point]::new(6, 25)
+$LegacyGUIminingSummaryLabel.Height = 60
+$LegacyGUIminingSummaryLabel.Location = [System.Drawing.Point]::new(8, 35)
+$LegacyGUIminingSummaryLabel.ScrollBars = "Both"
 $LegacyGUIminingSummaryLabel.Tag = ""
 $LegacyGUIminingSummaryLabel.TextAlign = "MiddleLeft"
 $LegacyGUIminingSummaryLabel.Visible = $true
 $LegacyGUIControls += $LegacyGUIminingSummaryLabel
 $LegacyGUItooltip.SetToolTip($LegacyGUIminingSummaryLabel, "Color legend:`rBlack: Mining profitability is unknown`rGreen: Mining is profitable`rRed: Mining is NOT profitable")
 
-$LegacyGUIbuttonPause = New-Object System.Windows.Forms.Button
+$LegacyGUIbuttonPause = [System.Windows.Forms.Button]::new()
 $LegacyGUIbuttonPause.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonPause.Height = 24
 $LegacyGUIbuttonPause.Text = "Pause mining"
@@ -858,7 +856,7 @@ $LegacyGUIbuttonPause.Add_Click(
 $LegacyGUIControls += $LegacyGUIbuttonPause
 $LegacyGUItooltip.SetToolTip($LegacyGUIbuttonPause, "Pause mining processes.`rBrain jobs and balances tracker remain running.")
 
-$LegacyGUIbuttonStart = New-Object System.Windows.Forms.Button
+$LegacyGUIbuttonStart = [System.Windows.Forms.Button]::new()
 $LegacyGUIbuttonStart.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonStart.Height = 24
 $LegacyGUIbuttonStart.Text = "Start mining"
@@ -876,7 +874,7 @@ $LegacyGUIbuttonStart.Add_Click(
 $LegacyGUIControls += $LegacyGUIbuttonStart
 $LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStart, "Start the mining process.`rBrain jobs and balances tracker will also start.")
 
-$LegacyGUIbuttonStop = New-Object System.Windows.Forms.Button
+$LegacyGUIbuttonStop = [System.Windows.Forms.Button]::new()
 $LegacyGUIbuttonStop.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIbuttonStop.Height = 24
 $LegacyGUIbuttonStop.Text = "Stop mining"
@@ -894,13 +892,13 @@ $LegacyGUIbuttonStop.Add_Click(
 $LegacyGUIControls += $LegacyGUIbuttonStop
 $LegacyGUItooltip.SetToolTip($LegacyGUIbuttonStop, "Stop mining processes.`rBrain jobs and balances tracker will also stop.")
 
-$LegacyGUIeditConfigLink = New-Object System.Windows.Forms.LinkLabel
+$LegacyGUIeditConfigLink = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIeditConfigLink.ActiveLinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIeditConfigLink.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIeditConfigLink.LinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIeditConfigLink.Location = [System.Drawing.Point]::new(10, ($LegacyGUIform.Bottom - 26))
 $LegacyGUIeditConfigLink.TextAlign = "MiddleLeft"
-$LegacyGUIeditConfigLink.Size = New-Object System.Drawing.Size(380, 26)
+$LegacyGUIeditConfigLink.Size = [System.Drawing.Size]::new(380, 26)
 $LegacyGUIeditConfigLink.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
@@ -911,12 +909,12 @@ $LegacyGUIeditConfigLink.Add_Click(
 $LegacyGUIControls += $LegacyGUIeditConfigLink
 $LegacyGUItooltip.SetToolTip($LegacyGUIeditConfigLink, "Click to the edit configuration")
 
-$LegacyGUIcopyrightLabel = New-Object System.Windows.Forms.LinkLabel
+$LegacyGUIcopyrightLabel = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIcopyrightLabel.ActiveLinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIcopyrightLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIcopyrightLabel.Location = [System.Drawing.Point]::new(10, ($LegacyGUIform.Bottom - 26))
 $LegacyGUIcopyrightLabel.LinkColor = [System.Drawing.Color]::Blue
-$LegacyGUIcopyrightLabel.Size = New-Object System.Drawing.Size(380, 26)
+$LegacyGUIcopyrightLabel.Size = [System.Drawing.Size]::new(380, 26)
 $LegacyGUIcopyrightLabel.Text = "Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru"
 $LegacyGUIcopyrightLabel.TextAlign = "MiddleRight"
 $LegacyGUIcopyrightLabel.Add_Click({ Start-Process "$($Variables.Branding.BrandWebSite)" })
@@ -924,24 +922,24 @@ $LegacyGUIControls += $LegacyGUIcopyrightLabel
 $LegacyGUItooltip.SetToolTip($LegacyGUIcopyrightLabel, "Click to go to the $($Variables.Branding.ProductLabel) Github page")
 
 # Miner context menu items
-$LegacyGUIcontextMenuStrip = New-Object System.Windows.Forms.ContextMenuStrip
+$LegacyGUIcontextMenuStrip = [System.Windows.Forms.ContextMenuStrip]::new()
 $LegacyGUIcontextMenuStrip.Enabled = $false
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem1 = New-Object System.Windows.Forms.ToolStripMenuItem
+[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem1 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem1)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem2 = New-Object System.Windows.Forms.ToolStripMenuItem
+[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem2 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem2)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem3 = New-Object System.Windows.Forms.ToolStripMenuItem
+[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem3 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem3)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem4 = New-Object System.Windows.Forms.ToolStripMenuItem
+[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem4 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem4)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem5 = New-Object System.Windows.Forms.ToolStripMenuItem
+[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem5 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem5)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem6 = New-Object System.Windows.Forms.ToolStripMenuItem
+[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem6 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem6)
 
 $LegacyGUIcontextMenuStrip.Add_ItemClicked(
@@ -1120,7 +1118,6 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     Else { 
                         $Data = "No matching watchdog timer found."
                     }
-                    Break
                 }
             }
             If ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Variables.Branding.ProductLabel): $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
@@ -1192,7 +1189,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
 )
 
 # CheckBox Column for DataGridView
-$LegacyGUIcheckBoxColumn = New-Object System.Windows.Forms.DataGridViewCheckBoxColumn
+$LegacyGUIcheckBoxColumn = [System.Windows.Forms.DataGridViewCheckBoxColumn]::new()
 $LegacyGUIcheckBoxColumn.HeaderText = ""
 $LegacyGUIcheckBoxColumn.Name = "CheckBoxColumn"
 $LegacyGUIcheckBoxColumn.ReadOnly = $false
@@ -1200,7 +1197,7 @@ $LegacyGUIcheckBoxColumn.ReadOnly = $false
 # Run Page Controls
 $LegacyGUIstatusPageControls = @()
 
-$LegacyGUIactiveMinersLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIactiveMinersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIactiveMinersLabel.AutoSize = $false
 $LegacyGUIactiveMinersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIactiveMinersLabel.Height = 20
@@ -1208,7 +1205,7 @@ $LegacyGUIactiveMinersLabel.Location = [System.Drawing.Point]::new(6, 5)
 $LegacyGUIactiveMinersLabel.Width = 600
 $LegacyGUIstatusPageControls += $LegacyGUIactiveMinersLabel
 
-$LegacyGUIactiveMinersDGV = New-Object System.Windows.Forms.DataGridView
+$LegacyGUIactiveMinersDGV = [System.Windows.Forms.DataGridView]::new()
 $LegacyGUIactiveMinersDGV.AllowUserToAddRows = $false
 $LegacyGUIactiveMinersDGV.AllowUserToDeleteRows = $false
 $LegacyGUIactiveMinersDGV.AllowUserToOrderColumns = $true
@@ -1244,7 +1241,7 @@ $LegacyGUIactiveMinersDGV.Add_Sorted(
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIactiveMinersDGV -Enabled $true
 $LegacyGUIstatusPageControls += $LegacyGUIactiveMinersDGV
 
-$LegacyGUIsystemLogLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIsystemLogLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIsystemLogLabel.AutoSize = $false
 $LegacyGUIsystemLogLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIsystemLogLabel.Height = 20
@@ -1252,7 +1249,7 @@ $LegacyGUIsystemLogLabel.Text = "System Log"
 $LegacyGUIsystemLogLabel.Width = 600
 $LegacyGUIstatusPageControls += $LegacyGUIsystemLogLabel
 
-$Variables.TextBoxSystemLog = New-Object System.Windows.Forms.TextBox
+$Variables.TextBoxSystemLog = [System.Windows.Forms.TextBox]::new()
 $Variables.TextBoxSystemLog.AutoSize = $true
 $Variables.TextBoxSystemLog.Font = [System.Drawing.Font]::new("Consolas", 9)
 $Variables.TextBoxSystemLog.HideSelection = $false
@@ -1267,12 +1264,12 @@ $LegacyGUItooltip.SetToolTip($Variables.TextBoxSystemLog, "These are the last 20
 # Earnings Page Controls
 $LegacyGUIearningsPageControls = @()
 
-$LegacyGUIearningsChart = New-Object System.Windows.Forms.DataVisualization.Charting.Chart
+$LegacyGUIearningsChart = [System.Windows.Forms.DataVisualization.Charting.Chart]::new()
 $LegacyGUIearningsChart.BackColor = [System.Drawing.Color]::FromArgb(255, 240, 240, 240)
 $LegacyGUIearningsChart.Location = [System.Drawing.Point]::new(-10, -5)
 $LegacyGUIearningsPageControls += $LegacyGUIearningsChart
 
-$LegacyGUIbalancesLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIbalancesLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIbalancesLabel.AutoSize = $false
 $LegacyGUIbalancesLabel.BringToFront()
 $LegacyGUIbalancesLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
@@ -1280,7 +1277,7 @@ $LegacyGUIbalancesLabel.Height = 20
 $LegacyGUIbalancesLabel.Width = 600
 $LegacyGUIearningsPageControls += $LegacyGUIbalancesLabel
 
-$LegacyGUIbalancesDGV = New-Object System.Windows.Forms.DataGridView
+$LegacyGUIbalancesDGV = [System.Windows.Forms.DataGridView]::new()
 $LegacyGUIbalancesDGV.AllowUserToAddRows = $false
 $LegacyGUIbalancesDGV.AllowUserToDeleteRows = $false
 $LegacyGUIbalancesDGV.AllowUserToOrderColumns = $true
@@ -1308,7 +1305,7 @@ $LegacyGUIearningsPageControls += $LegacyGUIbalancesDGV
 # Miner page Controls
 $LegacyGUIminersPageControls = @()
 
-$LegacyGUIradioButtonMinersOptimal = New-Object System.Windows.Forms.RadioButton
+$LegacyGUIradioButtonMinersOptimal = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIradioButtonMinersOptimal.AutoSize = $false
 $LegacyGUIradioButtonMinersOptimal.Checked = $true
 $LegacyGUIradioButtonMinersOptimal.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
@@ -1327,7 +1324,7 @@ $LegacyGUIradioButtonMinersOptimal.Add_Click(
 )
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonMinersOptimal, "These are all optimal miners per algorithm and device.")
 
-$LegacyGUIradioButtonMinersUnavailable = New-Object System.Windows.Forms.RadioButton
+$LegacyGUIradioButtonMinersUnavailable = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIradioButtonMinersUnavailable.AutoSize = $false
 $LegacyGUIradioButtonMinersUnavailable.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIradioButtonMinersUnavailable.Height = $LegacyGUIradioButtonMinersOptimal.Height
@@ -1345,7 +1342,7 @@ $LegacyGUIradioButtonMinersUnavailable.Add_Click(
 )
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonMinersUnavailable, "These are all unavailable miners.`rThe column 'Reason(s)' shows the filter criteria(s) that made the miner unavailable.")
 
-$LegacyGUIradioButtonMiners = New-Object System.Windows.Forms.RadioButton
+$LegacyGUIradioButtonMiners = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIradioButtonMiners.AutoSize = $false
 $LegacyGUIradioButtonMiners.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIradioButtonMiners.Height = $LegacyGUIradioButtonMinersUnavailable.Height
@@ -1363,7 +1360,7 @@ $LegacyGUIradioButtonMiners.Add_Click(
 )
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonMiners, "These are all miners.`rNote: UG-Miner will only create miners for algorithms that have at least one available pool.")
 
-$LegacyGUIminersLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIminersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIminersLabel.AutoSize = $false
 $LegacyGUIminersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIminersLabel.Height = 20
@@ -1371,7 +1368,7 @@ $LegacyGUIminersLabel.Location = [System.Drawing.Point]::new(6, 6)
 $LegacyGUIminersLabel.Width = 600
 $LegacyGUIminersPageControls += $LegacyGUIminersLabel
 
-$LegacyGUIminersPanel = New-Object System.Windows.Forms.Panel
+$LegacyGUIminersPanel = [System.Windows.Forms.Panel]::new()
 $LegacyGUIminersPanel.Height = 22
 $LegacyGUIminersPanel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIminersLabel.Height + 6))
 $LegacyGUIminersPanel.Controls.Add($LegacyGUIradioButtonMinersOptimal)
@@ -1379,7 +1376,7 @@ $LegacyGUIminersPanel.Controls.Add($LegacyGUIradioButtonMinersUnavailable)
 $LegacyGUIminersPanel.Controls.Add($LegacyGUIradioButtonMiners)
 $LegacyGUIminersPageControls += $LegacyGUIminersPanel
 
-$LegacyGUIminersDGV = New-Object System.Windows.Forms.DataGridView
+$LegacyGUIminersDGV = [System.Windows.Forms.DataGridView]::new()
 $LegacyGUIminersDGV.AllowUserToAddRows = $false
 $LegacyGUIminersDGV.AllowUserToDeleteRows = $false
 $LegacyGUIminersDGV.AllowUserToOrderColumns = $true
@@ -1418,7 +1415,7 @@ $LegacyGUIminersPageControls += $LegacyGUIminersDGV
 # Pools page Controls
 $LegacyGUIpoolsPageControls = @()
 
-$LegacyGUIradioButtonPoolsBest = New-Object System.Windows.Forms.RadioButton
+$LegacyGUIradioButtonPoolsBest = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIradioButtonPoolsBest.AutoSize = $false
 $LegacyGUIradioButtonPoolsBest.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIradioButtonPoolsBest.Height = 22
@@ -1438,7 +1435,7 @@ $LegacyGUIradioButtonPoolsBest.Add_Click(
 )
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPoolsBest, "This is the list of the best paying pool for each algorithm.")
 
-$LegacyGUIradioButtonPoolsUnavailable = New-Object System.Windows.Forms.RadioButton
+$LegacyGUIradioButtonPoolsUnavailable = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIradioButtonPoolsUnavailable.AutoSize = $false
 $LegacyGUIradioButtonPoolsUnavailable.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIradioButtonPoolsUnavailable.Height = $LegacyGUIradioButtonPoolsBest.Height
@@ -1457,7 +1454,7 @@ $LegacyGUIradioButtonPoolsUnavailable.Add_Click(
 )
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPoolsUnavailable, "This is the pool data of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
 
-$LegacyGUIradioButtonPools = New-Object System.Windows.Forms.RadioButton
+$LegacyGUIradioButtonPools = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIradioButtonPools.AutoSize = $false
 $LegacyGUIradioButtonPools.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIradioButtonPools.Height = $LegacyGUIradioButtonPoolsUnavailable.Height
@@ -1476,7 +1473,7 @@ $LegacyGUIradioButtonPools.Add_Click(
 )
 $LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPools, "This is the pool data of all configured pools.")
 
-$LegacyGUIpoolsLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIpoolsLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIpoolsLabel.AutoSize = $false
 $LegacyGUIpoolsLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIpoolsLabel.Location = [System.Drawing.Point]::new(6, 6)
@@ -1484,7 +1481,7 @@ $LegacyGUIpoolsLabel.Height = 20
 $LegacyGUIpoolsLabel.Width = 600
 $LegacyGUIpoolsPageControls += $LegacyGUIpoolsLabel
 
-$LegacyGUIpoolsPanel = New-Object System.Windows.Forms.Panel
+$LegacyGUIpoolsPanel = [System.Windows.Forms.Panel]::new()
 $LegacyGUIpoolsPanel.Height = 22
 $LegacyGUIpoolsPanel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIpoolsLabel.Height + 6))
 $LegacyGUIpoolsPanel.Controls.Add($LegacyGUIradioButtonPools)
@@ -1492,7 +1489,7 @@ $LegacyGUIpoolsPanel.Controls.Add($LegacyGUIradioButtonPoolsUnavailable)
 $LegacyGUIpoolsPanel.Controls.Add($LegacyGUIradioButtonPoolsBest)
 $LegacyGUIpoolsPageControls += $LegacyGUIpoolsPanel
 
-$LegacyGUIpoolsDGV = New-Object System.Windows.Forms.DataGridView
+$LegacyGUIpoolsDGV = [System.Windows.Forms.DataGridView]::new()
 $LegacyGUIpoolsDGV.AllowUserToAddRows = $false
 $LegacyGUIpoolsDGV.AllowUserToDeleteRows = $false
 $LegacyGUIpoolsDGV.AllowUserToOrderColumns = $true
@@ -1526,7 +1523,7 @@ $LegacyGUIpoolsPageControls += $LegacyGUIpoolsDGV
 # Monitoring Page Controls
 $LegacyGUIrigMonitorPageControls = @()
 
-$LegacyGUIworkersLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIworkersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIworkersLabel.AutoSize = $false
 $LegacyGUIworkersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIworkersLabel.Height = 20
@@ -1534,7 +1531,7 @@ $LegacyGUIworkersLabel.Location = [System.Drawing.Point]::new(6, 6)
 $LegacyGUIworkersLabel.Width = 900
 $LegacyGUIrigMonitorPageControls += $LegacyGUIworkersLabel
 
-# $LegacyGUIworkersDGV = New-Object System.Windows.Forms.DataGridView
+# $LegacyGUIworkersDGV = [System.Windows.Forms.DataGridView]::new()
 # $LegacyGUIworkersDGV.AllowUserToAddRows = $false
 # $LegacyGUIworkersDGV.AllowUserToDeleteRows = $false
 # $LegacyGUIworkersDGV.AllowUserToOrderColumns = $true
@@ -1560,7 +1557,7 @@ $LegacyGUIrigMonitorPageControls += $LegacyGUIworkersLabel
 # Set-DataGridViewDoubleBuffer -Grid $LegacyGUIworkersDGV -Enabled $true
 # $LegacyGUIrigMonitorPageControls += $LegacyGUIworkersDGV
 
-$LegacyGUIeditMonitoringLink = New-Object System.Windows.Forms.LinkLabel
+$LegacyGUIeditMonitoringLink = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIeditMonitoringLink.ActiveLinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIeditMonitoringLink.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIeditMonitoringLink.Height = 20
@@ -1568,7 +1565,7 @@ $LegacyGUIeditMonitoringLink.Location = [System.Drawing.Point]::new(6, 6)
 $LegacyGUIeditMonitoringLink.LinkColor = [System.Drawing.Color]::Blue
 $LegacyGUIeditMonitoringLink.Text = "Edit the monitoring configuration"
 $LegacyGUIeditMonitoringLink.TextAlign = "MiddleRight"
-$LegacyGUIeditMonitoringLink.Size = New-Object System.Drawing.Size(330, 26)
+$LegacyGUIeditMonitoringLink.Size = [System.Drawing.Size]::new(330, 26)
 $LegacyGUIeditMonitoringLink.Visible = $false
 $LegacyGUIeditMonitoringLink.Width = 330
 $LegacyGUIeditMonitoringLink.Add_Click({ Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/rigmonitor.html" })
@@ -1578,7 +1575,7 @@ $LegacyGUItooltip.SetToolTip($LegacyGUIeditMonitoringLink, "Click to the edit th
 # Switching Page Controls
 $LegacyGUIswitchingPageControls = @()
 
-$LegacyGUIswitchingLogLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIswitchingLogLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIswitchingLogLabel.AutoSize = $false
 $LegacyGUIswitchingLogLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIswitchingLogLabel.Height = 20
@@ -1586,7 +1583,7 @@ $LegacyGUIswitchingLogLabel.Location = [System.Drawing.Point]::new(6, 6)
 $LegacyGUIswitchingLogLabel.Width = 600
 $LegacyGUIswitchingPageControls += $LegacyGUIswitchingLogLabel
 
-$LegacyGUIswitchingLogClearButton = New-Object System.Windows.Forms.Button
+$LegacyGUIswitchingLogClearButton = [System.Windows.Forms.Button]::new()
 $LegacyGUIswitchingLogClearButton.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIswitchingLogClearButton.Height = 24
 $LegacyGUIswitchingLogClearButton.Location = [System.Drawing.Point]::new(6, ($LegacyGUIswitchingLogLabel.Height + 8))
@@ -1611,7 +1608,7 @@ $LegacyGUIswitchingLogClearButton.Add_Click(
 $LegacyGUIswitchingPageControls += $LegacyGUIswitchingLogClearButton
 $LegacyGUItooltip.SetToolTip($LegacyGUIswitchingLogClearButton, "This will clear the switching log '.\Logs\switchinglog.csv'")
 
-$LegacyGUIcheckShowSwitchingCPU = New-Object System.Windows.Forms.CheckBox
+$LegacyGUIcheckShowSwitchingCPU = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingCPU.AutoSize = $false
 $LegacyGUIcheckShowSwitchingCPU.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "CPU" }))
 $LegacyGUIcheckShowSwitchingCPU.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
@@ -1631,7 +1628,7 @@ $LegacyGUIcheckShowSwitchingCPU.ForEach(
     }
 )
 
-$LegacyGUIcheckShowSwitchingAMD = New-Object System.Windows.Forms.CheckBox
+$LegacyGUIcheckShowSwitchingAMD = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingAMD.AutoSize = $false
 $LegacyGUIcheckShowSwitchingAMD.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }))
 $LegacyGUIcheckShowSwitchingAMD.Height = 20
@@ -1651,7 +1648,7 @@ $LegacyGUIcheckShowSwitchingAMD.ForEach(
     }
 )
 
-$LegacyGUIcheckShowSwitchingINTEL = New-Object System.Windows.Forms.CheckBox
+$LegacyGUIcheckShowSwitchingINTEL = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingINTEL.AutoSize = $false
 $LegacyGUIcheckShowSwitchingINTEL.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }))
 $LegacyGUIcheckShowSwitchingINTEL.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
@@ -1671,7 +1668,7 @@ $LegacyGUIcheckShowSwitchingINTEL.ForEach(
     }
 )
 
-$LegacyGUIcheckShowSwitchingNVIDIA = New-Object System.Windows.Forms.CheckBox
+$LegacyGUIcheckShowSwitchingNVIDIA = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingNVIDIA.AutoSize = $false
 $LegacyGUIcheckShowSwitchingNVIDIA.Enabled = [Boolean]($Variables.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
 $LegacyGUIcheckShowSwitchingNVIDIA.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
@@ -1691,7 +1688,7 @@ $LegacyGUIcheckShowSwitchingNVIDIA.ForEach(
     }
 )
 
-$LegacyGUIswitchingDGV = New-Object System.Windows.Forms.DataGridView
+$LegacyGUIswitchingDGV = [System.Windows.Forms.DataGridView]::new()
 $LegacyGUIswitchingDGV.AllowUserToAddRows = $false
 $LegacyGUIswitchingDGV.AllowUserToDeleteRows = $false
 $LegacyGUIswitchingDGV.AllowUserToOrderColumns = $true
@@ -1732,7 +1729,7 @@ $LegacyGUIcheckShowSwitchingNVIDIA.Checked = $LegacyGUIcheckShowSwitchingNVIDIA.
 # Watchdog Page Controls
 $LegacyGUIwatchdogTimersPageControls = @()
 
-$LegacyGUIwatchdogTimersLabel = New-Object System.Windows.Forms.Label
+$LegacyGUIwatchdogTimersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIwatchdogTimersLabel.AutoSize = $false
 $LegacyGUIwatchdogTimersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIwatchdogTimersLabel.Height = 20
@@ -1740,7 +1737,7 @@ $LegacyGUIwatchdogTimersLabel.Location = [System.Drawing.Point]::new(6, 6)
 $LegacyGUIwatchdogTimersLabel.Width = 600
 $LegacyGUIwatchdogTimersPageControls += $LegacyGUIwatchdogTimersLabel
 
-$LegacyGUIwatchdogTimersRemoveButton = New-Object System.Windows.Forms.Button
+$LegacyGUIwatchdogTimersRemoveButton = [System.Windows.Forms.Button]::new()
 $LegacyGUIwatchdogTimersRemoveButton.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIwatchdogTimersRemoveButton.Height = 24
 $LegacyGUIwatchdogTimersRemoveButton.Location = [System.Drawing.Point]::new(6, ($LegacyGUIwatchdogTimersLabel.Height + 8))
@@ -1776,7 +1773,7 @@ $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
 $LegacyGUIwatchdogTimersPageControls += $LegacyGUIwatchdogTimersRemoveButton
 $LegacyGUItooltip.SetToolTip($LegacyGUIwatchdogTimersRemoveButton, "This will remove all watchdog timers.`rWatchdog timers will be recreated in the next cycle.")
 
-$LegacyGUIwatchdogTimersDGV = New-Object System.Windows.Forms.DataGridView
+$LegacyGUIwatchdogTimersDGV = [System.Windows.Forms.DataGridView]::new()
 $LegacyGUIwatchdogTimersDGV.AllowUserToAddRows = $false
 $LegacyGUIwatchdogTimersDGV.AllowUserToDeleteRows = $false
 $LegacyGUIwatchdogTimersDGV.AllowUserToOrderColumns = $true
@@ -1810,11 +1807,11 @@ $LegacyGUIrigMonitorPage.Controls.AddRange(@($LegacyGUIrigMonitorPageControls))
 $LegacyGUIswitchingPage.Controls.AddRange(@($LegacyGUIswitchingPageControls))
 $LegacyGUIwatchdogTimersPage.Controls.AddRange(@($LegacyGUIwatchdogTimersPageControls))
 
-$LegacyGUItabControl = New-Object System.Windows.Forms.TabControl
+$LegacyGUItabControl = [System.Windows.Forms.TabControl]::new()
 $LegacyGUItabControl.Appearance = "Buttons"
 $LegacyGUItabControl.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUItabControl.Height = 0
-$LegacyGUItabControl.Location = [System.Drawing.Point]::new(6, $LegacyGUIminingSummaryLabel.Bottom)
+$LegacyGUItabControl.Location = [System.Drawing.Point]::new(6, $LegacyGUIminingSummaryLabel.Bottom + 10)
 $LegacyGUItabControl.Name = "TabControl"
 $LegacyGUItabControl.ShowToolTips = $true
 $LegacyGUItabControl.Padding = [System.Drawing.Point]::new(18, 6)
@@ -1863,11 +1860,10 @@ $LegacyGUIform.Add_Load(
                 $LegacyGUIbuttonPause.Enabled = $true
                 $LegacyGUIbuttonStart.Enabled = $false
                 $LegacyGUIbuttonStop.Enabled = $true
-                Break
             }
         }
 
-        $TimerUI = New-Object System.Windows.Forms.Timer
+        $TimerUI = [System.Windows.Forms.Timer]::new()
         $TimerUI.Interval = 500
         $TimerUI.Add_Tick(
             { 

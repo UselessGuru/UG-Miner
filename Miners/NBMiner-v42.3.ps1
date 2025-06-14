@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
+Version:        6.4.32
 Version date:   2024/01/29
 #>
 
@@ -76,7 +76,7 @@ If ($Algorithms) {
                                     "ethstratum1"  { $Arguments += " --url stratum"; Break }
                                     "ethstratum2"  { $Arguments += " --url nicehash"; Break }
                                     "ethstratumnh" { $Arguments += " --url nicehash"; Break }
-                                    Default        { $Arguments += " --url stratum"; Break }
+                                    Default        { $Arguments += " --url stratum" }
                                 }
                                 $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else  { "+tcp://" }
                                 $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User)"

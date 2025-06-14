@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 using module .\Include.psm1
@@ -56,7 +56,8 @@ Do {
     }
     Remove-Variable FileName -ErrorAction Ignore
 
-    $Balances = [Ordered]@{ }
+    $Balances = [Ordered]@{ } # as case insensitive hash table
+
     $BalanceObjects = @()
 
     If ($Now.Date -ne [DateTime]::Today) { 
@@ -329,7 +330,7 @@ Do {
         }
 
         # Always keep pools sorted, even when new pools were added
-        $Variables.Balances = [Ordered]@{ }
+        $Variables.Balances = [Ordered]@{ } # as case insensitive hash table
         ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -notin $Config.BalancesTrackerExcludePool }) | Sort-Object).ForEach(
             { 
                 $Variables.Balances.Remove($_)

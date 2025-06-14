@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:     2025/06/11
+Version:        6.4.32
+Version date:     2025/06/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { Return }
@@ -58,7 +58,7 @@ If ($Algorithms) {
                                 "ethproxy"     { "stratum1"; Break }
                                 "ethstratum1"  { "stratum2"; Break }
                                 "ethstratum2"  { "stratum2"; Break }
-                                Default        { "stratum"; Break }
+                                Default        { "stratum" }
                             }
                             $Protocol += If ($Pool.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
 

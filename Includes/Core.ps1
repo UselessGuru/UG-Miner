@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 using module .\Include.psm1
@@ -824,7 +824,7 @@ Try {
 
             # Add reason 'Unreal profit data...' for miners with unreal earnings > x times higher than average of the next best 10% or at least 5 miners
             If ($Config.UnrealMinerEarningFactor -gt 1) { 
-                ($Miners.Where({ -not $_.Reasons.Count }) | Group-Object { [String]$_.DeviceNames }).ForEach(
+                ($Miners.Where({ -not $_.Reasons.Count -and -not $_.Benchmark}) | Group-Object { [String]$_.DeviceNames }).ForEach(
                     { 
                         If ($ReasonableEarnings = [Double]($_.Group | Sort-Object -Descending -Property Earnings_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earnings -Average).Average * $Config.UnrealMinerEarningFactor) { 
                             ($_.Group.Where({ $_.Earnings -gt $ReasonableEarnings })).ForEach(
@@ -855,6 +855,7 @@ Try {
             If ($DownloadList = @($Variables.MinersMissingPrerequisite | Select-Object @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }) + @($Variables.MinersMissingBinary | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }) | Select-Object * -Unique) { 
                 If ($Variables.Downloader.State -ne "Running") { 
                     # Download miner binaries
+                    $DownloadList = $DownloadList | Sort-Object -Unique
                     Write-Message -Level Info "Some miner binaries are missing ($($DownloadList.Count) item$(If ($DownloadList.Count -ne 1) { "s" })). Starting downloader..."
                     $DownloaderParameters = @{ 
                         Config       = $Config
@@ -875,8 +876,9 @@ Try {
                         If (Get-Command Get-NetFirewallRule) { 
                             If ($MissingFirewallRules = (Compare-Object @(Get-NetFirewallApplicationFilter | Select-Object -ExpandProperty Program -Unique) @(($Miners | Select-Object -ExpandProperty Path -Unique).ForEach({ "$PWD\$($_)" })) -PassThru).Where({ $_.SideIndicator -eq "=>" })) { 
                                 Try { 
-                                    Write-Message -Level Info "Adding inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })..."
+                                    If (-not $Variables.IsLocalAdmin) { Write-Message -Level Info "Initiating request to add inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })..." }
                                     Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })...'; Start-Sleep -Seconds 3; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json) | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' }" -replace '"', '\"') -Verb runAs
+                                    Write-Message -Level Info "Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) to Windows Defender Inbound Rules Group '$($Variables.Branding.ProductLabel)'."
                                 }
                                 Catch { 
                                     Write-Message -Level Error "Could not add inbound firewall rules. Some miners will not be available."
@@ -1092,7 +1094,7 @@ Try {
             }
 
             If ($Variables.MinersNeedingBenchmark.Count) { 
-                $Summary += "Earnings / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
+                $Summary += "Earnings / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { [String]$_.DeviceNames }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }))"
             }
             ElseIf ($Variables.MiningEarnings -gt 0) { 
                 $Summary += "Earnings / day: {0:n} {1} ({2:N$(Get-DecimalsFromValue -Value ($Variables.MiningProfit * ($Variables.MiningProfit * $Variables.Rates.BTC.$PayoutCurrency)) -DecimalsMax $Config.DecimalsMax)} {3})" -f ($Variables.MiningEarnings * $Variables.Rates.BTC.($Config.FIATcurrency)), $Config.FIATcurrency, ($Variables.MiningEarnings * $Variables.Rates.BTC.$PayoutCurrency), $PayoutCurrency
@@ -1100,7 +1102,7 @@ Try {
 
             If ($Variables.CalculatePowerCost) { 
                 If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
-                    $Summary += "    Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object { [String]$_.DeviceNames } | Sort-Object -Property Name).ForEach({ "$($_.Name): $($_.Count)" })) -join ", ")]" }))"
+                    $Summary += "    Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object { [String]$_.DeviceNames }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }))"
                 }
                 ElseIf ($Variables.MinersNeedingBenchmark.Count) { 
                     $Summary += "    Profit / day: n/a"
@@ -1354,12 +1356,12 @@ Try {
 
         ($Variables.MinersNeedingBenchmark.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
             { 
-                Write-Message -Level Info "Benchmarking for '$($_.Name)' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
+                Write-Message -Level Info "Benchmarking for '$($_.Group[0].BaseName_Version_Device -replace ".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
             }
         )
         ($Variables.MinersNeedingPowerConsumptionMeasurement.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
             { 
-                Write-Message -Level Info "Power consumption measurement for '$($_.Name)' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete measuring."
+                Write-Message -Level Info "Power consumption measurement for '$($_.Group[0].BaseName_Version_Device -replace ".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete measuring."
             }
         )
 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 using module .\Includes\Include.psm1
@@ -28,9 +28,9 @@ Param(
     [Parameter(Mandatory = $false)]
     [String[]]$Algorithm = @(), # i.e. @("Equihash1445", "Ethash", "KawPow") etc. If '+' is used, then only the explicitly enabled algorithms are used. If '-' is used, then all algorithms except the disabled ones are used. Do not combine '+' and '-' concurrently.
     [Parameter(Mandatory = $false)]
-    [String]$APILogfile = "", # API will log all requests to this file, leave empty to disable
+    [String]$APIlogfile = "", # API will log all requests to this file, leave empty to disable
     [Parameter(Mandatory = $false)]
-    [Int]$APIPort = 3999, # TCP Port for API and web GUI
+    [Int]$APIport = 3999, # TCP Port for API and web GUI
     [Parameter(Mandatory = $false)]
     [Switch]$AutoReboot = $true, # If true will reboot computer when a miner is completely dead, e.g. unresponsive
     [Parameter(Mandatory = $false)]
@@ -323,10 +323,9 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.31"
+    Version      = [System.Version]"6.4.32"
 }
 
-$Global:WscriptShell = New-Object -ComObject Wscript.Shell
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
 
 Write-Message -Level Info "Starting $($Variables.Branding.ProductLabel)® v$($Variables.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru..."
@@ -337,7 +336,7 @@ If ($PSVersiontable.PSVersion -lt [System.Version]"7.0.0") {
     Write-Host " ✖" -ForegroundColor Red
     Write-Message -Level Error "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected. $($Variables.Branding.BrandName) requires at least PWSH version 7.0.0."
     Write-Host "The recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
-    $Global:WscriptShell.Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0.`nThe recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    (New-Object -ComObject Wscript.Shell).Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Variables.Branding.BrandName) requires at least PWSH version 7.0.0.`nThe recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 Write-Host " ✔  (running PWSH version $($PSVersionTable.PSVersion)" -ForegroundColor Green -NoNewLine
@@ -358,7 +357,7 @@ While (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Comma
         [Console]::SetCursorPosition(55, $CursorPosition.y)
         Write-Host " ✖    " -ForegroundColor Red
         Write-Message -Level Error "Another instance of $($Variables.Branding.ProductLabel) is still running. Cannot continue!"
-        $Global:WscriptShell.Popup("Another instance of $($Variables.Branding.ProductLabel) is still running.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("Another instance of $($Variables.Branding.ProductLabel) is still running.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Exit
     }
 }
@@ -370,7 +369,7 @@ If ($Loops -ne 20 -and $Loops -ne $null) {
 Remove-Variable Loops
 
 # Convert command line parameters syntax
-$Variables.AllCommandLineParameters = [Ordered]@{ }
+$Variables.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash table
 ($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
     { 
         If ($MyInvocation.MyCommandLineParameters.$_ -is [Switch]) { 
@@ -425,7 +424,7 @@ $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $Ne
 If (-not $Variables.MyIP) { 
     Write-Host " ✖" -ForegroundColor Red
     Write-Message -Level Error "Terminating Error - no internet connection. $($Variables.Branding.ProductLabel) will shut down."
-    $Global:WscriptShell.Popup("No internet connection`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    (New-Object -ComObject Wscript.Shell).Popup("No internet connection`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 Write-Host " ✔  (IP address: $($Variables.MyIP))" -ForegroundColor Green
@@ -436,7 +435,7 @@ If ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") {
     [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
     Write-Host " ✖" -ForegroundColor Red
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) requires at least Windows 10. $($Variables.Branding.ProductLabel) will shut down."
-    $Global:WscriptShell.Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    (New-Object -ComObject Wscript.Shell).Popup("$($Variables.Branding.ProductLabel) requires at least Windows 10.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 $Prerequisites = @(
@@ -452,7 +451,7 @@ If ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath 
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
     Write-Message -Level Error "and run 'install_all.bat' (Admin rights are required)."
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
-    $Global:WscriptShell.Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    (New-Object -ComObject Wscript.Shell).Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 Remove-Variable Prerequisites, PrerequisitesMissing
@@ -461,7 +460,7 @@ If (-not (Get-Command Get-PnpDevice)) {
     [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
     Write-Host " ✖" -ForegroundColor Red
     Write-Message -Level Error "Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules from https://www.microsoft.com/en-us/download/details.aspx?id=54616. $($Variables.Branding.ProductLabel) will shut down."
-    $Global:WscriptShell.Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    (New-Object -ComObject Wscript.Shell).Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 $CursorPosition = $Host.UI.RawUI.CursorPosition
@@ -487,7 +486,7 @@ If ($Variables.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpCom
         [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
         Write-Host " ✖" -ForegroundColor Red
         Write-Message -Level Error "Could not exclude the directory '$PWD' from Microsoft Defender Antivirus scans. $($Variables.Branding.ProductLabel) will shut down."
-        $Global:WscriptShell.Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis would lead to unpredictable results.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis would lead to unpredictable results.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Exit
     }
     # Unblock files
@@ -581,7 +580,7 @@ $Variables.Devices = Get-Device
 If ($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion -and (Get-Item -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors).Property -notlike "*\amdocl64.dll") { 
     Write-Message -Level Error "OpenCL driver installation for AMD GPU devices is incomplete"
     Write-Message -Level Error "Please create the missing registry key as described in https://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143. $($Variables.Branding.ProductLabel) will shut down."
-    $Global:WscriptShell.Popup("The OpenCL driver installation for AMD GPU devices is incomplete.`nPlease create the missing registry key as described here:`n`nhttps://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    (New-Object -ComObject Wscript.Shell).Popup("The OpenCL driver installation for AMD GPU devices is incomplete.`nPlease create the missing registry key as described here:`n`nhttps://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
 
@@ -718,7 +717,6 @@ Function MainLoop {
                         $Variables.Summary = $Message
                         Remove-Variable Message
                     }
-
                     Break
                 }
                 "Paused" { 
@@ -758,7 +756,6 @@ Function MainLoop {
                     )
                     $Variables.Summary = $Message
                     Remove-Variable Message
-
                     Break
                 }
                 "Running" { 
@@ -786,7 +783,6 @@ Function MainLoop {
                         $LegacyGUIbuttonPause.Enabled = $true
                         $LegacyGUIbuttonStop.Enabled = $true
                     }
-
                     Break
                 }
             }
@@ -1137,7 +1133,7 @@ Function MainLoop {
                                     $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
                                 }
                                 ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.Best }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
-                                Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].DeviceNames -join ",") [$(($Variables.EnabledDevices.Where({ $MinersDeviceGroup[0].DeviceNames -contains $_.Name })).Model -join ", ")]" } } -AutoSize | Out-Host
+                                Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].BaseName_Version_Device -replace ".+-")" } } -AutoSize | Out-Host
                         }
                     )
                     Remove-Variable Bias, MinerTable, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
@@ -1151,8 +1147,8 @@ Function MainLoop {
                         @{ Label = "Hashrate(s)"; Expression = { $_.Hashrates_Live.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }; Align = "right" }
                         @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
-                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
-                        @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } }
+                        @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never"; Break } 1 { "Once"; Break } Default { $_ } } } }
+                        @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
                     $Variables.MinersBest | Sort-Object -Property { [String]$_.DeviceNames } | Format-Table $MinerTable -Wrap | Out-Host
@@ -1171,8 +1167,8 @@ Function MainLoop {
                             @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & " }; Align = "right" }
                             @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                             @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
-                            @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
-                            @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } }
+                            @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never"; Break } 1 { "Once"; Break } Default { $_ } } } }
+                            @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
                             @{ Label = "Command"; Expression = { $_.CommandLine } }
                         )
                         $ProcessesIdle | Sort-Object -Property EndTime -Descending | Format-Table $MinerTable -Wrap | Out-Host
@@ -1188,8 +1184,8 @@ Function MainLoop {
                             @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & " }; Align = "right" }
                             @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                             @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
-                            @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never" } 1 { "Once" } Default { $_ } } } }
-                            @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } }
+                            @{ Label = "Cnt"; Expression = { Switch ($_.Activated) { 0 { "Never"; Break } 1 { "Once"; Break } Default { $_ } } } }
+                            @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
                             @{ Label = "Command"; Expression = { $_.CommandLine } }
                         )
                         $ProcessesFailed | Sort-Object { If ($_.EndTime) { $_.EndTime } Else { [DateTime]0 } } | Format-Table $MinerTable -Wrap | Out-Host
@@ -1203,7 +1199,7 @@ Function MainLoop {
                             @{ Label = "Miner watchdog timer"; Expression = { $_.MinerName } },
                             @{ Label = "Pool"; Expression = { $_.PoolName } },
                             @{ Label = "Algorithm"; Expression = { $_.Algorithm } },
-                            @{ Label = "Device(s)"; Expression = { $_.DeviceNames -join "," } },
+                            @{ Label = "Device(s)"; Expression = { $_.MinerBaseName_Version_Device -replace ".+-" } },
                             @{ Label = "Last updated"; Expression = { "{0:mm} min {0:ss} sec ago" -f ([DateTime]::Now.ToUniversalTime() - $_.Kicked) }; Align = "right" }
                         ) | Out-Host
                     }
@@ -1212,12 +1208,12 @@ Function MainLoop {
                 If ($Variables.MiningStatus -eq "Running") { 
                     ($Variables.MinersNeedingBenchmark.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
                         { 
-                            Write-Host -ForegroundColor DarkYellow "Benchmarking for '$($_.Name)' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
+                            Write-Host -ForegroundColor DarkYellow "Benchmarking for '$($_.Group[0].BaseName_Version_Device -replace".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
                         }
                     )
                     ($Variables.MinersNeedingPowerConsumptionMeasurement.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
                         { 
-                            Write-Host -ForegroundColor DarkYellow "Power consumption measurement for '$($_.Name)' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete measuring."
+                            Write-Host -ForegroundColor DarkYellow "Power consumption measurement for '$($_.Group[0].BaseName_Version_Device -replace ".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete measuring."
                         }
                     )
                     If ($Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement -and $Variables.UIStyle -ne "full") { 
@@ -1260,12 +1256,12 @@ If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) {
         Write-Host ""
         Write-Message -Level Warn "No configuration file found. Edit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
         $Variables.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
-        $Global:WscriptShell.Popup("No configuration file found.`n`nEdit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", (4096 + 48)) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No configuration file found.`n`nEdit and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Variables.Branding.ProductLabel) v$($Variables.Branding.Version)", (4096 + 48)) | Out-Null
     }
     Else { 
         Write-Message -Level Warn "Configuration has changed during update. Verify and save your configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html)"
         $Variables.Summary = "Verify your settings and save the configuration.<br>Then click the 'Start mining' button."
-        $Global:WscriptShell.Popup("The configuration has changed during update:`n`n$($Variables.ConfigurationHasChangedDuringUpdate -join $nl)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Variables.Branding.ProductLabel) v$($Variables.Branding.Version) - configuration has changed", (4096 + 64)) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("The configuration has changed during update:`n`n$($Variables.ConfigurationHasChangedDuringUpdate -join $nl)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Variables.Branding.ProductLabel) v$($Variables.Branding.Version) - configuration has changed", (4096 + 64)) | Out-Null
     }
 }
 

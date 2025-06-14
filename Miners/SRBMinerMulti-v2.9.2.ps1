@@ -17,22 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/2.9.0/SRBMiner-Multi-2-9-0-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/2.9.2/SRBMiner-Multi-2-9-2-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Added algorithm 'evohash' (EvoAI coin) for CPU mining, fee 1.0%
-# Minor performance/efficiency improvement for algorithm 'sha3x'
-# Lowered devfee on algorithm 'sha3x' to ONLY 0.65%
-# Removed algorithm 'cryptixhash'
-
+# Performance/efficiency improvements for algorithm 'sha3x' on AMD and NVIDIA GPU's
+# Performance/efficiency improvements for DUAL mining FISHHASH/SHA3X on AMD RDNA and NVIDIA GPU's
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
@@ -308,7 +305,7 @@ If ($Algorithms) {
                                             "ethproxy"     { $Arguments += " --esm 0"; Break }
                                             "ethstratum1"  { $Arguments += " --esm 1"; Break }
                                             "ethstratum2"  { $Arguments += " --esm 2"; Break }
-                                            "ethstratumnh" { $Arguments += " --esm 2"; Break }
+                                            "ethstratumnh" { $Arguments += " --esm 2" }
                                         }
                                         $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
                                         $Arguments += " --password $($Pool.Pass)"

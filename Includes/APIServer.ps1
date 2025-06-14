@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.4.31
-Version date:   2025/06/11
+Version:        6.4.32
+Version date:   2025/06/14
 #>
 
 using module .\Include.psm1
@@ -46,7 +46,7 @@ $MIMEtypes = @{
 }
 
 # Setup the listener
-$Server = New-Object System.Net.HttpListener
+$Server = [System.Net.HttpListener]::new()
 
 # Listening on anything other than localhost requires admin privileges
 $Server.Prefixes.Add("http://localhost:$($Config.APIport)/")
@@ -479,7 +479,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                             $_.Activated = 0 # To allow 3 attempts
                             $_.Available = $true
                             $_.Benchmark = $true
-                            $_.Data = New-Object System.Collections.Generic.HashSet[PSCustomObject]
+                            $_.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
                             $_.Disabled = $false
                             $_.Earnings_Accuracy = [Double]::NaN
                             $Data += $_.Name

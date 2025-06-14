@@ -16,8 +16,8 @@ function formatMiners(data) {
       }
     }
 
-    // Format the device(s)
-    item.Devices = formatArrayAsSortedString(item.DeviceNames);
+    // Format the device name
+    item.Devices = formatDeviceNames(item.BaseName_Version_Device);
 
     // Format the pool and algorithm data
     item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
@@ -89,6 +89,12 @@ function formatPools(data) {
   });
   return data;
 }
+
+function formatDeviceNames(value) { 
+  if (value === '') return 'Unknown';
+  if (value == null) return 'Unknown';
+  return value.replace(/.+-/, "")
+};
 
 function formatTimeSpan(timespan) {
   var duration = '';

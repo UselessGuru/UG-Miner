@@ -102,7 +102,7 @@ Function Get-RegTime {
 
     $Reg = Get-Item $RegistryPath -Force
     If ($Reg.handle) { 
-        $Time = New-Object System.Runtime.InteropServices.ComTypes.FILETIME
+        $Time = [System.Runtime.InteropServices.ComTypes.FILETIME]::new()
         $Result = $RegData::RegQueryInfoKey($Reg.Handle, $null, 0, 0, 0, 0, 0, 0, 0, 0, 0, [ref]$Time)
         If ($Result -eq 0) { 
             $Low = [UInt32]0 -bor $Time.dwLowDateTime
@@ -444,7 +444,7 @@ Class Miner : IDisposable {
             Benchmark               = $this.Benchmark
             CommandLine             = $this.CommandLine
             Cycle                   = ""
-            DeviceNames             = $this.DeviceNames -join ";"
+            DeviceNames             = $this.BaseName_Version_Device -replace ".+-"
             Duration                = ""
             Earnings                = $this.Earnings
             Earnings_Bias           = $this.Earnings_Bias
@@ -530,7 +530,7 @@ Class Miner : IDisposable {
             Benchmark               = $this.Benchmark
             CommandLine             = $this.CommandLine
             Cycle                   = $this.ContinousCycle
-            DeviceNames             = $this.DeviceNames -join " "
+            DeviceNames             = $this.BaseName_Version_Device -replace ".+-"
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
             Earnings                = $this.Earnings
             Earnings_Bias           = $this.Earnings_Bias
@@ -1139,7 +1139,7 @@ Function Write-Message {
         [String]$Level = "Info"
     )
 
-    $Message = $Message -replace "<br>", " " -replace "&ensp;", " "
+    $Message = $Message -replace "(?:<br>)+|(?:&ensp;)+", " "
 
     # Make sure we are in main script
     If ($Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level)) { 
@@ -1198,7 +1198,7 @@ Function Write-Message {
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_Write-Message")
+        $Mutex = [System.Threading.Mutex]::new($false, "$($Variables.Branding.ProductLabel)_Write-Message")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary
         If ($Mutex.WaitOne(1000)) { 
@@ -1346,7 +1346,7 @@ Function Get-RandomDonationPoolsConfig {
     # Build pool config with available donation data, not all devs have the same set of wallets available
 
     $Variables.DonationRandom = $Variables.DonationData | Get-Random
-    $DonationRandomPoolsConfig = [Ordered]@{ }
+    $DonationRandomPoolsConfig = [Ordered]@{ } # as case insensitive hash table
     ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).Where({ $Variables.DonationRandom.PoolName -contains $_ }).ForEach(
         { 
             $PoolConfig = $Config.PoolsConfig[$_] | ConvertTo-Json -Depth 99 -Compress | ConvertFrom-Json -AsHashtable
@@ -1416,7 +1416,7 @@ Function Read-Config {
             $Variables.PoolVariants = @(($Variables.PoolBaseNames.ForEach({ $Variables.PoolData.$_.Variant.psBase.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
             If (-not $Variables.PoolVariants) { 
                 Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-                $Global:WscriptShell.Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+                (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\PoolData.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
                 Exit
             }
         }
@@ -1451,7 +1451,7 @@ Function Read-Config {
                     Switch ($PoolName) { 
                         "HiveON" { 
                             If (-not $PoolConfig.Wallets) { 
-                                $PoolConfig.Wallets = [Ordered]@{ }
+                                $PoolConfig.Wallets = [Ordered]@{ } # as case insensitive hash table
                                 $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach({ $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_ })
                             }
                             Break
@@ -1466,7 +1466,7 @@ Function Read-Config {
                             Break
                         }
                         "NiceHash" { 
-                            If ($ConfigFromFile.NiceHashWallet) { $PoolConfig.Wallets = [Ordered]@{ "BTC" = $ConfigFromFile.NiceHashWallet } }
+                            If ($ConfigFromFile.NiceHashWallet) { $PoolConfig.Wallets = @{ "BTC" = $ConfigFromFile.NiceHashWallet } }
                             Break
                         }
                         "ProHashing" { 
@@ -1549,7 +1549,7 @@ Function Read-Config {
             $Variables.PoolsConfigFileReadTimestamp = (Get-Item -Path $Variables.PoolsConfigFile).LastWriteTime
         }
         Catch { 
-            $Variables.PoolsConfigData = [Ordered]@{ }
+            $Variables.PoolsConfigData = [Ordered]@{ } # as case insensitive hash table
             Write-Message -Level Warn "Pools configuration file '$($Variables.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt. Will use default values."
             $Variables.Remove("PoolsConfigFileReadTimestamp")
         }
@@ -1561,7 +1561,7 @@ Function Read-Config {
     $ConfigFromFile.PoolsConfig = Get-PoolsConfig
 
     # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
-    $ConfigFromFile.psBase.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
+    ($ConfigFromFile.psBase.Keys | Sort-Object).ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
 
     $Variables.ShowAllMiners = $Config.ShowAllMiners
     $Variables.ShowPoolBalances = $Config.ShowPoolBalances
@@ -1585,8 +1585,8 @@ Function Read-Config {
     $Variables.ConfigReadTimestamp = [DateTime]::Now.ToUniversalTime()
 
     # Write config file in case they do not exist already
-    If (-not (Test-Path -LiteralPath $Variables.ConfigFile -PathType Leaf)) { 
-        If (-not $Variables.FreshConfig) { 
+    If (-not $Variables.FreshConfig) { 
+        If (-not (Test-Path -LiteralPath $Variables.ConfigFile -PathType Leaf)) { 
             [Void](Write-Config -Config $Config)
             $Variables.ConfigFileReadTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
         }
@@ -1829,9 +1829,10 @@ Function Get-SortedObject {
                     Else { $SortedObject | Add-Member $_ $Object.$_ }
                 }
             )
+            Break
         }
         "Hashtable|OrderedDictionary|SyncHashtable" { 
-            $SortedObject = [Ordered]@{ }
+            $SortedObject = [Ordered]@{ } # as case insensitve hashtable
             ($Object.GetEnumerator().Name | Sort-Object).ForEach(
                 { 
                     If ($Object[$_] -is [Hashtable] -or $Object[$_] -is [PSCustomObject]) { $SortedObject[$_] = Get-SortedObject $Object[$_] }
@@ -1839,6 +1840,7 @@ Function Get-SortedObject {
                     Else { $SortedObject[$_] = $Object[$_] }
                 }
             )
+            Break
         }
         Default { 
             $SortedObject = $Object | Sort-Object
@@ -2380,11 +2382,11 @@ Function Get-Device {
                     Bus       = $null
                     Vendor    = $(
                         Switch -Regex ($Device_CIM.Manufacturer) { 
-                            "Advanced Micro Devices" { "AMD" }
-                            "AMD"                    { "AMD" }
-                            "Intel"                  { "INTEL" }
-                            "NVIDIA"                 { "NVIDIA" }
-                            "Microsoft"              { "MICROSOFT" }
+                            "Advanced Micro Devices" { "AMD"; Break }
+                            "AMD"                    { "AMD"; Break }
+                            "Intel"                  { "INTEL"; Break }
+                            "NVIDIA"                 { "NVIDIA"; Break }
+                            "Microsoft"              { "MICROSOFT"; Break }
                             Default                  { $Device_CIM.Manufacturer -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
@@ -2398,7 +2400,7 @@ Function Get-Device {
                 $Device.Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
 
                 $Device.Name  = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
-                $Device.Model = (($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor) -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel"-replace "^\s*" -replace "[^ A-Z0-9\.]" -replace "\s+", " " -replace "\s*$"
+                $Device.Model = (($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "@" -notmatch ".*[MG]Hz") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel"-replace "^\s*" -replace "[^ A-Z0-9\.]" -replace "\s+", " " -replace "\s*$"
 
                 If (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
 
@@ -2437,11 +2439,11 @@ Function Get-Device {
                     )
                     Vendor    = $(
                         Switch -Regex ([String]$Device_CIM.AdapterCompatibility) { 
-                            "Advanced Micro Devices" { "AMD" }
-                            "AMD"                    { "AMD" }
-                            "Intel"                  { "INTEL" }
-                            "NVIDIA"                 { "NVIDIA" }
-                            "Microsoft"              { "MICROSOFT" }
+                            "Advanced Micro Devices" { "AMD"; Break }
+                            "AMD"                    { "AMD"; Break }
+                            "Intel"                  { "INTEL"; Break }
+                            "NVIDIA"                 { "NVIDIA"; Break }
+                            "Microsoft"              { "MICROSOFT"; Break }
                             Default                  { $Device_CIM.AdapterCompatibility -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
@@ -2496,8 +2498,8 @@ Function Get-Device {
                             Model     = $Device_OpenCL.Name
                             Type      = $(
                                 Switch -Regex ([String]$Device_OpenCL.Type) { 
-                                    "CPU"   { "CPU" }
-                                    "GPU"   { "GPU" }
+                                    "CPU"   { "CPU"; Break }
+                                    "GPU"   { "GPU"; Break }
                                     Default { [String]$Device_OpenCL.Type -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                                 }
                             )
@@ -2508,11 +2510,11 @@ Function Get-Device {
                             )
                             Vendor = $(
                                 Switch -Regex ([String]$Device_OpenCL.Vendor) { 
-                                    "Advanced Micro Devices" { "AMD" }
-                                    "AMD"                    { "AMD" }
-                                    "Intel"                  { "INTEL" }
-                                    "NVIDIA"                 { "NVIDIA" }
-                                    "Microsoft"              { "MICROSOFT" }
+                                    "Advanced Micro Devices" { "AMD"; Break }
+                                    "AMD"                    { "AMD"; Break }
+                                    "Intel"                  { "INTEL"; Break }
+                                    "NVIDIA"                 { "NVIDIA"; Break }
+                                    "Microsoft"              { "MICROSOFT"; Break }
                                     Default                  { [String]$Device_OpenCL.Vendor -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                                 }
                             )
@@ -2634,7 +2636,7 @@ Filter ConvertTo-Hash {
 Function Get-DecimalsFromValue { 
     # Used to limit absolute length of number
     # The larger the value, the less decimal digits are returned
-    # Maximal $DecimalsMax decimals are returned
+    # Maximal $DecimalsMax are returned
 
     Param (
         [Parameter(Mandatory = $true)]
@@ -2643,10 +2645,7 @@ Function Get-DecimalsFromValue {
         [Int]$DecimalsMax
     )
 
-    $Decimals = 1 + $DecimalsMax - [Math]::Floor([Math]::Abs($Value)).ToString().Length
-    If ($Decimals -gt $DecimalsMax) { $Decimals = 0 }
-
-    Return $Decimals
+    Return [Math]::Max($DecimalsMax - [Math]::Floor([Math]::Abs($Value)).ToString().Length + 1, 0)
 }
 
 Function Get-Combination { 
@@ -2759,7 +2758,7 @@ public static class Kernel32
         $ShowWindow = Switch ($WindowStyle) { 
             "hidden" { "0x0000"; Break } # SW_HIDE
             "normal" { "0x0001"; Break } # SW_SHOWNORMAL
-            Default  { "0x0007"; Break } # SW_SHOWMINNOACTIVE
+            Default  { "0x0007" } # SW_SHOWMINNOACTIVE
         }
 
         # Set local environment
@@ -2767,21 +2766,21 @@ public static class Kernel32
         ($EnvBlock | Select-Object).ForEach({ New-Item -Path "Env:$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force | Out-Null })
 
         # StartupInfo struct
-        $StartupInfo = New-Object STARTUPINFO
+        $StartupInfo = [STARTUPINFO]::new()
         $StartupInfo.dwFlags = $StartF # StartupInfo.dwFlag
         $StartupInfo.wShowWindow = $ShowWindow # StartupInfo.ShowWindow
         $StartupInfo.lpTitle = $StatusInfo
         $StartupInfo.cb = [System.Runtime.InteropServices.Marshal]::SizeOf($StartupInfo) # Struct size
 
         # SECURITY_ATTRIBUTES Struct (Process & Thread)
-        $SecAttr = New-Object SECURITY_ATTRIBUTES
+        $SecAttr = [SECURITY_ATTRIBUTES]::new()
         $SecAttr.Length = [System.Runtime.InteropServices.Marshal]::SizeOf($SecAttr)
 
         # CreateProcess --> lpCurrentDirectory
         If (-not $WorkingDirectory) { $WorkingDirectory = [IntPtr]::Zero }
 
         # ProcessInfo struct
-        $ProcessInfo = New-Object PROCESS_INFORMATION
+        $ProcessInfo = [PROCESS_INFORMATION]::new()
 
         # Force to use conhost, sometimes miners would get started using windows terminal
         $ConHost = "$($ENV:SystemRoot)\System32\conhost.exe"
@@ -2925,7 +2924,7 @@ Function Add-CoinName {
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_DataFiles")
+        $Mutex = [System.Threading.Mutex]::new($false, "$($Variables.Branding.ProductLabel)_DataFiles")
 
         If (-not $Variables.CurrencyAlgorithm[$Currency]) { 
             $Variables.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
@@ -2962,7 +2961,7 @@ Function Get-AlgorithmFromCurrency {
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = New-Object System.Threading.Mutex($false, "$($Variables.Branding.ProductLabel)_DataFiles")
+        $Mutex = [System.Threading.Mutex]::new($false, "$($Variables.Branding.ProductLabel)_DataFiles")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the coin names file and release mutex
         If ($Mutex.WaitOne(1000)) { 
@@ -3074,17 +3073,18 @@ Function Initialize-Autoupdate {
     $UpdateLog = ".\Logs\AutoUpdateLog_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
 
     # Download update script
+    $CursorPosition = $Host.UI.RawUI.CursorPosition
     "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
     Try { 
         Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
-        $CursorPosition = $Host.UI.RawUI.CursorPosition
-        [Console]::SetCursorPosition(55, $CursorPosition.y)
-        Write-Host " ✔    " -ForegroundColor Green
-        $CursorPosition = $Host.UI.RawUI.CursorPosition
+        [Console]::SetCursorPosition(29, $CursorPosition.y)
+        Write-Host " ✔" -ForegroundColor Green
         "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
         . $UpdateScript
     }
     Catch { 
+        [Console]::SetCursorPosition(29, $CursorPosition.y)
+        Write-Host " ✖" -ForegroundColor Red
         "Downloading update script failed. Cannot complete auto-update :-(" | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Error
     }
 }
@@ -3665,7 +3665,7 @@ Function Get-DAGepoch {
     )
 
     Switch ($Algorithm) { 
-        "Autolykos2" { $BlockHeight -= 416768 } # Epoch 0 starts @ 417792
+        "Autolykos2" { $BlockHeight -= 416768; Break } # Epoch 0 starts @ 417792
         "FishHash"   { Return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
         "PhiHash"    { Return [math]::Floor(((Get-Date) - [DateTime]::ParseExact("11/06/2023", "MM/dd/yyyy", $null)).TotalDays / 365.25) -1 }
         Default      { }
@@ -3708,7 +3708,7 @@ Function Out-DataTable {
     )
 
     Begin { 
-        $DataTable = New-Object Data.DataTable
+        $DataTable = [Data.DataTable]::new()
         $First = $true
     }
     Process { 
@@ -3716,7 +3716,7 @@ Function Out-DataTable {
             $DataRow = $DataTable.NewRow()
             ForEach ($Property in $Object.PSObject.Properties) { 
                 If ($First) { 
-                    $Col = New-Object Data.DataColumn
+                    $Col = [Data.DataColumn]::new()
                     $Col.ColumnName = $Property.Name.ToString()
                     $DataTable.Columns.Add($Col)
                 }
@@ -3803,42 +3803,42 @@ Function Initialize-Environment {
     # Check if all required files are present
     If (-not (Get-ChildItem -LiteralPath $PWD\Balances)) { 
         Write-Error "Terminating error - cannot continue! No files in folder '\Balances'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\Balances'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Brains)) { 
         Write-Error "Terminating error - cannot continue! No files in folder '\Brains'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\Brains'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Data)) { 
         Write-Error "Terminating error - cannot continue! No files in folder '\Data'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\Data'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Miners)) { 
         Write-Error "Terminating error - cannot continue! No files in folder '\Miners'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\Miners'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Pools)) { 
         Write-Error "Terminating error - cannot continue! No files in folder '\Pools'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\Pools'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
     If (-not (Get-ChildItem -LiteralPath $PWD\Web)) { 
         Write-Error "Terminating error - cannot continue! No files in folder '\Web'. Please restore the folder from your original download."
-        $Global:WscriptShell.Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\Web'.`nPlease restore the folder from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3848,7 +3848,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\DonationData.json") { $Variables.DonationData = [System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -NoEnumerate }
     If (-not $Variables.DonationData) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3865,7 +3865,7 @@ Function Initialize-Environment {
     iF (Test-Path -LiteralPath "$PWD\Data\Algorithms.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Algorithms[$_.Name] = $_.Value }) }
     If (-not $Variables.Algorithms.Keys) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3876,7 +3876,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\CoinNames.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CoinNames[$_.Name] = $_.Value }) }
     If (-not $Variables.CoinNames.Keys) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3887,7 +3887,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\CurrencyAlgorithm.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.CurrencyAlgorithm[$_.Name] = $_.Value }) }
     If (-not $Variables.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3906,11 +3906,12 @@ Function Initialize-Environment {
     Write-Host "Loaded algorithm & coin database."
 
     # Load regions list
-    $Variables.Regions = [Ordered]@{ } # as case insensitive hash table
+   $Variables.Regions = [Ordered]@{ } # as case insensitive hash table
+    # $Variables.Regions = [Ordered]@{ } # as case insensitive hash table
     If (Test-Path -LiteralPath "$PWD\Data\Regions.json") { (([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.Regions[$_.Name] = @($_.Value) }) }
     If (-not $Variables.Regions.Keys) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3921,7 +3922,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\FIATcurrencies.json") { $Variables.FIATcurrencies = [System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject }
     If (-not $Variables.FIATcurrencies) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3932,7 +3933,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\UnprofitableAlgorithms.json") { $Variables.UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable | Get-SortedObject }
     If (-not $Variables.UnprofitableAlgorithms.Count) { 
         Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3943,7 +3944,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\DAGdata.json" ) { $Variables.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject }
     If (-not $Variables.DAGdata) { 
         Write-Error "Error loading list of DAG data. File '.\Data\DAGdata.json' is not a valid $($Variables.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3972,7 +3973,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureNvidia.json") { $Variables.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore }
     If (-not $Variables.GPUArchitectureDbNvidia) { 
         Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -3983,7 +3984,7 @@ Function Initialize-Environment {
     If (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureAMD.json") { $Variables.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore }
     If (-not $Variables.GPUArchitectureDbAMD) { 
         Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
-        $Global:WscriptShell.Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
@@ -4001,59 +4002,56 @@ Function Start-APIserver {
 
     If (-not $Global:APIrunspace) { 
 
-        $TCPclient = New-Object -TypeName System.Net.Sockets.TCPClient
+        $TCPclient = [System.Net.Sockets.TCPClient]::new()
         $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Config.APIport, $null, $null)
         If ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
             Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport). Port is in use."
-            [Void]$TCPclient.EndConnect($AsyncResult)
             [Void]$TCPclient.Dispose()
-            Remove-Variable AsyncResult, TCPClient
+
+            Return
         }
-        Else { 
-            [Void]$TCPclient.Dispose()
-            Remove-Variable AsyncResult, TCPClient
+        Remove-Variable AsyncResult, TCPClient
 
-            # Setup runspace to launch the API server in a separate thread
-            $Global:APIrunspace = [RunspaceFactory]::CreateRunspace()
-            $Global:APIrunspace.ApartmentState = "STA"
-            $Global:APIrunspace.Name = "APIServer"
-            $Global:APIrunspace.ThreadOptions = "ReuseThread"
-            $Global:APIrunspace.Open()
+        # Setup runspace to launch the API server in a separate thread
+        $Global:APIrunspace = [RunspaceFactory]::CreateRunspace()
+        $Global:APIrunspace.ApartmentState = "STA"
+        $Global:APIrunspace.Name = "APIServer"
+        $Global:APIrunspace.ThreadOptions = "ReuseThread"
+        $Global:APIrunspace.Open()
 
-            $Global:APIrunspace.SessionStateProxy.SetVariable("Config", $Config)
-            $Global:APIrunspace.SessionStateProxy.SetVariable("Stats", $Stats)
-            $Global:APIrunspace.SessionStateProxy.SetVariable("Variables", $Variables)
-            [Void]$Global:APIrunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
+        $Global:APIrunspace.SessionStateProxy.SetVariable("Config", $Config)
+        $Global:APIrunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+        $Global:APIrunspace.SessionStateProxy.SetVariable("Variables", $Variables)
+        [Void]$Global:APIrunspace.SessionStateProxy.Path.SetLocation($Variables.MainPath)
 
-            $PowerShell = [PowerShell]::Create()
-            $PowerShell.Runspace = $Global:APIrunspace
-            [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\APIServer.ps1")
-            $Global:APIrunspace | Add-Member PowerShell $PowerShell
+        $PowerShell = [PowerShell]::Create()
+        $PowerShell.Runspace = $Global:APIrunspace
+        [Void]$Powershell.AddScript("$($Variables.MainPath)\Includes\APIserver.ps1")
+        $Global:APIrunspace | Add-Member PowerShell $PowerShell
 
-            # Initialize API and web GUI
-            Write-Message -Level Verbose "Initializing API and web GUI on 'http://localhost:$($Config.APIport)'..."
-            $Global:APIrunspace | Add-Member Job ($Global:APIrunspace.PowerShell.BeginInvoke())
-            $Global:APIrunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
+        # Initialize API and web GUI
+        Write-Message -Level Verbose "Initializing API and web GUI on 'http://localhost:$($Config.APIport)'..."
+        $Global:APIrunspace | Add-Member Job ($Global:APIrunspace.PowerShell.BeginInvoke())
+        $Global:APIrunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
 
-            # Wait for API to get ready
-            $RetryCount = 3
-            While (-not ($Variables.APIVersion) -and $RetryCount -gt 0) { 
-                Start-Sleep -Seconds 1
-                Try { 
-                    If ($Variables.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
-                        $Variables.APIport = $Config.APIport
-                        If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Variables.APIVersion)) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore }
-                        Write-Message -Level Info "API and web GUI is running on http://localhost:$($Variables.APIport)."
-                        # Start Web GUI (show configuration edit if no existing config)
-                        If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIport)$(If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
-                        Break
-                    }
+        # Wait for API to get ready
+        $RetryCount = 3
+        While (-not ($Variables.APIVersion) -and $RetryCount -gt 0) { 
+            Start-Sleep -Seconds 1
+            Try { 
+                If ($Variables.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
+                    $Variables.APIport = $Config.APIport
+                    If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Variables.APIVersion)) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore }
+                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Variables.APIport)."
+                    # Start Web GUI (show configuration edit if no existing config)
+                    If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIport)$(If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
+                    Break
                 }
-                Catch { }
-                $RetryCount--
             }
-            If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport)." }
+            Catch { }
+            $RetryCount--
         }
+        If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport)." }
     }
 }
 
