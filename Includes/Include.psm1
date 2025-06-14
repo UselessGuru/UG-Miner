@@ -3035,14 +3035,20 @@ Function Get-Version {
             If ($UpdateVersion.AutoUpdate) { 
                 If ($Config.AutoUpdate) { 
                     Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Starting update..."
+                    [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+                    Write-Host " ✔" -ForegroundColor Green
                     [Void](Initialize-Autoupdate -UpdateVersion $UpdateVersion)
                 }
                 Else { 
                     Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
+                    [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+                    Write-Host " ✔" -ForegroundColor Green
                 }
             }
             Else { 
                 Write-Message -Level Verbose "Version checker: New version is available. $($UpdateVersion.Version) does not support auto-update. You must update manually."
+                [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+                Write-Host " ✔" -ForegroundColor Green
             }
             If ($Config.ShowChangeLog) { 
                 Start-Process "https://github.com/UselessGuru/UG-Miner/releases/tag/v$($UpdateVersion.Version)"
@@ -3050,10 +3056,14 @@ Function Get-Version {
         }
         Else { 
             Write-Message -Level Verbose "Version checker: $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) is current - no update available."
+            [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+            Write-Host " ✔" -ForegroundColor Green
         }
     }
     Catch { 
         Write-Message -Level Warn "Version checker could not contact update server."
+        [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+        Write-Host " ✖" -ForegroundColor Red
     }
 }
 
@@ -3077,9 +3087,12 @@ Function Initialize-Autoupdate {
     "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
     Try { 
         Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
-        [Console]::SetCursorPosition(29, $CursorPosition.y)
+        [Console]::SetCursorPosition(28, $CursorPosition.y)
         Write-Host " ✔" -ForegroundColor Green
-        "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
+        $CursorPosition = $Host.UI.RawUI.CursorPosition
+        "Starting update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
+        [Console]::SetCursorPosition(25, $CursorPosition.y)
+        Write-Host " ✔" -ForegroundColor Green
         . $UpdateScript
     }
     Catch { 
