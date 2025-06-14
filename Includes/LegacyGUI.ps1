@@ -831,7 +831,6 @@ $LegacyGUIminingSummaryLabel.Font = [System.Drawing.Font]::new("Microsoft Sans S
 $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
 $LegacyGUIminingSummaryLabel.Height = 60
 $LegacyGUIminingSummaryLabel.Location = [System.Drawing.Point]::new(8, 35)
-$LegacyGUIminingSummaryLabel.ScrollBars = "Both"
 $LegacyGUIminingSummaryLabel.Tag = ""
 $LegacyGUIminingSummaryLabel.TextAlign = "MiddleLeft"
 $LegacyGUIminingSummaryLabel.Visible = $true
