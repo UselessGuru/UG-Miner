@@ -845,17 +845,16 @@ Try {
             )
 
             $Variables.MinersMissingPrerequisite = [Miner[]]@()
-            $Miners.Where({ -not $_.Reasons.Count -and $_.PrerequisitePath }).ForEach(
+            ($Miners.Where({ $_.PrerequisitePath }) | Group-Object PrerequisitePath).Where({ -not (Test-Path -LiteralPath $_.Name -Type Leaf) }).Group.ForEach(
                 { 
                     $_.Reasons.Add("Prerequisite missing ($(Split-Path -Path $_.PrerequisitePath -Leaf))") | Out-Null
                     $Variables.MinersMissingPrerequisite += $_
                 }
             )
 
-            If ($DownloadList = @($Variables.MinersMissingPrerequisite | Select-Object @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }) + @($Variables.MinersMissingBinary | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }) | Select-Object * -Unique) { 
+            If ($DownloadList = @($Variables.MinersMissingBinary | Sort-Object Path -Unique | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }) + @($Variables.MinersMissingPrerequisite | Select-Object -Unique @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } })) { 
                 If ($Variables.Downloader.State -ne "Running") { 
                     # Download miner binaries
-                    $DownloadList = $DownloadList | Sort-Object -Unique
                     Write-Message -Level Info "Some miner binaries are missing ($($DownloadList.Count) item$(If ($DownloadList.Count -ne 1) { "s" })). Starting downloader..."
                     $DownloaderParameters = @{ 
                         Config       = $Config

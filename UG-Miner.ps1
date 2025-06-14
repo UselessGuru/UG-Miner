@@ -507,7 +507,7 @@ If (Test-Path -LiteralPath $Variables.VertHashDatPath -PathType Leaf) {
     $VertHashDatCursorPosition = $Variables.CursorPosition
 }
 # Needs to be run in any case to set number of threads
-$VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Variables.MainPath)'")) -ScriptBlock { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
+$VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Variables.MainPath)'")) -ScriptBlock { If (Test-Path -LiteralPath $Variables.VertHashDatPath -PathType Leaf) { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
 
 Write-Message -Level Verbose "Importing modules..."
 Try { 
@@ -623,7 +623,7 @@ Else {
         Write-Host " ✖  (VertHash data file '$($Variables.VertHashDatPath)' is corrupt -> file deleted. It will be re-downloaded if needed)" -ForegroundColor Red
     }
 }
-Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition
+Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition -ErrorAction Ignore
 [Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
 
 # Getting exchange rates
