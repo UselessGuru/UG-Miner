@@ -35,10 +35,11 @@ $ProgressPreference = "SilentlyContinue"
         $URI = $_.URI
         $Path = $_.Path
         $Searchable = $_.Searchable
+        $Type = $_.Type
 
         If (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { 
             Try { 
-                Write-Message -Level Info "Downloader:<br>Initiated download of '$URI'."
+                Write-Message -Level Info "Downloader:<br>Initiated download of $Type from '$URI'."
 
                 If ($URI -and (Split-Path $URI -Leaf) -eq (Split-Path $Path -Leaf)) { 
                     New-Item (Split-Path $Path) -ItemType Directory | Out-Null
@@ -47,7 +48,7 @@ $ProgressPreference = "SilentlyContinue"
                 Else { 
                     [Void](Expand-WebRequest $URI $Path -ErrorAction Stop)
                 }
-                Write-Message -Level Info "Downloader:<br>Installed downloaded miner binary '$($Path.Replace("$($Variables.MainPath)\", ''))'."
+                Write-Message -Level Info "Downloader:<br>Installed $Type '$($Path.Replace("$($Variables.MainPath)\", ''))'."
                 If (Get-Command "Unblock-File" -ErrorAction Ignore) { $Path | Unblock-File }
             }
             Catch { 
@@ -61,7 +62,7 @@ $ProgressPreference = "SilentlyContinue"
                 Else { Write-Message -Level Warn "Downloader:<br>Cannot download '$(Split-Path $Path -Leaf)'." }
 
                 If ($Searchable) { 
-                    Write-Message -Level Info "Downloader:<br>Searching for $(Split-Path $Path -Leaf) on local computer..."
+                    Write-Message -Level Info "Downloader:<br>Searching for $Type $(Split-Path $Path -Leaf) on local computer..."
 
                     ($Path_Old = Get-PSDrive -PSProvider FileSystem).ForEach({ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse }) | Sort-Object -Property LastWriteTimeUtc -Descending | Select-Object -First 1
                     $Path_New = $Path
@@ -70,15 +71,15 @@ $ProgressPreference = "SilentlyContinue"
                 If ($Path_Old) { 
                     If (Test-Path -LiteralPath (Split-Path $Path_New) -PathType Container) { (Split-Path $Path_New) | Remove-Item -Recurse -Force }
                     (Split-Path $Path_Old) | Copy-Item -Destination (Split-Path $Path_New) -Recurse -Force
-                    Write-Message -Level Info "Downloader:<br>Copied '$($Path.Replace("$($Variables.MainPath)\", ''))' from local repository '$PathOld'."
+                    Write-Message -Level Info "Downloader:<br>Copied $Type '$($Path.Replace("$($Variables.MainPath)\", ''))' from local repository '$PathOld'."
                 }
                 Else { 
                     If ($URI) { 
                         If (Test-Path -LiteralPath "$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
-                            Write-Message -Level Warn "Downloader:<br>Cannot find '$(Split-Path $Path -Leaf)' in downloaded package '$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
+                            Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
                         }
                     }
-                    Else { Write-Message -Level Warn "Downloader:<br>Cannot find '$($Path.Replace("$($Variables.MainPath)\", ''))'." }
+                    Else { Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$($Path.Replace("$($Variables.MainPath)\", ''))'." }
                 }
             }
         }
