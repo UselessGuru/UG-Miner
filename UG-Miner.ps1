@@ -425,9 +425,11 @@ If (-not $Variables.MyIP) {
 }
 Write-Host " ✔  (IP address: $($Variables.MyIP))" -ForegroundColor Green
 
-# Check if a new version is available
+# Check if a new version is available and run update if so configured
 Write-Host ""
 [Void](Get-Version)
+[Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
+Write-Host " ✔" -ForegroundColor Green
 
 # Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
@@ -463,7 +465,6 @@ If (-not (Get-Command Get-PnpDevice)) {
     (New-Object -ComObject Wscript.Shell).Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
-$CursorPosition = $Host.UI.RawUI.CursorPosition
 [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
 Write-Host " ✔" -ForegroundColor Green
 Remove-Variable RecommendedPWSHversion
@@ -563,7 +564,6 @@ $Variables.RegexAlgoIsProgPow = "^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^PhiH
 $Variables.RegexAlgoHasDynamicDAG = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^Octopus$|^PhiHash$|^ProgPow|^SCCpow$|^UbqHash$"
 $Variables.RegexAlgoHasStaticDAG = "^FishHash$|^HeavyHashKarlsenV2$"
 $Variables.RegexAlgoHasDAG = (($Variables.RegexAlgoHasDynamicDAG -split '\|') + ($Variables.RegexAlgoHasStaticDAG -split '\|') | Sort-Object) -join '|'
-$CursorPosition = $Host.UI.RawUI.CursorPosition
 [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
 Write-Host " ✔" -ForegroundColor Green
 
@@ -601,7 +601,6 @@ $Variables.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
 $Variables.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$CursorPosition = $Host.UI.RawUI.CursorPosition
 [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
 Write-Host " ✔  ($($Variables.Devices.count) device$(If ($Variables.Devices.count -ne 1) { "s" }) found)" -ForegroundColor Green
 
