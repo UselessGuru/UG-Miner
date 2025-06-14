@@ -404,10 +404,6 @@ Else {
 # Start transcript log
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
-# Check if a new version is available
-Write-Host ""
-[Void](Get-Version)
-
 # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
 [Void](Start-LogReader)
 
@@ -428,6 +424,10 @@ If (-not $Variables.MyIP) {
     Exit
 }
 Write-Host " ✔  (IP address: $($Variables.MyIP))" -ForegroundColor Green
+
+# Check if a new version is available
+Write-Host ""
+[Void](Get-Version)
 
 # Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
