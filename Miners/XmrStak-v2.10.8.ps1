@@ -34,11 +34,11 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightLite";     MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightLiteV1";   MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightLiteItbc"; MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightHeavy";    MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.22.0.3 is fastest
+    @{ Algorithm = "CryptonightHeavy";    MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.22.3 is fastest
 #   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiB = 4; Type = "AMD"; MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # PARSE error: Invalid job length
     @{ Algorithm = "CryptonightMsr";      MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
 #   @{ Algorithm = "CryptonightR";        MinMemGiB = 2; Type = "AMD"; MinerSet = 3; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # ASIC
-    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.22.0.3 is fastest
+    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.22.3 is fastest
     @{ Algorithm = "CryptonightRwz";      MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightV1";       MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightV2";       MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
@@ -68,7 +68,7 @@ $Algorithms = @(
 #   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiB = 4; Type = "NVIDIA"; MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # PARSE error: Invalid job length
     @{ Algorithm = "CryptonightMsr";      MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
 #   @{ Algorithm = "CryptonightR";        MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 3; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # ASIC
-    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # XmRig-v6.22.0.3 is fastest
+    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # XmRig-v6.22.3 is fastest
     @{ Algorithm = "CryptonightRwz";      MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
     @{ Algorithm = "CryptonightV1";       MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
     @{ Algorithm = "CryptonightV2";       MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }

@@ -8,11 +8,13 @@ Changelog UG-Miner 6.4.32 2025/06/14
 Improvements:
 - Core, web & legacy GUI: Replace 'CPU#nn' / 'GPU#nn' with more descriptive text, e.g. '1xGTX1660SUPER6G'
 - Core: Minor code optimization
+- Downloader: Make messages more descriptive
 
 Miner changes:
 - lolMiner-v1.96a
 - SRBMinerMulti-v2.9.2
-
+- Wildrig-v0.43.2
+- XmRig-v6.22.3
 
 Changelog UG-Miner 6.4.31 2025/06/11
 ====================================

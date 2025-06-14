@@ -506,8 +506,8 @@ If (Test-Path -LiteralPath $Variables.VertHashDatPath -PathType Leaf) {
     Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Variables.VertHashDatPath)'..."
     $VertHashDatCursorPosition = $Variables.CursorPosition
 }
-# Needs to be run in any case to set number of threads
-$VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Variables.MainPath)'")) -ScriptBlock { If (Test-Path -LiteralPath $Variables.VertHashDatPath -PathType Leaf) { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
+# Start-ThreadJob needs to be run in any case to set number of threads
+$VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Variables.MainPath)'")) -ScriptBlock { If (Test-Path -LiteralPath ".\Cache\VertHash.dat" -PathType Leaf) { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
 
 Write-Message -Level Verbose "Importing modules..."
 Try { 

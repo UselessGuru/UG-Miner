@@ -21,34 +21,41 @@ Version:        6.4.32
 Version date:   2025/06/14
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Variables.DriverVersion.CUDA -ge [Version]"10.2") }))) { Return }
 
-$URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_4-win64.zip"; Break }
-    { $_ -ge [System.Version]"12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_3-win64.zip"; Break }
-    { $_ -ge [System.Version]"12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_2-win64.zip"; Break }
-    { $_ -ge [System.Version]"12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_1-win64.zip"; Break }
-    { $_ -ge [System.Version]"12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda12_0-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_8-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_7-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_6-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_5-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_4-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_3-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_2-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_1-win64.zip"; Break }
-    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda11_0-win64.zip"; Break }
-    { $_ -ge [System.Version]"10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_2-win64.zip"; Break }
-    { $_ -ge [System.Version]"10.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_1-win64.zip"; Break }
-    { $_ -ge [System.Version]"10.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda10_0-win64.zip"; Break }
-    { $_ -ge [System.Version]"9.2" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_2-win64.zip"; Break }
-    { $_ -ge [System.Version]"9.1" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_1-win64.zip"; Break }
-    { $_ -ge [System.Version]"9.0" }  { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda9_0-win64.zip"; Break }
-    Default                           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.0.3fix-cuda8_0-win64.zip" }
-}
+# CUDA backend: added missing RandomX dataset update.
+# Optimized auto-config for AMD CPUs with less than 2 MB L3 cache per thread.
+# Fixed possible crash when submitting RandomX benchmark.
+# Fixed OpenCL kernel compilation error on some platforms.
+
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xmrig.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
+
+$URI = Switch ($Variables.DriverVersion.CUDA) { 
+    { $_ -ge [System.Version]"12.9" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_9-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_8-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_7-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_6-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_5-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_4-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_3-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_2-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_1-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_0-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_8-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_7-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_6-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_5-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_4-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_3-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_2-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_1-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_0-win64.7z"; Break }
+    { $_ -ge [System.Version]"10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda10_2-win64.7z"; Break }
+    Default                           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-msvc-win64.7z" }
+}
+
 
 $Algorithms = @(
     @{ Algorithm = "Cryptonight";          Type = "AMD"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/0" }
@@ -104,7 +111,7 @@ $Algorithms = @(
 #   @{ Algorithm = "CryptonightHeavyXhv";  Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" } # Not profitable with CPU
 #   @{ Algorithm = "CryptonightZls";       Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" } # Not profitable with CPU
 #   @{ Algorithm = "Randomx";              Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo rx/0" } # ASIC
-#   @{ Algorithm = "Flex";                 Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo flex" } # https://github.com/RainbowMiner/RainbowMiner/issues/2841
+    @{ Algorithm = "Flex";                 Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo flex" }
     @{ Algorithm = "Ghostrider";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo gr" }
     @{ Algorithm = "Panthera";             Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo panthera" }
     @{ Algorithm = "RandomxArq";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # FPGA
