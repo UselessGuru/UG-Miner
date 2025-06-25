@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 using module .\Include.psm1
@@ -319,9 +319,9 @@ Try {
                             $PoolName = Get-PoolBaseName $_
                             If (Test-Path -LiteralPath ".\Pools\$PoolName.ps1") { 
                                 Try { 
-                                    Write-Message -Level Debug "Pool definition file '$MinerFileName': Start building pool objects"
+                                    Write-Message -Level Debug "Pool definition file '$PoolName': Start building pool objects"
                                     & ".\Pools\$PoolName.ps1" -Config $Config -PoolVariant $_ -Variables $Variables
-                                    Write-Message -Level Debug "Pool definition file '$MinerFileName': End building pool objects"
+                                    Write-Message -Level Debug "Pool definition file '$PoolName': End building pool objects"
                                 }
                                 Catch { 
                                     Write-Message -Level Error "Error in pool file 'Pools\$PoolName.ps1'."
@@ -499,7 +499,7 @@ Try {
 
 
                         # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
-                        ($Pools.Where({ $_.Available }) | Group-Object Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
+                        ($Pools.Where({ $_.Available }) | Group-Object -Property Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(If ($Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Variables.RegexAlgoHasDAG) { 1 } Else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
 
                         $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
                     }
@@ -591,6 +591,7 @@ Try {
                                     If ($Shares.$Algorithm -and $Shares.$Algorithm[1] -gt 0 -and $Shares.$Algorithm[3] -gt [Math]::Floor(1 / $Config.BadShareRatioThreshold) -and $Shares.$Algorithm[1] / $Shares.$Algorithm[3] -gt $Config.BadShareRatioThreshold) { 
                                         $Miner.StatusInfo = "$($Miner.Info) stopped. Too many bad shares: ($($Algorithm): A$($Shares.$Algorithm[0])+R$($Shares.$Algorithm[1])+I$($Shares.$Algorithm[2])=T$($Shares.$Algorithm[3]))"
                                         Write-Message -Level Error "Miner $($Miner.StatusInfo)"
+                                        $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
                                         $Miner.SetStatus([MinerStatus]::Failed)
                                         $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                     }
@@ -699,8 +700,8 @@ Try {
             # Get new miners
             If ($AvailableMinerPools = If ($Config.MinerUseBestPoolsOnly) { $Variables.Pools.Where({ $_.Available -and ($_.Best -or $_.Prioritize) }) } Else { $Variables.Pools.Where({ $_.Available }) }) { 
                 $MinerPools = [Ordered]@{ }, [Ordered]@{ "" = "" } # Dummy secondary pool
-                ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable primary algorithm" }) | Group-Object Algorithm).ForEach({ $MinerPools[0][$_.Name] = $_.Group })
-                ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable secondary algorithm" }) | Group-Object Algorithm).ForEach({ $MinerPools[1][$_.Name] = $_.Group })
+                ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable primary algorithm" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[0][$_.Name] = $_.Group })
+                ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable secondary algorithm" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[1][$_.Name] = $_.Group })
 
                 $Message = "Loading miners.$(If (-not $Variables.Miners) { "<br>This may take a while." }).."
                 If (-not $Variables.Miners) { 
@@ -771,26 +772,31 @@ Try {
                                             # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
                                             $_.Algorithms = $_.Workers.Pool.Algorithm
                                             $_.BaseName, $_.Version = ($_.Name -split "-")[0, 1]
-                                            $_.BaseName_Version = ($_.Name -split "-")[0..1] -join "-"
+                                            $_.BaseName_Version = "$($_.BaseName)-$($_.Version)"
                                             $_.CommandLine = $_.GetCommandLine()
+                                            $DeviceNames = $_.DeviceNames
+                                            $_.Devices = $MinerDevices.Where({ $DeviceNames -contains $_.Name })
                                         }
                                         Else { 
-                                            $Info = $_.Info
-                                            $Miner = $MinersNewGroup.Where({ $Info -eq $_.Info })
                                             # Update existing miners
-                                            If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
-                                                $_.Arguments = $Miner.Arguments
-                                                $_.CommandLine = $Miner.GetCommandLine()
-                                                $_.Port = $Miner.Port
+                                            $Info = $_.Info
+                                            If ($Miner = $MinersNewGroup.Where({ $Info -eq $_.Info })) { 
+                                                If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
+                                                    $_.Arguments = $Miner.Arguments
+                                                    $_.CommandLine = $Miner.GetCommandLine()
+                                                    $_.Port = $Miner.Port
+                                                    $DeviceNames = $_.DeviceNames
+                                                    $_.Devices = $MinerDevices.Where({ $DeviceNames -contains $_.Name })
+                                                }
+                                                $_.Best = $false
+                                                $_.PrerequisitePath = $Miner.PrerequisitePath
+                                                $_.PrerequisiteURI = $Miner.PrerequisiteURI
+                                                $_.Reasons = @()
+                                                $_.WarmupTimes = $Miner.WarmupTimes
+                                                $_.Workers = $Miner.Workers
                                             }
-                                            $_.PrerequisitePath = $Miner.PrerequisitePath
-                                            $_.PrerequisiteURI = $Miner.PrerequisiteURI
-                                            $_.WarmupTimes = $Miner.WarmupTimes
-                                            $_.Workers = $Miner.Workers
                                         }
                                     }
-                                    $DeviceNames = $_.DeviceNames
-                                    $_.Devices = $MinerDevices.Where({ $DeviceNames -contains $_.Name })
                                     $_.MeasurePowerConsumption = $Variables.CalculatePowerCost
                                     $_.Refresh($Variables.PowerCostBTCperW, $Config)
                                 }
@@ -812,7 +818,9 @@ Try {
 
             # Filter miners
             $Miners.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled by user") | Out-Null })
-            If ($Config.ExcludeMinerName.Count) { $Miners.Where({ (Compare-Object @($Config.ExcludeMinerName | Select-Object) @($_.BaseName, $_.BaseName_Version, $_.Name | Select-Object -Unique) -IncludeEqual -ExcludeDifferent | Measure-Object).Count -gt 0 }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Config.ExcludeMinerName -join ", "))") | Out-Null }) }
+            $ExcludeMinerName = @($Config.ExcludeMinerName -replace '^-' | Select-Object)
+            If ($ExcludeMinerName.Count) { $Miners.Where({ Compare-Object $ExcludeMinerName ($_.BaseName, $_.BaseName_Version, $_.BaseName_Version_Device) -IncludeEqual -ExcludeDifferent }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Config.ExcludeMinerName -join ", "))") | Out-Null }) }
+            Remove-Variable ExcludeMinerName
             If (-not $Config.PoolAllow0Price) { $Miners.Where({ $_.Earnings -eq 0 }).ForEach({ $_.Reasons.Add("Earnings -eq 0") | Out-Null }) }
             $Miners.Where({ -not $_.Benchmark -and $_.Workers.Hashrate -contains 0 }).ForEach({ $_.Reasons.Add("0 H/s Stat file") | Out-Null })
             If ($Config.DisableMinersWithFee) { $Miners.Where({ $_.Workers.Fee }).ForEach({ $_.Reasons.Add("Config.DisableMinersWithFee") | Out-Null }) }
@@ -822,13 +830,13 @@ Try {
             # Add reason 'Config.DisableCpuMiningOnBattery' for CPU miners when running on battery
             If ($Config.DisableCpuMiningOnBattery -and (Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miners.Where({ $_.Type -eq "CPU" }).ForEach({ $_.Reasons.Add("Config.DisableCpuMiningOnBattery") | Out-Null }) }
 
-            # Add reason 'Unreal profit data...' for miners with unreal earnings > x times higher than average of the next best 10% or at least 5 miners
+            # Add reason 'Unreal earning data...' for miners with unreal earnings > x times higher than average of the next best 10% or at least 5 miners
             If ($Config.UnrealMinerEarningFactor -gt 1) { 
                 ($Miners.Where({ -not $_.Reasons.Count -and -not $_.Benchmark}) | Group-Object { [String]$_.DeviceNames }).ForEach(
                     { 
                         If ($ReasonableEarnings = [Double]($_.Group | Sort-Object -Descending -Property Earnings_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earnings -Average).Average * $Config.UnrealMinerEarningFactor) { 
                             ($_.Group.Where({ $_.Earnings -gt $ReasonableEarnings })).ForEach(
-                                { $_.Reasons.Add("Unreal profit data (-gt $($Config.UnrealMinerEarningFactor)x higher than the next best miners available miners)") | Out-Null }
+                                { $_.Reasons.Add("Unreal earning data (-gt $($Config.UnrealMinerEarningFactor)x higher than the next best miners available miners)") | Out-Null }
                             )
                         }
                     }
@@ -837,7 +845,7 @@ Try {
             }
 
             $Variables.MinersMissingBinary = [Miner[]]@()
-            ($Miners.Where({ -not $_.Reasons.Count }) | Group-Object Path).Where({ -not (Test-Path -LiteralPath $_.Name -Type Leaf) }).Group.ForEach(
+            ($Miners.Where({ -not $_.Reasons.Count }) | Group-Object -Property Path).Where({ -not (Test-Path -LiteralPath $_.Name -Type Leaf) }).Group.ForEach(
                 { 
                     $_.Reasons.Add("Binary missing") | Out-Null
                     $Variables.MinersMissingBinary += $_
@@ -845,7 +853,7 @@ Try {
             )
 
             $Variables.MinersMissingPrerequisite = [Miner[]]@()
-            ($Miners.Where({ $_.PrerequisitePath }) | Group-Object PrerequisitePath).Where({ -not (Test-Path -LiteralPath $_.Name -Type Leaf) }).Group.ForEach(
+            ($Miners.Where({ $_.PrerequisitePath }) | Group-Object -Property PrerequisitePath).Where({ -not (Test-Path -LiteralPath $_.Name -Type Leaf) }).Group.ForEach(
                 { 
                     $_.Reasons.Add("Prerequisite missing ($(Split-Path -Path $_.PrerequisitePath -Leaf))") | Out-Null
                     $Variables.MinersMissingPrerequisite += $_
@@ -895,7 +903,7 @@ Try {
             If ($Config.Watchdog) { 
                 # We assume that miner is up and running, so watchdog timer is not relevant
                 If ($RelevantWatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -notin $Variables.MinersRunning.Name })) { 
-                    # Only miners with a corresponding watchdog timer object are of interest
+                    # Only miners with a watchdog timer object are of interest
                     If ($RelevantMiners = $Variables.Miners.Where({ $RelevantWatchdogTimers.MinerBaseName_Version -contains $_.BaseName_Version })) { 
                         # Add miner reason 'Miner suspended by watchdog [all algorithms & all devices]'
                         ($RelevantWatchdogTimers | Group-Object -Property MinerBaseName_Version).ForEach(
@@ -913,7 +921,7 @@ Try {
 
                         If ($RelevantMiners = $RelevantMiners.Where({ -not ($_.Reasons -match "Miner suspended by watchdog .+") })) { 
                             # Add miner reason 'Miner suspended by watchdog [all algorithms]'
-                            ($RelevantWatchdogTimers | Group-Object { $_.MinerBaseName_Version_Device }).ForEach(
+                            ($RelevantWatchdogTimers | Group-Object MinerBaseName_Version_Device).ForEach(
                                 { 
                                     If ($_.Count -gt 2 * $Variables.WatchdogCount * ($_.Group[0].MinerName -split "&").Count) { 
                                         $WatchdogGroup = $_.Group

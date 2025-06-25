@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 using module .\Includes\Include.psm1
@@ -56,7 +56,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$BalancesTrackerLog = $false, # If true will store all balance tracker data in .\Logs\EarningTrackerLog.csv
     [Parameter(Mandatory = $false)]
-    [UInt16]$BalancesTrackerPollInterval = 10, # minutes, Interval duration to trigger background task to collect pool balances & earnings data; set to 0 to disable, minumum value 10
+    [UInt16]$BalancesTrackerPollInterval = 10, # minutes, interval duration to trigger background task to collect pool balances & earnings data; set to 0 to disable, minumum value 10
     [Parameter(Mandatory = $false)]
     [Switch]$BenchmarkAllPoolAlgorithmCombinations = [Boolean]($Host.Name -eq "Visual Studio Code Host"),
     [Parameter(Mandatory = $false)]
@@ -94,7 +94,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String[]]$ExcludeMinerName = @(), # List of miners to be excluded; Either specify miner short name, e.g. "PhoenixMiner" (without '-v...') to exclude any version of the miner, or use the full miner name incl. version information
     [Parameter(Mandatory = $false)]
-    [String[]]$ExtraCurrencies = @("ETC", "ETH", "mBTC"), # Extra currencies used in balances summary, Enter 'real-world' or crypto currencies, mBTC (milli BTC) is also allowed
+    [String[]]$ExtraCurrencies = @("ETC", "ETH", "mBTC"), # Extra currencies used in balances summary, enter 'real-world' or crypto currencies, mBTC (milli BTC) is also allowed
     [Parameter(Mandatory = $false)]
     [String]$FIATcurrency = (Get-Culture).NumberFormat.CurrencySymbol, # Default main 'real-money' currency, i.e. GBP, USD, AUD, NZD etc. Do not use crypto currencies
     [Parameter(Mandatory = $false)]
@@ -168,7 +168,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$OpenFirewallPorts = $true, # If true will open firewall ports for all miners (requires admin rights!)
     [Parameter(Mandatory = $false)]
-    [String]$PayoutCurrency = "BTC", # i.e. BTC, LTC, ZEC, ETH etc., Default PayoutCurrency for all pools that have no other currency configured, PayoutCurrency is also a per pool setting (to be configured in 'PoolsConfig.json')
+    [String]$PayoutCurrency = "BTC", # i.e. BTC, LTC, ZEC, ETH etc., default PayoutCurrency for all pools that have no other currency configured, PayoutCurrency is also a per pool setting (to be configured in 'PoolsConfig.json')
     [Parameter(Mandatory = $false)]
     [Switch]$PoolAllow0Hashrate = $false, # Allow mining to the pool even when there is 0 (or no) hashrate reported in the API (not recommended)
     [Parameter(Mandatory = $false)]
@@ -286,7 +286,7 @@ Param(
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
 $ErrorLogFile = ".\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
-$RecommendedPWSHversion = [Version]"7.5.1"
+$RecommendedPWSHversion = [Version]"7.5.2"
 
 # Close useless empty cmd window that comes up when starting from bat file
 If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -323,7 +323,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.32"
+    Version      = [System.Version]"6.4.33"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
@@ -601,8 +601,11 @@ $Variables.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
 $Variables.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Variables.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Variables.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+
 [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
-Write-Host " ✔  ($($Variables.Devices.count) device$(If ($Variables.Devices.count -ne 1) { "s" }) found)" -ForegroundColor Green
+Write-Host " ✔  ($($Variables.Devices.count) device$(If ($Variables.Devices.count -ne 1) { "s" }) found" -ForegroundColor Green -NoNewline
+If ($Variables.Devices.Where({ $_.State -eq [DeviceState]::Unsupported })) { Write-Host " [$($Variables.Devices.Where({ $_.State -eq [DeviceState]::Unsupported }).Count) unsupported device$(If ($Variables.Devices.Where({ $_.State -eq [DeviceState]::Unsupported }).Count -ne 1){ "s" })]" -ForegroundColor DarkYellow -NoNewline } 
+Write-Host ")" -ForegroundColor Green
 
 # Driver version changed
 If ((Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) -and ([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Variables.DriverVersion | ConvertTo-Json -Compress)) { Write-Message -Level Warn "Graphics card driver version data has changed. It is recommended to re-benchmark all miners." }
@@ -689,7 +692,7 @@ Function MainLoop {
 
                     If ($Variables.MiningStatus) { 
                         Write-Host ""
-                        $Message = "'Stop Mining' button clicked."
+                        $Message = "'Stop mining' button clicked."
                         Write-Message -Level Info $Message
                         $Variables.Summary = $Message
                         Remove-Variable Message
@@ -726,7 +729,7 @@ Function MainLoop {
                     }
 
                     Write-Host ""
-                    $Message = "'Pause Mining' button clicked."
+                    $Message = "'Pause mining' button clicked."
                     Write-Message -Level Info $Message
                     $Variables.Summary = $Message
                     Remove-Variable Message
@@ -766,7 +769,7 @@ Function MainLoop {
 
                     If ($Variables.MiningStatus) { 
                         Write-Host ""
-                        $Message = "'Start Mining' button clicked."
+                        $Message = "'Start mining' button clicked."
                         Write-Message -Level Info $Message
                         $Message += " Mining processes are starting..."
                         $Variables.Summary = $Message

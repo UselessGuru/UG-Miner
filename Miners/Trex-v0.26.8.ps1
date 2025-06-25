@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -40,7 +40,7 @@ $Algorithms = @(
     @{ Algorithms = @("Ethash", "KawPow");     Fee = @(0.01, 0.01); MinMemGiB = 10;   MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo kawpow --lhr-tune -1" }
     @{ Algorithms = @("Ethash", "Octopus");    Fee = @(0.01, 0.02); MinMemGiB = 8;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo octopus --lhr-tune -1" }
     @{ Algorithms = @("FiroPow", "");          Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(60, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow --intensity 25" }
-    @{ Algorithms = @("KawPow", "");           Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.22.3 is almost as fast but has no fee
+    @{ Algorithms = @("KawPow", "");           Fee = @(0.01);       MinMemGiB = 1.08; MinerSet = 1; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.24.0 is almost as fast but has no fee
 #   @{ Algorithms = @("MTP", "");              Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
     @{ Algorithms = @("MTPTcr", "");           Fee = @(0.01);       MinMemGiB = 3;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp-tcr --intensity 21" }
     @{ Algorithms = @("Multi", "");            Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 2; Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo multi --intensity 25" }
@@ -54,8 +54,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
-$Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -eq $false -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -eq $false)) })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
@@ -68,10 +67,8 @@ If ($Algorithms) {
             $Algorithms.ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                    ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
-                        # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                        ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true })) { 
+                    ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
+                        ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                             If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
@@ -89,8 +86,7 @@ If ($Algorithms) {
                                 }
                                 $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
                                 $Arguments += "://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                $Arguments += " --user $($Pool0.User)"
-                                $Arguments += " --pass $($Pool0.Pass)"
+                                $Arguments += " --user $($Pool0.User) --pass $($Pool0.Pass)"
                                 If ($Pool0.WorkerName) { $Arguments += " --worker $($Pool0.WorkerName)" }
 
                                 If ("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool0.Currency) { 
@@ -106,8 +102,7 @@ If ($Algorithms) {
                                     }
                                     $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
                                     $Arguments += "://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " --user2 $($Pool1.User)"
-                                    $Arguments += " --pass2 $($Pool1.Pass)"
+                                    $Arguments += " --user2 $($Pool1.User) --pass2 $($Pool1.Pass)"
                                     If ($Pool1.WorkerName) { $Arguments += " --worker2 $($Pool1.WorkerName)" }
                                 }
 
@@ -128,7 +123,7 @@ If ($Algorithms) {
                                     Port        = $MinerAPIPort
                                     Type        = "NVIDIA"
                                     URI         = $URI
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                     Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                 }
                             }

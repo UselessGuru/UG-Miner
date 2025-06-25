@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -57,7 +57,7 @@ $Algorithms = @(
 #   @{ Algorithms = @("Ethash", "HeavyHashKaspa");     Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 15); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo ethash --dalgo kheavyhash --cuda 1 --opencl 0" } # ASIC
     @{ Algorithms = @("Ethash", "SHA512256d");         Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 90); ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo ethash --dalgo radiant --cuda 1 --opencl 0" }
     @{ Algorithms = @("FiroPow", "");                  Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo firo --cuda 1 --opencl 0" }
-    @{ Algorithms = @("IronFish", "");                 Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludePools = @(@("NiceHash"), @());   AutoCoinPers = "";             Arguments = " --algo ironfish --cuda 1 --opencl 0" } # XmRig-v6.22.3 is almost as fast but has no fee
+    @{ Algorithms = @("IronFish", "");                 Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludePools = @(@("NiceHash"), @());   AutoCoinPers = "";             Arguments = " --algo ironfish --cuda 1 --opencl 0" } # XmRig-v6.24.0 is almost as fast but has no fee
     @{ Algorithms = @("KawPow", "");                   Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo kawpow --cuda 1 --opencl 0" }
     @{ Algorithms = @("HeavyHashKarlsen", "");         Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo karlsen --cuda 1 --opencl 0" }
 #   @{ Algorithms = @("HeavyHashKaspa", "");           Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2.0;  Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludePools = @(@(), @());             AutoCoinPers = "";             Arguments = " --algo kaspa --cuda 1 --opencl 0" } # ASIC
@@ -71,7 +71,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
@@ -103,16 +103,14 @@ If ($Algorithms) {
                                         "ethstratumnh" { $Arguments += " --proto stratum" }
                                     }
                                     If ($Pool0.PoolPorts[1]) { $Arguments += " --ssl 1" }
-                                    $Arguments += " --user $($Pool0.User)"
-                                    $Arguments += " --pass $($Pool0.Pass)"
+                                    $Arguments += " --user $($Pool0.User) --pass $($Pool0.Pass)"
                                     If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { $Arguments += " --worker $($Pool0.WorkerName)" }
-                                    If ($_.AutoCoinPers) { $Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand $_.AutoCoinPers) }
+                                    If ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand $_.AutoCoinPers }
 
                                     If (($_.Algorithms[1])) { 
                                         $Arguments += " --dserver $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
                                         If ($Pool1.PoolPorts[1]) { $Arguments += " --dssl 1" }
-                                        $Arguments += " --duser $($Pool1.User)"
-                                        $Arguments += " --dpass $($Pool1.Pass)"
+                                        $Arguments += " --duser $($Pool1.User) --dpass $($Pool1.Pass)"
                                         If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { $Arguments += " --dworker $($Pool1.WorkerName)" }
                                     }
 
@@ -131,7 +129,7 @@ If ($Algorithms) {
                                         Port        = $MinerAPIPort
                                         Type        = $Type
                                         URI         = $URI
-                                        WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                         Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                     }
                                 }

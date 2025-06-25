@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -55,16 +55,16 @@ If ($Algorithms) {
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Protocol = Switch ($Pool.Protocol) { 
-                                "ethproxy"     { "stratum1"; Break }
-                                "ethstratum1"  { "stratum2"; Break }
-                                "ethstratum2"  { "stratum2"; Break }
-                                Default        { "stratum" }
+                                "ethproxy"    { "stratum1"; Break }
+                                "ethstratum1" { "stratum2"; Break }
+                                "ethstratum2" { "stratum2"; Break }
+                                Default       { "stratum" }
                             }
                             $Protocol += If ($Pool.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode("$($Pool.User)")):$([System.Web.HttpUtility]::UrlEncode($($Pool.Pass)))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:-$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:-$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 EnvVars     = @("SSL_NOVERIFY=TRUE")
                                 Fee         = @(0) # Dev fee
@@ -74,7 +74,7 @@ If ($Algorithms) {
                                 Port        = $MinerAPIPort
                                 Type        = "NVIDIA"
                                 URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })
                             }
                         }

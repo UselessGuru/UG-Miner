@@ -100,9 +100,9 @@
           </div>
           <label style="padding-top: 0.2rem;" for="StartupMode" title="Defines UG-Miner startup mode">UG-Miner starts in</label>
           <select style="height: 1.6em;" size=1 title="Defines UG-Miner startup mode" required id="StartupMode">
-            <option value="Idle" title="Initiate application, but do not start mining or run any background processes&#10;&#10;Same as pressing the 'Stop Mining' button">idle</option>
-            <option value="Paused" title="Initiate application and run background processes, but do not start mining&#10;&#10;Same as pressing the 'Pause Mining' button">paused</option>
-            <option value="Running" title="Initiate application and start mining&#10;&#10;Same as pressing the 'Start Mining' button">running</option>
+            <option value="Idle" title="Initiate application, but do not start mining or run any background processes&#10;&#10;Same as pressing the 'Stop mining' button">idle</option>
+            <option value="Paused" title="Initiate application and run background processes, but do not start mining&#10;&#10;Same as pressing the 'Pause mining' button">paused</option>
+            <option value="Running" title="Initiate application and start mining&#10;&#10;Same as pressing the 'Start mining' button">running</option>
           </select>
           <label for="StartupMode" title="Defines UG-Miner startup mode">mode</label>
           <div title="Mining will start when system is idle, e.g. no mouse&#10;or keyboard activity is detected for n seconds&#10;&#10;(min: 0, max: 3600; default: 120)&#10;&#10;Mining will stop when mouse or keyboard activity is detected">
@@ -212,7 +212,7 @@
               <option title="This will prolongue benchmarking, but will not improve profitability&#10;(Minerset 3) - not recommended" value=3>all miners (incl. those in UnprofitableAlgorithms.json)</option>
             </select>
           </div>
-          <div style="padding-top: 0.2rem;" title="List of miners to be excluded (case insensitive)&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the full miner name, e.g 'GMiner-v3.44' (incl. version information)&#10;">Exclude miners
+          <div style="padding-top: 0.2rem;" title="List of miners to be excluded (case insensitive)&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the miner name & version, e.g 'GMiner-v3.44' (incl. version information)&#10;To exclude a specific miner (version & device) use the miner name, version & device, e.g 'GMiner-v3.44-1xRTX306012GB' (incl. version & device information)">Exclude miners
             <input type="text" id="ExcludeMinerName" name="ExcludeMinerName" size=47>
           </div>
           <div style="padding-top: 0.2rem;" title="'+[Algorithm]' to enable algorithm or algorithm variant&#10;'-[Algorithm]' to disable algorithm or algorithm variant&#10;Values must be sparated by commas&#10;e.g. '+Ethash,+EtcHash' or '-Ethash(3GiB),-Ethash(4GiB)'&#10;&#10;Leave empty to use ALL available algorithms&#10;If '+' is used, then only the explicitly enabled algorithms or algorithm variants are used&#10;If '-' is used, then all algorithms or algorithm variants are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Include / exclude algorithms

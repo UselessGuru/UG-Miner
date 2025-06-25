@@ -1,6 +1,21 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.33 2025/06/25
+====================================
+
+Fixes:
+- Core: Do not store measured hashrate if too many bad shared were detected
+
+Improvements:
+- Core: Minor miner code optimization
+
+Miner changes
+- JayddeeCPU-v25.4
+- KudaraideeCPU-v1.2.4
+- SRBMinerMulti-v2.9.3 (dual mining is broken in v2.9.3; keep v2.9.2 for dual mining)
+- XmRig-v6.24.0
+
 
 Changelog UG-Miner 6.4.32 2025/06/14
 ====================================

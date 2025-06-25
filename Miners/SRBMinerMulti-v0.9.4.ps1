@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -106,9 +106,8 @@ If ($Algorithms) {
                                 "ethstratumnh" { $Arguments += " --esm 2"; Break }
                                 "minerproxy"   { $Arguments += " --esm 1" }
                             }
-                            $Arguments += " --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User)"
+                            $Arguments += " --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
                             If ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
-                            $Arguments += " --password $($Pool.Pass)"
                             If ($Pool.PoolPorts[1]) { $Arguments += " --tls true" }
 
                             [PSCustomObject]@{ 
@@ -125,7 +124,7 @@ If ($Algorithms) {
                                 PrerequisiteURI  = $PrerequisiteURI
                                 Type             = "AMD"
                                 URI              = $URI
-                                WarmupTimes      = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers          = @(@{ Pool = $Pool })
                             }
                         }

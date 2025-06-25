@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
@@ -94,8 +94,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
-$Algorithms = $Algorithms.Where({ $Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -eq $false)) })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
@@ -113,8 +112,8 @@ If ($Algorithms) {
                     If ($SupportedMinerDevices = $MinerDevices.Where({ (-not $ExcludeGPUmodel -or $_.Model -notmatch $ExcludeGPUmodel) -and $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name -and ($Config.SSL -ne "Always" -or $_.SSLselfSignedCertificate -ne $true) })) { 
+                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
@@ -131,9 +130,7 @@ If ($Algorithms) {
                                     }
                                     $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                     $Arguments += "$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " -w $($Pool0.User -replace "\..*")"
-                                    $Arguments += " --pool_password $($Pool0.Pass)"
-                                    $Arguments += " -r $(If ($Pool0.WorkerName) { $Pool0.WorkerName } ElseIf ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } Else { $Config.WorkerName })"
+                                    $Arguments += " -w $($Pool0.User -replace "\..*") --pool_password $($Pool0.Pass) -r $(If ($Pool0.WorkerName) { $Pool0.WorkerName } ElseIf ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } Else { $Config.WorkerName })"
 
                                     If ($_.Algorithms[1]) { 
                                         $Arguments += $_.Arguments[1]
@@ -146,9 +143,7 @@ If ($Algorithms) {
                                         }
                                         $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                         $Arguments += "$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --w2 $($Pool1.User  -replace "\..*")"
-                                        $Arguments += " --pool_password2 $($Pool1.Pass)"
-                                        $Arguments += " --r2 $(If ($Pool1.WorkerName) { $Pool1.WorkerName } ElseIf ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } Else { $Config.WorkerName })"
+                                        $Arguments += " --w2 $($Pool1.User -replace "\..*") --pool_password2 $($Pool1.Pass) --r2 $(If ($Pool1.WorkerName) { $Pool1.WorkerName } ElseIf ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } Else { $Config.WorkerName })"
                                     }
 
                                     # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -170,7 +165,7 @@ If ($Algorithms) {
                                         Port             = $MinerAPIPort
                                         Type             = $Type
                                         URI              = $URI
-                                        WarmupTimes      = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                        WarmupTimes      = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                         Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                     }
                                 }

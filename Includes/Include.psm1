@@ -330,10 +330,10 @@ Class Miner : IDisposable {
     [String]$URI
     [DateTime]$ValidDataSampleTimestamp = 0
     [String]$Version
-    [UInt16[]]$WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
-    [String]$WindowStyle
-    [Worker[]]$Workers = @()
-    [Worker[]]$WorkersRunning = @()
+    [UInt16[]]$WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+    [String]$WindowStyle # "minimized": miner window is minimized (default), but accessible; "normal": miner windows are shown normally; "hidden": miners will run as a hidden background task and are not accessible
+    [Worker[]]$Workers = @() # derived from pools
+    [Worker[]]$WorkersRunning = @() # derived from pools
 
     hidden [System.Collections.Generic.HashSet[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
     hidden [System.Management.Automation.Job]$DataReaderJob = $null
@@ -384,7 +384,7 @@ Class Miner : IDisposable {
             Remove-Variable Miner, LoopEnd -ErrorAction Ignore
         }
 
-        # Start Miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
+        # Start miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
         $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -Name "$($this.NameAndDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
 
         Remove-Variable ScriptBlock -ErrorAction Ignore
@@ -679,14 +679,11 @@ Class Miner : IDisposable {
     }
 
     [Void]Refresh([Double]$PowerCostBTCperW, [Hashtable]$Config) { 
-        $this.Best = $false
         $this.MinDataSample = $Config.MinDataSample
         $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
-        $this.ProcessPriority = If ($this.Type -eq "CPU") { $Config.CPUMinerProcessPriority } Else { $Config.GPUMinerProcessPriority }
-        $this.Reasons = @()
+        $this.ProcessPriority = $Config."$($this.Type)MinerProcessPriority"
         If ($this.ReadPowerConsumption -ne $this.Devices.ReadPowerConsumption -notcontains $false) { $this.Restart = $true }
         $this.ReadPowerConsumption = $this.Devices.ReadPowerConsumption -notcontains $false
-        $this.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
 
         $this.Workers.ForEach(
             { 
@@ -711,12 +708,8 @@ Class Miner : IDisposable {
                 }
             }
         )
-        $this.Benchmark = [Boolean]($this.Workers.Hashrate -match [Double]::NaN)
-        $this.Disabled = $this.Workers.Disabled -contains $true
-        $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
-        $this.Updated = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
 
-        If ($this.Benchmark -eq $true) { 
+        If ($this.Benchmark = [Boolean]($this.Workers.Hashrate -match [Double]::NaN)) { 
             $this.Earnings = [Double]::NaN
             $this.Earnings_Accuracy = [Double]::NaN
             $this.Earnings_Bias = [Double]::NaN
@@ -745,6 +738,11 @@ Class Miner : IDisposable {
             $this.Profit = [Double]::NaN
             $this.Profit_Bias = [Double]::NaN
         }
+
+        $this.Disabled = $this.Workers.Disabled -contains $true
+        $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
+        $this.Updated = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
+        $this.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
     }
 }
 
@@ -878,7 +876,7 @@ Function Stop-Core {
         $Global:CoreRunspace.Close()
         $Global:CoreRunspace.Dispose()
 
-        Remove-Variable CoreRunspace -Scope global
+        Remove-Variable CoreRunspace -Scope Global
 
         [System.GC]::Collect()
     }
@@ -922,10 +920,12 @@ Function Start-Brain {
                 }
             }
         )
-        $Message = "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", ' &$1') started."
-        If ($BrainsStarted.Count -gt 0) { Write-Message -Level Info $Message }
-        If (-not $Variables.Miners) {$Variables.Summary = $Message }
-        Remove-Variable Message
+        If ($BrainsStarted.Count -gt 0) { 
+            $Message = "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", ' &$1') started."
+            Write-Message -Level Info $Message
+            If (-not $Variables.Miners) {$Variables.Summary = $Message }
+            Remove-Variable Message
+        }
     }
     Else { 
         Write-Message -Level Error "Failed to start Pool brain backgound jobs. Directory '.\Brains' is missing."
@@ -1025,7 +1025,7 @@ Function Stop-BalancesTracker {
         $Global:BalancesTrackerRunspace.Close()
         $Global:BalancesTrackerRunspace.Dispose()
 
-        Remove-Variable BalancesTrackerRunspace -Scope global
+        Remove-Variable BalancesTrackerRunspace -Scope Global
 
         [System.GC]::Collect()
     }
@@ -1637,8 +1637,8 @@ Function Update-ConfigFile {
 
     # ZergPoolCoins is no longer available
     If ($Config.PoolName -like "ZergPoolCoins*") { 
-        Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' ))."
-        $Variables.ConfigurationHasChangedDuringUpdate += "- Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_  -like '*Coins*' }) -replace 'Coins' ))"
+        Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_ -like '*Coins*' }) -replace 'Coins' ))."
+        $Variables.ConfigurationHasChangedDuringUpdate += "- Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_ -like '*Coins*' }) -replace 'Coins' ))"
         $Config.PoolName = $Config.PoolName -replace 'Coins'
     }
 
@@ -3003,13 +3003,6 @@ Function Get-EquihashCoinPers {
         If ($Variables.EquihashCoinPers[$Currency]) { 
             Return "$($Command)$($Variables.EquihashCoinPers[$Currency])"
         }
-
-        $Variables.EquihashCoinPers = [Ordered]@{ } # as case insensitive hash table
-        (([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json).PSObject.Properties).ForEach({ $Variables.EquihashCoinPers[$_.Name] = $_.Value })
-
-        If ($Variables.EquihashCoinPers[$Currency]) { 
-            Return "$($Command)$($Variables.EquihashCoinPers[$Currency])"
-        }
     }
 
     Return $DefaultCommand
@@ -4106,7 +4099,7 @@ Function Stop-APIserver {
         $Global:APIrunspace.Close()
         $Global:APIrunspace.Dispose()
 
-        Remove-Variable APIrunspace -Scope global
+        Remove-Variable APIrunspace -Scope Global
 
         [System.GC]::Collect()
     }

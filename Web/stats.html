@@ -70,65 +70,163 @@
 
               $('#showzerohashrateminers').on('click',function() {
                 $('body').css('cursor', 'wait');
+                $('#showzerohashrateminers').disabled = true;
+                $('#resetzerohashrateminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#resetallpooldata').disabled = true;
+                $('#resetallbenchmarks').disabled = true;
+                $('#resetallpowerconsumption').disabled = true;
                 $('.modal-body').load('functions/stat/get?Type=Hashrate&Value=0', function() {
                   $('.modal-title').text($('#showzerohashrateminers').text());
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
+                $('#showzerohashrateminers').disabled = false;
+                $('#resetzerohashrateminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#resetallpooldata').disabled = false;
+                $('#resetallbenchmarks').disabled = false;
+                $('#resetallpowerconsumption').disabled = false;
               });
 
               $('#resetzerohashrateminers').on('click',function() {
                 $('body').css('cursor', 'wait');
+                $('#showzerohashrateminers').disabled = true;
+                $('#resetzerohashrateminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#resetallpooldata').disabled = true;
+                $('#resetallbenchmarks').disabled = true;
+                $('#resetallpowerconsumption').disabled = true;
                 $('.modal-body').load('functions/stat/remove?Type=Hashrate&Value=0', function() {
                   $('.modal-title').text($('#resetzerohashrateminers').text());
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
+                $('#showzerohashrateminers').disabled = false;
+                $('#resetzerohashrateminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#resetallpooldata').disabled = false;
+                $('#resetallbenchmarks').disabled = false;
+                $('#resetallpowerconsumption').disabled = false;
               });
 
               $('#showzeropowerconsumptionminers').on('click',function() {
                 $('body').css('cursor', 'wait');
+                $('#showzerohashrateminers').disabled = true;
+                $('#resetzerohashrateminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#resetallpooldata').disabled = true;
+                $('#resetallbenchmarks').disabled = true;
+                $('#resetallpowerconsumption').disabled = true;
                 $('.modal-body').load('functions/stat/get?Type=PowerConsumption&Value=0', function() {
                   $('.modal-title').text($('#showzeropowerconsumptionminers').text());
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
+                $('#showzerohashrateminers').disabled = false;
+                $('#resetzerohashrateminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#resetallpooldata').disabled = false;
+                $('#resetallbenchmarks').disabled = false;
+                $('#resetallpowerconsumption').disabled = false;
               });
 
               $('#resetzeropowerconsumptionminers').on('click',function() {
                 $('body').css('cursor', 'wait');
+                $('#showzerohashrateminers').disabled = true;
+                $('#resetzerohashrateminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#resetallpooldata').disabled = true;
+                $('#resetallbenchmarks').disabled = true;
+                $('#resetallpowerconsumption').disabled = true;
                 $('.modal-body').load('functions/stat/remove?Type=PowerConsumption&Value=0', function() {
                   $('.modal-title').text($('#resetzeropowerconsumptionminers').text());
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
+                $('#showzerohashrateminers').disabled = false;
+                $('#resetzerohashrateminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#resetallpooldata').disabled = false;
+                $('#resetallbenchmarks').disabled = false;
+                $('#resetallpowerconsumption').disabled = false;
               });
 
               $('#resetallpooldata').on('click',function() {
                 $('body').css('cursor', 'wait');
+                $('#showzerohashrateminers').disabled = true;
+                $('#resetzerohashrateminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#resetallpooldata').disabled = true;
+                $('#resetallbenchmarks').disabled = true;
+                $('#resetallpowerconsumption').disabled = true;                
                 $('.modal-body').load('functions/stat/remove?Type=Profit', function() {
                   $('.modal-title').text($('#resetallpooldata').text());
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
+                $('#showzerohashrateminers').disabled = false;
+                $('#resetzerohashrateminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#resetallpooldata').disabled = false;
+                $('#resetallbenchmarks').disabled = false;
+                $('#resetallpowerconsumption').disabled = false;
               });
 
               $('#resetallbenchmarks').on('click',function() {
                 $('body').css('cursor', 'wait');
+                $('#showzerohashrateminers').disabled = true;
+                $('#resetzerohashrateminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#resetallpooldata').disabled = true;
+                $('#resetallbenchmarks').disabled = true;
+                $('#resetallpowerconsumption').disabled = true;                
                 $('.modal-body').load('functions/stat/remove?Type=Hashrate', function() {
                   $('.modal-title').text($('#resetallbenchmarks').text());
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
+                $('#showzerohashrateminers').disabled = false;
+                $('#resetzerohashrateminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#resetallpooldata').disabled = false;
+                $('#resetallbenchmarks').disabled = false;
+                $('#resetallpowerconsumption').disabled = false;
               });
 
               $('#resetallpowerconsumption').on('click',function() {
                 $('body').css('cursor', 'wait');
+                $('#showzerohashrateminers').disabled = true;
+                $('#resetzerohashrateminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#showzeropowerconsumptionminers').disabled = true;
+                $('#resetallpooldata').disabled = true;
+                $('#resetallbenchmarks').disabled = true;
+                $('#resetallpowerconsumption').disabled = true;
                 $('.modal-body').load('functions/stat/remove?Type=PowerConsumption', function() {
                   $('.modal-title').text($('#resetallpowerconsumption').text());
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({show:true});
                 });
+                $('#showzerohashrateminers').disabled = false;
+                $('#resetzerohashrateminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#showzeropowerconsumptionminers').disabled = false;
+                $('#resetallpooldata').disabled = false;
+                $('#resetallbenchmarks').disabled = false;
+                $('#resetallpowerconsumption').disabled = false;
               });
               updateSummary();
               updateButtonStatus();

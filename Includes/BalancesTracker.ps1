@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 using module .\Include.psm1
@@ -96,7 +96,7 @@ Do {
         )
 
         # Keep most recent balance objects, keep empty balances for 7 days
-        $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object -Property DateTime -Bottom 1 }))
+        $BalanceObjects = @(($BalanceObjects + ($BalancesData).Where({ $_.Pool -notin @($Config.BalancesTrackerExcludePool) -and $_.Unpaid -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) -and $_.Wallet }) | Group-Object -Property Pool, Currency, Wallet).ForEach({ $_.Group | Sort-Object -Property DateTime -Bottom 1 }))
 
         ForEach ($PoolBalanceObject in $BalanceObjects) { 
             $PoolBalanceObjects = @($Variables.BalancesData.Where({ $_.Pool -eq $PoolBalanceObject.Pool -and $_.Currency -eq $PoolBalanceObject.Currency -and $_.Wallet -eq $PoolBalanceObject.Wallet }) | Sort-Object -Property DateTime)
@@ -389,7 +389,7 @@ Do {
         # At least 31 days are needed for Growth720
         If ($Variables.BalancesData.Count -gt 1) { 
             $Variables.BalancesData = @(
-                ($Variables.BalancesData.Where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object Pool, Currency).ForEach(
+                ($Variables.BalancesData.Where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object -Property Pool, Currency).ForEach(
                     { 
                         $Record = $null
                         ($_.Group | Sort-Object -Property DateTime).ForEach(

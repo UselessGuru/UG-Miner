@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -122,9 +122,8 @@ If ($Algorithms) {
                                 "ethstratumnh" { $Arguments += "stratum+"; Break }
                                 # Default        { $Arguments += "stratum+" }
                             }
-                            $Arguments += "$(If ($Pool.PoolPorts[1]) { "ssl://" } Else { "tcp://" })$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                            $Arguments += " -u $($Pool.User)"
-                            If ($Pool.Pass) { $Arguments += " -p $($Pool.Pass)" }
+                            $Arguments += If ($Pool.PoolPorts[1]) { "ssl://" } Else { "tcp://" }
+                            $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) -u $($Pool.User) -p $($Pool.Pass)"
                             If ($Pool.WorkerName) { $Arguments += " -w $($Pool.WorkerName)" }
 
                             # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -133,7 +132,7 @@ If ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = "$Arguments -report-average 5 -report-interval 5$(If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(If ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))" } Else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x2}:00' -f $_ }) -join ',')" })"
+                                Arguments   = "$Arguments -report-average 5 -report-interval 5$(If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(If ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Config.CPUMiningReserveCPUcore)" } Else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x2}:00' -f $_ }) -join ',')" })"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = $_.Fee # Dev fee
                                 MinerSet    = $_.MinerSet
@@ -143,7 +142,7 @@ If ($Algorithms) {
                                 Port        = $MinerAPIPort
                                 Type        = $Type
                                 URI         = $URI
-                                WarmupTimes = $WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })
                             }
                         }

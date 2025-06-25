@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 # Added support for Tari-Sha3x on Nvidia Pascal and newer and AMD RX 400 series and newer gpus. Use -a SHA3X to mine it. At the moment pool mining only. Fee is 1%.
@@ -33,45 +33,45 @@ $Path = "Bin\$Name\lolminer.exe"
 $DeviceEnumerator = "Bus"
 
 $Algorithms = @(
-    @{ Algorithms = @("Autolykos2", "");                   Type = "AMD"; Fee = @(0.015);       MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2" }
-    @{ Algorithms = @("Autolykos2", "HeavyHashPyrinV2");   Type = "AMD"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode PYRINV2DUAL" }
-    @{ Algorithms = @("Autolykos2", "SHA3x");              Type = "AMD"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode SHA3XDUAL" }
-    @{ Algorithms = @("BeamV3", "");                       Type = "AMD"; Fee = @(0.01);        MinMemGiB = 6.0;  MinerSet = 0; WarmupTimes = @(45, 50);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo BEAM-III" }
-    @{ Algorithms = @("Blake3", "");                       Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ALEPH" }
-    @{ Algorithms = @("Cuckoo29", "");                     Type = "AMD"; Fee = @(0.02);        MinMemGiB = 8.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C29AE" }
-    @{ Algorithms = @("Cuckaroo29B", "");                  Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29-40" }
-    @{ Algorithms = @("Cuckaroo29S", "");                  Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29-32" }
-    @{ Algorithms = @("Cuckaroo30CTX", "");                Type = "AMD"; Fee = @(0.025);       MinMemGiB = 7.8;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C30CTX" }
-#   @{ Algorithms = @("Cuckatoo31", "");                   Type = "AMD"; Fee = @(0.02);        MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 80);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C31" } # ASIC
-#   @{ Algorithms = @("Cuckatoo32", "");                   Type = "AMD"; Fee = @(0.02);        MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C32" } # ASIC
-    @{ Algorithms = @("Equihash1254", "");                 Type = "AMD"; Fee = @(0.015);       MinMemGiB = 3.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ZEL --pers ZelProof" }
-    @{ Algorithms = @("Equihash1445", "");                 Type = "AMD"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo EQUI144_5" } # FPGA
-    @{ Algorithms = @("Equihash1927", "");                 Type = "AMD"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo EQUI192_7" } # FPGA
-    @{ Algorithms = @("Equihash2109", "");                 Type = "AMD"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algp EQUI201_9" }
-    @{ Algorithms = @("EtcHash", "");                      Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ETCHASH" } # PhoenixMiner-v6.2c is faster
-    @{ Algorithms = @("EtcHash", "Blake3");                Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 100); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETCHASH --dualmode ALEPHDUAL" }
-    @{ Algorithms = @("Ethash", "");                       Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ETHASH" } # PhoenixMiner-v6.2c is faster
-    @{ Algorithms = @("Ethash", "Blake3");                 Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 100); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASH --dualmode ALEPHDUAL" }
-    @{ Algorithms = @("EthashB3", "");                     Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo ETHASHB3" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1992
-    @{ Algorithms = @("EthashB3", "Blake3");               Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASHB3 --dualmode ALEPHDUAL" }
-    @{ Algorithms = @("EthashB3", "SHA512256d");           Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 100); ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo ETHASHB3 --dualmode RXDDUAL" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1986
-    @{ Algorithms = @("Flux", "");                         Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FLUX" }
-    @{ Algorithms = @("FishHash", "");                     Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH" }
-    @{ Algorithms = @("FishHash", "Blake3");               Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo FISHHASH --dualmode ALEPHDUAL" }
-    @{ Algorithms = @("FishHash", "HeavyHashPyrinV2");     Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode PYRINV2DUAL" }
-    @{ Algorithms = @("FishHash", "SHA512256d");           Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode RXDDUAL" }
-    @{ Algorithms = @("FishHash", "SHA3x");                Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode SHA3XDUAL" }
-    @{ Algorithms = @("HeavyHashKarlsen", "");             Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo KARLSEN" }
-    @{ Algorithms = @("HeavyHashKarlsenV2", "");           Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2" }
-    @{ Algorithms = @("HeavyHashKarlsenV2", "SHA3x");      Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2 --dualmode SHA3XDUAL" }
-    @{ Algorithms = @("HeavyHashPyrin", "");               Type = "AMD"; Fee = @(0.01);        MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo PYRIN" }
-    @{ Algorithms = @("HeavyHashPyrinV2", "");             Type = "AMD"; Fee = @(0.01);        MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo PYRINV2" }
-    @{ Algorithms = @("NexaPow", "");                      Type = "AMD"; Fee = @(0.02);        MinMemGiB = 3.0;  MinerSet = 2; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo NEXA" }
-    @{ Algorithms = @("Octopus", "");                      Type = "AMD"; Fee = @(0.02);        MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@("NiceHash"), @()); Arguments = " --algo OCTOPUS" }
-    @{ Algorithms = @("Octopus", "SHA3x");                 Type = "AMD"; Fee = @(0.02, 0.01);  MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@("NiceHash"), @()); Arguments = " --algo OCTOPUS --dualmode SHA3XDUAL" }
-    @{ Algorithms = @("SHA512256d", "");                   Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 1.0;  MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo RADIANT" }
-    @{ Algorithms = @("SHA3x", "");                        Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.0;  MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo SHA3X" }
-    @{ Algorithms = @("UbqHash", "");                      Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH" }
+    @{ Algorithms = @("Autolykos2", "");                 Type = "AMD"; Fee = @(0.015);       MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2" }
+    @{ Algorithms = @("Autolykos2", "HeavyHashPyrinV2"); Type = "AMD"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode PYRINV2DUAL" }
+    @{ Algorithms = @("Autolykos2", "SHA3x");            Type = "AMD"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode SHA3XDUAL" }
+    @{ Algorithms = @("BeamV3", "");                     Type = "AMD"; Fee = @(0.01);        MinMemGiB = 6.0;  MinerSet = 0; WarmupTimes = @(45, 50);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo BEAM-III" }
+    @{ Algorithms = @("Blake3", "");                     Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ALEPH" }
+    @{ Algorithms = @("Cuckoo29", "");                   Type = "AMD"; Fee = @(0.02);        MinMemGiB = 8.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C29AE" }
+    @{ Algorithms = @("Cuckaroo29B", "");                Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29-40" }
+    @{ Algorithms = @("Cuckaroo29S", "");                Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29-32" }
+    @{ Algorithms = @("Cuckaroo30CTX", "");              Type = "AMD"; Fee = @(0.025);       MinMemGiB = 7.8;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C30CTX" }
+#   @{ Algorithms = @("Cuckatoo31", "");                 Type = "AMD"; Fee = @(0.02);        MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 80);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C31" } # ASIC
+#   @{ Algorithms = @("Cuckatoo32", "");                 Type = "AMD"; Fee = @(0.02);        MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C32" } # ASIC
+    @{ Algorithms = @("Equihash1254", "");               Type = "AMD"; Fee = @(0.015);       MinMemGiB = 3.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ZEL --pers ZelProof" }
+    @{ Algorithms = @("Equihash1445", "");               Type = "AMD"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo EQUI144_5" } # FPGA
+    @{ Algorithms = @("Equihash1927", "");               Type = "AMD"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo EQUI192_7" } # FPGA
+    @{ Algorithms = @("Equihash2109", "");               Type = "AMD"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algp EQUI201_9" }
+    @{ Algorithms = @("EtcHash", "");                    Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ETCHASH" } # PhoenixMiner-v6.2c is faster
+    @{ Algorithms = @("EtcHash", "Blake3");              Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 100); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETCHASH --dualmode ALEPHDUAL" }
+    @{ Algorithms = @("Ethash", "");                     Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ETHASH" } # PhoenixMiner-v6.2c is faster
+    @{ Algorithms = @("Ethash", "Blake3");               Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(60, 100); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASH --dualmode ALEPHDUAL" }
+    @{ Algorithms = @("EthashB3", "");                   Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo ETHASHB3" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1992
+    @{ Algorithms = @("EthashB3", "Blake3");             Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASHB3 --dualmode ALEPHDUAL" }
+    @{ Algorithms = @("EthashB3", "SHA512256d");         Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 100); ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo ETHASHB3 --dualmode RXDDUAL" } # https://github.com/Lolliedieb/lolMiner-releases/issues/1986
+    @{ Algorithms = @("Flux", "");                       Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.00; MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FLUX" }
+    @{ Algorithms = @("FishHash", "");                   Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH" }
+    @{ Algorithms = @("FishHash", "Blake3");             Type = "AMD"; Fee = @(0.01, 0);     MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo FISHHASH --dualmode ALEPHDUAL" }
+    @{ Algorithms = @("FishHash", "HeavyHashPyrinV2");   Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode PYRINV2DUAL" }
+    @{ Algorithms = @("FishHash", "SHA512256d");         Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode RXDDUAL" }
+    @{ Algorithms = @("FishHash", "SHA3x");              Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode SHA3XDUAL" }
+    @{ Algorithms = @("HeavyHashKarlsen", "");           Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo KARLSEN" }
+    @{ Algorithms = @("HeavyHashKarlsenV2", "");         Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2" }
+    @{ Algorithms = @("HeavyHashKarlsenV2", "SHA3x");    Type = "AMD"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2 --dualmode SHA3XDUAL" }
+    @{ Algorithms = @("HeavyHashPyrin", "");             Type = "AMD"; Fee = @(0.01);        MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo PYRIN" }
+    @{ Algorithms = @("HeavyHashPyrinV2", "");           Type = "AMD"; Fee = @(0.01);        MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo PYRINV2" }
+    @{ Algorithms = @("NexaPow", "");                    Type = "AMD"; Fee = @(0.02);        MinMemGiB = 3.0;  MinerSet = 2; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@(), @());           Arguments = " --algo NEXA" }
+    @{ Algorithms = @("Octopus", "");                    Type = "AMD"; Fee = @(0.02);        MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@("NiceHash"), @()); Arguments = " --algo OCTOPUS" }
+    @{ Algorithms = @("Octopus", "SHA3x");               Type = "AMD"; Fee = @(0.02, 0.01);  MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = "^GCN\d+$"; ExcludePools = @(@("NiceHash"), @()); Arguments = " --algo OCTOPUS --dualmode SHA3XDUAL" }
+    @{ Algorithms = @("SHA512256d", "");                 Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 1.0;  MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo RADIANT" }
+    @{ Algorithms = @("SHA3x", "");                      Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.0;  MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo SHA3X" }
+    @{ Algorithms = @("UbqHash", "");                    Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH" }
   
     @{ Algorithms = @("Autolykos2", "");   Type = "INTEL"; Fee = @(0.015); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo AUTOLYKOS2" }
     @{ Algorithms = @("BeamV3", "");       Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo BEAM-III" }
@@ -123,7 +123,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
@@ -171,13 +171,13 @@ If ($Algorithms) {
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)$(If ($_.MaxDualImpact -ne "*") { "-$($_.MaxDualImpact)" })"})"
 
                                     $Arguments = $_.Arguments
-                                    $CoinPers = If ("Equihash1445", "Equihash1927" -contains $_.Algorithms[0]) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" } Else { "" }
-                                    If ($CoinPers) { $Arguments += $CoinPers }
+
+                                    $CoinPers = If ("Equihash1445", "Equihash1927" -contains $_.Algorithms[0]) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" }
 
                                     If ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
+                                        If ($CoinPers) { $Arguments += $CoinPers }
                                         $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
-                                        $Arguments += " --user $($Pool0.User)$(If ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" })"
-                                        $Arguments += " --pass $($Pool0.Pass)"
+                                        $Arguments += " --user $($Pool0.User)$(If ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass $($Pool0.Pass)"
                                         $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
                                         Switch ($Pool0.Protocol) { 
                                             "ethproxy"     { $Arguments += " --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY"; Break }
@@ -188,8 +188,7 @@ If ($Algorithms) {
 
                                         If ($_.Algorithms[1]) { 
                                             $Arguments += " --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                            $Arguments += " --dualuser $($Pool1.User)$(If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
-                                            $Arguments += " --dualpass $($Pool1.Pass)"
+                                            $Arguments += " --dualuser $($Pool1.User)$(If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --dualpass $($Pool1.Pass)"
                                             If ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
                                             $Arguments += If ($Pool1.PoolPorts[1]) { " --dualtls on" } Else { " --dualtls off" }
                                         }
@@ -206,7 +205,7 @@ If ($Algorithms) {
                                             Port        = $MinerAPIPort
                                             Type        = $Type
                                             URI         = $URI
-                                            WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                            WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                             Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                         }
                                     }

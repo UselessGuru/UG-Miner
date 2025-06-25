@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 # Add sha3x algorithm for Tari mining (dev fee 1%)
@@ -89,7 +89,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ $_.Algorithms[1] -eq "" -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
@@ -127,9 +127,7 @@ If ($Algorithms) {
                                     }
                                     $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                     $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " --username [$Index]$($Pool.User -replace "\..*")"
-                                    $Arguments += " --password [$Index]$($Pool.Pass)"
-                                    $Arguments += " --worker [$Index]$(If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } Else { $Config.WorkerName })"
+                                    $Arguments += " --username [$Index]$($Pool.User -replace "\..*") --password [$Index]$($Pool.Pass) --worker [$Index]$(If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } Else { $Config.WorkerName })"
 
                                     $Index ++
                                 }
@@ -156,7 +154,7 @@ If ($Algorithms) {
                                     Port        = $MinerAPIPort
                                     Type        = "NVIDIA"
                                     URI         = $URI
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                     Workers     = @($Pools.ForEach({ @{ Pool = $_ } }))
                                 }
                             }

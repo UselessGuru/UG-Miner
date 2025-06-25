@@ -17,45 +17,44 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Variables.DriverVersion.CUDA -ge [Version]"10.2") }))) { Return }
 
-# CUDA backend: added missing RandomX dataset update.
-# Optimized auto-config for AMD CPUs with less than 2 MB L3 cache per thread.
-# Fixed possible crash when submitting RandomX benchmark.
-# Fixed OpenCL kernel compilation error on some platforms.
+# Fixed detection of L2 cache size for some complex NUMA topologies.
+# Fixed ARMv7 build.
+# Fixed auto-config for AMD CPUs with less than 2 MB L3 cache per thread.
+# Improved IPv6 support: the new default settings use IPv6 equally with IPv4.
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xmrig.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
+# There is no toolkit for CUDA 12.7
 $URI = Switch ($Variables.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"12.9" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_9-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_8-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_7-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_6-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_5-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_4-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_3-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_2-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_1-win64.7z"; Break }
-    { $_ -ge [System.Version]"12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda12_0-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_8-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_7-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_6-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_5-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_4-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_3-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_2-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_1-win64.7z"; Break }
-    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda11_0-win64.7z"; Break }
-    { $_ -ge [System.Version]"10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-cuda10_2-win64.7z"; Break }
-    Default                           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.22.3-msvc-win64.7z" }
+    { $_ -ge [System.Version]"12.9" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_9-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_8-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_6-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_5-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_4-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_3-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_2-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_1-win64.7z"; Break }
+    { $_ -ge [System.Version]"12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_0-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_8-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_7-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_6-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_5-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_4-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_3-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_2-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_1-win64.7z"; Break }
+    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda11_0-win64.7z"; Break }
+    { $_ -ge [System.Version]"10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda10_2-win64.7z"; Break }
+    Default                           { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-msvc-win64.7z" }
 }
-
 
 $Algorithms = @(
     @{ Algorithm = "Cryptonight";          Type = "AMD"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/0" }
@@ -115,7 +114,7 @@ $Algorithms = @(
     @{ Algorithm = "Ghostrider";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo gr" }
     @{ Algorithm = "Panthera";             Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo panthera" }
     @{ Algorithm = "RandomxArq";           Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # FPGA
-    @{ Algorithm = "RandomXeq";            Type = "CPU"; MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/xeq" }
+    @{ Algorithm = "RandomXeq";            Type = "CPU"; MinerSet = 3; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo rx/xeq" }
     @{ Algorithm = "RandomxKeva";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" }
     @{ Algorithm = "RandomxLoki";          Type = "CPU"; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/loki" }
     @{ Algorithm = "RandomxSfx";           Type = "CPU"; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/sfx" }
@@ -169,7 +168,7 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightXao";       Type = "NVIDIA"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
     @{ Algorithm = "CryptonightHeavyXhv";  Type = "NVIDIA"; MinMemGiB = 4;    MinerSet = 1; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
     @{ Algorithm = "CryptonightZls";       Type = "NVIDIA"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "NVIDIA"; MinMemGiB = 0.77; MinerSet = 3; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" } # Trex-v0.26.8 is fastest, but has 1% miner fee (Broken: https://github.com/RainbowMiner/RainbowMiner/issues/2224)
+    @{ Algorithm = "KawPow";               Type = "NVIDIA"; MinMemGiB = 0.77; MinerSet = 3; WarmupTimes = @(45, 15); ExcludePools = @(); Arguments = " --algo kawpow" } # Trex-v0.26.8 is fastest, but has 1% miner fee (Broken: https://github.com/RainbowMiner/RainbowMiner/issues/2224)
 #   @{ Algorithm = "Randomx";              Type = "NVIDIA"; MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxArq";           Type = "NVIDIA"; MinMemGiB = 4;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxKeva";          Type = "NVIDIA"; MinMemGiB = 1;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
@@ -198,8 +197,8 @@ If ($Algorithms) {
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
-                    ForEach ($Pool in $MinerPools[0][$_.Algorithm] | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
+                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                    ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
@@ -207,12 +206,12 @@ If ($Algorithms) {
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Arguments = $_.Arguments
-                            If ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -$($Config.CPUMiningReserveCPUcore))" }
+                            If ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Config.CPUMiningReserveCPUcore)" }
                             ElseIf ("AMD", "INTEL" -contains $_.Type) { $Arguments += " --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             Else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             If (-not $Variables.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
 
-                            $MinerPath = If ("Ghostrider", "Flex",  "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
+                            $MinerPath = If ("Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
                             $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Config.WorkerName }
 
                             [PSCustomObject]@{ 
@@ -227,7 +226,7 @@ If ($Algorithms) {
                                 Port        = $MinerAPIPort
                                 Type        = $Type
                                 URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })
                             }
                         }

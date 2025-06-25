@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -34,11 +34,11 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightLite";     MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightLiteV1";   MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightLiteItbc"; MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightHeavy";    MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.22.3 is fastest
+    @{ Algorithm = "CryptonightHeavy";    MinMemGiB = 1; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.24.0 is fastest
 #   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiB = 4; Type = "AMD"; MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # PARSE error: Invalid job length
     @{ Algorithm = "CryptonightMsr";      MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
 #   @{ Algorithm = "CryptonightR";        MinMemGiB = 2; Type = "AMD"; MinerSet = 3; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # ASIC
-    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.22.3 is fastest
+    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.24.0 is fastest
     @{ Algorithm = "CryptonightRwz";      MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightV1";       MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
     @{ Algorithm = "CryptonightV2";       MinMemGiB = 2; Type = "AMD"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
@@ -68,7 +68,7 @@ $Algorithms = @(
 #   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiB = 4; Type = "NVIDIA"; MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # PARSE error: Invalid job length
     @{ Algorithm = "CryptonightMsr";      MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
 #   @{ Algorithm = "CryptonightR";        MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 3; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # ASIC
-    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # XmRig-v6.22.3 is fastest
+    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # XmRig-v6.24.0 is fastest
     @{ Algorithm = "CryptonightRwz";      MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
     @{ Algorithm = "CryptonightV1";       MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
     @{ Algorithm = "CryptonightV2";       MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
@@ -114,8 +114,8 @@ If ($Algorithms) {
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name }) | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm] | Select-Object -Last $(If ($_.Type -eq "CPU") { 1 } Else { $MinerPools[0][$_.Algorithm].Count })) { 
+                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                             # Note: For fine tuning directly edit the config files in the miner binary directory
                             $ConfigFileName = [System.Web.HttpUtility]::UrlEncode("$((@("Config") + @($_.Type) + @(($Model.ForEach({ $Model = $_; "$(@($AvailableMinerDevices.Where({ $_.Model -EQ $Model })).Count)x$Model($((($AvailableMinerDevices | Sort-Object -Property Name).Where({ $_.Model -eq $Model })).Name -join ';'))" }) | Select-Object) -join '-') + @($MinerAPIPort) | Select-Object) -join '-').txt")
@@ -186,7 +186,7 @@ If ($Algorithms) {
                                 Port        = $MinerAPIPort
                                 Type        = $Type
                                 URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })
                             }
                         }

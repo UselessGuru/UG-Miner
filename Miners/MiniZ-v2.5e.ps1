@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -31,10 +31,10 @@ $DeviceEnumerator = "Type_Vendor_Slot"
 $Algorithms = @(
     @{ Algorithm = "Equihash1254";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=125,4 --smart-pers" }
     @{ Algorithm = "Equihash1445";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^GCN1$";     ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --amd" } # FPGA
-    @{ Algorithm = "Equihash1505";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 4.0;  MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^xRDNA1$";   ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=150,5 --smart-pers" }
+    @{ Algorithm = "Equihash1505";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 4.0;  MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ ";         ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=150,5 --smart-pers" }
     @{ Algorithm = "Equihash1927";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.3;  MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --amd" } # FPGA
-    @{ Algorithm = "Equihash2009";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^xRDNA1$";   ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=BgoldPoW" }
-    @{ Algorithm = "Equihash2109";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^xRDNA1$";   ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=210,9 --smart-pers" }
+    @{ Algorithm = "Equihash2009";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=BgoldPoW" }
+    @{ Algorithm = "Equihash2109";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=210,9 --smart-pers" }
     @{ Algorithm = "EtcHash";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=etcHash --dag-fix" }
     @{ Algorithm = "Ethash";             Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=ethash --dag-fix" }
     @{ Algorithm = "EthashB3";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @( );          AutoCoinPers = "";             Arguments = " --amd --par=ethashb3 --dag-fix" }
@@ -103,9 +103,9 @@ If ($Algorithms) {
 
                                 $Arguments = $_.Arguments
                                 $Arguments += " --url=$(If ($Pool.PoolPorts[1]) { "ssl://" })$($Pool.User)@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                $Arguments += " --pass=$($Pool.Pass)"
                                 If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments += " --worker=$($Pool.WorkerName)" }
-                                If ($_.AutoCoinPers) { $Arguments += $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers) }
+                                If ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers }
+                                $Arguments += " --pass=$($Pool.Pass)"
 
                                 # Apply tuning parameters
                                 If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
@@ -122,7 +122,7 @@ If ($Algorithms) {
                                     Port        = $MinerAPIPort
                                     Type        = $Type
                                     URI         = $URI
-                                    WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                    WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                     Workers     = @(@{ Pool = $Pool })
                                 }
                             }

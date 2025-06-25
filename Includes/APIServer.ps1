@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.4.32
-Version date:   2025/06/14
+Version:        6.4.33
+Version date:   2025/06/25
 #>
 
 using module .\Include.psm1
 
-$APIVersion = "6.0.4"
+$APIVersion = "6.0.6"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -119,11 +119,11 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 ForEach ($Pool in $Pools) { 
                     If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
-                        $Pool.Reasons = @($Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")) | Out-Null
+                        $Pool.Reasons = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
                     }
                     Else { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "+$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                        $PoolReasons = @($Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")) | Out-Null
+                        $Pool.Reasons = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config") | Out-Null
                     }
                     $Pool.Available = $false
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
@@ -148,11 +148,11 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 ForEach ($Pool in $Pools) { 
                     If ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
-                        $Pool.Reasons = @($Pool.Reasons.Where({ $_ -ne "Algorithm not enabled in $($Pool.Name) pool config" }) | Sort-Object -Unique)
+                        $Pool.Reasons = $Pool.Reasons.Where({ $_ -ne "Algorithm not enabled in $($Pool.Name) pool config" }) | Sort-Object -Unique
                     }
                     Else { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "-$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                        $Pool.Reasons = @($Pool.Reasons.Where({ $_ -ne "Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)" }) | Sort-Object -Unique)
+                        $Pool.Reasons = $Pool.Reasons.Where({ $_ -ne "Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)" }) | Sort-Object -Unique
                     }
                     If (-not $Pool.Reasons) { $Pool.Available = $true }
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
@@ -386,7 +386,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                             }
                             $_.Disabled = $true
                             $_.Reasons += "Disabled by user"
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
+                            $_.Reasons = $_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique
                         }
                     )
                     $Data = $Data | Sort-Object -Unique
@@ -412,7 +412,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                                 [Void](Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
                             }
                             $_.Disabled = $false
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
+                            $_.Reasons = $_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique
                             If (-not $_.Reasons) { $_.Available = $true }
                         }
                     )
@@ -502,9 +502,9 @@ While ($Variables.APIversion -and $Server.IsListening) {
                             # Remove watchdog
                             $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -NE $_.Name
 
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }))
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "0 H/s Stat file" }))
-                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
+                            $_.Reasons = $_.Reasons.Where({ $_ -ne "Disabled by user" })
+                            $_.Reasons = $_.Reasons.Where({ $_ -ne "0 H/s Stat file" })
+                            $_.Reasons = $_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique
                             If (-not $_.Reasons) { $_.Available = $true }
                             If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
                         }
@@ -587,7 +587,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                                     $_.Available = $false
                                     $_.Disabled = $false
                                     If ($_.Reasons -notcontains "0 H/s Stat file") { $_.Reasons.Add("0 H/s Stat file") | Out-Null }
-                                    $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
+                                    $_.Reasons = $_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique
                                     $_.Status = [MinerStatus]::Failed
                                 }
                             }
@@ -628,7 +628,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                     $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name }) }).ForEach(
                         { 
                             $Data += "$($_.Name)"
-                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
+                            $_.Reasons = $_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique
                             If (-not $_.Reasons) { $_.Available = $true }
                         }
                     )
@@ -642,7 +642,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                     $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }) }).ForEach(
                         { 
                             $Data += "$($_.Key) [$($_.Region)]"
-                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
+                            $_.Reasons = $_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique
                             If (-not $_.Reasons) { $_.Available = $true }
                         }
                     )
@@ -664,14 +664,14 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
                 $Variables.Miners.ForEach(
                     { 
-                        $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                        $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
+                        $_.Reasons = $_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique
+                        If (-not $_.Reasons) { $_.Available = $true }
                     }
                 )
                 $Variables.Pools.ForEach(
                     { 
-                        $_.Reasons = @($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
-                        $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
+                        $_.Reasons = $_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique
+                        If (-not $_.Reasons) { $_.Available = $true }
                     }
                 )
                 Write-Message -Level Verbose "Web GUI: All watchdog timers removed."

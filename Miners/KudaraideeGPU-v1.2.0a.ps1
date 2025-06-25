@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.4.27
-Version date:   2025/06/14
+Version date:   2025/06/25
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") }))) { Return }
@@ -71,7 +71,7 @@ If ($Algorithms) {
                             # 1 GB memory reserve, then 1 thread per 4GB
                             $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach({ ($_.MemoryGiB - 1) / 4 }) | Measure-Object -Minimum).Minimum)
 
-                            # Reserve 250KB for AMD driver, for NVIDIA
+                            # Reserve 250KB for AMD driver
                             $GPUmemory = ($AvailableMinerDevices.ForEach({ $_.MemoryGiB }) | Measure-Object -Minimum).Minimum
                             If ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } Else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
                             $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
@@ -87,7 +87,7 @@ If ($Algorithms) {
                                 Port        = $MinerAPIPort
                                 Type        = $Type
                                 URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: Seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: Seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                 Workers     = @(@{ Pool = $Pool })
                             }
                         }
