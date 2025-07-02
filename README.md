@@ -191,7 +191,7 @@ UG-Miner can run a batch script prior switching to a specific miner and/or algor
 
 The prerun scripts can be used to apply overclocking settings via any OC tool that can be parameterized via batch file commands (e.g. nvidiaInspector or OverdriveNTool).  
 
-Before starting a miner executable UG-Miner wiil try to launch one of the following 3 prerun scripts (in this order):
+Before starting a miner executable UG-Miner will try to launch one of the following 3 prerun scripts (in this order):
 
 1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
@@ -214,7 +214,7 @@ Before starting a miner executable UG-Miner wiil try to launch one of the follow
 
 **This is for advanced users. Do not use if you do not know what you are doing.**
 
-See '[UG-Miner directory]\Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of 'Config\PoolsConfig.json'.  
+See '[UG-Miner directory]\Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of '[UG-Miner directory]\Config\PoolsConfig.json'.  
 A separate section can be added to '[UG-Miner directory]\Config\PoolsConfig.json' for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built-in default values will be used.
 
 
