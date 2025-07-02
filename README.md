@@ -110,7 +110,7 @@ It is recommended to keep the number of configured pools to a minimum as this mi
 If more than one algorithm is given, then the algorithms must be separated with commas. Do not use spaces in between the values.
 
 If '+' is used, then only the explicitly enabled algorithms are used  
-If '-' is used, then all algorithms except the disabled algorithms are used
+If '-' is used, then all algorithms except the disabled ones are used
 
 Do not combine '+' and '-' concurrently.
 
@@ -140,7 +140,7 @@ Will mine all available algorithms
 If more than one currency is given, then the currencies must be separated with commas. Do not use spaces in between the values.
 
 If '+' is used, then only the explicitly enabled currencies are used  
-If '-' is used, then all currencies except the disabled currencies are used
+If '-' is used, then all currencies except the disabled ones are used
 
 Do not combine '+' and '-' concurrently.
 
