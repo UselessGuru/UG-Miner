@@ -107,8 +107,10 @@ It is recommended to keep the number of configured pools to a minimum as this mi
 +[algorithm] to enable algorithm  
 -[algorithm] to disable algorithm
 
+If more than one algorithm is given, then the algorithms must be separated with commas. Do not use spaces in between the values.
+
 If '+' is used, then only the explicitly enabled algorithms are used  
-If '-' is used, then all algorithms except the disabled ones are used
+If '-' is used, then all algorithms except the disabled algorithms are used
 
 Do not combine '+' and '-' concurrently.
 
@@ -121,7 +123,7 @@ Will mine anything but ethash
 Algorithm list = '-Ethash(3GB),-Kawpow'  
 Will mine anything but Ethash (3GB DAG size only) or Kawpow (any DAG size)
 
-Algorithm list = +Ethash  
+Algorithm list = '+Ethash'  
 Will mine only Ethash (any DAG size)
 
 Algorithm list = '+Ethash,+Kawpow(4GB)'  
@@ -135,8 +137,10 @@ Will mine all available algorithms
 +[currency] to enable currency  
 -[currency] to disable currency
 
+If more than one currency is given, then the currencies must be separated with commas. Do not use spaces in between the values.
+
 If '+' is used, then only the explicitly enabled currencies are used  
-If '-' is used, then all currencies except the disabled ones are used
+If '-' is used, then all currencies except the disabled currencies are used
 
 Do not combine '+' and '-' concurrently.
 
