@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.4.33
-Version date:   2025/06/25
+Version:        6.4.34
+Version date:   2025/07/02
 #>
 
 using module ..\Includes\Include.psm1
@@ -87,17 +87,16 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -and $CurrenciesData.$_.name -notcontains "Hashtap" }).ForEach(
                     { 
                         $CurrenciesData.$_ | Add-Member Currency $(If ($CurrenciesData.$_.symbol) { $CurrenciesData.$_.symbol -replace '-.+$' } Else { $_ -replace '-.+$' })
+                        Try { 
+                            # Add coin name
+                            [Void](Add-CoinName -Algorithm $CurrenciesData.$_.algo -Currency $CurrenciesData.$_.Currency -CoinName $CurrenciesData.$_.name)
+                        }
+                        Catch { }
                         $CurrenciesData.$_ | Add-Member CoinName ([String]$Variables.CoinNames[$CurrenciesData.$_.Currency]) -Force
 
                         $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
                         $CurrenciesData.$_.PSObject.Properties.Remove("name")
                         $CurrenciesArray += $CurrenciesData.$_
-
-                        Try { 
-                            # Add coin name
-                            [Void](Add-CoinName -Algorithm $CurrenciesData.$_.algo -Currency $CurrenciesData.$_.Currency -CoinName $CurrenciesData.$_.CoinName)
-                        }
-                        Catch { }
                     }
                 )
 

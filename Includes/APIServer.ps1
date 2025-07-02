@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.4.33
-Version date:   2025/06/25
+Version:        6.4.34
+Version date:   2025/07/02
 #>
 
 using module .\Include.psm1
@@ -503,7 +503,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                             $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -NE $_.Name
 
                             $_.Reasons = $_.Reasons.Where({ $_ -ne "Disabled by user" })
-                            $_.Reasons = $_.Reasons.Where({ $_ -ne "0 H/s Stat file" })
+                            $_.Reasons = $_.Reasons.Where({ $_ -ne "0 H/s stat file" })
                             $_.Reasons = $_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique
                             If (-not $_.Reasons) { $_.Available = $true }
                             If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
@@ -586,7 +586,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                                     $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = $_.Earnings_Accuracy = [Double]::NaN
                                     $_.Available = $false
                                     $_.Disabled = $false
-                                    If ($_.Reasons -notcontains "0 H/s Stat file") { $_.Reasons.Add("0 H/s Stat file") | Out-Null }
+                                    If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") | Out-Null }
                                     $_.Reasons = $_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique
                                     $_.Status = [MinerStatus]::Failed
                                 }

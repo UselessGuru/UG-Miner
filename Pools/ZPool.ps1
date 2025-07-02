@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.4.33
-Version date:   2025/06/25
+Version:        6.4.34
+Version date:   2025/07/02
 #>
 
 Param(
@@ -88,7 +88,7 @@ If ($PriceField) {
                     Name                     = $Name
                     Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(If ($Currency -eq $PayoutCurrency) { ",zap=$PayoutCurrency" })"
                     Port                     = [UInt16]$Request.$Algorithm.port
-                    PortSSL                  = [UInt16]("5$([String]$Request.$Algorithm.port)")
+                    PortSSL                  = [UInt16](50000 + $Request.$Algorithm.port)
                     PoolUri                  = "https://zpool.ca/algo/$($Algorithm)"
                     Price                    = $Stat.Live
                     Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethproxy" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }

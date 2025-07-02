@@ -79,6 +79,12 @@
               document.getElementById('btn-clear-log').disabled = !Boolean($table.bootstrapTable('getData').length);
             });
 
+            $('#switchinglog').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
+              $(".addlocalcurrency").each(function () {
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
+              });
+            });
+
             $table.bootstrapTable({
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top - 20,
@@ -113,26 +119,14 @@
               }
             });
 
-            $('#switchinglog').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
-              $(".addlocalcurrency").each(function () {
-                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
+            $('#btn-clear-log').click(function () {
+              $url = '/functions/switchinglog/clear';
+              $('.modal-body').load($url, function() {
+                $('.modal-title').text($('#btn-clear-log').text());
+                $('#myModal').modal({ show: true });
               });
-            });
-
-            $(document).ready(function () {
-
-              // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
- 
-              $('#btn-clear-log').click(function () {
-                $url = '/functions/switchinglog/clear';
-                $('.modal-body').load($url, function() {
-                  $('.modal-title').text($('#btn-clear-log').text());
-                  $('#myModal').modal({show:true});
-                });
-                $('#myModal').on('hidden.bs.modal', function () {
-                  $('#switchinglog').bootstrapTable('refresh');
-                });
+              $('#myModal').on('hidden.bs.modal', function () {
+                $('#switchinglog').bootstrapTable('refresh');
               });
             });
 
@@ -141,7 +135,12 @@
               window.RT = setTimeout(function() {
                 this.location.reload(false); /* false to get page from cache */
               }, 200);
-            })
+            });
+
+            $(document).ready(function () {
+              // Fix, button text is wrong
+              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            });
           </script>
 <!-- End of page scripts 'switchinglog.html' -->
 <!-- #include file="/parts/foot.html" -->

@@ -78,29 +78,23 @@
               document.getElementById('btn-remove-entry').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 
-            $(document).ready(function () {
-
-              // Fix, button text is wrong
-              if (document.getElementsByName('toggle')[0]) document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
-
-              $('#btn-remove-entry').click(function () {
-                $('body').css('cursor', 'wait');
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $url = '/functions/balancedata/remove';
-                  $payload = {
-                    'Data': JSON.stringify($data.map($element => ({DateTime: $element.DateTime, Pool: $element.Pool, Currency: $element.Currency, Wallet: $element.Wallet})))
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-remove-entry').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $('body').css('cursor', 'wait');
-                  $table.bootstrapTable('refresh');
+            $('#btn-remove-entry').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/balancedata/remove';
+                $payload = {
+                  'Data': JSON.stringify($data.map($element => ({DateTime: $element.DateTime, Pool: $element.Pool, Currency: $element.Currency, Wallet: $element.Wallet})))
                 };
-                $('body').css('cursor', 'default');
-              });
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-remove-entry').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $('body').css('cursor', 'wait');
+                $table.bootstrapTable('refresh');
+              };
+              $('body').css('cursor', 'default');
             });
 
             $(window).resize(function () {
@@ -108,7 +102,12 @@
               window.RT = setTimeout(function() {
                 this.location.reload(false); /* false to get page from cache */
               }, 200);
-            })
+            });
+
+            $(document).ready(function () {
+              // Fix, button text is wrong
+              if (document.getElementsByName('toggle')[0]) document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            });
           </script>
 <!-- End of page scripts 'balalancedata.html' -->
 <!-- #include file="/parts/foot.html" -->

@@ -680,7 +680,7 @@ Class Miner : IDisposable {
 
     [Void]Refresh([Double]$PowerCostBTCperW, [Hashtable]$Config) { 
         $this.MinDataSample = $Config.MinDataSample
-        $this.Prioritize = [Boolean]($this.Workers.Where({ $_.Pool.Prioritize }))
+        $this.Prioritize = $this.Workers.Pool.Prioritize -contains $true
         $this.ProcessPriority = $Config."$($this.Type)MinerProcessPriority"
         If ($this.ReadPowerConsumption -ne $this.Devices.ReadPowerConsumption -notcontains $false) { $this.Restart = $true }
         $this.ReadPowerConsumption = $this.Devices.ReadPowerConsumption -notcontains $false
@@ -709,7 +709,7 @@ Class Miner : IDisposable {
             }
         )
 
-        If ($this.Benchmark = [Boolean]($this.Workers.Hashrate -match [Double]::NaN)) { 
+        If ($this.Benchmark = [Boolean]($this.Workers.Hashrate -like [Double]::NaN)) { 
             $this.Earnings = [Double]::NaN
             $this.Earnings_Accuracy = [Double]::NaN
             $this.Earnings_Bias = [Double]::NaN
@@ -2935,9 +2935,9 @@ Function Add-CoinName {
             }
         }
         If (-not $Variables.CoinNames[$Currency]) { 
-            If ($CoinName = ($CoinName.Trim() -replace "[^A-Z0-9\$\.]" -replace "coin$", "Coin" -replace "bitcoin$", "Bitcoin")) { 
+            If ($CoinName = ($CoinName.Trim() -replace "[^A-Z0-9 \$\.]" -replace "coin$", " Coin" -replace "bit coin$", "Bitcoin" -replace "ERC20$" , " ERC20" -replace "TRC20$" , " TRC20" -replace "\s+", " " )) { 
                 $Variables.CoinNames[$Currency] = $CoinName
-                # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the  file and release mutex
+                # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the file and release mutex
                 If ($Mutex.WaitOne(1000)) { 
                     $Variables.CoinNames | Get-SortedObject | ConvertTo-Json | Out-File -Path ".\Data\CoinNames.json" -ErrorAction Ignore -Force
                     $Mutex.ReleaseMutex()
@@ -3351,9 +3351,9 @@ Function Get-AllDAGdata {
         }
     }
 
-    # Update on script start, once every 24hrs or if unable to get data from source
     # ZPool also supplies SCC DAG data. ZPool is the only pool with SCC, so we don't need a separate way to get SCC DAG information
     # If (-not ($Variables.PoolName -match "ZPool.*")) { 
+        # Update on script start, once every 24hrs or if unable to get data from source
         # $Currency = "SCC"
         # If (Get-AlgorithmFromCurrency -Currency $Currency) { 
         #     $Url = "https://scc.ccore.online/api/getblockcount"
@@ -3410,9 +3410,9 @@ Function Get-AllDAGdata {
         }
     }
 
-    # Update on script start, once every 24hrs or if unable to get data from source
     # ZergPool also supplies EVR DAG data.
     If (-not ($Variables.PoolName -match "^ZergPool.*")) { 
+        # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "EVR"
         If (Get-AlgorithmFromCurrency -Currency $Currency) { 
             $Url = "https://evr.cryptoscope.io/api/getblockcount"
@@ -3441,9 +3441,9 @@ Function Get-AllDAGdata {
         }
     }
 
-    # Update on script start, once every 24hrs or if unable to get data from source
     # ZergPool & ZPool also supply PHI DAG data.
     If (-not ($Variables.PoolName -match "^ZergPool.*|^ZPool.*")) { 
+        # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "PHI"
         If ((Get-AlgorithmFromCurrency -Currency $Currency)) { 
             $Url = "https://explorer.phicoin.net/api/getblockcount"
@@ -3472,9 +3472,9 @@ Function Get-AllDAGdata {
         }
     }
 
-    # Update on script start, once every 24hrs or if unable to get data from source
     # Zpool & ZergPool also supply MEWC DAG data
     If (-not ($Variables.PoolName -match "^ZergPool.*|^ZPool.+")) { 
+        # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "MEWC"
         If ((Get-AlgorithmFromCurrency -Currency $Currency)) { 
             $Url = "https://mewc.cryptoscope.io/api/getblockcount"

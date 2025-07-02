@@ -2,8 +2,9 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navminerstats">Manage miner and pool stats</h2>
           </div>
+
           <div class="alert alert-info" role="alert">UG-Miner stores all profit, hashrate and power consumption data in stat files.</div>
-          <div class="card-group mt-2">
+          <div id="cardgroup" class="card-group mt-2">
             <div class="card rounded mr-2 bg-light">
               <div class="card-header">
                 <h5>Stat files with 0H/s hashrate</h5>
@@ -12,9 +13,9 @@
                 <p>Reset the stats for miners that have a benchmarked hashrate of 0 H/s.</p>
                 <p>These miners may have failed to benchmark properly.<br>Resetting their stats allows them to attempt benchmarking again.</p>
                 <p>You should watch closely for failed miners after doing this.</p>
-                <a href="#" id="showzerohashrateminers" class="btn btn-info">Show stat files with 0H/s</a>
+                <button id="showzerohashrateminers" class="btn btn-info">Show stat files with 0H/s</button>
                 <p></p>
-                <a href="#" id="resetzerohashrateminers" class="btn btn-primary">Reset stat files with 0H/s</a>
+                <button id="resetzerohashrateminers" class="btn btn-primary">Reset stat files with 0H/s</button>
               </div>
             </div>
             <div class="card mx-2 rounded bg-light">
@@ -25,9 +26,9 @@
                 <p>Reset the stats for miners that have a measured power consumption of 0W.</p>
                 <p>These miners may have failed to measure power consumption properly.<br>Resetting their recorded value allows them to attempt measuring again.</p>
                 <p>You should watch closely for failed miners after doing this.</p>
-                <a href="#" id="showzeropowerconsumptionminers" class="btn btn-info">Show stat files with 0W power consumption</a>
+                <button id="showzeropowerconsumptionminers" class="btn btn-info">Show stat files with 0W power consumption</button>
                 <p></p>
-                <a href="#" id="resetzeropowerconsumptionminers" class="btn btn-primary">Reset stat file with 0W power consumption</a>
+                <button id="resetzeropowerconsumptionminers" class="btn btn-primary">Reset stat file with 0W power consumption</button>
               </div>
             </div>
             <div class="card mx-2 rounded bg-warning">
@@ -39,7 +40,7 @@
                 <p></p>
                 <p>This will force all miners to benchmark again.</p>
                 <p>You should watch closely for failed miners after doing this.</p>
-                <a href="#" id="resetallbenchmarks" class="btn btn-danger">Reset all miner benchmark data</a>
+                <button id="resetallbenchmarks" class="btn btn-danger">Reset all miner benchmark data</button>
               </div>
             </div>
             <div class="card ml-2 rounded bg-warning">
@@ -51,7 +52,7 @@
                 <p></p>
                 <p>This will force all miners to measure power consumption again.</p>
                 <p>You should watch closely for failed miners after doing this.</p>
-                <a href="#" id="resetallpowerconsumption" class="btn btn-danger">Reset all miner power consumption data</a>
+                <button id="resetallpowerconsumption" class="btn btn-danger">Reset all miner power consumption data</button>
               </div>
             </div>
             <div class="card mx-2 rounded bg-light">
@@ -60,174 +61,175 @@
               </div>
               <div class="card-body">
                 <p>To ensure your pool data is accurate you should do this after hardware changes, changing overclock settings and driver updates.</p>
-                <a href="#" id="resetallpooldata" class="btn btn-primary">Reset all pool price data</a>
+                <abutton id="resetallpooldata" class="btn btn-primary">Reset all pool price data</button>
               </div>
             </div>
           </div>
 <!-- Start of page scripts 'stats.html' -->
           <script type="text/javascript">
+
+            $('#showzerohashrateminers').click(function () {
+              $('body').css('cursor', 'wait');
+              document.getElementById('showzerohashrateminers').disabled = true;
+              document.getElementById('resetzerohashrateminers').disabled = true;
+              document.getElementById('showzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetallpooldata').disabled = true;
+              document.getElementById('resetallbenchmarks').disabled = true;
+              document.getElementById('resetallpowerconsumption').disabled = true;
+              $('.modal-body').load('functions/stat/get?Type=Hashrate&Value=0', null, function() {
+                $('.modal-title').text($('#showzerohashrateminers').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              document.getElementById('showzerohashrateminers').disabled = false;
+              document.getElementById('resetzerohashrateminers').disabled = false;
+              document.getElementById('showzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetallpooldata').disabled = false;
+              document.getElementById('resetallbenchmarks').disabled = false;
+              document.getElementById('resetallpowerconsumption').disabled = false;
+            });
+
+            $('#resetzerohashrateminers').click(function () {
+              $('body').css('cursor', 'wait');
+              document.getElementById('showzerohashrateminers').disabled = true;
+              document.getElementById('resetzerohashrateminers').disabled = true;
+              document.getElementById('showzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetallpooldata').disabled = true;
+              document.getElementById('resetallbenchmarks').disabled = true;
+              document.getElementById('resetallpowerconsumption').disabled = true;
+              $('.modal-body').load('functions/stat/remove?Type=Hashrate&Value=0', function() {
+                $('.modal-title').text($('#resetzerohashrateminers').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              document.getElementById('showzerohashrateminers').disabled = false;
+              document.getElementById('resetzerohashrateminers').disabled = false;
+              document.getElementById('showzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetallpooldata').disabled = false;
+              document.getElementById('resetallbenchmarks').disabled = false;
+              document.getElementById('resetallpowerconsumption').disabled = false;
+            });
+
+            $('#showzeropowerconsumptionminers').click(function () {
+              $('body').css('cursor', 'wait');
+              document.getElementById('showzerohashrateminers').disabled = true;
+              document.getElementById('resetzerohashrateminers').disabled = true;
+              document.getElementById('showzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetallpooldata').disabled = true;
+              document.getElementById('resetallbenchmarks').disabled = true;
+              document.getElementById('resetallpowerconsumption').disabled = true;
+              $('.modal-body').load('functions/stat/get?Type=PowerConsumption&Value=0', function() {
+                $('.modal-title').text($('#showzeropowerconsumptionminers').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              document.getElementById('showzerohashrateminers').disabled = false;
+              document.getElementById('resetzerohashrateminers').disabled = false;
+              document.getElementById('showzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetallpooldata').disabled = false;
+              document.getElementById('resetallbenchmarks').disabled = false;
+              document.getElementById('resetallpowerconsumption').disabled = false;
+            });
+
+            $('#resetzeropowerconsumptionminers').click(function () {
+              $('body').css('cursor', 'wait');
+              document.getElementById('showzerohashrateminers').disabled = true;
+              document.getElementById('resetzerohashrateminers').disabled = true;
+              document.getElementById('showzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetallpooldata').disabled = true;
+              document.getElementById('resetallbenchmarks').disabled = true;
+              document.getElementById('resetallpowerconsumption').disabled = true;
+              $('.modal-body').load('functions/stat/remove?Type=PowerConsumption&Value=0', function() {
+                $('.modal-title').text($('#resetzeropowerconsumptionminers').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              document.getElementById('showzerohashrateminers').disabled = false;
+              document.getElementById('resetzerohashrateminers').disabled = false;
+              document.getElementById('showzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetallpooldata').disabled = false;
+              document.getElementById('resetallbenchmarks').disabled = false;
+              document.getElementById('resetallpowerconsumption').disabled = false;
+            });
+
+            $('#resetallpooldata').click(function () {
+              $('body').css('cursor', 'wait');
+              document.getElementById('showzerohashrateminers').disabled = true;
+              document.getElementById('resetzerohashrateminers').disabled = true;
+              document.getElementById('showzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetallpooldata').disabled = true;
+              document.getElementById('resetallbenchmarks').disabled = true;
+              document.getElementById('resetallpowerconsumption').disabled = true;
+              $('.modal-body').load('functions/stat/remove?Type=Profit', function() {
+                $('.modal-title').text($('#resetallpooldata').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              document.getElementById('showzerohashrateminers').disabled = false;
+              document.getElementById('resetzerohashrateminers').disabled = false;
+              document.getElementById('showzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetallpooldata').disabled = false;
+              document.getElementById('resetallbenchmarks').disabled = false;
+              document.getElementById('resetallpowerconsumption').disabled = false;
+            });
+
+            $('#resetallbenchmarks').click(function () {
+              $('body').css('cursor', 'wait');
+              document.getElementById('showzerohashrateminers').disabled = true;
+              document.getElementById('resetzerohashrateminers').disabled = true;
+              document.getElementById('showzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetallpooldata').disabled = true;
+              document.getElementById('resetallbenchmarks').disabled = true;
+              document.getElementById('resetallpowerconsumption').disabled = true;
+              $('.modal-body').load('functions/stat/remove?Type=Hashrate', function() {
+                $('.modal-title').text($('#resetallbenchmarks').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              document.getElementById('showzerohashrateminers').disabled = false;
+              document.getElementById('resetzerohashrateminers').disabled = false;
+              document.getElementById('showzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetallpooldata').disabled = false;
+              document.getElementById('resetallbenchmarks').disabled = false;
+              document.getElementById('resetallpowerconsumption').disabled = false;
+            });
+
+            $('#resetallpowerconsumption').click(function () {
+              $('body').css('cursor', 'wait');
+              document.getElementById('showzerohashrateminers').disabled = true;
+              document.getElementById('resetzerohashrateminers').disabled = true;
+              document.getElementById('showzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = true;
+              document.getElementById('resetallpooldata').disabled = true;
+              document.getElementById('resetallbenchmarks').disabled = true;
+              document.getElementById('resetallpowerconsumption').disabled = true;
+              $('.modal-body').load('functions/stat/remove?Type=PowerConsumption', function() {
+                $('.modal-title').text($('#resetallpowerconsumption').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              document.getElementById('showzerohashrateminers').disabled = false;
+              document.getElementById('resetzerohashrateminers').disabled = false;
+              document.getElementById('showzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetzeropowerconsumptionminers').disabled = false;
+              document.getElementById('resetallpooldata').disabled = false;
+              document.getElementById('resetallbenchmarks').disabled = false;
+              document.getElementById('resetallpowerconsumption').disabled = false;
+            });
+
             $(document).ready(function () {
-
-              $('#showzerohashrateminers').on('click',function() {
-                $('body').css('cursor', 'wait');
-                $('#showzerohashrateminers').disabled = true;
-                $('#resetzerohashrateminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#resetallpooldata').disabled = true;
-                $('#resetallbenchmarks').disabled = true;
-                $('#resetallpowerconsumption').disabled = true;
-                $('.modal-body').load('functions/stat/get?Type=Hashrate&Value=0', function() {
-                  $('.modal-title').text($('#showzerohashrateminers').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#showzerohashrateminers').disabled = false;
-                $('#resetzerohashrateminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#resetallpooldata').disabled = false;
-                $('#resetallbenchmarks').disabled = false;
-                $('#resetallpowerconsumption').disabled = false;
-              });
-
-              $('#resetzerohashrateminers').on('click',function() {
-                $('body').css('cursor', 'wait');
-                $('#showzerohashrateminers').disabled = true;
-                $('#resetzerohashrateminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#resetallpooldata').disabled = true;
-                $('#resetallbenchmarks').disabled = true;
-                $('#resetallpowerconsumption').disabled = true;
-                $('.modal-body').load('functions/stat/remove?Type=Hashrate&Value=0', function() {
-                  $('.modal-title').text($('#resetzerohashrateminers').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#showzerohashrateminers').disabled = false;
-                $('#resetzerohashrateminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#resetallpooldata').disabled = false;
-                $('#resetallbenchmarks').disabled = false;
-                $('#resetallpowerconsumption').disabled = false;
-              });
-
-              $('#showzeropowerconsumptionminers').on('click',function() {
-                $('body').css('cursor', 'wait');
-                $('#showzerohashrateminers').disabled = true;
-                $('#resetzerohashrateminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#resetallpooldata').disabled = true;
-                $('#resetallbenchmarks').disabled = true;
-                $('#resetallpowerconsumption').disabled = true;
-                $('.modal-body').load('functions/stat/get?Type=PowerConsumption&Value=0', function() {
-                  $('.modal-title').text($('#showzeropowerconsumptionminers').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#showzerohashrateminers').disabled = false;
-                $('#resetzerohashrateminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#resetallpooldata').disabled = false;
-                $('#resetallbenchmarks').disabled = false;
-                $('#resetallpowerconsumption').disabled = false;
-              });
-
-              $('#resetzeropowerconsumptionminers').on('click',function() {
-                $('body').css('cursor', 'wait');
-                $('#showzerohashrateminers').disabled = true;
-                $('#resetzerohashrateminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#resetallpooldata').disabled = true;
-                $('#resetallbenchmarks').disabled = true;
-                $('#resetallpowerconsumption').disabled = true;
-                $('.modal-body').load('functions/stat/remove?Type=PowerConsumption&Value=0', function() {
-                  $('.modal-title').text($('#resetzeropowerconsumptionminers').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#showzerohashrateminers').disabled = false;
-                $('#resetzerohashrateminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#resetallpooldata').disabled = false;
-                $('#resetallbenchmarks').disabled = false;
-                $('#resetallpowerconsumption').disabled = false;
-              });
-
-              $('#resetallpooldata').on('click',function() {
-                $('body').css('cursor', 'wait');
-                $('#showzerohashrateminers').disabled = true;
-                $('#resetzerohashrateminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#resetallpooldata').disabled = true;
-                $('#resetallbenchmarks').disabled = true;
-                $('#resetallpowerconsumption').disabled = true;                
-                $('.modal-body').load('functions/stat/remove?Type=Profit', function() {
-                  $('.modal-title').text($('#resetallpooldata').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#showzerohashrateminers').disabled = false;
-                $('#resetzerohashrateminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#resetallpooldata').disabled = false;
-                $('#resetallbenchmarks').disabled = false;
-                $('#resetallpowerconsumption').disabled = false;
-              });
-
-              $('#resetallbenchmarks').on('click',function() {
-                $('body').css('cursor', 'wait');
-                $('#showzerohashrateminers').disabled = true;
-                $('#resetzerohashrateminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#resetallpooldata').disabled = true;
-                $('#resetallbenchmarks').disabled = true;
-                $('#resetallpowerconsumption').disabled = true;                
-                $('.modal-body').load('functions/stat/remove?Type=Hashrate', function() {
-                  $('.modal-title').text($('#resetallbenchmarks').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#showzerohashrateminers').disabled = false;
-                $('#resetzerohashrateminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#resetallpooldata').disabled = false;
-                $('#resetallbenchmarks').disabled = false;
-                $('#resetallpowerconsumption').disabled = false;
-              });
-
-              $('#resetallpowerconsumption').on('click',function() {
-                $('body').css('cursor', 'wait');
-                $('#showzerohashrateminers').disabled = true;
-                $('#resetzerohashrateminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#showzeropowerconsumptionminers').disabled = true;
-                $('#resetallpooldata').disabled = true;
-                $('#resetallbenchmarks').disabled = true;
-                $('#resetallpowerconsumption').disabled = true;
-                $('.modal-body').load('functions/stat/remove?Type=PowerConsumption', function() {
-                  $('.modal-title').text($('#resetallpowerconsumption').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#showzerohashrateminers').disabled = false;
-                $('#resetzerohashrateminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#showzeropowerconsumptionminers').disabled = false;
-                $('#resetallpooldata').disabled = false;
-                $('#resetallbenchmarks').disabled = false;
-                $('#resetallpowerconsumption').disabled = false;
-              });
               updateSummary();
               updateButtonStatus();
             });

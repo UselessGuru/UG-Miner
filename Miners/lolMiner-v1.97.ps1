@@ -17,17 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.33
-Version date:   2025/06/25
+Version:        6.4.34
+Version date:   2025/07/02
 #>
 
-# Added support for Tari-Sha3x on Nvidia Pascal and newer and AMD RX 400 series and newer gpus. Use -a SHA3X to mine it. At the moment pool mining only. Fee is 1%.
-# Added support for Tari-Sha3x dual mining with Octopus (Conflux), Autolykos V2 (Ergo), Fishhash and Karlsenhash V2 algorithms. Use --dualmode SHA3XDUAL to activate it. Supported GPUs: Nvidia Pascal and newer and AMD RX 5000 series and newer.
-# Added support for mining AutolykosV2, BeamHash 3, Fishhash, KarlsenhashV2, Octopus and Sha3x on Radeon 9060 XT.
+# Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
+# Added a hint that oc was reset when miner closes and it actually had set options that got successfully reset.
+# Fixed a bug when mining Grin Cuckatoo-32 not submitting shares in 1.96(a)
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
 
-$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.96a/lolMiner_v1.96a_Win64.zip"
+$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.97/lolMiner_v1.97_Win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\lolminer.exe"
 $DeviceEnumerator = "Bus"

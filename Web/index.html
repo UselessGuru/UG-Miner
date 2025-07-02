@@ -149,8 +149,6 @@
                   $table.bootstrapTable('hideColumn', 'SecondaryPoolFee');
                   $table.bootstrapTable('hideColumn', 'SecondaryMinerFee');
                 };
-                updateSummary();
-                updateButtonStatus();
               },
               onResetView: function () {
                 document.getElementById('logtext').style.height = ($(window).height() - $table.height() - 410) + 'px';
@@ -183,84 +181,76 @@
               document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 
-            $(document).ready(function () {
-              tailf();
-              setInterval('tailf()', 500);
+            $('#btn-re-benchmark').click(function () {
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $('body').css('cursor', 'wait');
+                $url = '/functions/stat/remove';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  'Type' : 'Hashrate'
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-re-benchmark').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $('#activeminers').bootstrapTable('refresh');
+              }
+            });
 
-              // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            $('#btn-re-measure').click(function () {
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $('body').css('cursor', 'wait');
+                $url = '/functions/stat/remove';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  'Type' : 'PowerConsumption'
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-re-measure').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $('#activeminers').bootstrapTable('refresh');
+              }
+            });
 
-              $('#btn-re-benchmark').click(function () {
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
-                  $url = '/functions/stat/remove';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                    'Type' : 'Hashrate'
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-re-benchmark').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $('#activeminers').bootstrapTable('refresh');
-                }
-              });
+            $('#btn-failed').click(function () {
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $('body').css('cursor', 'wait');
+                $url = '/functions/stat/set';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  'Type': 'Hashrate',
+                  'Value': 0 
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-failed').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $('#activeminers').bootstrapTable('refresh');
+              }
+            });
 
-              $('#btn-re-measure').click(function () {
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
-                  $url = '/functions/stat/remove';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                    'Type' : 'PowerConsumption'
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-re-measure').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $('#activeminers').bootstrapTable('refresh');
-                }
-              });
-
-              $('#btn-failed').click(function () {
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
-                  $url = '/functions/stat/set';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                    'Type': 'Hashrate',
-                    'Value': 0 
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-failed').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $('#activeminers').bootstrapTable('refresh');
-                }
-              });
-
-              $('#btn-disable').click(function () {
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
-                  $url = '/functions/stat/disable'
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-disable').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $('#activeminers').bootstrapTable('refresh');
-                }
-              });
+            $('#btn-disable').click(function () {
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $('body').css('cursor', 'wait');
+                $url = '/functions/stat/disable'
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-disable').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $('#activeminers').bootstrapTable('refresh');
+              }
             });
 
             $(window).resize(function () {
@@ -268,7 +258,16 @@
               window.RT = setTimeout(function() {
                 this.location.reload(false); /* false to get page from cache */
               }, 200);
-            })
+            });
+
+            $(document).ready(function () {
+              tailf();
+              setInterval('tailf()', 500);
+              // Fix, button text is wrong
+              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              updateSummary();
+              updateButtonStatus();
+            });
           </script>
 <!-- End of page scripts 'index.html' -->
 <!-- #include file="/parts/foot.html" -->

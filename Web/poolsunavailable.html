@@ -116,49 +116,43 @@
               }
             });
 
-            $(document).ready(function () {
+            $('#pools').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
+              document.getElementById('btn-reset-data').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+              document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+            });
 
-              // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            $('#btn-reset-data').click(function () {
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $('body').css('cursor', 'wait');
+                $url = '/functions/stat/remove';
+                $payload = {
+                  'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm, Currency: $element.Currency })))
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-reset-data').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+            });
 
-              $('#pools').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
-                document.getElementById('btn-reset-data').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-                document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              });
-
-              $('#btn-reset-data').click(function () {
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
-                  $url = '/functions/stat/remove';
-                  $payload = {
-                    'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm, Currency: $element.Currency })))
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-reset-data').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-              });
-
-              $('#btn-remove-watchdog').click(function () {
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $('body').css('cursor', 'wait');
-                  $url = '/functions/watchdogtimers/remove';
-                  $payload = {
-                    'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm })))
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-remove-watchdog').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-              });
+            $('#btn-remove-watchdog').click(function () {
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $('body').css('cursor', 'wait');
+                $url = '/functions/watchdogtimers/remove';
+                $payload = {
+                  'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm })))
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-remove-watchdog').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
             });
 
             $(window).resize(function () {
@@ -166,7 +160,12 @@
               window.RT = setTimeout(function() {
                 this.location.reload(false); /* false to get page from cache */
               }, 200);
-            })
+            });
+
+            $(document).ready(function () {
+              // Fix, button text is wrong
+              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            });
           </script>
 <!-- End of page scripts 'poolunavailable.html' -->
 <!-- #include file="/parts/foot.html" -->

@@ -65,6 +65,24 @@
               document.getElementById('btn-removewatchdogs').disabled = !Boolean($table.bootstrapTable('getData').length);
             });
 
+            $('#btn-removewatchdogs').click(function () {
+              $('body').css('cursor', 'wait');
+              $url = '/functions/watchdogtimers/remove';
+              $('.modal-body').load($url, function() {
+                $('.modal-title').text($('#btn-removewatchdogs').text());
+                $('body').css('cursor', 'default');
+                $('#myModal').modal({ show: true });
+              });
+              $('#watchdogtimers').bootstrapTable('refresh');
+            });
+
+            $(window).resize(function () {
+              if (window.RT) clearTimeout(window.RT);
+              window.RT = setTimeout(function() {
+                this.location.reload(false); /* false to get page from cache */
+              }, 200);
+            });
+
             $(document).ready(function () {
               if (config.Watchdog) { 
                 document.getElementById('watchdog').style.visibility='visible';
@@ -83,26 +101,9 @@
                 document.getElementById('watchdog').style.visibility='hidden'
                 $('#watchdogalert').text('Watchdog is disabled in configuration (Watchdog -eq $false)');
               };
-              $('#btn-removewatchdogs').click(function () {
-                $('body').css('cursor', 'wait');
-                $url = '/functions/watchdogtimers/remove';
-                $('.modal-body').load($url, function() {
-                  $('.modal-title').text($('#btn-removewatchdogs').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({show:true});
-                });
-                $('#watchdogtimers').bootstrapTable('refresh');
-              });
               updateSummary();
               updateButtonStatus();
             });
-
-            $(window).resize(function () {
-              if (window.RT) clearTimeout(window.RT);
-              window.RT = setTimeout(function() {
-                this.location.reload(false); /* false to get page from cache */
-              }, 200);
-            })
           </script>
 <!-- End of page scripts 'watchdogtmiers.html' -->
 <!-- #include file="/parts/foot.html" -->

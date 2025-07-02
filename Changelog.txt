@@ -1,6 +1,21 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.34 2025/07/02
+====================================
+
+Fixes:
+- Brains 'ZergPool' & 'ZPool' not updating CoinNames.json database (regression from v6.4.23)
+- Web GUI: Sizing & spacing is now consistent across different display dimensions
+
+Improvements:
+- Core: Minor code optimizations
+
+Miner updates:
+- lolMiner-v1.97
+- SRBMinerMulti-v2.9.4 (keep v2.9.2 for EvoHash & HooHash)
+
+
 Changelog UG-Miner 6.4.33 2025/06/25
 ====================================
 
@@ -8,7 +23,7 @@ Fixes:
 - Core: Do not store measured hashrate if too many bad shared were detected
 
 Improvements:
-- Core: Minor miner code optimization
+- Core: Minor code optimizations
 
 Miner changes
 - JayddeeCPU-v25.4
@@ -22,7 +37,7 @@ Changelog UG-Miner 6.4.32 2025/06/14
 
 Improvements:
 - Core, web & legacy GUI: Replace 'CPU#nn' / 'GPU#nn' with more descriptive text, e.g. '1xGTX1660SUPER6G'
-- Core: Minor code optimization
+- Core: Minor code optimizations
 - Downloader: Make messages more descriptive
 
 Miner changes:
@@ -52,7 +67,7 @@ Fixes:
 - Web GUI: Restore mouse pointer
 
 Improvements:
-- Core: Minor code optimization
+- Core: Minor code optimizations
 
 Miner changes:
 - SRBMinerMulti-v2.9.0
@@ -79,7 +94,7 @@ Changelog UG-Miner 6.4.28 2025/05/30
 ====================================
 
 Improvements:
-- Core: Minor code optimization
+- Core: Minor code optimizations
 - Downloader: Make error messages more descriptive
 
 Miner updates:

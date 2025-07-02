@@ -85,7 +85,12 @@ function formatPools(data) {
     item.StablePrice = item.StablePrice * factor;
 
     // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
-    if (item.Reasons.length <= 0) item.Reasons = [" "];
+    // try {
+      if (item.Reasons.length <= 0) item.Reasons = [" "];
+    // }
+    // catch { 
+      // item.Reasons = "ZZZ"
+    // }
   });
   return data;
 }

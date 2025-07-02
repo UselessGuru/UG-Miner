@@ -116,6 +116,43 @@
               height: $(window).height() - $('#workers').offset().top + 20
             });
 
+            // Get new guid
+            $('#new-guid').click(function () {
+              document.getElementById('MonitoringUser').value = createUUID();
+            });
+
+            $('#configuration').bind('reset', function () {
+              location.reload(true);
+            });
+
+            $('#configuration').validate({
+              submitHandler: function (form) {
+                $('body').css('cursor', 'wait');
+
+                config.ReportToServer = document.getElementById('ReportToServer').checked;
+                if ((document.getElementById('MonitoringServer').value).toString().trim() == "") document.getElementById('MonitoringServer').value = 'https://UG-Miner.com';
+                config.MonitoringServer = document.getElementById('MonitoringServer').value;
+                config.MonitoringUser = document.getElementById('MonitoringUser').value;
+                config.ShowWorkerStatus = document.getElementById('ShowWorkerStatus').checked;
+
+                // Write current config
+                var $url = '/functions/config/set'
+                var $payload = encodeURIComponent(JSON.stringify(config));
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#save-button').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+              }
+            });
+
+            $(window).resize(function () {
+              if (window.RT) clearTimeout(window.RT);
+              window.RT = setTimeout(function() {
+                this.location.reload(false); /* false to get page from cache */
+              }, 200);
+            })
+
             $(document).ready(function () {
 
               // Fix, button text is wrong
@@ -163,46 +200,10 @@
 
               if (document.getElementById('MonitoringServer').value == '' || document.getElementById('MonitoringUser').value == '' || document.getElementById('ShowWorkerStatus').checked != true) $("#settings").collapse("show");
 
-              // Get new guid
-              $('#new-guid').click(function () {
-                document.getElementById('MonitoringUser').value = createUUID();
-              });
-
-              $('#configuration').bind('reset', function () {
-                location.reload(true);
-              });
-
-              $('#configuration').validate({
-                submitHandler: function (form) {
-                  $('body').css('cursor', 'wait');
-
-                  config.ReportToServer = document.getElementById('ReportToServer').checked;
-                  if ((document.getElementById('MonitoringServer').value).toString().trim() == "") document.getElementById('MonitoringServer').value = 'https://UG-Miner.com';
-                  config.MonitoringServer = document.getElementById('MonitoringServer').value;
-                  config.MonitoringUser = document.getElementById('MonitoringUser').value;
-                  config.ShowWorkerStatus = document.getElementById('ShowWorkerStatus').checked;
-
-                  // Write current config
-                  var $url = '/functions/config/set'
-                  var $payload = encodeURIComponent(JSON.stringify(config));
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#save-button').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                }
-              });
               updateSummary();
               updateButtonStatus();
               $('body').css('cursor', 'default');
             });
-
-            $(window).resize(function () {
-              if (window.RT) clearTimeout(window.RT);
-              window.RT = setTimeout(function() {
-                this.location.reload(false); /* false to get page from cache */
-              }, 200);
-            })
           </script>
 <!-- End of page scripts 'rigmonitor.html' -->
 <!-- #include file="/parts/foot.html" -->

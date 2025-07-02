@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.4.33
-Version date:   2025/06/25
+Version:        6.4.34
+Version date:   2025/07/02
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

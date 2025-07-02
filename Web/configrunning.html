@@ -14,44 +14,38 @@
 <!-- Start of page scripts 'configrunning.html' -->
           <script type="text/javascript">
 
+            //Edit config file
+            $('#btn-editconfig').click(function () {
+              document.getElementById('btn-editconfig').disabled = true;
+              document.getElementById('btn-editpoolsconfig').disabled = true;
+              $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(configfile), function () {
+                if (this.outerText) {
+                  $('.modal-title').text('Edit Config file');
+                  $('#myModal').modal({ show: true });
+                  $('#myModal').on('hidden.bs.modal', function () {
+                    location.reload(true);
+                  })
+                }
+                document.getElementById('btn-editconfig').disabled = false;
+                document.getElementById('btn-editpoolsconfig').disabled = false;
+              });
+            });
+
+            //Edit poolsconfig file
+            $('#btn-editpoolsconfig').click(function () {
+              document.getElementById('btn-editconfig').disabled = true;
+              document.getElementById('btn-editpoolsconfig').disabled = true;
+              $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(poolsconfigfile), function () {
+                if (this.outerText) {
+                  $('.modal-title').text('Edit PoolsConfig file');
+                  $('#myModal').modal({ show: true });
+                }
+                document.getElementById('btn-editconfig').disabled = false;
+                document.getElementById('btn-editpoolsconfig').disabled = false;
+              });
+            });
+
             $(document).ready(function () {
-              //Edit config file
-              $('#btn-editconfig').click(function () {
-                document.getElementById('btn-editconfig').disabled = true;
-                document.getElementById('btn-editpoolsconfig').disabled = true;
-                $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(configfile), function () {
-                  if (this.outerText) {
-                    $('.modal-title').text('Edit Config file');
-                    $('#myModal').modal({ 
-                      show: true
-                    });
-                    $('#myModal').on('hidden.bs.modal', function () {
-                      location.reload(true);
-                    })
-                  }
-                  document.getElementById('btn-editconfig').disabled = false;
-                  document.getElementById('btn-editpoolsconfig').disabled = false;
-                });
-                updateSummary();
-                updateButtonStatus();
-              });
-
-              //Edit poolsconfig file
-              $('#btn-editpoolsconfig').click(function () {
-                document.getElementById('btn-editconfig').disabled = true;
-                document.getElementById('btn-editpoolsconfig').disabled = true;
-                $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(poolsconfigfile), function () {
-                  if (this.outerText) {
-                    $('.modal-title').text('Edit PoolsConfig file');
-                    $('#myModal').modal({ 
-                      show: true
-                    });
-                  }
-                  document.getElementById('btn-editconfig').disabled = false;
-                  document.getElementById('btn-editpoolsconfig').disabled = false;
-                });
-              });
-
               // Get config file names
               $.ajax({
                 async: false,

@@ -178,123 +178,116 @@
               document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 
-            $(document).ready(function () {
+            $('#btn-re-benchmark').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/stat/remove';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  'Type' : 'Hashrate'
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-re-benchmark').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+              else $('body').css('cursor', 'default');
+            });
 
-              // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            $('#btn-re-measure').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/stat/remove';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  'Type' : 'PowerConsumption'
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-re-measure').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+              else $('body').css('cursor', 'default');
+            });
 
-              $('#btn-re-benchmark').click(function () {
-                $('body').css('cursor', 'wait');
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $url = '/functions/stat/remove';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                    'Type' : 'Hashrate'
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-re-benchmark').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-                else $('body').css('cursor', 'default');
-              });
+            $('#btn-failed').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/stat/set';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  'Type': 'Hashrate',
+                  'Value': 0 
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-failed').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+              else $('body').css('cursor', 'default');
+            });
 
-              $('#btn-re-measure').click(function () {
-                $('body').css('cursor', 'wait');
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $url = '/functions/stat/remove';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                    'Type' : 'PowerConsumption'
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-re-measure').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-                else $('body').css('cursor', 'default');
-              });
+            $('#btn-disable').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/stat/disable';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-disable').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+              else $('body').css('cursor', 'default');
+            });
 
-              $('#btn-failed').click(function () {
-                $('body').css('cursor', 'wait');
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $url = '/functions/stat/set';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                    'Type': 'Hashrate',
-                    'Value': 0 
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-failed').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-                else $('body').css('cursor', 'default');
-              });
+            $('#btn-enable').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/stat/enable';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-enable').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+              else $('body').css('cursor', 'default');
+            });
 
-              $('#btn-disable').click(function () {
-                $('body').css('cursor', 'wait');
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $url = '/functions/stat/disable';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-disable').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-                else $('body').css('cursor', 'default');
-              });
-
-              $('#btn-enable').click(function () {
-                $('body').css('cursor', 'wait');
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $url = '/functions/stat/enable';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-enable').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-                else $('body').css('cursor', 'default');
-              });
-
-              $('#btn-remove-watchdog').click(function () {
-                $('body').css('cursor', 'wait');
-                var $data = $table.bootstrapTable('getSelections');
-                if ($data.length >= 1) {
-                  $url = '/functions/watchdogtimers/remove';
-                  $payload = {
-                    'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
-                  };
-                  $('.modal-body').load($url, $payload, function() {
-                    $('.modal-title').text($('#btn-remove-watchdog').text());
-                    $('body').css('cursor', 'default');
-                    $('#myModal').modal({show:true});
-                  });
-                  $table.bootstrapTable('refresh');
-                }
-                $('body').css('cursor', 'default');
-              });
-
+            $('#btn-remove-watchdog').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/watchdogtimers/remove';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text($('#btn-remove-watchdog').text());
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+              $('body').css('cursor', 'default');
             });
 
             $(window).resize(function () {
@@ -302,7 +295,12 @@
               window.RT = setTimeout(function() {
                 this.location.reload(false); /* false to get page from cache */
               }, 200);
-            })
+            });
+
+            $(document).ready(function () {
+              // Fix, button text is wrong
+              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            });
           </script>
 <!-- End of page scripts 'minersunavailable.html' -->
 <!-- #include file="/parts/foot.html" -->

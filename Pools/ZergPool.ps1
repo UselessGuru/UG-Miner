@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.4.33
-Version date:   2025/06/25
+Version:        6.4.34
+Version date:   2025/07/02
 #>
 
 Param(
@@ -72,7 +72,7 @@ If ($DivisorMultiplier -and $Regions) {
 
         $Reasons = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
-        If ($Request.$Pool.noautotrade -eq 1 -and $Pool -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Pool] (conversion disabled at pool)") | Out-Null }
+        If ($Request.$Pool.noautotrade -eq 1 -and $Currency -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Pool] (conversion disabled at pool)") | Out-Null }
         If ($Request.$Pool.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
         If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
 
@@ -103,7 +103,7 @@ If ($DivisorMultiplier -and $Regions) {
                     Host                     = $PoolHost.toLower()
                     Key                      = $Key
                     Name                     = $Name
-                    Pass                     = "c=$PayoutCurrency$(If ($Currency) { ",mc=$Currency" }),ID=$WorkerName$PayoutThresholdParameter" # Pool profit switching breaks Option 2 (static coin), instead it will still send DAG data for any coin
+                    Pass                     = "c=$PayoutCurrency$(If ($Currency) { ",mc=$Currency" }),ID=$WorkerName$PayoutThresholdParameter" # Pool profit switching breaks option 2 (static coin), instead it will still send DAG data for any coin
                     Port                     = [UInt16]$Request.$Pool.port
                     PortSSL                  = [UInt16]$Request.$Pool.tls_port
                     PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"

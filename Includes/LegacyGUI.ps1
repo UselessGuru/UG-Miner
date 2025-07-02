@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.33
-Version date:   2025/06/25
+Version:        6.4.34
+Version date:   2025/07/02
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -75,36 +75,41 @@ Function Resize-Form {
 
     If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smaller than minimum (Why?)
     Try { 
-        $LegacyGUItabControl.Height = $LegacyGUIform.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - 72
+        $LegacyGUItabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - $LegacyGUIeditConfigLink.Height + 4
+        # $LegacyGUItabControl.Width = $LegacyGUIform.ClientSize.Width - 30
         $LegacyGUItabControl.Width = $LegacyGUIform.Width - 40
 
         $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 60), 2)
         $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 50), 2)
         $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUIform.Width - $LegacyGUIbuttonStop.Width - 40), 2)
 
-        # $LegacyGUIminingSummaryLabel.Width = $Variables.TextBoxSystemLog.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIworkersDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.Width - 26
-        $LegacyGUIminingSummaryLabel.Width = $Variables.TextBoxSystemLog.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.Width - 26
+        # $LegacyGUIeditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIeditMonitoringLink.Width - 12), 6)
+        $LegacyGUIminingSummaryLabel.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.ClientSize.Width - 26
+        $Variables.TextBoxSystemLog.Width = $LegacyGUItabControl.ClientSize.Width - 20
+
+        $LegacyGUIeditConfigLink.Location = [System.Drawing.Point]::new(22, ($LegacyGUIform.ClientSize.Height - $LegacyGUIeditConfigLink.Height))
+        $LegacyGUIcopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.ClientSize.Width - $LegacyGUIcopyrightLabel.Width), ($LegacyGUIform.ClientSize.Height - $LegacyGUIeditConfigLink.Height))
 
         If ($Config.BalancesTrackerPollInterval -gt 0 -and $LegacyGUIbalancesDGV.RowCount -gt 0) { 
             $LegacyGUIbalancesDGVHeight = ($LegacyGUIbalancesDGV.Rows.Height | Measure-Object -Sum | Select-Object -ExpandProperty Sum) + $LegacyGUIbalancesDGV.ColumnHeadersHeight
             If ($LegacyGUIbalancesDGVHeight -gt $LegacyGUItabControl.Height / 2) { 
                 $LegacyGUIbalancesDGV.ScrollBars = "Vertical"
-                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height / 2 - 10))
+                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height / 2))
                 $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height / 2
             }
             Else { 
                 $LegacyGUIbalancesDGV.ScrollBars = "None"
-                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIearningsChart.Bottom - 20))
-                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesDGVHeight - 46
+                $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIearningsChart.Bottom - 10))
+                $LegacyGUIearningsChart.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIbalancesDGVHeight - 50
             }
         }
         Else { 
             $LegacyGUIbalancesDGV.ScrollBars = "None"
-            $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.Height - $LegacyGUIbalancesLabel.Height - 50))
+            $LegacyGUIbalancesLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUItabControl.ClientSize.Height - $LegacyGUIbalancesLabel.Height - 50))
             $LegacyGUIearningsChart.Height = $LegacyGUIbalancesLabel.Top + 36
         }
-        $LegacyGUIbalancesDGV.Location = [System.Drawing.Point]::new(10, $LegacyGUIbalancesLabel.Bottom)
-        $LegacyGUIbalancesDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIbalancesLabel.Bottom - 48
+        $LegacyGUIbalancesDGV.Location = [System.Drawing.Point]::new(8, $LegacyGUIbalancesLabel.Bottom)
+        $LegacyGUIbalancesDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIbalancesLabel.Bottom - 56
 
         $LegacyGUIactiveMinersDGV.Height = $LegacyGUIactiveMinersDGV.RowTemplate.Height * $LegacyGUIactiveMinersDGV.RowCount + $LegacyGUIactiveMinersDGV.ColumnHeadersHeight
         If ($LegacyGUIactiveMinersDGV.Height -gt $LegacyGUItabControl.Height / 2) { 
@@ -115,22 +120,18 @@ Function Resize-Form {
             $LegacyGUIactiveMinersDGV.ScrollBars = "None"
         }
 
-        $LegacyGUIsystemLogLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + 25))
-        $Variables.TextBoxSystemLog.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + $LegacyGUIsystemLogLabel.Height + 24))
-        $Variables.TextBoxSystemLog.Height = ($LegacyGUItabControl.Height - $LegacyGUIactiveMinersLabel.Height - $LegacyGUIactiveMinersDGV.Height - $LegacyGUIsystemLogLabel.Height - 95)
+        $LegacyGUIsystemLogLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + 30))
+        $Variables.TextBoxSystemLog.Location = [System.Drawing.Point]::new(8, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + $LegacyGUIsystemLogLabel.Height + 36))
+        $Variables.TextBoxSystemLog.Height = ($LegacyGUItabControl.ClientSize.Height - $LegacyGUIactiveMinersLabel.Height - $LegacyGUIactiveMinersDGV.Height - $LegacyGUIsystemLogLabel.Height - 92)
         If (-not $Variables.TextBoxSystemLog.SelectionLength) { 
             $Variables.TextBoxSystemLog.ScrollToCaret()
         }
 
-        $LegacyGUIminersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIminersLabel.Height - $LegacyGUIminersPanel.Height - 64
-        $LegacyGUIpoolsDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIpoolsLabel.Height - $LegacyGUIpoolsPanel.Height - 64
-        # $LegacyGUIworkersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIworkersLabel.Height - 61
-        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 67
-        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 67
-
-        $LegacyGUIeditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIeditMonitoringLink.Width - 12), 6)
-        $LegacyGUIeditConfigLink.Location = [System.Drawing.Point]::new(10, ($LegacyGUIform.Height - $LegacyGUIeditConfigLink.Height - 58))
-        $LegacyGUIcopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIcopyrightLabel.Width + 6), ($LegacyGUIform.Height - $LegacyGUIeditConfigLink.Height - 58))
+        $LegacyGUIminersDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIminersLabel.Height - $LegacyGUIminersPanel.Height - 74
+        $LegacyGUIpoolsDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIpoolsLabel.Height - $LegacyGUIpoolsPanel.Height - 74
+        # $LegacyGUIworkersDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIworkersLabel.Height - 74
+        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 80
+        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 80
     }
     Catch { 
         Start-Sleep 0
@@ -383,8 +384,8 @@ Function Update-TabControl {
                         $LegacyGUIbalancesDGV.Sort($LegacyGUIbalancesDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
                         $LegacyGUIbalancesDGV.ClearSelection()
 
-                        $LegacyGUIbalancesDGV.Columns[0].Visible = $false
                         If ($LegacyGUIbalancesDGV.Columns) { 
+                            $LegacyGUIbalancesDGV.Columns[0].Visible = $false
                             $LegacyGUIbalancesDGV.Columns[1].FillWeight = 120
                             $LegacyGUIbalancesDGV.Columns[2].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[2].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
                             $LegacyGUIbalancesDGV.Columns[3].FillWeight = 70; $LegacyGUIbalancesDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIbalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIbalancesDGV.Columns[3].Visible = $Config.BalancesShowSums
@@ -1250,6 +1251,7 @@ $LegacyGUIstatusPageControls += $LegacyGUIsystemLogLabel
 
 $Variables.TextBoxSystemLog = [System.Windows.Forms.TextBox]::new()
 $Variables.TextBoxSystemLog.AutoSize = $true
+$Variables.TextBoxSystemLog.BorderStyle = "FixedSingle"
 $Variables.TextBoxSystemLog.Font = [System.Drawing.Font]::new("Consolas", 9)
 $Variables.TextBoxSystemLog.HideSelection = $false
 $Variables.TextBoxSystemLog.MultiLine = $true

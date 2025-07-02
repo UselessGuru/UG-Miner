@@ -11,6 +11,24 @@
           <br>
 <!-- Start of page scripts 'unprofitablealgorithms.html' -->
           <script type="text/javascript">
+
+            //Edit unprofitable algorithms file
+            $('#btn-editunprofitablealgorithms').click(function () {
+              document.getElementById('btn-editunprofitablealgorithms').disabled = true;
+              $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent('.\\Data\\UnprofitableAlgorithms.json'), function () {
+                if (this.outerText) {
+                  $('.modal-title').text('Edit unprofitable algorithms file');
+                  $('#myModal').modal({ 
+                    show: true
+                  });
+                  $('#myModal').on('hidden.bs.modal', function () {
+                    location.reload(true);
+                  })
+                }
+                document.getElementById('btn-editunprofitablealgorithms').disabled = false;
+              });
+            });
+
             $(document).ready(function () {
               $(function() {
                 $.ajax({
@@ -23,22 +41,6 @@
                 });
               });
 
-              //Edit unprofitable algorithms file
-              $('#btn-editunprofitablealgorithms').click(function () {
-                document.getElementById('btn-editunprofitablealgorithms').disabled = true;
-                $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent('.\\Data\\UnprofitableAlgorithms.json'), function () {
-                  if (this.outerText) {
-                    $('.modal-title').text('Edit Unprofitable Algorithms file');
-                    $('#myModal').modal({ 
-                      show: true
-                    });
-                    $('#myModal').on('hidden.bs.modal', function () {
-                      location.reload(true);
-                    })
-                  }
-                  document.getElementById('btn-editunprofitablealgorithms').disabled = false;
-                });
-              });
               updateSummary();
               updateButtonStatus();
             });
