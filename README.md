@@ -195,8 +195,8 @@ Before starting a miner executable UG-Miner will try to launch one of the follow
 
 1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
-   'MiniZ-v2.4e-1xRadeonRX5808GB_EtcHash.bat'  
-   'BzMiner-v23.0.2-1xRTX306012GB_Ethash&SHA512256d.bat'  
+   'MiniZ-v2.5e-1xRX66008GB_EtcHash.bat'  
+   'lolMiner-v1.9.7-1xRTX306012GB_Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
 2. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
@@ -264,23 +264,24 @@ A simple miner switching log in csv format is written to '[UG-Miner directory]\L
 In the main text window (session console) the following hot keys are supported:
 ```
 Hot key legend:
-1: Toggle Listing pool balances                    [off]
-2: Toggle Listing all optimal miners               [off]
-3: Toggle UI style [full or light]                 [light]
+1: Toggle listing pool balances              [off]
+2: Toggle listing all optimal miners         [off]
+3: Toggle UI style [full or light]           [light]
 
-a: Toggle 'Accuracy' column visibility             [on]
-c: Toggle 'Power cost' column visibility           [on]
-e: Toggle 'Earnings' column visibility             [off]
-f: Toggle Pool 'Fees' column visibility            [on]
-i: Toggle 'Earning bias' column visibility         [on]
-m: Toggle Miner 'fees' column visibility           [on]
-n: Toggle 'CoinName' column visibility             [on]
-p: Toggle 'Pool' column visibility                 [on]
-r: Toggle 'Profit bias' column visibility          [on]
-t: Toggle 'Profit' column visibility               [off]
-u: Toggle 'User' column visibility                 [on]
-w: Toggle 'Power consumption' column visibility    [on]
-y: Toggle 'Currency' column visibility             [on]
+a: Toggle 'Accuracy' column visibility       [on]
+c: Toggle 'Power cost' column visibility     [on]
+e: Toggle 'Earnings' column visibility       [on]
+f: Toggle pool 'Fees' column visibility      [on]
+i: Toggle 'Earnings bias' column visibility  [on]
+m: Toggle miner 'Fees' column visibility     [on]
+n: Toggle 'CoinName' column visibility       [on]
+p: Toggle 'Pool' column visibility           [on]
+r: Toggle 'Profit bias' column visibility    [on]
+s: Toggle 'Hashrate(s)' column visibility    [on]
+t: Toggle 'Profit' column visibility         [on]
+u: Toggle 'User' column visibility           [off]
+w: Toggle 'Power (W)' column visibility      [on]
+y: Toggle 'Currency' column visibility       [on]
 ```
 UI style can be set to 'light' or 'full':
 

@@ -6,6 +6,7 @@ Changelog UG-Miner 6.4.34 2025/07/02
 
 Fixes:
 - Brains 'ZergPool' & 'ZPool' not updating CoinNames.json database (regression from v6.4.23)
+- Core: Invalid pre-run filename for <MinerName>_<AlgorithmName>.bat / <MinerName>_<AlgorithmName1&AlgorithmName2>.bat
 - Web GUI: Sizing & spacing is now consistent across different display dimensions
 
 Improvements:

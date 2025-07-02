@@ -1299,7 +1299,7 @@ Try {
                         Start-Process ".\Utils\Prerun\$($Miner.Type)Prerun.bat" -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
                         Start-Sleep -Seconds 2
                     }
-                    $MinerAlgorithmPrerunName = ".\Utils\Prerun\$($Miner.Name)$(If ($Miner.Algorithms.Count -eq 1) { "_$($Miner.Algorithms[0])" } Else { "_$($Miner.Algorithms -join '&')" }).bat"
+                    $MinerAlgorithmPrerunName = ".\Utils\Prerun\$($Miner.BaseName_Version_Device)_$($Miner.Algorithms -join '&').bat"
                     $AlgorithmPrerunName = ".\Utils\Prerun\$($Miner.Algorithms -join "&").bat"
                     $DefaultPrerunName = ".\Utils\Prerun\default.bat"
                     If (Test-Path -LiteralPath $MinerAlgorithmPrerunName -PathType Leaf) { 

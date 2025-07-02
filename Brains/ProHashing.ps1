@@ -86,7 +86,6 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     $Currencies = @($CurrenciesData.Where({ $_.algo -eq $Algorithm }).abbreviation)
                     $Currency = If ($Currencies.Count -eq 1) { $($Currencies[0] -replace '-.+' -replace ' \s+' -replace ' $') } Else { "" }
                     $AlgoData.$Algorithm | Add-Member Currency $Currency
-                    $AlgoData.$Algorithm | Add-Member CoinName ([String]$Variables.CoinNames.($CurrenciesData.$_.Currency)) -Force
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp
 
                     # Reset history when stat file got removed

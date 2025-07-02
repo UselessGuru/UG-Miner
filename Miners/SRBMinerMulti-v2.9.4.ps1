@@ -296,12 +296,14 @@ If ($Algorithms) {
 
                                     $Arguments = ""
                                     ForEach ($Pool in $Pools) { 
-                                        Switch ($Pool.Protocol) { 
-                                            "minerproxy"   { $Arguments += " --esm 0"; Break }
-                                            "ethproxy"     { $Arguments += " --esm 0"; Break }
-                                            "ethstratum1"  { $Arguments += " --esm 1"; Break }
-                                            "ethstratum2"  { $Arguments += " --esm 2"; Break }
-                                            "ethstratumnh" { $Arguments += " --esm 2" }
+                                        If ($Pool.Algorithm -match $Variables.RegexAlgoIsEthash) { 
+                                            Switch ($Pool.Protocol) { 
+                                                "minerproxy"   { $Arguments += " --esm 0"; Break }
+                                                "ethproxy"     { $Arguments += " --esm 0"; Break }
+                                                "ethstratum1"  { $Arguments += " --esm 1"; Break }
+                                                "ethstratum2"  { $Arguments += " --esm 2"; Break }
+                                                "ethstratumnh" { $Arguments += " --esm 2" }
+                                            }
                                         }
                                         $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
                                         If ($Pool.Name -eq "NiceHash" ) { $Arguments += " --nicehash true" }
