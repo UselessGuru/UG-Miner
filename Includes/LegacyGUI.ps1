@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
 Version:        6.4.34
-Version date:   2025/07/03
+Version date:   2025/07/02
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -41,15 +41,15 @@ Function Resize-Form {
 
     If ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { Return } # Sometimes $LegacyGUIform is smaller than minimum (Why?)
     Try { 
-        $LegacyGUItabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - $LegacyGUIeditConfigLink.Height + 8
+        $LegacyGUItabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIminingStatusLabel.Height - $LegacyGUIminingSummaryLabel.Height - $LegacyGUIeditConfigLink.Height - $LegacyGUIeditConfigLink.Height + 3
         $LegacyGUItabControl.Width = $LegacyGUIform.ClientSize.Width - 16
 
-        $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 20), 2)
-        $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 10), 2)
-        $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIbuttonStop.Width), 2)
+        $LegacyGUIbuttonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - $LegacyGUIbuttonStart.Width - 40), 2)
+        $LegacyGUIbuttonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIbuttonStop.Width - $LegacyGUIbuttonPause.Width - 30), 2)
+        $LegacyGUIbuttonStop.Location  = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIbuttonStop.Width - 20), 2)
 
         # $LegacyGUIeditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUItabControl.Width - $LegacyGUIeditMonitoringLink.Width - 12), 6)
-        $LegacyGUIminingSummaryLabel.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUItabControl.ClientSize.Width - 26
+        $LegacyGUIminingSummaryLabel.Width = $LegacyGUIactiveMinersDGV.Width = $LegacyGUIearningsChart.Width = $LegacyGUIbalancesDGV.Width = $LegacyGUIminersPanel.Width = $LegacyGUIminersDGV.Width = $LegacyGUIpoolsPanel.Width = $LegacyGUIpoolsDGV.Width = $LegacyGUIswitchingDGV.Width = $LegacyGUIwatchdogTimersDGV.Width = $LegacyGUIform.ClientSize.Width - 44
         $Variables.TextBoxSystemLog.Width = $LegacyGUItabControl.ClientSize.Width - 20
 
         $LegacyGUIeditConfigLink.Location = [System.Drawing.Point]::new(18, ($LegacyGUIform.ClientSize.Height - $LegacyGUIeditConfigLink.Height - 4))
@@ -85,7 +85,7 @@ Function Resize-Form {
         $LegacyGUIactiveMinersDGV.Height = $LegacyGUIactiveMinersDGVHeight
 
         $LegacyGUIsystemLogLabel.Location = [System.Drawing.Point]::new(0, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + 30))
-        $Variables.TextBoxSystemLog.Location = [System.Drawing.Point]::new(0, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + $LegacyGUIsystemLogLabel.Height + 30))
+        $Variables.TextBoxSystemLog.Location = [System.Drawing.Point]::new(0, ($LegacyGUIactiveMinersLabel.Height + $LegacyGUIactiveMinersDGV.Height + $LegacyGUIsystemLogLabel.Height + 36))
         $Variables.TextBoxSystemLog.Height = ($LegacyGUItabControl.ClientSize.Height - $LegacyGUIactiveMinersLabel.Height - $LegacyGUIactiveMinersDGV.Height - $LegacyGUIsystemLogLabel.Height - 95)
         If (-not $Variables.TextBoxSystemLog.SelectionLength) { 
             $Variables.TextBoxSystemLog.ScrollToCaret()
@@ -94,8 +94,8 @@ Function Resize-Form {
         $LegacyGUIminersDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIminersLabel.Height - $LegacyGUIminersPanel.Height - 74
         $LegacyGUIpoolsDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIpoolsLabel.Height - $LegacyGUIpoolsPanel.Height - 74
         # $LegacyGUIworkersDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIworkersLabel.Height - 74
-        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 77
-        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 77
+        $LegacyGUIswitchingDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIswitchingLogLabel.Height - $LegacyGUIswitchingLogClearButton.Height - 78
+        $LegacyGUIwatchdogTimersDGV.Height = $LegacyGUItabControl.ClientSize.Height - $LegacyGUIwatchdogTimersLabel.Height - $LegacyGUIwatchdogTimersRemoveButton.Height - 78
     }
     Catch { 
         Start-Sleep 0
@@ -1824,7 +1824,7 @@ $LegacyGUItabControl.Height = 0
 $LegacyGUItabControl.Location = [System.Drawing.Point]::new(12, $LegacyGUIminingSummaryLabel.Bottom + 10)
 $LegacyGUItabControl.Name = "TabControl"
 $LegacyGUItabControl.ShowToolTips = $true
-$LegacyGUItabControl.Padding = [System.Drawing.Point]::new(20, 6)
+$LegacyGUItabControl.Padding = [System.Drawing.Point]::new(18, 6)
 $LegacyGUItabControl.Width = 0
 # $LegacyGUItabControl.Controls.AddRange(@($LegacyGUIstatusPage, $LegacyGUIearningsPage, $LegacyGUIminersPage, $LegacyGUIpoolsPage, $LegacyGUIrigMonitorPage, $LegacyGUIswitchingPage, $LegacyGUIwatchdogTimersPage))
 $LegacyGUItabControl.Controls.AddRange(@($LegacyGUIstatusPage, $LegacyGUIearningsPage, $LegacyGUIminersPage, $LegacyGUIpoolsPage, $LegacyGUIswitchingPage, $LegacyGUIwatchdogTimersPage))
