@@ -1,6 +1,16 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.4.34 2025/07/03
+====================================
+
+Changes:
+- Merged miners 'KawpowMiner-v1.2.4cl' & 'KawpowMiner-v1.2.4cuda' into 'KawpowMiner-v1.2.4'
+
+Improvements:
+- Web GUI: Improve sizing & spacing
+
+
 Changelog UG-Miner 6.4.34 2025/07/02
 ====================================
 

@@ -17,19 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.34
-Version date:   2025/07/02
+Version:        6.4.35
+Version date:   2025/07/03
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/KawpowMiner/kawpowminer-windows-cuda11-1.2.4.zip"
+$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/KawpowMiner/KawpowMiner_v1.2.4.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\kawpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "KawPow"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = " "; ExcludePools = @("HashCryptos", "MiningDutch"); Arguments = "" }
+    @{ Algorithm = "KawPow"; Type = "AMD"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = " "; ExcludePools = @("HashCryptos", "MiningDutch"); Arguments = " --opencl --opencl-devices" }
+
+    @{ Algorithm = "KawPow"; Type = "NVIDIA"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = " "; ExcludePools = @("HashCryptos", "MiningDutch"); Arguments = " --cuda --cuda-devices" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -37,17 +39,18 @@ $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
-            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
+            $Type = $_.Type
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
-            $Algorithms.ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
-                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    If ($SupportedMinerDevices = $MinerDevices) { 
+                    # $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    If ($SupportedMinerDevices = $MinerDevices) { 
 
                         $ExcludePools = $_.ExcludePools
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
@@ -67,7 +70,7 @@ If ($Algorithms) {
 
                                 [PSCustomObject]@{ 
                                     API         = "EthMiner"
-                                    Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:-$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:-$($MinerAPIPort)$($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     EnvVars     = @("SSL_NOVERIFY=TRUE")
                                     Fee         = @(0) # Dev fee
@@ -75,7 +78,7 @@ If ($Algorithms) {
                                     Name        = $MinerName
                                     Path        = $Path
                                     Port        = $MinerAPIPort
-                                    Type        = "NVIDIA"
+                                    Type        = $Type
                                     URI         = $Uri
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                                     Workers     = @(@{ Pool = $Pool })

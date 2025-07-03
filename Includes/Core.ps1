@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.34
-Version date:   2025/07/02
+Version:        6.4.35
+Version date:   2025/07/03
 #>
 
 using module .\Include.psm1
@@ -313,6 +313,7 @@ Try {
                     While ([DateTime]::Now.ToUniversalTime() -lt $Variables.Timer.AddSeconds($Variables.PoolTimeout) -and ($Variables.Brains.psBase.Keys.Where({ $Variables.Brains[$_].Updated -lt $PoolDataCollectedTimeStamp }))) { 
                         Start-Sleep -Seconds 1
                     }
+                    Remove-Variable PoolDataCollectedTimeStamp
 
                     $Variables.PoolsNew = $Variables.PoolName.ForEach(
                         { 
@@ -890,7 +891,7 @@ Try {
                                             Import-Module NetSecurity
                                             $MissingFirewallRules | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path $_ | Split-Path -leaf) -Program $_ -Description "Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())" -Group $($Variables.Branding.ProductLabel) }
                                         }
-                                        Write-Message -Level Info "Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) to Windows Defender Inbound Rules Group '$($Variables.Branding.ProductLabel)'."
+                                        Write-Message -Level Info "Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) to Windows Defender inbound rules group '$($Variables.Branding.ProductLabel)'."
                                     }
                                     Catch { 
                                         Write-Message -Level Error "Could not add inbound firewall rules. Some miners will not be available."
