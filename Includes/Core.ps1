@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 using module .\Include.psm1
@@ -219,9 +219,7 @@ Try {
                     # Re-Randomize donation start and data once per day
                     If ((Get-Item -Path "$PWD\Logs\DonationLog.csv" -ErrorAction Ignore).LastWriteTime -lt [DateTime]::Today) { 
                         # Do not donate if remaing time for today is less than donation duration
-                        If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { 
-                            $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation)))
-                        }
+                        If ($Config.Donation -lt (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes))) { $Variables.DonationStart = [DateTime]::Now.AddMinutes((Get-Random -Minimum 0 -Maximum (1440 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes) - $Config.Donation))) }
                     }
                 }
 
@@ -272,15 +270,29 @@ Try {
                 If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { [Void](Get-Version) }
 
                 # Stop / Start brain background jobs
-                If ($BrainsToStop = (Compare-Object @(Get-PoolBaseName $Config.PoolName | Select-Object) @(Get-PoolBaseName $Variables.PoolName | Select-Object) | Where-Object SideIndicator -EQ "=>").InputObject) { 
-                    [Void](Stop-Brain $BrainsToStop)
-                }
+                If ($BrainsToStop = (Compare-Object @(Get-PoolBaseName $Config.PoolName | Select-Object) @(Get-PoolBaseName $Variables.PoolName | Select-Object) | Where-Object SideIndicator -EQ "=>").InputObject) { [Void](Stop-Brain $BrainsToStop) }
                 Remove-Variable BrainsToStop
 
                 [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
+
+                # Remove stats that have been deleted from disk
+                Try { 
+                    If ($StatFiles = [String[]](Get-ChildItem -Path "Stats" -File).BaseName) { 
+                        If ($Keys = [String[]]($Stats.psBase.Keys)) { 
+                            (Compare-Object $StatFiles $Keys -PassThru).Where({ $_.SideIndicator -eq "=>" }).ForEach(
+                                { 
+                                    # Remove stat if deleted on disk
+                                    $Stats.Remove($_)
+                                }
+                            )
+                        }
+                    }
+                }
+                Catch {}
+                Remove-Variable Keys, StatFiles -ErrorAction Ignore
 
                 # Read latest DAG data from web
                 $Variables.DAGdata = Get-AllDAGdata $Variables.DAGdata
@@ -346,9 +358,7 @@ Try {
                     )
                     Remove-Variable Factor, Pool, PoolName -ErrorAction Ignore
 
-                    If ($PoolsWithoutData = Compare-Object @($Variables.PoolName) @($Variables.PoolsNew.Variant | Sort-Object -Unique) -PassThru) { 
-                        Write-Message -Level Warn "No data received from pool$(If ($PoolsWithoutData.Count -gt 1) { "s" }) $($PoolsWithoutData -join ", " -replace ",([^,]*)$", ' &$1')."
-                    }
+                    If ($PoolsWithoutData = Compare-Object @($Variables.PoolName) @($Variables.PoolsNew.Variant | Sort-Object -Unique) -PassThru) { Write-Message -Level Warn "No data received from pool$(If ($PoolsWithoutData.Count -gt 1) { "s" }) $($PoolsWithoutData -join ", " -replace ",([^,]*)$", ' &$1')." }
                     Remove-Variable PoolsWithoutData
                     $Variables.PoolDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
 
@@ -543,9 +553,7 @@ Try {
                         If ([Math]::Floor(($Sample.Date - $Miner.ValidDataSampleTimestamp).TotalSeconds) -ge 0) { $Samples.Where({ $_.Hashrate.PSObject.Properties.Value -notcontains 0 }).ForEach({ $Miner.Data.Add($_) | Out-Null }) }
                         $Miner.Hashrates_Live = $Sample.Hashrate.PSObject.Properties.Value
                         # Hashrate from primary algorithm is relevant
-                        If ($Sample.Hashrate.($Miner.Algorithms[0])) { 
-                            $Miner.DataSampleTimestamp = $Sample.Date
-                        }
+                        If ($Sample.Hashrate.($Miner.Algorithms[0])) { $Miner.DataSampleTimestamp = $Sample.Date }
                     }
                     Remove-Variable Sample, Samples -ErrorAction Ignore
                 }
@@ -831,7 +839,7 @@ Try {
 
             # Add reason 'Unreal earning data...' for miners with unreal earnings > x times higher than average of the next best 10% or at least 5 miners
             If ($Config.UnrealMinerEarningFactor -gt 1) { 
-                ($Miners.Where({ -not $_.Reasons.Count -and -not $_.Benchmark}) | Group-Object { [String]$_.DeviceNames }).ForEach(
+                ($Miners.Where({ -not $_.Reasons.Count -and -not $_.Benchmark}) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach(
                     { 
                         If ($ReasonableEarnings = [Double]($_.Group | Sort-Object -Descending -Property Earnings_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earnings -Average).Average * $Config.UnrealMinerEarningFactor) { 
                             ($_.Group.Where({ $_.Earnings -gt $ReasonableEarnings })).ForEach(
@@ -1022,9 +1030,9 @@ Try {
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias *= $RunningMinerBonusFactor })
 
                     # Get the optimal miners per algorithm and device
-                    $MinersOptimal = ($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { [String]$_.DeviceNames }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) })
+                    $MinersOptimal = ($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) })
                     # Get the best miners per device
-                    $Variables.MinersBestPerDevice = ($Miners.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $false } -Top 1 })
+                    $Variables.MinersBestPerDevice = ($Miners.Where({ $_.Available }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $false } -Top 1 })
 
                     # Hack: Temporarily make all bias -ge 0 by adding smallest bias, MinersBest produces wrong sort order when some profits are negative
                     # Get smallest $Bias
@@ -1108,7 +1116,7 @@ Try {
                 $MinersBest.ForEach({ $_.Best = $true })
 
                 If ($Variables.MinersNeedingBenchmark.Count) { 
-                    $Summary += "Earnings / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { [String]$_.DeviceNames }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }))"
+                    $Summary += "Earnings / day: n/a (Benchmarking: $($Variables.MinersNeedingBenchmark.Count) $(If ($Variables.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingBenchmark | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }))"
                 }
                 ElseIf ($Variables.MiningEarnings -gt 0) { 
                     $Summary += "Earnings / day: {0:n} {1} ({2:N$(Get-DecimalsFromValue -Value ($Variables.MiningProfit * ($Variables.MiningProfit * $Variables.Rates.BTC.$PayoutCurrency)) -DecimalsMax $Config.DecimalsMax)} {3})" -f ($Variables.MiningEarnings * $Variables.Rates.BTC.($Config.FIATcurrency)), $Config.FIATcurrency, ($Variables.MiningEarnings * $Variables.Rates.BTC.$PayoutCurrency), $PayoutCurrency
@@ -1116,7 +1124,7 @@ Try {
 
                 If ($Variables.CalculatePowerCost) { 
                     If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -or [Double]::IsNaN($Variables.MiningPowerCost)) { 
-                        $Summary += "    Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object { [String]$_.DeviceNames }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }))"
+                        $Summary += "    Profit / day: n/a (Measuring power consumption: $($Variables.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Variables.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left$(If ($Variables.EnabledDevices.Count -gt 1) { " [$((($Variables.MinersNeedingPowerConsumptionMeasurement | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }))"
                     }
                     ElseIf ($Variables.MinersNeedingBenchmark.Count) { 
                         $Summary += "    Profit / day: n/a"
@@ -1168,7 +1176,7 @@ Try {
         }
 
         # Stop running miners
-        ForEach ($Miner in @($Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { [String]$_.DeviceNames })) { 
+        ForEach ($Miner in @($Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })) { 
             If ($Miner.Status -eq [MinerStatus]::Running -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
                 $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                 Write-Message -Level Error "Miner $($Miner.StatusInfo)"
@@ -1255,9 +1263,9 @@ Try {
         )
 
         # Update data in API
-        $Variables.Miners = $Miners.Where({ $_.SideIndicator -ne "<=" }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { [String]$_.DeviceNames }, Info
+        $Variables.Miners = $Miners.Where({ $_.SideIndicator -ne "<=" }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, Info
         $Variables.MinersBest = $MinersBest | Sort-Object { [String]$_.DeviceNames }
-        $Variables.MinersOptimal = $MinersOptimal | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { [String]$_.DeviceNames }, @{ Expression = $Bias; Descending = $true }
+        $Variables.MinersOptimal = $MinersOptimal | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
         Remove-Variable Bias, Miners, MinersBest, MinersOptimal -ErrorAction Ignore
 
         $Variables.Miners.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
@@ -1369,12 +1377,12 @@ Try {
         }
         Remove-Variable DataCollectInterval, Miner, Message -ErrorAction Ignore
 
-        ($Variables.MinersNeedingBenchmark.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
+        ($Variables.MinersNeedingBenchmark.Where({ $_.Available }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach(
             { 
                 Write-Message -Level Info "Benchmarking for '$($_.Group[0].BaseName_Version_Device -replace ".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
             }
         )
-        ($Variables.MinersNeedingPowerConsumptionMeasurement.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
+        ($Variables.MinersNeedingPowerConsumptionMeasurement.Where({ $_.Available }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach(
             { 
                 Write-Message -Level Info "Power consumption measurement for '$($_.Group[0].BaseName_Version_Device -replace ".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete measuring."
             }

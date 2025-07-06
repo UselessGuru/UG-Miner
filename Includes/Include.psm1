@@ -468,7 +468,7 @@ Class Miner : IDisposable {
                 $Loops = 100
                 Do { 
                     Start-Sleep -Milliseconds 50
-                    If ($this.ProcessId = $this.ProcessJob | Receive-Job -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId) { 
+                    If ($this.ProcessId = ($this.ProcessJob | Receive-Job -ErrorAction Ignore).MinerProcessId) { 
                         $this.Activated ++
                         $this.DataSampleTimestamp = [DateTime]0
                         $this.Status = [MinerStatus]::Running
@@ -502,7 +502,7 @@ Class Miner : IDisposable {
         If ($this.ProcessJob) { 
             If ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
             Try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } Catch { }
-            # Jobs are getting removed in core loop (removing immediately after stopping process here may take several seconds)
+            # Jobs are getting removed in core loop (removing here immediately after stopping process may take several seconds)
             $this.ProcessJob = $null
         }
 
@@ -555,7 +555,7 @@ Class Miner : IDisposable {
     }
 
     [MinerStatus]GetStatus() { 
-        If ($this.ProcessJob.State -eq "Running" -and $this.ProcessId -and (Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue | Select-Object -ExpandProperty ProcessName)) { 
+        If ($this.ProcessJob.State -eq "Running" -and $this.ProcessId -and (Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue)) { 
             # Use ProcessName, some crashed miners are dead, but may still be found by their processId
             Return [MinerStatus]::Running
         }
@@ -1226,12 +1226,12 @@ Function Write-MonitoringData {
                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
                     Currency       = $Config.FIATcurrency
                     CurrentSpeed   = $_.Hashrates_Live
-                    Earnings        = ($_.WorkersRunning.Earnings | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+                    Earnings        = (($_.WorkersRunning.Earnings | Measure-Object -Sum).Sum)
                     EstimatedSpeed = $_.WorkersRunning.Hashrate
                     Name           = $_.Name
                     Path           = Resolve-Path -Relative $_.Path
                     Pool           = $_.WorkersRunning.Pool.Name -join ","
-                    Profit         = If ($_.Profit) { $_.Profit } ElseIf ($Variables.CalculatePowerCost) { ($_.WorkersRunning.Profit | Measure-Object -Sum | Select-Object -ExpandProperty Sum) - $_.PowerConsumption_Live * $Variables.PowerCostBTCperW } Else { [Double]::Nan }
+                    Profit         = If ($_.Profit) { $_.Profit } ElseIf ($Variables.CalculatePowerCost) { ($_.WorkersRunning.Profit | Measure-Object -Sum).Sum - $_.PowerConsumption_Live * $Variables.PowerCostBTCperW } Else { [Double]::Nan }
                     Type           = $_.Type
                 }
             }
@@ -1430,14 +1430,10 @@ Function Read-Config {
                     # Generic algorithm disabling is done in pool files
                     $PoolConfig.Remove("Algorithm")
 
-                    If ($CustomPoolConfig = $Variables.PoolsConfigData.$PoolName) { 
-                        # Merge default config data with custom pool config
-                        $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $CustomPoolConfig -Unique $true
-                    }
+                    # Merge default config data with custom pool config
+                    If ($CustomPoolConfig = $Variables.PoolsConfigData.$PoolName) { $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $CustomPoolConfig -Unique $true }
 
-                    If (-not $PoolConfig.EarningsAdjustmentFactor) { 
-                        $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor
-                    }
+                    If (-not $PoolConfig.EarningsAdjustmentFactor) { $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor }
                     If ($PoolConfig.EarningsAdjustmentFactor -le 0 -or $PoolConfig.EarningsAdjustmentFactor -gt 10) { 
                         $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor
                         Write-Message -Level Warn "Earnings adjustment factor (value: $($PoolConfig.EarningsAdjustmentFactor)) for pool '$PoolName' is not within supported range (0 - 10); using default value $($PoolConfig.EarningsAdjustmentFactor)."
@@ -1495,7 +1491,7 @@ Function Read-Config {
             $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
             Move-Item -Path $ConfigFile $CorruptConfigFile -Force
             If ($Config.psBase.Keys.Count -gt 0) { 
-                $Message = "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
+                Write-Message -Level Error "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
                 [Void](Write-Config -Config $Config)
                 $Variables.ConfigFileReadTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
                 Continue
@@ -1824,9 +1820,15 @@ Function Get-SortedObject {
             $SortedObject = [PSCustomObject]@{ }
             ($Object.PSObject.Properties.Name | Sort-Object).ForEach(
                 { 
-                    If ($Object.$_ -is [Hashtable] -or $Object.$_ -is [PSCustomObject]) { $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_) }
-                    ElseIf ($Object.$_ -is [Array]) { $SortedObject | Add-Member $_ @($Object.$_ | Sort-Object) }
-                    Else { $SortedObject | Add-Member $_ $Object.$_ }
+                    If ($Object.$_ -is [Hashtable] -or $Object.$_ -is [PSCustomObject]) { 
+                        $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_)
+                    }
+                    ElseIf ($Object.$_ -is [Array]) { 
+                        $SortedObject | Add-Member $_ @($Object.$_ | Sort-Object)
+                    }
+                    Else { 
+                        $SortedObject | Add-Member $_ $Object.$_
+                    }
                 }
             )
             Break
@@ -1835,9 +1837,15 @@ Function Get-SortedObject {
             $SortedObject = [Ordered]@{ } # as case insensitve hashtable
             ($Object.GetEnumerator().Name | Sort-Object).ForEach(
                 { 
-                    If ($Object[$_] -is [Hashtable] -or $Object[$_] -is [PSCustomObject]) { $SortedObject[$_] = Get-SortedObject $Object[$_] }
-                    ElseIf ($Object.$_ -is [Array]) { $SortedObject[$_] = @($Object[$_] | Sort-Object) }
-                    Else { $SortedObject[$_] = $Object[$_] }
+                    If ($Object[$_] -is [Hashtable] -or $Object[$_] -is [PSCustomObject]) { 
+                        $SortedObject[$_] = Get-SortedObject $Object[$_]
+                    }
+                    ElseIf ($Object.$_ -is [Array]) { 
+                        $SortedObject[$_] = @($Object[$_] | Sort-Object)
+                    }
+                    Else { 
+                        $SortedObject[$_] = $Object[$_]
+                    }
                 }
             )
             Break
@@ -2072,9 +2080,7 @@ Function Get-Stat {
 
             If ($Global:Stats[$Name] -isnot [Hashtable]) { 
                 # Reduce number of errors
-                If (-not (Test-Path -LiteralPath "Stats\$Name.txt" -PathType Leaf)) { 
-                    Return
-                }
+                If (-not (Test-Path -LiteralPath "Stats\$Name.txt" -PathType Leaf)) { Return }
 
                 Try { 
                     $Stat = [System.IO.File]::ReadAllLines("$PWD\Stats\$Name.txt") | ConvertFrom-Json -ErrorAction Stop
@@ -2307,9 +2313,7 @@ Function Get-GPUArchitectureAMD {
     $Architecture = $Architecture -replace ":.+$" -replace "[^A-Za-z0-9]+"
 
     ForEach ($GPUArchitecture in $Variables.GPUArchitectureDbAMD.PSObject.Properties) { 
-        If ($Architecture -match $GPUArchitecture.Value) { 
-            Return $GPUArchitecture.Name
-        }
+        If ($Architecture -match $GPUArchitecture.Value) { Return $GPUArchitecture.Name }
     }
 
     Return $Architecture
@@ -2328,15 +2332,11 @@ Function Get-GPUArchitectureNvidia {
     $ComputeCapability = $ComputeCapability -replace "[^\d\.]"
 
     ForEach ($GPUArchitecture in $Variables.GPUArchitectureDbNvidia.PSObject.Properties) { 
-        If ($GPUArchitecture.Value.Compute -contains $ComputeCapability) { 
-            Return $GPUArchitecture.Name
-        }
+        If ($GPUArchitecture.Value.Compute -contains $ComputeCapability) { Return $GPUArchitecture.Name }
     }
 
     ForEach ($GPUArchitecture in $GPUArchitectureDbNvidia.PSObject.Properties) { 
-        If ($Model -match $GPUArchitecture.Value.Model) { 
-            Return $GPUArchitecture.Name
-        }
+        If ($Model -match $GPUArchitecture.Value.Model) { Return $GPUArchitecture.Name }
     }
 
     Return "Other"
@@ -2674,9 +2674,9 @@ Function Get-Combination {
             [PSCustomObject]@{ 
                 Combination = ($CombinationKeys.Where({ $_ -band $X })).ForEach({ $Combination.$_ })
             }
-            $Smallest = ($X -band - $X)
+            $Smallest = $X -band - $X
             $Ripple = $X + $Smallest
-            $NewSmallest = ($Ripple -band - $Ripple)
+            $NewSmallest = $Ripple -band - $Ripple
             $Ones = (($NewSmallest / $Smallest) -shr 1) - 1
             $X = $Ripple -bor $Ones
         }
@@ -2955,9 +2955,7 @@ Function Get-AlgorithmFromCurrency {
     )
 
     If ($Currency -and $Currency -ne "*") { 
-        If ($Variables.CurrencyAlgorithm[$Currency]) { 
-            Return $Variables.CurrencyAlgorithm[$Currency]
-        }
+        If ($Variables.CurrencyAlgorithm[$Currency]) { Return $Variables.CurrencyAlgorithm[$Currency] }
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
@@ -3786,9 +3784,7 @@ Function Get-MemoryUsage {
     $Sign = ""
 
     If ( $Script:LastMemoryUsageByte -ne 0) { 
-        If ($DiffBytes -ge 0) { 
-            $Sign = "+"
-        }
+        If ($DiffBytes -ge 0) { $Sign = "+" }
         $DiffText = ", $Sign$DiffBytes"
     }
 
@@ -3863,8 +3859,12 @@ Function Initialize-Environment {
 
     # Load donation log
     If (Test-Path -LiteralPath "$PWD\Logs\DonationLog.csv") { $Variables.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) }
-    If (-not $Variables.DonationLog) { $Variables.DonationLog = @() }
-    Else { Write-Host "Loaded donation log." }
+    If (-not $Variables.DonationLog) { 
+        $Variables.DonationLog = @()
+    }
+    Else { 
+        Write-Host "Loaded donation log."
+    }
 
     # Load algorithm list
     $Variables.Algorithms = [Ordered]@{ } # as case insensitive hash table
@@ -3959,20 +3959,36 @@ Function Initialize-Environment {
 
     # Load PoolsLastUsed data
     If (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json" ) { $Variables.PoolsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable }
-    If (-not $Variables.PoolsLastUsed.psBase.Keys) { $Variables.PoolsLastUsed = @{ } }
-    Else { Write-Host "Loaded pools last used data." }
+    If (-not $Variables.PoolsLastUsed.psBase.Keys) { 
+        $Variables.PoolsLastUsed = @{ }
+    }
+    Else { 
+        Write-Host "Loaded pools last used data."
+    }
 
     # Load AlgorithmsLastUsed data
     If (Test-Path -LiteralPath "$PWD\Data\AlgorithmsLastUsed.json" ) { $Variables.AlgorithmsLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastUsed.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable }
-    If (-not $Variables.AlgorithmsLastUsed.psBase.Keys) { $Variables.AlgorithmsLastUsed = @{ } }
-    Else { Write-Host "Loaded algorithm last used data." }
+    If (-not $Variables.AlgorithmsLastUsed.psBase.Keys) { 
+        $Variables.AlgorithmsLastUsed = @{ }
+    }
+    Else { 
+        Write-Host "Loaded algorithm last used data."
+    }
 
     # Load EarningsChart data to make it available early in GUI
     If (Test-Path -LiteralPath "$PWD\Data\EarningsChartData.json" -PathType Leaf) { $Variables.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Data\EarningsChartData.json") | ConvertFrom-Json }
-    Else { Write-Host "Loaded earnings chart data." }
+    If (-not $Variables.EarningsChartData.psBase.Keys) { 
+        $Variables.EarningsChartData = @{ }
+    }
+    Else { 
+        Write-Host "Loaded earnings chart data."
+    }
 
     # Load Balances data to make it available early in GUI
     If (Test-Path -LiteralPath "$PWD\Data\Balances.json" -PathType Leaf) { $Variables.Balances = [System.IO.File]::ReadAllLines("$PWD\Data\Balances.json") | ConvertFrom-Json }
+    If (-not $Variables.Balances.psBase.Keys) { 
+        $Variables.Balances = @{ }
+    }
     Else { Write-Host "Loaded balances data." }
 
     # Load NVidia GPU architecture table

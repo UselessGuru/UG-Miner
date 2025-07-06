@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class MiniZ : Miner { 
@@ -41,13 +41,13 @@ Class MiniZ : Miner {
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = [Double]($Data.result.speed_sps | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        If (-not $HashrateValue) { $HashrateValue = [Double]($Data.result.sol_ps | Measure-Object -Sum | Select-Object -ExpandProperty Sum) } # fix
+        $HashrateValue = [Double](($Data.result.speed_sps | Measure-Object -Sum).Sum)
+        If (-not $HashrateValue) { $HashrateValue = [Double](($Data.result.sol_ps | Measure-Object -Sum).Sum) } # fix
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]($Data.result.accepted_shares | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $SharesRejected = [Int64]($Data.result.rejected_shares | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $SharesAccepted = [Int64](($Data.result.accepted_shares | Measure-Object -Sum).Sum)
+        $SharesRejected = [Int64](($Data.result.rejected_shares | Measure-Object -Sum).Sum)
         $SharesInvalid = [Int64]0
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 

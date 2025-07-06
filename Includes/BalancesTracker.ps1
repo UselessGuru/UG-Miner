@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 using module .\Include.psm1
@@ -358,7 +358,7 @@ Do {
         ForEach ($PoolEarnings in $ChartData) { 
             $PoolChartData.PSObject.Properties.Name.ForEach(
                 { 
-                    $PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).ForEach({ [Double]$_.DailyEarnings * $Variables.Rates.($_.Currency).BTC }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+                    $PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).ForEach({ [Double]$_.DailyEarnings * $Variables.Rates.($_.Currency).BTC }) | Measure-Object -Sum).Sum
                 }
             )
         }

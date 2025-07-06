@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 using module .\Include.psm1
@@ -994,7 +994,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                         @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split ',' -join " & " }) -join '<br>' } },
                         @{ Name = "Benchmark Hashrate"; Expression = { $_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { "-" } })) -join " & " }) -join '<br>' } },
                         @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
-                        @{ Name = "EstimatedEarnings"; Expression = { [Decimal](($_.Data.Earnings | Measure-Object -Sum | Select-Object -ExpandProperty Sum) * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
+                        @{ Name = "EstimatedEarnings"; Expression = { [Decimal]((($_.Data.Earnings | Measure-Object -Sum).Sum) * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
                         @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
                         @{ Name = "LastSeen"; Expression = { $_.date } },
                         @{ Name = "Live Hashrate"; Expression = { $_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { '-' } })) -join " & " }) -join '<br>' } },

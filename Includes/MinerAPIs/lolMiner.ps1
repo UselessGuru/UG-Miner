@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class lolMiner : Miner { 
@@ -50,7 +50,7 @@ Class lolMiner : Miner {
             "EH/s"  { $HashrateUnit = [Math]::Pow(10,18); Break }
             "ZH/s"  { $HashrateUnit = [Math]::Pow(10,21); Break }
             "YH/s"  { $HashrateUnit = [Math]::Pow(10,24); Break }
-            Default { $HashrateUnit = [UInt64]1 }
+            Default { $HashrateUnit = 1 }
         }
         $HashrateValue = [Double]($Data.Algorithms[0].Total_Performance * $HashrateUnit)
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }

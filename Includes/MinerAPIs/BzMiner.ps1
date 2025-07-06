@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class BzMiner : Miner { 
@@ -47,23 +47,23 @@ Class BzMiner : Miner {
 
         $Shares = [PSCustomObject]@{ }
 
-        $HashrateValue = [Double]($Devices.ForEach({ $_.hashrate[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $HashrateValue = [Double](($Devices.ForEach({ $_.hashrate[0] }) | Measure-Object -Sum).Sum)
         If (-not $HashrateValue -and $Devices.hashrate -contains $null) { Return $null }
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-        $SharesAccepted = [Int64]($Devices.ForEach({ $_.valid_solutions[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $SharesRejected = [Int64]($Devices.ForEach({ $_.rejected_solutions[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-        $SharesInvalid = [Int64]($Devices.ForEach({ $_.stale_solutions[0] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $SharesAccepted = [Int64](($Devices.ForEach({ $_.valid_solutions[0] }) | Measure-Object -Sum).Sum)
+        $SharesRejected = [Int64](($Devices.ForEach({ $_.rejected_solutions[0] }) | Measure-Object -Sum).Sum)
+        $SharesInvalid = [Int64](($Devices.ForEach({ $_.stale_solutions[0] }) | Measure-Object -Sum).Sum)
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            $HashrateValue = [Double]($Devices.ForEach({ $_.hashrate[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $HashrateValue = [Double](($Devices.ForEach({ $_.hashrate[1] }) | Measure-Object -Sum).Sum)
             If (-not $HashrateValue -and $Devices.hashrate -contains $null) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-            $SharesAccepted = [Int64]($Devices.ForEach({ $_.valid_solutions[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $SharesRejected = [Int64]($Devices.ForEach({ $_.rejected_solutions[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $SharesInvalid = [Int64]($Devices.ForEach({ $_.stale_solutions[1] }) | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $SharesAccepted = [Int64](($Devices.ForEach({ $_.valid_solutions[1] }) | Measure-Object -Sum).Sum)
+            $SharesRejected = [Int64](($Devices.ForEach({ $_.rejected_solutions[1] }) | Measure-Object -Sum).Sum)
+            $SharesInvalid = [Int64](($Devices.ForEach({ $_.stale_solutions[1] }) | Measure-Object -Sum).Sum)
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }
 

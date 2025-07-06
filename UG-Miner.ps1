@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 using module .\Includes\Include.psm1
@@ -323,7 +323,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.35"
+    Version      = [System.Version]"6.4.36"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
@@ -993,8 +993,7 @@ Function MainLoop {
 
                     If ($LegacyGUIform) { 
                         [Void](Update-GUIstatus)
-                        $LegacyGUIminingSummaryLabel.Text = ""
-                        ($Message -replace '&', '&&' -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                        $LegacyGUIminingSummaryLabel.Text = ($Message -replace '&', '&&' -split '<br>') -join "`r`n"
                         $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                     }
                 }
@@ -1007,8 +1006,7 @@ Function MainLoop {
 
                 If ($LegacyGUIform) { 
                     [Void](Update-GUIstatus)
-                    $LegacyGUIminingSummaryLabel.Text = ""
-                    ($Message -replace '&', '&&' -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                    $LegacyGUIminingSummaryLabel.Text = ($Message -replace '&', '&&' -split '<br>') -join "`r`n"
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
 
@@ -1020,8 +1018,7 @@ Function MainLoop {
 
                 If ($LegacyGUIform) { 
                     [Void](Update-GUIstatus)
-                    $LegacyGUIminingSummaryLabel.Text = ""
-                    ($Message -replace '&', '&&' -split '<br>').ForEach({ $LegacyGUIminingSummaryLabel.Text += "$_`r`n" })
+                    $LegacyGUIminingSummaryLabel.Text = ($Message -replace '&', '&&' -split '<br>') -join "`r`n"
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
                 Remove-Variable Message
@@ -1122,7 +1119,7 @@ Function MainLoop {
                     )
                     # Display top 5 optimal miners and all benchmarking of power consumption measuring miners
                     $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
-                    ($Variables.Miners.Where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { [String]$_.DeviceNames }).ForEach(
+                    ($Variables.Miners.Where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace '.+-' } | Sort-Object -Property Name).ForEach(
                         { 
                             $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
                             $MinersDeviceGroupNeedingBenchmark = $MinersDeviceGroup.Where({ $_.Benchmark })
@@ -1135,7 +1132,7 @@ Function MainLoop {
                                     $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
                                 }
                                 ) | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.Best }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false } | 
-                                Format-Table $MinerTable -GroupBy @{ Name = "Device$(If ($MinersDeviceGroup[0].DeviceNames.Count -gt 1) { " group" })"; Expression = { "$($MinersDeviceGroup[0].BaseName_Version_Device -replace ".+-")" } } -AutoSize | Out-Host
+                                Format-Table $MinerTable -GroupBy @{ Name = "Device(s)"; Expression = { "$($MinersDeviceGroup[0].BaseName_Version_Device -replace ".+-")" } } -AutoSize | Out-Host
                         }
                     )
                     Remove-Variable Bias, MinerTable, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
@@ -1153,11 +1150,13 @@ Function MainLoop {
                         @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
                         @{ Label = "Command"; Expression = { $_.CommandLine } }
                     )
-                    $Variables.MinersBest | Sort-Object -Property { [String]$_.DeviceNames } | Format-Table $MinerTable -Wrap | Out-Host
+                    $Variables.MinersBest | Sort-Object -Property { $_.BaseName_Version_Device -replace ".+-" } | Format-Table $MinerTable -Wrap | Out-Host
                     Remove-Variable MinerTable
                 }
 
                 If ($Variables.UIStyle -eq "full" -or $Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { 
+
+                    If ($Variables.UIStyle -ne "full") { Write-Host -ForegroundColor DarkYellow "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
 
                     $MinersActivatedLast24Hrs = @($Variables.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now }))
 
@@ -1197,7 +1196,7 @@ Function MainLoop {
 
                     If ($Config.Watchdog) { 
                         # Display watchdog timers
-                        $Variables.WatchdogTimers.Where({ $_.Kicked -gt $Variables.Timer.AddSeconds(-$Variables.WatchdogReset) }) | Sort-Object -Property MinerName, Kicked | Format-Table -Wrap (
+                        $Variables.WatchdogTimers.Where({ $_.Kicked -gt $Variables.Timer.AddSeconds(-$Variables.WatchdogReset) }) | Sort-Object -Property Kicked, @{ Expression = { $_.MinerBaseName_Version_Device -replace ".+-"} } | Format-Table -Wrap (
                             @{ Label = "Miner watchdog timer"; Expression = { $_.MinerName } },
                             @{ Label = "Pool"; Expression = { $_.PoolName } },
                             @{ Label = "Algorithm"; Expression = { $_.Algorithm } },
@@ -1208,26 +1207,15 @@ Function MainLoop {
                 }
 
                 If ($Variables.MiningStatus -eq "Running") { 
-                    ($Variables.MinersNeedingBenchmark.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
-                        { 
-                            Write-Host -ForegroundColor DarkYellow "Benchmarking for '$($_.Group[0].BaseName_Version_Device -replace".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete benchmarking."
-                        }
-                    )
-                    ($Variables.MinersNeedingPowerConsumptionMeasurement.Where({ $_.Available }) | Group-Object { [String]$_.DeviceNames }).ForEach(
-                        { 
-                            Write-Host -ForegroundColor DarkYellow "Power consumption measurement for '$($_.Group[0].BaseName_Version_Device -replace ".+-")' in progress. $($_.Count) miner$(If ($_.Count -gt 1) { "s" }) left to complete measuring."
-                        }
-                    )
-                    If ($Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement -and $Variables.UIStyle -ne "full") { 
-                        Write-Host -ForegroundColor DarkYellow "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full' (Information about miners run in the past, failed miners & watchdog timers will be shown)`n"
-                    }
 
-                    Write-Host ($Variables.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
+                    $Colour = If ($Variables.MinersNeedingBenchmark -or $Variables.MinersNeedingPowerConsumptionMeasurement) { "DarkYello" } Else { "White"}
+                    Write-Host -ForegroundColor $Colour ($Variables.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
+                    Remove-Variable Colour
 
                     If ($Variables.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                         If ($Variables.MiningProfit -lt 0) { 
                             # Mining causes a loss
-                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and $(If ($Config.DryRun) { "would cause" } Else { "causes" }) a loss of {0} {1:n$($Config.DecimalsMax)}/day (including base power cost)." -f $Config.FIATcurrency, (-$Variables.MiningProfit * $Variables.Rates.BTC.($Config.FIATcurrency)))
+                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and $(If ($Config.DryRun) { "would cause" } Else { "causes" }) a loss of {0} {1:n$($Config.DecimalsMax)}/day (including base power cost)." -f $Config.FIATcurrency, - ($Variables.MiningProfit * $Variables.Rates.BTC.($Config.FIATcurrency)))
                         }
                         If ($Variables.MiningProfit -lt $Config.ProfitabilityThreshold) { 
                             # Mining profit is below the configured threshold

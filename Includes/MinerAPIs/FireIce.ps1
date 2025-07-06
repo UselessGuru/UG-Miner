@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class Fireice : Miner { 
@@ -51,7 +51,7 @@ Class Fireice : Miner {
                 # Sometimes the process cannot be found instantly
                 $Loops = 100
                 Do { 
-                    If ($this.ProcessId = $this.ProcessJob | Receive-Job -ErrorAction Ignore | Select-Object -ExpandProperty MinerProcessId) { 
+                    If ($this.ProcessId = ($this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore).MinerProcessId) { 
                         If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
                             $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                             # Read hw config created by miner
@@ -87,7 +87,7 @@ Class Fireice : Miner {
                     }
                 }
                 Else { 
-                    Write-Message -Level Error "Running temporary miner failed - cannot create threads config file '$($this.Info)' [Error: '$($Error | Select-Object -First 1)']."
+                    Write-Message -Level Error "Error running temporary miner - cannot create threads config file '$($this.Info)' ['$($Error | Select-Object -First 1)']."
                     Return
                 }
                 $this.Process = $null
@@ -105,7 +105,7 @@ Class Fireice : Miner {
             }
         }
         Catch { 
-            Write-Message -Level Error "Creating miner config files for '$($this.Info)' failed [Error: '$($Error | Select-Object -First 1)']."
+            Write-Message -Level Error "Error creating miner config files for '$($this.Info)' failed ['$($Error | Select-Object -First 1)']."
             Return
         }
     }

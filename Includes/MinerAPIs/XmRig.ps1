@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class XmRig : Miner { 
@@ -105,14 +105,14 @@ Class XmRig : Miner {
                 }
             }
             Else { 
-                Write-Message -Level Error "Running temporary miner failed - cannot create threads config file '$($this.Info)' [Error: '$($Error | Select-Object -First 1)']."
+                Write-Message -Level Error "Error running temporary miner - cannot create threads config file '$($this.Info)' ['$($Error | Select-Object -First 1)']."
                 Return
             }
             $this.Process = $null
             $this.ProcessId = $null
         }
         Catch { 
-            Write-Message -Level Error "Creating miner config files for '$($this.Info)' failed [Error: '$($Error | Select-Object -First 1)']."
+            Write-Message -Level Error "Error creating miner config files for '$($this.Info)' failed ['$($Error | Select-Object -First 1)']."
             Return
         }
     }
@@ -154,7 +154,7 @@ Class XmRig : Miner {
         $PowerConsumption = [Double]0
 
         If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = [Double]($Data.hwmon.power | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $PowerConsumption = [Double](($Data.hwmon.power | Measure-Object -Sum).Sum)
             If (-not $PowerConsumption) { 
                 $PowerConsumption = $this.GetPowerConsumption()
             }

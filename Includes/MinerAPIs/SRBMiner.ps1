@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\SRBminer.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class SRBMiner : Miner { 
@@ -53,7 +53,6 @@ Class SRBMiner : Miner {
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            $HashrateName = [String]$this.Algorithms[1]
             $HashrateValue = [Double]$Data.algorithms[1].hashrate.$Type.total
 
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -29,9 +29,9 @@ $Path = "Bin\$Name\kawpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "KawPow"; Type = "AMD"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = " "; ExcludePools = @("HashCryptos", "MiningDutch"); Arguments = " --opencl --opencl-devices" }
+    @{ Algorithm = "KawPow"; Type = "AMD"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = " "; ExcludePools = @(); Arguments = " --opencl --opencl-devices" }
 
-    @{ Algorithm = "KawPow"; Type = "NVIDIA"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = " "; ExcludePools = @("HashCryptos", "MiningDutch"); Arguments = " --cuda --cuda-devices" }
+    @{ Algorithm = "KawPow"; Type = "NVIDIA"; MinMemGiB = 0.93; MinerSet = 2; WarmupTimes = @(75, 10); ExcludeGPUarchitectures = " "; ExcludePools = @(); Arguments = " --cuda --cuda-devices" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -52,9 +52,9 @@ If ($Algorithms) {
                     # If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
                     If ($SupportedMinerDevices = $MinerDevices) { 
 
-                        $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-
+                        # $ExcludePools = $_.ExcludePools
+                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                        ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
                             If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 

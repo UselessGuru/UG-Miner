@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class NanoMiner : Miner { 
@@ -65,12 +65,12 @@ Class NanoMiner : Miner {
 
         ForEach ($Algorithm in $Algorithms) { 
             $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
-            $HashrateValue = [Double]($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $HashrateValue = [Double](($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum).Sum)
             If ($null -eq $HashrateValue) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-            $SharesAccepted = [Int64]($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
-            $SharesRejected = [Int64]($Data.Algorithms.$Algorithm.Total.Denied | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $SharesAccepted = [Int64](($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum).Sum)
+            $SharesRejected = [Int64](($Data.Algorithms.$Algorithm.Total.Denied | Measure-Object -Sum).Sum)
             $SharesInvalid = [Int64]0
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
         }

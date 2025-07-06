@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.4.35
-Version date:   2025/07/03
+Version:        6.4.36
+Version date:   2025/07/06
 #>
 
 Class GMiner : Miner { 
@@ -39,7 +39,7 @@ Class GMiner : Miner {
 
         $Hashrate = [PSCustomObject]@{ }
         $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = [Double]($Data.devices.speed | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+        $HashrateValue = [Double](($Data.devices.speed | Measure-Object -Sum).Sum)
         If (-not $HashRateValue -and $Data.devices.speed -contains $null) { Return $null }
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
@@ -50,7 +50,7 @@ Class GMiner : Miner {
         $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            $HashrateValue = [Double]($Data.devices.speed2 | Measure-Object -Sum | Select-Object -ExpandProperty Sum)
+            $HashrateValue = [Double](($Data.devices.speed2 | Measure-Object -Sum).Sum)
             If (-not $HashRateValue -and $Data.devices.speed2 -contains $null) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 

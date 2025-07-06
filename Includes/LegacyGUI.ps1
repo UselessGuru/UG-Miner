@@ -127,7 +127,7 @@ Function CheckBoxSwitching_Click {
         $LegacyGUIswitchingDGV.EndInit()
     }
     Else { 
-        $LegacyGUIswitchingLogLabel.Text = "Waiting for data..."
+        $LegacyGUIswitchingLogLabel.Text = "Waiting for switching log data..."
         $LegacyGUIswitchingLogClearButton.Enabled = $false
     }
     If ($Config.UseColorForMinerStatus) { 
@@ -256,7 +256,7 @@ Function Update-TabControl {
                 }
             }
             Else { 
-                $LegacyGUIactiveMinersLabel.Text = "Waiting for data..."
+                $LegacyGUIactiveMinersLabel.Text = "Waiting for active miner data..."
                 $LegacyGUIactiveMinersDGV.DataSource = $null
             }
             Resize-Form # To fully show grid
@@ -317,11 +317,10 @@ Function Update-TabControl {
                     $LegacyGUIearningsChart.ChartAreas.Add($ChartArea)
                     $LegacyGUIearningsChart.Series.Clear()
 
-                    $Color = @(255, 255, 255, 255) #"FFFFFF"
-
                     $DaySum = @(0) * $DataSource.Labels.Count
                     $LegacyGUItooltipText = $DataSource.Labels.Clone()
 
+                    $Color = @(255, 255, 255, 255) #"FFFFFF"
                     ForEach ($Pool in $DataSource.Earnings.PSObject.Properties.Name) { 
 
                         $Color = (Get-NextColor -Color $Color -Factors -0, -20, -20, -20)
@@ -506,7 +505,7 @@ Function Update-TabControl {
                 }
             }
             Else { 
-                $LegacyGUIminersLabel.Text = "Waiting for data..."
+                $LegacyGUIminersLabel.Text = "Waiting for miner data..."
                 $LegacyGUIminersDGV.DataSource = $null
             }
             Break
@@ -591,7 +590,7 @@ Function Update-TabControl {
                 }
             }
             Else { 
-                $LegacyGUIpoolsLabel.Text = "Waiting for data..."
+                $LegacyGUIpoolsLabel.Text = "Waiting for pool data..."
                 $LegacyGUIpoolsDGV.DataSource = $null
             }
             Break
@@ -614,7 +613,7 @@ Function Update-TabControl {
         #             ElseIf ($Variables.MiningStatus -eq "Idle") { $LegacyGUIworkersLabel.Text = "No data - mining is stopped" }
         #             ElseIf ($Variables.MiningStatus -eq "Paused" -and -not $DataSource) { $LegacyGUIworkersLabel.Text = "No data - mining is paused" }
         #             ElseIf ($Variables.NewMiningStatus -eq "Running" -and $Variables.MiningStatus -eq "Running" -and $Global:CoreRunspace.Job.IsCompleted -eq $true) {  $LegacyGUIminersLabel.Text = "No data - mining is suspended" }
-        #             Else  { $LegacyGUIworkersLabel.Text = "Waiting for data..." }
+        #             Else  { $LegacyGUIworkersLabel.Text = "Waiting for monitoring data..." }
         #
         #             $LegacyGUIworkersDGV.BeginInit()
         #             $LegacyGUIworkersDGV.ClearSelection()
@@ -723,7 +722,7 @@ Function Update-TabControl {
                     $LegacyGUIwatchdogTimersDGV.EndInit()
                 }
                 Else { 
-                    $LegacyGUIwatchdogTimersLabel.Text = "Waiting for data..."
+                    $LegacyGUIwatchdogTimersLabel.Text = "Waiting for watchdog timer data..."
                     $LegacyGUIwatchdogTimersDGV.DataSource = $null
                 }
             }
@@ -807,13 +806,13 @@ $LegacyGUIearningsPage.Text = "Earnings and balances"
 $LegacyGUIearningsPage.ToolTipText = "Information about the calculated earnings / profit"
 $LegacyGUIminersPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIminersPage.Text = "Miners"
-$LegacyGUIminersPage.ToolTipText = "Miner data collected in the last cycle"
+$LegacyGUIminersPage.ToolTipText = "Miner data updated in the last cycle"
 $LegacyGUIpoolsPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIpoolsPage.Text = "Pools"
-$LegacyGUIpoolsPage.ToolTipText = "Pool data collected in the last cycle"
-$LegacyGUIrigMonitorPage = [System.Windows.Forms.TabPage]::new()
-$LegacyGUIrigMonitorPage.Text = "Rig monitor"
-$LegacyGUIrigMonitorPage.ToolTipText = "Consolidated overview of all known mining rigs"
+$LegacyGUIpoolsPage.ToolTipText = "Pool data updated in the last cycle"
+# $LegacyGUIrigMonitorPage = [System.Windows.Forms.TabPage]::new()
+# $LegacyGUIrigMonitorPage.Text = "Rig monitor"
+# $LegacyGUIrigMonitorPage.ToolTipText = "Consolidated overview of all known mining rigs"
 $LegacyGUIswitchingPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIswitchingPage.Text = "Switching log"
 $LegacyGUIswitchingPage.ToolTipText = "List of the previously launched miners"
@@ -1531,15 +1530,15 @@ Set-DataGridViewDoubleBuffer -Grid $LegacyGUIpoolsDGV -Enabled $true
 $LegacyGUIpoolsPageControls += $LegacyGUIpoolsDGV
 
 # Monitoring Page Controls
-$LegacyGUIrigMonitorPageControls = @()
+# $LegacyGUIrigMonitorPageControls = @()
 
-$LegacyGUIworkersLabel = [System.Windows.Forms.Label]::new()
-$LegacyGUIworkersLabel.AutoSize = $false
-$LegacyGUIworkersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$LegacyGUIworkersLabel.Height = 20
-$LegacyGUIworkersLabel.Location = [System.Drawing.Point]::new(0, 6)
-$LegacyGUIworkersLabel.Width = 900
-$LegacyGUIrigMonitorPageControls += $LegacyGUIworkersLabel
+# $LegacyGUIworkersLabel = [System.Windows.Forms.Label]::new()
+# $LegacyGUIworkersLabel.AutoSize = $false
+# $LegacyGUIworkersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+# $LegacyGUIworkersLabel.Height = 20
+# $LegacyGUIworkersLabel.Location = [System.Drawing.Point]::new(0, 6)
+# $LegacyGUIworkersLabel.Width = 900
+# $LegacyGUIrigMonitorPageControls += $LegacyGUIworkersLabel
 
 # $LegacyGUIworkersDGV = [System.Windows.Forms.DataGridView]::new()
 # $LegacyGUIworkersDGV.AllowUserToAddRows = $false
@@ -1579,7 +1578,7 @@ $LegacyGUIeditMonitoringLink.Size = [System.Drawing.Size]::new(330, 26)
 $LegacyGUIeditMonitoringLink.Visible = $false
 $LegacyGUIeditMonitoringLink.Width = 330
 $LegacyGUIeditMonitoringLink.Add_Click({ Start-Process "http://localhost:$($Variables.APIRunspace.APIport)/rigmonitor.html" })
-$LegacyGUIrigMonitorPageControls += $LegacyGUIeditMonitoringLink
+# $LegacyGUIrigMonitorPageControls += $LegacyGUIeditMonitoringLink
 $LegacyGUItooltip.SetToolTip($LegacyGUIeditMonitoringLink, "Click to the edit the monitoring configuration in the Web GUI")
 
 # Switching Page Controls
@@ -1813,7 +1812,7 @@ $LegacyGUIstatusPage.Controls.AddRange(@($LegacyGUIstatusPageControls))
 $LegacyGUIearningsPage.Controls.AddRange(@($LegacyGUIearningsPageControls))
 $LegacyGUIminersPage.Controls.AddRange(@($LegacyGUIminersPageControls))
 $LegacyGUIpoolsPage.Controls.AddRange(@($LegacyGUIpoolsPageControls))
-$LegacyGUIrigMonitorPage.Controls.AddRange(@($LegacyGUIrigMonitorPageControls))
+# $LegacyGUIrigMonitorPage.Controls.AddRange(@($LegacyGUIrigMonitorPageControls))
 $LegacyGUIswitchingPage.Controls.AddRange(@($LegacyGUIswitchingPageControls))
 $LegacyGUIwatchdogTimersPage.Controls.AddRange(@($LegacyGUIwatchdogTimersPageControls))
 
