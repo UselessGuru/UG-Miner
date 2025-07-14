@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -68,7 +68,7 @@ If ($Algorithms) {
 
                             $Arguments = $_.Arguments
                             If ("CLO", "ETC", "ETH", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZANO", "ZCOIN", "ZELS" -contains $Pool.Currency) { 
-                                $Arguments = " -coin $($Pool.Currency)$($_.Arguments -replace ' -algo \w+')"
+                                $Arguments = " -coin $($Pool.Currency)$($_.Arguments -replace " -algo \w+")"
                             }
                             If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
 
@@ -78,7 +78,7 @@ If ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = "$Arguments -PRT 1 -PRS 0 -api-bind 127.0.0.1:$($MinerAPIPort) -device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$Arguments -PRT 1 -PRS 0 -api-bind 127.0.0.1:$($MinerAPIPort) -device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ",")"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @(0) # Dev fee
                                 MinerSet    = $_.MinerSet

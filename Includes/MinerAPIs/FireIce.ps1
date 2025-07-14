@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 Class Fireice : Miner { 
@@ -33,9 +33,9 @@ Class Fireice : Miner {
             $ThreadsConfig = ""
 
             # Write pool config file, overwrite every time
-            ($Parameters.PoolFile.Content | ConvertTo-Json -Depth 10) -replace '^{' -replace '}$', ',' | Out-File -LiteralPath $PoolFile -Force -ErrorAction Ignore
+            ($Parameters.PoolFile.Content | ConvertTo-Json -Depth 10) -replace "^{" -replace "}$", "," | Out-File -LiteralPath $PoolFile -Force -ErrorAction Ignore
             # Write config file, keep existing file to preserve user custom config
-            If (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { ($Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10) -replace '^{' -replace '}$' | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore }
+            If (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { ($Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10) -replace "^{" -replace "}$" | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore }
 
             # Check if we have a valid hw file for all installed hardware. If hardware / device order has changed we need to re-create the config files. 
             If (-not (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf)) { 
@@ -55,11 +55,11 @@ Class Fireice : Miner {
                         If (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
                             $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                             # Read hw config created by miner
-                            $ThreadsConfig = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) -replace '^\s*//.*' | Out-String
+                            $ThreadsConfig = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) -replace "^\s*//.*" | Out-String
                             # Set bfactor to 11 (default is 6 which makes PC unusable)
-                            $ThreadsConfig = $ThreadsConfig -replace '"bfactor"\s*:\s*\d,', '"bfactor" : 11,'
+                            $ThreadsConfig = $ThreadsConfig -replace "`"bfactor`"\s*:\s*\d,", "`"bfactor`" : 11,"
                             # Reformat to proper json
-                            $ThreadsConfigJson = "{$($ThreadsConfig -replace '\/\*.*' -replace '\*\/' -replace '\*.+' -replace '\s' -replace ',\},]', '}]' -replace ',\},\{', '},{' -replace '},]', '}]' -replace ',$')}" | ConvertFrom-Json
+                            $ThreadsConfigJson = "{$($ThreadsConfig -replace "\/\*.*" -replace "\*\/" -replace "\*.+" -replace "\s" -replace ",\},]", "}]" -replace ",\},\{", "},{" -replace "},]", "}]" -replace ",$")}" | ConvertFrom-Json
                             # Keep one instance per gpu config
                             $ThreadsConfigJson | Add-Member gpu_threads_conf ($ThreadsConfigJson.gpu_threads_conf | Sort-Object -Property Index -Unique) -Force
                             # Write json file
@@ -101,7 +101,7 @@ Class Fireice : Miner {
                 # Create correct numer of CPU threads
                 $ThreadsConfigJson | Add-Member cpu_threads_conf ([Array]$ThreadsConfigJson.cpu_threads_conf * $Parameters.Threads) -Force
                 # Write config file
-                ($ThreadsConfigJson | ConvertTo-Json -Depth 10) -replace '^{' -replace '}$' | Out-File -LiteralPath $MinerThreadsConfigFile -Force -ErrorAction Ignore
+                ($ThreadsConfigJson | ConvertTo-Json -Depth 10) -replace "^{" -replace "}$" | Out-File -LiteralPath $MinerThreadsConfigFile -Force -ErrorAction Ignore
             }
         }
         Catch { 

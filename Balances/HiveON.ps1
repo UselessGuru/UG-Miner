@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -29,7 +29,7 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
     { 
         $APIResponse = $null
         $Currency = $_.ToUpper()
-        $Wallet = ($PoolConfig.Wallets.$_ -replace '^0x').ToLower()
+        $Wallet = ($PoolConfig.Wallets.$_ -replace "^0x").ToLower()
         $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
         $RetryInterval = $PoolConfig.PoolAPIretryInterval
 

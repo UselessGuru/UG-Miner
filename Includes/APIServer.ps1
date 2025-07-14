@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 using module .\Include.psm1
 
-$APIVersion = "6.0.6"
+$APIVersion = "6.0.8"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -130,7 +130,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 }
                 $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
-                $Data = "$($Data -join "`n")`n`n$Message"
+                $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 $PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Variables.PoolsConfigFile -Force
             }
             Else { 
@@ -148,18 +148,21 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 ForEach ($Pool in $Pools) { 
                     If ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
-                        $Pool.Reasons = $Pool.Reasons.Where({ $_ -ne "Algorithm not enabled in $($Pool.Name) pool config" }) | Sort-Object -Unique
+                        $Pool.Reasons.Remove("Algorithm not enabled in $($Pool.Name) pool config") | Out-Null
                     }
                     Else { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "-$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                        $Pool.Reasons = $Pool.Reasons.Where({ $_ -ne "Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)" }) | Sort-Object -Unique
+                        $Pool.Reasons.Remove("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
                     }
-                    If (-not $Pool.Reasons) { $Pool.Available = $true }
+                    If (-not $Pool.Reasons.Count) { 
+                        $Pool.Available = $true
+                        $Pool.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
+                    }
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                 }
                 $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
-                $Data = "$($Data -join "`n")`n`n$Message"
+                $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 $PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Variables.PoolsConfigFile -Force
             }
             Else { 
@@ -301,6 +304,17 @@ While ($Variables.APIversion -and $Server.IsListening) {
             $ContentType = "text/html"
             Break
         }
+        "/functions/getminerdetail" { 
+            $Miner = $Variables.Miners.Where({ $_.Info -eq $Key })
+            If ($Miner) { 
+                $Data = $Miner | ConvertTo-Json -Depth 10
+            }
+            Else { 
+                $Data = "Miner with key '$Key' not found."
+            }
+            Remove-Variable Miner -ErrorAction Ignore
+            Break
+        }
         "/functions/log/get" { 
             $Lines = If ([Int]$Parameters.Lines) { [Int]$Parameters.Lines } Else { 100 }
             $Data = "$((Get-Content -Path $Variables.LogFile -Tail $Lines).ForEach({ "$($_)`n" }))"
@@ -362,40 +376,22 @@ While ($Variables.APIversion -and $Server.IsListening) {
             Remove-Variable StatNames -ErrorAction Ignore
             Break
         }
-        # "/functions/getminerdetail" { 
-        #     $Miner = $Variables.Miners.Where({ $_.Info -eq $Key })
-        #     If ($Miner) { 
-        #         $Data = $Miner | ConvertTo-Json -Depth 10
-        #     }
-        #     Else { 
-        #         $Data = "Miner with key '$Key' not found."
-        #     }
-        #     Remove-Variable Miner -ErrorAction Ignore
-        #     Break
-        # }
         "/functions/stat/disable" { 
             If ($Parameters.Miners) { 
-                If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
+                If ($Miners = (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info).Where({ -not $_.Disabled })) { 
                     $Data = @()
-                    $Miners.Where({ -not $_.Disabled }).ForEach(
+                    $Miners.ForEach(
                         { 
+                            [Void](Set-MinerDisabled $_)
                             $Data += $_.Name
-                            ForEach ($Worker in $_.Workers) { 
-                                [Void](Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
-                                $Worker.Disabled = $false
-                            }
-                            $_.Disabled = $true
-                            $_.Reasons += "Disabled by user"
-                            $_.Reasons = $_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique
                         }
                     )
-                    $Data = $Data | Sort-Object -Unique
-                    $Message = "$($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" }) disabled."
+                    $Message = "Disabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
-                    $Data = "$($Data -join "`n")`n`n$Message"
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 Else { 
-                    $Data = "No matching miner stats found."
+                    $Data = "No matching miners found."
                 }
                 Remove-Variable Miners, Message, Worker -ErrorAction Ignore
                 Break
@@ -403,26 +399,20 @@ While ($Variables.APIversion -and $Server.IsListening) {
         }
         "/functions/stat/enable" { 
             If ($Parameters.Miners) { 
-                If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
+                If ($Miners = (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info).Where({ $_.Disabled })) { 
                     $Data = @()
-                    $Miners.Where({ $_.Disabled }).ForEach(
+                    $Miners.ForEach(
                         { 
+                            [Void](Set-MinerEnabled $_)
                             $Data += $_.Name
-                            ForEach ($Worker in $_.Workers) { 
-                                [Void](Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
-                            }
-                            $_.Disabled = $false
-                            $_.Reasons = $_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique
-                            If (-not $_.Reasons) { $_.Available = $true }
                         }
                     )
-                    $Data = $Data | Sort-Object -Unique
-                    $Message = "$($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" }) enabled."
+                    $Message = "Enabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
-                    $Data = "$($Data -join "`n")`n`n$Message"
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 Else { 
-                    $Data = "No matching miner stats found."
+                    $Data = "No matching miners found."
                 }
                 Remove-Variable Message, Miners, Worker -ErrorAction Ignore
                 Break
@@ -447,23 +437,24 @@ While ($Variables.APIversion -and $Server.IsListening) {
         }
         "/functions/stat/remove" { 
             If ($Parameters.Pools) { 
-                If ($Pools = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Pools | Select-Object) @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Algorithm, Currency, Name)) { 
+                If ($Pools = Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Pools | Select-Object) @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Algorithm, Currency, Name) { 
                     $Data = @()
                     ($Pools | Sort-Object -Property Name, Algorithm, Currency).ForEach(
                         { 
                             $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
                             $Data += $StatName
+
                             [Void](Remove-Stat -Name "$($StatName)_Profit")
+
                             $_.Available = $true
                             $_.Disabled = $false
                             $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
-                            $_.Reasons = @()
+                            $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
                         }
                     )
-                    $Data = $Data | Sort-Object -Unique
                     $Message = "Reset pool stats for $($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
-                    $Data = "$($Data -join "`n")`n`n$Message"
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 Else { 
                     $Data = "No matching pool stats found."
@@ -472,47 +463,17 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 Break
             }
             ElseIf ($Parameters.Miners -and $Parameters.Type -eq "Hashrate") { 
-                If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
+                If ($Miners = Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info) { 
                     $Data = @()
                     $Miners.ForEach(
                         { 
-                            $_.Activated = 0 # To allow 3 attempts
-                            $_.Available = $true
-                            $_.Benchmark = $true
-                            $_.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
-                            $_.Disabled = $false
-                            $_.Earnings_Accuracy = [Double]::NaN
                             $Data += $_.Name
-                            ForEach ($Worker in $_.Workers) { 
-                                [Void](Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
-                                $Worker.Hashrate = [Double]::NaN
-                                $Worker.Disabled = $false
-                                $Worker.Earnings = [Double]::NaN
-                                $Worker.Earnings_Accuracy = [Double]::NaN
-                                $Worker.Earnings_Bias = [Double]::NaN
-                                $Worker.Fee = 0
-                                $Worker.Hashrate = [Double]::NaN
-                                $Worker.TotalMiningDuration = [TimeSpan]0
-                            }
-
-                            # Clear power consumption
-                            [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
-                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
-
-                            # Remove watchdog
-                            $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -NE $_.Name
-
-                            $_.Reasons = $_.Reasons.Where({ $_ -ne "Disabled by user" })
-                            $_.Reasons = $_.Reasons.Where({ $_ -ne "0 H/s stat file" })
-                            $_.Reasons = $_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique
-                            If (-not $_.Reasons) { $_.Available = $true }
-                            If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
+                            [Void](Set-MinerReBenchmark $_)
                         }
                     )
-                    $Data = $Data | Sort-Object -Unique
-                    $Message = "Re-benchmark triggered for $($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" })."
+                    $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
-                    $Data = "$($Data -join "`n")`n`n$Message"
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 Else { 
                     $Data = "No matching hashrate stats found."
@@ -521,26 +482,17 @@ While ($Variables.APIversion -and $Server.IsListening) {
                 Break
             }
             ElseIf ($Parameters.Miners -and $Parameters.Type -eq "PowerConsumption") { 
-                If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
+                If ($Miners = Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info) { 
                     $Data = @()
                     $Miners.ForEach(
                         { 
-                            If ($_.Earnings -eq 0) { $_.Available = $true }
-                            If ($Variables.CalculatePowerCost) { 
-                                $_.MeasurePowerConsumption = $true
-                                $_.Activated = 0 # To allow 3 attempts
-                            }
-                            $_.PowerConsumption = [Double]::NaN
                             $Data += $_.Name
-                            [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
-                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
-                            If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
+                            [Void](Set-MinerMeasurePowerConsumption $_)
                         }
                     )
-                    $Data = $Data | Sort-Object -Unique
-                    $Message = "Re-measure power consumption triggered for $($Data.Count) $(If ($Data.Count -eq 1) { "miner" } Else { "miners" })."
+                    $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
-                    $Data = "$($Data -join "`n")`n`n$Message"
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 Else { 
                     $Data = "No matching power consumption stats found."
@@ -556,12 +508,11 @@ While ($Variables.APIversion -and $Server.IsListening) {
                         $Data += $_.Name -replace "(_Hashrate|_PowerConsumption)$"
                     }
                 )
-                $Data = $Data | Sort-Object -Unique
                 If ($Parameters.Type -eq "Hashrate") { $Message = "Reset $($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" })$(If ($null -ne $Parameters.Value) { " with $($Parameters.Value)H/s hashrate" })." }
                 ElseIf ($Parameters.Type -eq "PowerConsumption") { $Message = "Reset $($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" })$(If ($null -ne $Parameters.Value) { " with $($Parameters.Value)W power consumption" })." }
                 ElseIf ($Parameters.Type -eq "Profit") { $Message = "Reset $($TempStats.Count) pool stat file$(If ($TempStats.Count -ne 1) { "s" })." }
                 Write-Message -Level Info "Web GUI: $Message"
-                $Data = "$($Data -join "`n")`n`n$Message"
+                $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
             }
             Else { 
                 $Data = "No matching stats found."
@@ -570,45 +521,32 @@ While ($Variables.APIversion -and $Server.IsListening) {
             Break
         }
         "/functions/stat/set" { 
-            If ($Parameters.Miners -and $Parameters.Type -eq "Hashrate" -and $null -ne $Parameters.Value) { 
+            If ($Parameters.Miners) { 
                 $Data = @()
-                If ($Miners = @(Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
-                    $Miners.ForEach(
-                        { 
-                            If ($Parameters.Value -le 0 -and $Parameters.Type -eq "Hashrate") { $_.Available = $false; $_.Disabled = $true }
-                            $Data += $_.Name
-                            ForEach ($Algorithm in $_.Algorithms) { 
-                                $StatName = "$($_.Name)_$($Algorithm)_$($Parameters.Type)"
-                                If ($Parameters.Value -eq 0) { 
-                                    # Miner failed
-                                    [Void](Remove-Stat -Name $StatName)
-                                    Set-Stat -Name $StatName -Value $Parameters.Value -FaultDetection $false | Out-Null
-                                    $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = $_.Earnings_Accuracy = [Double]::NaN
-                                    $_.Available = $false
-                                    $_.Disabled = $false
-                                    If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") | Out-Null }
-                                    $_.Reasons = $_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique
-                                    $_.Status = [MinerStatus]::Failed
-                                }
+                If ($Parameters.Type -eq "Hashrate" -and $Parameters.Value -eq 0) { 
+                    If ($Miners = Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info) { 
+                        $Miners.ForEach(
+                            { 
+                                [Void](Set-MinerFailed $_)
+                                $Data += $_.Name
                             }
-                        }
-                    )
-                    $Data = $Data | Sort-Object -Unique
-                    $Message = "$(If ($Data.Count -eq 1) { "The miner is" } Else { "$($Data.Count) miners are" }) $(If ($Parameters.Value -eq 0) { "marked as failed" } ElseIf ($Parameters.Value -eq -1) { "disabled" } Else { "set to value $($Parameters.Value)" })." 
-                    Write-Message -Level Verbose "Web GUI: $Message"
-                    $Data = "$($Data -join "`n")`n`n$Message" 
+                        )
+                        $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed."
+                        Write-Message -Level Verbose "Web GUI: $Message"
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message" 
+                    }
+                    Else { 
+                        $Data = "No matching miners found."
+                    }
+                    Remove-Variable Algorithm, Message, Miners, StatName -ErrorAction Ignore
+                    Break
                 }
-                Else { 
-                    $Data = "No matching miners found."
-                }
-                Remove-Variable Algorithm, Message, Miners, StatName -ErrorAction Ignore
-                Break
             }
         }
         "/functions/switchinglog/clear" { 
-            Get-ChildItem -Path ".\Logs\switchinglog.csv" -File | Remove-Item -Force
-            Write-Message -Level Verbose "Web GUI: Switching log '.\Logs\switchinglog.csv' cleared."
-            $Data = "Switching log '.\Logs\switchinglog.csv' cleared."
+            Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Remove-Item -Force
+            Write-Message -Level Verbose "Web GUI: Switching log '.\Logs\SwitchingLog.csv' cleared."
+            $Data = "Switching log '.\Logs\SwitchingLog.csv' cleared."
             Break
         }
         "/functions/variables/get" { 
@@ -623,37 +561,35 @@ While ($Variables.APIversion -and $Server.IsListening) {
         "/functions/watchdogtimers/remove" { 
             If ($Parameters.Miners -or $Parameters.Pools) { 
                 $Data = @()
-                ForEach ($Miner in @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore)) { 
-                    # Update miner
-                    $Variables.Miners.Where({ $_.Name -eq $Miner.Name -and $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name }) }).ForEach(
-                        { 
-                            $Data += "$($_.Name)"
-                            $_.Reasons = $_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique
-                            If (-not $_.Reasons) { $_.Available = $true }
-                        }
-                    )
+                ForEach ($Miner in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Name)) { 
+                    If ($Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name })) { 
+                        # Update miner
+                        $Data += $Miner.Name
+                        $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                        If (-not $Miner.Reasons.Count) { $Miner.Available = $true }
 
-                    # Remove Watchdog timers
-                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
+                        # Remove Watchdog timers
+                        $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
+                    }
                 }
+                Remove-Variable Miner
 
-                ForEach ($Pool in @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore)) { 
+                ForEach ($Pool in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Variables.Pools | Select-Object) @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Key)) { 
                     # Update pool
-                    $Variables.Pools.Where({ $_.Name -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm -and $Variables.WatchdogTimers.Where({ $_.PoolName -eq $Pool.Name -and $_.Algorithm -eq $Pool.Algorithm }) }).ForEach(
-                        { 
-                            $Data += "$($_.Key) [$($_.Region)]"
-                            $_.Reasons = $_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique
-                            If (-not $_.Reasons) { $_.Available = $true }
-                        }
-                    )
+                    If ($Variables.Pools.Where({ $_.Key -eq $Pool.Key })) { 
+                        $Data += "$($Pool.Key) [$($Pool.Region)]"
+                        $Pool.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                        If (-not $Pool.Reasons.Count) { $Pool.Available = $true }
 
-                    # Remove Watchdog timers
-                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.PoolName -ne $Pool.Name -or $_.Algorithm -ne $Pool.Algorithm })
+                        # Remove Watchdog timers
+                        $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.Key -ne $Pool.Key })
+                    }
                 }
-                If ($Data = $Data | Sort-Object -Unique) { 
+                Remove-Variable Pool
+                If ($Data.Count) {
                     $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
                     Write-Message -Level Verbose "Web GUI: $Message"
-                    $Data = "$($Data -join "`n")`n`n$Message"
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 Else { 
                     $Data = "No matching watchdog timer found."
@@ -662,18 +598,18 @@ While ($Variables.APIversion -and $Server.IsListening) {
             }
             Else { 
                 $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
-                $Variables.Miners.ForEach(
-                    { 
-                        $_.Reasons = $_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique
-                        If (-not $_.Reasons) { $_.Available = $true }
-                    }
-                )
-                $Variables.Pools.ForEach(
-                    { 
-                        $_.Reasons = $_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique
-                        If (-not $_.Reasons) { $_.Available = $true }
-                    }
-                )
+                Foreach ($Miner in $Variables.Miners) { 
+                    $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                    If (-not $Miner.Reasons.Count) { $_.Available = $true }
+                }
+                Remove-Variable Miner
+
+                ForEach ($Pool in $Variables.Pools.ForEach) { 
+                    $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                    If (-not $Pool.Reasons.Count) { $Pool.Available = $true }
+                }
+                Remove-Variable Pool
+
                 Write-Message -Level Verbose "Web GUI: All watchdog timers removed."
                 $Data = "All watchdog timers removed.`nWatchdog timers will be recreated in the next cycle."
             }
@@ -809,7 +745,7 @@ While ($Variables.APIversion -and $Server.IsListening) {
             Break
         }
         "/miners/best" { 
-            $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersBest | Sort-Object -Property DeviceNames | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
+            $Data = ConvertTo-Json -Depth 5 @(($Variables.MinersBest | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp).ForEach({ $_.Workers = $_.WorkersRunning; $_ }) | Select-Object -ExcludeProperty WorkersRunning)
             Break
         }
         "/miners/disabled" { 
@@ -991,15 +927,15 @@ While ($Variables.APIversion -and $Server.IsListening) {
             If ($Variables.Workers) { 
                 $Workers = [System.Collections.ArrayList]@(
                     $Variables.Workers | Select-Object @(
-                        @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split ',' -join " & " }) -join '<br>' } },
-                        @{ Name = "Benchmark Hashrate"; Expression = { $_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { "-" } })) -join " & " }) -join '<br>' } },
+                        @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join " & " }) -join "<br>" } },
+                        @{ Name = "Benchmark Hashrate"; Expression = { $_.data.ForEach({ ($_.EstimatedSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " }) -join "<br>" } },
                         @{ Name = "Currency"; Expression = { $_.Data.Currency | Select-Object -Unique } },
                         @{ Name = "EstimatedEarnings"; Expression = { [Decimal]((($_.Data.Earnings | Measure-Object -Sum).Sum) * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
                         @{ Name = "EstimatedProfit"; Expression = { [Decimal]($_.Profit * $Variables.Rates.BTC.($_.Data.Currency | Select-Object -Unique)) } },
                         @{ Name = "LastSeen"; Expression = { $_.date } },
-                        @{ Name = "Live Hashrate"; Expression = { $_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace '\s+', ' ' } Else { '-' } })) -join " & " }) -join '<br>' } },
-                        @{ Name = "Miner"; Expression = { $_.data.name -join '<br/>'} },
-                        @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join '<br>' } },
+                        @{ Name = "Live Hashrate"; Expression = { $_.data.ForEach({ ($_.CurrentSpeed.ForEach({ If ([Double]$_ -gt 0) { "$($_ | ConvertTo-Hash)/s" -replace "\s+", " " } Else { "-" } })) -join " & " }) -join "<br>" } },
+                        @{ Name = "Miner"; Expression = { $_.data.name -join "<br/>"} },
+                        @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join "<br>" } },
                         @{ Name = "Status"; Expression = { $_.status } },
                         @{ Name = "Version"; Expression = { $_.version } },
                         @{ Name = "Worker"; Expression = { $_.worker } }

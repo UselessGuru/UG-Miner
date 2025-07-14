@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 using module .\Include.psm1
@@ -85,7 +85,7 @@ Do {
 
         # Fetch balances data from pools
         If ($PoolsToTrack) { 
-        Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')..."
+        Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
         $PoolsToTrack.ForEach(
             { 
                 $BalanceObjects += @(
@@ -335,7 +335,7 @@ Do {
             { 
                 $Variables.Balances.Remove($_)
                 $Variables.Balances.$_ = $Balances.$_
-                $Variables.PoolsLastEarnings.($_ -replace ' \(.+') = ($Balances.$_.LastEarnings | Measure-Object -Maximum).Maximum
+                $Variables.PoolsLastEarnings.($_ -replace " \(.+") = ($Balances.$_.LastEarnings | Measure-Object -Maximum).Maximum
             }
         )
         $Variables.BalancesCurrencies = @($Variables.Balances.psBase.Keys.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
@@ -414,7 +414,7 @@ Do {
         If ($Variables.BalancesData.Count -ge 1) { $Variables.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
         If ($Variables.Balances.Count -ge 1) { $Variables.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Data\Balances.json" -Force -ErrorAction Ignore }
 
-        If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ', ' -replace ',([^,]*)$', ' &$1')." }
+        If ($PoolsToTrack.Count -gt 1) { Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")." }
     }
 
     # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection

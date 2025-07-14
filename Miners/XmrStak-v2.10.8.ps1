@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -165,9 +165,9 @@ If ($Algorithms) {
                                         prefer_ipv4     = $true
                                     }
                                 }
-                                Arguments = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $MinerThreadsConfigFileName --noUAC --httpd $MinerAPIPort" -replace ' \s+'
+                                Arguments = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $MinerThreadsConfigFileName --noUAC --httpd $MinerAPIPort" -replace "\s+"
                                 Devices  = @($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique)
-                                HwDetectArguments = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $PlatformThreadsConfigFileName --httpd $MinerAPIPort" -replace ' \s+'
+                                HwDetectArguments = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $PlatformThreadsConfigFileName --httpd $MinerAPIPort" -replace "\s+"
                                 MinerThreadsConfigFileName = $MinerThreadsConfigFileName
                                 Platform = $Platform
                                 PlatformThreadsConfigFileName = $PlatformThreadsConfigFileName

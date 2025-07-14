@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 If ($Config.NiceHashWallet) { 
@@ -60,7 +60,7 @@ If ($Config.NiceHashWallet) {
             "X-Time"            = $Timestamp
             "X-Nonce"           = $Uuid
             "X-Organization-Id" = $OrganizationId
-            "X-Auth"            = "$($Key):$(($Sign -replace '\-').ToLower())"
+            "X-Auth"            = "$($Key):$(($Sign -replace "\-").ToLower())"
             "Cache-Control"     = "no-cache"
         }
         Return Invoke-RestMethod "https://api2.nicehash.com$($EndPoint)?extendedResponse=true" -TimeoutSec $Config.PoolAPItimeout -ErrorAction Stop -Method $Method -Headers $Headers

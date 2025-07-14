@@ -1,6 +1,26 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.5.0 2025/07/14
+===================================
+
+Changes:
+- Merged miners 'MeowPowMiner-v1.2.0cl' & 'KawpMeowPowMinerowMiner-v1.2.0cuda' into 'MeowPowMiner-v1.2.0'
+
+Enhancements:
+- Brains 'HashCryptos' & 'MiningDutch': Workaround for 1000x inflated prices for Neoscrypt
+
+Improvements:
+- Core: Condense benchmark & power usage measurement messages
+- Core: Minor performance improvements and optimize memory footprint
+- Core: Use same pool variant when benchmarking to avoid extra bemchmarking
+- Web & legacy GUI: Use shared functions, less code redundancy
+
+Miner updates:
+- JayddeeCPU-v25.5
+- OneZeroMiner-v1.4.5
+
+
 Changelog UG-Miner 6.4.36 2025/07/06
 ====================================
 
@@ -9,6 +29,7 @@ Improvements:
 
 Miner changes:
 - Rigel-v1.22.2
+
 
 Changelog UG-Miner 6.4.35 2025/07/03
 ====================================

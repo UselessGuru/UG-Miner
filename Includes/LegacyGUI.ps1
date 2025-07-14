@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.4.34
-Version date:   2025/07/02
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -182,21 +182,21 @@ Function Update-TabControl {
 
     Switch ($LegacyGUItabControl.SelectedTab.Text) { 
         "System status" { 
-            $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.ClearSelection()
-            $LegacyGUIpoolsDGV.ClearSelection()
-            # $LegacyGUIworkersDGV.ClearSelection()
+            $LegacyGUIactiveMinersDGV.ClearSelection()
 
-            $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark"
+            $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark miner"
             $LegacyGUIcontextMenuStripItem1.Visible = $true
+            $LegacyGUIcontextMenuStripItem2.Enabled = $Config.CalculatePowerCost
             $LegacyGUIcontextMenuStripItem2.Text = "Re-measure power consumption"
-            $LegacyGUIcontextMenuStripItem2.Visible = $Config.CalculatePowerCost
-            $LegacyGUIcontextMenuStripItem3.Text = "Mark as failed"
-            $LegacyGUIcontextMenuStripItem3.Visible = $true
+            $LegacyGUIcontextMenuStripItem2.Visible = $true
+            $LegacyGUIcontextMenuStripItem3.Enabled = $true
+            $LegacyGUIcontextMenuStripItem3.Text = "Mark miner as failed"
             $LegacyGUIcontextMenuStripItem4.Enabled = $true
+            $LegacyGUIcontextMenuStripItem4.Text = "Disable miner"
             $LegacyGUIcontextMenuStripItem4.Visible = $true
-            $LegacyGUIcontextMenuStripItem4.Text = "Disable"
-            $LegacyGUIcontextMenuStripItem5.Visible = $false
+            $LegacyGUIcontextMenuStripItem5.Enabled = $true
+            $LegacyGUIcontextMenuStripItem5.Text = "Enable miner"
+            $LegacyGUIcontextMenuStripItem5.Visible = $true
             $LegacyGUIcontextMenuStripItem6.Visible = $false
 
             If ($Variables.NewMiningStatus -eq "Idle") { 
@@ -230,7 +230,7 @@ Function Update-TabControl {
                         @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     ) | Out-DataTable
-                    $LegacyGUIactiveMinersDGV.Sort($LegacyGUIactiveMinersDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
+                    $LegacyGUIactiveMinersDGV.Sort($LegacyGUIactiveMinersDGV.Columns[2], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIactiveMinersDGV.ClearSelection()
                     $LegacyGUIactiveMinersLabel.Text = "Active miners updated $($Variables.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIactiveMinersDGV.Rows.count) miner$(If ($LegacyGUIactiveMinersDGV.Rows.count -ne 1) { "s" }))"
 
@@ -263,11 +263,7 @@ Function Update-TabControl {
             Break
         }
         "Earnings and balances" { 
-            $LegacyGUIactiveMinersDGV.ClearSelection()
             $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.ClearSelection()
-            $LegacyGUIpoolsDGV.ClearSelection()
-            # $LegacyGUIworkersDGV.ClearSelection()
 
             Function Get-NextColor { 
                 Param (
@@ -424,30 +420,27 @@ Function Update-TabControl {
             Break
         }
         "Miners" { 
-            $LegacyGUIactiveMinersDGV.ClearSelection()
-            $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIpoolsDGV.ClearSelection()
-            # $LegacyGUIworkersDGV.ClearSelection()
+            $LegacyGUIminersDGV.ClearSelection()
 
-            $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark"
+            $LegacyGUIcontextMenuStripItem1.Text = "Re-benchmark miner"
             $LegacyGUIcontextMenuStripItem1.Visible = $true
             $LegacyGUIcontextMenuStripItem2.Enabled = $Config.CalculatePowerCost
             $LegacyGUIcontextMenuStripItem2.Text = "Re-measure power consumption"
             $LegacyGUIcontextMenuStripItem2.Visible = $true
             $LegacyGUIcontextMenuStripItem3.Enabled = $true
-            $LegacyGUIcontextMenuStripItem3.Text = "Mark as failed"
+            $LegacyGUIcontextMenuStripItem3.Text = "Mark miner as failed"
             $LegacyGUIcontextMenuStripItem4.Enabled = $true
-            $LegacyGUIcontextMenuStripItem4.Text = "Disable"
+            $LegacyGUIcontextMenuStripItem4.Text = "Disable miner"
             $LegacyGUIcontextMenuStripItem4.Visible = $true
             $LegacyGUIcontextMenuStripItem5.Enabled = $true
-            $LegacyGUIcontextMenuStripItem5.Text = "Enable"
+            $LegacyGUIcontextMenuStripItem5.Text = "Enable miner"
             $LegacyGUIcontextMenuStripItem5.Visible = $true
-            $LegacyGUIcontextMenuStripItem6.Enabled = $Config.WatchdogTimers
+            $LegacyGUIcontextMenuStripItem6.Enabled = $Variables.WatchdogTimers
             $LegacyGUIcontextMenuStripItem6.Text = "Remove watchdog timer"
             $LegacyGUIcontextMenuStripItem6.Visible = $true
 
             If ($LegacyGUIradioButtonMinersOptimal.checked) { $DataSource = $Variables.MinersOptimal }
-            ElseIf ($LegacyGUIradioButtonMinersUnavailable.checked) { $DataSource = $Variables.Miners.Where({ -not $_.Available }) | Sort-Object { [String]$_.DeviceNames }, Info }
+            ElseIf ($LegacyGUIradioButtonMinersUnavailable.checked) { $DataSource = $Variables.Miners.Where({ -not $_.Available }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info }
             Else { $DataSource = $Variables.Miners }
 
             If ($Variables.NewMiningStatus -eq "Idle") { 
@@ -494,9 +487,9 @@ Function Update-TabControl {
                         $LegacyGUIminersDGV.Columns[6].FillWeight = 40; $LegacyGUIminersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[6].Visible = $Variables.CalculatePowerCost
                         $LegacyGUIminersDGV.Columns[7].FillWeight = 40; $LegacyGUIminersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[7].Visible = $Variables.CalculatePowerCost
                         $LegacyGUIminersDGV.Columns[8].FillWeight = 40; $LegacyGUIminersDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIminersDGV.Columns[8].Visible = $Variables.CalculatePowerCost
-                        $LegacyGUIminersDGV.Columns[9].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 90 } Else { 60 }
-                        $LegacyGUIminersDGV.Columns[10].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 85 } Else { 60 }
-                        $LegacyGUIminersDGV.Columns[11].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like '* & ') { 80 } Else { 50 }; $LegacyGUIminersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIminersDGV.Columns[9].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like "* & ") { 90 } Else { 60 }
+                        $LegacyGUIminersDGV.Columns[10].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like "* & ") { 85 } Else { 60 }
+                        $LegacyGUIminersDGV.Columns[11].FillWeight = If ($LegacyGUIminersDGV.DataSource.Pool -like "* & ") { 80 } Else { 50 }; $LegacyGUIminersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIminersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
 
                         $LegacyGUIminersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
@@ -511,10 +504,7 @@ Function Update-TabControl {
             Break
         }
         "Pools" { 
-            $LegacyGUIactiveMinersDGV.ClearSelection()
-            $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.ClearSelection()
-            # $LegacyGUIworkersDGV.ClearSelection()
+            $LegacyGUIpoolsDGV.ClearSelection()
 
             $LegacyGUIcontextMenuStripItem1.Visible = $false
             $LegacyGUIcontextMenuStripItem2.Visible = $false
@@ -596,10 +586,7 @@ Function Update-TabControl {
             Break
         }
         # "Rig monitor" { 
-        #     $LegacyGUIactiveMinersDGV.ClearSelection()
-        #     $LegacyGUIbalancesDGV.ClearSelection()
-        #     $LegacyGUIminersDGV.ClearSelection()
-        #     $LegacyGUIpoolsDGV.ClearSelection()
+        #     $LegacyGUIworkersDGV.ClearSelection()
         # 
         #     $LegacyGUIworkersDGV.Visible = $Config.ShowWorkerStatus
         #     $LegacyGUIeditMonitoringLink.Visible = $Variables.APIRunspace.APIport
@@ -661,22 +648,10 @@ Function Update-TabControl {
         #     Break
         # }
         "Switching Log" { 
-            $LegacyGUIactiveMinersDGV.ClearSelection()
-            $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.ClearSelection()
-            $LegacyGUIpoolsDGV.ClearSelection()
-            # $LegacyGUIworkersDGV.ClearSelection()
-
             CheckBoxSwitching_Click
             Break
         }
         "Watchdog timers" { 
-            $LegacyGUIactiveMinersDGV.ClearSelection()
-            $LegacyGUIbalancesDGV.ClearSelection()
-            $LegacyGUIminersDGV.ClearSelection()
-            $LegacyGUIpoolsDGV.ClearSelection()
-            # $LegacyGUIworkersDGV.ClearSelection()
-
             $LegacyGUIwatchdogTimersRemoveButton.Visible = $Config.Watchdog
             $LegacyGUIwatchdogTimersDGV.Visible = $Config.Watchdog
 
@@ -933,196 +908,135 @@ $LegacyGUItooltip.SetToolTip($LegacyGUIcopyrightLabel, "Click to go to the $($Va
 # Miner context menu items
 $LegacyGUIcontextMenuStrip = [System.Windows.Forms.ContextMenuStrip]::new()
 $LegacyGUIcontextMenuStrip.Enabled = $false
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem1 = [System.Windows.Forms.ToolStripMenuItem]::new()
+
+$LegacyGUIcontextMenuStripItem1 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem1)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem2 = [System.Windows.Forms.ToolStripMenuItem]::new()
+$LegacyGUIcontextMenuStripItem2 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem2)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem3 = [System.Windows.Forms.ToolStripMenuItem]::new()
+$LegacyGUIcontextMenuStripItem3 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem3)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem4 = [System.Windows.Forms.ToolStripMenuItem]::new()
+$LegacyGUIcontextMenuStripItem4 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem4)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem5 = [System.Windows.Forms.ToolStripMenuItem]::new()
+$LegacyGUIcontextMenuStripItem5 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem5)
 
-[System.Windows.Forms.ToolStripItem]$LegacyGUIcontextMenuStripItem6 = [System.Windows.Forms.ToolStripMenuItem]::new()
+$LegacyGUIcontextMenuStripItem6 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIcontextMenuStrip.Items.Add($LegacyGUIcontextMenuStripItem6)
 
 $LegacyGUIcontextMenuStrip.Add_ItemClicked(
     { 
         $Data = @()
 
-        If ($this.SourceControl.Name -match "LaunchedMinersDGV|MinersDGV") { 
+        $SourceControl = $this.SourceControl
+        If ($SourceControl.Name -match "LaunchedMinersDGV|MinersDGV") { 
 
             Switch ($_.ClickedItem.Text) { 
-                "Re-benchmark" { 
-                    $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
+                "Re-benchmark miner" { 
+                    $LegacyGUIcontextMenuStrip.Visible = $false
+                    $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
-                            If ($_.Earnings -eq 0) { $_.Available = $true }
-                            $_.Earnings_Accuracy = [Double]::NaN
-                            $_.Activated = 0 # To allow 3 attempts
-                            $_.Disabled = $false
-                            $_.Benchmark = $true
-                            $_.Restart = $true
                             $Data += $_.Name
-                            ForEach ($Worker in $_.Workers) { 
-                                [Void](Remove-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
-                                $Worker.Hashrate = [Double]::NaN
-                            }
-                            Remove-Variable Worker
-                            # Also clear power consumption
-                            [Void](Remove-Stat -Name "$($_.Name)_PowerConsumption")
-                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
-                            If ($_.Status -eq [MinerStatus]::Idle) { 
-                                $_.SubStatus = "idle"
-                            }
-                            ElseIf ($_.Status -eq [MinerStatus]::Failed) { 
-                                $_.Status = "Idle"
-                                $_.SubStatus = "idle"
-                            }
-                            ElseIf ($_.Status -eq [MinerStatus]::Unavailable) { 
-                                $_.Status = "Idle"
-                                $_.SubStatus = "idle"
-                            }
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }))
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "0 H/s stat file" }))
-                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Unreal profit data *" }) | Sort-Object -Unique)
-                            If (-not $_.Reasons) { $_.Available = $true }
+                            [Void](Set-MinerReBenchmark $_)
                         }
                     )
-                    $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
-                        $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
-                        Update-TabControl
-                    }
+                    $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    Write-Message -Level Verbose "GUI: $Message" -Console $false
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                    Update-TabControl
                     Break
                 }
                 "Re-measure power consumption" { 
-                    $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
-                        { 
-                            If ($_.Earnings -eq 0) { $_.Available = $true }
-                            If ($Variables.CalculatePowerCost) { 
-                                $_.MeasurePowerConsumption = $true
-                                $_.Activated = 0 # To allow 3 attempts
-                            }
-                            $_.PowerConsumption = [Double]::NaN
-                            $StatName = $_.Name
-                            $Data += "$StatName"
-                            [Void](Remove-Stat -Name "$($StatName)_PowerConsumption")
-                            $_.PowerConsumption = $_.PowerCost = $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = [Double]::NaN
-                            If ($_.Status -eq "Disabled") { $_.Status = "Idle" }
-                        }
-                    )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
-                        $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
-                        Update-TabControl
-                    }
-                    Break
-                }
-                "Mark as failed" { 
-                    $Variables.Miners.Where({ $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
-                        { 
-                            If ($Parameters.Value -le 0 -and $Parameters.Type -eq "Hashrate") { $_.Available = $false; $_.Disabled = $true }
-                            $Data += $_.Name
-                            ForEach ($Worker in $_.Workers) { 
-                                $null = Set-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate" -Value $Parameters.Value -FaultDetection $false | Out-Null
-                                $Worker.Hashrate = [Double]::NaN
-                            }
-                            Remove-Variable Worker
-                            $_.Available = $false
-                            $_.Disabled = $false
-                            If ($_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun) { $_.SetStatus([MinerStatus]::Idle) }
-                            $_.Status = "Idle"
-                            $_.SubStatus = "failed"
-                            $_.Profit = $_.Profit_Bias = $_.Earnings = $_.Earnings_Bias = $_.Earnings_Accuracy = [Double]::NaN
-                            If ($_.Reasons -notcontains "0 H/s stat file") { $_.Reasons.Add("0 H/s stat file") | Out-Null }
-                            $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Disabled by user" }) | Sort-Object -Unique)
-                        }
-                    )
-                    $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
-                        $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
-                        Update-TabControl
-                    }
-                    Break
-                }
-                "Disable" { 
-                    $Variables.Miners.Where({ -not $_.Disabled -and $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             $Data += $_.Name
-                            ForEach ($Worker in $_.Workers) { 
-                                [Void](Disable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
-                                $Worker.Hashrate = [Double]::NaN
-                            }
-                            Remove-Variable Worker
-                            If ({ $_.ProcessJobb -or $_.Status -eq [MinerStatus]::DryRun }) { $_.SetStatus([MinerStatus]::Idle) }
-                            $_.Disabled = $true
-                            $_.Reasons += "Disabled by user"
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
+                            [Void](Set-MinerMeasurePowerConsumption $_)    
                         }
                     )
+                    $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    Write-Message -Level Verbose "GUI: $Message" -Console $false
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                    Update-TabControl
+                    Break
+                }
+                "Mark miner as failed" { 
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
+                    $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                        { 
+                            [Void](Set-MinerFailed $_)
+                            $Data += $_.Name
+                        }
+                    )
+                    $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed." 
+                    Write-Message -Level Verbose "GUI: $Message" -Console $false
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                    Update-TabControl
+                    Break
+                }
+                "Disable miner" { 
+                    $LegacyGUIcontextMenuStrip.Visible = $false
+                    $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).Where({ -not $_.Disabled }).ForEach(
+                        { 
+                            $Data += $_.Name
+                            [Void](Set-MinerDisabled $_)
+                        }
+                    )
+                    If ($Data.Count) { 
                         $Message = "Disabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
+                        Write-Message -Level Verbose "GUI: $Message" -Console $false
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                         Update-TabControl
+                    }
+                    Else {
+                        $Data = "No matching miners found."
                     }
                     Break
                 }
-                "Enable" { 
-                    $Variables.Miners.Where({ $_.Disabled -and $_.Info -in $this.SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                "Enable miner" { 
+                    $LegacyGUIcontextMenuStrip.Visible = $false
+                    $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).Where({ $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
-                            ForEach ($Worker in $_.Workers) { 
-                                [Void](Enable-Stat -Name "$($_.Name)_$($Worker.Pool.Algorithm)_Hashrate")
-                                $Worker.Hashrate = [Double]::NaN
-                            }
-                            Remove-Variable Worker
-                            $_.Disabled = $false
-                            $_.Reasons = @($_.Reasons.Where({ $_ -ne "Disabled by user" }) | Sort-Object -Unique)
-                            If (-not $_.Reasons) { $_.Available = $true }
+                            [Void](Set-MinerEnabled $_)
                         }
                     )
-                    $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
+                    If ($Data.Count) { 
                         $Message = "Enabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
+                        Write-Message -Level Verbose "GUI: $Message" -Console $false
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                         Update-TabControl
+                    }
+                    Else {
+                        $Data = "No matching miners found."
                     }
                     Break
                 }
                 "Remove watchdog timer" { 
                     $this.SourceControl.SelectedRows.ForEach(
                         { 
-                            $Variables.Miners.Where({ $_.Name -in $this.SourceControl.SelectedRows.ForEach({ $_.Cells[2].Value }) }).Where({ $Variables.WatchdogTimers.MinerName -contains $_.Name }).ForEach(
-                                { 
-                                    $Data += "$($_.Name)"
-                                    $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                                    # Update miner
-                                    If (-not $_.Reasons) { $_.Available = $true }
-                                    # Remove Watchdog timers
-                                    $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
-                                }
-                            )
+                            $MinerName = $_.Cells[2].Value
+                            # Update miner
+                            ForEach ($Miner in $Variables.Miners.Where({ $_.Name -eq $MinerName -and $Variables.WatchdogTimers.Where({ $_.MinerName -eq $MinerName }) })) { 
+                                $Data += $Miner.Name
+                                $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                                If (-not $Miner.Reasons.Count) { $Miner.Available = $true }
+                            }
+
+                            # Remove Watchdog timers
+                            $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.MinerName -ne $MinerName })
+
+                            Remove-Variable Miner, MinerName
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
+                    If ($Data) { 
                         $Message = "$($Data.Count) miner watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
+                        Write-Message -Level Verbose "GUI: $Message" -Console $false
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     }
                     Else { 
                         $Data = "No matching watchdog timer found."
@@ -1144,7 +1058,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                                     $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
                                     $Data += $StatName
                                     [Void](Remove-Stat -Name "$($StatName)_Profit")
-                                    $_.Reasons = @()
+                                    $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
                                     $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
                                     $_.Available = $true
                                     $_.Disabled = $false
@@ -1153,37 +1067,35 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
-                        $Message = "Pool stats for $($Data.Count) pool$(If ($Data.Count -ne 1) { "s" }) reset."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
-                        Update-TabControl
-                    }
+                    $Message = "Pool stats for $($Data.Count) pool$(If ($Data.Count -ne 1) { "s" }) reset."
+                    Write-Message -Level Verbose "GUI: $Message" -Console $false
+                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                    Update-TabControl
                     Break
                 }
                 "Remove watchdog timer" { 
                     $this.SourceControl.SelectedRows.ForEach(
                         { 
-                            $SelectedPoolName = $_.Cells[5].Value
-                            $SelectedPoolAlgorithm = $_.Cells[0].Value
+                            $PoolName = $_.Cells[5].Value
+                            $PoolAlgorithm = $_.Cells[0].Value
                             # Update pool
-                            $Variables.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm -and $_.Reason -like "Pool suspended by watchdog *" }).ForEach(
-                                { 
-                                    $Data += "$($_.Key) ($($_.Region))"
-                                    $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Pool suspended by watchdog *" }) | Sort-Object -Unique)
-                                    If (-not $_.Reasons) { $_.Available = $true }
-                                }
-                            )
+                            ForEach ($Pool in ($Variables.Pools.Where({ $_.Name -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm -and $Variables.WatchdogTimers.Where({ $_.PoolName -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm }) }))) {
+                                $Data += "$($Pool.Key) ($($Pool.Region))"
+                                $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                                If (-not $Pool.Reasons.Count) { $Pool.Available = $true }
+                            }
 
                             # Remove Watchdog timers
-                            $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.PoolName -ne $SelectedPoolName -or $_.Algorithm -ne $SelectedPoolAlgorithm })
+                            $Variables.WatchdogTimers = $Variables.WatchdogTimers.Where({ $_.PoolName -ne $PoolName -or $_.Algorithm -ne $PoolAlgorithm })
+
+                            Remove-Variable Pool, PoolAlgorithm, PoolAlgorithm
                         }
                     )
                     $LegacyGUIcontextMenuStrip.Visible = $false
-                    If ($Data = $Data | Sort-Object -Unique) { 
+                    If ($Data) { 
                         $Message = "$($Data.Count) pool watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
-                        Write-Message -Level Verbose "GUI: $Message"
-                        $Data = "$($Data -join "`n")`n`n$Message"
+                        Write-Message -Level Verbose "GUI: $Message" -Console $false
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     }
                     Else { 
                         $Data = "No matching watchdog timer found."
@@ -1194,6 +1106,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
             If ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Variables.Branding.ProductLabel): $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
 
         }
+        Remove-Variable SourceControl
     }
 )
 
@@ -1461,7 +1374,7 @@ $LegacyGUIradioButtonPoolsUnavailable.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPoolsUnavailable, "This is the pool data of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
+$LegacyGUItooltip.SetToolTip($LegacyGUIradioButtonPoolsUnavailable, "This is the pool of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
 
 $LegacyGUIradioButtonPools = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIradioButtonPools.AutoSize = $false
@@ -1603,10 +1516,10 @@ $LegacyGUIswitchingLogClearButton.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
 
-        Get-ChildItem -Path ".\Logs\switchinglog.csv" -File | Remove-Item -Force
+        Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Remove-Item -Force
         $LegacyGUIswitchingDGV.DataSource = $null
-        $Data = "Switching log '.\Logs\switchinglog.csv' cleared."
-        Write-Message -Level Verbose "GUI: $Data"
+        $Data = "Switching log '.\Logs\SwitchingLog.csv' cleared."
+        Write-Message -Level Verbose "GUI: $Data" -Console $false
         $LegacyGUIswitchingLogClearButton.Enabled = $false
 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
@@ -1615,7 +1528,7 @@ $LegacyGUIswitchingLogClearButton.Add_Click(
     }
 )
 $LegacyGUIswitchingPageControls += $LegacyGUIswitchingLogClearButton
-$LegacyGUItooltip.SetToolTip($LegacyGUIswitchingLogClearButton, "This will clear the switching log '.\Logs\switchinglog.csv'")
+$LegacyGUItooltip.SetToolTip($LegacyGUIswitchingLogClearButton, "This will clear the switching log '.\Logs\SwitchingLog.csv'")
 
 $LegacyGUIcheckShowSwitchingCPU = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingCPU.AutoSize = $false
@@ -1759,19 +1672,19 @@ $LegacyGUIwatchdogTimersRemoveButton.Add_Click(
 
         $Variables.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
         $LegacyGUIwatchdogTimersDGV.DataSource = $null
-        $Variables.Miners.ForEach(
-            { 
-                $_.Reasons = @($_.Reasons.Where({ $_ -notlike "Miner suspended by watchdog *" }) | Sort-Object -Unique)
-                $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
-            }
-        )
-        $Variables.Pools.ForEach(
-            { 
-                $_.Reasons = @($_.Reasons.Where({ $_ -notlike "*Pool suspended by watchdog" }) | Sort-Object -Unique)
-                $_.Where({ -not $_.Reasons.Count }).ForEach({ $_.Available = $true })
-            }
-        )
-        Write-Message -Level Verbose "GUI: All watchdog timers removed."
+        Foreach ($Miner in $Variables.Miners) { 
+            $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+            If (-not $Miner.Reasons.Count) { $_.Available = $true }
+        }
+        Remove-Variable Miner
+
+        ForEach ($Pool in $Variables.Pools.ForEach) { 
+            $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+            If (-not $Pool.Reasons.Count) { $Pool.Available = $true }
+        }
+        Remove-Variable Pool
+
+        Write-Message -Level Verbose "GUI: All watchdog timers removed." -Console $false
         Update-TabControl
 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal

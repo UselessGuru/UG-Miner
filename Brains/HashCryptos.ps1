@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 using module ..\Includes\Include.psm1
@@ -41,7 +41,7 @@ $PoolConfig = $Variables.PoolsConfig.$BrainName
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
 $Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";"Cache-Control"="no-cache" }
-$Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+$UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
@@ -71,10 +71,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
             If ($AlgoData) { 
                 # Change numeric string to numbers, some values are null
-                $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+                $AlgoData = ($AlgoData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
 
                 ForEach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
-                    $AlgorithmNorm = Get-Algorithm $Algo
+                    $AlgorithmNorm = Get-Algorithm $Algorithm
 
                     # Temp fix, incorrect data in API
                     If ($AlgorithmNorm -eq "Neoscrypt" -and $AlgoData.$Algorithm.mbtc_mh_factor -eq 1) { $AlgoData.$Algorithm.mbtc_mh_factor = 1000 }
@@ -89,7 +89,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                         If (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
                             # Reset history when stat file got removed
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
-                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit')"
+                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace "_Profit")"
                         }
                     }
 
@@ -133,7 +133,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                             [Void](Remove-Stat -Name $StatName)
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             $PlusPrice = $LastPrice
-                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit') (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
+                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
                         }
                     }
                     $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force

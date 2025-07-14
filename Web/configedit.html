@@ -285,7 +285,10 @@
           <div style="padding-top: 0.5rem;" title="UG-Miner will ignore the pool fee when calculating earnings & profit">
             <input type="checkbox" class="toggle-switch" id="IgnorePoolFee" name="IgnorePoolFee"> Ignore pool fees
           </div>
-          <div style="padding-top: 0.3rem;" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings Adjustment Factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">Earnings adjustment factor
+          <div style="padding-top: 0.5rem;" title="UG-Miner will ignore the miner fee when calculating earnings & profit">
+            <input type="checkbox" class="toggle-switch" id="IgnoreMinerFee" name="IgnoreMinerFee"> Ignore miner fees
+          </div>
+          <div style="padding-top: 0.3rem;" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings adjustment factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">Earnings adjustment factor
             <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=34 style="width: 3.4em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem;" title="Mark a miner as unavailable if earnings is x times higher than the&#10;next best 10% or at least 5 miners with same algorithm&#10;&#10;(min: 1, max: 99.9; default: 5)&#10;Set to 1 to disable this check">Unreal miner earnings factor
@@ -293,9 +296,6 @@
           </div>
           <div style="padding-top: 0.3rem;" title="UG-Miner will not switch miners&#10;unless another miner has n% higher earnings / profit&#10;&#10;Smaller numbers will cause more switching&#10;&#10;(min: 0%, max: 100%; default: 5%)" for="MinerSwitchingThreshold">Miner switching threshold
             <input type="number" id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" min=0 max=100 value=5 step=0.1 size=3 style="width: 3.4em; text-align:right;"> %
-          </div>
-          <div style="padding-top: 0.5rem;" title="UG-Miner will ignore the miner fee when calculating earnings & profit">
-            <input type="checkbox" class="toggle-switch" id="IgnoreMinerFee" name="IgnoreMinerFee"> Ignore miner fees
           </div>
           <div style="padding-top: 0.5rem;" title="Show shares information (Total / Rejected / Accepted) in log">
             <input type="checkbox" class="toggle-switch" id="ShowShares" name="ShowShares"> Show shares information
@@ -406,7 +406,7 @@
             <div style="padding-top: 0.5rem;" title="Show the 'Power (W)' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'w' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnPowerConsumption" name="ShowColumnPowerConsumption"> Show 'Power (W)' column
             </div>
-            <div style="padding-top: 0.5rem;" title="Show the 'Power Cost' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'c' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem;" title="Show the 'Power cost' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'c' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnPowerCost" name="ShowColumnPowerCost"> Show 'Power cost' column
             </div>
             <div style="padding-top: 0.5rem;" title="Show the 'User' column in the console window&#10;&#10;Can be toggled by pressing 'u' in the console window while waiting for the next cycle">
@@ -863,13 +863,13 @@
     document.getElementById('UnrealPoolPriceFactor').value = parseFloat(config.UnrealPoolPriceFactor).toFixed(1);
     document.getElementById('MinAccuracy').value = parseFloat(config.MinAccuracy) * 100;
     if (config.IgnorePoolFee) document.getElementById('IgnorePoolFee').checked = true;
+    if (config.IgnoreMinerFee) document.getElementById('IgnoreMinerFee').checked = true;
     document.getElementById('EarningsAdjustmentFactor').value = parseFloat(config.EarningsAdjustmentFactor).toFixed(1);
     document.getElementById('UnrealMinerEarningFactor').value = parseFloat(config.UnrealMinerEarningFactor).toFixed(1);
     document.getElementById('MinerSwitchingThreshold').value = parseFloat(config.MinerSwitchingThreshold).toFixed(1);
     if (config.ShowShares) document.getElementById('ShowShares').checked = true;
     document.getElementById('BadShareRatioThreshold').value = parseFloat(config.BadShareRatioThreshold) * 100;
     if (config.SubtractBadShares) document.getElementById('SubtractBadShares').checked = true;
-    if (config.IgnoreMinerFee) document.getElementById('IgnoreMinerFee').checked = true;
     document.getElementById('ProfitabilityThreshold').value = config.ProfitabilityThreshold;
     if (config.CalculatePowerCost) document.getElementById('CalculatePowerCost').checked = true;
     else {
@@ -1328,7 +1328,7 @@
         // Pool settings
         config.Region = document.getElementById('Region').value.trim();
         config.UseAnycast = document.getElementById('UseAnycast').checked;
-        if (document.getElementById('SSL').value.match('Never|Prefer|Always')) config.SSL = document.getElementById('SSL').value;
+        if (document.getElementById('SSL').value.match('Never|Always')) config.SSL = document.getElementById('SSL').value;
         else config.SSL = 'Prefer';
         config.SSLallowSelfSignedCertificate = document.getElementById('SSLallowSelfSignedCertificate').checked;
         config.MinWorker = parseInt(document.getElementById('MinWorker').value);
@@ -1368,10 +1368,10 @@
         config.UnrealPoolPriceFactor = parseFloat(document.getElementById('UnrealPoolPriceFactor').value);
         config.MinAccuracy = parseFloat(document.getElementById('MinAccuracy').value) / 100;
         config.IgnorePoolFee = document.getElementById('IgnorePoolFee').checked;
+        config.IgnoreMinerFee = document.getElementById('IgnoreMinerFee').checked;
         config.EarningsAdjustmentFactor = parseFloat(document.getElementById('EarningsAdjustmentFactor').value);
         config.UnrealMinerEarningFactor = parseFloat(document.getElementById('UnrealMinerEarningFactor').value);
         config.MinerSwitchingThreshold = parseFloat(document.getElementById('MinerSwitchingThreshold').value);
-        config.IgnoreMinerFee = document.getElementById('IgnoreMinerFee').checked;
         config.ShowShares = document.getElementById('ShowShares').checked;
         config.BadShareRatioThreshold = parseFloat(document.getElementById('BadShareRatioThreshold').value) / 100;
         config.SubtractBadShares = document.getElementById('SubtractBadShares').checked;

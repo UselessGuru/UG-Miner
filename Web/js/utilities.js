@@ -20,33 +20,40 @@ function formatMiners(data) {
     item.Devices = formatDeviceNames(item.BaseName_Version_Device);
 
     // Format the pool and algorithm data
-    item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
-    item.PrimaryAlgorithmVariant = item.Workers[0].Pool.AlgorithmVariant;
-    item.PrimaryCoinName = item.Workers[0].Pool.CoinName;
-    item.PrimaryCurrency = item.Workers[0].Pool.Currency;
-    item.PrimaryHashrate = item.Workers[0].Hashrate;
-    item.PrimaryMinerFee = item.Workers[0].Fee;
-    item.PrimaryPool = item.Workers[0].Pool.Name;
-    item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
-    item.PrimaryPoolPort = item.Workers[0].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
-    item.PrimaryPoolUser = item.Workers[0].Pool.User;
-    item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
-    if (item.Workers.length > 1) {
-      item.SecondaryAlgorithm = item.Workers[1].Pool.Algorithm;
-      item.SecondaryAlgorithmVariant = item.Workers[1].Pool.AlgorithmVariant;
-      item.SecondaryCoinName = item.Workers[1].Pool.CoinName;
-      item.SecondaryCurrency = item.Workers[1].Pool.Currency;
-      item.SecondaryHashrate = item.Workers[1].Hashrate;
-      item.SecondaryMinerFee = item.Workers[1].Fee;
-      item.SecondaryPool = item.Workers[1].Pool.Name;
-      item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
-      item.SecondaryPoolPort = item.Workers[1].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
-      item.SecondaryPoolUser = item.Workers[1].Pool.User;
-      item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
+    if (item.Workers.length > 0) {
+      item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
+      item.PrimaryAlgorithmVariant = item.Workers[0].Pool.AlgorithmVariant;
+      item.PrimaryCoinName = item.Workers[0].Pool.CoinName;
+      item.PrimaryCurrency = item.Workers[0].Pool.Currency;
+      item.PrimaryHashrate = item.Workers[0].Hashrate;
+      item.PrimaryMinerFee = item.Workers[0].Fee;
+      item.PrimaryPool = item.Workers[0].Pool.Name;
+      item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
+      item.PrimaryPoolPort = item.Workers[0].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
+      item.PrimaryPoolUser = item.Workers[0].Pool.User;
+      item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
+      if (item.Workers.length > 1) {
+        item.SecondaryAlgorithm = item.Workers[1].Pool.Algorithm;
+        item.SecondaryAlgorithmVariant = item.Workers[1].Pool.AlgorithmVariant;
+        item.SecondaryCoinName = item.Workers[1].Pool.CoinName;
+        item.SecondaryCurrency = item.Workers[1].Pool.Currency;
+        item.SecondaryHashrate = item.Workers[1].Hashrate;
+        item.SecondaryMinerFee = item.Workers[1].Fee;
+        item.SecondaryPool = item.Workers[1].Pool.Name;
+        item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
+        item.SecondaryPoolPort = item.Workers[1].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
+        item.SecondaryPoolUser = item.Workers[1].Pool.User;
+        item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
+      }
     }
 
     // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
-    if (item.Reasons.length <= 0) item.Reasons = [" "];
+    // try {
+      if (item.Reasons.length <= 0) item.Reasons = [" "];
+    // }
+    // catch { 
+    //   item.Reasons = "ZZZ"
+    // }
 
     // Format margin of error
     item.Earnings_Accuracy = formatPercent(item.Earnings_Accuracy);
@@ -89,7 +96,7 @@ function formatPools(data) {
       if (item.Reasons.length <= 0) item.Reasons = [" "];
     // }
     // catch { 
-      // item.Reasons = "ZZZ"
+    //   item.Reasons = "ZZZ"
     // }
   });
   return data;

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 # x86_64: improved handling of vector constants used for byte permutations.
@@ -28,7 +28,7 @@ Version date:   2025/07/06
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.4/cpuminer-opt-25.4-windows.zip"
+$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.5/cpuminer-opt-25.5-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 If     ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX512", "SHA", "VAES") -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 3) { $Path = "Bin\$Name\cpuminer-avx512-sha-vaes.exe" }

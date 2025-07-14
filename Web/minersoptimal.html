@@ -212,7 +212,7 @@
                   'Value': 0 
                 };
                 $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-failed').text());
+                  $('.modal-title').text("Mark miner as failed");
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({ show: true });
                 });
@@ -230,7 +230,7 @@
                   'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
                 };
                 $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-disable').text());
+                  $('.modal-title').text("Disable miner");
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({ show: true });
                 });

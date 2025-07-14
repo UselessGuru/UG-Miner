@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.4.36 / Updated 2025/07/06
+Version 6.5.0 / Updated 2025/07/13
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -206,7 +206,7 @@ Before starting a miner executable UG-Miner will try to launch one of the follow
    (use the algorithm base name, not the algorithm variant name)  
 
 3. default.bat  
-   If neither of the first two above exists UG-Miner will try to launch the generic '[UG-Miner directory]\Utils\prerun\default.bat'
+   If neither of the two files above exists UG-Miner will try to launch the generic '[UG-Miner directory]\Utils\prerun\default.bat'
 
 **Use overclock with caution!**
 

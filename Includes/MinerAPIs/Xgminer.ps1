@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Xgminer.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 Class XgMiner : Miner { 
@@ -31,7 +31,7 @@ Class XgMiner : Miner {
 
         Try { 
             $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout -ErrorAction Stop
-            $Data = $Response -replace ': ', ':' -replace ' ', '_' | ConvertFrom-Json -ErrorAction Stop
+            $Data = $Response -replace ": ", ":" -replace " ", "_" | ConvertFrom-Json -ErrorAction Stop
         }
         Catch { 
             Return $null

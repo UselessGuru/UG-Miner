@@ -7,6 +7,7 @@
             <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power consumption is unreal">Re-measure power consumption</button>
             <button id="btn-failed" class="btn btn-warning" disabled title="The marked miners will be marked as failed&#10;Use this if the miners fail benchmarking or produce unpredictable results">Mark as failed</button>
             <button id="btn-disable" class="btn btn-danger" disabled title="The marked miners will be marked as disabled&#10;To re-enable trigger re-benchmarking">Disable</button>
+            <button id="btn-enable" class="btn btn-success" disabled title="The marked miners will be enabled">Enable</button>
           </div>
           <table id="activeminers" class="table"
             data-auto-refresh="true"
@@ -179,6 +180,7 @@
               document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
               document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+              document.getElementById('btn-enable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
             });
 
             $('#btn-re-benchmark').click(function () {
@@ -228,7 +230,7 @@
                   'Value': 0 
                 };
                 $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-failed').text());
+                  $('.modal-title').text("Mark miner as failed");
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({ show: true });
                 });
@@ -245,12 +247,30 @@
                   'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
                 };
                 $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-disable').text());
+                  $('.modal-title').text("Disable miner");
                   $('body').css('cursor', 'default');
                   $('#myModal').modal({ show: true });
                 });
                 $('#activeminers').bootstrapTable('refresh');
               }
+            });
+
+            $('#btn-enable').click(function () {
+              $('body').css('cursor', 'wait');
+              var $data = $table.bootstrapTable('getSelections');
+              if ($data.length >= 1) {
+                $url = '/functions/stat/enable';
+                $payload = {
+                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                };
+                $('.modal-body').load($url, $payload, function() {
+                  $('.modal-title').text("Enable miner");
+                  $('body').css('cursor', 'default');
+                  $('#myModal').modal({ show: true });
+                });
+                $table.bootstrapTable('refresh');
+              }
+              else $('body').css('cursor', 'default');
             });
 
             $(window).resize(function () {

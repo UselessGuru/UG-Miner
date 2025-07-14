@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 using module .\Includes\Include.psm1
@@ -323,7 +323,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.4.36"
+    Version      = [System.Version]"6.5.0"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
@@ -344,14 +344,14 @@ If ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { Write-Host " [recom
 Write-Host ")" -ForegroundColor Green
 
 # Another instance might already be running. Wait no more than 20 seconds (previous instance might be from autoupdate)
-Write-Host ""
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 
 $Loops = 20
 While (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Variables.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     $Loops --
     [Console]::SetCursorPosition(0, $CursorPosition.y)
-    Write-Host "Waiting for a previous instance of $($Variables.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Waiting for another instance of $($Variables.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
     Start-Sleep -Seconds 1
     If ($Loops -eq 0) { 
         [Console]::SetCursorPosition(55, $CursorPosition.y)
@@ -361,10 +361,9 @@ While (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Comma
         Exit
     }
 }
-If ($Loops -ne 20 -and $Loops -ne $null) { 
+If ($Loops -ne 20) { 
     [Console]::SetCursorPosition(55, $CursorPosition.y)
     Write-Host " ✔    " -ForegroundColor Green
-    Write-Host ""
 }
 Remove-Variable Loops
 
@@ -383,6 +382,7 @@ $Variables.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash t
 )
 
 # Must done before reading config (Get-Region)
+Write-Host ""
 Write-Message -Level Verbose "Preparing environment and loading data files..."
 [Void](Initialize-Environment)
 $CursorPosition = $Host.UI.RawUI.CursorPosition
@@ -563,7 +563,7 @@ $Variables.RegexAlgoIsEthash = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^UbqH
 $Variables.RegexAlgoIsProgPow = "^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^PhiHash$|^ProgPow|^SCCpow$"
 $Variables.RegexAlgoHasDynamicDAG = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^Octopus$|^PhiHash$|^ProgPow|^SCCpow$|^UbqHash$"
 $Variables.RegexAlgoHasStaticDAG = "^FishHash$|^HeavyHashKarlsenV2$"
-$Variables.RegexAlgoHasDAG = (($Variables.RegexAlgoHasDynamicDAG -split '\|') + ($Variables.RegexAlgoHasStaticDAG -split '\|') | Sort-Object) -join '|'
+$Variables.RegexAlgoHasDAG = (($Variables.RegexAlgoHasDynamicDAG -split "\|") + ($Variables.RegexAlgoHasStaticDAG -split "\|") | Sort-Object) -join "|"
 [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
 Write-Host " ✔" -ForegroundColor Green
 
@@ -993,7 +993,7 @@ Function MainLoop {
 
                     If ($LegacyGUIform) { 
                         [Void](Update-GUIstatus)
-                        $LegacyGUIminingSummaryLabel.Text = ($Message -replace '&', '&&' -split '<br>') -join "`r`n"
+                        $LegacyGUIminingSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                         $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                     }
                 }
@@ -1006,7 +1006,7 @@ Function MainLoop {
 
                 If ($LegacyGUIform) { 
                     [Void](Update-GUIstatus)
-                    $LegacyGUIminingSummaryLabel.Text = ($Message -replace '&', '&&' -split '<br>') -join "`r`n"
+                    $LegacyGUIminingSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
 
@@ -1018,7 +1018,7 @@ Function MainLoop {
 
                 If ($LegacyGUIform) { 
                     [Void](Update-GUIstatus)
-                    $LegacyGUIminingSummaryLabel.Text = ($Message -replace '&', '&&' -split '<br>') -join "`r`n"
+                    $LegacyGUIminingSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
                 Remove-Variable Message
@@ -1119,7 +1119,7 @@ Function MainLoop {
                     )
                     # Display top 5 optimal miners and all benchmarking of power consumption measuring miners
                     $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
-                    ($Variables.Miners.Where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace '.+-' } | Sort-Object -Property Name).ForEach(
+                    ($Variables.Miners.Where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" } | Sort-Object -Property Name).ForEach(
                         { 
                             $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
                             $MinersDeviceGroupNeedingBenchmark = $MinersDeviceGroup.Where({ $_.Benchmark })
@@ -1158,7 +1158,7 @@ Function MainLoop {
 
                     If ($Variables.UIStyle -ne "full") { Write-Host -ForegroundColor DarkYellow "$(If ($Variables.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Variables.MinersNeedingBenchmark -and $Variables.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Variables.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
 
-                    $MinersActivatedLast24Hrs = @($Variables.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now }))
+                    [System.Collections.ArrayList]$MinersActivatedLast24Hrs = $Variables.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now })
 
                     If ($ProcessesIdle = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Idle" })) { 
                         Write-Host "$($ProcessesIdle.Count) previously executed miner$(If ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ProHashing.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 using module ..\Includes\Include.psm1
@@ -41,7 +41,7 @@ $PoolConfig = $Variables.PoolsConfig.$BrainName
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
 $Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";"Cache-Control"="no-cache" }
-$Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+$UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
@@ -75,16 +75,16 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
             If ($AlgoData) { 
                 # Change numeric string to numbers, some values are null
-                $AlgoData = ($AlgoData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
-                $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ': "(\d+\.?\d*)"', ': $1' -replace '": null', '": 0' | ConvertFrom-Json
+                $AlgoData = ($AlgoData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
+                $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
                 # Only recods with 24h_btc are relevant
                 $CurrenciesData = $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.enabled }).ForEach({ $CurrenciesData.$_ })
 
                 ForEach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
-                    $AlgorithmNorm = Get-Algorithm $Algo
+                    $AlgorithmNorm = Get-Algorithm $Algorithm
                     $BasePrice = If ($AlgoData.$Algorithm.actual_last24h) { $AlgoData.$Algorithm.actual_last24h } Else { $AlgoData.$Algorithm.estimate_last24h }
                     $Currencies = @($CurrenciesData.Where({ $_.algo -eq $Algorithm }).abbreviation)
-                    $Currency = If ($Currencies.Count -eq 1) { $($Currencies[0] -replace '-.+' -replace ' \s+' -replace ' $') } Else { "" }
+                    $Currency = If ($Currencies.Count -eq 1) { $($Currencies[0] -replace "-.+" -replace "\s+$") } Else { "" }
                     $AlgoData.$Algorithm | Add-Member Currency $Currency
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp
 
@@ -93,7 +93,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                         $StatName = If ($Currency) { "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)_Profit" } Else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }
                         If (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
-                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit')"
+                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace "_Profit")"
                         }
                     }
 
@@ -135,7 +135,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                             [Void](Remove-Stat -Name $StatName)
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             $PlusPrice = $LastPrice
-                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace '_Profit') (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
+                            Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
                         }
                     }
                     $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force

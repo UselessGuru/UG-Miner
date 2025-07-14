@@ -15,7 +15,7 @@
       <BookmarkTextColor>Yellow</BookmarkTextColor>
       <BookmarkBackColor>DarkGreen</BookmarkBackColor>
       <Modeless>false</Modeless>
-      <Title>UG-Miner_2025-01-20.log</Title>
+      <Title>UG-Miner_2025-07-08.log</Title>
       <WindowState>Maximized</WindowState>
       <WindowSize>
         <Width>1886</Width>
@@ -52,7 +52,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>(benchmark|power consumption).+for .+ in progress</Keyword>
+          <Keyword>(benchmark|power consumption).+for .+ in progress|Benchmarking:|Measuring power consumption:</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -211,8 +211,8 @@
     <Height>1163</Height>
   </WindowSize>
   <WindowPosition>
-    <X>1301</X>
-    <Y>672</Y>
+    <X>124</X>
+    <Y>140</Y>
   </WindowPosition>
   <MinimizedToTray>false</MinimizedToTray>
   <AlwaysOnTop>false</AlwaysOnTop>

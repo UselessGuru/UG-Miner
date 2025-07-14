@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.4.31
-Version date:   2025/01/13
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -30,7 +30,7 @@ $Global:WarningPreference = "SilentlyContinue"
 $Global:VerbosePreference = "SilentlyContinue"
 
 # Fix TLS Version erroring
-If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls10 }
+If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls10) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls10 }
 If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls11) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls11 }
 If ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls12) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls12 }
 
@@ -225,7 +225,7 @@ Class Pool : IDisposable {
     [Double]$Price_Bias
     [Boolean]$Prioritize = $false # derived from BalancesKeepAlive
     [String]$Protocol
-    [System.Collections.Generic.HashSet[String]]$Reasons = @() # Why is the pool not available?
+    [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the pool not available?
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
     [Boolean]$SSLselfSignedCertificate
@@ -317,7 +317,7 @@ Class Miner : IDisposable {
     [Double]$Profit = [Double]::NaN
     [Double]$Profit_Bias = [Double]::NaN
     [Boolean]$ReadPowerConsumption
-    [System.Collections.Generic.HashSet[String]]$Reasons = @() # Why is the miner not available?
+    [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the miner not available?
     [Boolean]$Restart = $false 
     hidden [DateTime]$StatStart
     hidden [DateTime]$StatEnd
@@ -335,7 +335,7 @@ Class Miner : IDisposable {
     [Worker[]]$Workers = @() # derived from pools
     [Worker[]]$WorkersRunning = @() # derived from pools
 
-    hidden [System.Collections.Generic.HashSet[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
+    hidden [System.Collections.Generic.List[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
     hidden [System.Management.Automation.Job]$DataReaderJob = $null
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [System.Diagnostics.Process]$Process = $null
@@ -510,14 +510,15 @@ Class Miner : IDisposable {
 
         $this.EndTime = [DateTime]::Now.ToUniversalTime()
 
-        If ($this.Process) { 
+        If ($this.Process.Id) { 
             If ($this.Process.Parent.Id) { Stop-Process -Id $this.Process.Parent.Id -Force -ErrorAction Ignore | Out-Null }
             Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-            (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+            (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore | Out-Null })
         }
         $this.Process = $null
-        $this.ProcessId = $null
+
+        $this.StatusInfo = If ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo.Replace("'$($this.Name)' ", "") -replace ".+stopped. " -replace ".+sample.*\) " } Else { "" }
 
         # Log switching information to .\Logs\SwitchingLog
         [PSCustomObject]@{ 
@@ -534,23 +535,39 @@ Class Miner : IDisposable {
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
             Earnings                = $this.Earnings
             Earnings_Bias           = $this.Earnings_Bias
-            Hashrates               = $this.Workers.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & "
+            Hashrates               = $this.WorkersRunning.Hashrate.ForEach({ $_ | ConvertTo-Hash }) -join " & "
             LastDataSample          = If ($this.Data.Count -ge 1) { $this.Data.Item | Select-Object -Last 1 | ConvertTo-Json -Compress } Else { "" }
             MeasurePowerConsumption = $this.MeasurePowerConsumption
             Pools                   = ($this.WorkersRunning.Pool.Name | Select-Object -Unique) -join " "
             PowerConsumption        = "$($this.PowerConsumption.ToString("N2"))W"
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
-            Reason                  = If ($this.Status -eq [MinerStatus]::Failed) { 
-                                          $this.StatusInfo = $this.StatusInfo.Replace("'$($this.Name)' ", "") -replace '.+stopped. ' -replace '.+sample.*\) '
-                                          $this.StatusInfo.substring(0, 1).toUpper() + $this.StatusInfo.substring(1)
-                                      } Else { "" }
+            Reason                  = $this.StatusInfo
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
-        $this.Status = [MinerStatus]::Idle
-        $this.StatusInfo = "Idle"
-        $this.SubStatus = $this.Status
+        If ($this.Status -eq [MinerStatus]::Failed) { 
+            $this.StatusInfo = "Failed: Miner $($this.StatusInfo)"
+            $this.SubStatus = "failed"
+            $this.WorkersRunning.ForEach(
+                { 
+                    $_.Disabled = $false
+                    $_.Earnings = [Double]::NaN
+                    $_.Earnings_Accuracy = [Double]::NaN
+                    $_.Earnings_Bias = [Double]::NaN
+                    $_.Fee = 0
+                    $_.Hashrate = [Double]::NaN
+                    $_.TotalMiningDuration = [TimeSpan]0
+                }
+            )
+            $this.Earnings = $this.Earnings_Accuracy = $this.Earnings_Bias = $this.PowerCost = $this.PowerConsumption = $this.PowerConsumption_Live = $this.Profit = $this.Profit_Bias =[Double]::NaN
+            $this.Hashrates_Live = @($this.WorkersRunning.ForEach({ [Double]::NaN }))
+        }
+        Else {  
+            $this.Status = [MinerStatus]::Idle
+            $this.StatusInfo = "Idle"
+            $this.SubStatus = $this.Status
+        }
         $this.WorkersRunning = [Worker[]]@()
     }
 
@@ -679,6 +696,7 @@ Class Miner : IDisposable {
     }
 
     [Void]Refresh([Double]$PowerCostBTCperW, [Hashtable]$Config) { 
+        $this.Best = $false
         $this.MinDataSample = $Config.MinDataSample
         $this.Prioritize = $this.Workers.Pool.Prioritize -contains $true
         $this.ProcessPriority = $Config."$($this.Type)MinerProcessPriority"
@@ -746,6 +764,157 @@ Class Miner : IDisposable {
     }
 }
 
+Function Invoke-CreateProcess { 
+    # Based on https://github.com/FuzzySecurity/PowerShell-Suite/blob/master/Invoke-CreateProcess.ps1
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [String]$BinaryPath,
+        [Parameter(Mandatory = $false)]
+        [String]$ArgumentList = "",
+        [Parameter(Mandatory = $false)]
+        [String]$WorkingDirectory = "",
+        [Parameter(Mandatory = $false)]
+        [String[]]$EnvBlock,
+        [Parameter(Mandatory = $false)]
+        [String]$CreationFlags = 0x00000010, # CREATE_NEW_CONSOLE
+        [Parameter(Mandatory = $false)]
+        [String]$WindowStyle = "minimized",
+        [Parameter(Mandatory = $false)]
+        [String]$StartF = 0x00003001, # STARTF_USESHOWWINDOW, STARTF_TITLEISAPPID, STARTF_PREVENTPINNING
+        [Parameter(Mandatory = $false)]
+        [String]$JobName,
+        [Parameter(Mandatory = $false)]
+        [String]$LogFile,
+        [Parameter(Mandatory = $false)]
+        [String]$StatusInfo
+    )
+
+    # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(250) would not work and miners remain running
+    Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $JobName, $StatusInfo { 
+        Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $JobName, $StatusInfo)
+
+        $ControllerProcess = Get-Process -Id $ControllerProcessID
+        If ($null -eq $ControllerProcess) { Return }
+
+        # Define all the structures for CreateProcess
+    Add-Type -TypeDefinition @"
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+[StructLayout(LayoutKind.Sequential)]
+public struct PROCESS_INFORMATION
+{ 
+    public IntPtr hProcess; public IntPtr hThread; public uint dwProcessId; public uint dwThreadId;
+}
+
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+public struct STARTUPINFO
+{ 
+    public uint cb; public string lpReserved; public string lpDesktop; [MarshalAs(UnmanagedType.LPUTF8Str)] public string lpTitle;
+    public uint dwX; public uint dwY; public uint dwXSize; public uint dwYSize; public uint dwXCountChars;
+    public uint dwYCountChars; public uint dwFillAttribute; public uint dwFlags; public short wShowWindow;
+    public short cbReserved2; public IntPtr lpReserved2; public IntPtr hStdInput; public IntPtr hStdOutput;
+    public IntPtr hStdError;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct SECURITY_ATTRIBUTES
+{ 
+    public int length; public IntPtr lpSecurityDescriptor; public bool bInheritHandle;
+}
+
+public static class Kernel32
+{ 
+    [DllImport("kernel32.dll", SetLastError=true)]
+    public static extern bool CreateProcess(
+        string lpApplicationName, string lpCommandLine, ref SECURITY_ATTRIBUTES lpProcessAttributes,
+        ref SECURITY_ATTRIBUTES lpThreadAttributes, bool bInheritHandles, uint dwCreationFlags,
+        IntPtr lpEnvironment, string lpCurrentDirectory, ref STARTUPINFO lpStartupInfo,
+        out PROCESS_INFORMATION lpProcessInformation);
+}
+"@
+
+        $ShowWindow = Switch ($WindowStyle) { 
+            "hidden" { "0x0000"; Break } # SW_HIDE
+            "normal" { "0x0001"; Break } # SW_SHOWNORMAL
+            Default  { "0x0007" } # SW_SHOWMINNOACTIVE
+        }
+
+        # Set local environment
+        New-Item -Path "Env:UGMINER_JOBNAME" -Value $JobName -Force | Out-Null
+        ($EnvBlock | Select-Object).ForEach({ New-Item -Path "Env:$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force | Out-Null })
+
+        # StartupInfo struct
+        $StartupInfo = [STARTUPINFO]::new()
+        $StartupInfo.dwFlags = $StartF # StartupInfo.dwFlag
+        $StartupInfo.wShowWindow = $ShowWindow # StartupInfo.ShowWindow
+        $StartupInfo.lpTitle = $StatusInfo
+        $StartupInfo.cb = [System.Runtime.InteropServices.Marshal]::SizeOf($StartupInfo) # Struct size
+
+        # SECURITY_ATTRIBUTES Struct (Process & Thread)
+        $SecAttr = [SECURITY_ATTRIBUTES]::new()
+        $SecAttr.Length = [System.Runtime.InteropServices.Marshal]::SizeOf($SecAttr)
+
+        # CreateProcess --> lpCurrentDirectory
+        If (-not $WorkingDirectory) { $WorkingDirectory = [IntPtr]::Zero }
+
+        # ProcessInfo struct
+        $ProcessInfo = [PROCESS_INFORMATION]::new()
+
+        # Force to use conhost, sometimes miners would get started using windows terminal
+        $ConHost = "$($ENV:SystemRoot)\System32\conhost.exe"
+
+        # Call CreateProcess
+        [Void][Kernel32]::CreateProcess($ConHost, "$ConHost $BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
+
+        # Timing issue, some processes are not immediately available on fast computers
+        $Loops = 100
+        Do { 
+            If ($ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore) { Break }
+            Start-Sleep -Milliseconds 50
+            $Loops --
+        } While ($Loops -gt 0)
+        Do { 
+            If ($MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")) { Break }
+            Start-Sleep -Milliseconds 50
+            $Loops --
+        } While ($Loops -gt 0)
+        $MinerProcessId = $MinerProcess.ProcessId
+
+        If ($null -eq $MinerProcess.Count) { 
+            [PSCustomObject]@{ 
+                ConhostProcessId = $ProcessInfo.dwProcessId
+                MinerProcessId = $null
+            }
+            Return 
+        }
+
+        [PSCustomObject]@{ 
+            ConhostProcessId = $ProcessInfo.dwProcessId
+            MinerProcessId = $MinerProcessId
+        }
+
+        $ConhostProcess.Handle | Out-Null
+        $ControllerProcess.Handle | Out-Null
+        $MinerProcess.Handle | Out-Null
+        $ChildProcesses.ForEach({ $_.Handle | Out-Null })
+
+        Do { 
+            If ($ControllerProcess.WaitForExit(250)) { 
+                # Kill process in bottum up order
+                # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
+                (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore | Out-Null })
+                Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
+                Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore | Out-Null
+                $MinerProcess = $null
+                $ControllerProcess = $null
+            }
+        } While ($ControllerProcess.HasExited -eq $false)
+    }
+}
+
 Function Start-Core { 
 
     Try { 
@@ -768,7 +937,7 @@ Function Start-Core {
             
             # Remove stats that have been deleted from disk
             Try { 
-                If ($StatFiles = ([System.IO.DirectoryInfo](".\Stats")).EnumerateFiles("*.txt", [System.IO.SearchOption]::TopDirectoryOnly).BaseName.ForEach({ ($_ -Split ' ')[0] })) { 
+                If ($StatFiles = ([System.IO.DirectoryInfo](".\Stats")).EnumerateFiles("*.txt", [System.IO.SearchOption]::TopDirectoryOnly).BaseName.ForEach({ ($_ -split " ")[0] })) { 
                     If ($Keys = [String[]]($Stats.psBase.Keys)) { 
                         (Compare-Object $Keys $StatFiles -PassThru).Where({ $_.SideIndicator -eq "<=" }).ForEach(
                             { 
@@ -921,7 +1090,7 @@ Function Start-Brain {
             }
         )
         If ($BrainsStarted.Count -gt 0) { 
-            $Message = "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", ' &$1') started."
+            $Message = "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", " &`$1") started."
             Write-Message -Level Info $Message
             If (-not $Variables.Miners) {$Variables.Summary = $Message }
             Remove-Variable Message
@@ -962,7 +1131,7 @@ Function Stop-Brain {
                 $BrainsStopped += $_
             }
         )
-        If ($BrainsStopped.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(If ($BrainsStopped.Count -gt 1) { "s" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", ' &$1') stopped." }
+        If ($BrainsStopped.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(If ($BrainsStopped.Count -gt 1) { "s" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1") stopped." }
 
         [System.GC]::Collect()
     }
@@ -1036,14 +1205,14 @@ Function Get-Rate {
     $RatesCacheFileName = "$($Variables.MainPath)\Cache\Rates.json"
 
     # Use stored currencies from last run
-    If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = $Variables.Rates.PSObject.Properties.Name -creplace "^m" }
+    If (-not $Variables.BalancesCurrencies -and $Config.BalancesTrackerPollInterval) { $Variables.BalancesCurrencies = @($Variables.Rates.PSObject.Properties.Name -creplace "^m") }
 
-    $Variables.AllCurrencies = @(@(@($Config.FIATcurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) | Select-Object) -replace "mBTC", "BTC" | Sort-Object -Unique)
+    $Variables.AllCurrencies = @(@($Config.FIATcurrency) + @($Config.Wallets.psBase.Keys) + @($Variables.PoolData.Keys.ForEach({ $Variables.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Config.ExtraCurrencies) + @($Variables.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
 
     Try { 
         $TSymBatches = @()
         $TSyms = "BTC"
-        $Variables.AllCurrencies.Where({ $_ -notin @("BTC", "INVALID") }).ForEach(
+        $Variables.AllCurrencies.Where({ "BTC", "INVALID" -notcontains $_ }).ForEach(
             { 
                 If (($TSyms.Length + $_.Length) -lt 99) { 
                     $TSyms = "$TSyms,$($_)"
@@ -1110,7 +1279,7 @@ Function Get-Rate {
                     }
                 )
             }
-            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", ' &$1'). $($Variables.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(If ($Variables.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
+            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Variables.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Variables.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Variables.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Variables.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(If ($Variables.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
             $Variables.Rates = $Rates
             $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime()
 
@@ -1136,13 +1305,15 @@ Function Write-Message {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [String]$Message,
         [Parameter(Mandatory = $false)]
-        [String]$Level = "Info"
+        [String]$Level = "Info",
+        [Parameter(Mandatory = $false)]
+        [Boolean]$Console = $true
     )
 
     $Message = $Message -replace "(?:<br>)+|(?:&ensp;)+", " "
 
     # Make sure we are in main script
-    If ($Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level)) { 
+    If ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Config.Keys.Count -or $Config.LogToScreen -contains $Level)) { 
         # Write to console
         Switch ($Level) { 
             "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewLine; Break }
@@ -1602,7 +1773,7 @@ Function Update-ConfigFile {
     If ($Config.PoolName -contains "NiceHash") { 
         If ($null -ne $Config.NiceHashWalletIsInternal -and -not $Config.NiceHashWalletIsInternal) { 
             Write-Message -Level Warn "Pool configuration changed during update (NiceHash [External] removed - to mine with NiceHash you must register)."
-            $Variables.ConfigurationHasChangedDuringUpdate.Add("- Pool 'NiceHash' [External] removed")
+            $Variables.ConfigurationHasChangedDuringUpdate += "- Pool 'NiceHash' [External] removed"
             $Config.PoolName = $Config.PoolName -notmatch "NiceHash"
             $Config.Remove("NiceHashWallet")
         }
@@ -1633,9 +1804,9 @@ Function Update-ConfigFile {
 
     # ZergPoolCoins is no longer available
     If ($Config.PoolName -like "ZergPoolCoins*") { 
-        Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_ -like '*Coins*' }) -replace 'Coins' ))."
-        $Variables.ConfigurationHasChangedDuringUpdate += "- Pool configuration changed ($($Config.PoolName.Where({ $_ -like '*Coins*' })) -> $($Config.PoolName.Where({ $_ -like '*Coins*' }) -replace 'Coins' ))"
-        $Config.PoolName = $Config.PoolName -replace 'Coins'
+        Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName.Where({ $_ -like "*Coins*" })) -> $($Config.PoolName.Where({ $_ -like "*Coins*" }) -replace "Coins" ))."
+        $Variables.ConfigurationHasChangedDuringUpdate += "- Pool configuration changed ($($Config.PoolName.Where({ $_ -like "*Coins*" })) -> $($Config.PoolName.Where({ $_ -like "*Coins*" }) -replace "Coins" ))"
+        $Config.PoolName = $Config.PoolName -replace "Coins"
     }
 
     # Available regions have changed
@@ -2560,7 +2731,7 @@ Function Get-Device {
                         # Add raw data
                         $Device.OpenCL = $Device_OpenCL
 
-                        If ($Device.OpenCL.PlatForm.Name -eq "NVIDIA CUDA") { $Device.CUDAversion = ([System.Version]($Device.OpenCL.PlatForm.Version -replace '.+CUDA ')) }
+                        If ($Device.OpenCL.PlatForm.Name -eq "NVIDIA CUDA") { $Device.CUDAversion = ([System.Version]($Device.OpenCL.PlatForm.Version -replace ".+CUDA ")) }
 
                         If (-not $Type_Vendor_Index.($Device.Type)) { $Type_Vendor_Index.($Device.Type) = @{ } }
                         If (-not $Type_PlatformId_Index.($Device.Type)) { $Type_PlatformId_Index.($Device.Type) = @{ } }
@@ -2680,157 +2851,6 @@ Function Get-Combination {
             $Ones = (($NewSmallest / $Smallest) -shr 1) - 1
             $X = $Ripple -bor $Ones
         }
-    }
-}
-
-Function Invoke-CreateProcess { 
-    # Based on https://github.com/FuzzySecurity/PowerShell-Suite/blob/master/Invoke-CreateProcess.ps1
-
-    Param (
-        [Parameter(Mandatory = $true)]
-        [String]$BinaryPath,
-        [Parameter(Mandatory = $false)]
-        [String]$ArgumentList = "",
-        [Parameter(Mandatory = $false)]
-        [String]$WorkingDirectory = "",
-        [Parameter(Mandatory = $false)]
-        [String[]]$EnvBlock,
-        [Parameter(Mandatory = $false)]
-        [String]$CreationFlags = 0x00000010, # CREATE_NEW_CONSOLE
-        [Parameter(Mandatory = $false)]
-        [String]$WindowStyle = "minimized",
-        [Parameter(Mandatory = $false)]
-        [String]$StartF = 0x00003001, # STARTF_USESHOWWINDOW, STARTF_TITLEISAPPID, STARTF_PREVENTPINNING
-        [Parameter(Mandatory = $false)]
-        [String]$JobName,
-        [Parameter(Mandatory = $false)]
-        [String]$LogFile,
-        [Parameter(Mandatory = $false)]
-        [String]$StatusInfo
-    )
-
-    # Cannot use Start-ThreadJob, $ControllerProcess.WaitForExit(250) would not work and miners remain running
-    Start-Job -InformationVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $JobName, $StatusInfo { 
-        Param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $JobName, $StatusInfo)
-
-        $ControllerProcess = Get-Process -Id $ControllerProcessID
-        If ($null -eq $ControllerProcess) { Return }
-
-        # Define all the structures for CreateProcess
-    Add-Type -TypeDefinition @"
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-
-[StructLayout(LayoutKind.Sequential)]
-public struct PROCESS_INFORMATION
-{ 
-    public IntPtr hProcess; public IntPtr hThread; public uint dwProcessId; public uint dwThreadId;
-}
-
-[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-public struct STARTUPINFO
-{ 
-    public uint cb; public string lpReserved; public string lpDesktop; [MarshalAs(UnmanagedType.LPUTF8Str)] public string lpTitle;
-    public uint dwX; public uint dwY; public uint dwXSize; public uint dwYSize; public uint dwXCountChars;
-    public uint dwYCountChars; public uint dwFillAttribute; public uint dwFlags; public short wShowWindow;
-    public short cbReserved2; public IntPtr lpReserved2; public IntPtr hStdInput; public IntPtr hStdOutput;
-    public IntPtr hStdError;
-}
-
-[StructLayout(LayoutKind.Sequential)]
-public struct SECURITY_ATTRIBUTES
-{ 
-    public int length; public IntPtr lpSecurityDescriptor; public bool bInheritHandle;
-}
-
-public static class Kernel32
-{ 
-    [DllImport("kernel32.dll", SetLastError=true)]
-    public static extern bool CreateProcess(
-        string lpApplicationName, string lpCommandLine, ref SECURITY_ATTRIBUTES lpProcessAttributes,
-        ref SECURITY_ATTRIBUTES lpThreadAttributes, bool bInheritHandles, uint dwCreationFlags,
-        IntPtr lpEnvironment, string lpCurrentDirectory, ref STARTUPINFO lpStartupInfo,
-        out PROCESS_INFORMATION lpProcessInformation);
-}
-"@
-
-        $ShowWindow = Switch ($WindowStyle) { 
-            "hidden" { "0x0000"; Break } # SW_HIDE
-            "normal" { "0x0001"; Break } # SW_SHOWNORMAL
-            Default  { "0x0007" } # SW_SHOWMINNOACTIVE
-        }
-
-        # Set local environment
-        New-Item -Path "Env:UGMINER_JOBNAME" -Value $JobName -Force | Out-Null
-        ($EnvBlock | Select-Object).ForEach({ New-Item -Path "Env:$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force | Out-Null })
-
-        # StartupInfo struct
-        $StartupInfo = [STARTUPINFO]::new()
-        $StartupInfo.dwFlags = $StartF # StartupInfo.dwFlag
-        $StartupInfo.wShowWindow = $ShowWindow # StartupInfo.ShowWindow
-        $StartupInfo.lpTitle = $StatusInfo
-        $StartupInfo.cb = [System.Runtime.InteropServices.Marshal]::SizeOf($StartupInfo) # Struct size
-
-        # SECURITY_ATTRIBUTES Struct (Process & Thread)
-        $SecAttr = [SECURITY_ATTRIBUTES]::new()
-        $SecAttr.Length = [System.Runtime.InteropServices.Marshal]::SizeOf($SecAttr)
-
-        # CreateProcess --> lpCurrentDirectory
-        If (-not $WorkingDirectory) { $WorkingDirectory = [IntPtr]::Zero }
-
-        # ProcessInfo struct
-        $ProcessInfo = [PROCESS_INFORMATION]::new()
-
-        # Force to use conhost, sometimes miners would get started using windows terminal
-        $ConHost = "$($ENV:SystemRoot)\System32\conhost.exe"
-
-        # Call CreateProcess
-        [Void][Kernel32]::CreateProcess($ConHost, "$ConHost $BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
-
-        # Timing issue, some processes are not immediately available on fast computers
-        $Loops = 100
-        Do { 
-            If ($ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore) { Break }
-            Start-Sleep -Milliseconds 50
-            $Loops --
-        } While ($Loops -gt 0)
-        Do { 
-            If ($MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")) { Break }
-            Start-Sleep -Milliseconds 50
-            $Loops --
-        } While ($Loops -gt 0)
-        $MinerProcessId = $MinerProcess.ProcessId
-
-        If ($null -eq $MinerProcess.Count) { 
-            [PSCustomObject]@{ 
-                ConhostProcessId = $ProcessInfo.dwProcessId
-                MinerProcessId = $null
-            }
-            Return 
-        }
-
-        [PSCustomObject]@{ 
-            ConhostProcessId = $ProcessInfo.dwProcessId
-            MinerProcessId = $MinerProcessId
-        }
-
-        $ConhostProcess.Handle | Out-Null
-        $ControllerProcess.Handle | Out-Null
-        $MinerProcess.Handle | Out-Null
-        $ChildProcesses.ForEach({ $_.Handle | Out-Null })
-
-        Do { 
-            If ($ControllerProcess.WaitForExit(250)) { 
-                # Kill process in bottum up order
-                # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
-                Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
-                Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore
-                $MinerProcess = $null
-                $ControllerProcess = $null
-            }
-        } While ($ControllerProcess.HasExited -eq $false)
     }
 }
 
@@ -3128,7 +3148,7 @@ Function Update-PoolWatchdog {
 
     Param (
         [Parameter(Mandatory = $true)]
-        [Pool[]]$Pools
+        $Pools
     )
 
     # Apply watchdog to pools
@@ -3234,11 +3254,11 @@ Function Get-AllDAGdata {
                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
             }
             Else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
 
@@ -3250,7 +3270,7 @@ Function Get-AllDAGdata {
             Write-Message -Level Info "Loading DAG data from '$Url'..."
             $CurrencyDAGdataResponse = Invoke-WebRequest -Uri $Url -TimeoutSec 5 # PWSH 6+ no longer supports basic parsing -> parse text
             If ($CurrencyDAGdataResponse.statuscode -eq 200) { 
-                (($CurrencyDAGdataResponse.Content -split "\n" -replace '"', "'").Where({ $_ -like "<div class='block' title='Current block height of *" })).ForEach(
+                (($CurrencyDAGdataResponse.Content -split "\n" -replace "`"", "'").Where({ $_ -like "<div class='block' title='Current block height of *" })).ForEach(
                     { 
                         $Currency = $_ -replace "^<div class='block' title='Current block height of " -replace "'>.*$"
                         If ($Currency -notin @("ETF")) { 
@@ -3273,11 +3293,11 @@ Function Get-AllDAGdata {
                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
             }
             Else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
 
@@ -3310,11 +3330,11 @@ Function Get-AllDAGdata {
                 $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
             }
             Else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
         Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
 
@@ -3343,7 +3363,7 @@ Function Get-AllDAGdata {
                     }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
         }
@@ -3374,7 +3394,7 @@ Function Get-AllDAGdata {
         #             }
         #         }
         #         Catch { 
-        #             Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+        #             Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         #         }
         #     }
         # }
@@ -3403,7 +3423,7 @@ Function Get-AllDAGdata {
                 }
             }
             Catch { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
     }
@@ -3433,7 +3453,7 @@ Function Get-AllDAGdata {
                     }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
         }
@@ -3464,7 +3484,7 @@ Function Get-AllDAGdata {
                     }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
         }
@@ -3495,7 +3515,7 @@ Function Get-AllDAGdata {
                     }
                 }
                 Catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace '^.+: ' -replace '\.$')."
+                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
         }
@@ -4119,4 +4139,123 @@ Function Stop-APIserver {
 
         [System.GC]::Collect()
     }
+}
+
+Function Set-MinerEnabled { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Miner]$Miner
+    )
+
+    ForEach ($Worker in $Miner.Workers) { 
+        [Void](Enable-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate")
+    }
+
+    $Miner.Disabled = $false
+    $Miner.Reasons.Remove("Disabled by user") | Out-Null
+    $Miner.Reasons.Where({ $_ -notlike "Unreal *" }).ForEach({ $Miner.Reasons.Remove({ $_ }) | Out-Null })
+    If (-not $Miner.Reasons.Count) { $Miner.Available = $true }
+}
+
+Function Set-MinerDisabled { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Miner]$Miner
+    )
+
+    ForEach ($Worker in $Miner.Workers) { 
+        [Void](Disable-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate")
+        $Worker.Disabled = $false
+    }
+
+    $Miner.Available = $false
+    $Miner.Disabled = $true
+    If (-not $Miner.Reasons.Contains("Disabled by user")) { $Miner.Reasons.Add("Disabled by user") | Out-Null }
+}
+
+Function Set-MinerFailed { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Miner]$Miner
+    )
+
+    ForEach ($Worker in $Miner.Workers) { 
+        [Void](Set-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate" -Value 0 -FaultDetection $false)
+        $Worker.Hashrate = [Double]::NaN
+        $Worker.Disabled = $false
+        $Worker.Earnings = [Double]::NaN
+        $Worker.Earnings_Accuracy = [Double]::NaN
+        $Worker.Earnings_Bias = [Double]::NaN
+        $Worker.Fee = 0
+        $Worker.Hashrate = [Double]::NaN
+        $Worker.TotalMiningDuration = [TimeSpan]0
+    }
+    Remove-Variable Worker
+
+    # Clear power consumption
+    [Void](Remove-Stat -Name "$($Miner.Name)_PowerConsumption")
+    $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = $Miner.Earnings = $Miner.Earnings_Bias = [Double]::NaN
+
+    If (-not $Miner.Reasons.Contains("0 H/s stat file")) { $Miner.Reasons.Add("0 H/s stat file") | Out-Null }
+    $Miner.Available = $false
+}
+
+Function Set-MinerReBenchmark { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Miner]$Miner
+    )
+
+    $Miner.Activated = 0 # To allow 3 attempts
+    $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
+
+    ForEach ($Worker in $Miner.Workers) { 
+        [Void](Remove-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate")
+        $Worker.Disabled = $false
+        $Worker.Earnings = [Double]::NaN
+        $Worker.Earnings_Accuracy = [Double]::NaN
+        $Worker.Earnings_Bias = [Double]::NaN
+        $Worker.Fee = 0
+        $Worker.Hashrate = [Double]::NaN
+        $Worker.TotalMiningDuration = [TimeSpan]0
+    }
+    Remove-Variable Worker
+
+    [Void](Remove-Stat -Name "$($Miner.Name)_PowerConsumption")
+    $Miner.Earnings = $Miner.Earnings_Accuracy = $Miner.Earnings_Bias = $Miner.PowerCost = $Miner.PowerConsumption = $Miner.PowerConsumption_Live = $Miner.Profit = $Miner.Profit_Bias =[Double]::NaN
+    $Miner.Hashrates_Live = @($this.Workers.ForEach({ [Double]::NaN }))
+
+    $Miner.Benchmark = $true
+    $Miner.MeasurePowerConsumption = $true
+    $Miner.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
+    $Miner.Available = $true
+
+    # Remove watchdog
+    $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -NE $Miner.Name
+}
+
+Function Set-MinerMeasurePowerConsumption { 
+
+    Param (
+        [Parameter(Mandatory = $true)]
+        [Miner]$Miner
+    )
+
+    $Miner.Activated = 0 # To allow 3 attempts
+    $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
+
+    # Clear power consumption
+    [Void](Remove-Stat -Name "$($Miner.Name)_PowerConsumption")
+    $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = [Double]::NaN
+
+    $Miner.MeasurePowerConsumption = $true
+    $Miner.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
+    $Miner.Available = $true
+
+    # Remove watchdog
+    $Variables.WatchdogTimers = $Variables.WatchdogTimers | Where-Object MinerName -NE $Miner.Name
 }

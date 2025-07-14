@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 Class EthMiner : Miner { 
@@ -43,7 +43,7 @@ Class EthMiner : Miner {
         $HashrateName = [String]$this.Algorithms[0]
         $HashrateValue = [Double]($Data.result[2] -split ";")[0]
 
-        If ($Data.result[0] -notmatch "^TT-Miner" -and $HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
+        If ($Data.result[0] -notmatch "^TT-Miner" -and $HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
         $Shares = [PSCustomObject]@{ }
@@ -55,7 +55,7 @@ Class EthMiner : Miner {
         If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
             If ($null -eq (($Data.result[4] -split ";")[0])) { Return $null }
             $HashrateValue = [Double]($Data.result[4] -split ";")[0]
-            If ($this.Algorithms[0] -match "^Blake2s|^Keccak") { $HashrateValue *= 1000 }
+            If ($HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $SharesAccepted = [Int64]($Data.result[4] -split ";")[1]

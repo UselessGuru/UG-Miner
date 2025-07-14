@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.4.36
-Version date:   2025/07/06
+Version:        6.5.0
+Version date:   2025/07/14
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Variables.DriverVersion.CUDA -ge [Version]"10.2") }))) { Return }
@@ -211,7 +211,7 @@ If ($Algorithms) {
                             Else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             If (-not $Variables.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
 
-                            $MinerPath = If ("Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace '\\xmrig.exe$', '\xmrig-mo.exe' } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
+                            $MinerPath = If ("Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace "\\xmrig.exe$", "\xmrig-mo.exe" } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
                             $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Config.WorkerName }
 
                             [PSCustomObject]@{ 
