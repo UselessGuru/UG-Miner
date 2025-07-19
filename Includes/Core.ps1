@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.1
+Version:        6.5.2
 Version date:   2025/07/19
 #>
 
@@ -1065,7 +1065,7 @@ Try {
                         }
                     )
                     Remove-Variable DeviceNames, DeviceNamesCombination -ErrorAction Ignore
-                    $MinersBest = ($MinerCombinations | Sort-Object -Descending { $_.Combination.Where({ [Double]::IsNaN($_.$Bias) }).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination
+                    $MinersBest = ($MinerCombinations | Sort-Object -Descending { $_.Combination.Where({ [Double]::IsNaN($_.$Bias) }).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination | Sort-Object -Property Devices
 
                     # Revert smallest bias hack
                     $Variables.MinersBestPerDevice.ForEach({ $_.Combination.ForEach({ $_.$Bias -= $SmallestBias }) })

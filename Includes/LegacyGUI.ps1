@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.1
+Version:        6.5.2
 Version date:   2025/07/19
 #>
 
@@ -439,9 +439,20 @@ Function Update-TabControl {
             $LegacyGUIcontextMenuStripItem6.Text = "Remove watchdog timer"
             $LegacyGUIcontextMenuStripItem6.Visible = $true
 
-            If ($LegacyGUIradioButtonMinersOptimal.checked) { $DataSource = $Variables.MinersOptimal }
-            ElseIf ($LegacyGUIradioButtonMinersUnavailable.checked) { $DataSource = $Variables.Miners.Where({ -not $_.Available }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info }
-            Else { $DataSource = $Variables.Miners }
+            If ($LegacyGUIradioButtonMinersOptimal.checked) { 
+                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+                $DataSource = $Variables.MinersOptimal.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                Remove-Variable Bias
+                $Variables.MinersOptimal
+            }
+            ElseIf ($LegacyGUIradioButtonMinersUnavailable.checked) { 
+                $DataSource = $Variables.Miners.Where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info, Algorithm
+            }
+            Else { 
+                $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+                $DataSource = $Variables.Miners.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                Remove-Variable Bias
+            }
 
             If ($Variables.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIminersLabel.Text = "No data - mining is stopped"
