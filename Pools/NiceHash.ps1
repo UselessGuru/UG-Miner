@@ -19,14 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 Param(
-    [PSCustomObject]$Config,
-    [String]$PoolVariant,
-    [Hashtable]$Variables
+    [String]$PoolVariant
 )
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -90,7 +88,7 @@ If ($Request.miningAlgorithms) {
                 Port                     = 9200
                 PortSSL                  = 443
                 PoolUri                  = "https://www.nicehash.com/algorithm/$($_.Algorithm.ToLower())"
-                Price                    = $Stat.Live
+                Price                    = If ($null -eq $_.paying) { [Double]::NaN } Else { $Stat.Live }
                 Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                 Region                   = [String]$PoolConfig.Region
                 Reasons                  = $Reasons

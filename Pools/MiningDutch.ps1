@@ -19,14 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 Param(
-    [PSCustomObject]$Config,
-    [String]$PoolVariant,
-    [Hashtable]$Variables
+    [String]$PoolVariant
 )
 
 $ProgressPreference = "SilentlyContinue"
@@ -63,7 +61,7 @@ If ($DivisorMultiplier -and $PriceField) {
 
         # Add coin name
         If ($Request.$Algorithm.CoinName -and $Currency) { 
-            [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Request.$Algorithm.CoinName)
+            Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Request.$Algorithm.CoinName
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
@@ -92,7 +90,7 @@ If ($DivisorMultiplier -and $PriceField) {
                     Port                     = [UInt16]$Request.$Algorithm.port
                     PortSSL                  = 0
                     PoolUri                  = "https://www.mining-dutch.nl/?page=pools"
-                    Price                    = $Stat.Live
+                    Price                    = If ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } Else { $Stat.Live }
                     Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $RegionNorm

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 using module ..\Includes\Include.psm1
@@ -48,7 +48,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
-    If ($Variables.MyIp) { 
+    If ($Variables.MyIPaddress) { 
         Try { 
 
             Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
@@ -66,7 +66,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     $APICallFails = 0
                 }
                 Catch { 
-                    If ($APICallFails -lt $PoolConfig.PoolAPIAllowedFailureCount) { $APICallFails ++ }
+                    If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
                     Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
                 }
             } While (-not ($AlgoData -and $TotalStats) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
@@ -138,7 +138,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     If ($Stat = Get-Stat -Name $StatName) { 
                         $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
                         If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
-                            [Void](Remove-Stat -Name $StatName)
+                            Remove-Stat -Name $StatName
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             $PlusPrice = $LastPrice
                             Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
@@ -160,7 +160,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $Variables.Brains.$BrainName | Add-Member "Updated" $Timestamp -Force
 
             # Limit to only sample size + 10 minutes history
-            $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes(- ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
+            $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes(-($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
         }
         Catch { 
             Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
@@ -183,7 +183,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         [System.GC]::Collect()
     }
 
-    While (-not $Variables.MyIP -or $Timestamp -ge $Variables.PoolDataCollectedTimeStamp -or ($Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While (-not $Variables.MyIPaddress -or $Timestamp -ge $Variables.PoolDataCollectedTimeStamp -or ($Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
 }

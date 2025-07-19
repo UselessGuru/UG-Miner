@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.5.0 / Updated 2025/07/14
+Version 6.5.1 / Updated 2025/07/19
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -69,13 +69,13 @@ UG-Miner code is partly based on
 
    <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username. To mine with NiceHash you must register and use the BTC address provided by NiceHash.
 
-It is recommended to run UG-Miner with local computer administrator rights (UG-Miner_AsAdmin.bat) to ensure file permissions and firewall rules can be set without user intervention. 
+It is recommended to run UG-Miner with local computer administrator privileges (UG-Miner_AsAdmin.bat) to ensure file permissions and firewall rules can be set without user intervention. 
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner web GUI")
 
 ### Pools
 
-UG-Miner polls the pools in regular intervals to get up-to-date pricing and coin availability data.  
+UG-Miner polls the configured pools in regular intervals to get up-to-date pricing and coin availability data.  
 
 You must select at least one pool.  
 If you select several pools, then your earnings might be split across different pools. UG-Miner will always direct the miners to the pools with the highest earnings.  
@@ -300,7 +300,7 @@ Windows 10.x and PowerShell Version 7.x or higher is required.
 UG-Miner works best with the latest PWSH version 7.5.2.  
 [Download Installer for version 7.5.2](https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/PowerShell-7.5.2-win-x64.msi)  
 
-Some miners may need 'Visual C+ RunTimes. Download and extract  
+Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
 then run install_all.bat file.
 

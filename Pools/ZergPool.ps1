@@ -19,14 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 Param(
-    [PSCustomObject]$Config,
-    [String]$PoolVariant,
-    [Hashtable]$Variables
+    [String]$PoolVariant
 )
 
 $ProgressPreference = "SilentlyContinue"
@@ -58,29 +56,28 @@ If ($DivisorMultiplier -and $Regions) {
 
     If (-not $Request.PSObject.Properties.Name) { Return }
 
-    ForEach ($Pool in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
-        $Algorithm = $Request.$Pool.algo
+    ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
         $AlgorithmNorm = Get-Algorithm $Algorithm
-        $Currency = If ([String]$Request.$Pool.Currency) { [String]$Request.$Pool.Currency } Else { "" }
-        $Divisor = [Double]$Request.$Pool.mbtc_mh_factor * $DivisorMultiplier
+        $Currency = If ([String]$Request.$Algorithm.Currency) { [String]$Request.$Algorithm.Currency } Else { "" }
+        $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
 
-        $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Pool -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
+        $PayoutCurrency = If ($Currency -and $PoolConfig.Wallets.$Currency -and -not $PoolConfig.ProfitSwitching) { $Currency } Else { $PoolConfig.PayoutCurrency }
         $PayoutThreshold = $PoolConfig.PayoutThreshold.$PayoutCurrency
-        If ($PayoutThreshold -gt $Request.$Pool.minpay) { $PayoutThreshold = $Request.$Pool.minpay }
+        If ($PayoutThreshold -gt $Request.$Algorithm.minpay) { $PayoutThreshold = $Request.$Algorithm.minpay }
         If (-not $PayoutThreshold -and $PayoutCurrency -eq "BTC" -and $PoolConfig.PayoutThreshold.mBTC) { $PayoutThreshold = $PoolConfig.PayoutThreshold.mBTC / 1000 }
         If ($PayoutThreshold) { $PayoutThresholdParameter = ",pl=$([Double]$PayoutThreshold)" }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
-        If ($Request.$Pool.noautotrade -eq 1 -and $Currency -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Pool] (conversion disabled at pool)") | Out-Null }
-        If ($Request.$Pool.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        If ($Request.$Algorithm.NoAutotrade -eq 1 -and $Currency -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
+        If ($Request.$Algorithm.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
         If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
 
         # Cannot cast negative values to [UInt]
-        If ($Request.$Pool.workers_shared -lt 0) { $Request.$Pool.workers_shared = 0 }
+        If ($Request.$Algorithm.workers_shared -lt 0) { $Request.$Algorithm.workers_shared = 0 }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Pool.$PriceField / $Divisor) -FaultDetection $false
+        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
 
         ForEach ($RegionNorm in $Variables.Regions[$Config.Region]) { 
             If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $RegionNorm })) { 
@@ -99,26 +96,26 @@ If ($DivisorMultiplier -and $Regions) {
                     Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-                    Fee                      = $Request.$Pool.Fees / 100
+                    Fee                      = $Request.$Algorithm.Fees / 100
                     Host                     = $PoolHost.toLower()
                     Key                      = $Key
                     Name                     = $Name
                     Pass                     = "c=$PayoutCurrency$(If ($Currency) { ",mc=$Currency" }),ID=$WorkerName$PayoutThresholdParameter" # Pool profit switching breaks option 2 (static coin), instead it will still send DAG data for any coin
-                    Port                     = [UInt16]$Request.$Pool.port
-                    PortSSL                  = [UInt16]$Request.$Pool.tls_port
+                    Port                     = [UInt16]$Request.$Algorithm.port
+                    PortSSL                  = [UInt16]$Request.$Algorithm.tls_port
                     PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"
-                    Price                    = If ($Request.$Pool.estimate_current -eq 0) { [Double]::NaN } Else { $Stat.Live }
+                    Price                    = If ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } Else { $Stat.Live }
                     Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $RegionNorm
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $false
                     StablePrice              = $Stat.Week
-                    Updated                  = [DateTime]$Request.$Pool.Updated
+                    Updated                  = [DateTime]$Request.$Algorithm.Updated
                     User                     = $PoolConfig.Wallets.$PayoutCurrency
                     Variant                  = $PoolVariant
                     WorkerName               = ""
-                    Workers                  = [UInt]$Request.$Pool.workers_shared
+                    Workers                  = [UInt]$Request.$Algorithm.workers_shared
                 }
                 Break
             }

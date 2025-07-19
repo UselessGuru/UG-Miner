@@ -2,7 +2,7 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
   <h2 id="title" data-navbaractive="navconfigedit">Edit configuration</h2>
 </div>
-<div id="configfilenames" class="alert alert-info" role="alert">&ensp;</div>
+<div id="ConfigFilenames" class="alert alert-info" role="alert">&ensp;</div>
 <form id="configuration">
   <input name="submit" type="submit" id="save-button" value="Save configuration" class="btn btn-success" alt="Submit" title="Save configuration&#10;It will become active in next cycle">
   <input name="reset" type="reset" id="reset-button" value="Reset" class="btn btn-warning" alt="Reset" title="Reset configuration data to previous values">
@@ -137,7 +137,7 @@
           <div style="padding-top: 0.3rem;" title="Cycle duration&#10;This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
             <input type="number" id="Interval" name="Interval" min=30 max=3600 step=1 value=90 style="width: 3.8em; text-align:right;"> seconds
           </div>
-          <div style="padding-top: 0.3rem;" title="Minimum number of continous cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
+          <div style="padding-top: 0.3rem;" title="Minimum number of Continous<br>cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
             <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 style="width: 2.7em; text-align:right;"> cycles before switching
           </div>
           <div style="padding-top: 0.3rem;" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
@@ -463,7 +463,7 @@
   const logtofilecontainer = document.getElementById('LogToFile');
   const logtoscreencontainer = document.getElementById('LogToScreen');
 
-  var configfile = '';
+  var ConfigFile = '';
   var regions = [];
 
   $(document).ready(function () {
@@ -473,7 +473,7 @@
     $('#btn-editconfig').click(function () {
       document.getElementById('btn-editconfig').disabled = true;
       document.getElementById('btn-editpoolsconfig').disabled = true;
-      $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(configfile), function () {
+      $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(ConfigFile), function () {
         if (this.outerText) {
           $('.modal-title').text("Edit config file");
           $('#myModal').modal({ 
@@ -492,7 +492,7 @@
     $('#btn-editpoolsconfig').click(function () {
       document.getElementById('btn-editconfig').disabled = true;
       document.getElementById('btn-editpoolsconfig').disabled = true;
-      $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(poolsconfigfile), function () {
+      $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(poolsConfigFile), function () {
         if (this.outerText) {
           $('.modal-title').text("Edit pools config file");
           $('#myModal').modal({ 
@@ -518,16 +518,16 @@
     $.ajax({
       async: false,
       dataType: 'text',
-      url: '/configfile',
+      url: '/ConfigFile',
       success: function (result) {
-        configfile = result;
+        ConfigFile = result;
         $.ajax({
           async: false,
           dataType: 'text',
-          url: '/poolsconfigfile',
+          url: '/poolsConfigFile',
           success: function (result) {
-            poolsconfigfile = result;
-            $('#configfilenames').text("Current configuration files: '" + configfile + "' & '" + poolsconfigfile + "'");
+            poolsConfigFile = result;
+            $('#ConfigFilenames').text("Current configuration files: '" + ConfigFile + "' & '" + poolsConfigFile + "'");
           }
         });
       }
@@ -1009,7 +1009,7 @@
     });
 
     // Error reading configuration
-    if (config && configfile && poolvariants && regions && devices) {
+    if (config && ConfigFile && poolvariants && regions && devices) {
       document.getElementById('save-button').disabled = false;
     } else {
       $('.modal-title').text('Error reading configuration');

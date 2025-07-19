@@ -16,15 +16,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 Product:        UG-Miner
 File:           API.psm1
-Version:        6.5.0
+Version:        6.5.1
 version date:   2025/07/14
 -->
 
 
 <html>
 
-<body>
-  <h1>UG-Miner API (version 6.0.8)</h1>
+<body style="font-size:20px; ">
+  <h1>UG-Miner API (version 6.0.10)</h1>
 
   API data is available at http://localhost:[API port]/&lt;resource&gt.<br>
   The default API port is 3999.
@@ -38,223 +38,223 @@ version date:   2025/07/14
      This feature can be used to gather data that the API doesn't expose directly.</p>
   <h2>Resources</h2>
   <b><a href="http://localhost:3999/algorithms">/algorithms</a></b>
-  <p>Shows the algorithm mappings used in Get-Algorithm to build normalized algorithm names (defined in '\Data\Algorithms.json').</p>
+  <p>Shows the algorithm mappings used in Get-Algorithm to build normalized algorithm names (defined in '\Data\Algorithms.json')</p>
   <br>
   <b><a href="http://localhost:3999/algorithms/lastused">/algorithms/lastused</a></b>
-  <p>Date & time when algorithms were last used (data is stored in '\Data\algorithmsUsed.json').</p>
+  <p>Date & time when algorithms were last used (data is stored in '\Data\algorithmsUsed.json')</p>
   <br>
   <b><a href="http://localhost:3999/allcurrencies">/allcurrencies</a></b>
   <p>Returns the list of all currencies (main currency, extra currency and all currencies from balances)</p>
   <br>
   <b><a href="http://localhost:3999/apiversion">/apiversion</a></b>
-  <p>Returns the version number of UG-Miner API.</p>
+  <p>Returns the version number of UG-Miner API</p>
   <br>
   <b><a href="http://localhost:3999/balances">/balances</a></b>
-  <p>Returns the current balance information calculated by the balance tracker.</p>
+  <p>Returns the current balance information calculated by the balance tracker</p>
   <br>
   <b><a href="http://localhost:3999/balancescurrencies">/balancescurrencies</a></b>
   <p>Returns the list of balances currencies</p>
   <br>
   <b><a href="http://localhost:3999/balancedata">/balancedata</a></b>
-  <p>Returns the balances collected by the balances tracker used to calculate balance information.</p>
+  <p>Returns the balances collected by the balances tracker used to calculate balance information</p>
   <br>
   <b><a href="http://localhost:3999/braindata">/braindata</a></b>
-  <p>Returns the braindata information.</p>
+  <p>Returns the braindata information</p>
   <br>
   <b><a href="http://localhost:3999/btc">/btc</a></b>
-  <p>Shows the BTC to main currency exchange rate.</p>
+  <p>Shows the BTC to main currency exchange rate</p>
   <br>
   <b><a href="http://localhost:3999/coinnames">/coinnames</a></b>
-  <p>Shows the Currency / CoinName mapping (defined in '\Data\CoinNames.json').</p>
+  <p>Shows the Currency / CoinName mapping (defined in '\Data\CoinNames.json')</p>
   <br>
   <b><a href="http://localhost:3999/config">/config</a></b>
-  <p>Returns the config stored in the current config file.</p>
+  <p>Returns the config stored in the current config file</p>
   <br>
-  <b><a href="http://localhost:3999/configfile">/configfile</a></b>
-  <p>Returns the current config file name.</p>
+  <b><a href="http://localhost:3999/ConfigFile">/ConfigFile</a></b>
+  <p>Returns the current config file name</p>
   <br>
   <b><a href="http://localhost:3999/configrunning">/configrunning</a></b>
-  <p>Returns the full configuration UG-Miner is currently using after all variable substitution (including 'PoolsConfig' built from the optional '.\Config\PoolsConfig.json' file).</p>
+  <p>Returns the full configuration UG-Miner is currently using after all variable substitution (including 'PoolsConfig' built from the optional '.\Config\PoolsConfig.json' file)</p>
   <br>
   <b><a href="http://localhost:3999/cpufeatures">/cpufeatures</a></b>
-  <p>Returns the CPU feature set.</p>
+  <p>Returns the CPU feature set</p>
   <br>
   <b><a href="http://localhost:3999/currency">/currency</a></b>
-  <p>Returns the main currency.</p>
+  <p>Returns the main currency</p>
   <br>
   <b><a href="http://localhost:3999/currencyalgorithm">/currencyalgorithm</a></b>
-  <p>Shows the Currency / Algorithm mapping (defined in '\Data\CurrencyAlgorithm.json').</p>
+  <p>Shows the Currency / Algorithm mapping (defined in '\Data\CurrencyAlgorithm.json')</p>
   <br>
   <b><a href="http://localhost:3999/dagdata">/dagdata</a></b>
-  <p>Returns the DAG data (algorithms & currencies).</p>
+  <p>Returns the DAG data (algorithms & currencies)</p>
   <br>
   <b><a href="http://localhost:3999/devices">/devices</a></b>
-  <p>Shows information about all mining devices.</p>
+  <p>Shows information about all mining devices</p>
   <br>
   <b><a href="http://localhost:3999/devices/disabled">/devices/disabled</a></b>
-  <p>Shows information about all disabled mining devices.</p>
+  <p>Shows information about all disabled mining devices</p>
   <br>
   <b><a href="http://localhost:3999/devices/enabled">/devices/enabled</a></b>
-  <p>Shows information about all enabled mining devices.</p>
+  <p>Shows information about all enabled mining devices</p>
   <br>
   <b><a href="http://localhost:3999/devices/unsupported">/devices/unsupported</a></b>
-  <p>Shows information about all unsupported mining devices.</p>
+  <p>Shows information about all unsupported mining devices</p>
   <br>
   <b><a href="http://localhost:3999/donationdata">/donationdata</a></b>
-  <p>Returns the donation data stored in 'Data\DonationData.json'.</p>
+  <p>Returns the donation data stored in 'Data\DonationData.json'</p>
   <br>
   <b><a href="http://localhost:3999/donationlog">/donationlog</a></b>
-  <p>Returns the donation data stored in 'Log\DonateLog.json'.</p>
+  <p>Returns the donation data stored in 'Log\DonateLog.json'</p>
   <br>
   <b><a href="http://localhost:3999/driverversion">/driverversion</a></b>
-  <p>Returns the installed CIM & OpenCL driver version numbers.</p>
+  <p>Returns the installed CIM & OpenCL driver version numbers</p>
   <br>
   <b><a href="http://localhost:3999/earningschartdata">/earningschartdata</a></b>
-  <p>Returns the data required for earnings chart.</p>
+  <p>Returns the data required for earnings chart</p>
   <br>
   <b><a href="http://localhost:3999/equihashcoinpers">/equihashcoinpers</a></b>
-  <p>Returns the Equihash coin personalisation string data.</p>
+  <p>Returns the Equihash coin personalisation string data</p>
   <br>
   <b><a href="http://localhost:3999/extracurrencies">/extracurrencies</a></b>
   <p>Returns the list of extra currencies</p>
   <br>
   <b><a href="http://localhost:3999/fiatcurrencies">/fiatcurrencies</a></b>
-  <p>Returns the list of all available FIAT currencies (defined in '\Data\FIATcurrencies.json').</p>
+  <p>Returns the list of all available FIAT currencies (defined in '\Data\FIATcurrencies.json')</p>
   <br>
   <b><a href="http://localhost:3999/miners">/miners</a></b>
-  <p>Shows all miners data, use for debugging.</p>
+  <p>Shows all miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/available">/miners/available</a></b>
-  <p>Shows the available miners data, use for debugging.</p>
+  <p>Shows the available miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/bestperdevice">/miners/bestperdevice</a></b>
-  <p>Shows the miners best per device data, use for debugging.</p>
+  <p>Shows the miners best per device data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/best">/miners/best</a></b>
-  <p>Shows the miners best combo data, use for debugging.</p>
+  <p>Shows the miners best combo data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/disabled">/miners/disabled</a></b>
-  <p>Shows the disabled miners data, use for debugging.</p>
+  <p>Shows the disabled miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/failed">/miners/failed</a></b>
-  <p>Shows the failed miners data, use for debugging.</p>
+  <p>Shows the failed miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/launched">/miners/launched</a></b>
-  <p>Shows the launched miners data, use for debugging.</p>
+  <p>Shows the launched miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/missingbinary">/miners/missingbinary</a></b>
-  <p>Shows the miners binaries data, use for debugging.</p>
+  <p>Shows the miners binaries data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/missingfirewallrule">/miners/missingfirewallrule</a></b>
-  <p>Shows the miners missing firewall rules data, use for debugging.</p>
+  <p>Shows the miners missing firewall rules data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/missingprerequisite">/miners/missingprerequisite</a></b>
-  <p>Shows the miners missing firewall rules data, use for debugging.</p>
+  <p>Shows the miners missing firewall rules data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/optimal">/miners/optimal</a></b>
-  <p>Shows the optimal miners data, use for debugging.</p>
+  <p>Shows the optimal miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/running">/miners/running</a></b>
-  <p>Shows the running miners data, use for debugging.</p>
+  <p>Shows the running miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miners/unavailable">/miners/unavailable</a></b>
-  <p>Shows the unavailable miners data, use for debugging.</p>
+  <p>Shows the unavailable miners data, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/miningearnings">/miningearnings</a></b>
-  <p>Shows current mining earnings (in BTC).</p>
+  <p>Shows current mining earnings (in BTC)</p>
   <br>
   <b><a href="http://localhost:3999/miningpowercost">/miningpowercost</a></b>
-  <p>Shows current mining power cost (in BTC).</p>
+  <p>Shows current mining power cost (in BTC)</p>
   <br>
   <b><a href="http://localhost:3999/miningprofit">/miningprofit</a></b>
-  <p>Shows current mining profit (in BTC).</p>
+  <p>Shows current mining profit (in BTC)</p>
   <br>
   <b><a href="http://localhost:3999/poolreasons">/poolreasons</a></b>
-  <p>Shows all reasons why pools are unavailable.</p>
+  <p>Shows all reasons why pools are unavailable</p>
   <br>
   <b><a href="http://localhost:3999/poolsconfig">/poolsconfig</a></b>
-  <p>Shows the pool configuration entries.</p>
+  <p>Shows the pool configuration entries</p>
   <br>
   <b><a href="http://localhost:3999/poolname">/poolname</a></b>
-  <p>Shows configured pool list.</p>
+  <p>Shows configured pool list</p>
   <br>
   <b><a href="http://localhost:3999/pooldata">/pooldata</a></b>
-  <p>Shows pool data.</p>
+  <p>Shows pool data</p>
   <br>
   <b><a href="http://localhost:3999/pools">/pools</a></b>
-  <p>Shows all pool entries.</p>
+  <p>Shows all pool entries</p>
   <br>
   <b><a href="http://localhost:3999/pools/added">/pools/added</a></b>
-  <p>Shows the added pool entries.</p>
+  <p>Shows the added pool entries</p>
   <br>
   <b><a href="http://localhost:3999/pools/available">/pools/available</a></b>
-  <p>Shows the available pool entries.</p>
+  <p>Shows the available pool entries</p>
   <br>
   <b><a href="http://localhost:3999/pools/expired">/pools/expired</a></b>
-  <p>Shows the expired pool entries.</p>
+  <p>Shows the expired pool entries</p>
   <br>
   <b><a href="http://localhost:3999/pools/best">/pools/best</a></b>
-  <p>Shows the best pool entries.</p>
+  <p>Shows the best pool entries</p>
   <br>
   <b><a href="http://localhost:3999/pools/new">/pools/new</a></b>
-  <p>Shows the new pool entries.</p>
+  <p>Shows the new pool entries</p>
   <br>
   <b><a href="http://localhost:3999/pools/updated">/pools/updated</a></b>
-  <p>Shows the updated pool entries.</p>
+  <p>Shows the updated pool entries</p>
   <br>
   <b><a href="http://localhost:3999/pools/unavailable">/pools/unavailable</a></b>
-  <p>Shows the unavailable pool configuration entries.</p>
+  <p>Shows the unavailable pool configuration entries</p>
   <br>
-  <b><a href="http://localhost:3999/poolsconfigfile">/poolsconfigfile</a></b>
-  <p>Returns the current pools config file name.</p>
+  <b><a href="http://localhost:3999/poolsConfigFile">/poolsConfigFile</a></b>
+  <p>Returns the current pools config file name</p>
   <br>
   <b><a href="http://localhost:3999/pools/lastearnings">/pools/lastearnings</a></b>
-  <p>Date & time of pools last earnings (data collected by the balances tracker).</p>
+  <p>Date & time of pools last earnings (data collected by the balances tracker)</p>
   <br>
   <b><a href="http://localhost:3999/pools/lastused">/pools/lastused</a></b>
-  <p>Date & time when pools were last used (data is stored in '\Data\PoolsLastUsed.json').</p>
+  <p>Date & time when pools were last used (data is stored in '\Data\PoolsLastUsed.json')</p>
   <br>
   <b><a href="http://localhost:3999/poolvariants">/poolvariants</a></b>
-  <p>Shows all pool variants (defined in '\Data\PoolConfig.json').</p>
+  <p>Shows all pool variants (defined in '\Data\PoolConfig.json')</p>
   <br>
   <b><a href="http://localhost:3999/rates">/rates</a></b>
-  <p>Shows the current exchange rate for all configured currencies.</p>
+  <p>Shows the current exchange rate for all configured currencies</p>
   <br>
   <b><a href="http://localhost:3999/refreshtimestamp">/refreshtimestamp</a></b>
   <p>Returns the refresh timestamp (e.g. to trigger web GUI update)</p>
   <br>
   <b><a href="http://localhost:3999/regions">/regions</a></b>
-  <p>Shows the list of supported regions (defined in '\Data\Regions.json').</p>
+  <p>Shows the list of supported regions (defined in '\Data\Regions.json')</p>
   <br>
   <b><a href="http://localhost:3999/regionsdata">/regionsdata</a></b>
-  <p>Shows the region data (defined in '\Data\Regions.json').</p>
+  <p>Shows the region data (defined in '\Data\Regions.json')</p>
   <br>
   <b><a href="http://localhost:3999/stats">/stats</a></b>
-  <p>Shows all stat data in the $Stats hashtable, use for debugging.</p>
+  <p>Shows all stat data in the $Stats hashtable, use for debugging</p>
   <br>
   <b><a href="http://localhost:3999/summarytext">/summarytext</a></b>
-  <p>Shows earnings / profit summary and BTC exchange rate (as shown in the Web GUI header) as printable text.</p>
+  <p>Shows earnings / profit summary and BTC exchange rate (as shown in the Web GUI header) as printable text</p>
   <br>
   <b><a href="http://localhost:3999/switchinglog">/switchinglog</a></b>
-  <p>Shows the previously executed miners.</p>
+  <p>Shows the previously executed miners</p>
   <br>
   <b><a href="http://localhost:3999/unprofitablealgorithms">/unprofitablealgorithms</a></b>
-  <p>Shows the list of unprofitable algorithms (defined in '\Data\UnprofitableAlgorithms.json').</p>
+  <p>Shows the list of unprofitable algorithms (defined in '\Data\UnprofitableAlgorithms.json')</p>
   <br>
   <b>   <a href="http://localhost:3999/version">/version</a></b>
   <p>Shows UG-Miner, API & PWSH version information</p>
   <br>
   <b><a href="http://localhost:3999/wallets">/wallets</a></b>
-  <p>Shows the configured wallet data.</p>
+  <p>Shows the configured wallet data</p>
   <br>
   <b><a href="http://localhost:3999/watchdogexpiration">/watchdogexpiration</a></b>
-  <p>Shows the watchdog expiration duration (in seconds).</p>
+  <p>Shows the watchdog expiration duration (in seconds)</p>
   <br>
   <b><a href="http://localhost:3999/watchdogtimers">/watchdogtimers</a></b>
-  <p>Shows the watchdog timers.</p>
+  <p>Shows the watchdog timers</p>
   <br>
   <!-- <b><a href="http://localhost:3999/workers">/workers</a></b>
-  <p>Shows the rig data as reported by the monitoring server.</p>
+  <p>Shows the rig data as reported by the monitoring server</p>
   <br> -->
   <h2>Functions</h2>
   <br>Parameters look like '[url]?a=b&c=d&message=Hello%20world' (as [URI]::EscapeDataString)
@@ -281,7 +281,7 @@ version date:   2025/07/14
   <br><b>/functions/config/set</b>
   <br>Write full config
   <br>Parameters: full config (JSON)
-  <br>e.g.: /functions/config/set?{"Algorithm"%3A%5B%5D%2C"APILogfile"%3A""%2C"APIPort"%3A3999%2C"AutoReboot"%3Atrue%2C"AutoUpdate"%3Atrue%2C"AutoUpdateCheckInterval"%3A1%2C"BackupOnAutoUpdate"%3Atrue%2C"BadShareRatioThreshold"%3A0.05%2C"BalancesKeepAlive"%3Atrue%2C"BalancesShowInAllCurrencies"%3Atrue%2C"BalancesTrackerExcludePool"%3A%5B%5D%2C"BalancesTrackerLog"%3Afalse%2C"BalancesTrackerPollInterval"%3A10%2C"CalculatePowerCost"%3Atrue%2C"ConfigFileVersion"%3A"6.1.4"%2C"CPUMinerProcessPriority"%3A-2%2C"Currency"%3A"CHF"%2C"DecimalsMax"%3A6%2C"Delay"%3A0%2C"DisableDualAlgoMining"%3Afalse%2C"DisableMinerFee"%3Afalse%2C"DisableMinersWithFee"%3Afalse%2C"DisableSingleAlgoMining"%3Afalse%2C"Donate"%3A13%2C"EarningsAdjustmentFactor"%3A1%2C"ExcludeDeviceName"%3A%5B%5D%2C"ExcludeMinerName"%3A%5B%5D%2C"ExtraCurrencies"%3A%5B"ETC"%2C"ETH"%2C"mBTC"%5D%2C"GPUMinerProcessPriority"%3A-1%2C"IdleDetection"%3Afalse%2C"IdleSec"%3A120%2C"IgnoreMinerFee"%3Afalse%2C"IgnorePoolFee"%3Afalse%2C"IgnorePowerCost"%3Afalse%2C"Interval"%3A90%2C"LogBalanceAPIResponse"%3Afalse%2C"LogToFile"%3A%5B"Info"%2C"Warn"%2C"Error"%2C"Verbose"%5D%2C"LogToScreen"%3A%5B"Info"%2C"Warn"%2C"Error"%2C"Verbose"%5D%2C"MinAccuracy"%3A0.5%2C"MinDataSample"%3A20%2C"MinDataSampleAlgoMultiplier"%3A{"X16r"%3A3}%2C"MinerInstancePerDeviceModel"%3Afalse%2C"MinerSet"%3A1%2C"MinerSwitchingThreshold"%3A10%2C"MinerWindowStyle"%3A"minimized"%2C"MinerWindowStyleNormalWhenBenchmarking"%3Atrue%2C"MiningPoolHubAPIKey"%3A""%2C"MiningPoolHubUserName"%3A"Nemo"%2C"MinInterval"%3A1%2C"MinWorker"%3A25%2C"MonitoringServer"%3A"https%3A%2F%2FUG-Miner.com"%2C"MonitoringUser"%3A""%2C"NiceHashAPIKey"%3A""%2C"NiceHashAPISecret"%3A""%2C"NiceHashOrganizationId"%3A""%2C"NiceHashWallet"%3A""%2C"NiceHashWalletIsInternal"%3Afalse%2C"OpenFirewallPorts"%3Atrue%2C"PayoutCurrency"%3A"BTC"%2C"PoolAPIAllowedFailureCount"%3A3%2C"PoolAPIRetryInterval"%3A3%2C"PoolAPITimeout"%3A20%2C"PoolName"%3A%5B"MiningPoolHubCoins"%2C"NiceHash"%5D%2C"PoolsConfigFile"%3A".%5C%5CConfig%5C%5CPoolsConfig.json"%2C"PoolTimeout"%3A20%2C"PowerPricekWh"%3A{"00%3A00"%3A0.26%2C"12%3A00"%3A0.3}%2C"PowerUsage"%3A{}%2C"PowerUsageIdleSystemW"%3A60%2C"ProfitabilityThreshold"%3A-99%2C"ProHashingAPIKey"%3A""%2C"ProHashingMiningMode"%3A"PPS"%2C"ProHashingUserName"%3A"UselessGuru"%2C"Proxy"%3A""%2C"Region"%3A"Europe"%2C"ReportToServer"%3Afalse%2C"ShowColumnAccuracy"%3Atrue%2C"ShowAllMiners"%3Afalse%2C"ShowChangeLog"%3Afalse%2C"ShowColumnCoinName"%3Atrue%2C"ShowColumnCurrency"%3Atrue%2C"ShowColumnEarnings"%3Atrue%2C"ShowColumnEarningsBias"%3Atrue%2C"ShowColumnMinerFee"%3Atrue%2C"ShowPoolBalances"%3Afalse%2C"ShowColumnPoolFee"%3Atrue%2C"ShowColumnPowerCost"%3Atrue%2C"ShowPowerUsage"%3Atrue%2C"ShowColumnProfit"%3Atrue%2C"ShowColumnProfitBias"%3Atrue%2C"ShowColumnUser"%3Afalse%2C"ShowWorkerStatus"%3Atrue%2C"SnakeTailConfig"%3A".%5C%5CUtils%5C%5CUG-Miner_LogReader.xml"%2C"SnakeTailExe"%3A".%5C%5CUtils%5C%5CSnakeTail.exe"%2C"SSL"%3A"prefer"%2C"StartGUIMinimized"%3Atrue%2C"StartupMode"%3A"Idle"%2C"SubtractBadShares"%3Atrue%2C"SyncWindow"%3A3%2C"Transcript"%3Afalse%2C"UIStyle"%3A"light"%2C"UnrealMinerEarningsFactor"%3A5%2C"UnrealPoolPriceFactor"%3A1.5%2C"UseAnycast"%3Atrue%2C"UsemBTC"%3Atrue%2C"UseMinerTweaks"%3Afalse%2C"Wallets"%3A{"BTC"%3A"1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF"%2C"ETC"%3A""%2C"ETH"%3A""}%2C"Watchdog"%3Atrue%2C"WatchdogCount"%3A3%2C"WebGUI"%3Atrue%2C"UseColorForMinerStatus"%3Atrue%2C"WorkerName"%3A"BLACKBOX"}
+  <br>e.g.: /functions/config/set?{"Algorithm"%3A%5B%5D%2C"APIlogfile"%3A""%2C"APIPort"%3A3999%2C"AutoReboot"%3Atrue%2C"AutoUpdate"%3Atrue%2C"AutoUpdateCheckInterval"%3A1%2C"BackupOnAutoUpdate"%3Atrue%2C"BadShareRatioThreshold"%3A0.05%2C"BalancesKeepAlive"%3Atrue%2C"BalancesShowInAllCurrencies"%3Atrue%2C"BalancesTrackerExcludePool"%3A%5B%5D%2C"BalancesTrackerLog"%3Afalse%2C"BalancesTrackerPollInterval"%3A10%2C"CalculatePowerCost"%3Atrue%2C"ConfigFileVersion"%3A"6.1.4"%2C"CPUMinerProcessPriority"%3A-2%2C"Currency"%3A"CHF"%2C"DecimalsMax"%3A6%2C"Delay"%3A0%2C"DisableDualAlgoMining"%3Afalse%2C"DisableMinerFee"%3Afalse%2C"DisableMinersWithFee"%3Afalse%2C"DisableSingleAlgoMining"%3Afalse%2C"Donate"%3A13%2C"EarningsAdjustmentFactor"%3A1%2C"ExcludeDeviceName"%3A%5B%5D%2C"ExcludeMinerName"%3A%5B%5D%2C"ExtraCurrencies"%3A%5B"ETC"%2C"ETH"%2C"mBTC"%5D%2C"GPUMinerProcessPriority"%3A-1%2C"IdleDetection"%3Afalse%2C"IdleSec"%3A120%2C"IgnoreMinerFee"%3Afalse%2C"IgnorePoolFee"%3Afalse%2C"IgnorePowerCost"%3Afalse%2C"Interval"%3A90%2C"LogBalanceAPIResponse"%3Afalse%2C"LogToFile"%3A%5B"Info"%2C"Warn"%2C"Error"%2C"Verbose"%5D%2C"LogToScreen"%3A%5B"Info"%2C"Warn"%2C"Error"%2C"Verbose"%5D%2C"MinAccuracy"%3A0.5%2C"MinDataSample"%3A20%2C"MinDataSampleAlgoMultiplier"%3A{"X16r"%3A3}%2C"MinerInstancePerDeviceModel"%3Afalse%2C"MinerSet"%3A1%2C"MinerSwitchingThreshold"%3A10%2C"MinerWindowStyle"%3A"minimized"%2C"MinerWindowStyleNormalWhenBenchmarking"%3Atrue%2C"MiningPoolHubAPIKey"%3A""%2C"MiningPoolHubUserName"%3A"Nemo"%2C"MinInterval"%3A1%2C"MinWorker"%3A25%2C"MonitoringServer"%3A"https%3A%2F%2FUG-Miner.com"%2C"MonitoringUser"%3A""%2C"NiceHashAPIKey"%3A""%2C"NiceHashAPISecret"%3A""%2C"NiceHashOrganizationId"%3A""%2C"NiceHashWallet"%3A""%2C"NiceHashWalletIsInternal"%3Afalse%2C"OpenFirewallPorts"%3Atrue%2C"PayoutCurrency"%3A"BTC"%2C"PoolAPIAllowedFailureCount"%3A3%2C"PoolAPIRetryInterval"%3A3%2C"PoolAPITimeout"%3A20%2C"PoolName"%3A%5B"MiningPoolHubCoins"%2C"NiceHash"%5D%2C"PoolsConfigFile"%3A".%5C%5CConfig%5C%5CPoolsConfig.json"%2C"PoolTimeout"%3A20%2C"PowerPricekWh"%3A{"00%3A00"%3A0.26%2C"12%3A00"%3A0.3}%2C"PowerUsage"%3A{}%2C"PowerUsageIdleSystemW"%3A60%2C"ProfitabilityThreshold"%3A-99%2C"ProHashingAPIKey"%3A""%2C"ProHashingMiningMode"%3A"PPS"%2C"ProHashingUserName"%3A"UselessGuru"%2C"Proxy"%3A""%2C"Region"%3A"Europe"%2C"ReportToServer"%3Afalse%2C"ShowColumnAccuracy"%3Atrue%2C"ShowAllMiners"%3Afalse%2C"ShowChangeLog"%3Afalse%2C"ShowColumnCoinName"%3Atrue%2C"ShowColumnCurrency"%3Atrue%2C"ShowColumnEarnings"%3Atrue%2C"ShowColumnEarningsBias"%3Atrue%2C"ShowColumnMinerFee"%3Atrue%2C"ShowPoolBalances"%3Afalse%2C"ShowColumnPoolFee"%3Atrue%2C"ShowColumnPowerCost"%3Atrue%2C"ShowPowerUsage"%3Atrue%2C"ShowColumnProfit"%3Atrue%2C"ShowColumnProfitBias"%3Atrue%2C"ShowColumnUser"%3Afalse%2C"ShowWorkerStatus"%3Atrue%2C"SnakeTailConfig"%3A".%5C%5CUtils%5C%5CUG-Miner_LogReader.xml"%2C"SnakeTailExe"%3A".%5C%5CUtils%5C%5CSnakeTail.exe"%2C"SSL"%3A"prefer"%2C"StartGUIMinimized"%3Atrue%2C"StartupMode"%3A"Idle"%2C"SubtractBadShares"%3Atrue%2C"SyncWindow"%3A3%2C"Transcript"%3Afalse%2C"UIStyle"%3A"light"%2C"UnrealMinerEarningsFactor"%3A5%2C"UnrealPoolPriceFactor"%3A1.5%2C"UseAnycast"%3Atrue%2C"UsemBTC"%3Atrue%2C"UseMinerTweaks"%3Afalse%2C"Wallets"%3A{"BTC"%3A"1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF"%2C"ETC"%3A""%2C"ETH"%3A""}%2C"Watchdog"%3Atrue%2C"WatchdogCount"%3A3%2C"WebGUI"%3Atrue%2C"UseColorForMinerStatus"%3Atrue%2C"WorkerName"%3A"BLACKBOX"}
 
   <br>
   <br><b>/functions/file/edit</b>
@@ -370,6 +370,7 @@ version date:   2025/07/14
   <br>
   <br><b>/functions/watchdogtimers/remove</b>
   <br>Clear watchdog timers data
+  <br>
   <br>
   <a href="https://github.com/UselessGuru/UG-Miner">UG-Miner@github</a>
 </body>

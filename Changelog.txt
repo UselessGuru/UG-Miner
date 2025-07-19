@@ -1,6 +1,18 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.5.1 2025/07/19
+===================================
+
+Improvements:
+- Core: Keep miners without pool data for 24hrs
+- Core: Minor code optimizations, reduce memory footprint
+
+Fixes:
+- Legacy GUI: Configuration item 'LegacyGUIStartMinimized' not working (regression from 6.2.12)
+- Pool 'ProHashing': No pice data for some algorithms
+
+
 Changelog UG-Miner 6.5.0 2025/07/14
 ===================================
 
@@ -13,7 +25,7 @@ Enhancements:
 Improvements:
 - Core: Condense benchmark & power usage measurement messages
 - Core: Minor performance improvements and optimize memory footprint
-- Core: Use same pool variant when benchmarking to avoid extra bemchmarking
+- Core: Use same pool variant when benchmarking to avoid extra benchmarking
 - Web & legacy GUI: Use shared functions, less code redundancy
 
 Miner updates:

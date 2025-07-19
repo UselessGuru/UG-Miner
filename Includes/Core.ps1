@@ -19,14 +19,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 using module .\Include.psm1
 
 $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
+
+$Variables.Miners = [Miner[]]@()
+$Variables.Pools = [Pool[]]@()
 
 Try { 
     (Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
@@ -47,7 +50,7 @@ Try {
         $Variables.CycleStarts = @($Variables.CycleStarts | Sort-Object -Bottom (3, ($Config.SyncWindow + 1) | Measure-Object -Maximum).Maximum)
 
         # Internet connection must be available
-        If (-not $Variables.MyIP) { 
+        If (-not $Variables.MyIPaddress) { 
             $Message = "No internet connection - will retry in $($Config.Interval) seconds..."
             Write-Message -Level Error $Message
             $Variables.Summary = $Message
@@ -68,7 +71,7 @@ Try {
         # Read config only if config files have changed
         If (Test-Path -Path $Variables.ConfigFile -PathType Leaf) { 
             If ($Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
-                [Void](Read-Config -ConfigFile $Variables.ConfigFile)
+                Read-Config -ConfigFile $Variables.ConfigFile
                 Write-Message -Level Verbose "Activated changed configuration."
                 $Variables.RefreshNeeded = $true
             }
@@ -267,13 +270,13 @@ Try {
             If ($Variables.ConfigReadTimestamp -gt $Variables.Timer -or -not $Variables.Pools -or $Variables.PoolDataCollectedTimeStamp.AddSeconds($Config.Interval / 2) -lt $Variables.Timer) { 
 
                 # Check for new version
-                If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { [Void](Get-Version) }
+                If ($Config.AutoUpdateCheckInterval -and $Variables.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Config.AutoUpdateCheckInterval)) { Get-Version }
 
                 # Stop / Start brain background jobs
-                If ($BrainsToStop = (Compare-Object @(Get-PoolBaseName $Config.PoolName | Select-Object) @(Get-PoolBaseName $Variables.PoolName | Select-Object) | Where-Object SideIndicator -EQ "=>").InputObject) { [Void](Stop-Brain $BrainsToStop) }
+                If ($BrainsToStop = (Compare-Object @(Get-PoolBaseName $Config.PoolName | Select-Object) @(Get-PoolBaseName $Variables.PoolName | Select-Object) | Where-Object SideIndicator -EQ "=>").InputObject) { Stop-Brain $BrainsToStop }
                 Remove-Variable BrainsToStop
 
-                [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
+                Start-Brain @(Get-PoolBaseName $Variables.PoolName)
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -308,7 +311,7 @@ Try {
                     If ($Variables.Brains.psBase.Keys.Where({ $Variables.Brains[$_].StartTime -gt $Variables.Timer.AddSeconds(- $Config.Interval) })) { 
                         # Newly started brains, allow extra time for brains to get ready
                         $Variables.PoolTimeout = 60
-                        $Message = "Requesting initial pool data from $((Get-PoolBaseName $Variables.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Variables.PoolTimeout) seconds..."
+                        $Message = "Loading initial pool data from $((Get-PoolBaseName $Variables.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Variables.PoolTimeout) seconds..."
                         If (-not $Variables.Miners) { 
                             $Variables.Summary = $Message
                             $Variables.RefreshNeeded = $true
@@ -317,7 +320,7 @@ Try {
                         Remove-Variable Message
                     }
                     Else { 
-                        Write-Message -Level Info "Requesting pool data from $((Get-PoolBaseName $Variables.PoolName) -join ", " -replace ",([^,]*)$", " &`$1")..."
+                        Write-Message -Level Info "Loading pool data from $((Get-PoolBaseName $Variables.PoolName) -join ", " -replace ",([^,]*)$", " &`$1")..."
                     }
 
                     # Wait for all brains
@@ -334,7 +337,7 @@ Try {
                             If (Test-Path -LiteralPath ".\Pools\$PoolName.ps1") { 
                                 Try { 
                                     Write-Message -Level Debug "Pool definition file '$PoolName': Start building pool objects"
-                                    & ".\Pools\$PoolName.ps1" -Config $Config -PoolVariant $_ -Variables $Variables
+                                    & ".\Pools\$PoolName.ps1" -PoolVariant $_
                                     Write-Message -Level Debug "Pool definition file '$PoolName': End building pool objects"
                                 }
                                 Catch { 
@@ -423,7 +426,7 @@ Try {
                         $Pools.Where({ [Double]::IsNaN($_.Price) }).ForEach({ $_.Reasons.Add("Price information not available") | Out-Null })
                         # Ignore pool if price is more than $Config.UnrealPoolPriceFactor higher than the medium price of all pools with same algorithm; NiceHash & MiningPoolHub are always right
                         If ($Config.UnrealPoolPriceFactor -gt 1) { 
-                            ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm).Where({ $_.Count -ge 2 }).ForEach(
+                            ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm).Where({ $_.Count -gt 3 }).ForEach(
                                 { 
                                     If ($PriceThreshold = (Get-Median $_.Group.Price_Bias) * $Config.UnrealPoolPriceFactor) { 
                                         $_.Group.Where({ $_.Name -notin @("NiceHash", "MiningPoolHub") -and $_.Price_Bias -gt $PriceThreshold }).ForEach({ $_.Reasons.Add("Unreal price ($($Config.UnrealPoolPriceFactor)x higher than median price)") | Out-Null })
@@ -480,12 +483,15 @@ Try {
                             $Pools.Where({ $Variables.UnprofitableAlgorithms[$_.Algorithm] -eq 2 }).ForEach({ $_.Reasons.Add("Unprofitable secondary algorithm") | Out-Null })
                         }
 
-                        If ($Variables.Pools.Count -gt 0) { 
-                            Write-Message -Level Info "Had $($Variables.PoolsCount) pool$(If ($Variables.PoolsCount -ne 1) { "s" }) from previous run$(If ($Variables.PoolsExpired.Count) { ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" })$(If ($PoolsDeconfiguredCount) { ", removed $PoolsDeconfiguredCount deconfigured pool$(If ($PoolsDeconfiguredCount -gt 1) { "s" })" })$(If ($Variables.PoolsAdded.Count) { ", found $($Variables.PoolsAdded.Count) new pool$(If ($Variables.PoolsAdded.Count -ne 1) { "s" })" })$(If ($Variables.PoolsNew) { ", updated $($Variables.PoolsUpdated.Count) existing pool$(If ($Variables.PoolsUpdated.Count -ne 1) { "s" })" })$(If ($Pools.Where({ -not $_.Available })) { ", filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }). $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
-                        }
-                        Else { 
-                            Write-Message -Level Info "Found $($Variables.PoolsNew.Count) pool$(If ($Variables.PoolsNew.Count -ne 1) { "s" })$(If ($Variables.PoolsExpired.Count) { ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" }), filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" }). $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
-                        }
+                        $Message = If ($Variables.Pools.Count -gt 0) { "Had $($Variables.PoolsCount) pool$(If ($Variables.PoolsCount -ne 1) { "s" }) from previous run" } Else { "Loaded $($Variables.PoolsNew.Count) pool$(If ($Variables.PoolsNew.Count -ne 1) { "s" })" }
+                        If ($Variables.PoolsExpired.Count) { $Message += ", expired $($Variables.PoolsExpired.Count) pool$(If ($Variables.PoolsExpired.Count -gt 1) { "s" })" }
+                        If ($PoolsDeconfiguredCount) { $Message += ", removed $PoolsDeconfiguredCount deconfigured pool$(If ($PoolsDeconfiguredCount -gt 1) { "s" })" }
+                        If ($Variables.Pools.Count -and $Variables.PoolsAdded.Count) { $Message += ", found $($Variables.PoolsAdded.Count) new pool$(If ($Variables.PoolsAdded.Count -ne 1) { "s" })" }
+                        If ($Variables.PoolsUpdated.Count) { $Message += ", updated $($Variables.PoolsUpdated.Count) existing pool$(If ($Variables.PoolsUpdated.Count -ne 1) { "s" })" }
+                        If ($Pools.Where({ -not $_.Available })) { $Message += ", filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(If (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }
+                        $Message += ". $(@($Pools.Where({ $_.Available })).Count) available pool$(If (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(If (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
+                        Write-Message -Level Info $Message
+                        Remove-Variable Message
 
                         # Keep pool balances alive; force mining at pool even if it is not the best for the algo
                         If ($Config.BalancesKeepAlive -and $Global:BalancesTrackerRunspace -and $Variables.PoolsLastEarnings.Count -gt 0 -and $Variables.PoolsLastUsed) { 
@@ -566,7 +572,7 @@ Try {
                         If ($Config.Watchdog) { 
                             ForEach ($Worker in $Miner.WorkersRunning) { 
                                 If ($WatchdogTimer = $Variables.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.Algorithm -eq $Worker.Pool.Algorithm }) | Sort-Object -Property Kicked -Bottom 1) { 
-                                    # Update watchdog timers
+                                    # Update watchdog timer
                                     $WatchdogTimer.Kicked = [DateTime]::Now.ToUniversalTime()
                                 }
                                 Else { 
@@ -624,14 +630,14 @@ Try {
                         $Miner.Hashrates_Live = @()
                         ForEach ($Algorithm in $Miner.Algorithms) { 
                             $CollectedHashrate = $Miner.CollectHashrate($Algorithm, (-not $Miner.Benchmark -and $Miner.Data.Count -lt $Miner.MinDataSample))
-                            $Miner.Hashrates_Live += $CollectedHashrate[1]
                             $MinerHashrates.$Algorithm = $CollectedHashrate[0]
+                            $Miner.Hashrates_Live += $CollectedHashrate[1]
                         }
                         If ($Miner.ReadPowerConsumption) { 
                             # Collect power consumption from miner, returns an array of two values (safe, unsafe)
                             $CollectedPowerConsumption = $Miner.CollectPowerConsumption(-not $Miner.MeasurePowerConsumption -and $Miner.Data.Count -lt $Miner.MinDataSample)
-                            $Miner.PowerConsumption_Live = $CollectedPowerConsumption[1]
                             $MinerPowerConsumption = $CollectedPowerConsumption[0]
+                            $Miner.PowerConsumption_Live = $CollectedPowerConsumption[1]
                         }
                     }
 
@@ -665,11 +671,13 @@ Try {
                                     Write-Message -Level Warn "Reported hashrate by '$($Miner.Info)' is unreal ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
                                     $Miner.SetStatus([MinerStatus]::Idle)
                                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { [Void](Remove-Stat $StatName) }
+                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { Remove-Stat $StatName }
                                 }
                             }
                         }
                         Remove-Variable Factor -ErrorAction Ignore
+
+                        $Variables.MinersLastUsed.($Miner.Name) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; Info = $Miner.Info }
 
                         If ($Miner.ReadPowerConsumption) { 
                             If ([Double]::IsNaN($MinerPowerConsumption )) { $MinerPowerConsumption = 0 }
@@ -685,7 +693,7 @@ Try {
                                     Write-Message -Level Warn "Reported power consumption by '$($Miner.Info)' is unreal ($($MinerPowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
                                     $Miner.SetStatus([MinerStatus]::Idle)
                                     $Variables.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { [Void](Remove-Stat $StatName) }
+                                    If ($Stat.ToleranceExceeded -ge $Config.WatchdogCount) { Remove-Stat $StatName }
                                 }
                             }
                         }
@@ -697,6 +705,7 @@ Try {
 
             # Update pools last used, required for BalancesKeepAlive
             If ($Variables.AlgorithmsLastUsed.Values.Updated -gt $Variables.BeginCycleTime) { $Variables.AlgorithmsLastUsed | Get-SortedObject | ConvertTo-Json | Out-File -LiteralPath ".\Data\AlgorithmsLastUsed.json" -Force }
+            If ($Variables.MinersLastUsed.Values.Updated -gt $Variables.BeginCycleTime) { $Variables.MinersLastUsed | Get-SortedObject | ConvertTo-Json | Out-File -LiteralPath ".\Data\MinersLastUsed.json" -Force }
             If ($Variables.PoolsLastUsed.Values -gt $Variables.BeginCycleTime) { $Variables.PoolsLastUsed | Get-SortedObject | ConvertTo-Json | Out-File -LiteralPath ".\Data\PoolsLastUsed.json" -Force }
 
             # Send data to monitoring server
@@ -707,7 +716,7 @@ Try {
 
             # Get new miners
             If ($AvailableMinerPools = If ($Config.MinerUseBestPoolsOnly) { $Variables.Pools.Where({ $_.Available -and ($_.Best -or $_.Prioritize) }) } Else { $Variables.Pools.Where({ $_.Available }) }) { 
-                $MinerPools = [Ordered]@{ }, [Ordered]@{ "" = "" } # Dummy secondary pool
+                $MinerPools = [System.Collections.SortedList]::New(), [System.Collections.SortedList]::New(@{ "" = "" })
                 ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable primary algorithm" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[0][$_.Name] = $_.Group })
                 ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable secondary algorithm" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[1][$_.Name] = $_.Group })
 
@@ -719,7 +728,7 @@ Try {
                 Write-Message -Level Info ($Message -replace "<br>", " ")
                 Remove-Variable Message
 
-                $MinersNew = (Get-ChildItem -Path ".\Miners\*.ps1").ForEach(
+                $MinersNew = ((Get-ChildItem -Path ".\Miners\*.ps1").ForEach(
                     { 
                         $MinerFileName = $_.Name
                         Try { 
@@ -754,17 +763,17 @@ Try {
                             $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
                         }
                     }
-                )
+                ) | Sort-Object -Property Info)
                 Remove-Variable Algorithm, AvailableMinerPools, Miner, MinerFileName, MinerPools -ErrorAction Ignore
 
                 If ($Variables.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info }) }
 
-                $Miners = Compare-Object @($Variables.Miners | Select-Object) @($MinersNew | Select-Object) -Property Info -IncludeEqual -PassThru
+                $Miners = Compare-Object @($Variables.Miners | Sort-Object -Property Info) @($MinersNew) -Property Info -IncludeEqual -PassThru
                 $MinerDevices = $Variables.EnabledDevices | Select-Object -Property Bus, ConfiguredPowerConsumption, Name, ReadPowerConsumption, Status
 
                 # Make smaller groups for faster update
-                $MinersNewGroups = $MinersNew | Group-Object -Property BaseName_Version_Device
-                ($Miners.Where({ $_.SideIndicator -ne "<=" }) | Group-Object -Property BaseName_Version_Device).ForEach(
+                $MinersNewGroups = $MinersNew | Group-Object -Property BaseName_Version
+                ($Miners.Where({ $_.SideIndicator -ne "<=" }) | Group-Object -Property BaseName_Version).ForEach(
                     { 
                         $Name = $_.Name
                         $MinersNewGroup = $MinersNewGroups.Where({ $Name -eq $_.Name }).Group
@@ -781,29 +790,25 @@ Try {
                                             # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
                                             $_.Algorithms = $_.Workers.Pool.Algorithm
                                             $_.CommandLine = $_.GetCommandLine()
-                                            $_.BaseName = ($Miner.Name -split "-")[0]
-                                            $_.Version = ($Miner.Name -split "-")[1]
-                                            $_.BaseName_Version = "$($Miner.BaseName)-$($Miner.Version)"
+                                            $_.BaseName = ($_.Name -split "-")[0]
+                                            $_.Version = ($_.Name -split "-")[1]
+                                            $_.BaseName_Version = "$($_.BaseName)-$($_.Version)"
                                             $DeviceNames = $_.DeviceNames
                                             $_.Devices = $MinerDevices.Where({ $DeviceNames -contains $_.Name })
                                         }
-                                        Else { 
+                                        ElseIf ($Miner = $MinersNewGroup.Where({ $Miner.Info -eq $_.Info })) { 
+                                        # ElseIf ($Miner = Compare-Object -PassThru $MinersNewGroup $_ -Property Info -IncludeEqual -ExcludeDifferent) { 
                                             # Update existing miners
-                                            $Info = $_.Info
-                                            If ($Miner = $MinersNewGroup.Where({ $Info -eq $_.Info })) { 
-                                                If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
-                                                    $_.Arguments = $Miner.Arguments
-                                                    $_.CommandLine = $Miner.GetCommandLine()
-                                                    $_.Port = $Miner.Port
-                                                    $DeviceNames = $_.DeviceNames
-                                                    $_.Devices = $MinerDevices.Where({ $DeviceNames -contains $_.Name })
-                                                }
-                                                $_.PrerequisitePath = $Miner.PrerequisitePath
-                                                $_.PrerequisiteURI = $Miner.PrerequisiteURI
-                                                $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
-                                                $_.WarmupTimes = $Miner.WarmupTimes
-                                                $_.Workers = $Miner.Workers
+                                            If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
+                                                $_.Arguments = $Miner.Arguments
+                                                $_.CommandLine = $Miner.GetCommandLine()
+                                                $_.Port = $Miner.Port
                                             }
+                                            $_.PrerequisitePath = $Miner.PrerequisitePath
+                                            $_.PrerequisiteURI = $Miner.PrerequisiteURI
+                                            $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
+                                            $_.WarmupTimes = $Miner.WarmupTimes
+                                            $_.Workers = $Miner.Workers
                                         }
                                     }
                                     $_.MeasurePowerConsumption = $Variables.CalculatePowerCost
@@ -819,14 +824,17 @@ Try {
                         )
                     }
                 )
-                Remove-Variable DeviceNames, Info, Miner, MinerDevices, MinersNewGroup, MinersNewGroups, MinersNew, Name -ErrorAction Ignore
+                Remove-Variable DeviceNames, Info, Miner, MinerDevices, MinersNew, MinersNewGroup, MinersNewGroups, Name -ErrorAction Ignore
             }
             $MinersAdded = $Miners.Where({ $_.SideIndicator -eq "=>" })
+            $MinersRemoved = $Miners.Where({ $_.Updated -lt $Variables.BeginCycleTime.AddDays(-1) })
+            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Best = $false; $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New() })
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             While ($Variables.SuspendCycle) { Start-Sleep -Seconds 1 }
 
             # Filter miners
+            $Miners.Where({ $_.Updated -lt $Variables.CycleStarts[0] }).ForEach({ $_.Reasons.Add("No valid pool data in the last $($Config.SyncWindow) cycles") | Out-Null })
             $Miners.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled by user") | Out-Null })
             $ExcludeMinerName = @($Config.ExcludeMinerName -replace "^-" | Select-Object)
             If ($ExcludeMinerName.Count) { $Miners.Where({ Compare-Object $ExcludeMinerName ($_.BaseName, $_.BaseName_Version, $_.BaseName_Version_Device) -IncludeEqual -ExcludeDifferent }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Config.ExcludeMinerName -join ", "))") | Out-Null }) }
@@ -884,33 +892,31 @@ Try {
             }
             Remove-Variable DownloadList
 
+            # Open firewall ports for all miners
             $Variables.MinerMissingFirewallRule = [System.Collections.Generic.SortedSet[String]]::new()
-            If ($MinersAdded) { 
-                # Open firewall ports for all miners
-                If ($Config.OpenFirewallPorts) { 
-                    If (Get-Command Get-MpPreference) { 
-                        If ((Get-Command Get-MpComputerStatus) -and (Get-MpComputerStatus)) { 
-                            If (Get-Command Get-NetFirewallRule) { 
-                                If ($MissingFirewallRules = (Compare-Object @(Get-NetFirewallApplicationFilter | Select-Object -ExpandProperty Program -Unique) @(($Miners | Select-Object -ExpandProperty Path -Unique).ForEach({ "$PWD\$($_)" })) -PassThru).Where({ $_.SideIndicator -eq "=>" })) { 
-                                    Try { 
-                                        If (-not $Variables.IsLocalAdmin) { 
-                                            Write-Message -Level Info "Initiating request to add inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })..."
-                                            Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })...'; Start-Sleep -Seconds 3; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json) | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' }" -replace "`"", "\`"") -Verb runAs
-                                        }
-                                        Else { 
-                                            Import-Module NetSecurity
-                                            $MissingFirewallRules | ForEach-Object { New-NetFirewallRule -DisplayName (Split-Path $_ | Split-Path -leaf) -Program $_ -Description "Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())" -Group $($Variables.Branding.ProductLabel) }
-                                        }
-                                        Write-Message -Level Info "Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) to Windows Defender inbound rules group '$($Variables.Branding.ProductLabel)'."
+            If ($Config.OpenFirewallPorts -and ($MinersAdded -or -not $Variables.IsLocalAdmin)) { # If running as admin only needed when new miners are found
+                If (Get-Command Get-MpPreference) { 
+                    If ((Get-Command Get-MpComputerStatus) -and (Get-MpComputerStatus)) { 
+                        If (Get-Command Get-NetFirewallRule) { 
+                            If ($MissingFirewallRules = (Compare-Object @(Get-NetFirewallApplicationFilter | Select-Object -ExpandProperty Program -Unique | Sort-Object) @(($Miners.Path | Sort-Object -Unique).ForEach({ "$PWD\$($_)" })) -PassThru).Where({ $_.SideIndicator -eq "=>" })) { 
+                                Try { 
+                                    If (-not $Variables.IsLocalAdmin) { 
+                                        Write-Message -Level Info "Initiating request to add inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })..."
+                                        Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })...';  Write-Host ''; Start-Sleep -Seconds 3; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json).ForEach({ New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Variables.Branding.ProductLabel)' | Out-Null; `$Message = 'Added inbound firewall rule for ' + (Split-Path `$_ | Split-Path -leaf) + '.'; Write-Host `$Message }); Write-Host ''; Write-Host 'Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }).'; Start-Sleep -Seconds 3" -replace "`"", "\`"") -Verb runAs
                                     }
-                                    Catch { 
-                                        Write-Message -Level Error "Could not add inbound firewall rules. Some miners will not be available."
-                                        $Variables.MinerMissingFirewallRule = $Miners.Where({ $MissingFirewallRules -contains $_.Path })
-                                        $Variables.MinerMissingFirewallRule.ForEach({ $_.Reasons.Add("Inbound firewall rule missing") | Out-Null })
+                                    Else { 
+                                        Import-Module NetSecurity
+                                        $MissingFirewallRules.ForEach({ New-NetFirewallRule -DisplayName (Split-Path $_ | Split-Path -leaf) -Program $_ -Description "Inbound rule added by $($Variables.Branding.ProductLabel) $($Variables.Branding.Version) on $([DateTime]::Now.ToString())" -Group $($Variables.Branding.ProductLabel) })
                                     }
+                                    Write-Message -Level Info "Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) to Windows Defender inbound rules group '$($Variables.Branding.ProductLabel)'."
                                 }
-                                Remove-Variable MissingFirewallRules
+                                Catch { 
+                                    Write-Message -Level Error "Could not add inbound firewall rules. Some miners will not be available."
+                                    $Variables.MinerMissingFirewallRule = $Miners.Where({ $MissingFirewallRules -contains $_.Path })
+                                    $Variables.MinerMissingFirewallRule.ForEach({ $_.Reasons.Add("Inbound firewall rule missing") | Out-Null })
+                                }
                             }
+                            Remove-Variable MissingFirewallRules
                         }
                     }
                 }
@@ -993,7 +999,7 @@ Try {
             $Miners.ForEach({ $_.Available = -not $_.Reasons.Count })
 
             # Gone miners are no longer available
-            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Available = $false; $_.Best = $false })
+            $Miners.Where({ $_.Updated -lt $Variables.BeginCycleTime.AddDays(-1) }).ForEach({ $_.Available = $false; $_.Best = $false })
 
             If (-not $Miners.Where({ $_.Available })) { 
                 $Message = "No available miners - will retry in $($Config.Interval) seconds..."
@@ -1011,13 +1017,14 @@ Try {
                 Continue
             }
 
-            If ($Variables.Miners) { 
-                Write-Message -Level Info "Had $($Variables.Miners.Count) miner$(If ($Variables.Miners.Count -ne 1) { "s" }) from previous run$(If ($MinersAdded.Count) { ", added $($MinersAdded.Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "=>" }).Count -ne 1) { "s" })" })$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) { ", removed $($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) miner$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count -ne 1) { "s" })" } )$(If ($Miners.Where({ $_.SideIndicator -eq "==" }).Count) { ", updated $($Miners.Where({ $_.SideIndicator -eq "==" }).Count) existing miner$(If ($Miners.Where({ $_.SideIndicator -ne "==" }).Count -ne 1) { "s" })" })$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" })) { ", filtered out $($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" })" }). $($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count) available miner$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -eq 1) { "s" })."
-            }
-            Else { 
-                Write-Message -Level Info "Loaded $($Miners.Where({ $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" })$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) { ", removed $($Miners.Where({ $_.SideIndicator -eq "<=" }).Count) miner$(if ($Miners.Where({ $_.SideIndicator -eq "<=" }).Count -ne 1) { "s" })" } )$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" })) { ", filtered out $($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count) miner$(If ($Miners.Where({ -not $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" })" }). $($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count) available miner$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available -and $_.SideIndicator -ne "<=" }).Count -eq 1) { "s" })."
-            }
-            Remove-Variable MinersAdded
+            $Message = If ($Variables.Miners) { "Had $($Variables.Miners.Count) miner$(If ($Variables.Miners.Count -ne 1) { "s" }) from previous run" } Else { "Loaded $($Miners.Count) miner$(If ($Miners.Count -ne 1) { "s" })" }
+            If ($Variables.Miners.Count -and $MinersAdded.Count) { $Message += ", added $($MinersAdded.Count) miner$(If ($Miners.Where({ $_.SideIndicator -ne "=>" }).Count -ne 1) { "s" })" }
+            If ($MinersRemoved.Count) { $Message += ", removed $($MinersRemoved.Count.Count) miner$(if ($MinersRemoved.Count -ne 1) { "s" })" }
+            If ($Miners.Where({ $_.SideIndicator -eq "==" }).Count) { $Message += ", updated $($Miners.Where({ $_.SideIndicator -eq "==" }).Count) existing miner$(If ($Miners.Where({ $_.SideIndicator -ne "==" }).Count -ne 1) { "s" })" }
+            If ($Miners.Where({ -not $_.Available -and $_.Updated -ge $Variables.BeginCycleTime.AddDays(-1) })) { $Message += ", filtered out $($Miners.Where({ -not $_.Available -and $_.Updated -ge $Variables.BeginCycleTime.AddDays(-1) }).Count) miner$(If ($Miners.Where({ -not $_.Available -and $_.Updated -ge$Variables.BeginCycleTime.AddDays(-1) }).Count -ne 1) { "s" })" }
+            $Message += ". $($Miners.Where({ $_.Available }).Count) available miner$(If ($Miners.Where({ $_.Available }).Count -ne 1) { "s" }) remain$(If ($Miners.Where({ $_.Available }).Count -eq 1) { "s" })."
+            Write-Message -Level Info $Message
+            Remove-Variable Message, MinersAdded, MinersRemoved
 
             $Bias = If ($Variables.CalculatePowerCost -and -not $Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
             If ($Miners.Where({ $_.Available })) { 
@@ -1032,7 +1039,7 @@ Try {
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias *= $RunningMinerBonusFactor })
 
                     # Get the optimal miners per algorithm and device
-                    $MinersOptimal = ($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }, { [String]$_.Algorithms }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { [String]$_.Algorithms }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) })
+                    $MinersOptimal = ($Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }, { $_.Algorithms -join " " }).ForEach({ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { $_.Algorithms -join " " }; Descending = $false } -Top 1).ForEach({ $_.Optimal = $true; $_ }) })
                     # Get the best miners per device
                     $Variables.MinersBestPerDevice = ($Miners.Where({ $_.Available }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, KeepRunning, Prioritize, $Bias, Activated, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $false } -Top 1 })
 
@@ -1046,18 +1053,18 @@ Try {
                     # Get most best miner combination i.e. AMD+INTEL+NVIDIA+CPU
                     $MinerCombinations = $Variables.MinerDeviceNamesCombinations.ForEach(
                         { 
-                            $MinerDeviceNamesCombination = $_.Combination
+                            $DeviceNamesCombination = $_.Combination
                             [PSCustomObject]@{ 
-                                Combination = $MinerDeviceNamesCombination.ForEach(
+                                Combination = $DeviceNamesCombination.ForEach(
                                     { 
-                                        $DeviceNames = [String]$_.DeviceNames
-                                        $Variables.MinersBestPerDevice.Where({ [String]$_.DeviceNames -eq $DeviceNames })
+                                        $DeviceNames = $_.DeviceNames -join " "
+                                        $Variables.MinersBestPerDevice.Where({ ($_.DeviceNames -join " ") -eq $DeviceNames })
                                     }
                                 )
                             }
                         }
                     )
-                    Remove-Variable DeviceNames, MinerDeviceNamesCombination -ErrorAction Ignore
+                    Remove-Variable DeviceNames, DeviceNamesCombination -ErrorAction Ignore
                     $MinersBest = ($MinerCombinations | Sort-Object -Descending { $_.Combination.Where({ [Double]::IsNaN($_.$Bias) }).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination
 
                     # Revert smallest bias hack
@@ -1266,7 +1273,8 @@ Try {
         )
 
         # Update data in API
-        $Variables.Miners = $Miners.Where({ $_.SideIndicator -ne "<=" }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, Info
+        # Keep miners that have no available pool for 24hrs
+        $Variables.Miners = $Miners.Where({ $_.Updated -ge $Variables.BeginCycleTime.AddDays(-1) }) | Sort-Object -Property Info
         $Variables.MinersBest = $MinersBest | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }
         $Variables.MinersOptimal = $MinersOptimal | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
         Remove-Variable Bias, Miners, MinersBest, MinersOptimal -ErrorAction Ignore
@@ -1517,8 +1525,7 @@ Try {
         Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
 
         If ($Error) { 
-           "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-            Write-Message -Level Error "Error: $Error" >> $ErrorLogFile
+            $Variables.CoreError += $Error
             $Error.Clear()
         }
         [System.GC]::Collect()

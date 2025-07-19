@@ -18,19 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ProHashing.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Url = "https://prohashing.com/customer/dashboard"
 
-$RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+$RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 $RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
-$Request = "https://prohashing.com/api/v1/wallet?apiKey=$($Config.ProHashingAPIKey)"
+$Request = "https://prohashing.com/api/v1/wallet?apiKey=$($Config.ProHashingAPIkey)"
 
-While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.ProHashingAPIKey) { 
+While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.ProHashingAPIkey) { 
 
     Try { 
         $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 If ($Config.NiceHashWallet) { 
@@ -28,11 +28,11 @@ If ($Config.NiceHashWallet) {
     $PoolConfig = $Config.PoolsConfig.NiceHash
     $PayoutCurrency = $PoolConfig.PayoutCurrency
     $Wallet = $PoolConfig.Wallets.$PayoutCurrency
-    $RetryCount = $PoolConfig.PoolAPIAllowedFailureCount
+    $RetryCount = $PoolConfig.PoolAPIallowedFailureCount
     $RetryInterval = $PoolConfig.PoolAPIretryInterval
 
     $Key = $Config.NiceHashAPIKey
-    $OrganizationID = $Config.NiceHashOrganizationID
+    $OrganizationID = $Config.NiceHashOrganizationId
     $Secret = $Config.NiceHashAPISecret
 
     Function Get-NiceHashRequest { 
@@ -71,7 +71,7 @@ If ($Config.NiceHashWallet) {
 
     $Request = "https://api2.nicehash.com$($EndPoint)?extendedResponse=true"
 
-    While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.NiceHashAPIKey -and $Config.NiceHashAPISecret -and $Config.NiceHashOrganizationID) { 
+    While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.NiceHashAPIKey -and $Config.NiceHashAPISecret -and $Config.NiceHashOrganizationId) { 
 
         Try { 
             $APIResponse = Get-NiceHashRequest -EndPoint $EndPoint -Method $Method -Key $Key -OrganizationID $OrganizationID -Secret $Secret

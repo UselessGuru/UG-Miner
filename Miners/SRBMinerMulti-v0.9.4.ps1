@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -63,7 +63,7 @@ $Algorithms = @(
     @{ Algorithm = "ProgPowanoZ";       Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_zano" }
     @{ Algorithm = "SHA3d";             Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm sha3d" } # FPGU
 #   @{ Algorithm = "VerusHash";         Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verushash" }
-    @{ Algorithm = "VertHash";          Fee = @(0.0125); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 10); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verthash --verthash-dat-path ..\.$($Variables.VerthashDatPath)" }
+    @{ Algorithm = "VertHash";          Fee = @(0.0125); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 10); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verthash --verthash-dat-path ..\.$($Variables.VertHashDatPath)" }
     @{ Algorithm = "Yescrypt";          Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --disable-cpu --algorithm yescrypt" }
 )
 
@@ -76,12 +76,12 @@ If ($Algorithms) {
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
-            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Config.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
             $Algorithms.ForEach(
                 { 
-                    If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                        $PrerequisitePath = $Variables.VerthashDatPath
+                    If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                        $PrerequisitePath = $Variables.VertHashDatPath
                         $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                     }
                     Else { 

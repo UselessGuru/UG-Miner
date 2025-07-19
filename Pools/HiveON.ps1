@@ -19,14 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HiveON.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 Param(
-    [PSCustomObject]$Config,
-    [String]$PoolVariant,
-    [Hashtable]$Variables
+    [String]$PoolVariant
 )
 
 $ProgressPreference = "SilentlyContinue"
@@ -52,14 +50,14 @@ Do {
 
 If (-not $Request) { Return }
 
-ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
-    $Currency = $Pool.name -replace "\s+"
+ForEach ($Algorithm in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
+    $Currency = $Algorithm.name -replace "\s+"
     If ($AlgorithmNorm = Get-AlgorithmFromCurrency $Currency) { 
-        $Divisor = [Double]$Pool.profitPerPower
+        $Divisor = [Double]$Algorithm.profitPerPower
 
         # Add coin name
-        If ($Pool.title -and $Currency) { 
-            [Void](Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title)
+        If ($Algorithm.title -and $Currency) { 
+            Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Algorithm.title
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
@@ -68,7 +66,7 @@ ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
         If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
+        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Algorithm.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
 
         [PSCustomObject]@{ 
             Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
@@ -77,14 +75,14 @@ ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
             Disabled                 = $Stat.Disabled
             EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
             Fee                      = 0.03
-            Host                     = [String]$Pool.servers[0].host
+            Host                     = [String]$Algorithm.servers[0].host
             Key                      = $Key
             Name                     = $Name
             Pass                     = "x"
-            Port                     = [UInt16]$Pool.servers[0].ports[0]
-            PortSSL                  = [UInt16]$Pool.servers[0].ssl_ports[0]
+            Port                     = [UInt16]$Algorithm.servers[0].ports[0]
+            PortSSL                  = [UInt16]$Algorithm.servers[0].SSL_ports[0]
             PoolUri                  = "https://hiveon.net/$($Currency.ToLower())"
-            Price                    = $Stat.Live
+            Price                    = If ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } Else { $Stat.Live }
             Protocol                 = "ethproxy"
             Reasons                  = $Reasons
             Region                   = [String]$PoolConfig.Region
@@ -95,7 +93,7 @@ ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
             User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }
             Variant                  = $PoolVariant
             WorkerName               = $PoolConfig.WorkerName
-            Workers                  = [UInt]$Request.stats.$($Pool.name).workers
+            Workers                  = [UInt]$Request.stats.$($Algorithm.name).workers
         }
     }
 }

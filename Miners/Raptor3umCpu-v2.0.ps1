@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -43,7 +43,7 @@ If ($Algorithms) {
     ElseIf ($AvailableMinerDevices.CPUfeatures -match 'sse2') { $Path = "Bin\$Name\cpuminer-sse2.exe" }
     Else { Return }
 
-    $MinerAPIPort = $Config.APIPort + ($AvailableMinerDevices.Id | Sort-Object -Top 1) + 1
+    $MinerAPIPort = $Config.APIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1) + 1
 
     $Algorithms.ForEach(
         { 

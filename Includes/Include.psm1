@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -297,6 +297,7 @@ Class Miner : IDisposable {
     [Double[]]$Hashrates_Live = @()
     [String]$Info
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
+    [DateTime]$LastUsed # derived from stats
     [String]$LogFile
     [Boolean]$MeasurePowerConsumption = $false # derived from stats
     [UInt16]$MinDataSample # for safe hashrate values
@@ -326,7 +327,7 @@ Class Miner : IDisposable {
     [String]$SubStatus = [MinerStatus]::Idle
     [TimeSpan]$TotalMiningDuration # derived from pool and stats
     [String]$Type
-    [DateTime]$Updated # derived from stats
+    [DateTime]$Updated
     [String]$URI
     [DateTime]$ValidDataSampleTimestamp = 0
     [String]$Version
@@ -759,7 +760,8 @@ Class Miner : IDisposable {
 
         $this.Disabled = $this.Workers.Disabled -contains $true
         $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
-        $this.Updated = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
+        $this.LastUsed = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
+        $this.Updated = [DateTime]::Now.ToUniversalTime()
         $this.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
     }
 }
@@ -798,7 +800,7 @@ Function Invoke-CreateProcess {
         If ($null -eq $ControllerProcess) { Return }
 
         # Define all the structures for CreateProcess
-    Add-Type -TypeDefinition @"
+        Add-Type -TypeDefinition @"
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -1291,6 +1293,7 @@ Function Get-Rate {
         $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -ErrorAction Ignore)
         If ($RatesCache.PSObject.Properties.Name) { 
             $Variables.Rates = $RatesCache
+            $Variables.RatesUpdated = [DateTime]::Now.ToUniversalTime().AddMinutes(-14) # Trigger next attempt in 1 minute
             Write-Message -Level Warn "Could not load exchange rates from 'min-api.cryptocompare.com'. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
         }
         Else { 
@@ -1344,10 +1347,8 @@ Function Write-Message {
                 $SelectionStart = $Variables.TextBoxSystemLog.SelectionStart
                 $TextLength = $Variables.TextBoxSystemLog.TextLength
 
-                If ($Variables.TextBoxSystemLog.Lines.Count -gt 250) { 
-                    # Keep only 200 lines, more lines impact performance
-                    $Variables.TextBoxSystemLog.Lines = $Variables.TextBoxSystemLog.Lines | Select-Object -Last 200
-                }
+                # Keep only 200 lines, more lines impact performance
+                If ($Variables.TextBoxSystemLog.Lines.Count -gt 250) { $Variables.TextBoxSystemLog.Lines = $Variables.TextBoxSystemLog.Lines | Select-Object -Last 200 }
 
                 $SelectionStart += ($Variables.TextBoxSystemLog.TextLength - $TextLength)
                 If ($SelectionLength -and $SelectionStart -ge 0) { 
@@ -1397,7 +1398,7 @@ Function Write-MonitoringData {
                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
                     Currency       = $Config.FIATcurrency
                     CurrentSpeed   = $_.Hashrates_Live
-                    Earnings        = (($_.WorkersRunning.Earnings | Measure-Object -Sum).Sum)
+                    Earnings       = ($_.WorkersRunning.Earnings | Measure-Object -Sum).Sum
                     EstimatedSpeed = $_.WorkersRunning.Hashrate
                     Name           = $_.Name
                     Path           = Resolve-Path -Relative $_.Path
@@ -1429,7 +1430,7 @@ Function Write-MonitoringData {
         }
     }
     Catch { 
-        Write-Message -Level Warn "Monitoring: Unable to send status to  monitoring server '$($Config.MonitoringServer)' [ID $($Config.MonitoringUser)]."
+        Write-Message -Level Warn "Monitoring: Unable to send status to monitoring server '$($Config.MonitoringServer)' [ID $($Config.MonitoringUser)]."
     }
 }
 
@@ -1657,13 +1658,16 @@ Function Read-Config {
     # Load the configuration
     $ConfigFromFile = @{ }
     If (Test-Path -LiteralPath $ConfigFile -PathType Leaf) { 
-        Try { $ConfigFromFile = [System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject } Catch {}
+        Try { 
+            $ConfigFromFile = [System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject
+        } 
+        Catch { }
         If ($ConfigFromFile.psBase.Keys.Count -eq 0) { 
             $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
             Move-Item -Path $ConfigFile $CorruptConfigFile -Force
             If ($Config.psBase.Keys.Count -gt 0) { 
                 Write-Message -Level Error "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
-                [Void](Write-Config -Config $Config)
+                Write-Config -Config $Config
                 $Variables.ConfigFileReadTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
                 Continue
             }
@@ -1678,7 +1682,7 @@ Function Read-Config {
             ($Variables.AllCommandLineParameters.psBase.Keys | Sort-Object).ForEach(
                 { 
                     If ($ConfigFromFile.psBase.Keys -contains $_) { 
-                        # Upper / lower case conversion of variable keys (Web GUI is case sensitive)
+                        # Upper / lower case conversion of variable keys (config item names are case sensitive)
                         $Value = $ConfigFromFile.$_
                         $ConfigFromFile.Remove($_)
                         If ($Variables.AllCommandLineParameters.$_ -is [Switch]) { 
@@ -1725,7 +1729,7 @@ Function Read-Config {
         $Variables.Remove("PoolsConfigFileReadTimestamp")
     }
 
-    $ConfigFromFile.PoolsConfig = Get-PoolsConfig
+    $Global:Config.PoolsConfig = Get-PoolsConfig
 
     # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
     ($ConfigFromFile.psBase.Keys | Sort-Object).ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
@@ -1754,7 +1758,7 @@ Function Read-Config {
     # Write config file in case they do not exist already
     If (-not $Variables.FreshConfig) { 
         If (-not (Test-Path -LiteralPath $Variables.ConfigFile -PathType Leaf)) { 
-            [Void](Write-Config -Config $Config)
+            Write-Config -Config $Config
             $Variables.ConfigFileReadTimestamp = (Get-Item -Path $Variables.ConfigFile).LastWriteTime
         }
     }
@@ -1822,7 +1826,7 @@ Function Update-ConfigFile {
             Default        { "Europe"; Break }
         }
         Write-Message -Level Warn "Available mining locations have changed during update ($OldRegion -> $($Config.Region))".
-        $Variables.ConfigurationHasChangedDuringUpdate += "- Mining locations have changed ($OldRegion -> $($Config.Region))"
+        $Variables.ConfigurationHasChangedDuringUpdate += "- Available mining locations have changed ($OldRegion -> $($Config.Region))"
     }
 
     # Changed config items
@@ -1870,7 +1874,7 @@ Function Update-ConfigFile {
 
     If (-not $Variables.FreshConfig) { 
         $Config.ConfigFileVersion = $Variables.Branding.Version.ToString()
-        [Void](Write-Config -Config $Config)
+        Write-Config -Config $Config
         Write-Message -Level Verbose "Updated configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' to version $($Variables.Branding.Version.ToString())."
     }
 }
@@ -2158,7 +2162,7 @@ Function Set-Stat {
                     }
                 }
 
-                [Void](Remove-Stat -Name $Name)
+                Remove-Stat -Name $Name
                 $Stat = Set-Stat -Name $Name -Value $Value
             }
             Else { 
@@ -2278,7 +2282,7 @@ Function Get-Stat {
                 }
                 Catch { 
                     Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
-                    [Void](Remove-Stat $Name)
+                    Remove-Stat $Name
                 }
             }
 
@@ -2547,10 +2551,12 @@ Function Get-Device {
 
                 # Add normalised values
                 $Devices += $Device = [Device]@{ 
+                    Bus       = $null
                     Name      = $null
+                    Memory    = $null
+                    MemoryGiB = $null
                     Model     = $Device_CIM.Name
                     Type      = "CPU"
-                    Bus       = $null
                     Vendor    = $(
                         Switch -Regex ($Device_CIM.Manufacturer) { 
                             "Advanced Micro Devices" { "AMD"; Break }
@@ -2561,8 +2567,6 @@ Function Get-Device {
                             Default                  { $Device_CIM.Manufacturer -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
-                    Memory    = $null
-                    MemoryGiB = $null
                 }
 
                 $Device.Id             = [Int]$Id
@@ -2600,14 +2604,16 @@ Function Get-Device {
                 $Device_PNP = $Device_PNP.PSObject.Copy()
                 $Device_Reg = (Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)").PSObject.Copy()
                 $Devices += $Device = [Device]@{ 
-                    Name      = $null
-                    Model     = $Device_CIM.Name
-                    Type      = "GPU"
                     Bus       = $(
                         If ($Device_PNP.DEVPKEY_Device_BusNumber -is [UInt64] -or $Device_PNP.DEVPKEY_Device_BusNumber -is [UInt32]) { 
                             [Int64]$Device_PNP.DEVPKEY_Device_BusNumber
                         }
                     )
+                    Name      = $null
+                    Memory    = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
+                    MemoryGiB = [Double]([Math]::Round([Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize') / 0.05GB) / 20) # Round to nearest 50MB
+                    Model     = $Device_CIM.Name
+                    Type      = "GPU"
                     Vendor    = $(
                         Switch -Regex ([String]$Device_CIM.AdapterCompatibility) { 
                             "Advanced Micro Devices" { "AMD"; Break }
@@ -2618,8 +2624,6 @@ Function Get-Device {
                             Default                  { $Device_CIM.AdapterCompatibility -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
-                    Memory    = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
-                    MemoryGiB = [Double]([Math]::Round([Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize') / 0.05GB) / 20) # Round to nearest 50MB
                 }
 
                 $Device.Id             = [Int]$Id
@@ -2665,18 +2669,20 @@ Function Get-Device {
 
                         # Add normalised values
                         $Device = [Device]@{ 
+                            Bus = $(
+                                If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
+                                    [Int64]$Device_OpenCL.PCIBus
+                                }
+                            )
                             Name      = $null
+                            Memory    = [UInt64]$Device_OpenCL.GlobalMemSize
+                            MemoryGiB = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
                             Model     = $Device_OpenCL.Name
                             Type      = $(
                                 Switch -Regex ([String]$Device_OpenCL.Type) { 
                                     "CPU"   { "CPU"; Break }
                                     "GPU"   { "GPU"; Break }
                                     Default { [String]$Device_OpenCL.Type -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
-                                }
-                            )
-                            Bus = $(
-                                If ($Device_OpenCL.PCIBus -is [Int64] -or $Device_OpenCL.PCIBus -is [Int32]) { 
-                                    [Int64]$Device_OpenCL.PCIBus
                                 }
                             )
                             Vendor = $(
@@ -2689,8 +2695,6 @@ Function Get-Device {
                                     Default                  { [String]$Device_OpenCL.Vendor -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                                 }
                             )
-                            Memory    = [UInt64]$Device_OpenCL.GlobalMemSize
-                            MemoryGiB = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
                         }
 
                         $Device.Id             = [Int]$Id
@@ -3048,7 +3052,7 @@ Function Get-Version {
                     Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Starting update..."
                     [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
                     Write-Host " ✔" -ForegroundColor Green
-                    [Void](Initialize-Autoupdate -UpdateVersion $UpdateVersion)
+                    Initialize-AutoUpdate -UpdateVersion $UpdateVersion
                 }
                 Else { 
                     Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
@@ -3078,7 +3082,7 @@ Function Get-Version {
     }
 }
 
-Function Initialize-Autoupdate { 
+Function Initialize-AutoUpdate { 
 
     Param (
         [Parameter(Mandatory = $true)]
@@ -3089,7 +3093,7 @@ Function Initialize-Autoupdate {
     If (-not (Test-Path -LiteralPath ".\AutoUpdate" -PathType Container)) { New-Item -Path . -Name "AutoUpdate" -ItemType Directory | Out-Null }
     If (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { New-Item -Path . -Name "Logs" -ItemType Directory | Out-Null }
 
-    $UpdateScriptURL = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/AutoUpdate/Autoupdate.ps1"
+    $UpdateScriptURL = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/AutoUpdate/AutoUpdate.ps1"
     $UpdateScript = ".\AutoUpdate\AutoUpdate.ps1"
     $UpdateLog = ".\Logs\AutoUpdateLog_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
 
@@ -3130,7 +3134,7 @@ Function Start-LogReader {
             }
         }
         Else { 
-            [Void](& $($Variables.LogViewerExe) $($Variables.LogViewerConfig))
+            & $($Variables.LogViewerExe) $($Variables.LogViewerConfig)
         }
     }
 }
@@ -3234,7 +3238,7 @@ Function Get-AllDAGdata {
                     { 
                         If ($AlgorithmNorm = Get-Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm) { 
                             $Currency = $CurrencyDAGdataResponse.coins.$_.tag
-                            [Void](Add-CoinName -Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm -Currency $Currency -CoinName $_)
+                            Add-CoinName -Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm -Currency $Currency -CoinName $_
                             If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG) { 
                                 If ($CurrencyDAGdataResponse.coins.$_.last_block -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
@@ -3995,6 +3999,15 @@ Function Initialize-Environment {
         Write-Host "Loaded algorithm last used data."
     }
 
+    # Load MinersLastUsed data
+    If (Test-Path -LiteralPath "$PWD\Data\MinersLastUsed.json" ) { $Variables.MinersLastUsed = [System.IO.File]::ReadAllLines("$PWD\Data\MinersLastUsed.json") | ConvertFrom-Json -ErrorAction Ignore -AsHashtable }
+    If (-not $Variables.MinersLastUsed.psBase.Keys) { 
+        $Variables.MinersLastUsed = @{ }
+    }
+    Else { 
+        Write-Host "Loaded algorithm last used data."
+    }
+
     # Load EarningsChart data to make it available early in GUI
     If (Test-Path -LiteralPath "$PWD\Data\EarningsChartData.json" -PathType Leaf) { $Variables.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Data\EarningsChartData.json") | ConvertFrom-Json }
     If (-not $Variables.EarningsChartData.psBase.Keys) { 
@@ -4034,6 +4047,11 @@ Function Initialize-Environment {
     Else { Write-Host "Loaded AMD GPU architecture table." }
 
     $Variables.BalancesCurrencies = @($Variables.Balances.PSObject.Properties.Name.ForEach({ $Variables.Balances.$_.Currency }) | Sort-Object -Unique)
+}
+
+Function Restart-APIserver { 
+    Stop-APIserver
+    Start-APIserver
 }
 
 Function Start-APIserver { 
@@ -4078,12 +4096,12 @@ Function Start-APIserver {
 
         # Wait for API to get ready
         $RetryCount = 3
-        While (-not ($Variables.APIVersion) -and $RetryCount -gt 0) { 
+        While (-not ($Variables.APIversion) -and $RetryCount -gt 0) { 
             Start-Sleep -Seconds 1
             Try { 
                 If ($Variables.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
                     $Variables.APIport = $Config.APIport
-                    If ($Config.APILogFile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Variables.APIVersion)) started." | Out-File $Config.APILogFile -Force -ErrorAction Ignore }
+                    If ($Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Variables.APIversion)) started." | Out-File $Config.APIlogfile -Force -ErrorAction Ignore }
                     Write-Message -Level Info "API and web GUI is running on http://localhost:$($Variables.APIport)."
                     # Start Web GUI (show configuration edit if no existing config)
                     If ($Config.WebGUI) { Start-Process "http://localhost:$($Variables.APIport)$(If ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
@@ -4093,7 +4111,7 @@ Function Start-APIserver {
             Catch { }
             $RetryCount--
         }
-        If (-not $Variables.APIVersion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport)." }
+        If (-not $Variables.APIversion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Config.APIport)." }
     }
 }
 
@@ -4101,16 +4119,16 @@ Function Stop-APIserver {
 
     If ($Global:APIrunspace.Job.IsCompleted -eq $false) { 
 
-      If ($Variables.APIserver.IsListening) { 
+        If ($Variables.APIserver.IsListening) { 
+            If ($Config.APIport -ne $Variables.APIport -or $Variables.Miners.Port -contains $Config.APIport) { 
+                # API port has changed; must stop all running miners
+                If ($Variables.MinersRunning) { 
+                    Write-Message -Level Info "API and web GUI port has changed. Stopping all running miners..."
 
-            # API port has changed; must stop all running miners
-            If ($Variables.MinersRunning){ 
-                Write-Message -Level Info "API and web GUI port has changed. Stopping all running miners..."
-
-                Clear-MinerData
-                Stop-Core
+                    Clear-MinerData
+                    Stop-Core
+                }
             }
-
             $Variables.APIserver.Stop()
         }
 
@@ -4149,7 +4167,7 @@ Function Set-MinerEnabled {
     )
 
     ForEach ($Worker in $Miner.Workers) { 
-        [Void](Enable-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate")
+        Enable-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
     }
 
     $Miner.Disabled = $false
@@ -4166,7 +4184,7 @@ Function Set-MinerDisabled {
     )
 
     ForEach ($Worker in $Miner.Workers) { 
-        [Void](Disable-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate")
+        Disable-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
         $Worker.Disabled = $false
     }
 
@@ -4183,7 +4201,7 @@ Function Set-MinerFailed {
     )
 
     ForEach ($Worker in $Miner.Workers) { 
-        [Void](Set-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate" -Value 0 -FaultDetection $false)
+        Set-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate" -Value 0 -FaultDetection $false
         $Worker.Hashrate = [Double]::NaN
         $Worker.Disabled = $false
         $Worker.Earnings = [Double]::NaN
@@ -4196,7 +4214,7 @@ Function Set-MinerFailed {
     Remove-Variable Worker
 
     # Clear power consumption
-    [Void](Remove-Stat -Name "$($Miner.Name)_PowerConsumption")
+    Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
     $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = $Miner.Earnings = $Miner.Earnings_Bias = [Double]::NaN
 
     If (-not $Miner.Reasons.Contains("0 H/s stat file")) { $Miner.Reasons.Add("0 H/s stat file") | Out-Null }
@@ -4214,7 +4232,7 @@ Function Set-MinerReBenchmark {
     $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
 
     ForEach ($Worker in $Miner.Workers) { 
-        [Void](Remove-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate")
+        Remove-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
         $Worker.Disabled = $false
         $Worker.Earnings = [Double]::NaN
         $Worker.Earnings_Accuracy = [Double]::NaN
@@ -4225,7 +4243,7 @@ Function Set-MinerReBenchmark {
     }
     Remove-Variable Worker
 
-    [Void](Remove-Stat -Name "$($Miner.Name)_PowerConsumption")
+    Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
     $Miner.Earnings = $Miner.Earnings_Accuracy = $Miner.Earnings_Bias = $Miner.PowerCost = $Miner.PowerConsumption = $Miner.PowerConsumption_Live = $Miner.Profit = $Miner.Profit_Bias =[Double]::NaN
     $Miner.Hashrates_Live = @($this.Workers.ForEach({ [Double]::NaN }))
 
@@ -4249,7 +4267,7 @@ Function Set-MinerMeasurePowerConsumption {
     $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
 
     # Clear power consumption
-    [Void](Remove-Stat -Name "$($Miner.Name)_PowerConsumption")
+    Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
     $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = [Double]::NaN
 
     $Miner.MeasurePowerConsumption = $true

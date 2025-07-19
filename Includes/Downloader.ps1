@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 using module .\Includes\Include.psm1
 
-$Config = $args.Config
+# $Config = $args.Config
 $DownloadList = $args.DownloadList
 $Variables = $args.Variables
 

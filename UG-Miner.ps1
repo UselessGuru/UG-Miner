@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 using module .\Includes\Include.psm1
@@ -194,7 +194,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Double]$ProfitabilityThreshold = -99, # Minimum profit threshold, if profit is less than the configured value (in $Currency, e.g. CHF) mining will stop (except for benchmarking & power consumption measuring)
     [Parameter(Mandatory = $false)]
-    [String]$ProHashingAPIKey = "", # ProHashing API Key (required to retrieve balance information)
+    [String]$ProHashingAPIkey = "", # ProHashing API Key (required to retrieve balance information)
     [Parameter(Mandatory = $false)]
     [String]$ProHashingMiningMode = "PPS", # Either PPS (Pay Per Share) or PPLNS (Pay per Last N Shares)
     [Parameter(Mandatory = $false)]
@@ -309,9 +309,9 @@ https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 Write-Host "`nCopyright and license notices must be preserved.`n" -ForegroundColor Green
 
 # Initialize thread safe global variables
-$Global:Config = [System.Collections.Hashtable]::Synchronized(@{ })
-$Global:Stats = [System.Collections.Hashtable]::Synchronized(@{ })
-$Global:Variables = [System.Collections.Hashtable]::Synchronized(@{ })
+$Global:Config = [System.Collections.SortedList]::Synchronized(@{ })
+$Global:Stats = [System.Collections.SortedList]::Synchronized(@{ })
+$Global:Variables = [System.Collections.SortedList]::Synchronized(@{ })
 
 # Expand paths
 $Variables.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
@@ -323,7 +323,7 @@ $Variables.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.0"
+    Version      = [System.Version]"6.5.1"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Variables.Branding.ProductLabel) $($Variables.Branding.Version)"
@@ -384,7 +384,7 @@ $Variables.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash t
 # Must done before reading config (Get-Region)
 Write-Host ""
 Write-Message -Level Verbose "Preparing environment and loading data files..."
-[Void](Initialize-Environment)
+Initialize-Environment
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
 Write-Host " ✔" -ForegroundColor Green
@@ -399,35 +399,35 @@ Else {
     $Variables.FreshConfig = $true
     $Variables.NewMiningStatus = $Variables.MiningStatus = "Idle"
 }
-[Void](Read-Config -ConfigFile $Variables.ConfigFile)
+Read-Config -ConfigFile $Variables.ConfigFile
 
 # Start transcript log
 If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
 # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
-[Void](Start-LogReader)
+Start-LogReader
 
 # Update config file to include all new config items
 If (-not $Config.ConfigFileVersion -or [System.Version]::Parse($Config.ConfigFileVersion) -lt $Variables.Branding.Version) { 
-    [Void](Update-ConfigFile -ConfigFile $Variables.ConfigFile)
+    Update-ConfigFile  -ConfigFile $Variables.ConfigFile
 }
 
 # Internet connection must be available
 Write-Host ""
 write-Host "Checking internet connection..." -ForegroundColor Yellow -NoNewline
 $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
-$Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
-If (-not $Variables.MyIP) { 
+$Variables.MyIPaddress = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+If (-not $Variables.MyIPaddress) { 
     Write-Host " ✖" -ForegroundColor Red
     Write-Message -Level Error "Terminating Error - no internet connection. $($Variables.Branding.ProductLabel) will shut down."
     (New-Object -ComObject Wscript.Shell).Popup("No internet connection`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
 }
-Write-Host " ✔  (IP address: $($Variables.MyIP))" -ForegroundColor Green
+Write-Host " ✔  (IP address: $($Variables.MyIPaddress))" -ForegroundColor Green
 
 # Check if a new version is available and run update if so configured
 Write-Host ""
-[Void](Get-Version)
+Get-Version
 [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
 Write-Host " ✔" -ForegroundColor Green
 
@@ -448,10 +448,10 @@ $Prerequisites = @(
 If ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) })) { 
     [Console]::SetCursorPosition($Variables.CursorPosition.X, $Variables.CursorPosition.Y)
     Write-Host " ✖" -ForegroundColor Red
-    $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "$_ is missing." })
+    $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "'$_' is missing." })
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
-    Write-Message -Level Error "and run 'install_all.bat' (Admin rights are required)."
+    Write-Message -Level Error "and run 'install_all.bat' (Administrative privileges are required)."
     Write-Message -Level Error "$($Variables.Branding.ProductLabel) will shut down."
     (New-Object -ComObject Wscript.Shell).Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Variables.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     Exit
@@ -549,6 +549,7 @@ $env:GPU_MAX_WORKGROUP_SIZE = 256
 $Variables.BrainData = @{ }
 $Variables.Brains = @{ }
 $Variables.CoreLoopCounter = [Int64]0
+$variables.CoreError = @()
 $Variables.CPUfeatures = (Get-CpuId).Features | Sort-Object
 $Variables.CycleStarts = @()
 $Variables.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")
@@ -631,12 +632,12 @@ Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition -ErrorAction Igno
 
 # Getting exchange rates
 Write-Host ""
-[Void](Get-Rate)
+Get-Rate
 
 # Start API server
 If ($Config.WebGUI) { 
     Write-Host ""
-    [Void](Start-APIserver)
+    Start-APIserver
 }
 
 # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
@@ -646,16 +647,16 @@ Function MainLoop {
 
     If ($Variables.ConfigurationHasChangedDuringUpdate) { $Variables.NewMiningStatus = $Variables.MiningStatus = "Idle" }
 
-    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.MiningStatus -ne "Idle") { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
+    If ($Config.BalancesTrackerPollInterval -gt 0 -and $Variables.MiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
 
     # Check internet connection and update rates every 15 minutes
-    If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(- 15)) { 
+    If ($Variables.NewMiningStatus -ne "Idle" -and $Variables.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-15)) { 
         # Check internet connection
         $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
-        $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+        $Variables.MyIPaddress = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
         Remove-Variable NetworkInterface
-        If ($Variables.MyIP) { 
-            [Void](Get-Rate)
+        If ($Variables.MyIPaddress) { 
+            Get-Rate
             If ($Variables.NewMiningStatus -eq "Paused") { $Variables.RefreshNeeded = $true }
         }
         Else { 
@@ -680,7 +681,7 @@ Function MainLoop {
             If ($Config.Proxy -eq "") { $PSDefaultParameterValues.Remove("*:Proxy") }
             Else { $PSDefaultParameterValues["*:Proxy"] = $Config.Proxy }
 
-            [Void](Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) })))
+            Stop-Brain @($Variables.Brains.psBase.Keys.Where({ $_ -notin (Get-PoolBaseName $Variables.PoolName) }))
 
             Switch ($Variables.NewMiningStatus) { 
                 "Idle" { 
@@ -699,9 +700,9 @@ Function MainLoop {
 
                         If ($LegacyGUIform) { Update-GUIstatus }
 
-                        [Void](Stop-Core)
-                        [Void](Stop-Brain)
-                        [Void](Stop-BalancesTracker)
+                        Stop-Core
+                        Stop-Brain
+                        Stop-BalancesTracker
 
                         # If ($Config.ReportToServer) { Write-MonitoringData }
 
@@ -736,9 +737,9 @@ Function MainLoop {
 
                     If ($LegacyGUIform) { Update-GUIstatus }
 
-                    [Void](Stop-Core)
-                    [Void](Start-Brain @(Get-PoolBaseName $Variables.PoolName))
-                    If ($Config.BalancesTrackerPollInterval -gt 0) { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
+                    Stop-Core
+                    Start-Brain @(Get-PoolBaseName $Variables.PoolName)
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } Else { Stop-BalancesTracker }
 
                     # If ($Config.ReportToServer) { Write-MonitoringData }
 
@@ -777,9 +778,9 @@ Function MainLoop {
                         If ($LegacyGUIform) { Update-GUIstatus }
                     }
 
-                    [Void](Start-Brain @(Get-PoolBaseName $Config.PoolName))
-                    [Void](Start-Core)
-                    If ($Config.BalancesTrackerPollInterval -gt 0) { [Void](Start-BalancesTracker) } Else { [Void](Stop-BalancesTracker) }
+                    Start-Brain @(Get-PoolBaseName $Config.PoolName)
+                    Start-Core
+                    If ($Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } Else { Stop-BalancesTracker }
 
                     If ($LegacyGUIform) { 
                         $LegacyGUIbuttonPause.Enabled = $true
@@ -794,7 +795,7 @@ Function MainLoop {
     }
 
     If ($Config.ShowConsole) { 
-        [Void](Show-Console)
+        Show-Console
         If ($host.UI.RawUI.KeyAvailable) { 
             $KeyPressed = [System.Console]::ReadKey($true)
 
@@ -978,7 +979,7 @@ Function MainLoop {
             $host.UI.RawUI.FlushInputBuffer()
         }
     }
-    Else { [Void](Hide-Console) }
+    Else { Hide-Console }
 
     If ($Variables.MiningStatus -eq "Running") { 
         If ($Config.IdleDetection) { 
@@ -989,10 +990,10 @@ Function MainLoop {
                     Write-Message -Level Verbose ($Message -replace "<br>", " ")
                     $Variables.Summary = $Message
 
-                    [Void](Start-Core)
+                    Start-Core
 
                     If ($LegacyGUIform) { 
-                        [Void](Update-GUIstatus)
+                        Update-GUIstatus
                         $LegacyGUIminingSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                         $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                     }
@@ -1005,19 +1006,19 @@ Function MainLoop {
                 $Variables.Summary = $Message
 
                 If ($LegacyGUIform) { 
-                    [Void](Update-GUIstatus)
+                    Update-GUIstatus
                     $LegacyGUIminingSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
 
-                [Void](Stop-Core)
+                Stop-Core
 
                 $Message = "Mining is suspended until system is idle for $($Config.IdleSec) second$(If ($Config.IdleSec -ne 1) { "s" })."
                 Write-Message -Level Verbose $Message
                 $Variables.Summary = $Message
 
                 If ($LegacyGUIform) { 
-                    [Void](Update-GUIstatus)
+                    Update-GUIstatus
                     $LegacyGUIminingSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                     $LegacyGUIminingSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
@@ -1027,22 +1028,22 @@ Function MainLoop {
         ElseIf ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
             If ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
                 Write-Message -Level Warn "Core cycle stopped abnormally - restarting..."
-                [Void](Stop-Core)
+                Stop-Core
             }
-            [Void](Start-Core)
-            If ($LegacyGUIform) { [Void](Update-GUIstatus) }
+            Start-Core
+            If ($LegacyGUIform) { Update-GUIstatus }
         }
         ElseIf (-not $Variables.SuspendCycle -and -not $Variables.MinersBenchmarkingOrMeasuring -and $Variables.BeginCycleTimeCycleTime -and [DateTime]::Now.ToUniversalTime() -gt $Variables.BeginCycleTimeCycleTime.AddSeconds(1.5 *$Config.Interval)) { 
             # Core watchdog. Sometimes core loop gets stuck
             Write-Message -Level Warn "Core cycle is stuck - restarting..."
-            [Void](Stop-Core)
-            [Void](Start-Core)
-            If ($LegacyGUIform) { [Void](Update-GUIstatus) }
+            Stop-Core
+            Start-Core
+            If ($LegacyGUIform) { Update-GUIstatus }
         }
     }
     ElseIf ((Test-Path -Path $Variables.ConfigFile) -and (Test-Path -Path $Variables.PoolsConfigFile)) { 
         If (-not ($Variables.FreshConfig -or $Variables.ConfigurationHasChangedDuringUpdate) -and $Variables.ConfigFileReadTimestamp -ne (Get-Item -Path $Variables.ConfigFile -ErrorAction Ignore).LastWriteTime -or $Variables.PoolsConfigFileReadTimestamp -ne (Get-Item -Path $Variables.PoolsConfigFile -ErrorAction Ignore).LastWriteTime) { 
-            [Void](Read-Config -ConfigFile $Variables.ConfigFile)
+            Read-Config -ConfigFile $Variables.ConfigFile
             Write-Message -Level Verbose "Activated changed configuration."
             $Variables.RefreshNeeded = $true
         }
@@ -1055,7 +1056,7 @@ Function MainLoop {
         If ($LegacyGUIform) { Update-GUIstatus }
 
         # API port has changed, Start-APIserver will restart server and stop all running miners when port has changed
-        If ($Config.APIport) { [Void](Start-APIserver) } Else { [Void](Stop-APIserver) }
+        If ($Config.APIport) { Start-APIserver } Else { Stop-APIserver }
 
         If ($Config.ShowConsole) { 
             If ($Variables.Miners) { Clear-Host }
@@ -1072,9 +1073,13 @@ Function MainLoop {
                             If ($Variables.Rates.$Currency -and $Variables.Rates.$Currency.$PayoutCurrency) { 
                                 $Percentage = ($_.Balance / $_.PayoutThreshold / $mBTCfactorPayoutCurrency * $Variables.Rates.$Currency.$PayoutCurrency).toString("P2")
                             }
-                            Else { $Percentage = "Unknown %" }
+                            Else { 
+                                $Percentage = "Unknown %"
+                            }
                         }
-                        Else { $Percentage = ($_.Balance / $_.PayoutThreshold).ToString("P2") }
+                        Else { 
+                            $Percentage = ($_.Balance / $_.PayoutThreshold).ToString("P2")
+                        }
 
                         Write-Host "$($_.Pool) [$($_.Wallet)]" -ForegroundColor Green
                         If ($Config.BalancesShowSums) { 
@@ -1096,7 +1101,7 @@ Function MainLoop {
                 Remove-Variable Currency, mBTCfactorCurrency, mBTCfactorPayoutCurrency, Percentage, PayoutCurrency -ErrorAction Ignore
             }
 
-            If ($Variables.MyIP) { 
+            If ($Variables.MyIPaddress) { 
                 If ($Variables.MiningStatus -eq "Running" -and $Variables.Miners.Where({ $_.Available })) { 
                     # Miner list format
                     [System.Collections.ArrayList]$MinerTable = @(
@@ -1265,7 +1270,7 @@ While ($true) {
         $LegacyGUIform.ShowDialog() | Out-Null
     }
     Else { 
-        [Void](MainLoop)
+        MainLoop
         Start-Sleep -Milliseconds 500
     }
 }

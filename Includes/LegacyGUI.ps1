@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -940,7 +940,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             $Data += $_.Name
-                            [Void](Set-MinerReBenchmark $_)
+                            Set-MinerReBenchmark $_
                         }
                     )
                     $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
@@ -954,7 +954,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
                             $Data += $_.Name
-                            [Void](Set-MinerMeasurePowerConsumption $_)    
+                            Set-MinerMeasurePowerConsumption $_  
                         }
                     )
                     $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
@@ -967,7 +967,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     $LegacyGUIcontextMenuStrip.Visible = $false
                     $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
                         { 
-                            [Void](Set-MinerFailed $_)
+                            Set-MinerFailed $_
                             $Data += $_.Name
                         }
                     )
@@ -982,7 +982,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).Where({ -not $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
-                            [Void](Set-MinerDisabled $_)
+                            Set-MinerDisabled $_
                         }
                     )
                     If ($Data.Count) { 
@@ -1001,7 +1001,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                     $Variables.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).Where({ $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
-                            [Void](Set-MinerEnabled $_)
+                            Set-MinerEnabled $_
                         }
                     )
                     If ($Data.Count) { 
@@ -1057,7 +1057,7 @@ $LegacyGUIcontextMenuStrip.Add_ItemClicked(
                                 { 
                                     $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
                                     $Data += $StatName
-                                    [Void](Remove-Stat -Name "$($StatName)_Profit")
+                                    Remove-Stat -Name "$($StatName)_Profit"
                                     $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New()
                                     $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
                                     $_.Available = $true
@@ -1540,15 +1540,7 @@ $LegacyGUIcheckShowSwitchingCPU.Tag = "CPU"
 $LegacyGUIcheckShowSwitchingCPU.Text = "CPU"
 $LegacyGUIcheckShowSwitchingCPU.Width = 70
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingCPU
-$LegacyGUIcheckShowSwitchingCPU.ForEach(
-    { 
-        $_.Add_Click(
-            { 
-                CheckBoxSwitching_Click($this)
-            }
-        )
-    }
-)
+$LegacyGUIcheckShowSwitchingCPU.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
 
 $LegacyGUIcheckShowSwitchingAMD = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingAMD.AutoSize = $false
@@ -1560,15 +1552,7 @@ $LegacyGUIcheckShowSwitchingAMD.Tag = "AMD"
 $LegacyGUIcheckShowSwitchingAMD.Text = "AMD"
 $LegacyGUIcheckShowSwitchingAMD.Width = 70
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingAMD
-$LegacyGUIcheckShowSwitchingAMD.ForEach(
-    { 
-        $_.Add_Click(
-            { 
-                CheckBoxSwitching_Click($this)
-            }
-        )
-    }
-)
+$LegacyGUIcheckShowSwitchingAMD.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
 
 $LegacyGUIcheckShowSwitchingINTEL = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingINTEL.AutoSize = $false
@@ -1580,15 +1564,7 @@ $LegacyGUIcheckShowSwitchingINTEL.Tag = "INTEL"
 $LegacyGUIcheckShowSwitchingINTEL.Text = "INTEL"
 $LegacyGUIcheckShowSwitchingINTEL.Width = 77
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingINTEL
-$LegacyGUIcheckShowSwitchingINTEL.ForEach(
-    { 
-        $_.Add_Click(
-            { 
-                CheckBoxSwitching_Click($this)
-            }
-        )
-    }
-)
+$LegacyGUIcheckShowSwitchingINTEL.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
 
 $LegacyGUIcheckShowSwitchingNVIDIA = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIcheckShowSwitchingNVIDIA.AutoSize = $false
@@ -1600,15 +1576,7 @@ $LegacyGUIcheckShowSwitchingNVIDIA.Tag = "NVIDIA"
 $LegacyGUIcheckShowSwitchingNVIDIA.Text = "NVIDIA"
 $LegacyGUIcheckShowSwitchingNVIDIA.Width = 80
 $LegacyGUIswitchingPageControls += $LegacyGUIcheckShowSwitchingNVIDIA
-$LegacyGUIcheckShowSwitchingNVIDIA.ForEach(
-    { 
-        $_.Add_Click(
-            { 
-                CheckBoxSwitching_Click($this)
-            }
-        )
-    }
-)
+$LegacyGUIcheckShowSwitchingNVIDIA.ForEach({ $_.Add_Click({ CheckBoxSwitching_Click($this) }) })
 
 $LegacyGUIswitchingDGV = [System.Windows.Forms.DataGridView]::new()
 $LegacyGUIswitchingDGV.AllowUserToAddRows = $false
@@ -1762,6 +1730,7 @@ $LegacyGUIform.Add_Load(
             If ($WindowSettings.Width -gt $LegacyGUIform.MinimumSize.Width) { $LegacyGUIform.Width = $WindowSettings.Width }
             If ($WindowSettings.Height -gt $LegacyGUIform.MinimumSize.Height) { $LegacyGUIform.Height = $WindowSettings.Height }
         }
+        If ($Config.LegacyGUIStartMinimized) { $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized }
 
         Update-GUIstatus
 
@@ -1799,7 +1768,7 @@ $LegacyGUIform.Add_Load(
                     $LegacyGUIeditConfigLink.Tag = "Edit-File"
                     $LegacyGUIeditConfigLink.Text = "Edit configuration file '$($Variables.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
                 }
-                [Void](MainLoop)
+                MainLoop
             }
         )
         $TimerUI.Start()
@@ -1832,9 +1801,9 @@ $LegacyGUIform.Add_FormClosing(
             Write-Message -Level Info "Shutting down $($Variables.Branding.ProductLabel)..."
             $Variables.NewMiningStatus = "Idle"
 
-            [Void](Stop-Core)
-            [Void](Stop-Brain)
-            [Void](Stop-BalancesTracker)
+            Stop-Core
+            Stop-Brain
+            Stop-BalancesTracker
 
             Write-Message -Level Info "$($Variables.Branding.ProductLabel) has shut down."
             Start-Sleep -Seconds 2

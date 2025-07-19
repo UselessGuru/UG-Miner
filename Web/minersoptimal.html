@@ -45,7 +45,7 @@
                 <th data-field="SubStatus" data-switchable="false" data-class="hidden statuscolor"></th>
                 <th data-field="CheckboxSelected" data-checkbox="true"></th>
                 <th data-field="Name" data-sortable="true" data-filter-control="input">Name</th>
-                <th data-field="Info" data-sortable="true" data-filter-control="input" data-visible="false">Name</th>
+                <th data-field="Info" data-sortable="true" data-filter-control="input" data-visible="false">Info</th>
                 <th data-field="BaseName" data-sortable="true" data-filter-control="select" data-visible="false">Miner</th>
                 <th data-field="Version" data-sortable="true" data-filter-control="select" data-visible="false">Version</th>
                 <th data-field="CommandLine" data-sortable="true" data-filter-control="input" data-visible="false">Command line</th>
@@ -53,11 +53,11 @@
                 <th data-field="Type" data-sortable="true" data-filter-control="select" data-visible="false">Type</th>
                 <th data-field="Status" data-sortable="true" data-filter-control="select">Status</th>
                 <th data-field="StatusInfo" data-sortable="true" data-filter-control="select" data-visible="false">Status Info</th>
-                <th data-field="Earnings_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earnings (biased)</th>
+                <th data-field="Earnings_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earnings<br>(biased)</th>
                 <th data-field="Earnings" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earnings</th>
                 <th data-field="Earnings_Accuracy" data-align="right" data-sortable="true">Earnings<br>Accuracy</th>
-                <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Power cost</th>
-                <th data-field="Profit_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Profit (biased)</th>
+                <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Power<br>cost</th>
+                <th data-field="Profit_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Profit<br>(biased)</th>
                 <th data-field="Profit" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Profit</th>
                 <th data-field="PowerConsumption" data-align="right" data-sortable="true" data-formatter="formatWatt" class="text-nowrap" data-title-tooltip="(benchmarked value)">Power</th>
                 <th data-field="TotalMiningDuration" data-sortable="true" data-visible="false">Total mining duration</th>
@@ -89,6 +89,7 @@
                 <th data-field="WarmupTimes0" data-sortable="true" data-filter-control="input" data-visible="false" data-title-tooltip="Seconds until miner must send first sample&#10;If no sample is received miner will be marked as failed">WarmupTime [0]</th>
                 <th data-field="WarmupTimes1" data-sortable="true" data-filter-control="input" data-visible="false" data-title-tooltip="Seconds until miner sends stable hashrates&#10;that will count for benchmarking">WarmupTime [1]</th>
                 <th data-field="Updated" data-sortable="true" data-formatter="formatTimeSince" data-width=250 data-visible="false">Updated</th>
+                <th data-field="LastUsed" data-sortable="true" data-formatter="formatTimeSince" data-width=250 data-visible="false">Last used</th>
                 <th data-field="EnvVars" data-sortable="true" data-filter-control="input" data-visible="false">Environment variables</th>
                 <th data-field="Activated" data-sortable="true" data-filter-control="input" data-visible="false">Activated</th>
                 <th data-field="WindowStyle" data-sortable="true" data-filter-control="select" data-visible="false">WindowStyle</th>
@@ -113,7 +114,7 @@
             $table.bootstrapTable({
               async: 'true',
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
-              height: $(window).height() - $table.offset().top + 26,
+              height: $(window).height() - $table.offset().top + 40,
               onColumnSwitch: function() {
                 $('body').css('cursor', 'default');
               },

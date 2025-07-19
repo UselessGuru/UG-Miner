@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 using module .\Include.psm1
@@ -76,12 +76,12 @@ Do {
 
     # Check internet connection
     $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
-    $Variables.MyIP = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+    $Variables.MyIPaddress = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
     Remove-Variable NetworkInterface
 
-    If ($Variables.MyIP) { 
+    If ($Variables.MyIPaddress) { 
         # Read exchange rates
-        [Void](Get-Rate)
+        Get-Rate
 
         # Fetch balances data from pools
         If ($PoolsToTrack) { 
@@ -418,7 +418,7 @@ Do {
     }
 
     # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
-    While (-not $Variables.MyIP -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
+    While (-not $Variables.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
 
     $Error.Clear()
     [System.GC]::Collect()

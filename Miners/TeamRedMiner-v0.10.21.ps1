@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" }))) { Return }
@@ -80,7 +80,7 @@ $Algorithms = @(
 #   @{ Algorithms = @("MTP", "");                          SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=mtp" } # Algorithm is dead
     @{ Algorithms = @("Nimiq", "");                        SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA3$";  ExcludePools = @(@(), @());           Arguments = " --algo=nimiq" }
     @{ Algorithms = @("Phi2", "");                         SecondaryAlgorithmPrefix = "";        Fee = @(0.03);       MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=phi2" }
-    @{ Algorithms = @("VertHash", "");                     SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 4.0;  MinerSet = 1; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = "^GCN1$";          ExcludePools = @(@(), @());           Arguments = " --algo=verthash --verthash_file=..\.$($Variables.VerthashDatPath)" }
+    @{ Algorithms = @("VertHash", "");                     SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 4.0;  MinerSet = 1; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = "^GCN1$";          ExcludePools = @(@(), @());           Arguments = " --algo=verthash --verthash_file=..\.$($Variables.VertHashDatPath)" }
 #   @{ Algorithms = @("X16r", "");                         SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=x16r" } # ASIC
     @{ Algorithms = @("X16rv2", "");                       SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 0; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=x16rv2" }
     @{ Algorithms = @("X16s", "");                         SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=x16s" }
@@ -97,15 +97,15 @@ If ($Algorithms) {
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
-            $MinerAPIPort = $Config.APIPort + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Config.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
             $Algorithms.ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
-                        If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VerthashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                            $PrerequisitePath = $Variables.VerthashDatPath
+                        If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                            $PrerequisitePath = $Variables.VertHashDatPath
                             $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                         }
                         Else { 

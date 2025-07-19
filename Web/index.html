@@ -50,11 +50,11 @@
                 <th data-field="Status" data-sortable="true" data-filter-control="select" data-visible="false">Status</th>
                 <th data-field="StatusInfo" data-sortable="true" data-filter-control="select">Status Info</th>
                 <th data-field="Earnings" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)" data-visible="false">Earnings</th>
-                <th data-field="Earnings_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earnings (biased)</th>
+                <th data-field="Earnings_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Earnings<br>(biased)</th>
                 <th data-field="Earnings_Accuracy" data-align="right" data-sortable="true" data-visible="false">Earnings<br>Accuracy</th>
-                <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Power cost</th>
+                <th data-field="PowerCost" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Power<br>cost</th>
                 <th data-field="Profit" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)" data-visible="false">Profit</th>
-                <th data-field="Profit_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Profit (biased)</th>
+                <th data-field="Profit_Bias" class="addlocalcurrency" data-align="right" data-sortable="true" data-formatter="formatDecimalsFromBTC" data-title-tooltip="(estimated value)">Profit<br>(biased)</th>
                 <th data-field="PowerConsumption_Live" data-align="right" data-sortable="true" data-formatter="formatWatt" data-title-tooltip="(live value)">Power<br>(live)</th>
                 <th data-field="PowerConsumption" data-align="right" data-sortable="true" data-formatter="formatWatt" data-visible="false" data-title-tooltip="(benchmarked value)">Power<br>(benchmarked)</th>
                 <th data-field="BeginTime" data-sortable="true" data-visible="false" data-formatter="formatDate">BeginTime</th>
@@ -152,7 +152,7 @@
                 };
               },
               onResetView: function () {
-                document.getElementById('logtext').style.height = ($(window).height() - $table.height() - 410) + 'px';
+                document.getElementById('logtext').style.height = ($(window).height() - $table.height() - 440) + 'px';
               },
               onPostBody: function () {
                 if (config.UseColorForMinerStatus == true) {

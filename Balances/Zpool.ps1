@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.5.0
-Version date:   2025/07/14
+Version:        6.5.1
+Version date:   2025/07/19
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -30,7 +30,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
         $Currency = $_
         $Wallet = $Config.PoolsConfig.$Name.Wallets.$Currency
 
-        $RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+        $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
         $Request = "https://zpool.ca/api/wallet?address=$Wallet"
 
         While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
