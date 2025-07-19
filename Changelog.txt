@@ -10,7 +10,7 @@ Improvements:
 
 Fixes:
 - Legacy GUI: Configuration item 'LegacyGUIStartMinimized' not working (regression from 6.2.12)
-- Pool 'ProHashing': No pice data for some algorithms
+- Pool 'ProHashing': No price data for some algorithms
 
 
 Changelog UG-Miner 6.5.0 2025/07/14
