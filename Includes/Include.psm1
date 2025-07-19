@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.2
+Version:        6.5.1
 Version date:   2025/07/19
 #>
 
@@ -980,7 +980,6 @@ Function Clear-MinerData {
     $Variables.MinersBenchmarkingOrMeasuring = [Miner[]]@()
     $Variables.MinersBest = [Miner[]]@()
     $Variables.MinersBestPerDevice = [Miner[]]@()
-    $Variables.MinerDeviceNamesCombinations = [Miner[]]@()
     $Variables.MinersFailed = [Miner[]]@()
     $Variables.MinersMissingBinary = [Miner[]]@()
     $Variables.MinerMissingFirewallRule = [Miner[]]@()

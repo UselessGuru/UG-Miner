@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.2
+Version:        6.5.1
 Version date:   2025/07/19
 #>
 
@@ -1046,12 +1046,12 @@ Try {
                     # Hack: Temporarily make all bias -ge 0 by adding smallest bias, MinersBest produces wrong sort order when some profits are negative
                     # Get smallest $Bias
                     $SmallestBias = $Variables.MinersBestPerDevice.$Bias | Sort-Object -Top 1
-                    $Variables.MinersBestPerDevice.ForEach({ $_.Combination.ForEach({ $_.$Bias += $SmallestBias }) })
 
-                    $Variables.MinerDeviceNamesCombinations = (Get-Combination @($Variables.MinersBestPerDevice | Select-Object DeviceNames -Unique)).Where({ (Compare-Object ($_.Combination | Select-Object -ExpandProperty DeviceNames -Unique) ($_.Combination | Select-Object -ExpandProperty DeviceNames) | Measure-Object).Count -eq 0 })
+                    $Variables.MinersBestPerDevice.ForEach({ $_.$Bias += $SmallestBias })
+                    $MinerDeviceNamesCombinations = (Get-Combination @($Variables.MinersBestPerDevice | Select-Object DeviceNames -Unique)).Where({ (Compare-Object ($_.Combination | Select-Object -ExpandProperty DeviceNames -Unique) ($_.Combination | Select-Object -ExpandProperty DeviceNames) | Measure-Object).Count -eq 0 })
 
-                    # Get most best miner combination i.e. AMD+INTEL+NVIDIA+CPU
-                    $MinerCombinations = $Variables.MinerDeviceNamesCombinations.ForEach(
+                    # Get best miner combination i.e. AMD+INTEL+NVIDIA+CPU
+                    $MinerCombinations = $MinerDeviceNamesCombinations.ForEach(
                         { 
                             $DeviceNamesCombination = $_.Combination
                             [PSCustomObject]@{ 
@@ -1064,15 +1064,14 @@ Try {
                             }
                         }
                     )
-                    Remove-Variable DeviceNames, DeviceNamesCombination -ErrorAction Ignore
-                    $MinersBest = ($MinerCombinations | Sort-Object -Descending { $_.Combination.Where({ [Double]::IsNaN($_.$Bias) }).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination | Sort-Object -Property Devices
+                    $MinersBest = ($MinerCombinations | Sort-Object -Descending { $_.Combination.Where({ [Double]::IsNaN($_.$Bias) }).Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where({ $_.$Bias -ne 0 }) | Measure-Object).Count } -Top 1).Combination | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }
 
                     # Revert smallest bias hack
-                    $Variables.MinersBestPerDevice.ForEach({ $_.Combination.ForEach({ $_.$Bias -= $SmallestBias }) })
-
+                    $Variables.MinersBestPerDevice.ForEach({ $_.$Bias -= $SmallestBias })
                     # Revert running miner bonus
                     $Miners.Where({ $_.Status -eq [MinerStatus]::Running }).ForEach({ $_.$Bias /= $RunningMinerBonusFactor })
-                    Remove-Variable MinerCombinations, MinerDeviceNameCount, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
+
+                    Remove-Variable DeviceNames, DeviceNamesCombination, MinerCombinations, MinerDeviceNamesCombinations, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
                 }
 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
@@ -1085,7 +1084,7 @@ Try {
             Else { 
                 $Variables.PowerConsumptionIdleSystemW = (($Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum).Maximum
                 $Variables.BasePowerCost = [Double]($Variables.PowerConsumptionIdleSystemW / 1000 * 24 * $Variables.PowerPricekWh / $Variables.Rates.BTC.($Config.FIATcurrency))
-                $Variables.MinersBestPerDevice = $Variables.MinerDeviceNamesCombinations = $MinersBest = $MinersOptimal = [Miner[]]@()
+                $Variables.MinersBestPerDevice = $MinerDeviceNamesCombinations = $MinersBest = $MinersOptimal = [Miner[]]@()
                 $Variables.MiningEarnings = $Variables.MiningProfit = $Variables.MiningPowerCost = $Variables.MiningPowerConsumption = [Double]0
             }
         }
