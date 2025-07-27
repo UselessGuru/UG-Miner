@@ -18,6 +18,7 @@ Improvements:
 
 Miner changes:
 - JayddeeCPU-v25.6
+- SRBMinerMulti-v2.9.5
 
 
 Changelog UG-Miner 6.5.1 2025/07/19
