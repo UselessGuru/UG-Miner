@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.CUDAversion -ge [System.Version]"11.6" -and $_.CUDAversion -lt [System.Version]"12.6" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.CUDAversion -ge [System.Version]"11.6" -and $_.CUDAversion -lt [System.Version]"12.6" }))) { Return }
 
 $URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.25/TeamBlackMiner_2_25_cuda_12_2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -37,25 +37,25 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash", "FiroPow");     SecondaryAlgorithmPrefix = "firo";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo etc+firo" }
     @{ Algorithms = @("EtcHash", "KawPow");      SecondaryAlgorithmPrefix = "rvn";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
     @{ Algorithms = @("EtcHash", "MeowPow");     SecondaryAlgorithmPrefix = "meow";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo etc+meow" }
-    @{ Algorithms = @("EtcHash", "VertHash");    SecondaryAlgorithmPrefix = "vtc";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(120, 60); ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc --verthash-data ..\.$($Variables.VertHashDatPath)" }
+    @{ Algorithms = @("EtcHash", "VertHash");    SecondaryAlgorithmPrefix = "vtc";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(120, 60); ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc --verthash-data ..\.$($Session.VertHashDatPath)" }
     @{ Algorithms = @("Ethash", "");             SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash" }
     @{ Algorithms = @("Ethash", "EthashB3");     SecondaryAlgorithmPrefix = "ethb3"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo eth+ethb3" }
     @{ Algorithms = @("Ethash", "EvrProgPow");   SecondaryAlgorithmPrefix = "evr";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo eth+evr" }
     @{ Algorithms = @("Ethash", "FiroPow");      SecondaryAlgorithmPrefix = "firo";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo eth+firo" }
     @{ Algorithms = @("Ethash", "KawPow");       SecondaryAlgorithmPrefix = "rvn";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
     @{ Algorithms = @("Ethash", "MeowPow");      SecondaryAlgorithmPrefix = "meow";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = " --algo eth+meow" }
-    @{ Algorithms = @("Ethash", "VertHash");     SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(120, 45); ExcludePools = @(@(), @()); Arguments = " --algo eth+vtc --verthash-data ..\.$($Variables.VertHashDatPath)" }
+    @{ Algorithms = @("Ethash", "VertHash");     SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(120, 45); ExcludePools = @(@(), @()); Arguments = " --algo eth+vtc --verthash-data ..\.$($Session.VertHashDatPath)" }
     @{ Algorithms = @("EthashB3", "");           SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 60);  ExcludePools = @(@(), @()); Arguments = " --algo ethashb3" }
     @{ Algorithms = @("EthashB3", "EvrProgPow"); SecondaryAlgorithmPrefix = "evr";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo ethb3+evr" }
     @{ Algorithms = @("EthashB3", "FiroPow");    SecondaryAlgorithmPrefix = "firo";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo ethb3+firo" }
     @{ Algorithms = @("EthashB3", "KawPow");     SecondaryAlgorithmPrefix = "rvn";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
     @{ Algorithms = @("EthashB3", "MeowPow");    SecondaryAlgorithmPrefix = "meow";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 45);  ExcludePools = @(@(), @()); Arguments = " --algo ethb3+meow" }
-    @{ Algorithms = @("EthashB3", "VertHash");   SecondaryAlgorithmPrefix = "vtc";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(120, 45); ExcludePools = @(@(), @()); Arguments = " --algo ethb3+vtc --verthash-data ..\.$($Variables.VertHashDatPath)" }
+    @{ Algorithms = @("EthashB3", "VertHash");   SecondaryAlgorithmPrefix = "vtc";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(120, 45); ExcludePools = @(@(), @()); Arguments = " --algo ethb3+vtc --verthash-data ..\.$($Session.VertHashDatPath)" }
     @{ Algorithms = @("EvrProgPow", "");         SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 1; Tuning = " --tweak 2"; WarmupTimes = @(90, 15);  ExcludePools = @(@(), @()); Arguments = " --algo evrprogpow" }
     @{ Algorithms = @("FiroPow", "");            SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(90, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow" }
     @{ Algorithms = @("KawPow", "");             SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 30);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
     @{ Algorithms = @("MeowPow", "");            SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 30);  ExcludePools = @(@(), @()); Arguments = " --algo meowpow" }
-    @{ Algorithms = @("VertHash", "");           SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 3.0;  MinerSet = 0; Tuning = " --tweak 2"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo verthash --verthash-data ..\.$($Variables.VertHashDatPath)" }
+    @{ Algorithms = @("VertHash", "");           SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 3.0;  MinerSet = 0; Tuning = " --tweak 2"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo verthash --verthash-data ..\.$($Session.VertHashDatPath)" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -73,8 +73,8 @@ If ($Algorithms) {
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
-                    If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                        $PrerequisitePath = $Variables.VertHashDatPath
+                    If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                        $PrerequisitePath = $Session.VertHashDatPath
                         $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                     }
                     Else { 
@@ -90,7 +90,7 @@ If ($Algorithms) {
                             # Dual algorithm mining: Both pools must support same protocol (SSL or non-SSL) :-(
                             If (-not $_.Algorithms[1] -or ($Pool0.PoolPorts[0] -and $Pool1.PoolPorts[0]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { 
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                 If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)$(If ($_.Intensity) { "-$($_.Intensity)" })"})"
@@ -108,10 +108,10 @@ If ($Algorithms) {
 
                                     # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                     $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                    $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 5)
+                                    $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 5)
 
                                     # Apply tuning parameters
-                                    If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                    If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                     [PSCustomObject]@{ 
                                         API              = "TeamBlackMiner"
@@ -128,7 +128,7 @@ If ($Algorithms) {
                                         Type             = $Type
                                         URI              = $URI
                                         WarmupTimes      = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                        Workers           = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                     }
                                 }
                             }

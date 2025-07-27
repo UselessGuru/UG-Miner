@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class GMiner : Miner { 
@@ -30,50 +30,49 @@ Class GMiner : Miner {
 
         Try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
+            If (-not $Data.devices) { Return $null }
+
+            $Hashrate = [PSCustomObject]@{ }
+            $HashrateName = [String]$this.Algorithms[0]
+            $HashrateValue = [Double](($Data.devices.speed | Measure-Object -Sum).Sum)
+            If (-not $HashrateValue -and $Data.devices.speed -contains $null) { Return $null }
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+            $Shares = [PSCustomObject]@{ }
+            $SharesAccepted = [Int64]$Data.total_accepted_shares
+            $SharesRejected = [Int64]$Data.total_rejected_shares
+            $SharesInvalid = [Int64]$Data.total_invalid_shares
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+
+            If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+                $HashrateValue = [Double](($Data.devices.speed2 | Measure-Object -Sum).Sum)
+                If (-not $HashrateValue -and $Data.devices.speed2 -contains $null) { Return $null }
+                $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+                $SharesAccepted = [Int64]$Data.total_accepted_shares2
+                $SharesRejected = [Int64]$Data.total_rejected_shares2
+                $SharesInvalid = [Int64]$Data.total_invalid_shares2
+                $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            }
+
+            $PowerConsumption = [Double]0
+
+            If ($this.ReadPowerConsumption) { 
+                $PowerConsumption = [Double]($Data.devices | Measure-Object power_usage -Sum).Sum
+                If (-not $PowerConsumption) { 
+                    $PowerConsumption = $this.GetPowerConsumption()
+                }
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
+            }
         }
         Catch { 
             Return $null
-        }
-
-        If (-not $Data.devices) { Return $null }
-
-        $Hashrate = [PSCustomObject]@{ }
-        $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = [Double](($Data.devices.speed | Measure-Object -Sum).Sum)
-        If (-not $HashRateValue -and $Data.devices.speed -contains $null) { Return $null }
-        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]$Data.total_accepted_shares
-        $SharesRejected = [Int64]$Data.total_rejected_shares
-        $SharesInvalid = [Int64]$Data.total_invalid_shares
-        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-
-        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            $HashrateValue = [Double](($Data.devices.speed2 | Measure-Object -Sum).Sum)
-            If (-not $HashRateValue -and $Data.devices.speed2 -contains $null) { Return $null }
-            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-            $SharesAccepted = [Int64]$Data.total_accepted_shares2
-            $SharesRejected = [Int64]$Data.total_rejected_shares2
-            $SharesInvalid = [Int64]$Data.total_invalid_shares2
-            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-        }
-
-        $PowerConsumption = [Double]0
-
-        If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = [Double]($Data.devices | Measure-Object power_usage -Sum).Sum
-            If (-not $PowerConsumption) { 
-                $PowerConsumption = $this.GetPowerConsumption()
-            }
-        }
-
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
         }
     }
 }

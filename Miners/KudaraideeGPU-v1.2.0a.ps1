@@ -18,10 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.4.27
-Version date:   2025/07/19
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Kudaraidee/kudaraidee-v1.2.0a-win64.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -88,7 +88,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                Workers      = @(@{ Pool = $Pool })
                             }
                         }
                     }

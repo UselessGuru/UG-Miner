@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
 
-If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 $URI = "https://github.com/scala-network/XLArig/releases/download/v5.2.4/xlarig-v5.2.4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -65,7 +65,7 @@ If ($Algorithms) {
                     Type        = "CPU"
                     URI         = $URI
                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers     = @(@{ Pool = $Pool })
+                    Workers      = @(@{ Pool = $Pool })
                 }
             }
         }

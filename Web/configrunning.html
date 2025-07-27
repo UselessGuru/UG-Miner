@@ -4,44 +4,44 @@
           </div>
           <div id="configrunning" class="alert alert-info" role="alert">This is the full configuration UG-Miner is currently using</div>
           <div id="toolbar">
-            <button type="button" class="btn btn-primary" id="btn-editconfig" name="btn-editconfig" title="Edit configuration file&#10;It will become active in next cycle.">Edit 'Config' file</button>
-            <button type="button" class="btn btn-primary" id="btn-editpoolsconfig" name="btn-editpoolsconfig" title="Edit pools config file&#10;It will become active in next cycle.">Edit 'PoolsConfig' file</button>
+            <button type="button" class="btn btn-primary" id="btn-editconfig" name="btn-editconfig" title="Edit configuration file&#10;It will become active in next cycle.">Edit "Config" file</button>
+            <button type="button" class="btn btn-primary" id="btn-editpoolsconfig" name="btn-editpoolsconfig" title="Edit pools config file&#10;It will become active in next cycle.">Edit "PoolsConfig" file</button>
           </div>
           <br>
 
           <pre id="config" style="height: calc(100vh - 380px); overflow:auto;"></pre>
           <br>
-<!-- Start of page scripts 'configrunning.html' -->
+<!-- Start of page scripts "configrunning.html" -->
           <script type="text/javascript">
 
             //Edit config file
-            $('#btn-editconfig').click(function () {
-              document.getElementById('btn-editconfig').disabled = true;
-              document.getElementById('btn-editpoolsconfig').disabled = true;
-              $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(ConfigFile), function () {
+            $("#btn-editconfig").click(function () {
+              document.getElementById("btn-editconfig").disabled = true;
+              document.getElementById("btn-editpoolsconfig").disabled = true;
+              $(".modal-body").load("/functions/file/edit?FileName=" + encodeURIComponent(ConfigFile), function () {
                 if (this.outerText) {
-                  $('.modal-title').text('Edit Config file');
-                  $('#myModal').modal({ show: true });
-                  $('#myModal').on('hidden.bs.modal', function () {
+                  $(".modal-title").text("Edit Config file");
+                  $("#myModal").modal({ show: true });
+                  $("#myModal").on("hidden.bs.modal", function () {
                     location.reload(true);
                   })
                 }
-                document.getElementById('btn-editconfig').disabled = false;
-                document.getElementById('btn-editpoolsconfig').disabled = false;
+                document.getElementById("btn-editconfig").disabled = false;
+                document.getElementById("btn-editpoolsconfig").disabled = false;
               });
             });
 
             //Edit poolsconfig file
-            $('#btn-editpoolsconfig').click(function () {
-              document.getElementById('btn-editconfig').disabled = true;
-              document.getElementById('btn-editpoolsconfig').disabled = true;
-              $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent(poolsConfigFile), function () {
+            $("#btn-editpoolsconfig").click(function () {
+              document.getElementById("btn-editconfig").disabled = true;
+              document.getElementById("btn-editpoolsconfig").disabled = true;
+              $(".modal-body").load("/functions/file/edit?FileName=" + encodeURIComponent(poolsConfigFile), function () {
                 if (this.outerText) {
-                  $('.modal-title').text('Edit PoolsConfig file');
-                  $('#myModal').modal({ show: true });
+                  $(".modal-title").text("Edit PoolsConfig file");
+                  $("#myModal").modal({ show: true });
                 }
-                document.getElementById('btn-editconfig').disabled = false;
-                document.getElementById('btn-editpoolsconfig').disabled = false;
+                document.getElementById("btn-editconfig").disabled = false;
+                document.getElementById("btn-editpoolsconfig").disabled = false;
               });
             });
 
@@ -49,17 +49,17 @@
               // Get config file names
               $.ajax({
                 async: false,
-                dataType: 'text',
-                url: '/ConfigFile',
+                dataType: "text",
+                url: "/ConfigFile",
                 success: function (result) {
                   ConfigFile = result;
                   $.ajax({
                     async: false,
-                    dataType: 'text',
-                    url: '/poolsConfigFile',
+                    dataType: "text",
+                    url: "/poolsConfigFile",
                     success: function (result) {
                       poolsConfigFile = result;
-                      $('#configrunning').text("This is the full configuration UG-Miner is currently using. (Current configuration files: '" + ConfigFile + "' & '" + poolsConfigFile + "')");
+                      $("#configrunning").text("This is the full configuration UG-Miner is currently using. (Current configuration files: '" + ConfigFile + "' & '" + poolsConfigFile + "')");
                     }
                   });
                 }
@@ -68,17 +68,17 @@
               $(function() {
                 $.ajax({
                   async: false,
-                  dataType: 'json',
-                  url: '/configrunning',
+                  dataType: "json",
+                  url: "/configrunning",
                   success: function(result) {
-                    $('#config').empty();
-                    $('#config').append(JSON.stringify(result, undefined, 4));
+                    $("#config").empty();
+                    $("#config").append(JSON.stringify(result, undefined, 4));
                   }
                 });
               });
-              updateSummary();
-              updateButtonStatus();
+              // updateSummary();
+              // updateButtonStatus();
             });
           </script>
-<!-- End of page scripts 'configrunning.html' -->
+<!-- End of page scripts "configrunning.html" -->
 <!-- #include file="/parts/foot.html" -->

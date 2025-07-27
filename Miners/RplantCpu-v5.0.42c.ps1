@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 $URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.42/cpuminer-opt-win-5.0.42c.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -109,7 +109,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerRes";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yespowerRes" }
     @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 15);  ExcludePools = @();           Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @("ZPool");    Arguments = " --algo yespowerTIDE" } # https://discord.com/channels/376790817811202050/1371515289824530434
-    @{ Algorithm = "YespowerURX";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerURX" } # JayddeeCPU-v25.5 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerURX";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerURX" } # JayddeeCPU-v25.6 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
@@ -138,7 +138,7 @@ If ($Algorithms) {
                     Type        = "CPU"
                     URI         = $URI
                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers     = @(@{ Pool = $Pool })
+                    Workers      = @(@{ Pool = $Pool })
                 }
             }
         }

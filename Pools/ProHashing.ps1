@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Param(
@@ -32,7 +32,7 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $HostSuffix = "mining.prohashing.com"
 
-$PoolConfig = $Variables.PoolsConfig.$Name
+$PoolConfig = $Session.PoolsConfig.$Name
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
@@ -42,8 +42,8 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 If ($DivisorMultiplier -and $PriceField) { 
 
     Try { 
-        If ($Variables.Brains.$Name) { 
-            $Request = $Variables.BrainData.$Name
+        If ($Session.Brains.$Name) { 
+            $Request = $Session.BrainData.$Name
         }
         Else { 
             $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
@@ -54,7 +54,7 @@ If ($DivisorMultiplier -and $PriceField) {
     If (-not $Request.PSObject.Properties.Name) { Return }
 
 
-    $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp }).ForEach(
+    $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp }).ForEach(
         { 
             $Algorithm = $Request.$_.name
             $AlgorithmNorm = Get-Algorithm $Algorithm
@@ -71,12 +71,12 @@ If ($DivisorMultiplier -and $PriceField) {
             $Reasons = [System.Collections.Generic.Hashset[String]]::new()
             If (-not $PoolConfig.UserName) { $Reasons.Add("No username") | Out-Null }
             If ($Request.$_.hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-            If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
+            If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
             $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$_.$PriceField / $Divisor) -FaultDetection $false
 
-            ForEach ($RegionNorm in $Variables.Regions[$Config.Region]) { 
+            ForEach ($RegionNorm in $Session.Regions[$Config.Region]) { 
                 If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $RegionNorm })) { 
 
                     [PSCustomObject]@{ 
@@ -93,7 +93,7 @@ If ($DivisorMultiplier -and $PriceField) {
                         Port                     = [UInt16]$Request.$_.port
                         PortSSL                  = 0
                         Price                    = If ($null -eq $Request.$_.$PriceField) { [Double]::NaN } Else { $Stat.Live }
-                        Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                        Protocol                 = If ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                         Reasons                  = $Reasons
                         Region                   = $RegionNorm
                         SendHashrate             = $false

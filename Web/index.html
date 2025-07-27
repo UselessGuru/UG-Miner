@@ -10,8 +10,6 @@
             <button id="btn-enable" class="btn btn-success" disabled title="The marked miners will be enabled">Enable</button>
           </div>
           <table id="activeminers" class="table"
-            data-auto-refresh="true"
-            data-auto-refresh-status="true"
             data-cache="false"
             data-click-to-select="true"
             data-cookie="true"
@@ -68,8 +66,8 @@
                 <th data-field="PrimaryPoolVariant" data-sortable="true" data-filter-control="select" data-filter-strict-search="true" data-visible="false">Primary pool (variant)</th>
                 <th data-field="PrimaryPoolUser" data-sortable="true" data-filter-control="select" data-visible="false">Primary user</th>
                 <th data-field="PrimaryPoolPort" data-sortable="true" data-filter-control="select" data-visible="false">Primary pool port</th>
-                <th data-field="PrimaryHashrateLive" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" data-title-tooltip="(live value)">Primary<br>hashrate<br>(live)</th>
-                <th data-field="PrimaryHashrate" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" data-visible="false" data-title-tooltip="(benchmarked value)">Primary<br>hashrate<br>(benchmarked)</th>
+                <th data-field="PrimaryHashrateLive" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" class="text-nowrap" data-title-tooltip="(benchmarked value)">Primary<br>hashrate<br>(live)</th>
+                <th data-field="PrimaryHashrate" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" class="text-nowrap" data-visible="false" data-title-tooltip="(benchmarked value)">Primary<br>hashrate<br>(benchmarked)</th>
                 <th data-field="PrimaryPoolFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Primary pool fee</th>
                 <th data-field="PrimaryMinerFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Primary miner fee</th>
                 <th data-field="SecondaryAlgorithm" data-sortable="true" data-filter-control="select" data-visible="false">Secondary algorithm</th>
@@ -80,8 +78,8 @@
                 <th data-field="SecondaryPoolVariant" data-sortable="true" data-filter-control="select" data-visible="false">Secondary pool (variant)</th>
                 <th data-field="SecondaryPoolUser" data-sortable="true" data-filter-control="select" data-visible="false">Secondary user</th>
                 <th data-field="SecondaryPoolPort" data-sortable="true" data-filter-control="select" data-visible="false">Secondary pool port</th>
-                <th data-field="SecondaryHashrateLive" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" data-title-tooltip="(live value)">Secondary<br>hashrate<br>(live)</th>
-                <th data-field="SecondaryHashrate" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" data-visible="false" data-title-tooltip="(benchmarked value)">Secondary<br>hashrate<br>(benchmarked)</th>
+                <th data-field="SecondaryHashrateLive" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" class="text-nowrap" data-title-tooltip="(live value)">Secondary<br>hashrate<br>(live)</th>
+                <th data-field="SecondaryHashrate" data-align="right" data-sortable="true" data-formatter="formatHashrateValue" class="text-nowrap" data-visible="false" data-title-tooltip="(benchmarked value)">Secondary<br>hashrate<br>(benchmarked)</th>
                 <th data-field="SecondaryPoolFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Secondary pool fee</th>
                 <th data-field="SecondaryMinerFee" data-align="right" data-sortable="true" data-filter-control="input" data-formatter="formatPercent" data-width=1 data-visible="false">Secondary miner fee</th>
                 <th data-field="TotalMiningDuration" data-sortable="true" data-visible="false">Total mining duration</th>
@@ -100,177 +98,177 @@
           </div>
           <pre id="logtext" style="font-size: 17px; line-height: 22px; margin-top: 20px; overflow: auto; display: flex; flex-direction: column-reverse;"></pre>
           <br>
-<!-- Start of page scripts 'index.html' -->
+<!-- Start of page scripts "index.html" -->
           <script type="text/javascript">
-            var $table = $('#activeminers');
+            var $table = $("#activeminers");
 
             function tailf() {
               $.ajax({
                 async: false,
-                dataType: 'text',
-                url: '/functions/log/get?lines=500', 
+                dataType: "text",
+                url: "/functions/log/get?lines=500", 
                 success: function(result) {
-                  document.getElementById('logtext').innerHTML = result.replaceAll('&', '&amp').replaceAll('<', '&lt').replaceAll('>', '&gt;').replaceAll("'", '&#39;').replaceAll('"', '&quot;');;
+                  document.getElementById("logtext").innerHTML = result.replaceAll("&", "&amp").replaceAll("<", "&lt").replaceAll(">", "&gt;").replaceAll("'", "&#39;").replaceAll('"', "&quot;");;
                 }
               });
             };
 
             if (config.CalculatePowerCost == false) {
-              $cookieIdTable = 'Index_Earnings'
+              $cookieIdTable = "Index_Earnings"
             }
             else { 
-              $cookieIdTable = 'Index_Profit'
+              $cookieIdTable = "Index_Profit"
             };
 
             if (config.DisableDualAlgoMining == true) {
-              $cookieIdTable = $cookieIdTable + '_SingleAlgo';
+              $cookieIdTable = $cookieIdTable + "_SingleAlgo";
             } else { 
-              $cookieIdTable = $cookieIdTable + '_DualAlgo';
+              $cookieIdTable = $cookieIdTable + "_DualAlgo";
             };
 
             $table.bootstrapTable({
-              async: 'true',
+              async: "true",
               cookieIdTable: $cookieIdTable,
               onLoadSuccess: function() {
                 if (config.CalculatePowerCost == false) {
-                  $table.bootstrapTable('hideColumn', 'Profit_Bias');
-                  $table.bootstrapTable('hideColumn', 'PowerConsumption');
-                  $table.bootstrapTable('hideColumn', 'PowerCost');
+                  $table.bootstrapTable("hideColumn", "Profit_Bias");
+                  $table.bootstrapTable("hideColumn", "PowerConsumption");
+                  $table.bootstrapTable("hideColumn", "PowerCost");
                 };
                 if (config.DisableDualAlgoMining == true) {
-                  $table.bootstrapTable('hideColumn', 'SecondaryAlgorithm');
-                  $table.bootstrapTable('hideColumn', 'SecondaryAlgorithmVariant');
-                  $table.bootstrapTable('hideColumn', 'SecondaryCurrency');
-                  $table.bootstrapTable('hideColumn', 'SecondaryCoinName');
-                  $table.bootstrapTable('hideColumn', 'SecondaryPool');
-                  $table.bootstrapTable('hideColumn', 'SecondaryPoolVariant');
-                  $table.bootstrapTable('hideColumn', 'SecondaryPoolUser');
-                  $table.bootstrapTable('hideColumn', 'SecondaryHashrateLive');
-                  $table.bootstrapTable('hideColumn', 'SecondaryHashrate');
-                  $table.bootstrapTable('hideColumn', 'SecondaryPoolFee');
-                  $table.bootstrapTable('hideColumn', 'SecondaryMinerFee');
+                  $table.bootstrapTable("hideColumn", "SecondaryAlgorithm");
+                  $table.bootstrapTable("hideColumn", "SecondaryAlgorithmVariant");
+                  $table.bootstrapTable("hideColumn", "SecondaryCurrency");
+                  $table.bootstrapTable("hideColumn", "SecondaryCoinName");
+                  $table.bootstrapTable("hideColumn", "SecondaryPool");
+                  $table.bootstrapTable("hideColumn", "SecondaryPoolVariant");
+                  $table.bootstrapTable("hideColumn", "SecondaryPoolUser");
+                  $table.bootstrapTable("hideColumn", "SecondaryHashrateLive");
+                  $table.bootstrapTable("hideColumn", "SecondaryHashrate");
+                  $table.bootstrapTable("hideColumn", "SecondaryPoolFee");
+                  $table.bootstrapTable("hideColumn", "SecondaryMinerFee");
                 };
               },
               onResetView: function () {
-                document.getElementById('logtext').style.height = ($(window).height() - $table.height() - 440) + 'px';
+                document.getElementById("logtext").style.height = ($(window).height() - $table.height() - 440) + "px";
               },
               onPostBody: function () {
                 if (config.UseColorForMinerStatus == true) {
                   $(".statuscolor").each(function () {
-                    if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());
+                    if (this.innerText) $(this).parent("tr").addClass("color-" + this.innerText.toLowerCase());
                   });
                 };
                 $(".addlocalcurrency").each(function () {
-                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
+                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + config.FIATcurrency + " / day";
                 });
               },
               onToggle: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               }
             });
 
-            $('#activeminers').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
+            $("#miners").on("column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table", function () {
               $(".addlocalcurrency").each(function () {
-                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + config.FIATcurrency + " / day";
               });
             });
 
-            $('#activeminers').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
-              document.getElementById('btn-re-benchmark').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-enable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+            $("#miners").on("check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table", function () {
+              document.getElementById("btn-re-benchmark").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-re-measure").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-failed").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-disable").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-enable").disabled = !Boolean($table.bootstrapTable("getSelections").length);
             });
 
-            $('#btn-re-benchmark').click(function () {
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-re-benchmark").click(function () {
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $('body').css('cursor', 'wait');
-                $url = '/functions/stat/remove';
+                $("body").css("cursor", "wait");
+                $url = "/functions/stat/remove";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                  'Type' : 'Hashrate'
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Type" : "Hashrate"
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-re-benchmark').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text($("#btn-re-benchmark").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $('#activeminers').bootstrapTable('refresh');
+                $("#miners").bootstrapTable("refresh");
               }
             });
 
-            $('#btn-re-measure').click(function () {
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-re-measure").click(function () {
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $('body').css('cursor', 'wait');
-                $url = '/functions/stat/remove';
+                $("body").css("cursor", "wait");
+                $url = "/functions/stat/remove";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                  'Type' : 'PowerConsumption'
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Type" : "PowerConsumption"
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-re-measure').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text($("#btn-re-measure").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $('#activeminers').bootstrapTable('refresh');
+                $("#miners").bootstrapTable("refresh");
               }
             });
 
-            $('#btn-failed').click(function () {
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-failed").click(function () {
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $('body').css('cursor', 'wait');
-                $url = '/functions/stat/set';
+                $("body").css("cursor", "wait");
+                $url = "/functions/stat/set";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                  'Type': 'Hashrate',
-                  'Value': 0 
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Type": "Hashrate",
+                  "Value": 0 
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text("Mark miner as failed");
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text("Mark miner as failed");
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $('#activeminers').bootstrapTable('refresh');
+                $("#miners").bootstrapTable("refresh");
               }
             });
 
-            $('#btn-disable').click(function () {
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-disable").click(function () {
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $('body').css('cursor', 'wait');
-                $url = '/functions/stat/disable'
+                $("body").css("cursor", "wait");
+                $url = "/functions/stat/disable"
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text("Disable miner");
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text("Disable miner");
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $('#activeminers').bootstrapTable('refresh');
+                $("#miners").bootstrapTable("refresh");
               }
             });
 
-            $('#btn-enable').click(function () {
-              $('body').css('cursor', 'wait');
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-enable").click(function () {
+              $("body").css("cursor", "wait");
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $url = '/functions/stat/enable';
+                $url = "/functions/stat/enable";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text("Enable miner");
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text("Enable miner");
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $table.bootstrapTable('refresh');
+                $table.bootstrapTable("refresh");
               }
-              else $('body').css('cursor', 'default');
+              else $("body").css("cursor", "default");
             });
 
             $(window).resize(function () {
@@ -282,12 +280,12 @@
 
             $(document).ready(function () {
               tailf();
-              setInterval('tailf()', 500);
+              setInterval("tailf()", 500);
               // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
-              updateSummary();
-              updateButtonStatus();
+              document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              // updateSummary();
+              // updateButtonStatus();
             });
           </script>
-<!-- End of page scripts 'index.html' -->
+<!-- End of page scripts "index.html" -->
 <!-- #include file="/parts/foot.html" -->

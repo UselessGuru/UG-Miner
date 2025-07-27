@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HiveON.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Param(
@@ -31,7 +31,7 @@ $ProgressPreference = "SilentlyContinue"
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PoolConfig = $Variables.PoolsConfig.$Name
+$PoolConfig = $Session.PoolsConfig.$Name
 
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
@@ -48,25 +48,23 @@ Do {
     }
 } While (-not $Request -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
 
-If (-not $Request) { Return }
-
-ForEach ($Algorithm in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
-    $Currency = $Algorithm.name -replace "\s+"
-    If ($AlgorithmNorm = Get-AlgorithmFromCurrency $Currency) { 
-        $Divisor = [Double]$Algorithm.profitPerPower
+ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
+    $Currency = $Pool.name -replace "\s+"
+    If ($AlgorithmNorm = $Session.CurrencyAlgorithm[$Currency]) { 
+        $Divisor = [Double]$Pool.profitPerPower
 
         # Add coin name
-        If ($Algorithm.title -and $Currency) { 
-            Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Algorithm.title
+        If ($Pool.title -and $Currency) { 
+            Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
         If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
+        If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Algorithm.name).expectedReward24H * $Variables.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
+        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.stats.($Pool.name).expectedReward24H * $Session.Rates.$Currency.BTC / $Divisor) -FaultDetection $false
 
         [PSCustomObject]@{ 
             Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
@@ -75,14 +73,14 @@ ForEach ($Algorithm in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
             Disabled                 = $Stat.Disabled
             EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
             Fee                      = 0.03
-            Host                     = [String]$Algorithm.servers[0].host
+            Host                     = [String]$Pool.servers[0].host
             Key                      = $Key
             Name                     = $Name
             Pass                     = "x"
-            Port                     = [UInt16]$Algorithm.servers[0].ports[0]
-            PortSSL                  = [UInt16]$Algorithm.servers[0].SSL_ports[0]
+            Port                     = [UInt16]$Pool.servers[0].ports[0]
+            PortSSL                  = [UInt16]$Pool.servers[0].SSL_ports[0]
             PoolUri                  = "https://hiveon.net/$($Currency.ToLower())"
-            Price                    = If ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } Else { $Stat.Live }
+            Price                    = If ($null -eq $Request.$Pool.$PriceField) { [Double]::NaN } Else { $Stat.Live }
             Protocol                 = "ethproxy"
             Reasons                  = $Reasons
             Region                   = [String]$PoolConfig.Region
@@ -93,7 +91,7 @@ ForEach ($Algorithm in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
             User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }
             Variant                  = $PoolVariant
             WorkerName               = $PoolConfig.WorkerName
-            Workers                  = [UInt]$Request.stats.$($Algorithm.name).workers
+            Workers                  = [UInt]$Request.stats.$($Pool.name).workers
         }
     }
 }

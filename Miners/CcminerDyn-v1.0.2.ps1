@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return } # Cuda error in func 'argon2d_hash_cuda' at line 89 : an illegal instruction was encountered on GTX 750
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return } # Cuda error in func 'argon2d_hash_cuda' at line 89 : an illegal instruction was encountered on GTX 750
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CCminerDyn/ccminerdyn_v1.0.2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -67,7 +67,7 @@ If ($Algorithms) {
                                 Type        = "NVIDIA"
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                Workers      = @(@{ Pool = $Pool })
                             }
                         }
                     }

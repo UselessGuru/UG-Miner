@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.5.1 / Updated 2025/07/19
+Version 6.5.2 / Updated 2025/07/27
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -17,11 +17,11 @@ UG-Miner code is partly based on
 - MultiPoolMiner<sup>(*)</sup>  
   https://github.com/MultiPoolMiner/MultiPoolMiner
 
-- NPlusMiner<sup>(*)</sup>  
-  https://github.com/MrPlusGH/NPlusMiner
-
 - NemosMiner<sup>(*)</sup>  
   https://github.com/Minerx117/NemosMiner
+
+- NPlusMiner<sup>(*)</sup>  
+  https://github.com/MrPlusGH/NPlusMiner
   
   <sup>(*)</sup>These projects are no longer maintained
 
@@ -291,7 +291,7 @@ UI style can be set to 'light' or 'full':
 - full  
   Information about miners run in the past 24hrs, failed miners in the past 24hrs & watchdog timers will be shown
 
-UIStyle automatically switches to full during benchmarking or when measuring power consumption.
+UI style automatically switches to full during benchmarking or when measuring power consumption.
 
 ## Requirements
 

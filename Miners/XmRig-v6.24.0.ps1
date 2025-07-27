@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Variables.DriverVersion.CUDA -ge [Version]"10.2") }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { Return }
 
 # Fixed detection of L2 cache size for some complex NUMA topologies.
 # Fixed ARMv7 build.
@@ -33,7 +33,7 @@ $Path = "Bin\$Name\xmrig.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 # There is no toolkit for CUDA 12.7
-$URI = Switch ($Variables.DriverVersion.CUDA) { 
+$URI = Switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"12.9" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_9-win64.7z"; Break }
     { $_ -ge [System.Version]"12.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_8-win64.7z"; Break }
     { $_ -ge [System.Version]"12.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.24.0-cuda12_6-win64.7z"; Break }
@@ -200,7 +200,7 @@ If ($Algorithms) {
                     # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
@@ -209,7 +209,7 @@ If ($Algorithms) {
                             If ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Config.CPUMiningReserveCPUcore)" }
                             ElseIf ("AMD", "INTEL" -contains $_.Type) { $Arguments += " --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             Else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
-                            If (-not $Variables.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
+                            If (-not $Session.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
 
                             $MinerPath = If ("Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace "\\xmrig.exe$", "\xmrig-mo.exe" } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
                             $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Config.WorkerName }
@@ -227,7 +227,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                Workers      = @(@{ Pool = $Pool })
                             }
                         }
                     }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Param(
@@ -30,7 +30,7 @@ Param(
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PoolHost = "auto.nicehash.com"
 
-$PoolConfig = $Variables.PoolsConfig.$Name
+$PoolConfig = $Session.PoolsConfig.$Name
 
 $Fee = $PoolConfig.Variant.$PoolVariant.Fee
 $PayoutCurrency = $PoolConfig.PayoutCurrency
@@ -54,9 +54,12 @@ Do {
         $APICallFails ++
         Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
     }
-} While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
+} While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -le $Config.PoolAPIallowedFailureCount)
 
-If ($Request.miningAlgorithms) { 
+If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
+    Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://api2.nicehash.com/main/api/v2."
+}
+ElseIf ($Request.miningAlgorithms) { 
     $Request.miningAlgorithms.ForEach(
         { 
             $Algorithm = $_.Algorithm
@@ -69,7 +72,7 @@ If ($Request.miningAlgorithms) {
             If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
             If ($RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }).order -eq 0) { $Reasons.Add("No orders at pool") | Out-Null }
             If ($_.speed -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-            If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
+            If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
             $Key = "$($Name)_$($AlgorithmNorm)"
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value ([Double]$_.paying / $Divisor) -FaultDetection $false
@@ -89,7 +92,7 @@ If ($Request.miningAlgorithms) {
                 PortSSL                  = 443
                 PoolUri                  = "https://www.nicehash.com/algorithm/$($_.Algorithm.ToLower())"
                 Price                    = If ($null -eq $_.paying) { [Double]::NaN } Else { $Stat.Live }
-                Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                Protocol                 = If ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                 Region                   = [String]$PoolConfig.Region
                 Reasons                  = $Reasons
                 SendHashrate             = $false

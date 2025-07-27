@@ -2,14 +2,12 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navwatchdogtimers">Watchdog timers</h2>
           </div>
-          <div id="watchdogalert" class="alert alert-info" role="alert"></div>
+          <div id="watchdogalert" class="alert alert-info" role="alert">Shows all watchdog timers.</div>
           <div id="watchdog" style="visibility:hidden">
             <div id="toolbar">
               <button id="btn-removewatchdogs" class="btn btn-info" disabled>Remove all watchdog timers</button>
             </div>
             <table id="watchdogtimers" class="table"
-              data-auto-refresh="true"
-              data-auto-refresh-status="true"
               data-cache="false"
               data-click-to-select="true"
               data-cookie="true"
@@ -51,29 +49,46 @@
               </thead>
             </table>
           </div>
-<!-- Start of page scripts 'watchdogtmiers.html' -->
+<!-- Start of page scripts "watchdogtmiers.html" -->
           <script type="text/javascript">
-            var $table = $('#watchdogtimers');
+            var $table = $("#watchdogtimers");
 
             $table.bootstrapTable({
-              async: 'true',
+              async: "true",
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
-              height: $(window).height() - $table.offset().top - 35
+              height: $(window).height() - $table.offset().top - 35,
+              onLoadSuccess: function() {
+                if (config.Watchdog) { 
+                  document.getElementById("watchdog").style.visibility = "visible";
+                  $.ajax({
+                    async: false,
+                    dataType: "text",
+                    url: "/watchdogexpiration",
+                    success: function(minutes) {
+                      document.getElementById("watchdogalert").innerHTML = ("Shows all watchdog timers (data updated " + refreshtimestamp + ").<br>Watchdog timers expire after " + formatTime(minutes) + ".");
+                    }
+                  });
+                } else {
+                  document.getElementById("watchdog").style.visibility = "hidden"
+                  $("#watchdogalert").text("Watchdog is disabled in configuration (Watchdog -eq $false)");
+                };
+                $("body").css("cursor", "default");
+              },
             });
 
-            $('#watchdogtimers').on('load-success.bs.table', function () {
-              document.getElementById('btn-removewatchdogs').disabled = !Boolean($table.bootstrapTable('getData').length);
+            $("#watchdogtimers").on("load-success.bs.table", function () {
+              document.getElementById("btn-removewatchdogs").disabled = !Boolean($table.bootstrapTable("getData").length);
             });
 
-            $('#btn-removewatchdogs').click(function () {
-              $('body').css('cursor', 'wait');
-              $url = '/functions/watchdogtimers/remove';
-              $('.modal-body').load($url, function() {
-                $('.modal-title').text($('#btn-removewatchdogs').text());
-                $('body').css('cursor', 'default');
-                $('#myModal').modal({ show: true });
+            $("#btn-removewatchdogs").click(function () {
+              $("body").css("cursor", "wait");
+              $url = "/functions/watchdogtimers/remove";
+              $(".modal-body").load($url, function() {
+                $(".modal-title").text($("#btn-removewatchdogs").text());
+                $("body").css("cursor", "default");
+                $("#myModal").modal({ show: true });
               });
-              $('#watchdogtimers').bootstrapTable('refresh');
+              $("#watchdogtimers").bootstrapTable("refresh");
             });
 
             $(window).resize(function () {
@@ -84,26 +99,9 @@
             });
 
             $(document).ready(function () {
-              if (config.Watchdog) { 
-                document.getElementById('watchdog').style.visibility='visible';
-                // Fix, button text is wrong
-                document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
-                // Get watchdog expiry time
-                $.ajax({
-                  async: false,
-                  dataType: 'text',
-                  url: '/watchdogexpiration',
-                  success: function(minutes) {
-                    $('#watchdogalert').text('Shows all watchdog timers (watchdog timers expire after ' + formatTime(minutes) + ').');
-                  }
-                });
-              } else {
-                document.getElementById('watchdog').style.visibility='hidden'
-                $('#watchdogalert').text('Watchdog is disabled in configuration (Watchdog -eq $false)');
-              };
-              updateSummary();
-              updateButtonStatus();
+              // Fix, button text is wrong
+              document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
             });
           </script>
-<!-- End of page scripts 'watchdogtmiers.html' -->
+<!-- End of page scripts "watchdogtmiers.html" -->
 <!-- #include file="/parts/foot.html" -->

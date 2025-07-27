@@ -4,79 +4,92 @@
     <footer id="footer"></footer>
   </body>
 
-<!-- Start of page scripts 'foot.html'-->
-  <script type='text/javascript'>
+<!-- Start of page scripts "foot.html"-->
+  <script type="text/javascript">
     $(document).ready(function () {
 
       // Set the active sidebar item
       $(function() {
-        $('#'+$('#title').data('navbaractive')).addClass('active');
+        $("#"+$("#title").data("navbaractive")).addClass("active");
       });
 
-      $('#btn-miningpause').click(function () {
-        $('body').css('cursor', 'wait');
-        $command = '/functions/mining/pause';
-        $('.modal-body').load($command, function() {
+      $("#btn-miningpause").click(function () {
+        $("body").css("cursor", "wait");
+        $command = "/functions/mining/pause";
+        $(".modal-body").load($command, function() {
           if (this.outerText) {
-            $('.modal-title').text($('#btn-miningpause').text());
-            $('body').css('cursor', 'default');
-            $('#myModal').modal({ show: true });
+            $(".modal-title").text($("#btn-miningpause").text());
+            $("body").css("cursor", "default");
+            $("#myModal").modal({ show: true });
           };
         });
-        $("#myModal").on('hidden.bs.modal', function () {
+        $("#myModal").on("hidden.bs.modal", function () {
           updateButtonStatus();
           updateSummary();
-          $('#activeminers').bootstrapTable('refresh');
-          $('#switchinglog').bootstrapTable('refresh');
+          $("#activeminers").bootstrapTable("refresh");
+          $("#switchinglog").bootstrapTable("refresh");
+          $("#watchdogtimers").bootstrapTable("refresh");
         });
       });
 
-      $('#btn-miningstart').click(function () {
-        $('body').css('cursor', 'wait');
-        $command = '/functions/mining/start';
-        $('.modal-body').load($command, function() {
+      $("#btn-miningstart").click(function () {
+        $("body").css("cursor", "wait");
+        $command = "/functions/mining/start";
+        $(".modal-body").load($command, function() {
           if (this.outerText) {
-            $('.modal-title').text($('#btn-miningstart').text());
-            $('body').css('cursor', 'default');
-            $('#myModal').modal({ show: true });
+            $(".modal-title").text($("#btn-miningstart").text());
+            $("body").css("cursor", "default");
+            $("#myModal").modal({ show: true });
           };
         });
-        $("#myModal").on('hidden.bs.modal', function () {
+        $("#myModal").on("hidden.bs.modal", function () {
           updateButtonStatus();
           updateSummary();
-          $('#activeminers').bootstrapTable('refresh');
-          $('#switchinglog').bootstrapTable('refresh');
+          $("#activeminers").bootstrapTable("refresh");
+          $("#switchinglog").bootstrapTable("refresh");
+          $("#watchdogtimers").bootstrapTable("refresh");
         });
       });
 
-      $('#btn-miningstop').click(function () {
-        $('body').css('cursor', 'wait');
-        $command = '/functions/mining/stop';
-        $('.modal-body').load($command, function() {
+      $("#btn-miningstop").click(function () {
+        $("body").css("cursor", "wait");
+        $command = "/functions/mining/stop";
+        $(".modal-body").load($command, function() {
           if (this.outerText) {
-            $('.modal-title').text($('#btn-miningstop').text());
-            $('body').css('cursor', 'default');
-            $('#myModal').modal({ show: true });
+            $(".modal-title").text($("#btn-miningstop").text());
+            $("body").css("cursor", "default");
+            $("#myModal").modal({ show: true });
           };
         });
-        $("#myModal").on('hidden.bs.modal', function () {
+        $("#myModal").on("hidden.bs.modal", function () {
           updateButtonStatus();
           updateSummary();
-          $('#activeminers').bootstrapTable('refresh');
-          $('#switchinglog').bootstrapTable('refresh');
+          $("#activeminers").bootstrapTable("refresh");
+          $("#switchinglog").bootstrapTable("refresh");
+          $("#watchdogtimers").bootstrapTable("refresh");
         });
       });
 
-      // Update data once per interval
       window.setInterval(function() { 
-        updateData();
-        updateSummary();
-        updateButtonStatus();
-        if (typeof updatePoolBalances === "function") updatePoolBalances();
-      }, config.Interval * 1000);
+        if (document.body.style.cursor != "wait") {
+          updateTimestamp();
+          // Refresh data only when refreshtimestamp is new
+          if (refreshedtimestamp < refreshtimestamp) { 
+            refreshedtimestamp = refreshtimestamp;
+            $("#activeminers").bootstrapTable("refresh");
+            $("#watchdogtimers").bootstrapTable("refresh");
+            $("#watchdogtimers").bootstrapTable("refresh");
+            updateData();
+            updateSummary();
+            updateButtonStatus();
+            if (typeof updatePoolBalances === "function") updatePoolBalances();
+            setTimeout(() => { }, 2000); // Wait 2 seconds after update
+          }
+        }
+      }, 500);
 
-      document.getElementById('footer').innerHTML = version.join(' / ') + ' / All earnings and profit numbers are estimates based on data provided by the pools APIs / &copy; UselessGuru'
+      if (typeof version != "undefined") document.getElementById("footer").innerHTML = version.join(" / ") + " / All earnings and profit numbers are estimates based on data provided by the pools APIs / &copy; UselessGuru"
     });
 </script>
-<!-- End of page scripts 'foot.html'-->
+<!-- End of page scripts "foot.html"-->
 </html>

@@ -2,7 +2,7 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navminersoptimal">Optimal miners</h2>
           </div>
-          <div class="alert alert-info" role="alert">These are the optimal miners for each algorithm and device.</div>
+          <div name="add-updatedtimestamp" class="alert alert-info" role="alert">These are the optimal miners for each algorithm and device.</div>
           <div id="toolbar">
             <button id="btn-re-benchmark" class="btn btn-primary" disabled title="The marked miners will re-benchmark&#10;Use this if the recorded hashrate is unreal or to re-enable disabled miners">Re-benchmark</button>
             <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power consumption is unreal">Re-measure power consumption</button>
@@ -11,8 +11,6 @@
             <button id="btn-remove-watchdog" class="btn btn-info" disabled title="Remove the watchdog timers for the marked miners">Remove watchdog</button>
           </div>
           <table id="miners" class="table"
-            data-auto-refresh="true"
-            data-auto-refresh-status="false"
             data-cache="true"
             data-click-to-select="true"
             data-cookie="true"
@@ -30,7 +28,6 @@
             data-show-button-text="true"
             data-show-columns="true"
             data-show-columns-toggle-all="true"
-            data-show-fullscreen="false"
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
@@ -107,155 +104,157 @@
               </tr>
             </thead>
           </table>
-<!-- Start of page scripts 'minersoptimal.html' -->
+<!-- Start of page scripts "minersoptimal.html" -->
           <script type="text/javascript">
-            var $table = $('#miners');
+            var $table = $("#miners");
 
             $table.bootstrapTable({
-              async: 'true',
+              async: "true",
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 40,
               onColumnSwitch: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onColumnSwitch: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onColumnSwitchAll: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onCreatedControls: function() {
-                $('body').css('cursor', 'wait');
+                $("body").css("cursor", "wait");
               },
               onLoadSuccess: function() {
-                updateSummary();
-                updateButtonStatus();
-                $('body').css('cursor', 'default');
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = document.getElementsByName("add-updatedtimestamp")[0].innerHTML.replace(/\.$| \(updated.+/, "") + " (data updated " + refreshtimestamp + ").";
+                $("body").css("cursor", "default");
               },
               onPostBody: function () {
                 if (this.data.length > 0) {
                   if (config.UseColorForMinerStatus == true) {
                     $(".statuscolor").each(function () {
-                      if (this.innerText) $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());
+                      if (this.innerText) $(this).parent("tr").addClass("color-" + this.innerText.toLowerCase());
                     });
                   };
                 };
 
                 $(".addlocalcurrency").each(function () {
-                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
+                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + config.FIATcurrency + " / day";
                 });
               },
+              onRefresh: function() {
+                $("body").css("cursor", "wait");
+              },
               onToggle: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               }
             });
 
-            $('#miners').on('column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table', function () {
+            $("#miners").on("column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table", function () {
               $(".addlocalcurrency").each(function () {
-                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(' / day')) this.childNodes[0].innerText = this.childNodes[0].innerText + '\n' + config.FIATcurrency + ' / day';
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + config.FIATcurrency + " / day";
               });
             });
 
-            $('#miners').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
-              document.getElementById('btn-re-benchmark').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-re-measure').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-failed').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-disable').disabled = !Boolean($table.bootstrapTable('getSelections').length);
-              document.getElementById('btn-remove-watchdog').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+            $("#miners").on("check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table", function () {
+              document.getElementById("btn-re-benchmark").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-re-measure").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-failed").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-disable").disabled = !Boolean($table.bootstrapTable("getSelections").length);
+              document.getElementById("btn-remove-watchdog").disabled = !Boolean($table.bootstrapTable("getSelections").length);
             });
 
-            $('#btn-re-benchmark').click(function () {
-              $('body').css('cursor', 'wait');
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-re-benchmark").click(function () {
+              $("body").css("cursor", "wait");
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $url = '/functions/stat/remove';
+                $url = "/functions/stat/remove";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                  'Type' : 'Hashrate'
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Type" : "Hashrate"
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-re-benchmark').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text($("#btn-re-benchmark").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $table.bootstrapTable('refresh');
+                $table.bootstrapTable("refresh");
               }
-              else $('body').css('cursor', 'default');
+              else $("body").css("cursor", "default");
             });
 
-            $('#btn-re-measure').click(function () {
-              $('body').css('cursor', 'wait');
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-re-measure").click(function () {
+              $("body").css("cursor", "wait");
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $url = '/functions/stat/remove';
+                $url = "/functions/stat/remove";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                  'Type' : 'PowerConsumption'
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Type" : "PowerConsumption"
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-re-measure').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text($("#btn-re-measure").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $table.bootstrapTable('refresh');
+                $table.bootstrapTable("refresh");
               }
-              else $('body').css('cursor', 'default');
+              else $("body").css("cursor", "default");
             });
 
-            $('#btn-failed').click(function () {
-              $('body').css('cursor', 'wait');
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-failed").click(function () {
+              $("body").css("cursor", "wait");
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $url = '/functions/stat/set';
+                $url = "/functions/stat/set";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info}))),
-                  'Type': 'Hashrate',
-                  'Value': 0 
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Type": "Hashrate",
+                  "Value": 0 
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text("Mark miner as failed");
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text("Mark miner as failed");
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $table.bootstrapTable('refresh');
+                $table.bootstrapTable("refresh");
               }
-              else $('body').css('cursor', 'default');
+              else $("body").css("cursor", "default");
             });
 
-            $('#btn-disable').click(function () {
-              $('body').css('cursor', 'wait');
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-disable").click(function () {
+              $("body").css("cursor", "wait");
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $url = '/functions/stat/disable';
+                $url = "/functions/stat/disable";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text("Disable miner");
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text("Disable miner");
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $table.bootstrapTable('refresh');
+                $table.bootstrapTable("refresh");
               }
-              else $('body').css('cursor', 'default');
+              else $("body").css("cursor", "default");
             });
 
-            $('#btn-remove-watchdog').click(function () {
-              $('body').css('cursor', 'wait');
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-remove-watchdog").click(function () {
+              $("body").css("cursor", "wait");
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $url = '/functions/watchdogtimers/remove';
+                $url = "/functions/watchdogtimers/remove";
                 $payload = {
-                  'Miners': JSON.stringify($data.map($element => ({Name: $element.Name})))
+                  "Miners": JSON.stringify($data.map($element => ({Name: $element.Name})))
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-remove-watchdog').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text($("#btn-remove-watchdog").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $table.bootstrapTable('refresh');
+                $table.bootstrapTable("refresh");
               }
-              $('body').css('cursor', 'default');
+              $("body").css("cursor", "default");
             });
 
             $(window).resize(function () {
@@ -267,8 +266,8 @@
 
             $(document).ready(function () {
               // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
             });
           </script>
-<!-- End of page scripts 'minersoptimal.html' -->
+<!-- End of page scripts "minersoptimal.html" -->
 <!-- #include file="/parts/foot.html" -->

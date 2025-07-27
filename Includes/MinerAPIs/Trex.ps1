@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class Trex : Miner { 
@@ -30,50 +30,51 @@ Class Trex : Miner {
 
         Try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
-        }
-        Catch { 
-            Return $null
-        }
+            If (-not $Data) { Return $null }
 
-        $Hashrate = [PSCustomObject]@{ }
-        $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = $Data.hashrate_minute
-        If (-not $Data.hashrate_minute) { $HashrateValue = $Data.hashrate }
-        If ($null -eq $HashrateValue) { Return $null }
-        $Hashrate | Add-Member @{ $HashrateName = [Double]$HashrateValue }
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]$Data.accepted_count
-        $SharesRejected = [Int64]$Data.rejected_count
-        $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-
-        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            $HashrateValue = $Data.dual_stat.hashrate_minute
-            If (-not $HashrateValue) { $HashrateValue = $Data.dual_stat.hashrate }
+            $Hashrate = [PSCustomObject]@{ }
+            $HashrateName = [String]$this.Algorithms[0]
+            $HashrateValue = $Data.hashrate_minute
+            If (-not $Data.hashrate_minute) { $HashrateValue = $Data.hashrate }
             If ($null -eq $HashrateValue) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = [Double]$HashrateValue }
 
-            $SharesAccepted = [Int64]$Data.dual_stat.accepted_count
-            $SharesRejected = [Int64]$Data.dual_stat.rejected_count
+            $Shares = [PSCustomObject]@{ }
+            $SharesAccepted = [Int64]$Data.accepted_count
+            $SharesRejected = [Int64]$Data.rejected_count
             $SharesInvalid = [Int64]0
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-        }
 
-        $PowerConsumption = [Double]0
+            If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+                $HashrateValue = $Data.dual_stat.hashrate_minute
+                If (-not $HashrateValue) { $HashrateValue = $Data.dual_stat.hashrate }
+                If ($null -eq $HashrateValue) { Return $null }
+                $Hashrate | Add-Member @{ $HashrateName = [Double]$HashrateValue }
 
-        If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = [Double]($Data.gpus | Measure-Object power -Sum).Sum
-            If (-not $PowerConsumption) { 
-                $PowerConsumption = $this.GetPowerConsumption()
+                $SharesAccepted = [Int64]$Data.dual_stat.accepted_count
+                $SharesRejected = [Int64]$Data.dual_stat.rejected_count
+                $SharesInvalid = [Int64]0
+                $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            }
+
+            $PowerConsumption = [Double]0
+
+            If ($this.ReadPowerConsumption) { 
+                $PowerConsumption = [Double]($Data.gpus | Measure-Object power -Sum).Sum
+                If (-not $PowerConsumption) { 
+                    $PowerConsumption = $this.GetPowerConsumption()
+                }
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
             }
         }
-
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
+        Catch { 
+            Return $null
         }
     }
 }

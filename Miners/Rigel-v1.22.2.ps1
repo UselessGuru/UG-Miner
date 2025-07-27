@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 # Add sha3x algorithm for Tari mining (dev fee 1%)
@@ -29,7 +29,7 @@ Version date:   2025/07/19
 # CFX (octopus+sha3x)
 # KLS (karlsenhashv2+sha3x)
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
 $URI = "https://github.com/rigelminer/rigel/releases/download/1.22.2/rigel-1.22.2-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -108,7 +108,7 @@ If ($Algorithms) {
                         ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
                             $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                            $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                             If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
@@ -137,10 +137,10 @@ If ($Algorithms) {
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
+                                $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                 # Apply tuning parameters
-                                If ($Variables.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments += $_.Tuning }
+                                If ($Session.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "Rigel"
@@ -155,7 +155,7 @@ If ($Algorithms) {
                                     Type        = "NVIDIA"
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @($Pools.ForEach({ @{ Pool = $_ } }))
+                                    Workers      = @($Pools.ForEach({ @{ Pool = $_ } }))
                                 }
                             }
                         }

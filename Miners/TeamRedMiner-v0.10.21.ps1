@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TeamRedMiner/teamredminer-v0.10.21-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -80,7 +80,7 @@ $Algorithms = @(
 #   @{ Algorithms = @("MTP", "");                          SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=mtp" } # Algorithm is dead
     @{ Algorithms = @("Nimiq", "");                        SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA3$";  ExcludePools = @(@(), @());           Arguments = " --algo=nimiq" }
     @{ Algorithms = @("Phi2", "");                         SecondaryAlgorithmPrefix = "";        Fee = @(0.03);       MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=phi2" }
-    @{ Algorithms = @("VertHash", "");                     SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 4.0;  MinerSet = 1; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = "^GCN1$";          ExcludePools = @(@(), @());           Arguments = " --algo=verthash --verthash_file=..\.$($Variables.VertHashDatPath)" }
+    @{ Algorithms = @("VertHash", "");                     SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 4.0;  MinerSet = 1; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = "^GCN1$";          ExcludePools = @(@(), @());           Arguments = " --algo=verthash --verthash_file=..\.$($Session.VertHashDatPath)" }
 #   @{ Algorithms = @("X16r", "");                         SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 3; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=x16r" } # ASIC
     @{ Algorithms = @("X16rv2", "");                       SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 4.0;  MinerSet = 0; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=x16rv2" }
     @{ Algorithms = @("X16s", "");                         SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=x16s" }
@@ -104,8 +104,8 @@ If ($Algorithms) {
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
-                        If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Variables.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                            $PrerequisitePath = $Variables.VertHashDatPath
+                        If ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                            $PrerequisitePath = $Session.VertHashDatPath
                             $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                         }
                         Else { 
@@ -117,7 +117,7 @@ If ($Algorithms) {
                         ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
@@ -152,7 +152,7 @@ If ($Algorithms) {
                                         Type             = "AMD"
                                         URI              = $URI
                                         WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                        Workers           = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                     }
                                 }
                             }

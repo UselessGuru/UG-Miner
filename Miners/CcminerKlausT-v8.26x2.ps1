@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge [System.Version]"6.0" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge [System.Version]"6.0" }))) { Return }
 
-$URI = Switch ($Variables.DriverVersion.CUDA) { 
+$URI = Switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda118-x64.7z"; Break }
     { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda117-x64.7z"; Break }
     { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda116-x64.7z"; Break }
@@ -87,7 +87,7 @@ If ($Algorithms) {
                                 Type        = "NVIDIA"
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                Workers      = @(@{ Pool = $Pool })
                             }
                         }
                     }

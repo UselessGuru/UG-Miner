@@ -221,7 +221,7 @@
             <br>
             <br>
           </div>
-<!-- Start of page scripts 'devices.html' -->
+<!-- Start of page scripts "devices.html" -->
           <script type="text/javascript">
 
             function formatDevices(data) {
@@ -243,7 +243,7 @@
                 else if (item.CIM) item.Cores = item.CIM.NumberOfLogicalProcessors;
 
                 // Convert CUDAversion to string
-                if (item.CUDAversion) item.CUDAversion = item.CUDAversion.Major + '.' + item.CUDAversion.Minor + ' (build ' + item.CUDAversion.Build + ')';
+                if (item.CUDAversion) item.CUDAversion = item.CUDAversion.Major + "." + item.CUDAversion.Minor + " (build " + item.CUDAversion.Build + ")";
 
                 if (item.Architecture) item.Architecture = item.Architecture;
 
@@ -257,63 +257,60 @@
             };
 
             $(".table").bootstrapTable({
-              async: 'true',
+              async: "true",
+              onAll: function() {
+                document.getElementById("btn-disable-device").disabled = !Boolean($("#enableddevices").bootstrapTable("getSelections").length);
+                document.getElementById("btn-enable-device").disabled = !Boolean($("#disableddevices").bootstrapTable("getSelections").length);
+              },
               onPostBody: function () {
                 if (config.UseColorForMinerStatus == true) {
                   $(".statuscolor").each(function () {
                     if (this.innerText) {
-                      $(this).parent('tr').addClass('color-' + this.innerText.toLowerCase());
+                      $(this).parent("tr").addClass("color-" + this.innerText.toLowerCase());
                     }
                   });
                 };
               },
-
-              onAll: function() {
-                document.getElementById('btn-disable-device').disabled = !Boolean($('#enableddevices').bootstrapTable('getSelections').length);
-                document.getElementById('btn-enable-device').disabled = !Boolean($('#disableddevices').bootstrapTable('getSelections').length);
-              }
             });
 
             $(function () {
-              $('#btn-disable-device').click(function () {
-                $('body').css('cursor', 'wait');
-                var command = 'functions/config/device/disable?Name=' + encodeURIComponent($('#enableddevices').bootstrapTable('getSelections').map(item => item.Name));
-                $('.modal-body').load(command, function() {
-                  $('.modal-title').text($('#btn-disable-device').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+              $("#btn-disable-device").click(function () {
+                $("body").css("cursor", "wait");
+                var command = "functions/config/device/disable?Name=" + encodeURIComponent($("#enableddevices").bootstrapTable("getSelections").map(item => item.Name));
+                $(".modal-body").load(command, function() {
+                  $(".modal-title").text($("#btn-disable-device").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $('#enableddevices').bootstrapTable('refresh');
-                $('#disableddevices').bootstrapTable('refresh');
+                $("#enableddevices").bootstrapTable("refresh");
+                $("#disableddevices").bootstrapTable("refresh");
               });
-              updateSummary();
-              updateButtonStatus();
             });
 
             $(function () {
-              $('#btn-enable-device').click(function () {
-                $('body').css('cursor', 'wait');
-                var command = 'functions/config/device/enable?Name=' + encodeURIComponent($('#disableddevices').bootstrapTable('getSelections').map(item => item.Name));
-                $('.modal-body').load(command, function() {
-                  $('.modal-title').text($('#btn-enable-device').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+              $("#btn-enable-device").click(function () {
+                $("body").css("cursor", "wait");
+                var command = "functions/config/device/enable?Name=" + encodeURIComponent($("#disableddevices").bootstrapTable("getSelections").map(item => item.Name));
+                $(".modal-body").load(command, function() {
+                  $(".modal-title").text($("#btn-enable-device").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $('#enableddevices').bootstrapTable('refresh');
-                $('#disableddevices').bootstrapTable('refresh');
+                $("#enableddevices").bootstrapTable("refresh");
+                $("#disableddevices").bootstrapTable("refresh");
               });
             });
 
             $(function() {
               $.ajax({
                 async: false,
-                dataType: 'json',
-                url: '/devices/unsupported', 
+                dataType: "json",
+                url: "/devices/unsupported", 
                 success: function(result) {
-                  if (result == '') {
-                    document.getElementById("unsupporteddevices").style.visibility='hidden';
+                  if (result == "") {
+                    document.getElementById("unsupporteddevices").style.visibility="hidden";
                   } else {
-                    document.getElementById("unsupporteddevices").style.visibility='visible';
+                    document.getElementById("unsupporteddevices").style.visibility="visible";
                   }
                 }
               });
@@ -328,11 +325,11 @@
 
             $(document).ready(function () {
               // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
-              document.getElementsByName('toggle')[1].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
-              document.getElementsByName('toggle')[2].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              document.getElementsByName("toggle")[1].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              document.getElementsByName("toggle")[2].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
             });
 
           </script>
-<!-- End of page scripts 'devices.html' -->
+<!-- End of page scripts "devices.html" -->
 <!-- #include file="/parts/foot.html" -->

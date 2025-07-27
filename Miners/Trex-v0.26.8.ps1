@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
 $URI = "https://github.com/trexminer/T-Rex/releases/download/0.26.8/t-rex-0.26.8-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -70,7 +70,7 @@ If ($Algorithms) {
                     ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
                         ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                            $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                             If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
@@ -109,7 +109,7 @@ If ($Algorithms) {
                                 If ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
 
                                 # Apply tuning parameters
-                                If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "Trex"
@@ -124,7 +124,7 @@ If ($Algorithms) {
                                     Type        = "NVIDIA"
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                    Workers      = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                 }
                             }
                         }

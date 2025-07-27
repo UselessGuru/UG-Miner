@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ProHashing.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -63,7 +63,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.ProHashingAPIkey) {
             }
             Else { 
                 # Remove non present (paid) balances
-                $Variables.BalancesData = $Variables.BalancesData.Where({ $_.Pool -ne $Name })
+                $Session.BalancesData = $Session.BalancesData.Where({ $_.Pool -ne $Name })
             }
         }
     }

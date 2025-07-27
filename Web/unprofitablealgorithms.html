@@ -2,30 +2,30 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navunprofitablealgorithms">Unprofitable algorithms</h2>
           </div>
-          <div class="alert alert-info" role="alert">This is the static list of unprofitable algorithms (stored in '.\Data\UnprofitableAlgorithms.json'). Feel free to edit it to match your requirements.</br></div>
+          <div class="alert alert-info" role="alert">This is the static list of unprofitable algorithms (stored in ".\Data\UnprofitableAlgorithms.json"). Feel free to edit it to match your requirements.</br></div>
           <div id="toolbar">
             <button type="button" class="btn btn-primary" id="btn-editunprofitablealgorithms" name="btn-editunprofitablealgorithms" title="Edit Unprofitable Algorithms file&#10;It will become active in next cycle.">Edit unprofitable algorithms file</button>
           </div>
           <br>
           <pre id="unprofitablealgorithms" style="height: calc(100vh - 380px); overflow: auto;"></pre>
           <br>
-<!-- Start of page scripts 'unprofitablealgorithms.html' -->
+<!-- Start of page scripts "unprofitablealgorithms.html" -->
           <script type="text/javascript">
 
             //Edit unprofitable algorithms file
-            $('#btn-editunprofitablealgorithms').click(function () {
-              document.getElementById('btn-editunprofitablealgorithms').disabled = true;
-              $('.modal-body').load('/functions/file/edit?FileName=' + encodeURIComponent('.\\Data\\UnprofitableAlgorithms.json'), function () {
+            $("#btn-editunprofitablealgorithms").click(function () {
+              document.getElementById("btn-editunprofitablealgorithms").disabled = true;
+              $(".modal-body").load("/functions/file/edit?FileName=" + encodeURIComponent(".\\Data\\UnprofitableAlgorithms.json"), function () {
                 if (this.outerText) {
-                  $('.modal-title').text('Edit unprofitable algorithms file');
-                  $('#myModal').modal({ 
+                  $(".modal-title").text("Edit unprofitable algorithms file");
+                  $("#myModal").modal({ 
                     show: true
                   });
-                  $('#myModal').on('hidden.bs.modal', function () {
+                  $("#myModal").on("hidden.bs.modal", function () {
                     location.reload(true);
                   })
                 }
-                document.getElementById('btn-editunprofitablealgorithms').disabled = false;
+                document.getElementById("btn-editunprofitablealgorithms").disabled = false;
               });
             });
 
@@ -33,17 +33,17 @@
               $(function() {
                 $.ajax({
                   async: false,
-                  dataType: 'text',
-                  url: '/functions/file/showcontent?FileName=' + encodeURIComponent('.\\Data\\UnprofitableAlgorithms.json'), 
+                  dataType: "text",
+                  url: "/functions/file/showcontent?FileName=" + encodeURIComponent(".\\Data\\UnprofitableAlgorithms.json"), 
                   success: function(result) {
-                    $('#unprofitablealgorithms').text(result);
+                    $("#unprofitablealgorithms").text(result);
                   }
                 });
               });
 
-              updateSummary();
-              updateButtonStatus();
+              // updateSummary();
+              // updateButtonStatus();
             });
           </script>
-<!-- End of page scripts 'unprofitablealgorithms.html' -->
+<!-- End of page scripts "unprofitablealgorithms.html" -->
 <!-- #include file="/parts/foot.html" -->

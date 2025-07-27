@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Param(
@@ -32,7 +32,7 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $HostSuffix = "mine.zergpool.com"
 
-$PoolConfig = $Variables.PoolsConfig.$Name
+$PoolConfig = $Session.PoolsConfig.$Name
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $Regions = If ($Config.UseAnycast -and $PoolConfig.Region -contains "n/a (Anycast)") { "n/a (Anycast)" } Else { $PoolConfig.Region.Where({ $_ -ne "n/a (Anycast)" }) }
@@ -45,8 +45,8 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 If ($DivisorMultiplier -and $Regions) { 
 
     Try { 
-        If ($Variables.BrainData.$Name.PSObject.Properties) { 
-            $Request = $Variables.BrainData.$Name
+        If ($Session.BrainData.$Name.PSObject.Properties) { 
+            $Request = $Session.BrainData.$Name
         }
         Else { 
             $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
@@ -56,7 +56,7 @@ If ($DivisorMultiplier -and $Regions) {
 
     If (-not $Request.PSObject.Properties.Name) { Return }
 
-    ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
+    ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp })) { 
         $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = If ([String]$Request.$Algorithm.Currency) { [String]$Request.$Algorithm.Currency } Else { "" }
         $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
@@ -71,7 +71,7 @@ If ($DivisorMultiplier -and $Regions) {
         If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
         If ($Request.$Algorithm.NoAutotrade -eq 1 -and $Currency -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
         If ($Request.$Algorithm.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
+        If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
         # Cannot cast negative values to [UInt]
         If ($Request.$Algorithm.workers_shared -lt 0) { $Request.$Algorithm.workers_shared = 0 }
@@ -79,7 +79,7 @@ If ($DivisorMultiplier -and $Regions) {
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
         $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
 
-        ForEach ($RegionNorm in $Variables.Regions[$Config.Region]) { 
+        ForEach ($RegionNorm in $Session.Regions[$Config.Region]) { 
             If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $RegionNorm })) { 
 
                 If ($Region -eq "n/a (Anycast)") { 
@@ -105,7 +105,7 @@ If ($DivisorMultiplier -and $Regions) {
                     PortSSL                  = [UInt16]$Request.$Algorithm.tls_port
                     PoolUri                  = "https://zergpool.com/pool/$($Algorithm)"
                     Price                    = If ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } Else { $Stat.Live }
-                    Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                    Protocol                 = If ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum2" } ElseIf ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } Else { "" }
                     Reasons                  = $Reasons
                     Region                   = $RegionNorm
                     SendHashrate             = $false

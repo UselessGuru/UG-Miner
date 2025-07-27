@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
-If (($Variables.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { Return }
-If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
+If (($Session.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
 
-$URI = Switch ($Variables.DriverVersion.CUDA) { 
+$URI = Switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.0" } { "http://www.tradeproject.de/download/Miner/TT-Miner-2024.3.3b6.zip"; Break }
     Default                           { Return }
 }
@@ -103,7 +103,7 @@ If ($Algorithms) {
                     # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
-                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
@@ -128,11 +128,11 @@ If ($Algorithms) {
 
                             # Allow more time to build larger DAGs, must use type cast to keep values in $_
                             $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                            $WarmupTimes[0] += [UInt16]($Pool.DAGSizeGiB * 5)
+                            $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 5)
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = "$Arguments -report-average 5 -report-interval 5$(If ($_.Algorithm -match $Variables.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(If ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Config.CPUMiningReserveCPUcore)" } Else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x2}:00' -f $_ }) -join ',')" })"
+                                Arguments   = "$Arguments -report-average 5 -report-interval 5$(If ($_.Algorithm -match $Session.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(If ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Config.CPUMiningReserveCPUcore)" } Else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x2}:00' -f $_ }) -join ',')" })"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = $_.Fee # Dev fee
                                 MinerSet    = $_.MinerSet
@@ -143,7 +143,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                Workers      = @(@{ Pool = $Pool })
                             }
                         }
                     }

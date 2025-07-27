@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 using module .\Includes\Include.psm1
@@ -48,14 +48,14 @@ $ProgressPreference = "SilentlyContinue"
                 Else { 
                     [Void](Expand-WebRequest $URI $Path -ErrorAction Stop)
                 }
-                Write-Message -Level Info "Downloader:<br>Installed $Type '$($Path.Replace("$($Variables.MainPath)\", ''))'."
+                Write-Message -Level Info "Downloader:<br>Installed $Type '$($Path.Replace("$($Session.MainPath)\", ''))'."
                 If (Get-Command "Unblock-File" -ErrorAction Ignore) { $Path | Unblock-File }
             }
             Catch { 
                 $Path_Old = $null
 
                 If ($URI) { 
-                    If (-not (Test-Path -LiteralPath "$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
+                    If (-not (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
                         Write-Message -Level Warn "Downloader:<br>Cannot download '$URI'."
                     }
                 }
@@ -71,15 +71,15 @@ $ProgressPreference = "SilentlyContinue"
                 If ($Path_Old) { 
                     If (Test-Path -LiteralPath (Split-Path $Path_New) -PathType Container) { (Split-Path $Path_New) | Remove-Item -Recurse -Force }
                     (Split-Path $Path_Old) | Copy-Item -Destination (Split-Path $Path_New) -Recurse -Force
-                    Write-Message -Level Info "Downloader:<br>Copied $Type '$($Path.Replace("$($Variables.MainPath)\", ''))' from local repository '$PathOld'."
+                    Write-Message -Level Info "Downloader:<br>Copied $Type '$($Path.Replace("$($Session.MainPath)\", ''))' from local repository '$PathOld'."
                 }
                 Else { 
                     If ($URI) { 
-                        If (Test-Path -LiteralPath "$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
-                            Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Variables.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
+                        If (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
+                            Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
                         }
                     }
-                    Else { Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$($Path.Replace("$($Variables.MainPath)\", ''))'." }
+                    Else { Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$($Path.Replace("$($Session.MainPath)\", ''))'." }
                 }
             }
         }

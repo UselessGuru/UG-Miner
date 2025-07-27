@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
 # Added a hint that oc was reset when miner closes and it actually had set options that got successfully reset.
 # Fixed a bug when mining Grin Cuckatoo-32 not submitting shares in 1.96(a)
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
 
 $URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.97/lolMiner_v1.97_Win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -127,7 +127,7 @@ $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Al
 
 If ($Algorithms) { 
 
-    If (-not $Config.DryRun) { 
+    If (-not $Session.DryRun) { 
         # MaxDualImpact for 2. algorithm; The maximum impact on the eth mining speed in dual mining in %. Default is * for automatic mode
         $MaxDualImpactValues = @("*", 5, 10, 15, 20)
 
@@ -163,7 +163,7 @@ If ($Algorithms) {
                         ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                 # Windows 10 requires more memory on some algos
                                 If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [System.Version]"10.0.0.0")) { $MinMemGiB += 1 }
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
@@ -206,7 +206,7 @@ If ($Algorithms) {
                                             Type        = $Type
                                             URI         = $URI
                                             WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                            Workers      = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Xgminer.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class XgMiner : Miner { 
@@ -32,45 +32,12 @@ Class XgMiner : Miner {
         Try { 
             $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout -ErrorAction Stop
             $Data = $Response -replace ": ", ":" -replace " ", "_" | ConvertFrom-Json -ErrorAction Stop
-        }
-        Catch { 
-            Return $null
-        }
+            If (-not $Data) { Return $null }
 
-        If (-not $Data) { Return $null }
+            $Hashrate = [PSCustomObject]@{ }
 
-        $Hashrate = [PSCustomObject]@{ }
-
-        $DataSummary = If ($this.Algorithms[1]) { $Data.summary.SUMMARY[0] } Else { $Data.SUMMARY }
-        $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = If ($DataSummary.HS_5s) { [Double]$DataSummary.HS_5s * [Math]::Pow(1000, 0) }
-        ElseIf ($DataSummary.KHS_5s) { [Double]$DataSummary.KHS_5s * [Math]::Pow(1000, 1) }
-        ElseIf ($DataSummary.MHS_5s) { [Double]$DataSummary.MHS_5s * [Math]::Pow(1000, 2) }
-        ElseIf ($DataSummary.GHS_5s) { [Double]$DataSummary.GHS_5s * [Math]::Pow(1000, 3) }
-        ElseIf ($DataSummary.THS_5s) { [Double]$DataSummary.THS_5s * [Math]::Pow(1000, 4) }
-        ElseIf ($DataSummary.PHS_5s) { [Double]$DataSummary.PHS_5s * [Math]::Pow(1000, 5) }
-        ElseIf ($DataSummary.KHS_30s) { [Double]$DataSummary.KHS_30s * [Math]::Pow(1000, 1) }
-        ElseIf ($DataSummary.MHS_30s) { [Double]$DataSummary.MHS_30s * [Math]::Pow(1000, 2) }
-        ElseIf ($DataSummary.GHS_30s) { [Double]$DataSummary.GHS_30s * [Math]::Pow(1000, 3) }
-        ElseIf ($DataSummary.THS_30s) { [Double]$DataSummary.THS_30s * [Math]::Pow(1000, 4) }
-        ElseIf ($DataSummary.PHS_30s) { [Double]$DataSummary.PHS_30s * [Math]::Pow(1000, 5) }
-        ElseIf ($DataSummary.HS_av) { [Double]$DataSummary.HS_av * [Math]::Pow(1000, 0) }
-        ElseIf ($DataSummary.KHS_av) { [Double]$DataSummary.KHS_av * [Math]::Pow(1000, 1) }
-        ElseIf ($DataSummary.MHS_av) { [Double]$DataSummary.MHS_av * [Math]::Pow(1000, 2) }
-        ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
-        ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
-        ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
-        If ($null -eq $HashrateValue) { Return $null }
-        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]$DataSummary.accepted
-        $SharesRejected = [Int64]$DataSummary.rejected
-        $SharesInvalid = [Int64]$DataSummary.stale
-        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-
-        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            $DataSummary = $Data.summary2.SUMMARY[0]
+            $DataSummary = If ($this.Algorithms[1]) { $Data.summary.SUMMARY[0] } Else { $Data.SUMMARY }
+            $HashrateName = [String]$this.Algorithms[0]
             $HashrateValue = If ($DataSummary.HS_5s) { [Double]$DataSummary.HS_5s * [Math]::Pow(1000, 0) }
             ElseIf ($DataSummary.KHS_5s) { [Double]$DataSummary.KHS_5s * [Math]::Pow(1000, 1) }
             ElseIf ($DataSummary.MHS_5s) { [Double]$DataSummary.MHS_5s * [Math]::Pow(1000, 2) }
@@ -91,22 +58,54 @@ Class XgMiner : Miner {
             If ($null -eq $HashrateValue) { Return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
+            $Shares = [PSCustomObject]@{ }
             $SharesAccepted = [Int64]$DataSummary.accepted
             $SharesRejected = [Int64]$DataSummary.rejected
             $SharesInvalid = [Int64]$DataSummary.stale
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-        }
 
-        $PowerConsumption = [Double]0
-        If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = $this.GetPowerConsumption()
-        }
+            If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+                $DataSummary = $Data.summary2.SUMMARY[0]
+                $HashrateValue = If ($DataSummary.HS_5s) { [Double]$DataSummary.HS_5s * [Math]::Pow(1000, 0) }
+                ElseIf ($DataSummary.KHS_5s) { [Double]$DataSummary.KHS_5s * [Math]::Pow(1000, 1) }
+                ElseIf ($DataSummary.MHS_5s) { [Double]$DataSummary.MHS_5s * [Math]::Pow(1000, 2) }
+                ElseIf ($DataSummary.GHS_5s) { [Double]$DataSummary.GHS_5s * [Math]::Pow(1000, 3) }
+                ElseIf ($DataSummary.THS_5s) { [Double]$DataSummary.THS_5s * [Math]::Pow(1000, 4) }
+                ElseIf ($DataSummary.PHS_5s) { [Double]$DataSummary.PHS_5s * [Math]::Pow(1000, 5) }
+                ElseIf ($DataSummary.KHS_30s) { [Double]$DataSummary.KHS_30s * [Math]::Pow(1000, 1) }
+                ElseIf ($DataSummary.MHS_30s) { [Double]$DataSummary.MHS_30s * [Math]::Pow(1000, 2) }
+                ElseIf ($DataSummary.GHS_30s) { [Double]$DataSummary.GHS_30s * [Math]::Pow(1000, 3) }
+                ElseIf ($DataSummary.THS_30s) { [Double]$DataSummary.THS_30s * [Math]::Pow(1000, 4) }
+                ElseIf ($DataSummary.PHS_30s) { [Double]$DataSummary.PHS_30s * [Math]::Pow(1000, 5) }
+                ElseIf ($DataSummary.HS_av) { [Double]$DataSummary.HS_av * [Math]::Pow(1000, 0) }
+                ElseIf ($DataSummary.KHS_av) { [Double]$DataSummary.KHS_av * [Math]::Pow(1000, 1) }
+                ElseIf ($DataSummary.MHS_av) { [Double]$DataSummary.MHS_av * [Math]::Pow(1000, 2) }
+                ElseIf ($DataSummary.GHS_av) { [Double]$DataSummary.GHS_av * [Math]::Pow(1000, 3) }
+                ElseIf ($DataSummary.THS_av) { [Double]$DataSummary.THS_av * [Math]::Pow(1000, 4) }
+                ElseIf ($DataSummary.PHS_av) { [Double]$DataSummary.PHS_av * [Math]::Pow(1000, 5) }
+                If ($null -eq $HashrateValue) { Return $null }
+                $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
+                $SharesAccepted = [Int64]$DataSummary.accepted
+                $SharesRejected = [Int64]$DataSummary.rejected
+                $SharesInvalid = [Int64]$DataSummary.stale
+                $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            }
+
+            $PowerConsumption = [Double]0
+            If ($this.ReadPowerConsumption) { 
+                $PowerConsumption = $this.GetPowerConsumption()
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
+            }
+        }
+        Catch { 
+            Return $null
         }
     }
 }

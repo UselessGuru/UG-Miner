@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 # Flex and Xelisv2: Clang and Bionic compatibility by @sig11b in #13
@@ -26,7 +26,7 @@ Version date:   2025/07/19
 # Add Evohash
 # Add EvohashV2
 
-If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Kudaraidee/cpuminer-opt-kudaraidee-1.2.4_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -95,7 +95,7 @@ If ($Algorithms) {
                     Type             = "CPU"
                     URI              = $URI
                     WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers          = @(@{ Pool = $Pool })
+                    Workers           = @(@{ Pool = $Pool })
                 }
             }
         }

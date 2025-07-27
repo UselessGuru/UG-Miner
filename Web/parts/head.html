@@ -60,6 +60,8 @@
 <!-- Start of page scripts 'head.html' -->
   <script type='text/javascript'>
 
+    var refreshedtimestamp = "";
+
     function updateData() { 
       // Get current config
       $.ajax({
@@ -93,6 +95,18 @@
           }
         });
       }
+    }
+
+    function updateTimestamp() {
+      $.ajax({
+        async: false,
+        dataType: 'json',
+        timeout: 1,
+        url: '/refreshtimestamp',
+        success: function(result) {
+          refreshtimestamp = result;
+        }
+      });
     }
 
     function updateSummary() {
@@ -146,6 +160,7 @@
       });
     }
     updateData();
+    updateTimestamp()
   </script>
 <!-- Start of page scripts 'head.html' -->
   <body>

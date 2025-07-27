@@ -17,18 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-# x86_64: improved handling of vector constants used for byte permutations.
-# x86_64: removed hooks for cancelled AVX10-256.
-# Minor bug fixes & improvements.
-# More code cleanup.
+# Added argon2d1000, argon2d16000 algos.
+# Target specific AES optimizations improve shavite for ARM64 & x86_64.
 
-If (-not ($AvailableMinerDevices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
 
-$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.5/cpuminer-opt-25.5-windows.zip"
+$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.6/cpuminer-opt-25.6-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 If     ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX512", "SHA", "VAES") -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 3) { $Path = "Bin\$Name\cpuminer-avx512-sha-vaes.exe" }
@@ -44,6 +42,8 @@ Else { Return }
 $Algorithms = @(
     @{ Algorithm = "Allium";        MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo allium" }
     @{ Algorithm = "Anime";         MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo anime" }
+    @{ Algorithm = "Argon2d1000";   MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d1000" }
+    @{ Algorithm = "Argon2d1600";   MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d1600" }
     @{ Algorithm = "Argon2d250";    MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d250" }
     @{ Algorithm = "Argon2d500";    MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d500" }
     @{ Algorithm = "Argon2d5096";   MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo argon2d5096" }
@@ -61,7 +61,7 @@ $Algorithms = @(
 #   @{ Algorithm = "SHA3d";         MinerSet = 3; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --algo SHA3d" } # FPGA
 #   @{ Algorithm = "ScryptN11";     MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo scrypt(N,1,1)" } # GPU
 #   @{ Algorithm = "ScryptN2";      MinerSet = 1; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " --algo scrypt --param-n 1048576" } # Drops back to commandline, tested @ zergpool & zpool
-    @{ Algorithm = "VertHash";      MinerSet = 0; WarmupTimes = @(45, 50); ExcludePools = @(); Arguments = " --algo verthash --data-file ..\.$($Variables.VertHashDatPath)" }
+    @{ Algorithm = "VertHash";      MinerSet = 0; WarmupTimes = @(45, 50); ExcludePools = @(); Arguments = " --algo verthash --data-file ..\.$($Session.VertHashDatPath)" }
     @{ Algorithm = "Yescrypt";      MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescrypt" }
     @{ Algorithm = "YescryptR16";   MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr16" }
     @{ Algorithm = "YescryptR32";   MinerSet = 2; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo yescryptr32" }
@@ -91,8 +91,8 @@ If ($Algorithms) {
         { 
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
-            If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                $PrerequisitePath = $Variables.VertHashDatPath
+            If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                $PrerequisitePath = $Session.VertHashDatPath
                 $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
             }
             Else { 
@@ -118,7 +118,7 @@ If ($Algorithms) {
                     Type             = "CPU"
                     URI              = $URI
                     WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers          = @(@{ Pool = $Pool })
+                    Workers           = @(@{ Pool = $Pool })
                 }
             }
         }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZergPool.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 using module ..\Includes\Include.psm1
@@ -36,7 +36,7 @@ $BrainName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PoolObjects = @()
 $APICallFails = 0
 $Durations = [TimeSpan[]]@()
-$PoolConfig = $Variables.PoolsConfig.$BrainName
+$PoolConfig = $Session.PoolsConfig.$BrainName
 
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
@@ -45,7 +45,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     $PoolVariant = [String]$Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
-    If ($Variables.MyIPaddress) { 
+    If ($Session.MyIPaddress) { 
         Try { 
 
             Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
@@ -65,11 +65,14 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
                     Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
                 }
-            } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
+            } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -le $Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            If ($AlgoData -and $CurrenciesData) { 
+            If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
+                Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://zergpool.com/api."
+            }
+            ElseIf ($AlgoData -and $CurrenciesData) { 
                 $AlgoData.PSObject.Properties.Name.Where({ $AlgoData.$_.algo -eq "Token" -or $_ -like "*-*" }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })
                 $AlgoData.PSObject.Properties.Name.Where({ -not $AlgoData.$_.algo }).ForEach(
                     { 
@@ -92,7 +95,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                             Add-CoinName -Algorithm $CurrenciesData.$_.algo -Currency $CurrenciesData.$_.Currency -CoinName $CurrenciesData.$_.name
                         }
                         Catch { }
-                        $CurrenciesData.$_ | Add-Member CoinName ([String]$Variables.CoinNames[$CurrenciesData.$_.Currency]) -Force
+                        $CurrenciesData.$_ | Add-Member CoinName ([String]$Session.CoinNames[$CurrenciesData.$_.Currency]) -Force
 
                         $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
                         $CurrenciesData.$_.PSObject.Properties.Remove("name")
@@ -119,12 +122,12 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     $BasePrice = If ($AlgoData.$Algorithm.actual_last24h_shared) { $AlgoData.$Algorithm.actual_last24h_shared } Else { $AlgoData.$Algorithm.estimate_last24h }
 
                     # Keep DAG data up to date
-                    If ($AlgorithmNorm -match $Variables.RegexAlgoHasDAG -and $CurrenciesData.$Currency.height -gt $Variables.DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ($AlgorithmNorm -match $Session.RegexAlgoHasDAG -and $CurrenciesData.$Currency.height -gt $Session.DAGdata.Currency.$Currency.BlockHeight) { 
                         $DAGdata = (Get-DAGData -BlockHeight $CurrenciesData.$Currency.height -Currency $Currency -EpochReserve 2)
                         $DAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                         $DAGdata | Add-Member Url "https://zergpool.com/api/currencies"
-                        $Variables.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
-                        $Variables.DAGdata.Updated | Add-Member "https://zergpool.com/api/currencies" ([DateTime]::Now).ToUniversalTime() -Force
+                        $Session.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                        $Session.DAGdata.Updated | Add-Member "https://zergpool.com/api/currencies" ([DateTime]::Now).ToUniversalTime() -Force
                     }
 
                     $AlgoData.$Algorithm | Add-Member Fees $Config.PoolsConfig.$BrainName.DefaultFee -Force
@@ -194,8 +197,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 $AlgoData = [PSCustomObject]@{ }
             }
 
-            $Variables.BrainData.$BrainName = $AlgoData
-            $Variables.Brains.$BrainName | Add-Member "Updated" $Timestamp -Force
+            $Session.BrainData.$BrainName = $AlgoData
+            $Session.Brains.$BrainName | Add-Member "Updated" $Timestamp -Force
 
             # Limit to only sample size + 10 minutes history
             $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes(-($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
@@ -209,11 +212,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Remove-Variable AlgoData -ErrorAction Ignore
 
         $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
-        $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum).Minimum
+        $Durations += ($Duration, $Session.Interval | Measure-Object -Minimum).Minimum
         $Durations = @($Durations | Select-Object -Last 20)
         $DurationsAvg = ($Durations | Measure-Object -Average).Average
 
-        Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
+        Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
 
         $Error.Clear()
         [System.GC]::Collect()
@@ -221,10 +224,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         [System.GC]::Collect()
     }
 
-    While (-not $Variables.MyIPaddress -or $Timestamp -ge $Variables.PoolDataCollectedTimeStamp -or ($Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While (-not $Session.MyIPaddress -or $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Session.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
 }
 
-$Variables.Brains.Remove($BrainName)
-$Variables.BrainData.Remove($BrainName)
+$Session.Brains.Remove($BrainName)
+$Session.BrainData.Remove($BrainName)

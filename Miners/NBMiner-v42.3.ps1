@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
+Version:        6.5.2
 Version date:   2024/01/29
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") }))) { Return }
 
 $URI = "https://github.com/NebuTech/NBMiner/releases/download/v42.3/NBMiner_42.3_Win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -64,7 +64,7 @@ If ($Algorithms) {
                         $ExcludePools = $_.ExcludePools
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                             # Windows 10 requires more memory on some algos
                             If ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
 
@@ -90,10 +90,10 @@ If ($Algorithms) {
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
+                                $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                 # Apply tuning parameters
-                                If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "NBMiner"
@@ -108,7 +108,7 @@ If ($Algorithms) {
                                     Type        = $Type
                                     URI         = $URI
                                     WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
+                                    Workers      = @(@{ Pool = $Pool })
                                 }
                             }
                         }

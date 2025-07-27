@@ -17,12 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.Architecture -match "GCN[1-3]" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.Architecture -match "GCN[1-3]" }))) { Return }
 
 $URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/0.9.4/SRBMiner-Multi-0-9-4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -63,7 +63,7 @@ $Algorithms = @(
     @{ Algorithm = "ProgPowanoZ";       Fee = @(0.0065); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_zano" }
     @{ Algorithm = "SHA3d";             Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm sha3d" } # FPGU
 #   @{ Algorithm = "VerusHash";         Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verushash" }
-    @{ Algorithm = "VertHash";          Fee = @(0.0125); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 10); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verthash --verthash-dat-path ..\.$($Variables.VertHashDatPath)" }
+    @{ Algorithm = "VertHash";          Fee = @(0.0125); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 10); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verthash --verthash-dat-path ..\.$($Session.VertHashDatPath)" }
     @{ Algorithm = "Yescrypt";          Fee = @(0.0085); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --disable-cpu --algorithm yescrypt" }
 )
 
@@ -80,8 +80,8 @@ If ($Algorithms) {
 
             $Algorithms.ForEach(
                 { 
-                    If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                        $PrerequisitePath = $Variables.VertHashDatPath
+                    If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                        $PrerequisitePath = $Session.VertHashDatPath
                         $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                     }
                     Else { 
@@ -93,7 +93,7 @@ If ($Algorithms) {
                     # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
@@ -125,7 +125,7 @@ If ($Algorithms) {
                                 Type             = "AMD"
                                 URI              = $URI
                                 WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers          = @(@{ Pool = $Pool })
+                                Workers           = @(@{ Pool = $Pool })
                             }
                         }
                     }

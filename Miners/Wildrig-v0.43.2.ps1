@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 # fixed rejects and improved speed on some x-like algorithms for NVIDIA Blackwell
 # proper parameters for evohash by default, no need to set diff factor and so on
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
 $URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.43.2/wildrig-multi-windows-0.43.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -249,7 +249,7 @@ If ($Algorithms) {
                         $ExcludePools = $_.ExcludePools
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                             If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
@@ -267,7 +267,7 @@ If ($Algorithms) {
                                     Type        = $Type
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
+                                    Workers      = @(@{ Pool = $Pool })
                                 }
                             }
                         }

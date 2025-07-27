@@ -47,14 +47,6 @@ function formatMiners(data) {
       }
     }
 
-    // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
-    // try {
-      // if (item.Reasons.length <= 0) item.Reasons = [""];
-    // }
-    // catch { 
-    //   item.Reasons = "ZZZ"
-    // }
-
     // Format margin of error
     item.Earnings_Accuracy = formatPercent(item.Earnings_Accuracy);
 
@@ -90,14 +82,6 @@ function formatPools(data) {
     item.Price = item.Price * factor;
     item.Price_Bias = item.Price_Bias * factor;
     item.StablePrice = item.StablePrice * factor;
-
-    // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
-    // try {
-      if (item.Reasons.length <= 0) item.Reasons = [" "];
-    // }
-    // catch { 
-    //   item.Reasons = "ZZZ"
-    // }
   });
   return data;
 }

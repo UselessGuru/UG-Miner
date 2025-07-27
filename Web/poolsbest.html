@@ -2,15 +2,13 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navpoolsbest">Best pools</h2>
           </div>
-          <div class="alert alert-info" role="alert">This is the list of the best paying pool for each algorithm.</div>
+          <div name="add-updatedtimestamp" class="alert alert-info" role="alert">This is the list of the best paying pool for each algorithm.</div>
           <div id="toolbar">
             <!-- <button id="btn-enable" class="btn btn-success" disabled>Enable algorithm @ pool</button> -->
             <!-- <button id="btn-disable" class="btn btn-danger" disabled>Disable algorithm @ pool</button> -->
             <button id="btn-reset-data" class="btn btn-warning" disabled>Reset pool stat data</button>
           </div>
           <table id="pools" class="table"
-            data-auto-refresh="true"
-            data-auto-refresh-status="true"
             data-cache="false"
             data-click-to-select="true"
             data-cookie="true"
@@ -28,7 +26,6 @@
             data-show-button-text="true"
             data-show-columns="true"
             data-show-columns-toggle-all="true"
-            data-show-fullscreen="false"
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
@@ -67,7 +64,7 @@
                 <th data-field="SendHashrate" data-align="right" data-sortable="true" data-visible="false">Send<br>hashrate</th>
                 <th data-field="Workers" data-align="right" data-sortable="true" data-visible="false">Workers</th>
                 <th data-field="SSLselfSignedCertificate" data-align="right" data-sortable="true" data-filter-control="select" data-visible="false">Self signed certificate</th>
-                <th data-field="DAGSizeGiB" data-align="right" data-sortable="true" data-visible="false" data-formatter="formatGiBDigits3" data-visible="false">DAG size</th>
+                <th data-field="DAGsizeGiB" data-align="right" data-sortable="true" data-visible="false" data-formatter="formatGiBDigits3" data-visible="false">DAG size</th>
                 <th data-field="Epoch" data-align="right" data-sortable="true" data-visible="false">Epoch</th>
                 <th data-field="BlockHeight" data-align="right" data-sortable="true" data-visible="false">Block height</th>
                 <th data-field="Updated" data-sortable="true" data-formatter="formatTimeSince" data-width=250>Last updated</th>
@@ -76,60 +73,62 @@
               </tr>
             </thead>
           </table>
-<!-- Start of page scripts 'poolsbest.html' -->
+<!-- Start of page scripts "poolsbest.html" -->
           <script type="text/javascript">
-            var $table = $('#pools');
+            var $table = $("#pools");
 
             $table.bootstrapTable({
-              async: 'true',
+              async: "true",
               autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 30,
               onColumnSwitch: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onColumnSwitchAll: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onCreatedControls: function() {
-                $('body').css('cursor', 'wait');
+                $("body").css("cursor", "wait");
               },
               onLoadSuccess: function() {
-                $('body').css('cursor', 'default');
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = document.getElementsByName("add-updatedtimestamp")[0].innerHTML.replace(/\.$| \(updated.+/, "") + " (data updated " + refreshtimestamp + ").";
+                $("body").css("cursor", "default");
               },
               onPostBody: function () {
                 if (this.data.length > 0) {
                   if (config.UsemBTC) {
                     $(".addm").each(function () {
-                      this.childNodes[0].innerText = ("m" + this.childNodes[0].innerText).replace('mm', 'm');
+                      this.childNodes[0].innerText = ("m" + this.childNodes[0].innerText).replace("mm", "m");
                     });
                   };
                 };
-                updateSummary();
-                updateButtonStatus();
+              },
+              onRefresh: function() {
+                $("body").css("cursor", "wait");
               },
               onToggle: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               }
             });
 
-            $('#pools').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
-              document.getElementById('btn-reset-data').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+            $("#pools").on("check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table refresh.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table", function () {
+              document.getElementById("btn-reset-data").disabled = !Boolean($table.bootstrapTable("getSelections").length);
             });
 
-            $('#btn-reset-data').click(function () {
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-reset-data").click(function () {
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $('body').css('cursor', 'wait');
-                $url = '/functions/stat/remove';
+                $("body").css("cursor", "wait");
+                $url = "/functions/stat/remove";
                 $payload = {
-                  'Pools': JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm, Currency: $element.Currency })))
+                  "Pools": JSON.stringify($data.map($element => ({ Name: $element.Name, Algorithm: $element.Algorithm, Currency: $element.Currency })))
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-reset-data').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text($("#btn-reset-data").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
                 });
-                $table.bootstrapTable('refresh');
+                $table.bootstrapTable("refresh");
               }
             });
 
@@ -142,8 +141,8 @@
 
             $(document).ready(function () {
               // Fix, button text is wrong
-              document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
             });
           </script>
-<!-- End of page scripts 'poolsbest.html' -->
+<!-- End of page scripts "poolsbest.html" -->
 <!-- #include file="/parts/foot.html" -->

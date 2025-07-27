@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" }))) { Return }
 
-$URI = Switch ($Variables.DriverVersion.CUDA) { 
+$URI = Switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CryptoDredge/CryptoDredge_0.27.0_cuda_11.4_windows.zip"; Break }
     Default                           { Return }
 }
@@ -68,7 +68,7 @@ If ($Algorithms) {
                         $ExcludePools = $_.ExcludePools
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                             If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -90,7 +90,7 @@ If ($Algorithms) {
                                     Type        = "NVIDIA"
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
+                                    Workers      = @(@{ Pool = $Pool })
                                 }
                             }
                         }

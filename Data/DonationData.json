@@ -1,6 +1,5 @@
-[
-  {
-    "Name": "uselessguru",
+{
+  "uselessguru": {
     "MiningDutchUserName": "UselessGuru",
     "ProHashingUserName": "UselessGuru",
     "PoolName": [
@@ -17,4 +16,4 @@
       "ETH": "0x92e6F22C1493289e6AD2768E1F502Fc5b414a287"
     }
   }
-]
+}

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Rigel.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class Rigel : Miner { 
@@ -30,48 +30,47 @@ Class Rigel : Miner {
 
         Try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
+            If (-not $Data) { Return $null }
+
+            $Hashrate = [PSCustomObject]@{ }
+            $HashrateName = ""
+            $HashrateValue = [Double]0
+            $Algorithms = [String[]]@($Data.algorithm -split "\+")
+            $Algorithm = $Algorithms[0]
+
+            $Shares = [PSCustomObject]@{ }
+            $SharesAccepted = $SharesRejected = $SharesInvalid = [Int64]0
+
+            ForEach ($Algorithm in $Algorithms) { 
+                If ($null -eq $Data.hashrate.$Algorithm) { Return $null }
+                $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
+                $HashrateValue = [Double]$Data.hashrate.$Algorithm
+                $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+                $SharesAccepted = [Int64]$Data.solution_stat.$Algorithm.accepted
+                $SharesRejected = [Int64]$Data.solution_stat.$Algorithm.rejected
+                $SharesInvalid = [Int64]$Data.solution_stat.$Algorithm.invalid
+                $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            }
+
+            $PowerConsumption = [Double]0
+
+            If ($this.ReadPowerConsumption) { 
+                $PowerConsumption = [Double]$Data.power_usage
+                If (-not $PowerConsumption) { 
+                    $PowerConsumption = $this.GetPowerConsumption()
+                }
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
+            }
         }
         Catch { 
             Return $null
-        }
-
-        If (-not $Data) { Return $null }
-
-        $Hashrate = [PSCustomObject]@{ }
-        $HashrateName = ""
-        $HashrateValue = [Double]0
-        $Algorithms = [String[]]@($Data.algorithm -split "\+")
-        $Algorithm = $Algorithms[0]
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = $SharesRejected = $SharesInvalid = [Int64]0
-
-        ForEach ($Algorithm in $Algorithms) { 
-            If ($null -eq $Data.hashrate.$Algorithm) { Return $null }
-            $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
-            $HashrateValue = [Double]$Data.hashrate.$Algorithm
-            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-            $SharesAccepted = [Int64]$Data.solution_stat.$Algorithm.accepted
-            $SharesRejected = [Int64]$Data.solution_stat.$Algorithm.rejected
-            $SharesInvalid = [Int64]$Data.solution_stat.$Algorithm.invalid
-            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-        }
-
-        $PowerConsumption = [Double]0
-
-        If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = [Double]$Data.power_usage
-            If (-not $PowerConsumption) { 
-                $PowerConsumption = $this.GetPowerConsumption()
-            }
-        }
-
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
         }
     }
 }

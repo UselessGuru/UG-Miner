@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ProHashing.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 using module ..\Includes\Include.psm1
@@ -36,7 +36,7 @@ $BrainName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PoolObjects = @()
 $APICallFails = 0
 $Durations = [TimeSpan[]]@()
-$PoolConfig = $Variables.PoolsConfig.$BrainName
+$PoolConfig = $Session.PoolsConfig.$BrainName
 
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
@@ -48,7 +48,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
     $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
-    If ($Variables.MyIPaddress) { 
+    If ($Session.MyIPaddress) { 
         Try { 
 
             Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
@@ -69,11 +69,14 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
                     Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
                 }
-            } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -lt $Config.PoolAPIallowedFailureCount)
+            } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -lE $Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            If ($AlgoData) { 
+            If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
+                Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://prohashing.com/api/v1."
+            }
+            ElseIf ($AlgoData) { 
                 # Change numeric string to numbers, some values are null
                 $AlgoData = ($AlgoData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
                 $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
@@ -150,8 +153,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 $AlgoData = [PSCustomObject]@{ }
             }
 
-            $Variables.BrainData.$BrainName = $AlgoData
-            $Variables.Brains.$BrainName | Add-Member "Updated" $Timestamp -Force
+            $Session.BrainData.$BrainName = $AlgoData
+            $Session.Brains.$BrainName | Add-Member "Updated" $Timestamp -Force
 
             # Limit to only sample size + 10 minutes history
             $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes(-($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
@@ -165,11 +168,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         Remove-Variable AlgoData, CurrenciesData -ErrorAction Ignore
 
         $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
-        $Durations += ($Duration, $Variables.Interval | Measure-Object -Minimum).Minimum
+        $Durations += ($Duration, $Session.Interval | Measure-Object -Minimum).Minimum
         $Durations = @($Durations | Select-Object -Last 20)
         $DurationsAvg = ($Durations | Measure-Object -Average).Average
 
-        Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Variables.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
+        Write-Message -Level Debug "Brain '$BrainName': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$BrainName.PSObject.Properties.Name.Count) valid pools."
 
         $Error.Clear()
         [System.GC]::Collect()
@@ -177,10 +180,10 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         [System.GC]::Collect()
     }
 
-    While (-not $Variables.MyIPaddress -or $Timestamp -ge $Variables.PoolDataCollectedTimeStamp -or ($Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Variables.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Variables.EndCycleTime)) { 
+    While (-not $Session.MyIPaddress -or $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Session.EndCycleTime)) { 
         Start-Sleep -Seconds 1
     }
 }
 
-$Variables.Brains.Remove($BrainName)
-$Variables.BrainData.Remove($BrainName)
+$Session.Brains.Remove($BrainName)
+$Session.BrainData.Remove($BrainName)

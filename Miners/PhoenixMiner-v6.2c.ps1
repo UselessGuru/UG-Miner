@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/PhoenixMiner/PhoenixMiner_6.2c_Windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -55,7 +55,7 @@ If ($Algorithms) {
         "Blake2s" = @(10, 20, 30, 40)
     }
 
-    If (-not $Config.DryRun) { 
+    If (-not $Session.DryRun) { 
         # Build command sets for intensities
         $Algorithms = $Algorithms.ForEach(
             { 
@@ -93,10 +93,10 @@ If ($Algorithms) {
                             # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] })) { 
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
                                     If ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
-                                        If ($Pool0.DAGSizeGiB -ge 4) { Return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
+                                        If ($Pool0.DAGsizeGiB -ge 4) { Return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
                                         $AvailableMinerDevices = $AvailableMinerDevices.Where({ [System.Version]$_.CIM.DriverVersion -le [System.Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)
                                     }
 
@@ -118,7 +118,7 @@ If ($Algorithms) {
                                         If ($Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                         If ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }
 
-                                        If ($Pool0.DAGSizeGiB -gt 0) { 
+                                        If ($Pool0.DAGsizeGiB -gt 0) { 
                                             If ("MiningPoolHub", "ProHashing" -contains $Pool0.Name) { $Arguments += " -proto 1" }
                                             ElseIf ($Pool0.Name -eq "NiceHash") { $Arguments += " -proto 4" }
                                         }
@@ -138,10 +138,10 @@ If ($Algorithms) {
 
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                         $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB) * 2)
+                                        $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                         # Apply tuning parameters
-                                        If ($Variables.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                        If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                         [PSCustomObject]@{ 
                                             API         = "EthMiner"
@@ -156,7 +156,7 @@ If ($Algorithms) {
                                             Type        = $Type
                                             URI         = $URI
                                             WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                            Workers      = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }

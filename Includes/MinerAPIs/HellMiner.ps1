@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class HellMiner : Miner { 
@@ -30,34 +30,33 @@ Class HellMiner : Miner {
 
         Try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
+            If ($null -eq $Data.total_mhs) { Return $null }
+
+            $Hashrate = [PSCustomObject]@{ }
+            $HashrateName = [String]$this.Algorithms[0]
+            $HashrateValue = [Double]($Data.total_mhs * [Math]::Pow(10, 6))
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+            $Shares = [PSCustomObject]@{ }
+            $SharesAccepted = [Int64]$Data.total_accepted
+            $SharesRejected = [Int64]$Data.total_rejected
+            $SharesInvalid = [Int64]0
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            $PowerConsumption = [Double]0
+
+            If ($this.ReadPowerConsumption) { 
+                $PowerConsumption = $this.GetPowerConsumption()
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
+            }
         }
         Catch { 
             Return $null
-        }
-
-        If ($null -eq $Data.total_mhs) { Return $null }
-
-        $Hashrate = [PSCustomObject]@{ }
-        $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = [Double]($Data.total_mhs * [Math]::Pow(10, 6))
-        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]$Data.total_accepted
-        $SharesRejected = [Int64]$Data.total_rejected
-        $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-        $PowerConsumption = [Double]0
-
-        If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = $this.GetPowerConsumption()
-        }
-
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
         }
     }
 }

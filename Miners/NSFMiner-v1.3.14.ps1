@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1") }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1") }))) { Return }
 
-$URI = Switch ($Variables.DriverVersion.CUDA) { 
+$URI = Switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/NSFMiner/nsfminer_1.3.14-windows_10-cuda_11.3-opencl.zip"; Break }
     { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/NSFMiner/nsfminer_1.3.13-windows_10-cuda_11.2-opencl.1.zip"; Break }
     Default                           { Return }
@@ -59,7 +59,7 @@ If ($Algorithms) {
                     # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGSizeGiB
+                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                         If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
@@ -86,7 +86,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                Workers      = @(@{ Pool = $Pool })
                             }
                         }
                     }

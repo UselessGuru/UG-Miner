@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "AMD" -and $Variables.DriverVersion.CIM.AMD -lt [System.Version]"26.20.15011.10003" }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -and $Session.DriverVersion.CIM.AMD -lt [System.Version]"26.20.15011.10003" }))) { Return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/ClaymoreNeoscrypt/Claymore-Neoscrypt-v1.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -77,7 +77,7 @@ If ($Algorithms) {
                                 Type        = "AMD"
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
+                                Workers      = @(@{ Pool = $Pool })
                             }
                         }
                     }

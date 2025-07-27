@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
-If (-not ($Devices = $Variables.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
+If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
 
 $URI = "https://github.com/nanopool/nanominer/releases/download/v3.10.0/nanominer-windows-3.10.0.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -87,8 +87,8 @@ If ($Algorithms) {
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
-                        If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Variables.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                            $PrerequisitePath = $Variables.VertHashDatPath
+                        If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                            $PrerequisitePath = $Session.VertHashDatPath
                             $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                         }
                         Else { 
@@ -101,7 +101,7 @@ If ($Algorithms) {
                             ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
                                 $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGSizeGiB + $Pool1.DAGSizeGiB
+                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                 If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
@@ -119,7 +119,7 @@ If ($Algorithms) {
                                     $Arguments += " -mport 0 -webPort $MinerAPIPort -rigName $($Config.PoolsConfig.($Pool0.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
 
                                     # Apply tuning parameters
-                                    If ($Variables.ApplyMinerTweaks) { $Arguments += $_.Tuning }
+                                    If ($Session.ApplyMinerTweaks) { $Arguments += $_.Tuning }
 
                                     [PSCustomObject]@{ 
                                         API              = "NanoMiner"
@@ -136,7 +136,7 @@ If ($Algorithms) {
                                         Type             = $Type
                                         URI              = $URI
                                         WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers          = @($Pools.ForEach({ @{ Pool = $_ } }))
+                                        Workers           = @($Pools.ForEach({ @{ Pool = $_ } }))
                                     }
                                 }
                             }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Param(
@@ -32,7 +32,7 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Hostsuffix = "stratum1.hashcryptos.com"
 
-$PoolConfig = $Variables.PoolsConfig.$Name
+$PoolConfig = $Session.PoolsConfig.$Name
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PayoutCurrency = $PoolConfig.PayoutCurrency
@@ -44,8 +44,8 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 If ($DivisorMultiplier -and $PriceField) { 
 
     Try { 
-        If ($Variables.Brains.$Name) { 
-            $Request = $Variables.BrainData.$Name
+        If ($Session.Brains.$Name) { 
+            $Request = $Session.BrainData.$Name
         }
         Else { 
             $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
@@ -55,7 +55,7 @@ If ($DivisorMultiplier -and $PriceField) {
 
     If (-not $Request.PSObject.Properties.Name) { Return }
 
-    ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Variables.PoolDataCollectedTimeStamp })) { 
+    ForEach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp })) { 
         $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = "$($Request.$Algorithm.currency)" -replace "\s+"
         $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
@@ -68,7 +68,7 @@ If ($DivisorMultiplier -and $PriceField) {
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
         If ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        If ($Variables.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Variables.Branding.ProductLabel)") | Out-Null }
+        If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
         If ($PoolConfig.PayoutCurrencies -notcontains $PoolConfig.PayoutCurrency) { $Reasons.Add("Payout currency [$($PoolConfig.PayoutCurrency)] not supported by by pool") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
@@ -89,7 +89,7 @@ If ($DivisorMultiplier -and $PriceField) {
             PortSSL                  = If (($Request.$Algorithm.port -split " ")[2]) { ($Request.$Algorithm.port -split " ")[2] } Else { $null }
             PoolUri                  = ""
             Price                    = If ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } Else { $Stat.Live }
-            Protocol                 = If ($AlgorithmNorm -match $Variables.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Variables.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+            Protocol                 = If ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } ElseIf ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } Else { "" }
             Reasons                  = $Reasons
             Region                   = [String]$PoolConfig.Region
             SendHashrate             = $false

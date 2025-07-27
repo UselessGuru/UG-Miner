@@ -149,25 +149,25 @@
           </div>
           <br>
 
-<!-- Start of page scripts 'earningsbalances.html' -->
+<!-- Start of page scripts "earningsbalances.html" -->
           <script type="text/javascript">
-            var canvas = document.getElementById('EarningsChart');
+            var canvas = document.getElementById("EarningsChart");
             canvas.width = window.innerWidth;
             canvas.height = (window.innerHeight * 0.4);
 
             //get stored variables
-            var useColor = JSON.parse(localStorage.getItem('useColor'));
+            var useColor = JSON.parse(localStorage.getItem("useColor"));
             if (useColor == null) useColor = true;
-            document.getElementById('useColor').checked = useColor
-            $(document.getElementById('useColor')).change(function (event) {
-              useColor = Boolean(document.getElementById('useColor').checked);
-              localStorage.setItem('useColor', useColor);
+            document.getElementById("useColor").checked = useColor
+            $(document.getElementById("useColor")).change(function (event) {
+              useColor = Boolean(document.getElementById("useColor").checked);
+              localStorage.setItem("useColor", useColor);
               updateEarningsChart();
             });
 
             function GetColor (items, item) {
-              // Colors = ['#03A9F4', '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#FFEB3B', '#FFC107', '#FF9800', '#E91E63', '#9C27B0', '#3F51B5'];
-              var Colors = ['#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#FFEB3B', '#FFC107', '#FF9800', '#E91E63', '#9C27B0', '#3F51B5'];
+              // Colors = ["#03A9F4", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#FFEB3B", "#FFC107", "#FF9800", "#E91E63", "#9C27B0", "#3F51B5"];
+              var Colors = ["#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#FFEB3B", "#FFC107", "#FF9800", "#E91E63", "#9C27B0", "#3F51B5"];
 
               if (useColor) return Colors[item];
 
@@ -176,7 +176,7 @@
 
             function Greyscale (items, item) {
               var shade = 60 + Math.trunc(192 / items * item);
-              return 'rgb(' + shade + ', ' + shade + ', ' + shade + ')';
+              return "rgb(" + shade + ", " + shade + ", " + shade + ")";
             };
 
             function HslColor (items, item) {
@@ -184,14 +184,14 @@
               // var saturation = 70;
               var saturation = 50 + (25 * (item % 2));
               var lightness = 50 + (25 * (item % 2));
-              return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)';
+              return "hsl(" + hue + ", " + saturation + "%, " + lightness + "%)";
             };
 
             function HsvColor (items, item) {
               var hue = Math.trunc(360 / items * item);
               var saturation = 0.8;
               var value = 0.95;
-              return 'rgb(' + hsv2rgb(hue, saturation, value) + ')';
+              return "rgb(" + hsv2rgb(hue, saturation, value) + ")";
             };
 
             function RGBcolor (items, item) {
@@ -203,7 +203,7 @@
               if (green >= 255) { green -= 255};
               var blue = step * item + 2 * delta;
               if (blue >= 255) { blue -= 255};
-              return 'rgb(' + red + ', ' + green + ', ' + blue + ')';
+              return "rgb(" + red + ", " + green + ", " + blue + ")";
             };
 
             function hsv2rgb(hue, saturation, value) {
@@ -236,16 +236,16 @@
               return [255*r,255*g,255*b];
             };
 
-            var ctx = canvas.getContext('2d');
+            var ctx = canvas.getContext("2d");
             var myChart = new Chart(ctx);
 
             function renderChart(labels, datasets, currency) {
-              Chart.defaults.color = 'black';
+              Chart.defaults.color = "black";
               Chart.defaults.font.size = 16;
 
               myChart.destroy();
               myChart = new Chart(ctx, {
-                type: 'bar',
+                type: "bar",
                 data: {
                   labels: labels,
                   datasets: datasets
@@ -257,13 +257,13 @@
                         font: {
                           size: 20
                         },
-                        text: 'Date'
+                        text: "Date"
                       },
                       stacked: true
                     },
                     y: {
                       title: {
-                        display: 'true',
+                        display: "true",
                         font: {
                           size: 20
                         },
@@ -283,23 +283,23 @@
                     title: {
                       display: true,
                       font: {
-                        family: 'Arial, Helvetica, sans-serif',
+                        family: "Arial, Helvetica, sans-serif",
                         size: 28,
-                        weight: 'normal'
+                        weight: "normal"
                       },
-                      text: 'Daily mining earnings',
+                      text: "Daily mining earnings",
                     },
                     tooltip: {
                       enabled: true,
                       callbacks: {
                         label: function(context) {
-                          if (context.parsed.y > 0) return ' ' + context.dataset.label + ': ' + context.parsed.y.toFixed(config.DecimalsMax) + ' ' + currency;
+                          if (context.parsed.y > 0) return " " + context.dataset.label + ": " + context.parsed.y.toFixed(config.DecimalsMax) + " " + currency;
                         },
                         footer: function(data) {
                           // Loop through all datasets to get the actual total of the index
                           var total = 0;
                           for (var i = 0; i < data.length; i ++) total += data[i].raw;
-                          return 'Total: ' + total.toFixed(config.DecimalsMax) + ' ' + currency;
+                          return "Total: " + total.toFixed(config.DecimalsMax) + " " + currency;
                         }
                       },
                       // itemSort: function(a, b) {
@@ -312,7 +312,7 @@
                         size: 16
                       },
                       footerFont: {
-                        weight: 'normal'
+                        weight: "normal"
                       }
                     }
                   }
@@ -320,7 +320,7 @@
               });
             }
 
-            Handlebars.registerHelper('convertRate', function(value, rates, from, to) {
+            Handlebars.registerHelper("convertRate", function(value, rates, from, to) {
               if (value >= 0) { 
                 value *= rates[from][to];
                 return formatDecimals(value);
@@ -329,7 +329,7 @@
               }
             });
 
-            Handlebars.registerHelper('formatCurrency', function(value, rate) {
+            Handlebars.registerHelper("formatCurrency", function(value, rate) {
               if (value >= 0) { 
                   if (rate > 0) value *= rate;
                   return formatDecimals(value);
@@ -361,51 +361,51 @@
               };
               currencies = [config.FIATcurrency].concat(config.ExtraCurrencies)
 
-              if (config.UsemBTC == true) currencies[currencies.indexOf('BTC')] = 'mBTC'
+              if (config.UsemBTC == true) currencies[currencies.indexOf("BTC")] = "mBTC"
 
               var rates = {};
               // get rates
               $.ajax({
                 async: false,
-                dataType: 'json',
+                dataType: "json",
                 timeout: 10,
-                url: '/rates',
+                url: "/rates",
                 success: function(result) {
                   rates = result;
-                  sessionStorage.setItem('rates', JSON.stringify(rates));
+                  sessionStorage.setItem("rates", JSON.stringify(rates));
 
                   $.ajax({
                     async: false,
-                    dataType: 'json',
-                    url: '/balances',
+                    dataType: "json",
+                    url: "/balances",
                     success: function(result) {
                       if (result != null) { 
-                        document.getElementById('balances').style.display = 'block';
-                        $('#balanceboxes').empty();
+                        document.getElementById("balances").style.display = "block";
+                        $("#balanceboxes").empty();
 
-                        var outdatedicon = '';
-                        var template = Handlebars.compile($('#poolbalance_template').html());
-                        var footer = new RegExp('-.+|=.+');
+                        var outdatedicon = "";
+                        var template = Handlebars.compile($("#poolbalance_template").html());
+                        var footer = new RegExp("-.+|=.+");
 
                         $.each(currencies, function(cindex, currency) {
-                          data_sum['balances'][currency]  = 0;
-                          data_sum['growth1'][currency]   = 0;
-                          data_sum['growth6'][currency]   = 0;
-                          data_sum['growth24'][currency]  = 0;
-                          data_sum['growth168'][currency] = 0;
-                          data_sum['growth720'][currency] = 0;
+                          data_sum["balances"][currency]  = 0;
+                          data_sum["growth1"][currency]   = 0;
+                          data_sum["growth6"][currency]   = 0;
+                          data_sum["growth24"][currency]  = 0;
+                          data_sum["growth168"][currency] = 0;
+                          data_sum["growth720"][currency] = 0;
                         });
 
                         $.each(result, function(index, item) {
                           try {
-                            if (config.UsemBTC && item.Currency == 'BTC') {
-                              var currency = 'mBTC';
+                            if (config.UsemBTC && item.Currency == "BTC") {
+                              var currency = "mBTC";
                             } else {
                               var currency = item.Currency;
                             }
 
-                            if (config.UsemBTC && item.PayoutThresholdCurrency == 'BTC') {
-                              item.PayoutThresholdCurrency = 'mBTC';
+                            if (config.UsemBTC && item.PayoutThresholdCurrency == "BTC") {
+                              item.PayoutThresholdCurrency = "mBTC";
                               var factor = 0.001;
                             } else {
                               var factor = 1;
@@ -436,7 +436,7 @@
                               }
 
                               var data = {
-                                name: item.Pool + ' (' + item.Currency + ')',
+                                name: item.Pool + " (" + item.Currency + ")",
                                 uri: item.Uri,
                                 updated: formatDate(item.LastUpdated),
                                 balances: {},
@@ -463,7 +463,7 @@
 
                               // Add warning symbol if data was not updated in last poll, add one minute to ensure completion of balance poll
                               if ((new Date() - new Date(item.LastUpdated)) / 1000 > parseInt(config.BalancesTrackerPollInterval + 1) * 60) {
-                                outdatedicon = ' &#9888;&#65039;';
+                                outdatedicon = " &#9888;&#65039;";
                                 data.title = "Outdated balance data"
                                 data.updated += outdatedicon;
                               }
@@ -471,26 +471,26 @@
                               // Convert balance to other currencies
                               if (rates[item.Currency]) {
                                 $.each(item.Currencies, function(cindex, currency) {
-                                  if (rates[item.Currency] && rates[currency]) data['balances'][currency] = item.Balance * rates[item.Currency][currency];
+                                  if (rates[item.Currency] && rates[currency]) data["balances"][currency] = item.Balance * rates[item.Currency][currency];
                                 });
                                 data.balanceinFIATcurrency = item.Balance * rates[item.Currency][config.FIATcurrency];
                               } else { 
-                                data['balances'][item.Currency] = item.Balance;
+                                data["balances"][item.Currency] = item.Balance;
                               }
 
                               // build totals
                               $.each(currencies, function(cindex, currency) {
                                 if (rates[item.Currency] && rates[currency]) {
-                                    data_sum['growth1'][currency]  += item.Growth1 * rates[item.Currency][currency];
-                                    data_sum['growth6'][currency]  += item.Growth6 * rates[item.Currency][currency];
-                                    data_sum['growth24'][currency] += item.Growth24 * rates[item.Currency][currency];
-                                    data_sum['growth168'][currency] += item.Growth168 * rates[item.Currency][currency];
-                                    data_sum['growth720'][currency] += item.Growth720 * rates[item.Currency][currency];
-                                    data_sum['balances'][currency] += item.Balance * rates[item.Currency][currency];
+                                    data_sum["growth1"][currency]  += item.Growth1 * rates[item.Currency][currency];
+                                    data_sum["growth6"][currency]  += item.Growth6 * rates[item.Currency][currency];
+                                    data_sum["growth24"][currency] += item.Growth24 * rates[item.Currency][currency];
+                                    data_sum["growth168"][currency] += item.Growth168 * rates[item.Currency][currency];
+                                    data_sum["growth720"][currency] += item.Growth720 * rates[item.Currency][currency];
+                                    data_sum["balances"][currency] += item.Balance * rates[item.Currency][currency];
                                 }
                               });
 
-                              $('#balanceboxes').append(template(data));
+                              $("#balanceboxes").append(template(data));
                             }
                           } catch {
                             console.log(data);
@@ -498,7 +498,7 @@
                         });
 
                         if (outdatedicon) {
-                          totals['name'] = totals['name'] + outdatedicon;
+                          totals["name"] = totals["name"] + outdatedicon;
                           totals.outdated = true;
                         }
 
@@ -506,16 +506,16 @@
 
                         $.each(currencies, function(cindex, currency) {
                           if (rates[currency]) {
-                            totals['growth1'][currency]     = data_sum['growth1'][currency];
-                            totals['growth6'][currency]     = data_sum['growth6'][currency];
-                            totals['growth24'][currency]    = data_sum['growth24'][currency];
-                            totals['growth168'][currency]   = data_sum['growth168'][currency];
-                            totals['growth720'][currency]   = data_sum['growth720'][currency];
-                            totals['allbalances'][currency] = data_sum['balances'][currency];
+                            totals["growth1"][currency]     = data_sum["growth1"][currency];
+                            totals["growth6"][currency]     = data_sum["growth6"][currency];
+                            totals["growth24"][currency]    = data_sum["growth24"][currency];
+                            totals["growth168"][currency]   = data_sum["growth168"][currency];
+                            totals["growth720"][currency]   = data_sum["growth720"][currency];
+                            totals["allbalances"][currency] = data_sum["balances"][currency];
                           }
                         });
 
-                        $('#balanceboxes').append(template(totals));
+                        $("#balanceboxes").append(template(totals));
                       }
                     }
                   });
@@ -526,8 +526,8 @@
             function updateEarningsChart() {
               $.ajax({
                 async: false,
-                dataType: 'json',
-                url: '/earningschartdata',
+                dataType: "json",
+                url: "/earningschartdata",
                 success: function (earningsdata) {
                   var datasets = [];
 
@@ -548,13 +548,11 @@
 
             $(document).ready(function () {
               $(".addlocalcurrency").each(function () {
-                this.childNodes[0].innerText = this.childNodes[0].innerText + '\n(' + config.FIATcurrency + ')';
+                this.childNodes[0].innerText = this.childNodes[0].innerText + "\n(" + config.FIATcurrency + ")";
               });
 
               updateEarningsChart();
               updatePoolBalances();
-              updateSummary();
-              updateButtonStatus();
 
               window.setInterval(function() {
                 updateEarningsChart();
@@ -562,5 +560,5 @@
               }, parseInt(Math.max(10, config.BalancesTrackerPollInterval)) * 1000 * 60);   // refresh once per balances tracker interval or every 10 minutes
             });
             </script>
-<!-- End of page scripts 'earningsbalances.html' -->
+<!-- End of page scripts "earningsbalances.html" -->
 <!-- #include file="/parts/foot.html" -->

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class EthMiner : Miner { 
@@ -32,49 +32,48 @@ Class EthMiner : Miner {
         Try { 
             $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout
             $Data = $Response | ConvertFrom-Json -ErrorAction Stop
+            If (-not $Data.result -or ($null -eq ($Data.result[2] -split ";")[0])) { Return $null }
+
+            $Hashrate = [PSCustomObject]@{ }
+            $HashrateName = [String]$this.Algorithms[0]
+            $HashrateValue = [Double]($Data.result[2] -split ";")[0]
+
+            If ($Data.result[0] -notmatch "^TT-Miner" -and $HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+            $Shares = [PSCustomObject]@{ }
+            $SharesAccepted = [Int64]($Data.result[2] -split ";")[1]
+            $SharesRejected = [Int64]($Data.result[2] -split ";")[2]
+            $SharesInvalid = [Int64]0
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+
+            If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+                If ($null -eq (($Data.result[4] -split ";")[0])) { Return $null }
+                $HashrateValue = [Double]($Data.result[4] -split ";")[0]
+                If ($HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
+                $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+                $SharesAccepted = [Int64]($Data.result[4] -split ";")[1]
+                $SharesRejected = [Int64]($Data.result[4] -split ";")[2]
+                $SharesInvalid = [Int64]0
+                $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            }
+
+            $PowerConsumption = [Double]0
+
+            If ($this.ReadPowerConsumption) { 
+                $PowerConsumption = $this.GetPowerConsumption()
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
+            }
         }
         Catch { 
             Return $null
-        }
-
-        If (-not $Data.result -or ($null -eq ($Data.result[2] -split ";")[0])) { Return $null }
-
-        $Hashrate = [PSCustomObject]@{ }
-        $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = [Double]($Data.result[2] -split ";")[0]
-
-        If ($Data.result[0] -notmatch "^TT-Miner" -and $HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
-        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]($Data.result[2] -split ";")[1]
-        $SharesRejected = [Int64]($Data.result[2] -split ";")[2]
-        $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-
-        If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-            If ($null -eq (($Data.result[4] -split ";")[0])) { Return $null }
-            $HashrateValue = [Double]($Data.result[4] -split ";")[0]
-            If ($HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
-            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-            $SharesAccepted = [Int64]($Data.result[4] -split ";")[1]
-            $SharesRejected = [Int64]($Data.result[4] -split ";")[2]
-            $SharesInvalid = [Int64]0
-            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-        }
-
-        $PowerConsumption = [Double]0
-
-        If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = $this.GetPowerConsumption()
-        }
-
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
         }
     }
 }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class XmRig : Miner { 
@@ -129,42 +129,41 @@ Class XmRig : Miner {
             If ($Data -is [String] -and $Data -match "(?smi)^({.+?`"total`":\s*\[.+?\])") { 
                 $Data = "$($Matches[1])}}" | ConvertFrom-Json -ErrorAction Stop
             }
+            If (-not $Data.hashrate.total) { Return $null }
+
+            $Hashrate = [PSCustomObject]@{ }
+            $HashrateName = [String]$this.Algorithms[0]
+            $HashrateValue = [Double]($Data.hashrate.total.Where({ $_ }) | Measure-Object -Average).Average
+            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[0] } # fix
+            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[1] } # fix
+            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[2] } # fix
+            If ($null -eq $HashrateValue) { Return $null }
+            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+            $Shares = [PSCustomObject]@{ }
+            $SharesAccepted = [Int64]$Data.results.shares_good
+            $SharesRejected = [Int64]($Data.results.shares_total - $Data.results.shares_good)
+            $SharesInvalid = [Int64]0
+            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+
+            $PowerConsumption = [Double]0
+
+            If ($this.ReadPowerConsumption) { 
+                $PowerConsumption = [Double](($Data.hwmon.power | Measure-Object -Sum).Sum)
+                If (-not $PowerConsumption) { 
+                    $PowerConsumption = $this.GetPowerConsumption()
+                }
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
+            }
         }
         Catch { 
             Return $null
-        }
-
-        If (-not $Data.hashrate.total) { Return $null }
-
-        $Hashrate = [PSCustomObject]@{ }
-        $HashrateName = [String]$this.Algorithms[0]
-        $HashrateValue = [Double]($Data.hashrate.total.Where({ $_ }) | Measure-Object -Average).Average
-        If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[0] } # fix
-        If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[1] } # fix
-        If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[2] } # fix
-        If ($null -eq $HashrateValue) { Return $null }
-        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]$Data.results.shares_good
-        $SharesRejected = [Int64]($Data.results.shares_total - $Data.results.shares_good)
-        $SharesInvalid = [Int64]0
-        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-
-        $PowerConsumption = [Double]0
-
-        If ($this.ReadPowerConsumption) { 
-            $PowerConsumption = [Double](($Data.hwmon.power | Measure-Object -Sum).Sum)
-            If (-not $PowerConsumption) { 
-                $PowerConsumption = $this.GetPowerConsumption()
-            }
-        }
-
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
         }
     }
 }

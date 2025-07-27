@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.5.1
-Version date:   2025/07/19
+Version:        6.5.2
+Version date:   2025/07/27
 #>
 
 Class NanoMiner : Miner { 
@@ -46,49 +46,48 @@ Class NanoMiner : Miner {
 
         Try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
+            If (-not $Data) { Return $null }
+
+            $Hashrate = [PSCustomObject]@{ }
+            $HashrateName = ""
+            $HashrateValue = [Double]0
+
+            $Shares = [PSCustomObject]@{ }
+            $SharesAccepted = [Int64]0
+            $SharesRejected = [Int64]0
+
+            $Algorithms = @($Data.Algorithms.ForEach({ ($_ | Get-Member -MemberType NoteProperty).Name }) | Select-Object -Unique)
+
+            ForEach ($Algorithm in $Algorithms) { 
+                $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
+                $HashrateValue = [Double](($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum).Sum)
+                If ($null -eq $HashrateValue) { Return $null }
+                $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+
+                $SharesAccepted = [Int64](($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum).Sum)
+                $SharesRejected = [Int64](($Data.Algorithms.$Algorithm.Total.Denied | Measure-Object -Sum).Sum)
+                $SharesInvalid = [Int64]0
+                $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
+            }
+
+            $PowerConsumption = [Double]0
+
+            If ($this.ReadPowerConsumption) { 
+                ForEach ($Device in $Data.Devices) { $PowerConsumption += [Double]$Device.PSObject.Members.Value.Power }
+                If (-not $PowerConsumption) { 
+                    $PowerConsumption = $this.GetPowerConsumption()
+                }
+            }
+
+            Return [PSCustomObject]@{ 
+                Date             = [DateTime]::Now.ToUniversalTime()
+                Hashrate         = $Hashrate
+                PowerConsumption = $PowerConsumption
+                Shares           = $Shares
+            }
         }
         Catch { 
             Return $null
-        }
-
-        If (-not $Data) { Return $null }
-
-        $Hashrate = [PSCustomObject]@{ }
-        $HashrateName = ""
-        $HashrateValue = [Double]0
-
-        $Shares = [PSCustomObject]@{ }
-        $SharesAccepted = [Int64]0
-        $SharesRejected = [Int64]0
-
-        $Algorithms = @($Data.Algorithms.ForEach({ ($_ | Get-Member -MemberType NoteProperty).Name }) | Select-Object -Unique)
-
-        ForEach ($Algorithm in $Algorithms) { 
-            $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
-            $HashrateValue = [Double](($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum).Sum)
-            If ($null -eq $HashrateValue) { Return $null }
-            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
-
-            $SharesAccepted = [Int64](($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum).Sum)
-            $SharesRejected = [Int64](($Data.Algorithms.$Algorithm.Total.Denied | Measure-Object -Sum).Sum)
-            $SharesInvalid = [Int64]0
-            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-        }
-
-        $PowerConsumption = [Double]0
-
-        If ($this.ReadPowerConsumption) { 
-            ForEach ($Device in $Data.Devices) { $PowerConsumption += [Double]$Device.PSObject.Members.Value.Power }
-            If (-not $PowerConsumption) { 
-                $PowerConsumption = $this.GetPowerConsumption()
-            }
-        }
-
-        Return [PSCustomObject]@{ 
-            Date             = [DateTime]::Now.ToUniversalTime()
-            Hashrate         = $Hashrate
-            PowerConsumption = $PowerConsumption
-            Shares           = $Shares
         }
     }
 }
