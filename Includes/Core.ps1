@@ -884,7 +884,7 @@ Try {
                     $DownloaderParameters = @{ 
                         Config       = $Config
                         DownloadList = $DownloadList
-                        Variables    = $Variables
+                        Session      = $Session
                     }
                     $Session.Downloader = Start-ThreadJob -Name Downloader -StreamingHost $null -FilePath ".\Includes\Downloader.ps1" -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Session.MainPath)'")) -ArgumentList $DownloaderParameters
                     Remove-Variable DownloaderParameters

@@ -26,7 +26,7 @@ using module .\Includes\Include.psm1
 
 # $Config = $args.Config
 $DownloadList = $args.DownloadList
-$Variables = $args.Variables
+$Session = $args.Session
 
 $ProgressPreference = "SilentlyContinue"
 

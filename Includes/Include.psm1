@@ -2001,54 +2001,59 @@ Function Get-SortedObject {
         [Object]$Object
     )
 
-    Switch -Regex ($Object.GetType().Name) { 
-        "PSCustomObject" { 
-            $SortedObject = [PSCustomObject]@{ }
-            ($Object.PSObject.Properties.Name | Sort-Object).ForEach(
-                { 
-                    If ($Object.$_.GetType().Name -eq "Array" -or $Object.$_.GetType().BaseType -match "array|System\.Array") { 
-                        If ($Object.$_) { 
-                            $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]($Object.$_))
+    Try { 
+        Switch -Regex ($Object.GetType().Name) { 
+            "PSCustomObject" { 
+                $SortedObject = [PSCustomObject]@{ }
+                ($Object.PSObject.Properties.Name | Sort-Object).ForEach(
+                    { 
+                        If ($Object.$_.GetType().Name -eq "Array" -or $Object.$_.GetType().BaseType -match "array|System\.Array") { 
+                            If ($Object.$_) { 
+                                $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]($Object.$_))
+                            }
+                            Else { 
+                                $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]::new())
+                            }
+                        }
+                        ElseIf ($Object.$_.GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
+                            $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_)
                         }
                         Else { 
-                            $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]::new())
+                            $SortedObject | Add-Member $_ $Object.$_
                         }
                     }
-                    ElseIf ($Object.$_.GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
-                        $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_)
-                    }
-                    Else { 
-                        $SortedObject | Add-Member $_ $Object.$_
-                    }
-                }
-            )
-            Break
-        }
-        "Hashtable|OrderedDictionary|OrderedHashTable|SyncHashtable" { 
-            $SortedObject = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
-            ($Object.GetEnumerator().Name | Sort-Object).ForEach(
-                { 
-                    If ($Object[$_].GetType().Name -eq "Array" -or $Object[$_].GetType().BaseType -match "array|System\.Array") { 
-                        If ($Object[$_]) { 
-                            $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]($Object[$_])
+                )
+                Break
+            }
+            "Hashtable|OrderedDictionary|OrderedHashTable|SyncHashtable" { 
+                $SortedObject = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
+                ($Object.GetEnumerator().Name | Sort-Object).ForEach(
+                    { 
+                        If ($Object[$_].GetType().Name -eq "Array" -or $Object[$_].GetType().BaseType -match "array|System\.Array") { 
+                            If ($Object[$_]) { 
+                                $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]($Object[$_])
+                            }
+                            Else { 
+                                $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]::new()
+                            }
+                        }
+                        ElseIf ($Object[$_].GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object[$_].GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
+                            $SortedObject[$_] = Get-SortedObject $Object[$_]
                         }
                         Else { 
-                            $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]::new()
+                            $SortedObject[$_] = $Object[$_]
                         }
                     }
-                    ElseIf ($Object[$_].GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object[$_].GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
-                        $SortedObject[$_] = Get-SortedObject $Object[$_]
-                    }
-                    Else { 
-                        $SortedObject[$_] = $Object[$_]
-                    }
-                }
-            )
-            Break
+                )
+                Break
+            }
+            Default { 
+                $SortedObject = $Object | Sort-Object
+            }
         }
-        Default { 
-            $SortedObject = $Object | Sort-Object
-        }
+    }
+    Catch { 
+        Start-Sleep 0
     }
     Return $SortedObject
 }
