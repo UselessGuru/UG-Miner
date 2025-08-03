@@ -897,8 +897,7 @@ Try {
             Remove-Variable DownloadList
 
             # Open firewall ports for all miners
-            $Session.MinerMissingFirewallRule = [System.Collections.Generic.SortedSet[String]]::new()
-            If ($Session.ConfigRunning.OpenFirewallPorts -and ($MinersAdded -or -not $Session.IsLocalAdmin)) { # If running as admin only needed when new miners are found
+            If ($Session.ConfigRunning.OpenFirewallPorts) { 
                 If (Get-Command Get-MpPreference) { 
                     If ((Get-Command Get-MpComputerStatus) -and (Get-MpComputerStatus)) { 
                         If (Get-Command Get-NetFirewallRule) { 

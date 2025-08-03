@@ -97,7 +97,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             }
         )
     }
-    Remove-Variable Buffer, Body, Key, Length, Request, Value -ErrorAction Ignore
+    Remove-Variable Buffer, Body, Length, Request, Value -ErrorAction Ignore
 
     # Create a new response and the defaults for associated settings
     $Response = $Context.Response
@@ -264,7 +264,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                 Write-Config -Config $TempConfig
                 Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
 
-                $TempConfig.Keys.ForEach({ $Session.ConfigRunning.$_ = $TempConfig.$_ })
+                $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
 
                 $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                     { 
@@ -285,6 +285,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             }
             Catch { 
                 $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
+                $_ > t.txt
             }
             Remove-Variable Key, TempConfig -ErrorAction Ignore
             Break
@@ -1004,6 +1005,8 @@ While ($Session.APIversion -and $Server.IsListening) {
         }
     }
 
+    Remove-Variable Key
+
     # If $Data is null, the API will just return whatever data was in the previous request. Instead, show an error
     # This happens if the script just started and hasn't filled all the properties in yet.
     If ($null -eq $Data) { 
@@ -1021,12 +1024,12 @@ While ($Session.APIversion -and $Server.IsListening) {
 
     Remove-Variable ContentType, Data, Parameters, Response, ResponseBuffer, StatusCode -ErrorAction Ignore
 
-    # If ($GCstopWatch.Elapsed.TotalMinutes -gt 10) { 
-    #     [System.GC]::Collect()
-    #     [System.GC]::WaitForPendingFinalizers()
-    #     [System.GC]::Collect()
-    #     $GCstopWatch.Restart()
-    # }
+    If ($GCstopWatch.Elapsed.TotalMinutes -gt 10) { 
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
+        [System.GC]::Collect()
+        $GCstopWatch.Restart()
+    }
 }
 
 # Only gets here if something is wrong and the server couldn't start or stops listening
