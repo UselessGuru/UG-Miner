@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 Class XmRig : Miner { 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03" }))) { Return }
@@ -41,7 +41,7 @@ $Algorithms = @(
     @{ Algorithms = @("Ethash", "SHA512256d");            Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; MinerSet = 2; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(90, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());           Arguments = @(" -a ethash", " --a2 radiant") }
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
@@ -52,7 +52,7 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model -and $_.Type -eq $Type })
-            $MinerAPIPort = $Config.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
@@ -79,7 +79,7 @@ If ($Algorithms) {
                                     }
                                     $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                     $Arguments += "$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " -w $($Pool0.User -replace "\..*") --pool_password $($Pool0.Pass) -r $(If ($Pool0.WorkerName) { $Pool0.WorkerName } ElseIf ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } Else { $Config.WorkerName })"
+                                    $Arguments += " -w $($Pool0.User -replace "\..*") --pool_password $($Pool0.Pass) -r $(If ($Pool0.WorkerName) { $Pool0.WorkerName } ElseIf ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } Else { $Session.ConfigRunning.WorkerName })"
 
                                     If ($_.Algorithms[1]) { 
                                         $Arguments += $_.Arguments[1]
@@ -92,7 +92,7 @@ If ($Algorithms) {
                                         }
                                         $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
                                         $Arguments += "$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --w2 $($Pool1.User -replace "\..*") --pool_password2 $($Pool1.Pass) --r2 $(If ($Pool1.WorkerName) { $Pool1.WorkerName } ElseIf ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } Else { $Config.WorkerName })"
+                                        $Arguments += " --w2 $($Pool1.User -replace "\..*") --pool_password2 $($Pool1.Pass) --r2 $(If ($Pool1.WorkerName) { $Pool1.WorkerName } ElseIf ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } Else { $Session.ConfigRunning.WorkerName })"
                                     }
 
                                     # Allow more time to build larger DAGs, must use type cast to keep values in $_

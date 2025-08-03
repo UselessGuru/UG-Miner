@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -28,9 +28,13 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Fixed dual mining broke in previous version (2.9.3)
-# Minor improvements to all 'randomx' based algorithms on CPU's with AVX2
-# Removed algorithm 'hoohash' (keep v2.9.2)
+# Added algorithm 'randomalpha' (Unicity coin) for CPU mining, fee 1.0%
+# Performance/efficiency improvements for algorithm 'nxlhash' on AMD RDNA and NVIDIA GPU's
+# Fixed broken dual mining of algorithms 'autolykos2/sha256dt' and 'autolykos2/heavyhash' on NVIDIA 5000 series [blackwell]
+# Removed algorithm 'xehash'
+# Removed algorithm 'astrixhash'
+# Removed algorithm 'clchash'
+# Removed algorithm 'yespowerdogemone'
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
@@ -234,13 +238,13 @@ $Algorithms = @(
     @{ Algorithms = @("XeChain", "");                   Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm xechain") }
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
-    If (-not $Session.DryRun) { 
+    If (-not $Session.ConfigRunning.DryRun) { 
         # Allowed max loss for 1. algorithm
         # $GpuDualMaxLosses = @(2, 4, 7, 10, 15, 21, 30)
         $GpuDualMaxLosses = @(5)
@@ -264,7 +268,7 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Config.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
@@ -310,7 +314,7 @@ If ($Algorithms) {
                                     Remove-Variable Pool
 
                                     If ($_.Type -eq "CPU") { 
-                                        $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Config.CPUMiningReserveCPUcore)"
+                                        $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.ConfigRunning.CPUMiningReserveCPUcore)"
                                     }
                                     Else { 
                                         $Arguments += " --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
@@ -327,7 +331,7 @@ If ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API              = "SRBMiner"
-                                        Arguments        = "$Arguments --api-rig-name $($Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
+                                        Arguments        = "$Arguments --api-rig-name $($Session.ConfigRunning.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
                                         DeviceNames      = $AvailableMinerDevices.Name
                                         Fee              = $_.Fee # Dev fee
                                         MinerSet         = $_.MinerSet

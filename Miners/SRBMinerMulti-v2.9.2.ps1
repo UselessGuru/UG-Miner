@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -29,27 +29,41 @@ $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 # Note: EvoHash was removed in v2.9.3, HooHash in v2.9.4; keep v2.9.2 for these algorithms
+# Note: CCLHash, YespowerDogemone, astrixhash, xehash were removed in v2.9.5; keep v2.9.2 for these algorithms
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
-    @{ Algorithms = @("Autolykos2", "HooHash"); Type = "AMD";    Fee = @(0.01, 0.02); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm autolykos2 --autolykos2-preload", " --algorithm hoohash") }
-    @{ Algorithms = @("EvoHash", "");           Type = "AMD";    Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm evohash") }
-    @{ Algorithms = @("HooHash", "");           Type = "AMD";    Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm hoohash") }
-    @{ Algorithms = @("Autolykos2", "HooHash"); Type = "INTEL";  Fee = @(0.01, 0.02); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm autolykos2 --autolykos2-preload", " --algorithm hoohash") }
-    @{ Algorithms = @("EvoHash", "");           Type = "INTEL";  Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm evohash") }
-    @{ Algorithms = @("HooHash", "");           Type = "INTEL";  Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm hoohash") }
+    @{ Algorithms = @("AstrixHash", "");        Type = "AMD"; Fee = @(0.01);       MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm astrixhash") }
+    @{ Algorithms = @("Autolykos2", "HooHash"); Type = "AMD"; Fee = @(0.01, 0.02); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm autolykos2 --autolykos2-preload", " --algorithm hoohash") }
+    @{ Algorithms = @("CLCHash", "");           Type = "AMD"; Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm clchash") }
+    @{ Algorithms = @("EvoHash", "");           Type = "AMD"; Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm evohash") }
+    @{ Algorithms = @("HooHash", "");           Type = "AMD"; Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm hoohash") }
+    @{ Algorithms = @("XeChain", "");           Type = "AMD"; Fee = @(0.01);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm xechain") }
+
+    @{ Algorithms = @("YespowerDogemone", ""); Type = "CPU"; Fee = @(0.0085); MinerSet = 0; WarmupTimes = @(60, 25); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerdogemone") }
+
+    @{ Algorithms = @("AstrixHash", "");        Type = "INTEL";  Fee = @(0.01);       MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm astrixhash") }
+    @{ Algorithms = @("Autolykos2", "HooHash"); Type = "INTEL";  Fee = @(0.01, 0.02); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm autolykos2 --autolykos2-preload", " --algorithm hoohash") }
+    @{ Algorithms = @("CLCHash", "");           Type = "INTEL";  Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm clchash") }
+    @{ Algorithms = @("EvoHash", "");           Type = "INTEL";  Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm evohash") }
+    @{ Algorithms = @("HooHash", "");           Type = "INTEL";  Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm hoohash") }
+    @{ Algorithms = @("XeChain", "");           Type = "INTEL";  Fee = @(0.01);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm xechain") }
+
+    @{ Algorithms = @("AstrixHash", "");        Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1;    MinerSet = 1; WarmupTimes = @(30, 20); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm astrixhash") }
     @{ Algorithms = @("Autolykos2", "HooHash"); Type = "NVIDIA"; Fee = @(0.01, 0.02); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^Other$"; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm autolykos2 --autolykos2-preload", " --algorithm hoohash") }
+    @{ Algorithms = @("CLCHash", "");           Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm clchash") }
     @{ Algorithms = @("EvoHash", "");           Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^Other$"; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm evohash") }
     @{ Algorithms = @("HooHash", "");           Type = "NVIDIA"; Fee = @(0.02);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^Other$"; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm hoohash") }
+    @{ Algorithms = @("XeChain", "");           Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm xechain") }
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 If ($Algorithms) { 
 
-    If (-not $Session.DryRun) { 
+    If (-not $Session.ConfigRunning.DryRun) { 
         # Allowed max loss for 1. algorithm
         # $GpuDualMaxLosses = @(2, 4, 7, 10, 15, 21, 30)
         $GpuDualMaxLosses = @(5)
@@ -73,7 +87,7 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Config.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
@@ -119,7 +133,7 @@ If ($Algorithms) {
                                     Remove-Variable Pool
 
                                     If ($_.Type -eq "CPU") { 
-                                        $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Config.CPUMiningReserveCPUcore)"
+                                        $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.ConfigRunning.CPUMiningReserveCPUcore)"
                                     }
                                     Else { 
                                         $Arguments += " --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
@@ -136,7 +150,7 @@ If ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API              = "SRBMiner"
-                                        Arguments        = "$Arguments --api-rig-name $($Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
+                                        Arguments        = "$Arguments --api-rig-name $($Session.ConfigRunning.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
                                         DeviceNames      = $AvailableMinerDevices.Name
                                         Fee              = $_.Fee # Dev fee
                                         MinerSet         = $_.MinerSet

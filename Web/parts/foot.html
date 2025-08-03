@@ -74,8 +74,7 @@
         if (document.body.style.cursor != "wait") {
           updateTimestamp();
           // Refresh data only when refreshtimestamp is new
-          if (refreshedtimestamp < refreshtimestamp) { 
-            refreshedtimestamp = refreshtimestamp;
+          if (refreshedtimestamp == "" || refreshedtimestamp < refreshtimestamp) { 
             $("#activeminers").bootstrapTable("refresh");
             $("#watchdogtimers").bootstrapTable("refresh");
             $("#watchdogtimers").bootstrapTable("refresh");
@@ -83,6 +82,7 @@
             updateSummary();
             updateButtonStatus();
             if (typeof updatePoolBalances === "function") updatePoolBalances();
+            refreshedtimestamp = refreshtimestamp;
             setTimeout(() => { }, 2000); // Wait 2 seconds after update
           }
         }

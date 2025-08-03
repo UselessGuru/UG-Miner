@@ -69,6 +69,8 @@ function formatMiners(data) {
     item.WarmupTimes0 = item.WarmupTimes[0];
     item.WarmupTimes1 = item.WarmupTimes[1];
 
+    // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
+    if (item.Reasons.length <= 0) item.Reasons = [" "];
   });
   return data;
 }
@@ -82,6 +84,8 @@ function formatPools(data) {
     item.Price = item.Price * factor;
     item.Price_Bias = item.Price_Bias * factor;
     item.StablePrice = item.StablePrice * factor;
+    // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
+    if (item.Reasons.length <= 0) item.Reasons = [" "];
   });
   return data;
 }

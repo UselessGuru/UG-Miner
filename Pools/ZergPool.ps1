@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZergPool.ps1
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 Param(
@@ -32,10 +32,10 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $HostSuffix = "mine.zergpool.com"
 
-$PoolConfig = $Session.PoolsConfig.$Name
+$PoolConfig = $Session.ConfigRunning.PoolsConfig.$Name
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
-$Regions = If ($Config.UseAnycast -and $PoolConfig.Region -contains "n/a (Anycast)") { "n/a (Anycast)" } Else { $PoolConfig.Region.Where({ $_ -ne "n/a (Anycast)" }) }
+$Regions = If ($Session.ConfigRunning.UseAnycast -and $PoolConfig.Region -contains "n/a (Anycast)") { "n/a (Anycast)" } Else { $PoolConfig.Region.Where({ $_ -ne "n/a (Anycast)" }) }
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
 $WorkerName = $PoolConfig.WorkerName -replace "^ID="
@@ -70,16 +70,25 @@ If ($DivisorMultiplier -and $Regions) {
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
         If ($Request.$Algorithm.NoAutotrade -eq 1 -and $Currency -ne $PayoutCurrency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
-        If ($Request.$Algorithm.hashrate_shared -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        If ($Request.$Algorithm.hashrate_shared -eq 0 -and -not ($Session.ConfigRunning.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
         If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
         # Cannot cast negative values to [UInt]
         If ($Request.$Algorithm.workers_shared -lt 0) { $Request.$Algorithm.workers_shared = 0 }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$($Currency)" })"
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
+        $Value = $Request.$Algorithm.$PriceField / $Divisor
 
-        ForEach ($RegionNorm in $Session.Regions[$Config.Region]) { 
+        $Stat = Get-Stat -Name "$($Key)_Profit"
+        If ($Stat.Live -and $Value -gt 10 * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor) { 
+            # New price should never spike more than 10x
+            $Reasons.Add("Price data is more than 10x higher than previous price data (Error in pool API data?)") | Out-Null
+        }
+        Else { 
+            $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
+        }
+
+        ForEach ($RegionNorm in $Session.Regions[$Session.ConfigRunning.Region]) { 
             If ($Region = $Regions.Where({ $_ -eq "n/a (Anycast)" -or (Get-Region $_) -eq $RegionNorm })) { 
 
                 If ($Region -eq "n/a (Anycast)") { 

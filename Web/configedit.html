@@ -143,7 +143,7 @@
           <div style="padding-top: 0.3rem;" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
             <input type="number" id="MinDataSample" name="MinDataSample" min=10 max=100 value=20 step=1 size=4 style="width: 2.8em; text-align:right;"> data samples while benchmarking
           </div>
-          <div style="padding-top: 0.2rem;" title="Enter Proxy IP address and port&#10;e.g. 192.168.1.1:3128">Proxy address:port
+          <div style="padding-top: 0.2rem;" title="Enter proxy IP address and port&#10;e.g. 192.168.1.1:3128">Proxy address & port
             <input type="text" id="Proxy" name="Proxy" maxlength=22 size=30>
           </div>
           <div style="padding-top: 0.4rem;" title="If enabled UG-Miner will open firewall ports for all miners&#10;Administrator rights required (or you must accept the UAC prompts)">
@@ -167,7 +167,7 @@
             <div style="padding-top: 0.2rem;" title="Pools establish fastest network route based on your location&#10;Currently only ZergPool supports this feature">
               <input type="checkbox" class="toggle-switch" id="UseAnycast" name="UseAnycast"> Use anycast for best network performance and ping times
             </div>
-            <div style="padding-top: 0.5rem;" title="This setting definines how miners will connect to the pools&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json').">
+            <div style="padding-top: 0.6rem;" title="This setting definines how miners will connect to the pools&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json').">
               <select style="height: 1.6em;" id="SSL">
                 <option value="Never" title="Never use SSL/TLS for pool connections&#10;Pools that enforce SSL/TLS connections are marked as unavailable.&#10;&#10;This setting might reduce earnings because not all pools may allow Non-SSL connections.">Never use</option>
                 <option value="Prefer" title="Prefer SSL/TLS pool connections">Prefer</option>
@@ -187,7 +187,13 @@
             <div style="padding-top: 0.8rem;" title="Allow using the pool even if the price reported in the pool API is 0&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Price" class="toggle-switch" name="PoolAllow0Price"> Use pool even if price@pool is 0 (not recommended)
             </div>
-            <div style="padding-top: 0.8rem;" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This may affect profitability, but is less CPU heavy">
+            <div style="padding-top: 0.6em;" title="Max. allowed price increase compared with last price.&#10;If price increase is higher the the pool will be marked as unavaliable.&#10;&#10;(min: 2, max: 99; default: 5)"> Max. allowed price increase
+              <input type="number" step=0.1 min=2 max=99 value=3 size=3 id="PoolAllowedPriceIncreaseFactor" name="PoolAllowedPriceIncreaseFactor" style="width: 3em; text-align:right;">
+            </div>
+            <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at two least pools"> Unrealistic pool price factor
+              <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealisticPoolPriceFactor" name="UnrealisticPoolPriceFactor" style="width: 3em; text-align:right;">
+            </div>
+            <div style="padding-top: 0.5rem;" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This may affect profitability, but is less CPU heavy">
               <input type="checkbox" class="toggle-switch" id="MinerUseBestPoolsOnly" name="MinerUseBestPoolsOnly"> Only use the pools in the best pool list (not recommended)
             </div>
             <br>
@@ -276,10 +282,7 @@
 
           <!-- Calculation settings -->
           <legend title="These settings are used to calculate the best miners" class=h6><b>Calculation settings</b></legend>
-          <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at two least pools">Unreal pool price factor
-            <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealPoolPriceFactor" name="UnrealPoolPriceFactor" style="width: 3em; text-align:right;">
-          </div>
-          <div style="padding-top: 0.3rem;" title="Mark pool as unavailable if accuracy is below this value&#10;&#10;(min: 0%, max 100%; default: 50%)">Minimum accuracy
+          <div style="padding-top: 0.3rem;" title="Mark pool as unavailable if accuracy is below this value&#10;&#10;(min: 0%, max 100%; default: 50%)"> Minimum accuracy
             <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinAccuracy" name="MinAccuracy" style="width: 3em; text-align:right;"> %
           </div>
           <div style="padding-top: 0.5rem;" title="UG-Miner will ignore the pool fee when calculating earnings & profit">
@@ -291,8 +294,8 @@
           <div style="padding-top: 0.3rem;" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings adjustment factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">Earnings adjustment factor
             <input type="number" id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" min=0 max=10 value=1 step=0.01 size=34 style="width: 3.4em; text-align:right;">
           </div>
-          <div style="padding-top: 0.3rem;" title="Mark a miner as unavailable if earnings is x times higher than the&#10;next best 10% or at least 5 miners with same algorithm&#10;&#10;(min: 1, max: 99.9; default: 5)&#10;Set to 1 to disable this check">Unreal miner earnings factor
-            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealMinerEarningFactor" name="UnrealMinerEarningFactor" style="width: 3.4em; text-align:right;">
+          <div style="padding-top: 0.3rem;" title="Mark a miner as unavailable if earnings are x times higher than the&#10; higher than average earnings of all other miners with same algorithm & currency&#10;&#10;(min: 1, max: 99.9; default: 5)&#10;Set to 1 to disable this check">Unrealistic miner earnings factor
+            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealisticMinerEarningsFactor" name="UnrealisticMinerEarningsFactor" style="width: 3.4em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem;" title="UG-Miner will not switch miners&#10;unless another miner has n% higher earnings / profit&#10;&#10;Smaller numbers will cause more switching&#10;&#10;(min: 0%, max: 100%; default: 5%)" for="MinerSwitchingThreshold">Miner switching threshold
             <input type="number" id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" min=0 max=100 value=5 step=0.1 size=3 style="width: 3.4em; text-align:right;"> %
@@ -358,7 +361,7 @@
           <div class="col-md-12">
             <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console window display settings</b></legend>
             <div style="padding-top: 0.3rem;" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle">UI Style
-              <select style="height: 1.6em;" name="UIStyle" id="UIStyle">
+              <select style="height: 1.6em;" name="UIstyle" id="UIstyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>
                 <option value='light' title="Information about miners run in the past, failed miners & watchdog timers will not be shown">light</option>
               </select>
@@ -755,6 +758,8 @@
     document.getElementById('MinWorker').value = parseInt(config.MinWorker);
     if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
     if (config.PoolAllow0Price) document.getElementById('PoolAllow0Price').checked = true;
+    document.getElementById('UnrealisticPoolPriceFactor').value = parseFloat(config.UnrealisticPoolPriceFactor).toFixed(1);
+    document.getElementById('PoolAllowedPriceIncreaseFactor').value = parseFloat(config.PoolAllowedPriceIncreaseFactor).toFixed(1);
     if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
 
     // Region list
@@ -860,12 +865,11 @@
     $(document.getElementById('FIATcurrency')).trigger('change');
 
     // Calculation settings
-    document.getElementById('UnrealPoolPriceFactor').value = parseFloat(config.UnrealPoolPriceFactor).toFixed(1);
     document.getElementById('MinAccuracy').value = parseFloat(config.MinAccuracy) * 100;
     if (config.IgnorePoolFee) document.getElementById('IgnorePoolFee').checked = true;
     if (config.IgnoreMinerFee) document.getElementById('IgnoreMinerFee').checked = true;
     document.getElementById('EarningsAdjustmentFactor').value = parseFloat(config.EarningsAdjustmentFactor).toFixed(1);
-    document.getElementById('UnrealMinerEarningFactor').value = parseFloat(config.UnrealMinerEarningFactor).toFixed(1);
+    document.getElementById('UnrealisticMinerEarningsFactor').value = parseFloat(config.UnrealisticMinerEarningsFactor).toFixed(1);
     document.getElementById('MinerSwitchingThreshold').value = parseFloat(config.MinerSwitchingThreshold).toFixed(1);
     if (config.ShowShares) document.getElementById('ShowShares').checked = true;
     document.getElementById('BadShareRatioThreshold').value = parseFloat(config.BadShareRatioThreshold) * 100;
@@ -916,7 +920,7 @@
 
     // Console display settings
     $(document.getElementById('ShowConsole')).change(function (event) {
-      document.getElementById('UIStyle').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('UIstyle').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowPoolBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('ShowAllMiners').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowColumnAccuracy').disabled = !(document.getElementById('ShowConsole').checked);
@@ -940,8 +944,8 @@
     });
     $(document.getElementById('ShowConsole')).trigger('change');
 
-    if (config.UIStyle.trim().toLowerCase() == 'full') document.getElementById('UIStyle').value = 'full';
-    else document.getElementById('UIStyle').value = 'light';
+    if (config.UIstyle.trim().toLowerCase() == 'full') document.getElementById('UIstyle').value = 'full';
+    else document.getElementById('UIstyle').value = 'light';
     if (config.ShowPoolBalances) document.getElementById('ShowPoolBalances').checked = true;
     if (config.ShowAllMiners) document.getElementById('ShowAllMiners').checked = true;
     if (config.ShowColumnAccuracy) document.getElementById('ShowColumnAccuracy').checked = true;
@@ -1164,7 +1168,7 @@
           required: true,
           step: 1
         },
-        UnrealPoolPriceFactor: {
+        UnrealisticPoolPriceFactor: {
           range: [1, 10],
           required: true,
           step: 0.1
@@ -1184,7 +1188,7 @@
           required: true,
           step: 0.01
         },
-        UnrealMinerEarningFactor: {
+        UnrealisticMinerEarningsFactor: {
           range: [1, 99.9],
           required: true,
           step: 0.1
@@ -1249,7 +1253,7 @@
           pattern: "<br>Workername must be between 2 and 32 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
         },
         Proxy: {
-          pattern: "<br>Enter Proxy IP V4 address and port<br>e.g. 192.168.1.1:3128"
+          pattern: "<br>Enter proxy IPv4 address and port<br>e.g. 192.168.1.1:3128"
         },
         ExtraCurrencies: {
           pattern: "<br>Currencies must be separated by commas.<br>Do not use special characters."
@@ -1334,6 +1338,8 @@
         config.MinWorker = parseInt(document.getElementById('MinWorker').value);
         config.PoolAllow0Hashrate = document.getElementById('PoolAllow0Hashrate').checked;
         config.PoolAllow0Price = document.getElementById('PoolAllow0Price').checked;
+        config.UnrealisticPoolPriceFactor = parseFloat(document.getElementById('UnrealisticPoolPriceFactor').value);
+        config.PoolAllowedPriceIncreaseFactor = parseFloat(document.getElementById('PoolAllowedPriceIncreaseFactor').value);
         config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
 
         // Select one or more pools
@@ -1365,12 +1371,11 @@
         config.UseMinerTweaks = document.getElementById('UseMinerTweaks').checked;
 
         // Calculation settings
-        config.UnrealPoolPriceFactor = parseFloat(document.getElementById('UnrealPoolPriceFactor').value);
         config.MinAccuracy = parseFloat(document.getElementById('MinAccuracy').value) / 100;
         config.IgnorePoolFee = document.getElementById('IgnorePoolFee').checked;
         config.IgnoreMinerFee = document.getElementById('IgnoreMinerFee').checked;
         config.EarningsAdjustmentFactor = parseFloat(document.getElementById('EarningsAdjustmentFactor').value);
-        config.UnrealMinerEarningFactor = parseFloat(document.getElementById('UnrealMinerEarningFactor').value);
+        config.UnrealisticMinerEarningsFactor = parseFloat(document.getElementById('UnrealisticMinerEarningsFactor').value);
         config.MinerSwitchingThreshold = parseFloat(document.getElementById('MinerSwitchingThreshold').value);
         config.ShowShares = document.getElementById('ShowShares').checked;
         config.BadShareRatioThreshold = parseFloat(document.getElementById('BadShareRatioThreshold').value) / 100;
@@ -1399,7 +1404,7 @@
         config.BalancesTrackerLog = document.getElementById('BalancesTrackerLog').checked;
 
         // Console display settings
-        config.UIStyle = document.getElementById('UIStyle').value;
+        config.UIstyle = document.getElementById('UIstyle').value;
         config.ShowPoolBalances = document.getElementById('ShowPoolBalances').checked;
         config.ShowAllMiners = document.getElementById('ShowAllMiners').checked;
         config.ShowColumnAccuracy = document.getElementById('ShowColumnAccuracy').checked;

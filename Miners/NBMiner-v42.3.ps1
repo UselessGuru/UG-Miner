@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.2
+Version:        6.5.3
 Version date:   2024/01/29
 #>
 
@@ -43,7 +43,7 @@ $Algorithms = @(
     @{ Algorithm = "Octopus";    Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 1.20; AdditionalWin10MemGB = 1; MinComputeCapability = 6.1; MinerSet = 2; Tuning = " -mt 1"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = "^Ampere$"; ExcludePools = @();                         Arguments = " --algo octopus --platform 1" } # Trex-v0.26.8 is fastest
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Config.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
@@ -53,7 +53,7 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Config.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
@@ -83,7 +83,7 @@ If ($Algorithms) {
                                 $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --password $($Pool.Pass)"
 
                                 # Optionally disable dev fee mining
-                                If ($Config.DisableMinerFee) { 
+                                If ($Session.ConfigRunning.DisableMinerFee) { 
                                     $_.Fee = 0
                                     $Arguments += " --fee 0"
                                 }

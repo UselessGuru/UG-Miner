@@ -18,33 +18,32 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 $PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
 $Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) { 
+While (-not $APIResponse -and $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount -gt 0 -and $Config.MiningDutchAPIKey) { 
 
     Try { 
-        (Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Config.MiningDutchUserName)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).result.Where({ $_.tag -notlike "*_*" }).ForEach(
+        ((Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Config.MiningDutchUserName)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).result.Where({ $_.tag -and $_.tag -notlike "*_*" }) | Sort-Object -Property tag).ForEach(
             { 
-                $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
-                $Currency = $_.tag
-                $CoinName = $_.currency
-
                 $APIResponse = $null
+                $CoinName = $_.currency
+                $Currency = $_.tag
+                $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+
                 While (-not $APIResponse -and $RetryCount -gt 0) { 
                     Try { 
                         If ($APIResponse = ((Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($CoinName.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).getuserbalance).data) { 
-                            $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 
                             If ($Config.LogBalanceAPIResponse) { 
                                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -69,7 +68,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
                     }
                     Catch { 
                         $RetryCount--
-                        Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPIretryInterval # Pool might not like immediate requests
+                        Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
                     }
                 }
             }
@@ -77,7 +76,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) 
     }
     Catch { 
         $RetryCount--
-        Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPIretryInterval # Pool might not like immediate requests
+        Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
     }
 
     $RetryCount--

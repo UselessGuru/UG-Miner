@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 Param(
@@ -32,7 +32,7 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Hostsuffix = "stratum1.hashcryptos.com"
 
-$PoolConfig = $Session.PoolsConfig.$Name
+$PoolConfig = $Session.ConfigRunning.PoolsConfig.$Name
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PayoutCurrency = $PoolConfig.PayoutCurrency
@@ -67,12 +67,21 @@ If ($DivisorMultiplier -and $PriceField) {
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
-        If ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        If ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Session.ConfigRunning.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
         If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
         If ($PoolConfig.PayoutCurrencies -notcontains $PoolConfig.PayoutCurrency) { $Reasons.Add("Payout currency [$($PoolConfig.PayoutCurrency)] not supported by by pool") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$Algorithm.$PriceField / $Divisor) -FaultDetection $false
+        $Value = $Request.$Algorithm.$PriceField / $Divisor
+
+        $Stat = Get-Stat -Name "$($Key)_Profit"
+        If ($Stat.Live -and $Value -gt 10 * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor) { 
+            # New price should never spike more than 10x
+            $Reasons.Add("Price data is more than 10x higher than previous price data (Error in pool API data?)") | Out-Null
+        }
+        Else { 
+            $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
+        }
 
         [PSCustomObject]@{ 
             Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)

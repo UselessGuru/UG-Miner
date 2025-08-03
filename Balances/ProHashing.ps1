@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ProHashing.ps1
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -42,8 +42,8 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.ProHashingAPIkey) {
         }
 
         If ($APIResponse.status -eq "success") { 
-            If (($APIResponse.data.balances | Get-Member -MemberType NoteProperty).Name) { 
-                ($APIResponse.data.balances | Get-Member -MemberType NoteProperty).Name.ForEach(
+            If ($APIResponse.data.balances.PSObject.Properties.Name) { 
+               $APIResponse.data.balances.PSObject.Properties.Name.ForEach(
                     { 
                         [PSCustomObject]@{ 
                             DateTime = [DateTime]::Now.ToUniversalTime()

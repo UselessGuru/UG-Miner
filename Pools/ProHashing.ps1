@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ProHashing.ps1
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 Param(
@@ -32,7 +32,7 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $HostSuffix = "mining.prohashing.com"
 
-$PoolConfig = $Session.PoolsConfig.$Name
+$PoolConfig = $Session.ConfigRunning.PoolsConfig.$Name
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
@@ -61,7 +61,7 @@ If ($DivisorMultiplier -and $PriceField) {
             $Currency = [String]$Request.$_.currency
             $Divisor = [Double]$Request.$_.mbtc_mh_factor * $DivisorMultiplier
             $Fee = If ($Currency) { $Request.$_."$($PoolConfig.MiningMode)_fee" } Else { $Request.$_."pps_fee" }
-            $Pass = "a=$($Algorithm.ToLower()),n=$($PoolConfig.WorkerName)$(If ($Config.ProHashingMiningMode -eq "PPLNS" -and $Request.$_.CoinName) { ",c=$($Request.$_.CoinName.ToLower()),m=pplns" })"
+            $Pass = "a=$($Algorithm.ToLower()),n=$($PoolConfig.WorkerName)$(If ($Session.ConfigRunning.ProHashingMiningMode -eq "PPLNS" -and $Request.$_.CoinName) { ",c=$($Request.$_.CoinName.ToLower()),m=pplns" })"
 
             # Add coin name
             If ($Request.$_.CoinName -and $Currency) { 
@@ -70,13 +70,22 @@ If ($DivisorMultiplier -and $PriceField) {
 
             $Reasons = [System.Collections.Generic.Hashset[String]]::new()
             If (-not $PoolConfig.UserName) { $Reasons.Add("No username") | Out-Null }
-            If ($Request.$_.hashrate -eq 0 -and -not ($Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+            If ($Request.$_.hashrate -eq 0 -and -not ($Session.ConfigRunning.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
             If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
             $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
-            $Stat = Set-Stat -Name "$($Key)_Profit" -Value ($Request.$_.$PriceField / $Divisor) -FaultDetection $false
+            $Value = $Request.$_.$PriceField / $Divisor
 
-            ForEach ($RegionNorm in $Session.Regions[$Config.Region]) { 
+            $Stat = Get-Stat -Name "$($Key)_Profit"
+            If ($Stat.Live -and $Value -gt 10 * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor) { 
+                # New price should never spike more than 10x
+                $Reasons.Add("Price data is more than 10x higher than previous price data (Error in pool API data?)") | Out-Null
+            }
+            Else { 
+                $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
+            }
+
+            ForEach ($RegionNorm in $Session.Regions[$Session.ConfigRunning.Region]) { 
                 If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $RegionNorm })) { 
 
                     [PSCustomObject]@{ 

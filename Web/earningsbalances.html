@@ -5,12 +5,8 @@
             </div>
             <table class="alert alert-info table" role="alert">
               <tr>
-                <td>
-                  Consolidated earnings of the last 30 active mining days. The data is taken from the pools APIs and may not yet include results from recent mining.
-                </td>
-                <td data-halign="right" style="padding-top: 0.8rem">
-                  Grey scale <input type="checkbox" class="toggle-switch" id="useColor" name="useColor"> Colors
-                </td>
+                <td name="add-balancesupdatedtimestamp"> Consolidated earnings of the last 30 active mining days. The data is taken from the pools APIs and may not yet include results from recent mining.</td>
+                <td data-halign="right" style="padding-top: 0.8rem"> Grey scale <input type="checkbox" class="toggle-switch" id="useColor" name="useColor"> Colors</td>
               </tr>
             </table>
             <canvas style="top:-30px;" id="EarningsChart" role="img"></canvas>
@@ -524,6 +520,16 @@
             }
 
             function updateEarningsChart() {
+              $.ajax({
+                async: false,
+                dataType: 'json',
+                timeout: 1,
+                url: '/balancesupdatedtimestamp',
+                success: function(balancesupdatedtimestamp) {
+                  document.getElementsByName("add-balancesupdatedtimestamp")[0].innerHTML = document.getElementsByName("add-balancesupdatedtimestamp")[0].innerHTML.replace(/\.$| \(updated.+/, "") + " (data updated " + balancesupdatedtimestamp + ").";
+                }
+              });
+
               $.ajax({
                 async: false,
                 dataType: "json",

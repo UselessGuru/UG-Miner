@@ -19,14 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.5.2
-Version date:   2025/07/27
+Version:        6.5.3
+Version date:   2025/08/03
 #>
 
 using module ..\Includes\Include.psm1
-
-# Start transcript log
-If ($Config.Transcript) { Start-Transcript -Path ".\Debug\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)-Transcript_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").log" }
 
 # Set Process priority
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
@@ -36,7 +33,6 @@ $BrainName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PoolObjects = @()
 $APICallFails = 0
 $Durations = [TimeSpan[]]@()
-$PoolConfig = $Session.PoolsConfig.$BrainName
 
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
