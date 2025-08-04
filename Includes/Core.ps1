@@ -445,7 +445,7 @@ Try {
                         $Pools.Where({ $Session.ConfigRunning.PoolsConfig[$_.Name].Algorithm -split "," -contains "-$($_.Algorithm)" -or $Session.ConfigRunning.PoolsConfig[$_.Name].Algorithm -split "," -contains "-$($_.AlgorithmVariant)" }).ForEach({ $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in $($_.Name) pool config)") | Out-Null })
                         # Filter non-enabled algorithms
                         If ($Session.ConfigRunning.Algorithm -like "+*") { 
-                            $IncludeAlgorithmNames = @($Session.ConfigRunning.Algorithm -replace "^+" | Select-Object)
+                            $IncludeAlgorithmNames = @($Session.ConfigRunning.Algorithm -replace "^\+" | Select-Object)
                             $Pools.Where({ $IncludeAlgorithmNames -notcontains $_.Algorithm -and $IncludeAlgorithmNames -notcontains $_.AlgorithmVariant }).ForEach({ $_.Reasons.Add("Algorithm not enabled in generic config") | Out-Null })
                             Remove-Variable IncludeAlgorithmNames
                         }
