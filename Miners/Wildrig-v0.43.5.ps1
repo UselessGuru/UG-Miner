@@ -21,12 +21,13 @@ Version:        6.5.4
 Version date:   2025/08/04
 #>
 
-# implemented qhash for AMD, Intel and NVIDIA(only Ada Lovelace and Blackwell) 5% dev-fee
-# removed clchash
+# implemented new changes to qhash to avoid rejects, but pool hashrate will be lower now
+# fixed auto-tunig of qhash for AMD gpu's
+# enabled support for all NVIDIA gpu's for qhash, but RTX 3000 series and lower is not optimized yet
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.43.3/wildrig-multi-windows-0.43.3.7z"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.43.5/wildrig-multi-windows-0.43.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -40,7 +41,7 @@ $Algorithms = @(
     @{ Algorithm = "EvoHash";          Type = "AMD"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo evohash" }
     @{ Algorithm = "EvrProgPow";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo evrprogpow" }
     @{ Algorithm = "FiroPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 45);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo firopow" }
-    @{ Algorithm = "Ghostrider";       Type = "AMD"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(180, 60); ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo ghostrider" }
+#   @{ Algorithm = "Ghostrider";       Type = "AMD"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(180, 60); ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo ghostrider" } # https://github.com/andru-kun/wildrig-multi/issues/329
     @{ Algorithm = "HeavyHash";        Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo heavyhash" } # FPGA
     @{ Algorithm = "Hex";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo hex" }
     @{ Algorithm = "HMQ1725";          Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo hmq1725" } # CryptoDredge-v0.27.0 is fastest
@@ -49,7 +50,7 @@ $Algorithms = @(
     @{ Algorithm = "MegaBtx";          Type = "AMD"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo megabtx" }
     @{ Algorithm = "MemeHash";         Type = "AMD"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo memehash" }
     @{ Algorithm = "MeowPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(75, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo meowpow" }
-    @{ Algorithm = "Mike";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo mike" }
+#   @{ Algorithm = "Mike";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo mike" } # https://github.com/andru-kun/wildrig-multi/issues/329
     @{ Algorithm = "NexaPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow" } # https://github.com/andru-kun/wildrig-multi/issues/255 & https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo nist5" } # ASIC
 #   @{ Algorithm = "Phi";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo phi" } # ASIC
@@ -86,7 +87,7 @@ $Algorithms = @(
 #   @{ Algorithm = "X15";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x15" } # ASIC
 #   @{ Algorithm = "X16r";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16r" } # ASIC
     @{ Algorithm = "X16rt";            Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16rt" } # FPGA
-    @{ Algorithm = "X16rv2";           Type = "AMD"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16rv2" }
+    @{ Algorithm = "X16rv2";           Type = "AMD"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(150, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16rv2" }
     @{ Algorithm = "X16s";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16s" } # FPGA
     @{ Algorithm = "X17";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x17" }
     @{ Algorithm = "X18";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x18" }
@@ -151,7 +152,7 @@ $Algorithms = @(
 #   @{ Algorithm = "X15";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x15 --watchdog" } # ASIC
 #   @{ Algorithm = "X16r";             Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x16r --watchdog" } # ASIC
     @{ Algorithm = "X16rt";            Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x16rt --watchdog" } # FPGA
-    @{ Algorithm = "X16rv2";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x16rv2 --watchdog" }
+    @{ Algorithm = "X16rv2";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(150, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x16rv2 --watchdog" }
     @{ Algorithm = "X16s";             Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x16s --watchdog" } # FPGA
     @{ Algorithm = "X17";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x17 --watchdog" }
     @{ Algorithm = "X18";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo x18 --watchdog" }
@@ -170,7 +171,7 @@ $Algorithms = @(
     @{ Algorithm = "EvoHash";          Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = "^Blackwell$";      ExcludePools = @();           Arguments = " --algo evohash" } # Bad shares on Blackwell
     @{ Algorithm = "EvrProgPow";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo evrprogpow --watchdog" }
     @{ Algorithm = "FiroPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 1; WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo firopow --watchdog" }
-    @{ Algorithm = "Ghostrider";       Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(180, 60); ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo ghostrider --watchdog" }
+#   @{ Algorithm = "Ghostrider";       Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(180, 60); ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo ghostrider --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/329
     @{ Algorithm = "HeavyHash";        Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo heavyhash --watchdog" } # FPGA
     @{ Algorithm = "Hex";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo hex --watchdog" }
     @{ Algorithm = "HMQ1725";          Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo hmq1725 --watchdog" } # CryptoDredge-v0.27.0 is fastest
@@ -179,7 +180,7 @@ $Algorithms = @(
     @{ Algorithm = "MegaBtx";          Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo megabtx --watchdog" }
     @{ Algorithm = "MemeHash";         Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo memehash --watchdog" }
     @{ Algorithm = "MeowPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(75, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo meowpow --watchdog" }
-    @{ Algorithm = "Mike";             Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo mike --watchdog" }
+#   @{ Algorithm = "Mike";             Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo mike --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/329
     @{ Algorithm = "NexaPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo nist5 --watchdog" } # ASIC
 #   @{ Algorithm = "Phi";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo phi --watchdog" } # ASIC
@@ -216,15 +217,15 @@ $Algorithms = @(
 #   @{ Algorithm = "X15";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x15 --watchdog" } # ASIC
 #   @{ Algorithm = "X16r";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x16r --watchdog" } # ASIC
     @{ Algorithm = "X16rt";            Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x16rt --watchdog" } # FPGA
-    @{ Algorithm = "X16rv2";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x16rv2 --watchdog" }
+    @{ Algorithm = "X16rv2";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(150, 15); ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x16rv2 --watchdog" }
     @{ Algorithm = "X16s";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x16s --watchdog" } # FPGA
     @{ Algorithm = "X17";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x17 --watchdog" }
 #   @{ Algorithm = "X18";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x18 --watchdog" } # ASIC
 #   @{ Algorithm = "X20r";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @();           Arguments = " --algo x20r --watchdog" } # ASIC
     @{ Algorithm = "X21s";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 45); ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x21s --watchdog" }
     @{ Algorithm = "X22";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x22 --watchdog" }
-#   @{ Algorithm = "X22i";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x22i --watchdog" } # Not yet supported on Nvidia
-#   @{ Algorithm = "X25x";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x25x --watchdog" } # Not yet supported on Nvidia
+    @{ Algorithm = "X22i";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x22i --watchdog" }
+    @{ Algorithm = "X25x";             Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x25x --watchdog" }
     @{ Algorithm = "X33";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x33 --watchdog" }
 #   @{ Algorithm = "X7";               Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x7 --watchdog" } # ASIC
 )

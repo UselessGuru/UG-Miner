@@ -457,13 +457,6 @@
                                 title: "Data last collected from pool"
                               };
 
-                              // Add warning symbol if data was not updated in last poll, add one minute to ensure completion of balance poll
-                              if ((new Date() - new Date(item.LastUpdated)) / 1000 > parseInt(config.BalancesTrackerPollInterval + 1) * 60) {
-                                outdatedicon = " &#9888;&#65039;";
-                                data.title = "Outdated balance data"
-                                data.updated += outdatedicon;
-                              }
-
                               // Convert balance to other currencies
                               if (rates[item.Currency]) {
                                 $.each(item.Currencies, function(cindex, currency) {
@@ -472,6 +465,14 @@
                                 data.balanceinFIATcurrency = item.Balance * rates[item.Currency][config.FIATcurrency];
                               } else { 
                                 data["balances"][item.Currency] = item.Balance;
+                              }
+
+                              // Add warning symbol if data was not updated in last poll, add one minute to ensure completion of balance poll
+                              // 0 valued balances cannot be outdated, some pools just have had a payout
+                              if (item.Balance > 0 && (new Date() - new Date(item.LastUpdated)) / 1000 > parseInt(config.BalancesTrackerPollInterval + 1) * 60) {
+                                outdatedicon = " &#9888;&#65039;";
+                                data.title = "Outdated balance data"
+                                data.updated += outdatedicon;
                               }
 
                               // build totals
@@ -526,7 +527,7 @@
                 timeout: 1,
                 url: '/balancesupdatedtimestamp',
                 success: function(balancesupdatedtimestamp) {
-                  document.getElementsByName("add-balancesupdatedtimestamp")[0].innerHTML = document.getElementsByName("add-balancesupdatedtimestamp")[0].innerHTML.replace(/\.$| \(updated.+/, "") + " (data updated " + balancesupdatedtimestamp + ").";
+                  document.getElementsByName("add-balancesupdatedtimestamp")[0].innerHTML = " Consolidated earnings of the last 30 active mining days. The data is taken from the pools APIs and may not yet include results from recent mining (data updated " + balancesupdatedtimestamp + ")."
                 }
               });
 
@@ -559,11 +560,6 @@
 
               updateEarningsChart();
               updatePoolBalances();
-
-              window.setInterval(function() {
-                updateEarningsChart();
-                updatePoolBalances();
-              }, parseInt(Math.max(10, config.BalancesTrackerPollInterval)) * 1000 * 60);   // refresh once per balances tracker interval or every 10 minutes
             });
             </script>
 <!-- End of page scripts "earningsbalances.html" -->

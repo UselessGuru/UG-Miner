@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.3
-Version date:   2025/08/03
+Version:        6.5.4
+Version date:   2025/08/04
 #>
 
 using module .\Include.psm1
@@ -787,33 +787,32 @@ Try {
                             { 
                                 Try { 
                                     $Miner = $_
-                                    If ($_.KeepRunning = [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status -and ($Session.DonationRunning -or $_.ContinousCycle -lt $Session.ConfigRunning.MinCycle)) { 
-                                        # Minimum numbers of cycles not yet reached
-                                        $_.Restart = $false
+                                    If ($_.SideIndicator -eq "=>") { 
+                                        # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
+                                        $_.Algorithms = $_.Workers.Pool.Algorithm
+                                        $_.CommandLine = $_.GetCommandLine()
+                                        $_.BaseName = ($_.Name -split "-")[0]
+                                        $_.Version = ($_.Name -split "-")[1]
+                                        $_.BaseName_Version = "$($_.BaseName)-$($_.Version)"
+                                        $_.Devices = [System.Collections.Generic.SortedSet[Object]]::new($MinerDevices.Where({ $Miner.DeviceNames -contains $_.Name }))
+                                        $_.Updated = ($_.Workers.Pool.Updated | Measure-Object -Minimum).Minimum
                                     }
-                                    Else { 
-                                        If ($_.SideIndicator -eq "=>") { 
-                                            # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
-                                            $_.Algorithms = $_.Workers.Pool.Algorithm
-                                            $_.CommandLine = $_.GetCommandLine()
-                                            $_.BaseName = ($_.Name -split "-")[0]
-                                            $_.Version = ($_.Name -split "-")[1]
-                                            $_.BaseName_Version = "$($_.BaseName)-$($_.Version)"
-                                            $_.Devices = [System.Collections.Generic.SortedSet[Object]]::new($MinerDevices.Where({ $Miner.DeviceNames -contains $_.Name }))
+                                    ElseIf ($Miner = $MinersNewGroup.Where({ $Miner.Info -eq $_.Info })) { 
+                                        If ($_.KeepRunning = [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status -and ($Session.DonationRunning -or $_.ContinousCycle -lt $Session.ConfigRunning.MinCycle)) { 
+                                            # Minimum numbers of cycles not yet reached
+                                            $_.Restart = $false
                                         }
-                                        ElseIf ($Miner = $MinersNewGroup.Where({ $Miner.Info -eq $_.Info })) { 
-                                            # Update existing miners
-                                            If ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
-                                                $_.Arguments = $Miner.Arguments
-                                                $_.CommandLine = $Miner.GetCommandLine()
-                                                $_.Port = $Miner.Port
-                                            }
-                                            $_.PrerequisitePath = $Miner.PrerequisitePath
-                                            $_.PrerequisiteURI = $Miner.PrerequisiteURI
-                                            $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-                                            # $_.WarmupTimes = $Miner.WarmupTimes
-                                            # $_.Workers = $Miner.Workers
+                                        # Update existing miners
+                                        ElseIf ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
+                                            $_.Arguments = $Miner.Arguments
+                                            $_.CommandLine = $Miner.GetCommandLine()
+                                            $_.Port = $Miner.Port
                                         }
+                                        $_.PrerequisitePath = $Miner.PrerequisitePath
+                                        $_.PrerequisiteURI = $Miner.PrerequisiteURI
+                                        $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
+                                        $_.WarmupTimes = $Miner.WarmupTimes
+                                        $_.Workers = $Miner.Workers
                                     }
                                     $_.MeasurePowerConsumption = $Session.CalculatePowerCost
                                     $_.Refresh($Session.PowerCostBTCperW, $Session.ConfigRunning)
@@ -1005,22 +1004,6 @@ Try {
             $Miners.Where({ $_.Workers.Pool.Variant.Where({ $_ -notin $Session.ConfigRunning.PoolName }) }).ForEach({ $_.Available = $false; $_.Best = $false })
             $Miners.Where({ $_.Updated -lt $Session.BeginCycleTime.AddDays(-1) }).ForEach({ $_.Available = $false; $_.Best = $false })
 
-            If (-not $Miners.Where({ $_.Available })) { 
-                $Message = "No available miners - will retry in $($Session.ConfigRunning.Interval) seconds..."
-                Write-Message -Level Warn $Message
-                $Session.Summary = $Message
-                Remove-Variable Message
-
-                Clear-MinerData
-
-                $Session.RefreshNeeded = $true
-
-                Start-Sleep -Seconds $Session.ConfigRunning.Interval
-
-                Write-Message -Level Info "Ending cycle."
-                Continue
-            }
-
             $MinersAdded = $Miners.Where({ $_.SideIndicator -eq "=>" })
             $MinersToBeRemoved = $Miners.Where({ $_.Updated -lt $Session.BeginCycleTime.AddDays(-1) -or (Compare-Object $MinerDevices.Name $_.DeviceNames -IncludeEqual | Where-Object -Property SideIndicator -eq "=>") -or $_.Workers.Pool.Variant.Where({ $_ -notin $Session.ConfigRunning.PoolName })})
             $MinersToBeRemoved.ForEach({ $_.Available = $false; $_.Best = $false })
@@ -1036,6 +1019,22 @@ Try {
             $Message += ". $MinersAvailableCount available miner$(If ($MinersAvailableCount -ne 1) { "s" }) remain$(If ($MinersAvailableCount -eq 1) { "s" })."
             Write-Message -Level Info $Message
             Remove-Variable Message, MinersAdded, MinersAvailableCount, MinersFilteredCount, MinersUpdatedCount
+
+            If (-not $Miners.Where({ $_.Available })) { 
+                $Message = "No available miners - will retry in $($Session.ConfigRunning.Interval) seconds..."
+                Write-Message -Level Warn $Message
+                $Session.Summary = $Message
+                Remove-Variable Message
+
+                Clear-MinerData -KeepMiners $true
+
+                $Session.RefreshNeeded = $true
+
+                Start-Sleep -Seconds $Session.ConfigRunning.Interval
+
+                Write-Message -Level Info "Ending cycle."
+                Continue
+            }
 
             $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
             If ($Miners.Where({ $_.Available })) { 
@@ -1305,8 +1304,7 @@ Try {
             $Session.Summary = $Message
             Remove-Variable Message
 
-            Clear-PoolData
-            Clear-MinerData
+            Clear-MinerData -KeepMiners $true
 
             $Session.RefreshNeeded = $true
 

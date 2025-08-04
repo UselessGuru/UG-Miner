@@ -1,6 +1,18 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.5.4 2025/08/0?
+===================================
+
+Fixes:
+- Core: Incorrect miner switching (regression from v6.5.2)
+- Core: Configuration parameter 'Algorithm' not working when using '+' in filter (regression from v6.5.3)
+
+Miner changes:
+- OneZeroMiner-v1.4.9
+- Wildrig-v0.43.5
+
+
 Changelog UG-Miner 6.5.3 2025/08/03
 ===================================
 

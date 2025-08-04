@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.5.3
-Version date:   2025/08/03
+Version:        6.5.4
+Version date:   2025/08/04
 #>
 
 using module .\Include.psm1
@@ -104,7 +104,7 @@ Do {
             Remove-Variable BalanceObjectGroups
 
             # Keep empty balances for 7 days
-            $BalanceObjects = $BalanceObjects.Where({ ($_.Unpaid -gt 0 -and $_.Unpaid -ne $_.Balance) -or $_.DateTime -gt $Now.AddDays(-7) })
+            $BalanceObjects = $BalanceObjects.Where({ $_.Unpaid -gt 0 -or $_.Balance -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) })
 
             $Session.BalancesCurrencies = @(@($Session.BalancesCurrencies) + @($BalanceObjects.Currency) | Sort-Object -Unique)
 

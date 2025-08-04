@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.5.3
-Version date:   2025/08/03
+Version:        6.5.4
+Version date:   2025/08/04
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -31,19 +31,18 @@ $RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 $Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-While (-not $APIResponse -and $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount -gt 0 -and $Config.MiningDutchAPIKey) { 
+While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.MiningDutchAPIKey) { 
 
     Try { 
         ((Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Config.MiningDutchUserName)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).result.Where({ $_.tag -and $_.tag -notlike "*_*" }) | Sort-Object -Property tag).ForEach(
             { 
                 $APIResponse = $null
-                $CoinName = $_.currency
-                $Currency = $_.tag
+                $Currency = $_.currency
                 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 
                 While (-not $APIResponse -and $RetryCount -gt 0) { 
                     Try { 
-                        If ($APIResponse = ((Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($CoinName.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).getuserbalance).data) { 
+                        If ($APIResponse = ((Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore).getuserbalance).data) { 
 
                             If ($Config.LogBalanceAPIResponse) { 
                                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -56,7 +55,7 @@ While (-not $APIResponse -and $Config.PoolsConfig.$Name.PoolAPIallowedFailureCou
                                 [PSCustomObject]@{ 
                                     DateTime        = [DateTime]::Now.ToUniversalTime()
                                     Pool            = $Name
-                                    Currency        = $Currency
+                                    Currency        = $_.tag
                                     Wallet          = $Config.MiningDutchUserName
                                     Pending         = [Double]$APIResponse.unconfirmed
                                     Balance         = [Double]$APIResponse.confirmed

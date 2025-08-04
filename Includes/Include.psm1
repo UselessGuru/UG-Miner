@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.3
-Version date:   2025/08/03
+Version:        6.5.4
+Version date:   2025/08/04
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -278,7 +278,7 @@ Class Pool : IDisposable {
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
     [Boolean]$SSLselfSignedCertificate
     [Double]$StablePrice
-    [DateTime]$Updated = [DateTime]::Now.ToUniversalTime()
+    [DateTime]$Updated
     [String]$User
     [String]$Variant
     [String]$WorkerName = ""
@@ -783,12 +783,12 @@ Class Miner : IDisposable {
         }
         Else { 
             $this.Earnings = 0
+            $this.Earnings_Accuracy = 0
             $this.Earnings_Bias = 0
             $this.Workers.ForEach({ 
                 $this.Earnings += $_.Earnings
                 $this.Earnings_Bias += $_.Earnings_Bias
             })
-            $this.Earnings_Accuracy = 0
             If ($this.Earnings) { $this.Workers.ForEach({ $this.Earnings_Accuracy += $_.Earnings_Accuracy * $_.Earnings / $this.Earnings }) }
         }
 
@@ -809,7 +809,7 @@ Class Miner : IDisposable {
         $this.Disabled = $this.Workers.Disabled -contains $true
         $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
         $this.LastUsed = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
-        $this.Updated = [DateTime]::Now.ToUniversalTime()
+        $this.Updated = ($this.Workers.Pool.Updated | Measure-Object -Minimum).Minimum
         $this.WindowStyle = If ($ConfigRunning.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $ConfigRunning.MinerWindowStyle }
     }
 }
@@ -1013,6 +1013,11 @@ Function Start-Core {
 }
 
 Function Clear-MinerData { 
+        
+    Param (
+        [Parameter(Mandatory = $false)]
+        [Boolean]$KeepMiners = $false
+    )
 
     # Stop all miners
     ForEach ($Miner in $Session.Miners.Where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
@@ -1024,7 +1029,7 @@ Function Clear-MinerData {
     $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
 
     $Session.Miners.ForEach({ $_.Dispose() })
-    $Session.Miners = [Miner[]]@()
+    If (-not $KeepMiners) { $Session.Miners = [Miner[]]@() }
     $Session.MinersBenchmarkingOrMeasuring = [Miner[]]@()
     $Session.MinersBest = [Miner[]]@()
     $Session.MinersBestPerDevice = [Miner[]]@()
