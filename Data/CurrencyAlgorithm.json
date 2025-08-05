@@ -176,6 +176,7 @@
   "PPC": "SHA256",
   "PRIV": "Yespower",
   "PXC": "Neoscrypt",
+  "QBIT": "QHash",
   "QOGE": "YescryptR16",
   "QUAI": "ProgPow",
   "RBL": "SHA256",

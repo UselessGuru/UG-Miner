@@ -6,52 +6,52 @@
       "Epoch": 1141
     },
     "EtcHash": {
-      "BlockHeight": 22752963,
+      "BlockHeight": 22757813,
       "DAGsize": 4269799808,
       "Epoch": 381
     },
     "Ethash": {
-      "BlockHeight": 22392774,
+      "BlockHeight": 22397756,
       "DAGsize": 7348419712,
       "Epoch": 748
     },
     "EthashB3": {
-      "BlockHeight": 7335154,
+      "BlockHeight": 7342878,
       "DAGsize": 3137339264,
       "Epoch": 246
     },
     "EvrProgPow": {
-      "BlockHeight": 1442564,
+      "BlockHeight": 1443638,
       "DAGsize": 4244633728,
       "Epoch": 122
     },
     "FiroPow": {
-      "BlockHeight": 1143354,
+      "BlockHeight": 1143810,
       "DAGsize": 8464104832,
       "Epoch": 881
     },
     "FishHash": {
-      "BlockHeight": 1209526,
+      "BlockHeight": 1210647,
       "DAGsize": 4831838208,
       "Epoch": 448
     },
     "HeavyHashKarlsenV2": {
-      "BlockHeight": 55134330,
+      "BlockHeight": 55199579,
       "DAGsize": 4831838208,
-      "Epoch": 1839
+      "Epoch": 1841
     },
     "KawPow": {
-      "BlockHeight": 3961285,
+      "BlockHeight": 3962350,
       "DAGsize": 5519703424,
       "Epoch": 530
     },
     "MeowPow": {
-      "BlockHeight": 1523344,
+      "BlockHeight": 1524429,
       "DAGsize": 7952400256,
       "Epoch": 205
     },
     "Octopus": {
-      "BlockHeight": 127964018,
+      "BlockHeight": 128011461,
       "DAGsize": 8422153472,
       "Epoch": 246
     },
@@ -61,7 +61,7 @@
       "Epoch": 0
     },
     "ProgPow": {
-      "BlockHeight": 15582648,
+      "BlockHeight": 15587648,
       "DAGsize": 5444205952,
       "Epoch": 521
     },
@@ -71,17 +71,17 @@
       "Epoch": 503
     },
     "ProgPowTelestai": {
-      "BlockHeight": 523674,
+      "BlockHeight": 524759,
       "DAGsize": 1451229056,
       "Epoch": 45
     },
     "ProgPowZ": {
-      "BlockHeight": 3275941,
+      "BlockHeight": 3277064,
       "DAGsize": 2004874624,
       "Epoch": 111
     },
     "SCCpow": {
-      "BlockHeight": 1220404,
+      "BlockHeight": 1220992,
       "DAGsize": 4244633728,
       "Epoch": 378
     },
@@ -96,10 +96,10 @@
   },
   "Currency": {
     "*": {
-      "BlockHeight": 127964018,
+      "BlockHeight": 128011461,
       "Currency": "*",
       "DAGsize": 8464104832,
-      "Epoch": 1839
+      "Epoch": 1841
     },
     "AIDP": {
       "Algorithm": "KawPow",
@@ -112,10 +112,10 @@
     },
     "AIPG": {
       "Algorithm": "KawPow",
-      "BlockHeight": 863857,
+      "BlockHeight": 864949,
       "CoinName": "AI Power Grid",
       "DAGsize": 2055208576,
-      "Date": "2025-08-04T11:20:43.8852892Z",
+      "Date": "2025-08-05T05:29:41.2147912Z",
       "Epoch": 117,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -193,10 +193,10 @@
     },
     "CFX": {
       "Algorithm": "Octopus",
-      "BlockHeight": 127964018,
+      "BlockHeight": 128011461,
       "CoinName": "Conflux Network",
       "DAGsize": 8422153472,
-      "Date": "2025-08-04T11:20:43.9316501Z",
+      "Date": "2025-08-05T05:29:41.2870995Z",
       "Epoch": 246,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -211,10 +211,10 @@
     },
     "CLORE": {
       "Algorithm": "KawPow",
-      "BlockHeight": 1386035,
+      "BlockHeight": 1387085,
       "CoinName": "Clore.ai",
       "DAGsize": 2634022016,
-      "Date": "2025-08-04T11:20:43.9005872Z",
+      "Date": "2025-08-05T05:29:41.251804Z",
       "Epoch": 186,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -283,19 +283,19 @@
     },
     "EPIC": {
       "Algorithm": "ProgPow",
-      "BlockHeight": 3127392,
+      "BlockHeight": 3128461,
       "CoinName": "Epic Chain",
       "DAGsize": 1962932096,
-      "Date": "2025-08-04T11:20:43.8749058Z",
+      "Date": "2025-08-05T05:29:41.1966679Z",
       "Epoch": 106,
       "Url": "https://whattomine.com/coins.json"
     },
     "ERG": {
       "Algorithm": "Autolykos2",
-      "BlockHeight": 1583182,
+      "BlockHeight": 1583759,
       "CoinName": "Ergo",
       "DAGsize": 5256951945,
-      "Date": "2025-08-04T11:20:45.4170686Z",
+      "Date": "2025-08-05T05:29:43.3015693Z",
       "Epoch": 1141,
       "Url": "https://prohashing.com/api/v1/currencies"
     },
@@ -310,10 +310,10 @@
     },
     "ETC": {
       "Algorithm": "EtcHash",
-      "BlockHeight": 22752963,
+      "BlockHeight": 22757813,
       "CoinName": "Ethereum Classic",
       "DAGsize": 4269799808,
-      "Date": "2025-08-04T11:20:45.4250247Z",
+      "Date": "2025-08-05T05:29:43.3067082Z",
       "Epoch": 381,
       "Url": "https://prohashing.com/api/v1/currencies"
     },
@@ -337,10 +337,10 @@
     },
     "ETHW": {
       "Algorithm": "Ethash",
-      "BlockHeight": 22392774,
+      "BlockHeight": 22397756,
       "CoinName": "Ethereum PoW",
       "DAGsize": 7348419712,
-      "Date": "2025-08-04T11:20:45.418539Z",
+      "Date": "2025-08-05T05:29:43.3029189Z",
       "Epoch": 748,
       "Url": "https://prohashing.com/api/v1/currencies"
     },
@@ -364,10 +364,10 @@
     },
     "EVR": {
       "Algorithm": "EvrProgPow",
-      "BlockHeight": 1442564,
+      "BlockHeight": 1443638,
       "CoinName": "Everus",
       "DAGsize": 4244633728,
-      "Date": "2025-08-04T11:20:43.8816724Z",
+      "Date": "2025-08-05T05:29:41.2066996Z",
       "Epoch": 122,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -382,10 +382,10 @@
     },
     "FIRO": {
       "Algorithm": "FiroPow",
-      "BlockHeight": 1143354,
+      "BlockHeight": 1143810,
       "CoinName": "Firo",
       "DAGsize": 8464104832,
-      "Date": "2025-08-04T11:20:43.883513Z",
+      "Date": "2025-08-05T05:29:41.2095147Z",
       "Epoch": 881,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -400,21 +400,21 @@
     },
     "FREN": {
       "Algorithm": "KawPow",
-      "BlockHeight": 2342777,
+      "BlockHeight": 2344950,
       "CoinName": "FREN",
       "DAGsize": 3707764352,
-      "Date": "2025-08-04T11:20:43.8919546Z",
+      "Date": "2025-08-05T05:29:41.235783Z",
       "Epoch": 314,
       "Url": "https://whattomine.com/coins.json"
     },
     "GEMMA": {
       "Algorithm": "KawPow",
-      "BlockHeight": 173347,
+      "BlockHeight": 174396,
       "CoinName": "Gemma",
       "DAGsize": 1283453312,
-      "Date": "2025-08-04T11:20:42.8655578Z",
+      "Date": "2025-08-05T05:40:03.5614094Z",
       "Epoch": 25,
-      "Url": "https://zergpool.com/api/currencies"
+      "Url": "https://www.zpool.ca/api/currencies"
     },
     "GPN": {
       "Algorithm": "KawPow",
@@ -436,19 +436,19 @@
     },
     "HYP": {
       "Algorithm": "EthashB3",
-      "BlockHeight": 7335154,
+      "BlockHeight": 7342878,
       "CoinName": "HyperX",
       "DAGsize": 3137339264,
-      "Date": "2025-08-04T11:20:42.8344743Z",
+      "Date": "2025-08-05T05:29:40.8490495Z",
       "Epoch": 246,
       "Url": "https://zergpool.com/api/currencies"
     },
     "IRON": {
       "Algorithm": "FishHash",
-      "BlockHeight": 1209526,
+      "BlockHeight": 1210647,
       "CoinName": "Iron Fish",
       "DAGsize": 4831838208,
-      "Date": "2025-08-04T11:20:43.8902514Z",
+      "Date": "2025-08-05T05:29:41.2205244Z",
       "Epoch": 448,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -463,21 +463,21 @@
     },
     "KLS": {
       "Algorithm": "HeavyHashKarlsenV2",
-      "BlockHeight": 55134330,
+      "BlockHeight": 55199579,
       "CoinName": "Karlsen",
       "DAGsize": 4831838208,
-      "Date": "2025-08-04T11:20:43.9141978Z",
-      "Epoch": 1839,
+      "Date": "2025-08-05T05:29:41.262956Z",
+      "Epoch": 1841,
       "Url": "https://whattomine.com/coins.json"
     },
     "LRS": {
       "Algorithm": "Ethash",
-      "BlockHeight": 3793083,
+      "BlockHeight": 3811235,
       "CoinName": "Larissa",
-      "DAGsize": 2147483264,
-      "Date": "2025-08-02T15:01:39.8433538Z",
-      "Epoch": 128,
-      "Url": "https://whattomine.com/coins.json"
+      "DAGsize": 2155872128,
+      "Date": "2025-08-05T05:29:40.839535Z",
+      "Epoch": 129,
+      "Url": "https://zergpool.com/api/currencies"
     },
     "META": {
       "Algorithm": "Ethash",
@@ -490,12 +490,12 @@
     },
     "MEWC": {
       "Algorithm": "MeowPow",
-      "BlockHeight": 1523344,
+      "BlockHeight": 1524429,
       "CoinName": "Meowcoin",
       "DAGsize": 7952400256,
-      "Date": "2025-08-04T11:20:43.8767429Z",
+      "Date": "2025-08-05T05:40:03.5816339Z",
       "Epoch": 205,
-      "Url": "https://whattomine.com/coins.json"
+      "Url": "https://www.zpool.ca/api/currencies"
     },
     "MOAC": {
       "Algorithm": "Ethash",
@@ -508,11 +508,11 @@
     },
     "NEOX": {
       "Algorithm": "KawPow",
-      "BlockHeight": 1679217,
+      "BlockHeight": 1680272,
       "CoinName": "Neoxa",
-      "DAGsize": 2961177728,
-      "Date": "2025-08-04T11:20:43.9023997Z",
-      "Epoch": 225,
+      "DAGsize": 2969565568,
+      "Date": "2025-08-05T05:29:41.2546287Z",
+      "Epoch": 226,
       "Url": "https://whattomine.com/coins.json"
     },
     "NILU": {
@@ -544,10 +544,10 @@
     },
     "OCTA": {
       "Algorithm": "Ethash",
-      "BlockHeight": 7629230,
+      "BlockHeight": 7634296,
       "CoinName": "OctaSpace",
       "DAGsize": 3221224064,
-      "Date": "2025-08-04T11:20:43.9251846Z",
+      "Date": "2025-08-05T05:29:41.2748251Z",
       "Epoch": 256,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -598,10 +598,10 @@
     },
     "QUAI": {
       "Algorithm": "ProgPow",
-      "BlockHeight": 3121805,
+      "BlockHeight": 3134809,
       "CoinName": "Quai Network",
       "DAGsize": 1962932096,
-      "Date": "2025-08-04T11:20:43.887143Z",
+      "Date": "2025-08-05T05:29:41.1996447Z",
       "Epoch": 106,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -625,10 +625,10 @@
     },
     "RVN": {
       "Algorithm": "KawPow",
-      "BlockHeight": 3961285,
+      "BlockHeight": 3962350,
       "CoinName": "Ravencoin",
       "DAGsize": 5519703424,
-      "Date": "2025-08-04T11:20:45.4198469Z",
+      "Date": "2025-08-05T05:29:43.3043412Z",
       "Epoch": 530,
       "Url": "https://prohashing.com/api/v1/currencies"
     },
@@ -643,19 +643,19 @@
     },
     "SCC": {
       "Algorithm": "SCCpow",
-      "BlockHeight": 1220404,
+      "BlockHeight": 1220992,
       "CoinName": "StockChain Coin",
       "DAGsize": 4244633728,
-      "Date": "2025-08-04T11:20:43.4020777Z",
+      "Date": "2025-08-05T05:41:46.193785Z",
       "Epoch": 378,
       "Url": "https://www.zpool.ca/api/currencies"
     },
     "SERO": {
       "Algorithm": "ProgPow",
-      "BlockHeight": 15582648,
+      "BlockHeight": 15587648,
       "CoinName": "Super Zero",
       "DAGsize": 5444205952,
-      "Date": "2025-08-04T11:20:43.9127273Z",
+      "Date": "2025-08-05T05:29:41.2582659Z",
       "Epoch": 521,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -670,12 +670,12 @@
     },
     "TLS": {
       "Algorithm": "ProgPowTelestai",
-      "BlockHeight": 523674,
+      "BlockHeight": 524759,
       "CoinName": "Telestai",
       "DAGsize": 1451229056,
-      "Date": "2025-08-04T11:20:42.8866707Z",
+      "Date": "2025-08-05T05:40:03.5835669Z",
       "Epoch": 45,
-      "Url": "https://zergpool.com/api/currencies"
+      "Url": "https://www.zpool.ca/api/currencies"
     },
     "UBQ": {
       "Algorithm": "UbqHash",
@@ -697,10 +697,10 @@
     },
     "XNA": {
       "Algorithm": "KawPow",
-      "BlockHeight": 1200221,
+      "BlockHeight": 1201301,
       "CoinName": "Neurai",
       "DAGsize": 2432695424,
-      "Date": "2025-08-04T11:20:43.9051198Z",
+      "Date": "2025-08-05T05:29:41.2459819Z",
       "Epoch": 162,
       "Url": "https://whattomine.com/coins.json"
     },
@@ -715,10 +715,10 @@
     },
     "ZANO": {
       "Algorithm": "ProgPowZ",
-      "BlockHeight": 3275941,
+      "BlockHeight": 3277064,
       "CoinName": "Zano",
       "DAGsize": 2004874624,
-      "Date": "2025-08-04T11:20:42.9173303Z",
+      "Date": "2025-08-05T05:29:40.923847Z",
       "Epoch": 111,
       "Url": "https://zergpool.com/api/currencies"
     },
@@ -738,12 +738,12 @@
     "https://evr.cryptoscope.io/api/getblockcount": "2025-07-31T20:50:36.5941508Z",
     "https://explorer.phicoin.net/api/getblockcount": "2025-04-05T09:56:26.7291009Z",
     "https://mewc.cryptoscope.io/api/getblockcount": "2025-04-07T11:31:55.4000872Z",
-    "https://minerstat.com/dag-size-calculator": "2025-08-04T11:20:44.1234129Z",
-    "https://prohashing.com/api/v1/currencies": "2025-08-04T11:20:45.4253523Z",
+    "https://minerstat.com/dag-size-calculator": "2025-08-05T05:29:41.8851362Z",
+    "https://prohashing.com/api/v1/currencies": "2025-08-05T05:29:43.307005Z",
     "https://scc.ccore.online/api/getblockcount": "2025-02-23T13:13:37.6392343Z",
     "https://telestai.cryptoscope.io/api/getblockcount": "2025-04-07T11:31:39.8801536Z",
-    "https://whattomine.com/coins.json": "2025-08-04T11:20:43.9319598Z",
-    "https://www.zpool.ca/api/currencies": "2025-08-04T11:20:43.4214824Z",
-    "https://zergpool.com/api/currencies": "2025-08-04T11:20:42.9176239Z"
+    "https://whattomine.com/coins.json": "2025-08-05T05:29:41.2873722Z",
+    "https://www.zpool.ca/api/currencies": "2025-08-05T05:41:46.4349911Z",
+    "https://zergpool.com/api/currencies": "2025-08-05T05:29:40.9279185Z"
   }
 }

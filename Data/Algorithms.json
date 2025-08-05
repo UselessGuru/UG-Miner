@@ -230,6 +230,7 @@
   "pyrinhash": "HeavyHashPyrin",
   "pyrinhashv2": "HeavyHashPyrinV2",
   "pufferfish2bmb": "Pufferfish2BMB",
+  "qhash": "QHash",
   "qogecoin": "QogeCoin",
   "radiant": "SHA512256d",
   "rainforestv2": "RainforestV2",
