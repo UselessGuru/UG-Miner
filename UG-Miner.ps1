@@ -403,7 +403,7 @@ Else {
 }
 
 Read-Config -ConfigFile $Session.ConfigFile
-# $Session.ConfigRunning = $Config.Clone()
+$Session.ConfigRunning = $Config.Clone()
 
 # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
 Start-LogReader

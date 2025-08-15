@@ -1200,7 +1200,7 @@ Try {
             }
             Else { 
                 If ($Miner.Benchmark -or $Miner.MeasurePowerConsumption) { 
-                    If ($Miner.Activated -le 0) { $Miner.Restart = $true } # Re-benchmark sets Activated to 0
+                    If ($Miner.Activated -le 0 -or $Miner.Status -eq [MinerStatus]::DryRun ) { $Miner.Restart = $true } # Re-benchmark sets Activated to 0
                 }
                 ElseIf (($Session.ConfigRunning.DryRun -and $Miner.Status -ne [MinerStatus]::DryRun) -or (-not $Session.ConfigRunning.DryRun -and $Miner.Status -eq [MinerStatus]::DryRun)) { 
                     $Miner.Restart = $true
@@ -1263,10 +1263,6 @@ Try {
                     $_.Status = [MinerStatus]::Unavailable
                     $_.SubStatus = "unavailable"
                 }
-                # ElseIf ($_.Status -eq [MinerStatus]::Unavailable) { 
-                #     $_.Status = [MinerStatus]::Idle
-                #     $_.SubStatus = "idle"
-                # }
                 ElseIf ($_.Status -eq [MinerStatus]::Idle) { 
                     $_.SubStatus = "idle"
                 }
@@ -1447,15 +1443,16 @@ Try {
                         } Catch { }
 
                         If ($Miner.DataReaderJob.HasMoreData) { 
-                            If ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.Hashrate.PSObject.Properties.Name })) { 
+                            # Need hashrates for all algorithms to count as a valid sample
+                            If ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.Hashrate.PSObject.Properties.Name -and [Double[]]$_.Hashrate.PSObject.Properties.Value -notcontains 0 })) { 
                                 $Sample = $Samples[-1]
                                 $Miner.Hashrates_Live = $Sample.Hashrate.PSObject.Properties.Value
                                 $Miner.DataSampleTimestamp = $Sample.Date
                                 If ($Miner.ReadPowerConsumption) { $Miner.PowerConsumption_Live = $Sample.PowerConsumption }
-                                # Need hashrates for all algorithms to count as a valid sample
-                                If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and [Double[]]$Sample.Hashrate.PSObject.Properties.Value -notcontains 0) { $Miner.ValidDataSampleTimestamp = $Sample.Date.AddSeconds($Miner.WarmupTimes[1]) }
+                                If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0) { $Miner.ValidDataSampleTimestamp = $Sample.Date.AddSeconds($Miner.WarmupTimes[1]) }
+
                                 If (($Miner.ValidDataSampleTimestamp -ne [DateTime]0 -and ($Sample.Date - $Miner.ValidDataSampleTimestamp) -ge 0)) { 
-                                    $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp -and [Double[]]$_.Hashrate.PSObject.Properties.Value -notcontains 0 }).ForEach({ $Miner.Data.Add($_) | Out-Null })
+                                    $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp }).ForEach({ $Miner.Data.Add($_) | Out-Null })
                                     Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Session.ConfigRunning.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
                                     If ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
                                         $Miner.StatusInfo = "$($Miner.Info) is $(If ($Miner.Benchmark) { "benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
