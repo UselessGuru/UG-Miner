@@ -18,15 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.5.5
-Version date:   2025/08/04
+Version date:   2025/08/15
 #>
 
-# Just another performance boost for Qubitcoin. 
-# Roughly about 50% for 30xx and older generations, 25% for the newer cards. 
+# Added a new kernel for CMP cards with nerfed f32/f64 performance (--kernel 2).
+# Performance improvement for the other cards
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { Return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.5.0/onezerominer-win64-1.5.0.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.5.2/onezerominer-win64-1.5.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"

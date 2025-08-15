@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.5.4
-Version date:   2025/08/04
+Version:        6.5.5
+Version date:   2025/08/15
 #>
 
 Class Trex : Miner { 

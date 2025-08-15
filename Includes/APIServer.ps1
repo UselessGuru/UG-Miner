@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.5.4
-Version date:   2025/08/04
+Version:        6.5.5
+Version date:   2025/08/15
 #>
 
 using module .\Include.psm1
@@ -212,7 +212,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                                 }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' disabled. Configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' updated."
+                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked disabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. Configuration will become active in the next cycle."
                     }
                     Catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -245,7 +245,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                                 Else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' enabled. Configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' updated."
+                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked as enabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. Configuration will become fully active in the next cycle."
                     }
                     Catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -262,7 +262,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Try { 
                 $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
                 Write-Config -Config $TempConfig
-                Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
+                Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. Configuration will become fully active in the next cycle."
 
                 $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
 
@@ -275,7 +275,6 @@ While ($Session.APIversion -and $Server.IsListening) {
                         Else { 
                             $_.State = [DeviceState]::Enabled
                             If ($_.Status -like "*; will get disabled at end of cycle") { $_.Status = $_.Status -replace "; will get disabled at end of cycle" }
-                            If ($_.Status -like "Disabled *") { $_.Status = "Idle" }
                         }
                     }
                 )
@@ -652,7 +651,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/braindata" { 
-            $Data = ConvertTo-Json -Depth 2 ($Session.BrainData)
+            $Data = ConvertTo-Json -Depth 2 $Session.BrainData
             Break
         }
         "/coinnames" { 

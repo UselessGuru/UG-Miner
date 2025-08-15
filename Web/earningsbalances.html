@@ -467,9 +467,8 @@
                                 data["balances"][item.Currency] = item.Balance;
                               }
 
-                              // Add warning symbol if data was not updated in last poll, add one minute to ensure completion of balance poll
-                              // 0 valued balances cannot be outdated, some pools just have had a payout
-                              if (item.Balance > 0 && (new Date() - new Date(item.LastUpdated)) / 1000 > parseInt(config.BalancesTrackerPollInterval + 1) * 60) {
+                              // Add warning symbol if data was not updated in last poll, add half an interval to ensure completion of balance poll
+                              if ((new Date() - new Date(item.LastUpdated)) / 1000 > (parseInt(config.BalancesTrackerPollInterval) * 1.5 * 60)) {
                                 outdatedicon = " &#9888;&#65039;";
                                 data.title = "Outdated balance data"
                                 data.updated += outdatedicon;

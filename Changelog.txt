@@ -1,6 +1,21 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+
+Changelog UG-Miner 6.5.5 2025/08/15
+===================================
+
+Changes:
+- Removed balances tracker for MiningDutch; data provided in pool API is incorrect
+
+Miner updates:
+- OneZeroMiner-v1.5.1
+- Wildrig-v0.44.0
+
+Improvements
+- Core: Remove obsolete code & minor code optimizations
+
+
 Changelog UG-Miner 6.5.4 2025/08/04
 ===================================
 
@@ -26,7 +41,7 @@ Enhancements:
 
 Improvements:
 - Core / main text console: Disable QuickEdit mode
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 
 Miner updates:
 - OneZeroMiner-v1.4.5
@@ -45,7 +60,7 @@ Fixes:
 
 Improvements:
 - Legacy GUI: Refresh balances data as soon as it is available from balances tracker
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 - Web GUI: Auto-refresh tables whenever data has changed in core
 
 Miner changes:
@@ -125,7 +140,7 @@ Changelog UG-Miner 6.4.33 2025/06/25
 ====================================
 
 Fixes:
-- Core: Do not store measured hashrate if too many bad shared were detected
+- Core: Do not store measured hashrate if too many bad shares were detected
 
 Improvements:
 - Core: Minor code optimizations
@@ -497,7 +512,7 @@ Changelog UG-Miner 6.4.6 2025/01/29
 ===================================
 
 Changes:
-- Core: Reduce obsolete code
+- Core: Remove obsolete code
 
 Enhancements:
 - Optimize dual algorithm miners code
@@ -602,7 +617,7 @@ Fixes:
 - Core: Gone miners not stopping in some scenarios
 
 Improvements:
-- Reduce obsolete code & minor code optimizations
+- Remove obsolete code & minor code optimizations
 
 Miner updates:
 - BzMiner-v22.0.0
@@ -618,7 +633,7 @@ Changelog UG-Miner 6.3.22 2024/12/21
 
 Improvements:
 - Core: Optimize miner window title display
-- Reduce obsolete code & minor code optimizations (summary & footer)
+- Remove obsolete code & minor code optimizations (summary & footer)
 
 Miner updates:
 - JayddeeCpu-v24.7
@@ -676,7 +691,7 @@ Fixes:
 - Legacy GUI: Context menu for miners not working
 
 Improvements:
-- Reduce obsolete code & minor code optimizations 
+- Remove obsolete code & minor code optimizations 
 
 Miner updates:
 - lolMiner-v1.92
@@ -757,7 +772,7 @@ Improvements:
 - Core: Close useless empty cmd window that comes up when starting from cmd file (Windows 11)
 - Core: Minor code optimizations
 - LegacyGUI  / Earnings & balances: Add more columns to balances table
-- Legacy GUI: Reduce obsolete code & minor code optimizations 
+- Legacy GUI: Remove obsolete code & minor code optimizations 
 
 
 Changelog UG-Miner 6.3.9 2024/10/17
@@ -789,8 +804,8 @@ Fixes:
 - Web GUI / Miners & pools tables: Reasons filter not working
 
 Improvements:
-- Core & Miner APIs: Reduce obsolete code & minor code optimizations
-- LegacyGUI.ps1: Reduce obsolete code & minor code optimizations
+- Core & Miner APIs: Remove obsolete code & minor code optimizations
+- LegacyGUI.ps1: Remove obsolete code & minor code optimizations
 
 Miner updates:
 - BzMiner-v21.5.1
@@ -801,7 +816,7 @@ Changelog UG-Miner 6.3.7 2024/10/05
 ===================================
 
 Improvements:
-- Core & Miner APIs: Reduce obsolete code & minor code optimizations
+- Core & Miner APIs: Remove obsolete code & minor code optimizations
 - Core / Includes.psm1: Function 'Update-DAGdata' sets CUDAversion property. No need for 'CUDAversion.json' anymore
 - Core: Streamline failed miner reason text in switching log file
 - Log viewer (SnakeTail): Change color for 'WARN' messages to magenta to match color in text console
@@ -963,7 +978,7 @@ Fixes:
 - APIserver.psm1: Do not print full path in log
 
 Improvements:
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 
 
 Changelog UG-Miner 6.2.26 2024/08/16
@@ -978,7 +993,7 @@ Fixes:
 - Core: 'Error in file 'Includes\Core.ps1' line 291' (Regression from 6.2.25)
 
 Improvements:
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 
 
 Changelog UG-Miner 6.2.25 2024/08/13
@@ -988,7 +1003,7 @@ Fixed:
 - Pool 'Miningdutch': Payout threshold 1000x too low
 
 Improvements:
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 
 
 Changelog UG-Miner 6.2.24 2024/08/10
@@ -1001,7 +1016,7 @@ Enhancements:
 - Core: Check if there is already another instance running and show error message
 
 Improvements:
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 
 Miner changes:
 - SRBMinerMulti-v2.6.1
@@ -1019,7 +1034,7 @@ Fixes:
 - Web GUI: Watchdog timer table not getting cleared when no watchdog timers exist
 
 Improvements:
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 - Miners: Minor code optimizations when reading miner objects
 
 Miner changes:
@@ -1030,7 +1045,7 @@ Changelog UG-Miner 6.2.22 2024/08/01
 ====================================
 
 Improvements:
-- Core: Reduce obsolete code & minor code optimizations
+- Core: Remove obsolete code & minor code optimizations
 
 Miner changes:
 - XmrStak-v2.10.8 (reactivated)
@@ -1454,7 +1469,7 @@ Fixes:
 - Legacy GUI: ToolTips broken on some controls
 
 Improvements:
-- UG-Miner.ps1: Reduce obsolete code; improve performance
+- UG-Miner.ps1: Remove obsolete code; improve performance
 
 
 Changelog UG-Miner 6.1.13 2024/02/28
@@ -1633,7 +1648,7 @@ Changelog UG-Miner 6.1.1 2024/01/17
 
 Changes:
 - Core: Minor code optimizations
-- Core: Reduce obsolete code
+- Core: Remove obsolete code
 
 Miner changes:
 - Rigel-v1.13.1
@@ -1644,7 +1659,7 @@ Changelog UG-Miner 6.1.0 2024/01/15
 
 Changes:
 - Core: Renamed algorithm 'kHeavyHash' to 'HeavyHashKaspa"
-- Include.psm1: Reduce obsolete code
+- Include.psm1: Remove obsolete code
 - README.MD: Fix typo
 
 Fixes:

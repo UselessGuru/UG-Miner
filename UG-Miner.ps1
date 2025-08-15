@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.4
-Version date:   2025/08/04
+Version:        6.5.5
+Version date:   2025/08/15
 #>
 
 using module .\Includes\Include.psm1
@@ -310,10 +310,10 @@ https://github.com/UselessGuru/UG-Miner/blob/master/LICENSE
 "@
 Write-Host "`nCopyright and license notices must be preserved.`n" -ForegroundColor Green
 
-# Initialize thread safe global variables
-$Global:Config = [System.Collections.SortedList]::Synchronized(@{ })
-$Global:Session = [System.Collections.SortedList]::Synchronized(@{ })
-$Global:Stats = [System.Collections.SortedList]::Synchronized(@{ })
+# Initialize global thread safe case insensitive lists
+$Global:Config = [System.Collections.SortedList]::Synchronized([System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase))
+$Global:Session = [System.Collections.SortedList]::Synchronized([System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase))
+$Global:Stats = [System.Collections.SortedList]::Synchronized([System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase))
 
 # Expand paths
 $Session.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
@@ -325,7 +325,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.4"
+    Version      = [System.Version]"6.5.5"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Branding.Version)"
@@ -403,7 +403,7 @@ Else {
 }
 
 Read-Config -ConfigFile $Session.ConfigFile
-$Session.ConfigRunning = $Config.Clone()
+# $Session.ConfigRunning = $Config.Clone()
 
 # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
 Start-LogReader

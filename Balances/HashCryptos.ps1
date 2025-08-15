@@ -18,15 +18,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.5.4
-Version date:   2025/08/04
+Version:        6.5.5
+Version date:   2025/08/15
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
+
 $PayoutCurrency = $Config.PoolsConfig.$Name.PayoutCurrency
-$Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
+$PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
 $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 $RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+$Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
 
 $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 
@@ -36,7 +38,7 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
     Try { 
-        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
+        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
 
         If ($Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -58,9 +60,12 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) {
                 Url      = "https://hashcryptos.com/?address=$Wallet"
             }
         }
+        ElseIf ($APIResponse.Message -like "Only 1 request *") { 
+            Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
+        }
     }
     Catch { 
-        Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
+        Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
     }
 
     $RetryCount--

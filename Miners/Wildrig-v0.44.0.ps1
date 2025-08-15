@@ -18,15 +18,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.5.5
-Version date:   2025/08/04
+Version date:   2025/08/15
 #>
 
-# significant improvements to qhash for all cards
-# hashrate of qhash should be the same in miner and on pool side now
+# improved qhash for AMD RDNA1, RDNA2 and RDNA3 architectures
+# significantly improved qhash for NVIDIA Ampere and older architectures
+# fixed low hashrate on CMP 170HX for qhash(use parameter --qhash-kernel 2)
+# up to 20% improvements for NVIDIA Ada Lovelace and Blackwell
+# CPU usage decreased again
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.43.6/wildrig-multi-windows-0.43.6.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.44.0/wildrig-multi-windows-0.44.0.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -36,7 +39,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Blake2s";          Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo blake2s" } # ASIC
 #   @{ Algorithm = "Bmw512";           Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo bmw512" } # ASIC
     @{ Algorithm = "C11";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo c11" }
-    @{ Algorithm = "CurveHash";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @();           Arguments = " --algo curvehash" }
+    @{ Algorithm = "CurveHash";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo curvehash" }
     @{ Algorithm = "EvoHash";          Type = "AMD"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo evohash" }
     @{ Algorithm = "EvrProgPow";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo evrprogpow" }
     @{ Algorithm = "FiroPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(45, 45);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo firopow" }

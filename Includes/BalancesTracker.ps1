@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.5.4
-Version date:   2025/08/04
+Version:        6.5.5
+Version date:   2025/08/15
 #>
 
 using module .\Include.psm1
@@ -82,17 +82,17 @@ Do {
             Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
             $PoolsToTrack.ForEach(
                 { 
+                    Write-Message -Level Debug "Balances tracker for pool '$_': Start building balances objects"
                     $BalanceObjects += @(
-                        Write-Message -Level Debug "Balances tracker for pool '$_': Start building balances objects"
                         & ".\Balances\$($_).ps1"
-                        Write-Message -Level Debug "Balances tracker for pool '$_': End building balances objects"
                     )
+                    Write-Message -Level Debug "Balances tracker for pool '$_': End building balances objects"
                 }
             )
 
             # Only keep non excluded balances
             $BalancesTrackerExcludePool = @(Get-PoolBaseName $Config.BalancesTrackerExcludePool)
-            $BalanceObjects = @((@($BalanceObjects) + @($Session.BalancesData)))
+            $BalanceObjects = @(@($BalanceObjects) + @($Session.BalancesData))
             $BalanceObjects = $BalanceObjects.Where({ $_.Wallet -and $_.Pool -notin $BalancesTrackerExcludePool })
             Remove-Variable BalancesTrackerExcludePool
 
@@ -116,7 +116,6 @@ Do {
 
                 # Get threshold currency and value
                 $PayoutThreshold = $BalanceObject.PayoutThreshold
-
                 $PayoutThresholdCurrency = $BalanceObject.Currency
 
                 If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
@@ -341,7 +340,7 @@ Do {
 
         # Always keep pools sorted, even when new pools were added
         $Session.Balances = [Ordered]@{ } # as case insensitive hash table
-        ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -notin $Config.BalancesTrackerExcludePool }) | Sort-Object).ForEach(
+        ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -in $PoolsToTrack }) | Sort-Object).ForEach(
             { 
                 $Session.Balances.Remove($_)
                 $Session.Balances.$_ = $Balances.$_
@@ -355,7 +354,7 @@ Do {
 
         # Build chart data (used in GUI) for last 30 days
         $PoolChartData = [PSCustomObject]@{ }
-        $ChartData = $Earnings.Where({ $PoolsToTrack -contains $_.Pool }) | Sort-Object -Property Date | Group-Object -Property Date | Select-Object -Last 30 # days
+        $ChartData = $Earnings.Where({ $_.Pool -in $PoolsToTrack }) | Sort-Object -Property Date | Group-Object -Property Date | Select-Object -Last 30 # days
 
         # One dataset per pool
         (($ChartData.Group.Where({ $_.DailyEarnings -gt 0 })).Pool | Sort-Object -Unique).ForEach(

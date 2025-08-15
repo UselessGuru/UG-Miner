@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.5.4
-Version date:   2025/08/04
+Version:        6.5.5
+Version date:   2025/08/15
 #>
 
 using module ..\Includes\Include.psm1
@@ -57,7 +57,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 }
                 Catch { 
                 }
-                If ($AlgoData.PSObject.Properties.Name.Count -lt 2) { 
+                If ($APIResponse.Message -like "Only 1 request *" -or $AlgoData.PSObject.Properties.Name.Count -lt 2) { 
                     If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
                     Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
                 }

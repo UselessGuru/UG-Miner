@@ -37,8 +37,8 @@
       "*": 0.0000075
     },
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIretryInterval": 11,
-    "PoolAPItimeout": 30,
+    "PoolAPIretryInterval": 11, // Only 1 request every 10 seconds allowed
+    "PoolAPItimeout": 15,
     "Region": [
       "n/a"
     ],
@@ -110,8 +110,8 @@
       "BTC": 0.0002
     },
     "PoolAPIAllowedFailureCount": 3,
-    "PoolAPIretryInterval": 15, // Only 1 request every 10 seconds allowed
-    "PoolAPItimeout": 3,
+    "PoolAPIretryInterval": 11, // Only 1 request every 10 seconds allowed
+    "PoolAPItimeout": 15,
     "Region": [
       "australia",
       "americas",
@@ -181,7 +181,8 @@
     ],
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
-    "PoolAPItimeout": 20,    "Region": [
+    "PoolAPItimeout": 20,
+    "Region": [
       "asia",
       "europe",
       "us-east"

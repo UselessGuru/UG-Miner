@@ -601,6 +601,8 @@
       $('.cancelnewwalletbutton').click(function () {
         document.getElementById('newwallet').remove();
         document.getElementById('btn-addwallet').disabled = false;
+        document.getElementById('save-button').disabled = false;
+        document.getElementById('reset-button').disabled = false;
       });
     });
 
@@ -738,10 +740,17 @@
           $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('device-' + device.Name).toLowerCase(), value: device.Name, style: 'margin-top:0.3rem' }).appendTo(devicescontainer);
           $('<label/>', { for: ('device-' + device.Name).toLowerCase(), text: (device.Name + ': ' + device.Model), style: 'margin-left:5px' }).appendTo(devicescontainer);
           $('<br>').appendTo(devicescontainer);
-          if (device.State == 0) document.getElementById(('device-' + device.Name).toLowerCase()).checked = true;
-          if (device.State == 2) {
-            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = true;
+          if (device.State == 0) {
+            document.getElementById(('device-' + device.Name).toLowerCase()).checked = true;
+            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
+          }
+          if (device.State == 1) {
             document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
+            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
+          }
+          if (device.State == 2) {
+            document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
+            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = true;
           }
         })
       }
@@ -1323,9 +1332,9 @@
 
         // Select mining devices
         config.ExcludeDeviceName = [];
-        var enabledDevicesCount = 0
+        var availableDevicesCount = 0
         $.each(devices, function (key, device) {
-          if (device.State != 2) enabledDevicesCount ++;
+          if (device.State != 2) availableDevicesCount ++;
           if (document.getElementById(('device-' + device.Name.toLowerCase())).checked == false && device.State != 2) config.ExcludeDeviceName.push(device.Name);
         });
 
@@ -1443,7 +1452,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0) && /[a-zA-Z]{3}/.test(config.FIATcurrency) && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < enabledDevicesCount) {
+        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0) && /[a-zA-Z]{3}/.test(config.FIATcurrency) && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < availableDevicesCount) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1469,7 +1478,7 @@
           $('.modal-body').html('Cannot save configuration - NiceHash address must be different from your general BTC wallet.');
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
-          } else if (config.ExcludeDeviceName.length >= enabledDevicesCount) {
+          } else if (config.ExcludeDeviceName.length >= availableDevicesCount) {
           // No mining device selected
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must select at least one mining device.');

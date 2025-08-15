@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.4
-Version date:   2025/08/04
+Version:        6.5.5
+Version date:   2025/08/15
 #>
 
 using module .\Include.psm1
@@ -387,7 +387,7 @@ Try {
 
                         $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
 
-                        # Reduce accuracy on older pool data
+                        # Reduce price on older pool data
                         $Pools.Where({ $_.Updated -lt $Session.CycleStarts[0] }).ForEach({ $_.Price_Bias *= [Math]::Pow(0.9, ($Session.CycleStarts[0] - $_.Updated).TotalMinutes) })
 
                         $Pools.ForEach(
@@ -668,7 +668,6 @@ Try {
                             $Stat = Set-Stat -Name $StatName -Value $MinerHashrates.$Algorithm -Duration $StatSpan -FaultDetection ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Session.WatchdogCount) -ToleranceExceeded ($Session.WatchdogCount + 1)
                             If ($Stat.Updated -gt $Miner.StatStart) { 
                                 Write-Message -Level Info "Saved hashrate for '$($StatName -replace "_Hashrate$")': $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ")$(If ($Factor -le 0.999) { " (adjusted by factor $($Factor.ToString("N3")) [Shares: A$($MinerData.$Algorithm[0])|R$($MinerData.$Algorithm[1])|I$($MinerData.$Algorithm[2])|T$($MinerData.$Algorithm[3])])" }) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.Benchmark) { " [Benchmark done]" })."
-                                $Miner.StatStart = $Miner.StatEnd
                                 $Session.AlgorithmsLastUsed.($Worker.Pool.Algorithm) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; MinerName = $Miner.Name }
                                 $Session.PoolsLastUsed.($Worker.Pool.Name) = $Stat.Updated # most likely this will count at the pool to keep balances alive
                             }
@@ -789,13 +788,13 @@ Try {
                                     $Miner = $_
                                     If ($_.SideIndicator -eq "=>") { 
                                         # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
-                                        $_.Algorithms = $_.Workers.Pool.Algorithm
-                                        $_.CommandLine = $_.GetCommandLine()
                                         $_.BaseName = ($_.Name -split "-")[0]
                                         $_.Version = ($_.Name -split "-")[1]
                                         $_.BaseName_Version = "$($_.BaseName)-$($_.Version)"
+
+                                        $_.Algorithms = $_.Workers.Pool.Algorithm
+                                        $_.CommandLine = $_.GetCommandLine()
                                         $_.Devices = [System.Collections.Generic.SortedSet[Object]]::new($MinerDevices.Where({ $Miner.DeviceNames -contains $_.Name }))
-                                        $_.Updated = ($_.Workers.Pool.Updated | Measure-Object -Minimum).Minimum
                                     }
                                     ElseIf ($Miner = $MinersNewGroup.Where({ $Miner.Info -eq $_.Info })) { 
                                         If ($_.KeepRunning = [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status -and ($Session.DonationRunning -or $_.ContinousCycle -lt $Session.ConfigRunning.MinCycle)) { 
@@ -834,8 +833,7 @@ Try {
             While ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
 
             # Filter miners
-            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Best = $false; $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new() })
-            If ($Session.CycleStarts.Count -ge 3) { $Miners.Where({ $_.Updated -lt $Session.CycleStarts[0] }).ForEach({ $_.Reasons.Add("No valid pool data in the last $($Session.ConfigRunning.SyncWindow) cycles") | Out-Null }) }
+            $Miners.Where({ $_.SideIndicator -eq "<=" }).ForEach({ $_.Benchmark = $false; $_.MeasurePowerConsumption = $false; $_.Best = $false; $_.KeepRunning = $false; $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new() })
             $Miners.Where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled by user") | Out-Null })
             $ExcludeMinerName = @($Session.ConfigRunning.ExcludeMinerName -replace "^-" | Select-Object)
             If ($ExcludeMinerName.Count) { $Miners.Where({ Compare-Object $ExcludeMinerName ($_.BaseName, $_.BaseName_Version, $_.BaseName_Version_Device) -IncludeEqual -ExcludeDifferent }).ForEach({ $_.Reasons.Add("ExcludeMinerName ($($Session.ConfigRunning.ExcludeMinerName -join ", "))") | Out-Null }) }
@@ -1265,10 +1263,10 @@ Try {
                     $_.Status = [MinerStatus]::Unavailable
                     $_.SubStatus = "unavailable"
                 }
-                ElseIf ($_.Status -eq [MinerStatus]::Unavailable) { 
-                    $_.Status = [MinerStatus]::Idle
-                    $_.SubStatus = "idle"
-                }
+                # ElseIf ($_.Status -eq [MinerStatus]::Unavailable) { 
+                #     $_.Status = [MinerStatus]::Idle
+                #     $_.SubStatus = "idle"
+                # }
                 ElseIf ($_.Status -eq [MinerStatus]::Idle) { 
                     $_.SubStatus = "idle"
                 }
@@ -1281,7 +1279,8 @@ Try {
             }
         )
         # Remove miners with deconfigured pool
-        $Miners = $Miners.Where({ $_.Workers.Pool.Variant.Where({ $_ -in $Session.ConfigRunning.PoolName }) })
+        $Miners = $Miners.Where({ $_.Workers[0].Pool.Variant -in $Session.ConfigRunning.PoolName })
+        $Miners = $Miners.Where({ -not $_.Workers[1] -or $_.Workers[1].Pool.Variant -in $Session.ConfigRunning.PoolName })
 
         # Keep miners that have no updated pool for 24hrs
         $Miners = $Miners.Where({ $_.Updated -ge $Session.BeginCycleTime.AddDays(-1) })
@@ -1554,7 +1553,7 @@ Try {
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
 
-        $Session.RestartCycle = $true
+        # $Session.RestartCycle = $true
 
         If ($Session.NewMiningStatus -eq "Running" -and $Session.EndCycleTime) { Write-Message -Level Info "Ending cycle$($Session.EndCycleMessage)." }
 
