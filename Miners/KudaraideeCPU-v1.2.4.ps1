@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.5
-Version date:   2025/08/15
+Version:        6.5.6
+Version date:   2025/08/17
 #>
 
 # Flex and Xelisv2: Clang and Bionic compatibility by @sig11b in #13

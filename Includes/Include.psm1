@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.5
-Version date:   2025/08/15
+Version:        6.5.6
+Version date:   2025/08/17
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -4277,7 +4277,7 @@ Function Set-MinerReBenchmark {
     Remove-Variable Worker
 
     Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
-    $Miner.Earnings = $Miner.Earnings_Accuracy = $Miner.Earnings_Bias = $Miner.PowerCost = $Miner.PowerConsumption = $Miner.PowerConsumption_Live = $Miner.Profit = $Miner.Profit_Bias =[Double]::NaN
+    $Miner.Earnings = $Miner.Earnings_Accuracy = $Miner.Earnings_Bias = $Miner.PowerCost = $Miner.PowerConsumption = $Miner.PowerConsumption_Live = $Miner.Profit = $Miner.Profit_Bias = [Double]::NaN
     $Miner.Hashrates_Live = @($this.Workers.ForEach({ [Double]::NaN }))
 
     $Miner.Benchmark = $true

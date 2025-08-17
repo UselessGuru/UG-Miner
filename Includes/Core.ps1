@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.5
-Version date:   2025/08/15
+Version:        6.5.6
+Version date:   2025/08/17
 #>
 
 using module .\Include.psm1
@@ -622,7 +622,7 @@ Try {
                         }
                     }
                     Else { 
-                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                         Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                         $Miner.SetStatus([MinerStatus]::Failed)
                         $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
@@ -667,7 +667,7 @@ Try {
                             $StatName = "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                             $Stat = Set-Stat -Name $StatName -Value $MinerHashrates.$Algorithm -Duration $StatSpan -FaultDetection ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Session.WatchdogCount) -ToleranceExceeded ($Session.WatchdogCount + 1)
                             If ($Stat.Updated -gt $Miner.StatStart) { 
-                                Write-Message -Level Info "Saved hashrate for '$($StatName -replace "_Hashrate$")': $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ")$(If ($Factor -le 0.999) { " (adjusted by factor $($Factor.ToString("N3")) [Shares: A$($MinerData.$Algorithm[0])|R$($MinerData.$Algorithm[1])|I$($MinerData.$Algorithm[2])|T$($MinerData.$Algorithm[3])])" }) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.Benchmark) { " [Benchmark done]" })."
+                                Write-Message -Level Info "Saved hashrate for '$($StatName -replace "_Hashrate$")': $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ")$(If ($Factor -le 0.999) { " (adjusted by factor $($Factor.ToString("N3")) [Shares: A$($MinerData.$Algorithm[0])|R$($MinerData.$Algorithm[1])|I$($MinerData.$Algorithm[2])|T$($MinerData.$Algorithm[3])])" }) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.Benchmark) { " [Benchmark done]" })."
                                 $Session.AlgorithmsLastUsed.($Worker.Pool.Algorithm) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; MinerName = $Miner.Name }
                                 $Session.PoolsLastUsed.($Worker.Pool.Name) = $Stat.Updated # most likely this will count at the pool to keep balances alive
                             }
@@ -691,7 +691,7 @@ Try {
                             # Always update power consumption when benchmarking
                             $Stat = Set-Stat -Name $StatName -Value $MinerPowerConsumption -Duration $StatSpan -FaultDetection (-not $Miner.Benchmark -and ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Session.WatchdogCount)) -ToleranceExceeded ($Session.WatchdogCount + 1)
                             If ($Stat.Updated -gt $Miner.StatStart) { 
-                                Write-Message -Level Info "Saved power consumption for '$($StatName -replace "_PowerConsumption$")': $($Stat.Live.ToString("N2"))W ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.MeasurePowerConsumption) { " [Power consumption measurement done]" })."
+                                Write-Message -Level Info "Saved power consumption for '$($StatName -replace "_PowerConsumption$")': $($Stat.Live.ToString("N2"))W ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" }))$(If ($Miner.MeasurePowerConsumption) { " [Power consumption measurement done]" })."
                             }
                             ElseIf ($Stat.Week) { 
                                 If ($MinerPowerConsumption -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and ($MinerPowerConsumption -gt $Stat.Week * 2 -or $MinerPowerConsumption -lt $Stat.Week / 2)) { 
@@ -1193,7 +1193,7 @@ Try {
 
         ForEach ($Miner in @($Miners.Where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })) { 
             If ($Miner.Status -eq [MinerStatus]::Running -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
-                $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
+                $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                 Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                 $Miner.SetStatus([MinerStatus]::Failed)
                 $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
@@ -1401,12 +1401,12 @@ Try {
         }
         Remove-Variable DataCollectInterval, Miner, Message -ErrorAction Ignore
 
+        $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBest.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
+        $Session.MinersRunning = $Session.MinersBest
+        $Session.MinersFailed = [Miner[]]@()
+
         If ($Session.MinersNeedingBenchmark) { Write-Message -Level Info "Benchmarking: $($Session.MinersNeedingBenchmark.Count) $(If ($Session.MinersNeedingBenchmark.Count -eq 1) { "miner" } Else { "miners" }) left [$((($Session.MinersNeedingBenchmark | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }
         If ($Session.MinersNeedingPowerConsumptionMeasurement) { Write-Message -Level Info "Measuring power consumption: $($Session.MinersNeedingPowerConsumptionMeasurement.Count) $(If ($Session.MinersNeedingPowerConsumptionMeasurement.Count -eq 1) { "miner" } Else { "miners" }) left [$((($Session.MinersNeedingPowerConsumptionMeasurement | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }
-
-        $Session.MinersRunning = $Session.MinersBest
-        $Session.MinersBenchmarkingOrMeasuring = $Session.MinersRunning.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
-        $Session.MinersFailed = [Miner[]]@()
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -1453,7 +1453,7 @@ Try {
 
                                 If (($Miner.ValidDataSampleTimestamp -ne [DateTime]0 -and ($Sample.Date - $Miner.ValidDataSampleTimestamp) -ge 0)) { 
                                     $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp }).ForEach({ $Miner.Data.Add($_) | Out-Null })
-                                    Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Session.ConfigRunning.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) Sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
+                                    Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(If ($Session.ConfigRunning.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(If ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) sample$(If ($Miner.Data.Count -ne 1) { "s" }))"
                                     If ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
                                         $Miner.StatusInfo = "$($Miner.Info) is $(If ($Miner.Benchmark) { "benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
                                         $Miner.SubStatus = "benchmarking"
@@ -1511,7 +1511,7 @@ Try {
             }
 
             $Session.MinersRunning = $Session.MinersRunning.Where({ $_ -notin $Session.MinersFailed })
-            $Session.MinersBenchmarkingOrMeasuring = $Session.MinersRunning.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
+            $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBenchmarkingOrMeasuring.Where({ $_ -notin $Session.MinersFailed })
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             While ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -1524,7 +1524,7 @@ Try {
         Remove-Variable LoopEnd
 
         $Session.MinersRunning = $Session.MinersRunning.Where({ $_ -notin $Session.MinersFailed })
-        $Session.MinersBenchmarkingOrMeasuring = $Session.MinersRunning.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
+        $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBenchmarkingOrMeasuring.Where({ $_ -notin $Session.MinersFailed })
 
         # Set end cycle time to end brains loop to collect data
         If ($Session.EndCycleMessage -or $Session.ConfigRunning.DryRun) { 
@@ -1549,8 +1549,6 @@ Try {
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         While ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
-
-        # $Session.RestartCycle = $true
 
         If ($Session.NewMiningStatus -eq "Running" -and $Session.EndCycleTime) { Write-Message -Level Info "Ending cycle$($Session.EndCycleMessage)." }
 
