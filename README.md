@@ -117,16 +117,16 @@ Do not combine '+' and '-' concurrently.
 This parameter is not case sensitive. 
 
 #### Examples:
-Algorithm list = '-Ethash'  
+Algorithm list: '-Ethash'  
 Will mine anything but ethash
 
-Algorithm list = '-Ethash(3GB),-Kawpow'  
+Algorithm list: '-Ethash(3GB),-Kawpow'  
 Will mine anything but Ethash (3GB DAG size only) or Kawpow (any DAG size)
 
-Algorithm list = '+Ethash'  
+Algorithm list: '+Ethash'  
 Will mine only Ethash (any DAG size)
 
-Algorithm list = '+Ethash,+Kawpow(4GB)'  
+Algorithm list: '+Ethash,+Kawpow(4GB)'  
 Will mine only Ethash (any DAG size) and Kawpow (only 4GB DAG size)
 
 Algorithm list blank  
@@ -147,16 +147,16 @@ Do not combine '+' and '-' concurrently.
 This parameter is not case sensitive. 
 
 #### Examples:
-Currency list = '-EVR'  
+Currency list: '-EVR'  
 Will mine anything but EVR
 
-Currency list = '-EVR,-KIIRO'  
+Currency list: '-EVR,-KIIRO'  
 Will mine anything but EVR and KIIRO
 
-Currency list = '+EVR'  
+Currency list: '+EVR'  
 Will mine only EVR
 
-Currency list = '+EVR,+KIIRO'  
+Currency list: '+EVR,+KIIRO'  
 Will mine only EVR and KIIRO
 
 Currency list blank  
@@ -249,7 +249,7 @@ Supported pools:
 
  - HashCryptos
  - Hiveon
- - MiningDutch
+ - ~~MiningDutch~~ (data provided in pool API is incorrect)
  - NiceHash
  - ProHashing
  - ZergPool
@@ -267,6 +267,7 @@ Hot key legend:
 1: Toggle listing pool balances              [off]
 2: Toggle listing all optimal miners         [off]
 3: Toggle UI style [full or light]           [light]
+4: Toggle use of legacy GUI                  [enabled]
 
 a: Toggle 'Accuracy' column visibility       [on]
 c: Toggle 'Power cost' column visibility     [on]
@@ -326,7 +327,7 @@ The default donation fee is approx. 1% (15 minutes per day). It can be increased
 Please help support the great team behind UG-Miner by leaving mining donations turned on.
 
 We want to stay completely transparent on the way fees are managed in the product.  
-Donation cycle occurs only once in 24hrs (or once until midnight if UG-Miner has been running less than 24hrs).  
+The donation cycle occurs only once in 24hrs (or once until midnight if UG-Miner has been running less than 24hrs).  
 Donation start time is randomized each day.  
 It will then mine for UselessGuru for the configured duration.  
 
@@ -336,8 +337,8 @@ Example for default parameters (15 minutes):
 - First donation cycle starts somewhen between 10:01h and 23:45h and will then donate for 15 minutes. After that it will mine for you again until the next donation run.
 - After 00:00h the donation start time is randomized again.
 - When donation start time is reached it will then donate for 15 minutes. After that it will mine for you again until the next donation run.
-The donation data is stored in 'Data\DonationData.json'.  
-All donation times and addresses are recorded in the donation log file 'Log\DonationLog.csv'.
+The donation data is stored in '[UG-Miner directory]\Data\DonationData.json'.  
+All donation times and addresses are recorded in the donation log file '[UG-Miner directory]\Log\DonationLog.csv'.
 
 ## Known issues
 
