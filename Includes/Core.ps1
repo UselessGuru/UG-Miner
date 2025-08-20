@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.6
-Version date:   2025/08/17
+Version:        6.5.7
+Version date:   2025/08/20
 #>
 
 using module .\Include.psm1
@@ -67,8 +67,6 @@ Try {
             $Session.Summary = $Message
             Remove-Variable Message
 
-            Write-Message -Level Info "Ending cycle."
-
             Clear-PoolData
             Clear-MinerData
 
@@ -76,6 +74,7 @@ Try {
 
             Start-Sleep -Seconds $Session.ConfigRunning.Interval
 
+            Write-Message -Level Info "Ending cycle."
             Continue
         }
 
@@ -1532,11 +1531,11 @@ Try {
             Start-Sleep -Seconds 1
         }
 
-        Get-Job -State "Completed" | Receive-Job | Out-Null
+        Get-Job -State "Completed" | Receive-Job -ErrorAction Ignore | Out-Null
         Get-Job -State "Completed" | Remove-Job -Force -ErrorAction Ignore | Out-Null
-        Get-Job -State "Failed" | Receive-Job | Out-Null
+        Get-Job -State "Failed" | Receive-Job -ErrorAction Ignore | Out-Null
         Get-Job -State "Failed" | Remove-Job -Force -ErrorAction Ignore | Out-Null
-        Get-Job -State "Stopped" | Receive-Job | Out-Null
+        Get-Job -State "Stopped" | Receive-Job -ErrorAction Ignore | Out-Null
         Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
 
         If ($Error) { 

@@ -17,26 +17,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.6
-Version date:   2025/08/17
+Version:        6.5.7
+Version date:   2025/08/20
 #>
 
-# Performance improvement (~50% for 40xx/50xx series, 25% for 30xx series)
+# Another major performance boost for Qubitcoin on 30xx/40xx/50xx series
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { Return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.5.3/onezerominer-win64-1.5.3.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.5.4/onezerominer-win64-1.5.4.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @( 
-    @{ Algorithm = "QHash";       Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo qhash") }
-    @{ Algorithm = "XelisHashV2"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "QHash";       Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10); ExcludePools = @(); Arguments = @(" --algo qhash") }
+    @{ Algorithm = "XelisHashV2"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10); ExcludePools = @(); Arguments = @(" --algo xelis") }
 
     @{ Algorithm = "DynexSolve";  Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo dynex") }
-    @{ Algorithm = "QHash";       Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo xelis") }
-    @{ Algorithm = "XelisHashV2"; Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "QHash";       Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10);  ExcludePools = @(); Arguments = @(" --algo xelis") }
+    @{ Algorithm = "XelisHashV2"; Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10);  ExcludePools = @(); Arguments = @(" --algo xelis") }
 )
 
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })

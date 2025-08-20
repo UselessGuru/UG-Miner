@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.6
-Version date:   2025/08/17
+Version:        6.5.7
+Version date:   2025/08/20
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3692,12 +3692,12 @@ Function Get-DAGsize {
             }
             Break
         }
-        "PHI" { 
-            # https://phicoin.net/docs/Phicoin/algorithm#improved-dag-growth-mechanism
-            $DatasetBytesInit = 4GB
-            $Size = $DatasetBytesInit * [Math]::Pow(1.25, $Epoch)
-            Break
-        }
+        # "PHI" { 
+        #     # https://phicoin.net/docs/Phicoin/algorithm#improved-dag-growth-mechanism
+        #     $DatasetBytesInit = 4GB
+        #     $Size = $DatasetBytesInit * [Math]::Pow(1.25, $Epoch)
+        #     Break
+        # }
         Default { 
             $DatasetBytesInit = 1GB
             $DatasetBytesGrowth = 8MB
@@ -3751,6 +3751,7 @@ Function Get-DAGepochLength {
         "KawPow"          { Return 7500 }
         "MeowPow"         { Return 7500 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L32
         "Octopus"         { Return 524288 }
+        "PhiHash"         { Return 7500 } # https://github.com/PhicoinProject/phihashminer_v2/blob/main/README.md
         "SCCpow"          { Return 3240 } # https://github.com/stakecube/sccminer/commit/16bdfcaccf9cba555f87c05f6b351e1318bd53aa#diff-200991710fe4ce846f543388b9b276e959e53b9bf5c7b7a8154b439ae8c066aeR32
         "ProgPowTelestai" { Return 12000 }
         Default           { Return 30000 }
