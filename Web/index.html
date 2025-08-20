@@ -194,8 +194,8 @@
                   $(".modal-title").text($("#btn-re-benchmark").text());
                   $("body").css("cursor", "default");
                   $("#myModal").modal({ show: true });
+                  $("#miners").bootstrapTable("refresh");
                 });
-                $("#miners").bootstrapTable("refresh");
               }
             });
 
@@ -212,8 +212,8 @@
                   $(".modal-title").text($("#btn-re-measure").text());
                   $("body").css("cursor", "default");
                   $("#myModal").modal({ show: true });
+                  $("#miners").bootstrapTable("refresh");
                 });
-                $("#miners").bootstrapTable("refresh");
               }
             });
 
@@ -231,8 +231,8 @@
                   $(".modal-title").text("Mark miner as failed");
                   $("body").css("cursor", "default");
                   $("#myModal").modal({ show: true });
+                  $("#miners").bootstrapTable("refresh");
                 });
-                $("#miners").bootstrapTable("refresh");
               }
             });
 
@@ -248,8 +248,8 @@
                   $(".modal-title").text("Disable miner");
                   $("body").css("cursor", "default");
                   $("#myModal").modal({ show: true });
+                  $("#miners").bootstrapTable("refresh");
                 });
-                $("#miners").bootstrapTable("refresh");
               }
             });
 
@@ -265,8 +265,8 @@
                   $(".modal-title").text("Enable miner");
                   $("body").css("cursor", "default");
                   $("#myModal").modal({ show: true });
+                  $table.bootstrapTable("refresh");
                 });
-                $table.bootstrapTable("refresh");
               }
               else $("body").css("cursor", "default");
             });

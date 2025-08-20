@@ -132,8 +132,8 @@
                   $(".modal-title").text($("#btn-reset-data").text());
                   $("body").css("cursor", "default");
                   $("#myModal").modal({ show: true });
+                  $table.bootstrapTable("refresh");
                 });
-                $table.bootstrapTable("refresh");
               }
             });
 
@@ -149,8 +149,8 @@
                   $(".modal-title").text($("#btn-remove-watchdog").text());
                   $("body").css("cursor", "default");
                   $("#myModal").modal({ show: true });
+                  $table.bootstrapTable("refresh");
                 });
-                $table.bootstrapTable("refresh");
               }
             });
 
