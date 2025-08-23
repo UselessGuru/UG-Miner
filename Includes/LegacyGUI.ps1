@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.7
-Version date:   2025/08/20
+Version:        6.5.8
+Version date:   2025/08/23
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1066,7 +1066,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                                     $Data += $StatName
                                     Remove-Stat -Name "$($StatName)_Profit"
                                     $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-                                    $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
+                                    $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::NaN
                                     $_.Available = $true
                                     $_.Disabled = $false
                                 }

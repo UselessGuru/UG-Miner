@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.5.7
-Version date:   2025/08/20
+Version:        6.5.8
+Version date:   2025/08/23
 #>
 
 Param(
@@ -78,9 +78,8 @@ ElseIf ($Request.miningAlgorithms) {
             $Value = [Double]$_.paying / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
-        If ($Stat.Live -and $Value -gt 10 * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor) { 
-            # New price should never spike more than 10x
-            $Reasons.Add("Price data is more than 10x higher than previous price data (Error in pool API data?)") | Out-Null
+        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)) { 
+            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
         }
         Else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false

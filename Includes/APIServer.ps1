@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.5.7
-Version date:   2025/08/20
+Version:        6.5.8
+Version date:   2025/08/23
 #>
 
 using module .\Include.psm1
@@ -445,7 +445,7 @@ While ($Session.APIversion -and $Server.IsListening) {
 
                             $_.Available = $true
                             $_.Disabled = $false
-                            $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::Nan
+                            $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::NaN
                             $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
                         }
                     )
@@ -926,7 +926,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/workers" { 
-            If ($Session.ConfigRunning.ShowWorkerStatus -and $Session.ConfigRunning.MonitoringUser -and $Session.ConfigRunning.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
+            If ($Session.ShowWorkerStatus -and $Session.ConfigRunning.MonitoringUser -and $Session.ConfigRunning.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
                 Read-MonitoringData
             }
             If ($Session.Workers) { 

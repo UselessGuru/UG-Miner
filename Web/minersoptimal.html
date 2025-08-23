@@ -125,7 +125,7 @@
                 $("body").css("cursor", "wait");
               },
               onLoadSuccess: function() {
-                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = document.getElementsByName("add-updatedtimestamp")[0].innerHTML.replace(/\.$| \(updated.+/, "") + " (data updated " + refreshtimestamp + ").";
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = document.getElementsByName("add-updatedtimestamp")[0].innerHTML.replace(/\.$| \(data updated.+/, "") + " (data updated " + refreshtimestamp + ").";
                 $("body").css("cursor", "default");
               },
               onPostBody: function () {

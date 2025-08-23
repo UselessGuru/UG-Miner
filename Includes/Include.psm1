@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.7
-Version date:   2025/08/20
+Version:        6.5.8
+Version date:   2025/08/23
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1458,7 +1458,7 @@ Function Write-MonitoringData {
                     Name           = $_.Name
                     Path           = Resolve-Path -Relative $_.Path
                     Pool           = $_.WorkersRunning.Pool.Name -join ","
-                    Profit         = If ($_.Profit) { $_.Profit } ElseIf ($Session.CalculatePowerCost) { ($_.WorkersRunning.Profit | Measure-Object -Sum).Sum - $_.PowerConsumption_Live * $Session.PowerCostBTCperW } Else { [Double]::Nan }
+                    Profit         = If ($_.Profit) { $_.Profit } ElseIf ($Session.CalculatePowerCost) { ($_.WorkersRunning.Profit | Measure-Object -Sum).Sum - $_.PowerConsumption_Live * $Session.PowerCostBTCperW } Else { [Double]::NaN }
                     Type           = $_.Type
                 }
             }
@@ -1972,6 +1972,25 @@ Function Write-Config {
 "
     "$Header$($NewConfig | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $Session.ConfigFile -Force
 
+    $Session.ShowAllMiners = $Config.ShowAllMiners
+    $Session.ShowColumnAccuracy = $Config.ShowColumnAccuracy
+    $Session.ShowColumnCoinName = $Config.ShowColumnCoinName
+    $Session.ShowColumnCurrency = $Config.ShowColumnCurrency
+    $Session.ShowColumnEarnings = $Config.ShowColumnEarnings
+    $Session.ShowColumnEarningsBias = $Config.ShowColumnEarningsBias
+    $Session.ShowColumnHashrate = $Config.ShowColumnHashrate
+    $Session.ShowColumnMinerFee = $Config.ShowColumnMinerFee
+    $Session.ShowColumnMinerFee = $Config.ShowColumnMinerFee
+    $Session.ShowColumnPool = $Config.ShowColumnPool
+    $Session.ShowColumnPoolFee = $Config.ShowColumnPoolFee
+    $Session.ShowColumnPowerConsumption = $Config.ShowColumnPowerConsumption
+    $Session.ShowColumnPowerCost = $Config.ShowColumnPowerCost
+    $Session.ShowColumnProfit = $Config.ShowColumnProfit
+    $Session.ShowColumnProfitBias = $Config.ShowColumnProfitBias
+    $Session.ShowColumnUser = $Config.ShowColumnUser
+    $Session.ShowPoolBalances = $Config.ShowPoolBalances
+    $Session.ShowShares = $Config.ShowShares
+    $Session.UIstyle = $Config.UIstyle
     $Session.FreshConfig = $false
 }
 
