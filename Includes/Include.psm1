@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.8
-Version date:   2025/08/23
+Version:        6.5.9
+Version date:   2025/08/30
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3361,7 +3361,7 @@ Function Get-AllDAGdata {
         # Get block data from ProHashing
         Try { 
             Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
+            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec $Config.PoolsConfig.ProHashing.PoolAPItimeout
 
             If ($CurrencyDAGdataResponse.code -eq 200) { 
                 $CurrencyDAGdataResponse.data.PSObject.Properties.Name.Where({ $CurrencyDAGdataResponse.data.$_.enabled -and $CurrencyDAGdataResponse.data.$_.height -and ($Session.RegexAlgoHasDAG -match (Get-Algorithm $CurrencyDAGdataResponse.data.$_.algo) -or $DAGdata.Currency.psBase.Keys -contains $_) }).ForEach(

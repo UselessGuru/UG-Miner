@@ -17,16 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.8
-Version date:   2025/08/23
+Version:        6.5.9
+Version date:   2025/08/30
 #>
 
-# should be less rejects on NVIDIA gpu's
-# Efficiency shows values in kh/s now
+# up to 18% qhash speed improvements for AMD and NVIDIA gpu's
+# added --qhash-kernel 2 for CMP50HX and other Volta/Turings
+# fixed support AMD RX4x0/RX5x0/Vega gpu's(but Vega still better to use on Linux with latest ROCm drivers)
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.44.4/wildrig-multi-windows-0.44.4.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.44.5/wildrig-multi-windows-0.44.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"

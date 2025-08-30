@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.8
-Version date:   2025/08/23
+Version:        6.5.9
+Version date:   2025/08/30
 #>
 
 using module .\Include.psm1
@@ -816,7 +816,7 @@ Try {
                                     $_.Refresh($Session.PowerCostBTCperW, $Session.ConfigRunning)
                                 }
                                 Catch { 
-                                    Write-Message -Level Error "Failed to update miner '$($Miner.Name)': Error $_ ($($Miner | ConvertTo-Json -Compress)"
+                                    Write-Message -Level Error "Failed to update miner '$($Miner.Name)': Error $_ ($($Miner | ConvertTo-Json -Compress))"
                                     "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
                                     $_.Exception | Format-List -Force >> $ErrorLogFile
                                     $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
@@ -846,15 +846,33 @@ Try {
             # Add reason 'Config.DisableCpuMiningOnBattery' for CPU miners when running on battery
             If ($Session.ConfigRunning.DisableCpuMiningOnBattery -and (Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miners.Where({ $_.Type -eq "CPU" }).ForEach({ $_.Reasons.Add("Config.DisableCpuMiningOnBattery") | Out-Null }) }
 
-            # Add reason 'Unrealistic earnings data...' for miners with unrealistic earnings > x times higher than average of the next best 10% or at least 5 available miners
-            If ($Session.ConfigRunning.UnrealMinerEarningFactor -gt 1) { 
+            # Add reason 'Unrealistic earnings...' for miners with earnings > x times higher than any other miner for this device
+            If ($Session.ConfigRunning.UnrealisticAlgorithmDeviceEarningsFactor -gt 1) { 
                 ($Miners.Where({ -not $_.Reasons.Count -and -not $_.Benchmark -and -not $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach(
                     { 
-                        If ($ReasonableEarnings = [Double]($_.Group | Sort-Object -Descending -Property Earnings_Bias | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earnings -Average).Average * $Session.ConfigRunning.UnrealMinerEarningFactor) { 
+                        $HighestEarningAlgorithm = ($_.Group | Sort-Object -Property Earnings_Bias -Descending | Select-Object -Index 0).Workers.Pool.Algorithm -join " "
+                        If ($ReasonableEarnings = ($_.Group.Where({ ($_.Workers.Pool.Algorithm -join " ") -ne $HighestEarningAlgorithm }) | Sort-Object -Property Earnings_Bias -Descending | Select-Object -Index 0).Earnings_Bias * $Session.ConfigRunning.UnrealisticAlgorithmDeviceEarningsFactor) { 
+                            $Group = $_.Group.Where({ $_.Earnings -gt $ReasonableEarnings })
+                            $Group.ForEach(
+                                { 
+                                    $_.Reasons.Add("Unrealistic earnings (biased earnings more than $($Session.ConfigRunning.UnrealisticAlgorithmDeviceEarningsFactor)x higher than any other miner for this device & algorithm)") | Out-Null
+                                }
+                            )
+                        }
+                    }
+                )
+                Remove-Variable Group, HighestEarningAlgorithm, ReasonableEarnings -ErrorAction Ignore
+            }
+
+            # Add reason 'Unrealistic earnings (biased earnings...' for miners with unrealistic earnings > x times higher than average of the next best 10% or at least 5 available miners
+            If ($Session.ConfigRunning.UnrealisticMinerEarningsFactor -gt 1) { 
+                ($Miners.Where({ -not $_.Reasons.Count -and -not $_.Benchmark -and -not $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach(
+                    { 
+                        If ($ReasonableEarnings = [Double]($_.Group | Sort-Object -Property Earnings_Bias -Descending | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earnings_Bias -Average).Average * $Session.ConfigRunning.UnrealisticMinerEarningsFactor) { 
                             $Group = $_.Group.Where({ $_.Group.Count -ge 5 -and $_.Earnings -gt $ReasonableEarnings })
                             $Group.ForEach(
                                 { 
-                                    $_.Reasons.Add("Unrealistic earnings data (-gt $($Session.ConfigRunning.UnrealMinerEarningFactor)x higher than the next best $($Group.Count - 1) miners available miners)") | Out-Null
+                                    $_.Reasons.Add("Unrealistic earnings (biased earnings more than $($Session.ConfigRunning.UnrealisticMinerEarningsFactor)x higher than the next best $($Group.Count - 1) miners available miners)") | Out-Null
                                 }
                             )
                         }
@@ -901,7 +919,7 @@ Try {
                                 Try { 
                                     If (-not $Session.IsLocalAdmin) { 
                                         Write-Message -Level Info "Initiating request to add inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })..."
-                                        Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })...';  Write-Host ''; Start-Sleep -Seconds 3; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json).ForEach({ New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Session.Branding.ProductLabel) $($Session.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Session.Branding.ProductLabel)' | Out-Null; `$Message = 'Added inbound firewall rule for ' + (Split-Path `$_ | Split-Path -leaf) + '.'; Write-Host `$Message }); Write-Host ''; Write-Host 'Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }).'; Start-Sleep -Seconds 3" -replace "`"", "\`"") -Verb runAs
+                                        Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(If ($MissingFirewallRules.Count -ne 1) { "s" })...';  Write-Host ''; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json).ForEach({ New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Session.Branding.ProductLabel) $($Session.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Session.Branding.ProductLabel)' | Out-Null; `$Message = 'Added inbound firewall rule for ' + (Split-Path `$_ | Split-Path -leaf) + '.'; Write-Host `$Message }); Write-Host ''; Write-Host 'Added $($MissingFirewallRules.Count) inbound firewall rule$(If ($MissingFirewallRules.Count -ne 1) { "s" }).'; Start-Sleep -Seconds 3" -replace "`"", "\`"") -Verb runAs
                                     }
                                     Else { 
                                         Import-Module NetSecurity

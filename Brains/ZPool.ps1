@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
 Version:        6.5.8
-Version date:   2025/08/23
+Version date:   2025/08/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -31,13 +31,13 @@ using module ..\Includes\Include.psm1
 $BrainName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolObjects = @()
-$APICallFails = 0
 $Durations = [TimeSpan[]]@()
 
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
+    $APICallFails = 0
     $PoolVariant = [String]$Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
@@ -56,18 +56,18 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                         $CurrenciesData = Invoke-RestMethod -Uri "https://www.zpool.ca/api/currencies" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                         If ($CurrenciesData -like "<!DOCTYPE html>*") { $CurrenciesData = $null }
                     }
-                    $APICallFails = 0
                 }
                 Catch { 
-                    If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
-                    Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
+                    $APICallFails ++
+                    $APIerror = $_.Exception.Message
+                    If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
                 }
             } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -le $Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
             If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://www.zpool.ca/api."
+                Write-Message -Level Warn "Brain '$BrainName': $APIerror' when trying to access https://www.zpool.ca/api."
             }
             ElseIf ($AlgoData -and $CurrenciesData) { 
                 # Change numeric string to numbers, some values are null

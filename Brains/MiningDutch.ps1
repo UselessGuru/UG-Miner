@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/08/23
+Version date:   2025/08/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -31,7 +31,6 @@ using module ..\Includes\Include.psm1
 $BrainName = (Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolObjects = @()
-$APICallFails = 0
 $Durations = [TimeSpan[]]@()
 
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
@@ -41,6 +40,7 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
 
+    $APICallFails = 0
     $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
@@ -59,18 +59,18 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                         $TotalStats = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                         If ($TotalStats -like "<!DOCTYPE html>*") { $AlgTotalStatsoData = $null }
                     }
-                    $APICallFails = 0
                 }
                 Catch { 
-                    If ($APIResponse.Message -like "Only 1 request *" -or $TotalStats.Message -like "Only 1 request *" -or $APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
-                    Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
+                    $APICallFails ++
+                    $APIerror = $_.Exception.Message
+                    If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
                 }
             } While (-not ($AlgoData -and $TotalStats) -and $APICallFails -le $Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
             If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://www.mining-dutch.nl/api."
+                Write-Message -Level Warn "Brain '$BrainName': $APIerror' when trying to access https://www.mining-dutch.nl/api."
             }
             Else {
                 ($AlgoData.PSObject.Properties.Name).Where({ $TotalStats.result.algorithm -notcontains $_ }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })

@@ -2,12 +2,30 @@ Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 
+Changelog UG-Miner 6.5.9 2025/08/30
+===================================
+
+Enhancements:
+- Core: Added configuration item 'UnrealisticAlgorithmDeviceEarningsFactor' (default value. 10). Ignore miner if resulting earnings are more than 'UnrealisticAlgorithmDeviceEarningsFactor' higher than any other miner for the device
+- Brain 'Prohashing': Do not create pool objects for algorithms in error state @ pool
+
+Improvements:
+- Core / Includes.psm1: Function Get-AllDGdata use configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
+
+Miner changes:
+- MiniZ-v2.5e2
+- OneZeroMiner-v1.5.5
+- Rigel-v1.22.3
+- Wildrig-v0.44.5
+
+
 Changelog UG-Miner 6.5.8 2025/08/23
 ===================================
 
 Fixes:
 - Core: Console screen hot key values reverting on each cycle (regression from v6.5.2)
 - Pools: UnrealisticPoolPriceFactor broken (regression from v6.5.3)
+
 
 Changelog UG-Miner 6.5.7 2025/08/23
 ===================================

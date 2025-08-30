@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.8
-Version date:   2025/08/23
+Version:        6.5.9
+Version date:   2025/08/30
 #>
 
 using module .\Includes\Include.psm1
@@ -266,9 +266,11 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$UIstyle = "light", # light or full. Defines level of info displayed in main text window
     [Parameter(Mandatory = $false)]
-    [Double]$UnrealisticPoolPriceFactor = 10, # Mark pool unavailable if current price data in pool API is more than $Config.UnrealisticPoolPriceFactor higher than previous price
+    [Double]$UnrealisticAlgorithmDeviceEarningsFactor = 10, # Ignore miner if resulting earnings are more than $.UnrealisticAlgorithmDeviceEarningsFactor higher than any other miner for the device & algorithm
     [Parameter(Mandatory = $false)]
-    [Double]$UnrealisticMinerEarningsFactor = 5, # Ignore miner if resulting earnings are more than $Config.UnrealisticMinerEarningsFactor higher than average earnings of all other miners with same algorithm
+    [Double]$UnrealisticMinerEarningsFactor = 5, # Ignore miner if resulting earnings are more than $UnrealisticAlgorithmDeviceEarningsFactor higher than average earnings of all other miners with same algorithm
+    [Parameter(Mandatory = $false)]
+    [Double]$UnrealisticPoolPriceFactor = 10, # Mark pool unavailable if current price data in pool API is more than $UnrealisticPoolPriceFactor higher than previous price
     [Parameter(Mandatory = $false)]
     [Switch]$UseAnycast = $true, # If true pools (currently ZergPool only) will use anycast for best network performance and ping times
     [Parameter(Mandatory = $false)]
@@ -325,7 +327,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.8"
+    Version      = [System.Version]"6.5.9"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Branding.Version)"

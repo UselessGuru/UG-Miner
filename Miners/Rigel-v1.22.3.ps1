@@ -17,21 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.8
-Version date:   2025/08/23
+Version:        6.5.9
+Version date:   2025/08/30
 #>
 
-# Add sha3x algorithm for Tari mining (dev fee 1%)
-# Add dual mining combos with the following coins:
-# ABEL (abelian+sha3x)
-# ERGO (autolykos2+sha3x)
-# IRON (fishhash+sha3x)
-# CFX (octopus+sha3x)
-# KLS (karlsenhashv2+sha3x)
+# (XEL) Minor performance improvement on 30xx, 40xx, and 170hx cards
+# Bug fixes: Failed to load CUDA / NVML errors when running in Docker
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.22.2/rigel-1.22.2-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.22.3/rigel-1.22.3-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
