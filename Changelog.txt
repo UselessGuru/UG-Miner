@@ -1,6 +1,23 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.5.10 2025/09/03
+====================================
+
+Changes:
+- Renamed configuration items 'LogToFile' to 'LogLevel'. Configuration file will get updated automatically during update.
+- Removed configuration item 'LogToScreen'
+
+Fixes:
+- LegacyGUI.ps1: Do not write $Session.OptimalMiners to console screen (potential memory leak)
+- Miner TTMiner-v5.0.3: Invalid parameters for algorithm ProgPowZ (ZANO)
+
+Improvements
+- Core: Remove obsolete code & minor code optimizations
+
+Miner changes:
+- OneZeroMiner-v1.5.7
+
 
 Changelog UG-Miner 6.5.9 2025/08/30
 ===================================
@@ -10,7 +27,7 @@ Enhancements:
 - Brain 'Prohashing': Do not create pool objects for algorithms in error state @ pool
 
 Improvements:
-- Core / Includes.psm1: Function Get-AllDGdata use configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
+- Core / Includes.psm1: Function Get-AllDGdata uses configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
 
 Miner changes:
 - MiniZ-v2.5e2
@@ -79,7 +96,7 @@ Changelog UG-Miner 6.5.3 2025/08/03
 Changes:
 - Generate fresh CoinName.json from 'https://min-api.cryptocompare.com/data/all/coinlist'
 - Renamed configuration items 'UnrealMinerEarningFactor' to 'UnrealisticMinerEarningsFactor' and 'UnrealPoolPriceFactor' to 'UnrealisticPoolPriceFactor'. Configuration file will get updated automatically during update.
-- Removed configuration Item 'Transcript' (used for debugging)
+- Removed configuration item 'Transcript' (used for debugging)
 
 Enhancements:
 - Core: Added configuration item 'PoolAllowedPriceIncreaseFactor' (default value. 2) for max. allowed price increase compared with last price. If price increase is higher then the pool will be marked as unavaliable.

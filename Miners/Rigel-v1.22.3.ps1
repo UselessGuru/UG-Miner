@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.9
-Version date:   2025/08/30
+Version:        6.5.10
+Version date:   2025/09/03
 #>
 
 # (XEL) Minor performance improvement on 30xx, 40xx, and 170hx cards
@@ -33,7 +33,7 @@ $DeviceEnumerator = "Type_Vendor_Slot"
  
 $Algorithms = @(
     @{ Algorithms = @("Autolykos2", "");                     Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2" }
-    @{ Algorithms = @("Autolykos2", "Blake3");               Fee = @(0.01, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+alephium" }
+#   @{ Algorithms = @("Autolykos2", "Blake3");               Fee = @(0.01, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+alephium" } # CUDA error: a supplied argument was invalid
 #   @{ Algorithms = @("Autolykos2", "HeavyHashKarlsenV2");   Fee = @(0.01, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+karlsenhashv2" } # Not supported yet
     @{ Algorithms = @("Autolykos2", "IronFish");             Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+fishhash" }
     @{ Algorithms = @("Autolykos2", "SHA512256d");           Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; MinerSet = 0; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+sha512256d" }

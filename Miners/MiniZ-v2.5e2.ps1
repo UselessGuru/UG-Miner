@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.9
-Version date:   2025/08/30
+Version:        6.5.10
+Version date:   2025/09/03
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -75,10 +75,10 @@ $Algorithms = @(
     @{ Algorithm = "HeavyHashKarlsen";   Type = "NVIDIA"; Fee = @(0.008);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhash" }
     @{ Algorithm = "HeavyHashKarlsenV2"; Type = "NVIDIA"; Fee = @(0.0095); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhashv2" }
     @{ Algorithm = "Octopus";            Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 1.24; Minerset = 0; Tuning = " --ocX"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=octopus" }
-    @{ Algorithm = "ProgPowSero";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=sero" }
-    @{ Algorithm = "ProgPowTelestai";    Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=telestai" }
-    @{ Algorithm = "ProgPowVeil";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=veil" }
-    @{ Algorithm = "ProgPowVeriblock";   Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=VeriBlock" }
+#   @{ Algorithm = "ProgPowSero";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=sero" } # GPU[00] CUDA API error 7 from <progpow>, line 291 - check your OC settings.
+#   @{ Algorithm = "ProgPowTelestai";    Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=telestai" } # GPU[00] CUDA API error 7 from <progpow>, line 291 - check your OC settings.
+#   @{ Algorithm = "ProgPowVeil";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=veil" } # GPU[00] CUDA API error 7 from <progpow>, line 291 - check your OC settings.
+#   @{ Algorithm = "ProgPowVeriblock";   Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=VeriBlock" } # GPU[00] CUDA API error 7 from <progpow>, line 291 - check your OC settings.
 #   @{ Algorithm = "ProgPowZ";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=auto" } # GPU[00] CUDA API error 7 from <progpow>, line 291 - check your OC settings.
 )
 

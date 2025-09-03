@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/08/30
+Version date:   2025/09/03
 #>
 
 using module ..\Includes\Include.psm1

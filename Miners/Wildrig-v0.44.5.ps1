@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.9
-Version date:   2025/08/30
+Version:        6.5.10
+Version date:   2025/09/03
 #>
 
 # up to 18% qhash speed improvements for AMD and NVIDIA gpu's

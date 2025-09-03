@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.9
-Version date:   2025/08/30
+Version:        6.5.10
+Version date:   2025/09/03
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1371,7 +1371,7 @@ Function Write-Message {
     $Message = $Message -replace "(?:<br>)+|(?:&ensp;)+", " "
 
     # Make sure we are in main script
-    If ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogToScreen -contains $Level)) { 
+    If ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level)) { 
         # Write to console
         Switch ($Level) { 
             "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewLine; Break }
@@ -1397,7 +1397,7 @@ Function Write-Message {
     If ($Session.TextBoxSystemLog) { 
         # Ignore error when legacy GUI gets closed
         Try { 
-            If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogToScreen -contains $Level) { 
+            If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level) { 
                 $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
                 $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
                 $TextLength = $Session.TextBoxSystemLog.TextLength
@@ -1419,7 +1419,7 @@ Function Write-Message {
         Catch { }
     }
 
-    If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogToFile -contains $Level) { 
+    If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level) { 
 
         $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
 
@@ -1892,6 +1892,7 @@ Function Update-ConfigFile {
             Switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); Break }
+                "LogToScreen" { $Config.LogLevel = $Config.$_; $Config.Remove($_); Break }
                 "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); Break }
                 "MinerInstancePerDeviceModel" { $Config.Remove($_); Break }
                 "ShowAccuracy" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); Break }
@@ -3580,20 +3581,15 @@ Function Get-AllDAGdata {
         $CurrencyDAGdataKeys = @($DAGdata.Currency.PSObject.Properties.Name) # Store as array to avoid error 'An error occurred while enumerating through a collection: Collection was modified; enumeration operation may not execute.'
 
         ForEach ($Algorithm in @($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.Algorithm }) | Select-Object -Unique)) { 
-            Try { 
-                $DAGdata.Algorithm | Add-Member $Algorithm (
-                    [PSCustomObject]@{ 
-                        BlockHeight = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
-                        DAGsize     = [Int64]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
-                        Epoch       = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
-                    }
-                ) -Force
-                $DAGdata.Algorithm.$Algorithm | Add-Member Currency [String]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
-                $DAGdata.Algorithm.$Algorithm | Add-Member CoinName [String]($Session.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency]) -Force
-            }
-            Catch { 
-                Start-Sleep 0
-            }
+            $DAGdata.Algorithm | Add-Member $Algorithm (
+                [PSCustomObject]@{ 
+                    BlockHeight = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
+                    DAGsize     = [Int64]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
+                    Epoch       = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
+                }
+            ) -Force
+            $DAGdata.Algorithm.$Algorithm | Add-Member Currency ([String]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm }))) -Force
+            $DAGdata.Algorithm.$Algorithm | Add-Member CoinName ([String]($Session.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency])) -Force
         }
 
         # Add default '*' (equal to highest)
@@ -3745,7 +3741,7 @@ Function Get-DAGepoch {
     Switch ($Algorithm) { 
         "Autolykos2" { $BlockHeight -= 416768; Break } # Epoch 0 starts @ 417792
         "FishHash"   { Return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
-        "PhiHash"    { Return [math]::Floor(((Get-Date) - [DateTime]::ParseExact("11/06/2023", "MM/dd/yyyy", $null)).TotalDays / 365.25) -1 }
+        "PhiHash"    { Return [Math]::Floor(((Get-Date) - [DateTime]::ParseExact("11/06/2023", "MM/dd/yyyy", $null)).TotalDays / 365.25) -1 }
         Default      { }
     }
 

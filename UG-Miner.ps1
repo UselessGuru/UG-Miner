@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.9
-Version date:   2025/08/30
+Version:        6.5.10
+Version date:   2025/09/03
 #>
 
 using module .\Includes\Include.psm1
@@ -120,9 +120,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$LogBalanceAPIResponse = $false, # If true will log the pool balance API data
     [Parameter(Mandatory = $false)]
-    [String[]]$LogToFile = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to log file, see Write-Message function; any of "Debug", "Error", "Info", "MemDbg", "Verbose", "Warn"
-    [Parameter(Mandatory = $false)]
-    [String[]]$LogToScreen = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to screen, see Write-Message function; any of "Debug", "Error", "Info", "MemDbg", "Verbose", "Warn"
+    [String[]]$LogLevel = @("Error", "Warn", "Info", "Verbose"), # Log level detail to be written to log file and screen, see Write-Message function; any of "Debug", "Error", "Info", "MemDbg", "Verbose", "Warn"
     [Parameter(Mandatory = $false)]
     [String]$LogViewerConfig = ".\Utils\UG-Miner_LogReader.xml", # Path to external log viewer config file
     [Parameter(Mandatory = $false)]
@@ -327,7 +325,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.9"
+    Version      = [System.Version]"6.5.10"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Branding.Version)"
@@ -418,6 +416,7 @@ Write-Host ""
 write-Host "Checking internet connection..." -ForegroundColor Yellow -NoNewline
 $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
 $Session.MyIPaddress = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+Remove-Variable NetworkInterface
 If (-not $Session.MyIPaddress) { 
     Write-Host " ✖" -ForegroundColor Red
     Write-Message -Level Error "Terminating Error - no internet connection. $($Session.Branding.ProductLabel) will shut down."

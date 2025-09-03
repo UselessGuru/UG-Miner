@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.9
-Version date:   2025/08/30
+Version:        6.5.10
+Version date:   2025/09/03
 #>
 
 using module .\Include.psm1
@@ -1544,10 +1544,7 @@ Try {
         $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBenchmarkingOrMeasuring.Where({ $_ -notin $Session.MinersFailed })
 
         # Set end cycle time to end brains loop to collect data
-        If ($Session.EndCycleMessage -or $Session.ConfigRunning.DryRun) { 
-            $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime()
-            Start-Sleep -Seconds 1
-        }
+        If ($Session.EndCycleMessage) { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
 
         Get-Job -State "Completed" | Receive-Job -ErrorAction Ignore | Out-Null
         Get-Job -State "Completed" | Remove-Job -Force -ErrorAction Ignore | Out-Null

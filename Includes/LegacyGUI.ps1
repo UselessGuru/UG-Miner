@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.9
-Version date:   2025/08/30
+Version:        6.5.10
+Version date:   2025/09/03
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -438,7 +438,6 @@ Function Update-TabControl {
                 $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
                 $DataSource = $Session.MinersOptimal.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
                 Remove-Variable Bias
-                $Session.MinersOptimal
             }
             ElseIf ($LegacyGUIelements.RadioButtonMinersUnavailable.checked) { 
                 $DataSource = $Session.Miners.Where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info, Algorithm
