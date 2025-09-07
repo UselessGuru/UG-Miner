@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.10
-Version date:   2025/09/03
+Version:        6.5.11
+Version date:   2025/09/07
 #>
 
 using module .\Includes\Include.psm1
@@ -38,7 +38,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Int]$AutoUpdateCheckInterval = 1, # If true will periodically check for a new program version every n days (0 to disable)
     [Parameter(Mandatory = $false)]
-    [Switch]$BackupOnAutoUpdate = $true, # If true will backup installed version before update to the new version
+    [Switch]$BackupOnAutoUpdate = $true, # If true a backup copy will be saved as '[UG-Miner directory]\AutoUpdate\Backup_v[version]_[date_time].zip' when updateing
     [Parameter(Mandatory = $false)]
     [Double]$BadShareRatioThreshold = 0.05, # Allowed ratio of bad shares (total / bad) as reported by the miner. If the ratio exceeds the configured threshold then the miner will get marked as failed. Allowed values: 0.00 - 1.00. 0 disables this check
     [Parameter(Mandatory = $false)]
@@ -325,7 +325,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.10"
+    Version      = [System.Version]"6.5.11"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Branding.Version)"

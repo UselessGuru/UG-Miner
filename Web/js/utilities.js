@@ -60,7 +60,7 @@ function formatMiners(data) {
 
     // Format Mining Duration (DateTime)
     if (item.BeginTime == "0001-01-01T00:00:00") item.MiningDuration = "n/a";
-    else item.MiningDuration = formatTimeSince(item.BeginTime).replace('&nbsp;ago' ,'').replace('just now', 'just started');
+    else item.MiningDuration = formatTimeSince(item.BeginTime).replaceAll('&nbsp;ago' ,'').replaceAll('just now', 'just started');
 
     // Format status
     item.Status = enumminerstatus[item.Status];
@@ -68,6 +68,9 @@ function formatMiners(data) {
     // Format warmup times
     item.WarmupTimes0 = item.WarmupTimes[0];
     item.WarmupTimes1 = item.WarmupTimes[1];
+
+    // Format CommandLine, escape \"
+    item.CommandLine = item.CommandLine.replaceAll('\"', '&#34;');
 
     // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
     if (item.Reasons.length <= 0) item.Reasons = [" "];

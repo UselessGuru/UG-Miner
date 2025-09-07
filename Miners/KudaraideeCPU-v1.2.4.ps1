@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.10
-Version date:   2025/09/03
+Version:        6.5.11
+Version date:   2025/09/07
 #>
 
 # Flex and Xelisv2: Clang and Bionic compatibility by @sig11b in #13
@@ -57,7 +57,7 @@ $Algorithms = @(
     @{ Algorithm = "XelisHashV2";    MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @("NiceHash"); Arguments = " --algo xelisv2" }
     @{ Algorithm = "YespowerADVC";   MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespoweradvc" }
     @{ Algorithm = "YespowerARWN";   MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespowerarwn" }
-    @{ Algorithm = "YespowerEQPAY";  MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @("zergPool"); Arguments = " --algo yespowereqpay" } # https://github.com/RainbowMiner/RainbowMiner/issues/3076#issue-3230754391
+#   @{ Algorithm = "YespowerEQPAY";  MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = " --algo yespowereqpay" } # https://github.com/Kudaraidee/cpuminer-opt-kudaraidee/issues/17
     @{ Algorithm = "YespowerIc";     MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC"' }
     @{ Algorithm = "YespowerIots";   MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
     @{ Algorithm = "YespowerLitb";   MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"' }

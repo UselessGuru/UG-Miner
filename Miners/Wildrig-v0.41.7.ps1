@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.10
-Version date:   2025/09/03
+Version:        6.5.11
+Version date:   2025/09/07
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$|^RDNA4$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
@@ -37,6 +37,7 @@ $Algorithms = @(
     @{ Algorithm = "Blake3";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3" }
     @{ Algorithm = "Dedal";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal" } # CryptoDredge-v0.27.0 is fastest
     @{ Algorithm = "GlobalHash";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash" }
+    @{ Algorithm = "HeavyHash";        Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo heavyhash" } # FPGA
     @{ Algorithm = "JeongHash";        Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash" }
 #   @{ Algorithm = "Lyra2RE3";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3" } # ASIC
     @{ Algorithm = "Lyra2TDC";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc" }
@@ -73,6 +74,7 @@ $Algorithms = @(
     @{ Algorithm = "Blake3";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3 --watchdog" }
     @{ Algorithm = "Dedal";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal --watchdog" } # CryptoDredge-v0.27.0 is fastest
     @{ Algorithm = "GlobalHash";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash --watchdog" }
+    @{ Algorithm = "HeavyHash";        Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo heavyhash --watchdog" } # FPGA
     @{ Algorithm = "JeongHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
 #   @{ Algorithm = "Lyra2RE3";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
     @{ Algorithm = "Lyra2TDC";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }

@@ -1,6 +1,15 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.5.11 2025/09/07
+====================================
+
+Miner updates:
+- OneZeroMiner-v1.5.8
+- SRBMinerMulti-v2.9.7
+- Wildrig-v0.44.6
+
+
 Changelog UG-Miner 6.5.10 2025/09/03
 ====================================
 
