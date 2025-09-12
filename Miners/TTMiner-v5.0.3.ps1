@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.11
-Version date:   2025/09/07
+Version:        6.5.12
+Version date:   2025/09/12
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -45,6 +45,7 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSe
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 $Algorithms = $Algorithms.Where({ $_.Algorithm -ne "Ethash" -or $MinerPools[0][$_.Algorithm].Epoch -le 384 }) # Miner supports Ethash up to epoch 384
+$Algorithms = $Algorithms.Where({ $_.Algorithm -ne "EtcHash" -or $MinerPools[0][$_.Algorithm].Epoch -lt 383 }) # Miner supports EtcHash up to epoch 382
 $Algorithms = $Algorithms.Where({ $_.Algorithm -ne "KawPow" -or $MinerPools[0][$_.Algorithm].DAGsizeGiB -lt "4" }) # Miner supports Kawpow up to 4GB
 
 If ($Algorithms) { 

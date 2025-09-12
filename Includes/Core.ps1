@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.11
-Version date:   2025/09/07
+Version:        6.5.12
+Version date:   2025/09/12
 #>
 
 using module .\Include.psm1
@@ -287,12 +287,7 @@ Try {
                 Try { 
                     If ($StatFiles = (Get-ChildItem -Path "Stats" -File).BaseName) { 
                         If ($Stats.Keys) { 
-                            (Compare-Object -PassThru $StatFiles $Stats.Keys).Where({ $_.SideIndicator -eq "=>" }).ForEach(
-                                { 
-                                    # Remove stat if deleted on disk
-                                    $Stats.Remove($_)
-                                }
-                            )
+                            (Compare-Object -PassThru $StatFiles $Stats.Keys).Where({ $_.SideIndicator -eq "=>" }).ForEach({ $Stats.Remove($_) })
                         }
                     }
                 }
@@ -1374,9 +1369,6 @@ Try {
                         If ((Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miner.WarmupTimes[0] += 60 <# seconds #> }
                     }
 
-                    #  Do not wait for stable hash rates, for quick and dirty benchmarking
-                    If ($Session.ConfigRunning.DryRun -and $Session.BenchmarkAllPoolAlgorithmCombinations) { $Miner.WarmupTimes[1] = 0 }
-
                     $Miner.DataCollectInterval = $DataCollectInterval
                     $Miner.SetStatus([MinerStatus]::Running)
                 }
@@ -1411,6 +1403,9 @@ Try {
                 $Miner.DataCollectInterval = $DataCollectInterval
                 $Miner.RestartDataReader()
             }
+
+            #  Do not wait for stable hash rates, for quick and dirty benchmarking
+            If ($Session.ConfigRunning.DryRun -and $Miner.Benchmark) { $Miner.WarmupTimes[1] = 0 }
 
             If ($Message = "$(If ($Miner.Benchmark) { "Benchmarking" })$(If ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [attempt $($Miner.Activated) of $($Session.WatchdogCount + 1); min. $($Miner.MinDataSample) sample$(If ($Miner.MinDataSample -ne 1) { "s" })]..."
@@ -1495,7 +1490,7 @@ Try {
 
                         # Stop miner, it has not provided hash rate on time
                         If ($Miner.ValidDataSampleTimestamp -eq [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.BeginTime.AddSeconds($Miner.WarmupTimes[0])) { 
-                            $Miner.StatusInfo = "$($Miner.Info) has not provided first valid data sample in $($Miner.WarmupTimes[0]) seconds"
+                            $Miner.StatusInfo = "$($Miner.Info) has not provided first valid data sample in $($Miner.WarmupTimes[0]) seconds."
                             Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                             $Miner.SetStatus([MinerStatus]::Failed)
                             $Session.MinersFailed += $Miner
@@ -1506,7 +1501,7 @@ Try {
                         Else { 
                             $Seconds = (($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count
                             If ($Miner.ValidDataSampleTimestamp -gt [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.DataSampleTimestamp.AddSeconds($Seconds)) { 
-                                $Miner.StatusInfo = "$($Miner.Info) has not updated data for more than $Seconds seconds"
+                                $Miner.StatusInfo = "$($Miner.Info) has not updated data for more than $Seconds seconds."
                                 Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                                 $Miner.SetStatus([MinerStatus]::Failed)
                                 $Session.MinersFailed += $Miner
@@ -1540,11 +1535,11 @@ Try {
         } While ($Session.NewMiningStatus -eq "Running" -and -not $Session.EndCycleMessage -and ([DateTime]::Now.ToUniversalTime() -le $Session.EndCycleTime -or $Session.MinersBenchmarkingOrMeasuring))
         Remove-Variable LoopEnd
 
-        $Session.MinersRunning = $Session.MinersRunning.Where({ $_ -notin $Session.MinersFailed })
-        $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBenchmarkingOrMeasuring.Where({ $_ -notin $Session.MinersFailed })
-
         # Set end cycle time to end brains loop to collect data
         If ($Session.EndCycleMessage) { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+
+        $Session.MinersRunning = $Session.MinersRunning.Where({ $_ -notin $Session.MinersFailed })
+        $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBenchmarkingOrMeasuring.Where({ $_ -notin $Session.MinersFailed })
 
         Get-Job -State "Completed" | Receive-Job -ErrorAction Ignore | Out-Null
         Get-Job -State "Completed" | Remove-Job -Force -ErrorAction Ignore | Out-Null

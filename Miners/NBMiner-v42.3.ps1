@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.11
+Version:        6.5.12
 Version date:   2024/01/29
 #>
 
@@ -90,7 +90,7 @@ If ($Algorithms) {
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
+                                $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 2)
 
                                 # Apply tuning parameters
                                 If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }

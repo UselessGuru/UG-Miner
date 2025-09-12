@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.11
-Version date:   2025/09/07
+Version:        6.5.12
+Version date:   2025/09/12
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { Return }
@@ -95,6 +95,7 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $_.Algorithms[0] -ne "EtcHash" -or $MinerPools[0][$_.Algorithms[0]].Epoch -lt 383 }) # Miner supports EtcHash up to epoch 382
 
 If ($Algorithms) { 
 

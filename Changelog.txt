@@ -1,6 +1,20 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+Changelog UG-Miner 6.5.12 2025/09/12
+====================================
+
+Changes:
+- Re-added balances tracker for MiningDutch; APi queries take a lot of time, must set $BalancesTrackerPollInterval to a minimum of 30 minutes
+
+Improvements:
+- Core: faster benchmarking in dry mode
+
+Miner changes:
+- OneZeroMiner-v1.5.9
+- Wildrig-v0.45.1
+
+
 Changelog UG-Miner 6.5.11 2025/09/07
 ====================================
 
@@ -36,7 +50,7 @@ Enhancements:
 - Brain 'Prohashing': Do not create pool objects for algorithms in error state @ pool
 
 Improvements:
-- Core / Includes.psm1: Function Get-AllDGdata uses configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
+- Core / Includes.psm1: Function 'Get-AllDGdata' uses configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
 
 Miner changes:
 - MiniZ-v2.5e2
@@ -442,7 +456,7 @@ Fixes:
 - Core / Include.psm1: Watchdog no longer sets reason 'Pool suspended by watchdog [all algorithms]' if only one pool is configured
 - Core: Hidden 'file not found' errors on first start
 - Core: Read changed config on each loop, even when there is no pools config file
-- Miners SRBMinerMulti-v2.6.8 & SRBMinerMulti-v2.8.0: Fix error creating double miner objects craching core
+- Miners SRBMinerMulti-v2.6.8 & SRBMinerMulti-v2.8.0: Fix error creating double miner objects crashing core
 
 Miner updates:
 - PhoenixMiner-v6.2c (fix download link)

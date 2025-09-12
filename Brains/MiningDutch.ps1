@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/09/07
+Version date:   2025/09/12
 #>
 
 using module ..\Includes\Include.psm1
@@ -70,7 +70,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
             If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain '$BrainName': $APIerror' when trying to access https://www.mining-dutch.nl/api."
+                Write-Message -Level Warn "Brain $($BrainName): Problem when trying to access https://www.mining-dutch.nl/api [$($APIerror -replace '\.$')]."
             }
             Else {
                 ($AlgoData.PSObject.Properties.Name).Where({ $TotalStats.result.algorithm -notcontains $_ }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })
@@ -186,8 +186,8 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
         [System.GC]::Collect()
     }
 
-    While (-not $Session.MyIPaddress -or $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime() -lt $Session.EndCycleTime)) { 
-        Start-Sleep -Seconds 1
+    While (-not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
+        Start-Sleep -MilliSeconds 250
     }
 }
 

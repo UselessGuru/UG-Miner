@@ -17,17 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.11
-Version date:   2025/09/07
+Version:        6.5.12
+Version date:   2025/09/12
 #>
 
-# quantum-leapfrogging improvements for qhash across all GPUs
-# added Hopper architecture support(NVIDIA H100/H200 gpu's)
-# removed heavyhash support
+# added back-up pool for qhash dev-fee
+# fixed network flood in case of disconnect
+# implemented experimental kernel 3 for CMP 70HX/90HX(--qhash-kernel 3)
+# slightly improved qhash on some cards
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.44.6/wildrig-multi-windows-0.44.6.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.45.1/wildrig-multi-windows-0.45.1.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -49,8 +50,8 @@ $Algorithms = @(
     @{ Algorithm = "MegaBtx";          Type = "AMD"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo megabtx" }
     @{ Algorithm = "MemeHash";         Type = "AMD"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo memehash" }
     @{ Algorithm = "MeowPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(75, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo meowpow" }
-    @{ Algorithm = "Mike";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo mike" }# https://github.com/andru-kun/wildrig-multi/issues/329
-#   @{ Algorithm = "NexaPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow" } # https://github.com/andru-kun/wildrig-multi/issues/334
+    @{ Algorithm = "Mike";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo mike" } # https://github.com/andru-kun/wildrig-multi/issues/329
+    @{ Algorithm = "NexaPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo nist5" } # ASIC
 #   @{ Algorithm = "Phi";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo phi" } # ASIC
 #   @{ Algorithm = "PhiHash";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo phihash" } # Not working
@@ -114,7 +115,7 @@ $Algorithms = @(
     @{ Algorithm = "MemeHash";         Type = "INTEL"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo memehash --watchdog" }
     @{ Algorithm = "MeowPow";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(75, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo meowpow --watchdog" }
     @{ Algorithm = "Mike";             Type = "INTEL"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo mike --watchdog" }
-#   @{ Algorithm = "NexaPow";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/334
+    @{ Algorithm = "NexaPow";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo nist5 --watchdog" }
 #   @{ Algorithm = "Phi";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo phi --watchdog" } # ASIC
 #   @{ Algorithm = "PhiHash";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo phihash" } # Not working
@@ -178,7 +179,7 @@ $Algorithms = @(
     @{ Algorithm = "MemeHash";         Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo memehash --watchdog" }
     @{ Algorithm = "MeowPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 0; WarmupTimes = @(75, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo meowpow --watchdog" }
     @{ Algorithm = "Mike";             Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo mike --watchdog" }
-#   @{ Algorithm = "NexaPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/277
+    @{ Algorithm = "NexaPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo nist5 --watchdog" } # ASIC
 #   @{ Algorithm = "Phi";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo phi --watchdog" } # ASIC
 #   @{ Algorithm = "PhiHash";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo phihash" } # Not working

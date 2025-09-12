@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.11
-Version date:   2025/09/07
+Version:        6.5.12
+Version date:   2025/09/12
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -87,6 +87,7 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where({ $_.Algorithm -ne "EtcHash" -or $MinerPools[0][$_.Algorithm].Epoch -lt 383 }) # Miner supports EtcHash up to epoch 382
 
 If ($Algorithms) { 
 

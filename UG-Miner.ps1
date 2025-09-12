@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.11
-Version date:   2025/09/07
+Version:        6.5.12
+Version date:   2025/09/12
 #>
 
 using module .\Includes\Include.psm1
@@ -102,7 +102,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Switch]$IdleDetection = $false, # If true will start mining only if system is idle for $IdleSec seconds
     [Parameter(Mandatory = $false)]
-    [Int]$IdleSec = 120, # seconds the system must be idle before mining starts (if IdleDetection)
+    [Int]$IdleSec = 120, # seconds the system must be idle before mining starts
     [Parameter(Mandatory = $false)]
     [Switch]$IgnoreMinerFee = $false, # If true will ignore miner fee for earnings & profit calculation
     [Parameter(Mandatory = $false)]
@@ -325,7 +325,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.11"
+    Version      = [System.Version]"6.5.12"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Branding.Version)"
