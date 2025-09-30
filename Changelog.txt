@@ -1,6 +1,24 @@
 Known issues:
 - Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
+
+Changelog UG-Miner 6.5.13 2025/09/30
+====================================
+
+Enhancements:
+- Core / Console window: Add 'Q' key to shut down UG-Miner
+
+Improvements:
+- Pools 'HashCryptos' & 'MiningDutch': Mark unminable algorithms as 'Algorithm not supported by pool'
+
+Miner updates:
+- lolMiner-v1.98a
+- OneZeroMiner-v1.6.0
+- Wildrig-v0.45.6
+
+Pool changes:
+- Removed ZergPool (pool closes down beginning of october 2025) :-(
+
 Changelog UG-Miner 6.5.12 2025/09/12
 ====================================
 
@@ -32,7 +50,7 @@ Changes:
 - Removed configuration item 'LogToScreen'
 
 Fixes:
-- LegacyGUI.ps1: Do not write $Session.OptimalMiners to console screen (potential memory leak)
+- LegacyGUI.ps1: Do not write $Session.OptimalMiners to console window (potential memory leak)
 - Miner TTMiner-v5.0.3: Invalid parameters for algorithm ProgPowZ (ZANO)
 
 Improvements
@@ -63,7 +81,7 @@ Changelog UG-Miner 6.5.8 2025/08/23
 ===================================
 
 Fixes:
-- Core: Console screen hot key values reverting on each cycle (regression from v6.5.2)
+- Core: Console window hot key values reverting on each cycle (regression from v6.5.2)
 - Pools: UnrealisticPoolPriceFactor broken (regression from v6.5.3)
 
 
@@ -125,7 +143,7 @@ Enhancements:
 - Core: Added configuration item 'PoolAllowedPriceIncreaseFactor' (default value. 2) for max. allowed price increase compared with last price. If price increase is higher then the pool will be marked as unavaliable.
 
 Improvements:
-- Core / main text console: Disable QuickEdit mode
+- Core / Console window: Disable QuickEdit mode
 - Core: Remove obsolete code & minor code optimizations
 
 Miner updates:
@@ -1040,8 +1058,8 @@ Changelog UG-Miner 6.2.28 2024/08/24
 ====================================
 
 Enhancements:
-- Core / Console display: Optimize hotkey legend
-- Core / Consone display: Optimize miner list when benchmarking or power usage measuring
+- Core / Console window: Optimize hotkey legend
+- Core / Consone window: Optimize miner list when benchmarking or power usage measuring
 - Core: Reduce number of miners to benchmark when configuration item 'BenchmarkAllPoolAlgorithmCombinations' -eq $true
 - Web GUI: Use [System.Web.HttpUtility]::UrlDecode to decode payload
 

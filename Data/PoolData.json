@@ -254,68 +254,6 @@
       }
     }
   },
-  "ZergPool": {
-    "Algorithm": [
-      "-ScryptN2",
-      "-Yescrypt"
-    ],
-    "AutoExchange": true,
-    "BalancesKeepAlive": 90, // Accounts with no mining activity for 3 months are purged
-    "BrainConfig": {
-      "SampleHalfPower": 0,
-      "SampleSizeMinutes": 45,
-      "UseTransferFile": false
-    },
-    "Currency": [],
-    "DefaultFee": 0.5, // %
-    "GuaranteedPayoutCurrencies": [
-      "BCH",
-      "BNB",
-      "BTC",
-      "CAKE",
-      "DASH",
-      "DOGE",
-      "ETH",
-      "FLUX",
-      "KAS",
-      "KLV",
-      "LTC",
-      "RTM",
-      "RVN",
-      "SHIB",
-      "TRX",
-      "WIN",
-      "XMR"
-    ], // as of 2025/03/2025 
-    "PayoutCurrency": "[Default]",
-    "PayoutThreshold": { // PayoutThreshold is retrieved from API data, but can be set here to override value set by pool (can only set higher)
-      // e.g. "mBTC": 5
-    },
-    "PoolAPIallowedFailureCount": 3,
-    "PoolAPIretryInterval": 3,
-    "PoolAPItimeout": 30,
-    "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
-    "Region": [
-      "asia",
-      "eu",
-      "n/a (Anycast)",
-      "na"
-    ],
-    "Variant": {
-      "ZergPool": {
-        "DivisorMultiplier": 1000000,
-        "PriceField": "estimate_current"
-      },
-      "ZergPool24hr": {
-        "DivisorMultiplier": 1000000,
-        "PriceField": "estimate_last24h"
-      },
-      "ZergPoolPlus": {
-        "DivisorMultiplier": 1000000,
-        "PriceField": "PlusPrice"
-      }
-    }
-  },
   "ZPool": {
     "Algorithm": [],
     "AutoExchange": true,

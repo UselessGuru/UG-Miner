@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 using module .\Includes\Include.psm1
@@ -182,7 +182,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$PoolsConfigFile = ".\Config\PoolsConfig.json", # PoolsConfig file name
     [Parameter(Mandatory = $false)]
-    [String[]]$PoolName = @("HashCryptosPlus", "HiveON", "MiningDutchPlus", "NiceHash", "ProHashingPlus", "ZergPoolPlus", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "HiveON", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ProHashing", "ProHashing24hr", "ProHashingPlus", "ZergPool", "ZergPool24hr", "ZergPoolPlus", "ZPool", "ZPool24hr", "ZPoolPlus"
+    [String[]]$PoolName = @("HashCryptosPlus", "HiveON", "MiningDutchPlus", "NiceHash", "ProHashingPlus", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "HiveON", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ProHashing", "ProHashing24hr", "ProHashingPlus", "ZPool", "ZPool24hr", "ZPoolPlus"
     [Parameter(Mandatory = $false)]
     [Int]$PoolTimeout = 20, # Time (in seconds) until it aborts the pool request (useful if a pool's API is stuck). Note: do not set this value too small or UG-Miner will not be able to get any pool data
     [Parameter(Mandatory = $false)]
@@ -270,7 +270,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [Double]$UnrealisticPoolPriceFactor = 10, # Mark pool unavailable if current price data in pool API is more than $UnrealisticPoolPriceFactor higher than previous price
     [Parameter(Mandatory = $false)]
-    [Switch]$UseAnycast = $true, # If true pools (currently ZergPool only) will use anycast for best network performance and ping times
+    [Switch]$UseAnycast = $true, # If true pools will use anycast for best network performance and ping times (currently no available pool supports this feature) 
     [Parameter(Mandatory = $false)]
     [Hashtable]$Wallets = @{ "BTC" = "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF" },
     [Parameter(Mandatory = $false)]
@@ -288,7 +288,7 @@ Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 [ConsoleModeSettings]::DisableQuickEditMode()
 
 $ErrorLogFile = ".\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
-$RecommendedPWSHversion = [Version]"7.5.2"
+$RecommendedPWSHversion = [Version]"7.5.3"
 
 # Close useless empty cmd window that comes up when starting from bat file
 If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -325,7 +325,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.12"
+    Version      = [System.Version]"6.5.13"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Branding.Version)"
@@ -817,6 +817,7 @@ Function MainLoop {
                         $LegacyGUIelements.ButtonPause.Enabled = $true
                         $LegacyGUIelements.ButtonStop.Enabled = $true
                     }
+                    If (-not $Session.MiningStatus) { $host.UI.RawUI.FlushInputBuffers() }
                     Break
                 }
             }
@@ -828,11 +829,11 @@ Function MainLoop {
 
     If ($Session.ConfigRunning.ShowConsole) { 
         Show-Console
-        If ($host.UI.RawUI.KeyAvailable) { 
+        If ([System.Console]::KeyAvailable) { 
             $KeyPressed = [System.Console]::ReadKey($true)
 
             If ($Session.NewMiningStatus -eq "Running" -and $KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Ctrl><Alt> #>) { 
-                If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
+                If (-not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
                     # Core is complete / gone. Cycle cannot be suspended anymore
                     $Session.SuspendCycle = $false
                 }
@@ -942,6 +943,7 @@ Function MainLoop {
                             Write-Host "w: Toggle 'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er (W)' column visibility      [" -NoNewline; If ($Session.ConfigRunning.CalculatePowerCost -and $Session.ShowColumnPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         }
                         Write-Host "y: Toggle 'Currenc" -NoNewline; Write-Host "y" -ForegroundColor Cyan -NoNewline; Write-Host "' column visibility       [" -NoNewline; If ($Session.ShowColumnCurrency) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
+                        Write-Host "`nq: " -NoNewline; Write-Host "Q" -ForegroundColor Blue -NoNewline; Write-Host "uit $($Session.Branding.ProductLabel)"
                         Break
                     }
                     "i" { 
@@ -967,6 +969,14 @@ Function MainLoop {
                         Write-Host "`n'" -NoNewline; Write-Host "P" -ForegroundColor Cyan -NoNewline; Write-Host "ool' column visibility set to [" -NoNewline; If ($Session.ShowColumnPool) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor Red -NoNewline }; Write-Host "]"
                         $Session.RefreshNeeded = $true
                         Break
+                    }
+                    "q" { 
+                        $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
+                        If ($MsgBoxInput -eq "Yes") { 
+                            Write-Host
+                            Exit-UGminer
+                        }
+                        $Session.RefreshNeeded = $true
                     }
                     "r" { 
                         If ($Session.CalculatePowerCost) { 
@@ -1271,7 +1281,7 @@ Function MainLoop {
                             # Mining profit is below the configured threshold
                             Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Session.ConfigRunning.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Session.ConfigRunning.DecimalsMax)}/day. Mining is suspended until threshold is reached." -f $Session.ConfigRunning.FIATcurrency, ($Session.MiningProfit * $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)), $Session.ConfigRunning.ProfitabilityThreshold)
                         }
-                        $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(If ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } Else { 'n/a (Mining is suspended)' })   |   Hot keys: $(If ($Session.CalculatePowerCost) { "[1234acefimnprstuwy]" } Else { "[1234aefimnrsuwy]" })   |   Press 'h' for help"
+                        $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(If ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } Else { 'n/a (Mining is suspended)' })   |   Hot keys: $(If ($Session.CalculatePowerCost) { "[1234acefimnpqrstuwy]" } Else { "[1234aefimnqrsuwy]" })   |   Press 'h' for help"
                         Write-Host ("-" * $StatusInfo.Length)
                         Write-Host -ForegroundColor Yellow $StatusInfo
                         Remove-Variable StatusInfo

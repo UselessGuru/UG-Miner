@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
 and runs the most profitable miner.
 
-Version 6.5.12 / Updated 2025/09/12
+Version 6.5.13 / Updated 2025/09/30
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -44,7 +44,6 @@ UG-Miner code is partly based on
    - [MiningDutch](<https://www.mining-dutch.nl/>)
    - [NiceHash](<https://www.nicehash.com/>)<sup>(3)</sup>
    - [ProHashing](<https://prohashing.com/>)
-   - [ZergPool](<https://zergpool.com/>)<sup>(4)</sup>
    - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
 
 <sup>(1)</sup> Optional installation of HWiNFO required, see [ConfigHWinfo64.pdf](<https://github.com/UselessGuru/UG-Miner/blob/main/ConfigHWinfo64.pdf>)
@@ -54,8 +53,6 @@ UG-Miner code is partly based on
 
 <sup>(3)</sup> Registration with NiceHash is required. For some countries private usage is no longer possible.  
 
-<sup>(4)</sup> Pool does not support auto-exchange for some currencies.  
-    You need to configure a wallet address for each non-auto-exchangable currency you want to mine.
 
 ## Easy configuration, easy start
 
@@ -236,7 +233,7 @@ A separate section can be added to '[UG-Miner directory]\Config\PoolsConfig.json
 
 - Edit '[UG-Miner directory]\Config\PoolsConfig.json' (**be careful with json formatting!**)
 - Add an entry for the pool you want to customize  
-  The name must be the pool base name (omit *24hrs or *Plus), e.g ZergPool (even if you have configured ZergPoolPlus in the pool list)
+  The name must be the pool base name (omit *24hrs or *Plus), e.g ZPool (even if you have configured ZPoolPlus in the pool list)
 - Add the pool specific configuration items
 
 Note: The configuration editor in the web GUI only updates the generic pool settings. Pool specific settings override the generic settings.
@@ -252,7 +249,6 @@ Supported pools:
  - ~~MiningDutch~~ (data provided in pool API is incorrect)
  - NiceHash
  - ProHashing
- - ZergPool
  - Zpool
 
 ## Miner switching log
@@ -298,8 +294,8 @@ UI style automatically switches to full during benchmarking or when measuring po
 
 Windows 10.x and PowerShell Version 7.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.5.2.  
-[Download Installer for version 7.5.2](https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/PowerShell-7.5.2-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.5.3.  
+[Download Installer for version 7.5.3](https://github.com/PowerShell/PowerShell/releases/download/v7.5.3/PowerShell-7.5.3-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  

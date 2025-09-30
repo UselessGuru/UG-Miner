@@ -2,7 +2,7 @@
 // For each pool the listed parameters can be set
 
 {
-  // PoolName must be without pool variant extension, e.g. "ZergPool"
+  // PoolName must be without pool variant extension, e.g. "ZPool"
   "PoolName": { 
     // Algorithm: '+[Algorithm]' to enable algorithm; '-[Algorithm]' to disable algorithm.
     // If '+' is used, then only the explicitly enabled algorithms are used; if '-' is used, then all algorithms are used except the disabled ones

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1848,7 +1848,7 @@ Function Update-ConfigFile {
     }
 
     # Removed pools
-    ("AHashPool", "BlockMasters", "NLPool", "MiningPoolHub").ForEach(
+    ("AHashPool", "BlockMasters", "NLPool", "MiningPoolHub", "ZergPool").ForEach(
         { 
             If ($Config.PoolName -like "$_*") { 
                 Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName -like "$_*" -join "; ") removed)."
@@ -1862,13 +1862,6 @@ Function Update-ConfigFile {
             }
         }
     )
-
-    # ZergPoolCoins is no longer available
-    If ($Config.PoolName -like "ZergPoolCoins*") { 
-        Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName.Where({ $_ -like "*Coins*" })) -> $($Config.PoolName.Where({ $_ -like "*Coins*" }) -replace "Coins" ))."
-        $Session.ConfigurationHasChangedDuringUpdate += "- Pool configuration changed ($($Config.PoolName.Where({ $_ -like "*Coins*" })) -> $($Config.PoolName.Where({ $_ -like "*Coins*" }) -replace "Coins" ))"
-        $Config.PoolName = $Config.PoolName -replace "Coins"
-    }
 
     # Available regions have changed
     If ((Get-Region $Config.Region -List) -notcontains $Config.Region) { 
@@ -3394,8 +3387,8 @@ Function Get-AllDAGdata {
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source
-    # ZergPool & ZPool also supply TLS DAG data.
-    If (-not ($Session.ConfigRunning.PoolName -match "^ZergPool.*|^ZPool.*")) { 
+    # ZPool also supplies TLS DAG data.
+    If (-not ($Session.ConfigRunning.PoolName -match "^ZPool.*")) { 
         If ($Session.CurrencyAlgorithm[$Currency]) { 
             $Currency = "TLS"
             $Url = "https://telestai.cryptoscope.io/api/getblockcount"
@@ -3483,39 +3476,8 @@ Function Get-AllDAGdata {
         }
     }
 
-    # ZergPool also supplies EVR DAG data
-    If (-not ($Session.ConfigRunning.PoolName -match "^ZergPool.*")) { 
-        # Update on script start, once every 24hrs or if unable to get data from source
-        $Currency = "EVR"
-        If ($Session.CurrencyAlgorithm[$Currency]) { 
-            $Url = "https://evr.cryptoscope.io/api/getblockcount"
-            If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-                # Get block data from EVR block explorer
-                Try { 
-                    Write-Message -Level Info "Loading DAG data from '$Url'..."
-                    $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    If ($Session.CurrencyAlgorithm[$Currency] -and $CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                        $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
-                        If ($CurrencyDAGdata.Epoch) { 
-                            $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                            $CurrencyDAGdata | Add-Member Url $Url -Force
-                            $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                            $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-                        }
-                        Else { 
-                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
-                        }
-                    }
-                }
-                Catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
-                }
-            }
-        }
-    }
-
-    # ZergPool & ZPool also supply PHI DAG data
-    If (-not ($Session.ConfigRunning.PoolName -match "^ZergPool.*|^ZPool.*")) { 
+    # ZPool also supplies PHI DAG data
+    If (-not ($Session.ConfigRunning.PoolName -match "^ZPool.*")) { 
         # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "PHI"
         If ($Session.CurrencyAlgorithm[$Currency]) { 
@@ -3545,8 +3507,8 @@ Function Get-AllDAGdata {
         }
     }
 
-    # Zpool & ZergPool also supply MEWC DAG data
-    If (-not ($Session.ConfigRunning.PoolName -match "^ZergPool.*|^ZPool.+")) { 
+    # Zpool also supplies MEWC DAG data
+    If (-not ($Session.ConfigRunning.PoolName -match "^ZPool.+")) { 
         # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "MEWC"
         If ($Session.CurrencyAlgorithm[$Currency]) { 
@@ -4325,4 +4287,27 @@ Function Set-MinerMeasurePowerConsumption {
 
     # Remove watchdog
     $Session.WatchdogTimers = $Session.WatchdogTimers | Where-Object MinerName -NE $Miner.Name
+}
+
+Function Exit-UGminer { 
+
+    If ($Session.LegacyGUI) { 
+        # Save window settings
+        If ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
+
+        $TimerUI.Stop()
+        Remove-Variable $TimerUI
+        $LegacyGUIelements.TabControl.SelectTab(0)
+    }
+
+    Write-Message -Level Info "Shutting down $($Session.Branding.ProductLabel)..."
+    $Session.NewMiningStatus = "Idle"
+
+    Stop-Core
+    Stop-Brain
+    Stop-BalancesTracker
+
+    Write-Message -Level Info "$($Session.Branding.ProductLabel) has shut down."
+    Start-Sleep -Seconds 2
+    Stop-Process $PID -Force
 }

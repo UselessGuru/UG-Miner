@@ -17,18 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
-# added back-up pool for qhash dev-fee
-# fixed network flood in case of disconnect
-# implemented experimental kernel 3 for CMP 70HX/90HX(--qhash-kernel 3)
-# slightly improved qhash on some cards
+# implemented auto-switch to new qhash after QTC hardfork(25 September 2025 at 01:00:00 GMT)
+# up to 10% speed improvement of qhash for NVIDIA gpu's
+# up to 25% speed improvement of qhash for AMD and NVIDIA CMP 70HX/90HX gpu's
+# fixed power readings for some AMD gpu's on Linux
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.45.1/wildrig-multi-windows-0.45.1.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.45.6/wildrig-multi-windows-0.45.6.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
@@ -27,7 +27,7 @@ Version date:   2025/09/12
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
 
-$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.97/lolMiner_v1.97_Win64.zip"
+$URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.98a/lolMiner_v1.98a_Win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\lolminer.exe"
 $DeviceEnumerator = "Bus"
@@ -39,6 +39,8 @@ $Algorithms = @(
     @{ Algorithms = @("BeamV3", "");                     Type = "AMD"; Fee = @(0.01);        MinMemGiB = 6.0;  MinerSet = 0; WarmupTimes = @(45, 50);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo BEAM-III" }
     @{ Algorithms = @("Blake3", "");                     Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo ALEPH" }
     @{ Algorithms = @("Cuckoo29", "");                   Type = "AMD"; Fee = @(0.02);        MinMemGiB = 8.0;  MinerSet = 0; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C29AE" }
+    @{ Algorithms = @("Cuckaroo29", "");                 Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29" }
+    @{ Algorithms = @("Cuckaroo29B", "");                Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29-40" }
     @{ Algorithms = @("Cuckaroo29B", "");                Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29-40" }
     @{ Algorithms = @("Cuckaroo29S", "");                Type = "AMD"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo CR29-32" }
     @{ Algorithms = @("Cuckaroo30CTX", "");              Type = "AMD"; Fee = @(0.025);       MinMemGiB = 7.8;  MinerSet = 2; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo C30CTX" }
@@ -85,6 +87,7 @@ $Algorithms = @(
     @{ Algorithms = @("Blake3", "");                             Type = "NVIDIA"; Fee = @(0.075);       MinMemGiB = 2.0;  MinerSet = 1; WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ALEPH" }
     @{ Algorithms = @("BeamV3", "");                             Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 3.0;  MinerSet = 2; WarmupTimes = @(45, 50);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo BEAM-III" }
     @{ Algorithms = @("Cuckoo29", "");                           Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 8.0;  MinerSet = 2; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo C29AE" }
+    @{ Algorithms = @("Cuckaroo29", "");                         Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo CR29" }
     @{ Algorithms = @("Cuckaroo29B", "");                        Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo CR29-40" }
     @{ Algorithms = @("Cuckaroo29S", "");                        Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 6.0;  MinerSet = 2; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo CR29-32" }
     @{ Algorithms = @("Cuckaroo30CTX", "");                      Type = "NVIDIA"; Fee = @(0.025);       MinMemGiB = 8.0;  MinerSet = 2; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo C30CTX" }

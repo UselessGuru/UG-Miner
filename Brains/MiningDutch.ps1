@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/09/12
+Version date:   2025/09/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -91,6 +91,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
                     If ($AlgoStats = $TotalStats.result.Where({ $_.Algorithm -eq $Algorithm })) { 
+                        $AlgoData.$Algorithm | Add-Member coins $AlgoData.$Algorithm.coins -Force
                         $AlgoData.$Algorithm | Add-Member hashrate_shared $AlgoStats.hashrate -Force
                         $AlgoData.$Algorithm | Add-Member hashrate_solo $AlgoStats.hashrate_solo -Force
                         $AlgoData.$Algorithm | Add-Member workers_shared $AlgoStats.workers -Force

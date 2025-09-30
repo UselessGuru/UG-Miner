@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/09/12
+Version date:   2025/09/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -82,6 +82,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
 
                     $BasePrice = If ($AlgoData.$Algorithm.actual_last24h) { $AlgoData.$Algorithm.actual_last24h } Else { $AlgoData.$Algorithm.estimate_last24h }
 
+                    $AlgoData.$Algorithm | Add-Member coins $AlgoData.$Algorithm.coins -Force
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
 
                     # Reset history when stat file got removed
@@ -97,6 +98,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     $PoolObjects += [PSCustomObject]@{ 
                         actual_last24h      = $BasePrice
                         AlgorithmNorm       = $AlgorithmNorm
+                        Coins               = $AlgoData.$Algorithm.coins
                         Date                = $Timestamp
                         estimate_current    = $AlgoData.$Algorithm.estimate_current
                         estimate_last24h    = $AlgoData.$Algorithm.estimate_last24h

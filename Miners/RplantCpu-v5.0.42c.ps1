@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -89,7 +89,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Quark";         MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo quark" } # ASIC
 #   @{ Algorithm = "Qubit";         MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qubit" } # ASIC
 #   @{ Algorithm = "Qureno";        MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qureno" } # GPU
-    @{ Algorithm = "RinHash";       MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @("ZergPool"); Arguments = " --algo rinhash" } # Miner just closes
+    @{ Algorithm = "RinHash";       MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo rinhash" }
 #   @{ Algorithm = "X11";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x11" } # ASIC, algorithm not supported
     @{ Algorithm = "X22";           MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x22" }
     @{ Algorithm = "Yescrypt";      MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yescrypt" }

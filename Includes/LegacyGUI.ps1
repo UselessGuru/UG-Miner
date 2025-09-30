@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1771,11 +1771,12 @@ $LegacyGUIform.Add_Load(
 
 $LegacyGUIform.Add_FormClosing(
     { 
-        If ($KeyPressed.KeyChar -ne "4") { # 4: Closing triggered via console window
+        If ($KeyPressed.KeyChar -ne "4" -or $KeyPressed.KeyChar -ne "q") { # 4: Closing triggered via console window
             If (-not $Session.ConfigRunning.ShowConsole) { # If console is not visible there is no user friendly way to end script
                 $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
                 If ($MsgBoxInput -eq "No") { 
                     $_.Cancel = $true
+                    Remove-Variable MsgBoxInput
                     Return
                 }
             }
@@ -1784,6 +1785,7 @@ $LegacyGUIform.Add_FormClosing(
                 If ($MsgBoxInput -eq "Cancel") { 
                     $_.Cancel = $true
                     Return
+                    Remove-Variable MsgBoxInput
                 }
             }
             $Session.LegacyGUI = $false
@@ -1793,21 +1795,10 @@ $LegacyGUIform.Add_FormClosing(
         If ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
 
         $TimerUI.Stop()
+        Remove-Variable $TimerUI
 
-        If ($MsgBoxInput -eq "Yes") { 
-            $LegacyGUIelements.TabControl.SelectTab(0)
-            
-            Write-Message -Level Info "Shutting down $($Session.Branding.ProductLabel)..."
-            $Session.NewMiningStatus = "Idle"
-
-            Stop-Core
-            Stop-Brain
-            Stop-BalancesTracker
-
-            Write-Message -Level Info "$($Session.Branding.ProductLabel) has shut down."
-            Start-Sleep -Seconds 2
-            Stop-Process $PID -Force
-        }
+        If ($MsgBoxInput -eq "Yes") { Exit-UGminer }
+        Remove-Variable MsgBoxInput
     }
 )
 
@@ -1815,7 +1806,7 @@ $LegacyGUIform.Add_KeyDown(
     { 
         If ($Session.NewMiningStatus -eq "Running" -and $_.Control -and $_.Alt -and $_.KeyCode -eq "P") { 
             # '<Ctrl><Alt>P' pressed
-            If (-not $Global:CoreRunspace.AsyncObject.IsCompleted -eq $false) { 
+            If (-not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
                 # Core is complete / gone. Cycle cannot be suspended anymore
                 $Session.SuspendCycle = $false
             }

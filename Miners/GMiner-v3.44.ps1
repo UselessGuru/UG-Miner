@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -31,7 +31,7 @@ $DeviceEnumerator = "Type_Vendor_Slot"
 $Algorithms = @(
 #   @{ Algorithms = @("Autolykos2", "");   Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.24; Tuning = ""; MinerSet = 2; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); AutoCoinPers = "";             Arguments = " --algo autolykos2 --cuda 0 --opencl 1" } # Algorithm not yet supported
 #   @{ Algorithms = @("Cuckatoo32", "");   Type = "AMD"; Fee = @(0.05);  MinMemGiB = 8.0;  Tuning = ""; MinerSet = 3; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); AutoCoinPers = "";             Arguments = " --algo cuckatoo32 --cuda 0 --opencl 1" } # ASIC
-    @{ Algorithms = @("Equihash1254", ""); Type = "AMD"; Fee = @(0.02);  MinMemGiB = 2.1;  Tuning = ""; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); AutoCoinPers = "";             Arguments = " --algo equihash125_4 --cuda 0 --opencl 1" } # lolMiner-v1.97 is fastest
+    @{ Algorithms = @("Equihash1254", ""); Type = "AMD"; Fee = @(0.02);  MinMemGiB = 2.1;  Tuning = ""; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); AutoCoinPers = "";             Arguments = " --algo equihash125_4 --cuda 0 --opencl 1" } # lolMiner-v1.98a is fastest
     @{ Algorithms = @("Equihash1445", ""); Type = "AMD"; Fee = @(0.02);  MinMemGiB = 1.8;  Tuning = ""; MinerSet = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = "^RDNA1$"; ExcludePools = @(@(), @()); AutoCoinPers = " --pers auto"; Arguments = " --algo equihash144_5 --cuda 0 --opencl 1" } # FPGA # https://github.com/develsoftware/GMinerRelease/issues/906
     @{ Algorithms = @("Equihash2109", ""); Type = "AMD"; Fee = @(0.02);  MinMemGiB = 2.8;  Tuning = ""; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); AutoCoinPers = "";             Arguments = " --algo equihash210_9 --cuda 0 --opencl 1" }
     @{ Algorithms = @("Ethash", "");       Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.24; Tuning = ""; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); AutoCoinPers = "";             Arguments = " --algo ethash --cuda 0 --opencl 1" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool

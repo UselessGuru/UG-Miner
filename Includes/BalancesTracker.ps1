@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 using module .\Include.psm1
@@ -217,7 +217,7 @@ Do {
                         }
                     }
                     Else { 
-                        # HashCryptos, HiveON, MiningDutch, ZergPool, ZPool
+                        # HashCryptos, HiveON, MiningDutch, ZPool
                         $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
                         # Current 'Unpaid' is smaller
                         If ($Delta -lt 0) { 

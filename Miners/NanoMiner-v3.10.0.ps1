@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.12
-Version date:   2025/09/12
+Version:        6.5.13
+Version date:   2025/09/30
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
@@ -39,7 +39,7 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsenV2", ""); Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());             Arguments = @(" -algo Karlsen") }
     @{ Algorithms = @("KawPow", "");             Type = "AMD"; Fee = @(0.02);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@("ProHashing"), @()); Arguments = @(" -algo KawPow") } # TeamRedMiner-v0.10.21 is fastest
     @{ Algorithms = @("UbqHash", "");            Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());             Arguments = @(" -algo Ubqhash") } # PhoenixMiner-v6.2c is fastest
-    @{ Algorithms = @("VertHash", "");           Type = "AMD"; Fee = @(0.01);  MinMemGiB = 3;    MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@("ZergPool"), @());   Arguments = @(" -algo Verthash") }
+    @{ Algorithms = @("VertHash", "");           Type = "AMD"; Fee = @(0.01);  MinMemGiB = 3;    MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@( ), @());            Arguments = @(" -algo Verthash") }
 
 #   @{ Algorithms = @("Randomx", "");    Type = "CPU"; Fee = @(0.02); MinerSet = 3; WarmupTimes = @(45, 0); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Randomx") } # ASIC
     @{ Algorithms = @("RandomNevo", ""); Type = "CPU"; Fee = @(0.02); MinerSet = 3; WarmupTimes = @(45, 0); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo RandomNEVO") }
