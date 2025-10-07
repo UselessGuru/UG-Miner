@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -597,7 +597,7 @@ Class Miner : IDisposable {
 
         If ($this.Status -eq [MinerStatus]::Failed) { 
             $this.StatusInfo = "Failed: Miner $($this.StatusInfo)"
-            $this.SubStatus = "failed"
+            $this.SubStatus = "Failed"
             $this.WorkersRunning.ForEach(
                 { 
                     $_.Disabled = $false
@@ -652,33 +652,6 @@ Class Miner : IDisposable {
                 $this.Status = [MinerStatus]::Failed
                 $this.StopMining()
             }
-        }
-    }
-
-    [DateTime]GetActiveLast() { 
-        If ($this.Process.BeginTime -and $this.Process.EndTime) { 
-            Return $this.Process.EndTime
-        }
-        ElseIf ($this.Process.BeginTime) { 
-            Return [DateTime]::Now.ToUniversalTime()
-        }
-        ElseIf ($this.EndTime) { 
-            Return $this.EndTime
-        }
-        Else { 
-            Return [DateTime]::MinValue
-        }
-    }
-
-    [TimeSpan]GetActiveTime() { 
-        If ($this.Process.BeginTime -and $this.Process.EndTime) { 
-            Return $this.Active + $this.Process.EndTime - $this.Process.BeginTime
-        }
-        ElseIf ($this.Process.BeginTime) { 
-            Return $this.Active + [DateTime]::Now - $this.Process.BeginTime
-        }
-        Else { 
-            Return $this.Active
         }
     }
 
@@ -1817,8 +1790,6 @@ Function Read-Config {
             $Session.ConfigFileReadTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime
         }
     }
-    $Session.ConfigRunning = $Config.Clone()
-
 }
 
 Function Update-ConfigFile { 
@@ -1885,6 +1856,7 @@ Function Update-ConfigFile {
             Switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); Break }
+                "LogToFile" { $Config.Remove($_); Break }
                 "LogToScreen" { $Config.LogLevel = $Config.$_; $Config.Remove($_); Break }
                 "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); Break }
                 "MinerInstancePerDeviceModel" { $Config.Remove($_); Break }
@@ -3888,7 +3860,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
-    Write-Host "Loaded donation data."
+    Write-Host "Loaded donation database." -NoNewline;  Write-Host " ✔  ($($Session.DonationData.Count) $(If ($Session.DonationData.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load donation log
     If (Test-Path -LiteralPath "$PWD\Logs\DonationLog.csv") { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) }
@@ -3896,7 +3868,7 @@ Function Initialize-Environment {
         $Session.DonationLog = @()
     }
     Else { 
-        Write-Host "Loaded donation log."
+        Write-Host "Loaded donation log." -NoNewline;  Write-Host " ✔  ($($Session.DonationLog.Count) $(If ($Session.DonationLog.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load algorithm list as sorted case insensitive hash table
@@ -3908,6 +3880,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
+    Write-Host "Loaded algorithm database." -NoNewline;  Write-Host " ✔  ($($Session.Algorithms.Count) $(If ($Session.Algorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load coin names as sorted case insensitive hash table
     If (Test-Path -LiteralPath "$PWD\Data\CoinNames.json") { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3918,6 +3891,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
+    Write-Host "Loaded coin names database." -NoNewline;  Write-Host " ✔  ($($Session.CoinNames.Count) $(If ($Session.CoinNames.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load currency algorithm data as sorted case insensitive hash table
     If (Test-Path -LiteralPath "$PWD\Data\CurrencyAlgorithm.json") { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3928,6 +3902,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
+    Write-Host "Loaded currency database." -NoNewline;  Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(If ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load EquihashCoinPers data as sorted case insensitive hash table
     If (Test-Path -LiteralPath "$PWD\Data\EquihashCoinPers.json") { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3938,7 +3913,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
-    Write-Host "Loaded algorithm & coin database."
+    Write-Host "Loaded equihash database." -NoNewline;  Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(If ($Session.EquihashCoinPers.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load regions as sorted case insensitive hash table
     If (Test-Path -LiteralPath "$PWD\Data\Regions.json") { 
@@ -3952,7 +3927,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
-    Write-Host "Loaded regions database."
+    Write-Host "Loaded regions database." -NoNewline;  Write-Host " ✔  ($($Session.Regions.Count) $(If ($Session.Regions.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load FIAT currencies list as sorted case insensitive hash table
     If (Test-Path -LiteralPath "$PWD\Data\FIATcurrencies.json") { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3963,7 +3938,7 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
-    Write-Host "Loaded fiat currencies database."
+    Write-Host "Loaded fiat currencies database." -NoNewline;  Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(If ($Session.FIATcurrencies.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load unprofitable algorithms as sorted case insensitive hash table, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
     $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
@@ -3979,18 +3954,18 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
-    Write-Host "Loaded list of unprofitable algorithms."
+    Write-Host "Loaded unprofitable algorithms database." -NoNewline;  Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(If ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load DAG data, if not available it will get recreated
     If (Test-Path -LiteralPath "$PWD\Data\DAGdata.json" ) { $Session.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject }
     If (-not $Session.DAGdata) { 
-        Write-Error "Error loading list of DAG data. File '.\Data\DAGdata.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
+        Write-Error "Error loading DAG database. File '.\Data\DAGdata.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
         (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
         Start-Sleep -Seconds 5
         Exit
     }
-    Write-Host "Loaded DAG database."
+    Write-Host "Loaded DAG database." -NoNewline;  Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(If ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load PoolsLastUsed data as sorted case insensitive hash table
     If (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json") { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3998,7 +3973,7 @@ Function Initialize-Environment {
         $Session.PoolsLastUsed = @{ }
     }
     Else { 
-        Write-Host "Loaded pools last used data."
+        Write-Host "Loaded pools last used database." -NoNewline;  Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(If ($Session.PoolsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load AlgorithmsLastUsed data as sorted case insensitive hash table
@@ -4007,7 +3982,7 @@ Function Initialize-Environment {
         $Session.AlgorithmsLastUsed = @{ }
     }
     Else { 
-        Write-Host "Loaded algorithm last used data."
+        Write-Host "Loaded algorithm last used database." -NoNewline;  Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(If ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load MinersLastUsed data as sorted case insensitive hash table
@@ -4016,7 +3991,7 @@ Function Initialize-Environment {
         $Session.MinersLastUsed = @{ }
     }
     Else { 
-        Write-Host "Loaded algorithm last used data."
+        Write-Host "Loaded miners last used database." -NoNewline;  Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(If ($Session.MinersLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load EarningsChart data to make it available early in GUI
@@ -4025,7 +4000,7 @@ Function Initialize-Environment {
         $Session.EarningsChartData = @{ }
     }
     Else { 
-        Write-Host "Loaded earnings chart data."
+        Write-Host "Loaded earnings chart database." -NoNewline;  Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(If ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load Balances data to make it available early in GUI
@@ -4033,7 +4008,9 @@ Function Initialize-Environment {
     If (-not $Session.Balances.PSObject.Properties.Name) { 
         $Session.Balances = @{ }
     }
-    Else { Write-Host "Loaded balances data." }
+    Else { 
+        Write-Host "Loaded balances database." -NoNewline;  Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(If ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    }
 
     # Load NVidia GPU architecture table
     If (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureNvidia.json") { $Session.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore }
@@ -4044,7 +4021,9 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
-    Else { Write-Host "Loaded NVidia GPU architecture table." }
+    Else { 
+        Write-Host "Loaded NVidia GPU architecture database." -NoNewline;  Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(If ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    }
 
     # Load AMD GPU architecture table
     If (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureAMD.json") { $Session.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore }
@@ -4055,7 +4034,9 @@ Function Initialize-Environment {
         Start-Sleep -Seconds 5
         Exit
     }
-    Else { Write-Host "Loaded AMD GPU architecture table." }
+    Else { 
+        Write-Host "Loaded AMD GPU architecture database." -NoNewline;  Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(If ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    }
 
     $Session.BalancesCurrencies = @($Session.Balances.PSObject.Properties.Name.ForEach({ $Session.Balances.$_.Currency }) | Sort-Object -Unique)
 }

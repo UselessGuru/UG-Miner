@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 using module .\Include.psm1
@@ -716,7 +716,8 @@ Try {
 
             # Get new miners
             If ($AvailableMinerPools = If ($Session.ConfigRunning.MinerUseBestPoolsOnly) { $Session.Pools.Where({ $_.Available -and ($_.Best -or $_.Prioritize) }) } Else { $Session.Pools.Where({ $_.Available }) }) { 
-                $MinerPools = [System.Collections.SortedList]::new(), [System.Collections.SortedList]::new(@{ "" = "" })
+                $MinerPools = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase), [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
+                $MinerPools[1]."" = ""
                 ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable primary algorithm" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[0][$_.Name] = $_.Group })
                 ($AvailableMinerPools.Where({ $_.Reasons -notcontains "Unprofitable secondary algorithm" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[1][$_.Name] = $_.Group })
 

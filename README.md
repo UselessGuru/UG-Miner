@@ -1,9 +1,9 @@
 # UG-Miner
 
-UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm
+UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.5.13 / Updated 2025/09/30
+Version 6.5.14 / Updated 2025/10/07
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -72,7 +72,7 @@ It is recommended to run UG-Miner with local computer administrator privileges (
 
 ### Pools
 
-UG-Miner polls the configured pools in regular intervals to get up-to-date pricing and coin availability data.  
+UG-Miner polls the configured pools in regular intervals to get up-to-date pricing and coin availability information.  
 
 You must select at least one pool.  
 If you select several pools, then your earnings might be split across different pools. UG-Miner will always direct the miners to the pools with the highest earnings.  
@@ -114,19 +114,19 @@ Do not combine '+' and '-' concurrently.
 This parameter is not case sensitive. 
 
 #### Examples:
-Algorithm list: '-Ethash'  
+Algorithm list '-Ethash':  
 Will mine anything but ethash
 
 Algorithm list: '-Ethash(3GB),-Kawpow'  
 Will mine anything but Ethash (3GB DAG size only) or Kawpow (any DAG size)
 
-Algorithm list: '+Ethash'  
+Algorithm list '+Ethash':  
 Will mine only Ethash (any DAG size)
 
-Algorithm list: '+Ethash,+Kawpow(4GB)'  
+Algorithm list '+Ethash,+Kawpow(4GB)':  
 Will mine only Ethash (any DAG size) and Kawpow (only 4GB DAG size)
 
-Algorithm list blank  
+Algorithm list blank:  
 Will mine all available algorithms
 
 ### Currency selection
@@ -144,19 +144,19 @@ Do not combine '+' and '-' concurrently.
 This parameter is not case sensitive. 
 
 #### Examples:
-Currency list: '-EVR'  
-Will mine anything but EVR
+Currency list '-EVR':  
+Will mine anything except EVR
 
-Currency list: '-EVR,-KIIRO'  
-Will mine anything but EVR and KIIRO
+Currency list '-EVR,-KIIRO':  
+Will mine anything except EVR and KIIRO
 
-Currency list: '+EVR'  
+Currency list '+EVR':  
 Will mine only EVR
 
-Currency list: '+EVR,+KIIRO'  
+Currency list '+EVR,+KIIRO':  
 Will mine only EVR and KIIRO
 
-Currency list blank  
+Currency list blank:  
 Will mine all available currencies
 
 ## Idle detection

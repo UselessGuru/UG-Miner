@@ -30,8 +30,10 @@ where /q PWSH.exe
 
 if ERRORLEVEL 1 (
 
-  echo Powershell 6 or later is required. Cannot continue.
-  pause
+  echo PWSH 6 or later is required.
+  echo The preferred PWSH version is version 7.5.3 which can be downloaded from https://github.com/PowerShell/PowerShell/releases.
+  echo Press any key to exit the script.
+  pause > nul
 
 ) else (
   pushd "%CD%"

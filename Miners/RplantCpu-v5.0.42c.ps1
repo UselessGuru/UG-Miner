@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -89,7 +89,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Quark";         MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo quark" } # ASIC
 #   @{ Algorithm = "Qubit";         MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qubit" } # ASIC
 #   @{ Algorithm = "Qureno";        MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo qureno" } # GPU
-    @{ Algorithm = "RinHash";       MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo rinhash" }
+#   @{ Algorithm = "Rinhash";       MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo Rinhash" } # Miner just closes
 #   @{ Algorithm = "X11";           MinerSet = 3; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x11" } # ASIC, algorithm not supported
     @{ Algorithm = "X22";           MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo x22" }
     @{ Algorithm = "Yescrypt";      MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo yescrypt" }
@@ -109,7 +109,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerRes";   MinerSet = 2; WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yespowerRes" }
     @{ Algorithm = "YespowerSugar"; MinerSet = 1; WarmupTimes = @(45, 15);  ExcludePools = @();           Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerTIDE";  MinerSet = 0; WarmupTimes = @(45, 5);   ExcludePools = @("ZPool");    Arguments = " --algo yespowerTIDE" } # https://discord.com/channels/376790817811202050/1371515289824530434
-    @{ Algorithm = "YespowerURX";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerURX" } # JayddeeCPU-v25.6 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerUrx";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerUrx" } # JayddeeCPU-v25.6 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -751,15 +751,15 @@ Function Update-GUIstatus {
 }
 
 $LegacyGUIelements.Colors = @{ }
-$LegacyGUIelements.Colors["benchmarking"]                            = [System.Drawing.Color]::FromArgb(241, 255, 229)
-$LegacyGUIelements.Colors["disabled"]                                = [System.Drawing.Color]::FromArgb(255, 243, 231)
-$LegacyGUIelements.Colors["failed"]                                  = [System.Drawing.Color]::FromArgb(255, 230, 230)
-$LegacyGUIelements.Colors["idle"] = $LegacyGUIelements.Colors["stopped"]      = [System.Drawing.Color]::FromArgb(230, 248, 252)
-$LegacyGUIelements.Colors["launched"]                                = [System.Drawing.Color]::FromArgb(229, 255, 229)
-$LegacyGUIelements.Colors["dryrun"] = $LegacyGUIelements.Colors["running"]    = [System.Drawing.Color]::FromArgb(212, 244, 212)
+$LegacyGUIelements.Colors["benchmarking"]                                     = [System.Drawing.Color]::FromArgb(241, 255, 229)
+$LegacyGUIelements.Colors["disabled"]                                         = [System.Drawing.Color]::FromArgb(255, 243, 231)
+$LegacyGUIelements.Colors["failed"]                                           = [System.Drawing.Color]::FromArgb(255, 230, 230)
+$LegacyGUIelements.Colors["idle"]     = $LegacyGUIelements.Colors["stopped"]  = [System.Drawing.Color]::FromArgb(230, 248, 252)
+$LegacyGUIelements.Colors["launched"]                                         = [System.Drawing.Color]::FromArgb(229, 255, 229)
+$LegacyGUIelements.Colors["dryrun"]   = $LegacyGUIelements.Colors["running"]  = [System.Drawing.Color]::FromArgb(212, 244, 212)
 $LegacyGUIelements.Colors["starting"] = $LegacyGUIelements.Colors["stopping"] = [System.Drawing.Color]::FromArgb(245, 255, 245)
-$LegacyGUIelements.Colors["unavailable"]                             = [System.Drawing.Color]::FromArgb(254, 245, 220)
-$LegacyGUIelements.Colors["warmingup"]                               = [System.Drawing.Color]::FromArgb(231, 255, 230)
+$LegacyGUIelements.Colors["unavailable"]                                      = [System.Drawing.Color]::FromArgb(254, 245, 220)
+$LegacyGUIelements.Colors["warmingup"]                                        = [System.Drawing.Color]::FromArgb(231, 255, 230)
 
 $LegacyGUIelements.Tooltip = [System.Windows.Forms.ToolTip]::new()
 
@@ -1242,7 +1242,7 @@ $LegacyGUIelements.RadioButtonMinersOptimal.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersOptimal, "These are all optimal miners per algorithm and device.")
+$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersOptimal, "Shows the list of all optimal miners per algorithm and device.")
 
 $LegacyGUIelements.RadioButtonMinersUnavailable = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonMinersUnavailable.AutoSize = $false
@@ -1260,7 +1260,7 @@ $LegacyGUIelements.RadioButtonMinersUnavailable.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersUnavailable, "These are all unavailable miners.`rThe column 'Reason(s)' shows the filter criteria(s) that made the miner unavailable.")
+$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersUnavailable, "Shows the list of all unavailable miners.`rThe column 'Reason(s)' shows the filter criteria(s) that made the miner unavailable.")
 
 $LegacyGUIelements.RadioButtonMiners = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonMiners.AutoSize = $false
@@ -1278,7 +1278,7 @@ $LegacyGUIelements.RadioButtonMiners.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMiners, "These are all miners.`rNote: UG-Miner will only create miners for algorithms that have at least one available pool.")
+$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMiners, "Shows the list of all miners.`rNote: UG-Miner will only create miners for algorithms that have at least one available pool.")
 
 $LegacyGUIelements.MinersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.MinersLabel.AutoSize = $false
@@ -1349,7 +1349,7 @@ $LegacyGUIelements.RadioButtonPoolsBest.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsBest, "This is the list of the best paying pool for each algorithm.")
+$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsBest, "Shows the list of the best paying pools for each algorithm.")
 
 $LegacyGUIelements.RadioButtonPoolsUnavailable = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonPoolsUnavailable.AutoSize = $false
@@ -1368,7 +1368,7 @@ $LegacyGUIelements.RadioButtonPoolsUnavailable.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsUnavailable, "This is the pool of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
+$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsUnavailable, "Shows the list of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
 
 $LegacyGUIelements.RadioButtonPools = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonPools.AutoSize = $false
@@ -1387,7 +1387,7 @@ $LegacyGUIelements.RadioButtonPools.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPools, "This is the pool data of all configured pools.")
+$LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPools, "Shows the list of all configured pools.")
 
 $LegacyGUIelements.PoolsLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.PoolsLabel.AutoSize = $false

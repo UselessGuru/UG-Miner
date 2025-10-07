@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 using module .\Include.psm1
@@ -70,6 +70,7 @@ Do {
 
     # Get pools to track
     $PoolsToTrack = @((Get-ChildItem -File ".\Balances\*.ps1" -ErrorAction Ignore).BaseName.Where({ $_ -notin (Get-PoolBaseName $Config.BalancesTrackerExcludePools) }))
+    If ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = $PoolsToTrack -notmatch "MiningDutch"; $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
 
     # Check internet connection
     $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex

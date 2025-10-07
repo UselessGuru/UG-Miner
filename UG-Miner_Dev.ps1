@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-File:           UG-Miner.ps1
+File:           UG-Miner_Dev.ps1
 Version:        6.5.14
 Version date:   2025/10/07
 #>
@@ -296,6 +296,9 @@ If ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") {
     If ((Get-Process -Id $ConHostProcessId).Parent.ProcessName -eq "cmd") { Stop-Process -Id (Get-Process -Id $ConhostProcessId).Parent.Id -Force -ErrorAction Ignore }
     Remove-Variable ConhostProcessId
 }
+
+$Global:DebugPreference = "Continue"
+$Global:ErrorActionPreference = "Inquire"
 
 @"
  _   _  ____       __  __ _
@@ -662,6 +665,47 @@ If ($Config.WebGUI) {
     Start-APIserver
 }
 
+###################################################################################
+While ($Session.NewMiningStatus -eq "Running") { 
+
+    If ($LegacyGUIelements) { 
+        $LegacyGUIelements.ButtonPause.Enabled = $false
+        $LegacyGUIelements.ButtonStart.Enabled = $false
+    }
+
+    # Read regions list, update on each start
+    $Session.Regions = [Ordered]@{ } # as case insensitive hash table
+    ([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties.ForEach({ $Session.Regions[$_.Name] = @($_.Value) })
+    Try { 
+        If ($BrainNameToDebug = "") { 
+            $Session.Brains.$BrainNameToDebug = @{ }
+            . ".\Brains\$BrainNameToDebug.ps1"
+        }
+        Remove-Variable BrainNameToDebug -Exclude Ignore
+
+        Start-Brain @(Get-PoolBaseName $Session.ConfigRunning.PoolName)
+
+        If ($DebugBalancesTracker) { 
+            . .\Includes\BalancesTracker.ps1
+        }
+        ElseIf ($Session.ConfigRunning.BalancesTrackerPollInterval -gt 0) { 
+            Start-BalancesTracker
+        }
+        Remove-Variable DebugBalancesTracker -ErrorAction Ignore
+
+        $Session.MiningStatus = "Running"
+        . .\Includes\Core_Dev.ps1
+        # . .\Includes\Core.ps1
+    }
+    Catch { 
+        Start-Sleep -Seconds 0
+    }
+
+    # Read data on each loop
+    Initialize-Environment
+}
+###################################################################################
+
 Function MainLoop { 
 
     If ($Session.MinersRunning) { 
@@ -692,8 +736,8 @@ Function MainLoop {
         }
     }
 
-    # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
-    If ($Session.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIelements.MiningSummaryLabel.Text)) { 
+    # If something (pause button, idle timer, web GUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
+    If ($Session.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIminingSummaryLabel.Text)) { 
         $Session.RestartCycle = $false
 
         If ($Session.NewMiningStatus -ne $Session.MiningStatus) { 

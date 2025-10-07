@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.14"
+$APIversion = "6.0.16"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -84,7 +84,7 @@ While ($Session.APIversion -and $Server.IsListening) {
         [Void]$Request.inputstream.read($Buffer, 0, $Length)
         $Body = [Text.Encoding]::ascii.getstring($Buffer)
 
-        If ($Session.ConfigRunning.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File $Session.ConfigRunning.APIlogfile -Append -ErrorAction Ignore }
+        If ($Session.ConfigRunning.APIlogfile -and $Session.ConfigRunning.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File $Session.ConfigRunning.APIlogfile -Append -ErrorAction Ignore }
 
         $Parameters = @{ }
         ($Body -split "&").ForEach(
@@ -111,7 +111,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             # Disable algorithm@pool in poolsconfig.json
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
-            If ($Pools = @($Session.Pools.PsObject.Copy().Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
+            If ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
                 $PoolsConfig = [System.IO.File]::ReadAllLines($Session.ConfigRunning.PoolsConfigFile) | ConvertFrom-Json
                 ForEach ($Pool in $Pools) { 
                     If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
@@ -140,7 +140,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             # Enable algorithm@pool in poolsconfig.json
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
-            If ($Pools = @($Session.Pools.PsObject.Copy().Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
+            If ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
                 $PoolsConfig = [System.IO.File]::ReadAllLines($Session.ConfigRunning.PoolsConfigFile) | ConvertFrom-Json
                 ForEach ($Pool in $Pools) { 
                     If ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
@@ -302,7 +302,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/functions/getminerdetail" { 
-            $Miner = $Session.Miners.PsObject.Copy().Where({ $_.Info -eq $Key })
+            $Miner = $Session.Miners.Where({ $_.Info -eq $Key })
             If ($Miner) { 
                 $Data = $Miner | ConvertTo-Json -Depth 10
             }
@@ -575,7 +575,7 @@ While ($Session.APIversion -and $Server.IsListening) {
 
                 ForEach ($Pool in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Pools | Select-Object) @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Key)) { 
                     # Update pool
-                    If ($Session.Pools.PsObject.Copy().Where({ $_.Key -eq $Pool.Key })) { 
+                    If ($Session.Pools.Where({ $_.Key -eq $Pool.Key })) { 
                         $Data += "$($Pool.Key) [$($Pool.Region)]"
                         $Pool.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
                         If (-not $Pool.Reasons.Count) { $Pool.Available = $true }
@@ -661,7 +661,10 @@ While ($Session.APIversion -and $Server.IsListening) {
         "/config" { 
             $Data = ConvertTo-Json -Depth 10 ([System.IO.File]::ReadAllLines($Session.ConfigFile) | ConvertFrom-Json -Depth 10 -AsHashtable | Select-Object)
             If (-not ($Data | ConvertFrom-Json).ConfigFileVersion) { 
-                $Data = ConvertTo-Json -Depth 10 ($Config | Select-Object -ExcludeProperty PoolsConfig)
+                $ConfigCopy = $Config.PsObject.Copy()
+                $ConfigCopy.Remove("PoolsConfig")
+                $Data = ConvertTo-Json -Depth 10 $ConfigCopy
+                Remove-Variable ConfigCopy
             }
             Break
         }
@@ -741,7 +744,7 @@ While ($Session.APIversion -and $Server.IsListening) {
         }
         "/miners/available" { 
             $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.PsObject.Copy().Where({ $_.Available }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Available }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
             Remove-Variable Bias
             Break
         }
@@ -756,11 +759,11 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/miners/disabled" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.PsObject.Copy().Where({ $_.Status -eq [MinerStatus]::Disabled }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Status -eq [MinerStatus]::Disabled }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
             Break
         }
         "/miners/failed" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.PsObject.Copy().Where({ $_.Status -eq [MinerStatus]::Failed }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Status -eq [MinerStatus]::Failed }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
             Break
         }
         "/miners/launched" { 
@@ -790,11 +793,11 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/miners/running" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.PsObject.Copy().Where({ $_.Status -eq [MinerStatus]::Running }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Status -eq [MinerStatus]::Running }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })
             Break
         }
         "/miners/unavailable" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.PsObject.Copy().Where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Name, Algorithm)
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Name, Algorithm)
             Break
         }
         "/miningpowercost" { 
@@ -834,19 +837,19 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/pools/available" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.PsObject.Copy().Where({ $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.Where({ $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
             Break
         }
         "/pools/best" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsBest.PsObject.Copy() | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsBest | Sort-Object -Property Algorithm, Name, Region)
             Break
         }
         "/pools/expired" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsExpired.PsObject.Copy() | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsExpired | Sort-Object -Property Algorithm, Name, Region)
             Break
         }
         "/pools/new" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsNew.PsObject.Copy() | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsNew | Sort-Object -Property Algorithm, Name, Region)
             Break
         }
         "/pools/lastearnings" { 
@@ -858,7 +861,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/pools/unavailable" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.PsObject.Copy().Where({ -not $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.Where({ -not $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
             Break
         }
         "/pools/updated" { 
@@ -866,7 +869,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/poolreasons" { 
-            $Data = ConvertTo-Json -Depth 10 ($Session.Pools.PsObject.Copy().Where({ -not $_.Available }).Reasons | Sort-Object -Unique)
+            $Data = ConvertTo-Json -Depth 10 ($Session.Pools.Where({ -not $_.Available }).Reasons | Sort-Object -Unique)
             Break
         }
         "/poolvariants" { 
@@ -1017,7 +1020,7 @@ While ($Session.APIversion -and $Server.IsListening) {
     $Response.StatusCode = $StatusCode
     $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
     $Response.ContentLength64 = $ResponseBuffer.Length
-    # If ($Session.ConfigRunning.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.ConfigRunning.APIlogfile -Append -ErrorAction Ignore }
+    If ($Session.ConfigRunning.APIlogfile -and $Session.ConfigRunning.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.ConfigRunning.APIlogfile -Append -ErrorAction Ignore }
     $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
     $Response.Close()
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Performance improvements for 'rinhash' on AVX2 CPU's
+# Performance improvements for 'Rinhash' on AVX2 CPU's
 # Minor performance improvements to all 'randomx' based algorithms
 # Minor performance improvements to all 'yespower' based algorithms
 # Removed algorithm 'blake3_lbrt'
@@ -116,7 +116,7 @@ $Algorithms = @(
     @{ Algorithms = @("RandomYada", "");           Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomyada --Randomx-use-1gb-pages") }
     @{ Algorithms = @("Randomy", "");              Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomy") }
     @{ Algorithms = @("RandomVirel", "");          Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomvirel") }
-    @{ Algorithms = @("RinHash", "");              Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm rinhash") }
+    @{ Algorithms = @("Rinhash", "");              Type = "CPU"; Fee = @(0.01);   MinerSet = 2; WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm Rinhash") }
     @{ Algorithms = @("VerusHash", "");            Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm verushash") }
     @{ Algorithms = @("YescryptR16", "");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yescryptr16") }
     @{ Algorithms = @("YescryptR32", "");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 45);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yescryptr32") }
@@ -132,7 +132,7 @@ $Algorithms = @(
     @{ Algorithms = @("YespowerR16", "");          Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowerr16") }
     @{ Algorithms = @("YespowerSugar", "");        Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowersugar") }
     @{ Algorithms = @("YespowerTide", "");         Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowertide") }
-    @{ Algorithms = @("YespowerURX", "");          Type = "CPU"; Fee = @(0);      MinerSet = 1; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm YespowerURX") }
+    @{ Algorithms = @("YespowerUrx", "");          Type = "CPU"; Fee = @(0);      MinerSet = 1; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm YespowerUrx") }
     @{ Algorithms = @("Yescrypt", "");             Type = "CPU"; Fee = @(0.0085); MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yescrypt") }
     @{ Algorithms = @("XelisHashV2", "");          Type = "CPU"; Fee = @(0.015);  MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-gpu --algorithm xelishashv2") }
     @{ Algorithms = @("XelisV2PepePow", "");       Type = "CPU"; Fee = @(0.015);  MinerSet = 2; WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm xelishashv2_pepew") }

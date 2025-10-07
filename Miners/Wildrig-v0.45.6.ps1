@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 # implemented auto-switch to new qhash after QTC hardfork(25 September 2025 at 01:00:00 GMT)
@@ -68,13 +68,13 @@ $Algorithms = @(
 #   @{ Algorithm = "Quibit";           Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo qui" } # ASIC
 #   @{ Algorithm = "SHA256";           Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256" } # ASIC
 #   @{ Algorithm = "SHA256d";          Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256d" } # ASIC
-    @{ Algorithm = "SHAndwich256";     Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skydoge" }
     @{ Algorithm = "SHA256csm";        Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256csm" }
     @{ Algorithm = "SHA256t";          Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256t" } # Takes too long until it starts mining
     @{ Algorithm = "SHA256q";          Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256q" }
     @{ Algorithm = "SHA512256d";       Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha512256d" }
     @{ Algorithm = "Skein2";           Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skein2" }
     @{ Algorithm = "SkunkHash";        Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skunkhash" } # Algorithm is dead
+    @{ Algorithm = "SkyDoge";          Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skydoge" }
     @{ Algorithm = "Timetravel";       Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo timetravel" }
     @{ Algorithm = "Timetravel10";     Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo timetravel10" }
     @{ Algorithm = "Tribus";           Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo tribus" }
@@ -132,13 +132,13 @@ $Algorithms = @(
 #   @{ Algorithm = "Quibit";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo qui" } # ASIC
 #   @{ Algorithm = "SHA256";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo sha256" } # ASIC
 #   @{ Algorithm = "SHA256d";          Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo sha256d" } # ASIC
-    @{ Algorithm = "SHAndwich256";     Type = "INTEL"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skydoge --watchdog" } # Trex-v0.26.8 is fastest
     @{ Algorithm = "SHA256csm";        Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo sha256csm --watchdog" }
     @{ Algorithm = "SHA256t";          Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo sha256t --watchdog" }
     @{ Algorithm = "SHA256q";          Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo sha256q --watchdog" }
     @{ Algorithm = "SHA512256d";       Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo sha512256d --watchdog" }
     @{ Algorithm = "Skein2";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skein2 --watchdog" } # CcminerAlexis78-v1.5.2 is fastest
     @{ Algorithm = "SkunkHash";        Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skunkhash --watchdog" } # Algorithm is dead
+    @{ Algorithm = "SkyDoge";          Type = "INTEL"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skydoge --watchdog" }
     @{ Algorithm = "Timetravel";       Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo timetravel --watchdog" }
     @{ Algorithm = "Timetravel10";     Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo timetravel10 --watchdog" }
 #   @{ Algorithm = "Tribus";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo tribus --watchdog" } # ASIC
@@ -196,13 +196,13 @@ $Algorithms = @(
 #   @{ Algorithm = "Quibit";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo qui --watchdog" } # ASIC
 #   @{ Algorithm = "SHA256";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo sha256 --watchdog" } # ASIC
 #   @{ Algorithm = "SHA256d";          Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo sha256d --watchdog" } # ASIC
-    @{ Algorithm = "SHAndwich256";     Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skydoge --watchdog" } # Trex-v0.26.8 is fastest
     @{ Algorithm = "SHA256csm";        Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo sha256csm --watchdog" }
     @{ Algorithm = "SHA256t";          Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo sha256t --watchdog" }
     @{ Algorithm = "SHA256q";          Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo sha256q --watchdog" }
     @{ Algorithm = "SHA512256d";       Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo sha512256d --watchdog" }
     @{ Algorithm = "Skein2";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skein2 --watchdog" } # CcminerAlexis78-v1.5.2 is fastest
     @{ Algorithm = "SkunkHash";        Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skunkhash --watchdog" } # Algorithm is dead
+    @{ Algorithm = "SkyDoge";          Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skydoge --watchdog" }
     @{ Algorithm = "Timetravel";       Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo timetravel --watchdog" }
     @{ Algorithm = "Timetravel10";     Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo timetravel10 --watchdog" }
 #   @{ Algorithm = "Tribus";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo tribus --watchdog" } # ASIC

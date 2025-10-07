@@ -1425,7 +1425,7 @@
         config.ShowColumnUser = document.getElementById('ShowColumnUser').checked;
 
         // Log level
-        values = ["Info", "Warn", "Error", "Verbose", "Debug"];
+        values = ["Debug", "Error", "Info", "Verbose", "Warn"];
         config.LogLevel = [];
         $.each(values, function (key, value) {
           if (document.getElementById(('LogLevel-' + value)).checked) config.LogLevel.push(value);

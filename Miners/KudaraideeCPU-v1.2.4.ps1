@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.13
-Version date:   2025/09/30
+Version:        6.5.14
+Version date:   2025/10/07
 #>
 
 # Flex and Xelisv2: Clang and Bionic compatibility by @sig11b in #13
@@ -53,7 +53,7 @@ $Algorithms = @(
     @{ Algorithm = "Evohash";        MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo evohash" }
     @{ Algorithm = "EvohashV2";      MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo evohashv2" }
     @{ Algorithm = "Flex";           MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo flex" }
-    @{ Algorithm = "RinHash";        MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo rinhash" }
+    @{ Algorithm = "Rinhash";        MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo Rinhash" }
     @{ Algorithm = "XelisHashV2";    MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @("NiceHash"); Arguments = " --algo xelisv2" }
     @{ Algorithm = "YespowerADVC";   MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespoweradvc" }
     @{ Algorithm = "YespowerARWN";   MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespowerarwn" }
@@ -65,7 +65,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerMGPC";   MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Magpies are birds of the Corvidae family."' } # MagpieCoin
     @{ Algorithm = "YespowerSugar";  MinerSet = 1; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerTIDE";   MinerSet = 1; WarmupTimes = @(45, 55); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
-    @{ Algorithm = "YespowerURX";    MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerUrx";    MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
