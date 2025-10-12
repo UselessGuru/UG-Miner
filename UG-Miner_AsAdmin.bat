@@ -39,6 +39,8 @@ if ERRORLEVEL 1 (
   pushd "%CD%"
   CD /D "%~dp0"
 
+  Set POWERSHELL_UPDATECHECK=Off
+
   if not "%GPU_FORCE_64BIT_PTR%"=="1" (setx GPU_FORCE_64BIT_PTR 1) > nul
   if not "%GPU_MAX_HEAP_SIZE%"=="100" (setx GPU_MAX_HEAP_SIZE 100) > nul
   if not "%GPU_USE_SYNC_OBJECTS%"=="1" (setx GPU_USE_SYNC_OBJECTS 1) > nul

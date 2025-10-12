@@ -1,5 +1,16 @@
-Known issues:
-- Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
+Changelog UG-Miner 6.5.15 2025/10/12
+====================================
+
+Fixes:
+- Core / Includes.psm1: Fixed 'Failed to load DAG data from 'https://prohashing.com/api/v1/currencies' - Error: Index operation failed; the array index evaluated to null.'
+
+Improvements:
+- APIserver: Minor code optimizations
+- Core: Minor code optimizations
+
+Miner updates:
+- OneZeroMiner-v1.6.2
+- Wildrig-v0.45.8
 
 
 Changelog UG-Miner 6.5.14 2025/10/07
@@ -9,7 +20,7 @@ Fixes:
 - APIserver: Not using default configuration values when no configuration files exists
 - Core: Miner object not created when algorithm name case mismatched
 
-Improvements
+Improvements:
 - APIserver: Minor code optimizations
 - Core: Remove obsolete code & minor code optimizations
 
@@ -29,7 +40,7 @@ Miner updates:
 - Wildrig-v0.45.6
 
 Pool changes:
-- Removed ZergPool (pool closes down beginning of october 2025) :-(
+- Removed ZergPool (pool has closed down beginning of october 2025)
 
 
 Changelog UG-Miner 6.5.12 2025/09/12
@@ -1850,3 +1861,7 @@ Changelog UG-Miner 6.0.0 2024/01/01
 ===================================
 
 Initial 6.x.x release.
+
+Known issues:
+=============
+- Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)

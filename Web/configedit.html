@@ -24,7 +24,7 @@
           <br>
 
           <legend class=h6 title="You must have a registered account with Mining Dutch">Mining Dutch
-            <a id="RegisterMiningDutch" href="https://www.mining-dutch.nl/pools/account.php?page=register" target="_blank" hidden style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
+            <a id="RegisterMiningDutch" href="https://www.mining-dutch.nl/pools/account.php?page=register" target="_blank" style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
           <div style="padding-top: 0.2rem;" title="Your username as registered with Mining Dutch&#10;(min. 2 and max. 32 characters)">
             <label for="MiningDutchUserName">Mining Dutch user name</label>
@@ -37,7 +37,7 @@
           <br>
 
           <legend class=h6 title="You must have a registered account with NiceHash">NiceHash
-            <a id="RegisterNiceHash" href="https://www.nicehash.com/my/register" target="_blank" hidden style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
+            <a id="RegisterNiceHash" href="https://www.nicehash.com/my/register" target="_blank" style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
           <div style="padding-top: 0.2rem;" title="Your NiceHash Bitcoin wallet address (must be between 26 and 35 chars long)">
             <label for="NiceHashWallet">NiceHash Bitcoin wallet address</label>
@@ -58,7 +58,7 @@
           <br>
 
           <legend class=h6 title="You must have a registered account with ProHashing">ProHashing
-            <a id="RegisterProHashing" href="https://prohashing.com/auth/register?r=3pH68Dhj" target="_blank" hidden style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
+            <a id="RegisterProHashing" href="https://prohashing.com/auth/register?r=3pH68Dhj" target="_blank" style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
           <div style="padding-top: 0.2rem;" title="Your username as registered with ProHashing" for="ProHashingUserName">
             <label for="ProHashingUserName">ProHashing user name</label>
@@ -613,7 +613,6 @@
     document.getElementById('MiningDutchUserName').value = config.MiningDutchUserName || '';
     document.getElementById('MiningDutchAPIKey').value = config.MiningDutchAPIKey || '';
     $(document.getElementById('MiningDutchUserName')).change(function (event) {
-      document.getElementById('RegisterMiningDutch').hidden = !Boolean(document.getElementById('MiningDutchUserName').value == "" || document.getElementById('MiningDutchUserName').value == "UselessGuru");
       if (document.getElementById('pool-miningdutch')) { 
         if (!Boolean(document.getElementById('MiningDutchUserName').value)) document.getElementById('pool-miningdutch').checked = false;
         document.getElementById('pool-miningdutch').disabled = !Boolean(document.getElementById('MiningDutchUserName').value)
@@ -635,7 +634,6 @@
     document.getElementById('NiceHashOrganizationId').value = config.NiceHashOrganizationId || '';
     document.getElementById('NiceHashAPISecret').value = config.NiceHashAPISecret || '';
     $(document.getElementById('NiceHashWallet')).change(function (event) {
-      document.getElementById('RegisterNiceHash').hidden = Boolean(document.getElementById('NiceHashWallet').value);
       if (document.getElementById('pool-nicehash')) { 
         if (!Boolean(document.getElementById('NiceHashWallet').value.match(/^[0-9A-Za-z]{34}$/))) document.getElementById('pool-nicehash').checked = false;
         document.getElementById('pool-nicehash').disabled = !Boolean(document.getElementById('NiceHashWallet').value.match(/^[0-9A-Za-z]{34}$/));
@@ -649,7 +647,6 @@
     if (config.ProHashingMiningMode === 'PPLNS') document.getElementById('ProHashingMiningMode').value = config.ProHashingMiningMode;
     else document.getElementById('ProHashingMiningMode').value = 'PPS';
     $(document.getElementById('ProHashingUserName')).change(function (event) {
-      document.getElementById('RegisterProHashing').hidden = !Boolean(document.getElementById('ProHashingUserName').value == "" || document.getElementById('ProHashingUserName').value == "UselessGuru");
       if (document.getElementById('pool-prohashing')) { 
         if (!Boolean(document.getElementById('ProHashingUserName').value)) document.getElementById('pool-prohashing').checked = false;
         document.getElementById('pool-prohashing').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
@@ -1459,7 +1456,7 @@
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         } else if (config.NiceHashWallet == config.Wallets.BTC) {
-          // Nicehash wallet
+          // NiceHash wallet
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - NiceHash address must be different from your general BTC wallet.');
           $('body').css('cursor', 'default');
@@ -1471,7 +1468,7 @@
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         } else if (config.NiceHashWallet == config.Wallets.BTC) {
-          // Nicehash wallet
+          // Niceash wallet
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - NiceHash address must be different from your general BTC wallet.');
           $('body').css('cursor', 'default');

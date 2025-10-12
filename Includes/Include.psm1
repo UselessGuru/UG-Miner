@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.14
-Version date:   2025/10/07
+Version:        6.5.15
+Version date:   2025/10/12
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3119,7 +3119,7 @@ Function Initialize-AutoUpdate {
         [Console]::SetCursorPosition(28, $CursorPosition.y)
         Write-Host " ✔" -ForegroundColor Green
         $CursorPosition = $Host.UI.RawUI.CursorPosition
-        "Starting update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
+        "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
         [Console]::SetCursorPosition(25, $CursorPosition.y)
         Write-Host " ✔" -ForegroundColor Green
         . $UpdateScript
@@ -3332,17 +3332,15 @@ Function Get-AllDAGdata {
             If ($CurrencyDAGdataResponse.code -eq 200) { 
                 $CurrencyDAGdataResponse.data.PSObject.Properties.Name.Where({ $CurrencyDAGdataResponse.data.$_.enabled -and $CurrencyDAGdataResponse.data.$_.height -and ($Session.RegexAlgoHasDAG -match (Get-Algorithm $CurrencyDAGdataResponse.data.$_.algo) -or $DAGdata.Currency.psBase.Keys -contains $_) }).ForEach(
                     { 
-                        If ($Session.CurrencyAlgorithm[$Currency]) { 
-                            If ($CurrencyDAGdataResponse.data.$_.height -gt $DAGdata.Currency.$_.BlockHeight) { 
-                                $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.data.$_.height -Currency $_ -EpochReserve 2
-                                If ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
-                                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                                    $DAGdata.Currency | Add-Member $_ $CurrencyDAGdata -Force
-                                }
-                                Else { 
-                                    Write-Message -Level Warn "Failed to load DAG data for '$_' from '$Url'."
-                                }
+                        If ($CurrencyDAGdataResponse.data.$_.height -gt $DAGdata.Currency.$_.BlockHeight) { 
+                            $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.data.$_.height -Currency $_ -EpochReserve 2
+                            If ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
+                                $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                                $CurrencyDAGdata | Add-Member Url $Url -Force
+                                $DAGdata.Currency | Add-Member $_ $CurrencyDAGdata -Force
+                            }
+                            Else { 
+                                Write-Message -Level Warn "Failed to load DAG data for '$_' from '$Url'."
                             }
                         }
                     }

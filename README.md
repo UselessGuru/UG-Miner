@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.5.14 / Updated 2025/10/07
+Version 6.5.15 / Updated 2025/10/12
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -64,7 +64,8 @@ UG-Miner code is partly based on
    6. Save configuration
    7. Start mining
 
-   <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username. To mine with NiceHash you must register and use the BTC address provided by NiceHash.
+   <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username.  
+   To mine with NiceHash you must register and use the BTC address provided by NiceHash.
 
 It is recommended to run UG-Miner with local computer administrator privileges (UG-Miner_AsAdmin.bat) to ensure file permissions and firewall rules can be set without user intervention. 
 

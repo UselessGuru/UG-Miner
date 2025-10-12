@@ -17,18 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.14
-Version date:   2025/10/07
+Version:        6.5.15
+Version date:   2025/10/12
 #>
 
-# implemented auto-switch to new qhash after QTC hardfork(25 September 2025 at 01:00:00 GMT)
-# up to 10% speed improvement of qhash for NVIDIA gpu's
-# up to 25% speed improvement of qhash for AMD and NVIDIA CMP 70HX/90HX gpu's
-# fixed power readings for some AMD gpu's on Linux
+# up to 100% boost of qhash across all gpu's
+# removed phihash, progpow-veil and vprogpow (use v0.41.7 instead)
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.45.6/wildrig-multi-windows-0.45.6.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.45.8/wildrig-multi-windows-0.45.8.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -54,13 +52,10 @@ $Algorithms = @(
     @{ Algorithm = "NexaPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo nist5" } # ASIC
 #   @{ Algorithm = "Phi";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo phi" } # ASIC
-#   @{ Algorithm = "PhiHash";          Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo phihash" } # Not working
     @{ Algorithm = "ProgPowEthercore"; Type = "AMD"; Fee = @(0);      MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo progpow-ethercore" }
     @{ Algorithm = "ProgPowQuai";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo progpow-quai" }
     @{ Algorithm = "ProgPowSero";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo progpow-sero" }
     @{ Algorithm = "ProgPowTelestai";  Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo progpow-telestai" }
-    @{ Algorithm = "ProgPowVeil";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo progpow-veil" }
-    @{ Algorithm = "ProgPowVeriblock"; Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo vprogpow" }
     @{ Algorithm = "ProgPowZ";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo progpowz" }
 #   @{ Algorithm = "Pufferfish2BMB";   Type = "AMD"; Fee = @(0);      MinMemGiB = 8;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo pufferfish2" } # waiting for coin to resurrect
     @{ Algorithm = "QHash";            Type = "AMD"; Fee = @(0.05);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo qhash" }
@@ -118,13 +113,10 @@ $Algorithms = @(
     @{ Algorithm = "NexaPow";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo nist5 --watchdog" }
 #   @{ Algorithm = "Phi";              Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo phi --watchdog" } # ASIC
-#   @{ Algorithm = "PhiHash";          Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo phihash" } # Not working
     @{ Algorithm = "ProgPowEthercore"; Type = "INTEL"; Fee = @(0);      MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo progpow-ethercore --watchdog" }
     @{ Algorithm = "ProgPowQuai";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo progpow-quai --watchdog" }
     @{ Algorithm = "ProgPowSero";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo progpow-sero --watchdog" }
     @{ Algorithm = "ProgPowTelestai";  Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo progpow-telestai --watchdog" }
-    @{ Algorithm = "ProgPowVeil";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
-    @{ Algorithm = "ProgPowVeriblock"; Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
     @{ Algorithm = "ProgPowZ";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo progpowz --watchdog" }
 #   @{ Algorithm = "Pufferfish2BMB";   Type = "INTEL"; Fee = @(0);      MinMemGiB = 8;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo pufferfish2 --watchdog" } # waiting for coin to resurrect
     @{ Algorithm = "QHash";            Type = "INTEL"; Fee = @(0.05);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo qhash" }
@@ -182,13 +174,10 @@ $Algorithms = @(
     @{ Algorithm = "NexaPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo nist5 --watchdog" } # ASIC
 #   @{ Algorithm = "Phi";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo phi --watchdog" } # ASIC
-#   @{ Algorithm = "PhiHash";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.24; MinerSet = 2; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo phihash" } # Not working
     @{ Algorithm = "ProgPowEthercore"; Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo progpow-ethercore --watchdog" }
     @{ Algorithm = "ProgPowQuai";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo progpow-quai --watchdog" }
     @{ Algorithm = "ProgPowSero";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo progpow-sero --watchdog" }
     @{ Algorithm = "ProgPowTelestai";  Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @();           Arguments = " --algo progpow-telestai --watchdog" }
-    @{ Algorithm = "ProgPowVeil";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
-    @{ Algorithm = "ProgPowVeriblock"; Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
     @{ Algorithm = "ProgPowZ";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 1; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo progpowz --watchdog" }
 #   @{ Algorithm = "Pufferfish2BMB";   Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 8;    MinerSet = 2; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo pufferfish2 --watchdog" } # waiting for coin to resurrect
     @{ Algorithm = "QHash";            Type = "NVIDIA"; Fee = @(0.05);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo qhash --watchdog" }

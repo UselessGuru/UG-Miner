@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.14
-Version date:   2025/10/07
+Version:        6.5.15
+Version date:   2025/10/12
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$|^RDNA4$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
@@ -44,7 +44,8 @@ $Algorithms = @(
     @{ Algorithm = "Lyra2vc0ban";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban" }
     @{ Algorithm = "PadiHash";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash" }
     @{ Algorithm = "PawelHash";        Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-pawelhash" }
-#   @{ Algorithm = "Phi5";             Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo phi5" } # Algorithm is dead
+    @{ Algorithm = "ProgPowVeil";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil" }
+    @{ Algorithm = "ProgPowVeriblock"; Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow" }
     @{ Algorithm = "RWAHash";          Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash" }
     @{ Algorithm = "Xevan";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo xevan --gpu-threads 1" } # No hashrate on time for old GPUs
 
@@ -62,7 +63,8 @@ $Algorithms = @(
     @{ Algorithm = "Lyra2vc0ban";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban --watchdog" }
     @{ Algorithm = "PadiHash";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash --watchdog" }
     @{ Algorithm = "PawelHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @();           Arguments = " --algo glt-pawelhash --watchdog" } # Trex-v0.26.8 is fastest
-#   @{ Algorithm = "Phi5";             Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo phi5 --watchdog" } # Algorithm is dead
+    @{ Algorithm = "ProgPowVeil";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
+    @{ Algorithm = "ProgPowVeriblock"; Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
     @{ Algorithm = "RWAHash";          Type = "INTEL"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash --watchdog" }
     @{ Algorithm = "Xevan";            Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo xevan --watchdog" }
 
@@ -81,7 +83,8 @@ $Algorithms = @(
     @{ Algorithm = "Lyra2vc0ban";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban --watchdog" }
     @{ Algorithm = "PadiHash";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash --watchdog" }
     @{ Algorithm = "PawelHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @();           Arguments = " --algo glt-pawelhash --watchdog" } # Trex-v0.26.8 is fastest
-#   @{ Algorithm = "Phi5";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo phi5 --watchdog" } # Algorithm is dead
+    @{ Algorithm = "ProgPowVeil";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
+    @{ Algorithm = "ProgPowVeriblock"; Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
     @{ Algorithm = "RWAHash";          Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash --watchdog" }
     @{ Algorithm = "Xevan";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo xevan --watchdog" }
 )

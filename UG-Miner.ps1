@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.5.14
-Version date:   2025/10/07
+Version:        6.5.15
+Version date:   2025/10/12
 #>
 
 using module .\Includes\Include.psm1
@@ -283,9 +283,9 @@ Param(
     [String]$WorkerName = [System.Net.Dns]::GetHostName() # Do not allow '.'
 )
 
-Set-Location (Split-Path $MyInvocation.MyCommand.Path)
-
 [ConsoleModeSettings]::DisableQuickEditMode()
+
+Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
 $ErrorLogFile = ".\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 $RecommendedPWSHversion = [Version]"7.5.3"
@@ -325,7 +325,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.5.14"
+    Version      = [System.Version]"6.5.15"
 }
 
 $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Branding.Version)"
@@ -508,31 +508,38 @@ If (Test-Path -LiteralPath $Session.VertHashDatPath -PathType Leaf) {
     Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Session.VertHashDatPath)'..."
     $VertHashDatCursorPosition = $Session.CursorPosition
 }
-# Start-ThreadJob needs to be run in any case to set number of threads
+# Start-ThreadJob needs to be run in any case to set number of threads (# of devices + downloader)
 $VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Session.MainPath)'")) -ScriptBlock { If (Test-Path -LiteralPath ".\Cache\VertHash.dat" -PathType Leaf) { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
 
 Write-Message -Level Verbose "Importing modules..."
+[Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.y)
 Try { 
     Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Stop
+    Write-Host "    (~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
 }
 Catch { 
     If (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
     Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
     Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
+    Write-Host "    (~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
 }
 
 Try { 
     Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Stop
+    Write-Host ", ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
 }
 Catch { 
     If (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
     Add-Type -Path ".\Includes\CPUID.cs" -OutputAssembly ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
     Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
+    Write-Host ", ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
 }
 
 Import-Module NetSecurity -ErrorAction Ignore
+Write-Host ", NetSecurity" -ForegroundColor Green -NoNewline
 Import-Module Defender -ErrorAction Ignore -SkipEditionCheck
-[Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+Write-Host ", Defender)" -ForegroundColor Green
+[Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.y)
 Write-Host " ✔" -ForegroundColor Green
 
 Write-Message -Level Verbose "Setting variables..."
@@ -671,8 +678,6 @@ Function MainLoop {
     Else { 
         (Get-Process -Id $PID).PriorityClass = "Normal"
     }
-
-    If ($Session.ConfigurationHasChangedDuringUpdate) { $Session.NewMiningStatus = $Session.MiningStatus = "Idle" }
 
     If ($Session.ConfigRunning.BalancesTrackerPollInterval -gt 0 -and $Session.MiningStatus -ne "Idle") { Start-BalancesTracker } Else { Stop-BalancesTracker }
 
@@ -1217,7 +1222,7 @@ Function MainLoop {
 
                 If ($Session.UIstyle -eq "full" -or $Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement) { 
 
-                    If ($Session.UIstyle -ne "full") { Write-Host -ForegroundColor DarkYellow "$(If ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
+                    If ($Session.NewMiningStatus -eq "running" -and $Session.UIstyle -ne "full") { Write-Host -ForegroundColor DarkYellow "$(If ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(If ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(If ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
 
                     [System.Collections.ArrayList]$MinersActivatedLast24Hrs = $Session.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now })
 
@@ -1302,8 +1307,9 @@ Function MainLoop {
 }
 
 If ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { 
-    $Session.NewMiningStatus = "Idle" # Must click 'Start mining' in GUI
     If ($Session.FreshConfig) { 
+        # Must click 'Start mining' in GUI
+        $Session.NewMiningStatus = "Idle"
         Write-Host ""
         Write-Message -Level Warn "No configuration file found. Edit and save your configuration using the configuration editor (http://localhost:$($Session.ConfigRunning.APIport)/configedit.html)"
         $Session.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
