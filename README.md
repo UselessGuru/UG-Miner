@@ -219,7 +219,9 @@ A separate section can be added to for each pool. If a pool is listed in this fi
 
 **Available per pool configuration options**
 
-- Algorithm [ALGORITHM]: List of included or excluded algorithms per pool
+- Algorithm [ALGORITHM]:  
+  List of included or excluded algorithms per pool
+- Currency [CURRENCY]: List of included or excluded currencies per pool
 - Currency [CURRENCY]: List of included or excluded currencies per pool
 - EarningsAdjustmentFactor [Number]: This adds a multiplicator on estimations presented by the pool  
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
