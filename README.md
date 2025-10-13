@@ -219,19 +219,27 @@ A separate section can be added to for each pool. If a pool is listed in this fi
 
 **Available per pool configuration options**
 
-- Algorithm [ALGORITHM]:  
+- Algorithm [ALGORITHM]  
   List of included or excluded algorithms per pool
-- Currency [CURRENCY]: List of included or excluded currencies per pool
-- Currency [CURRENCY]: List of included or excluded currencies per pool
-- EarningsAdjustmentFactor [Number]: This adds a multiplicator on estimations presented by the pool  
+- Currency [CURRENCY]  
+  List of included or excluded currencies per pool
+- EarningsAdjustmentFactor [Number]  
+  This adds a multiplicator on estimations presented by the pool  
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
-- ExcludeRegion [REGION]: One or more of 'Australia', 'Asia', 'Brazil', 'Canada', 'Europe', 'HongKong', 'India', 'Kazakhstan', 'Russia', 'USA East', 'USA West'
-- MinWorker [Number]: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
-- PayoutThreshold [CURRENCY: Value]: Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
-- PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hashrate reported in the API
-- SSL [ALWAYS|NEVER|PREFER]: One of 'Always' (pools that do not allow SSL connection are marked as unavailable), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection)
-- SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
-- Wallet [CURRENCY: Wallet address]: Your wallet address for [CURRENCY]; some pools, e.g. Hiveon, require wallets in each supported currency
+- ExcludeRegion [REGION]  
+  One or more of 'Australia', 'Asia', 'Brazil', 'Canada', 'Europe', 'HongKong', 'India', 'Kazakhstan', 'Russia', 'USA East', 'USA West'
+- MinWorker [Number]  
+  Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
+- PayoutThreshold [CURRENCY: Value]  
+  Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
+- PoolAllow0Hashrate [true|false]  
+  Allow mining to the pool even when there is no 0 hashrate reported in the API
+- SSL [ALWAYS|NEVER|PREFER]  
+  One of 'Always' (pools that do not allow SSL connection are marked as unavailable), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection)
+- SSLallowSelfSignedCertificate [true|false]  
+  If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
+- Wallet [CURRENCY: Wallet address]  
+  Your wallet address for [CURRENCY]; some pools, e.g. Hiveon, require wallets in each supported currency
 
 **Usage**
 
