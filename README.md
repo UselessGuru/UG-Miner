@@ -212,8 +212,9 @@ Before starting a miner executable UG-Miner will try to launch one of the follow
 
 **This is for advanced users. Do not use if you do not know what you are doing.**
 
-See '[UG-Miner directory]\Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of '[UG-Miner directory]\Config\PoolsConfig.json'.  
-A separate section can be added to '[UG-Miner directory]\Config\PoolsConfig.json' for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built-in default values will be used.
+UG-Miner stores pool specific configuration information in the file '[UG-Miner directory]\Config\PoolsConfig.json'.  
+See '[UG-Miner directory]\Data\PoolsConfig-Template.json' for the basic file structure and all available pool configuration options.  
+A separate section can be added to for each pool. If a pool is listed in this file, the specific settings will be taken into account, otherwise the built-in default values will be used.
 
 
 **Available per pool configuration options**
