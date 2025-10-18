@@ -4120,6 +4120,7 @@ Function Stop-APIserver {
                 }
             }
             $Session.APIserver.Stop()
+            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport)."
         }
 
         $Session.APIserver.Close()
@@ -4127,8 +4128,6 @@ Function Stop-APIserver {
 
         $Global:APIrunspace.PowerShell.Stop()
         $Global:APIrunspace.PSObject.Properties.Remove("StartTime")
-
-        Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport)."
 
         $Session.Remove("APIport")
         $Session.Remove("APIversion")
