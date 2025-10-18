@@ -1,6 +1,9 @@
 Changelog UG-Miner 6.5.16 2025/10/19
 ====================================
 
+Fixes:
+- Core / Includes.psm1: Do not show "Failed to load DAG data from 'https://prohashing.com/api/v1/currencies'." for some non-DAG currencies
+
 Miner changes:
 - OneZeroMiner-v1.6.3
 - Wildrig-v0.45.9

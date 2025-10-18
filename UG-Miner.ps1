@@ -589,9 +589,9 @@ $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 $Session.SuspendCycle = $false
 $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-$Session.RegexAlgoIsEthash = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^UbqHash$"
+$Session.RegexAlgoIsEthash = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^EthashSHA256$|^UbqHash$"
 $Session.RegexAlgoIsProgPow = "^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^PhiHash$|^ProgPow|^SCCpow$"
-$Session.RegexAlgoHasDynamicDAG = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^Octopus$|^PhiHash$|^ProgPow|^SCCpow$|^UbqHash$"
+$Session.RegexAlgoHasDynamicDAG = "^Autolykos2$|^EtcHash$|^Ethash$|^EthashB3$|^EthashSHA256$|^EvrProgPow$|^FiroPow$|^KawPow$|^MeowPow$|^Octopus$|^PhiHash$|^ProgPow|^SCCpow$|^UbqHash$"
 $Session.RegexAlgoHasStaticDAG = "^FishHash$|^HeavyHashKarlsenV2$"
 $Session.RegexAlgoHasDAG = (($Session.RegexAlgoHasDynamicDAG -split "\|") + ($Session.RegexAlgoHasStaticDAG -split "\|") | Sort-Object) -join "|"
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)

@@ -3339,7 +3339,7 @@ Function Get-AllDAGdata {
                                 $CurrencyDAGdata | Add-Member Url $Url -Force
                                 $DAGdata.Currency | Add-Member $_ $CurrencyDAGdata -Force
                             }
-                            Else { 
+                            ElseIf ($CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                 Write-Message -Level Warn "Failed to load DAG data for '$_' from '$Url'."
                             }
                         }
@@ -4046,7 +4046,7 @@ Function Restart-APIserver {
 
 Function Start-APIserver { 
 
-    If ($Session.ConfigRunning.APIport -ne $Session.APIport) { 
+    If ($Session.APIport -and $Session.ConfigRunning.APIport -ne $Session.APIport) { 
         Stop-APIserver
     }
 
