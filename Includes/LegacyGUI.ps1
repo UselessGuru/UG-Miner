@@ -1771,7 +1771,7 @@ $LegacyGUIform.Add_Load(
 
 $LegacyGUIform.Add_FormClosing(
     { 
-        If ($KeyPressed.KeyChar -ne "4" -or $KeyPressed.KeyChar -ne "q") { # 4: Closing triggered via console window
+        If ($KeyPressed.KeyChar -ne "4" -and $KeyPressed.KeyChar -ne "q") { # 4: Closing triggered via console window
             If (-not $Session.ConfigRunning.ShowConsole) { # If console is not visible there is no user friendly way to end script
                 $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
                 If ($MsgBoxInput -eq "No") { 
