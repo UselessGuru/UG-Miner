@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.15
-Version date:   2025/10/12
+Version:        6.5.16
+Version date:   2025/10/19
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -367,7 +367,7 @@ Class Miner : IDisposable {
     [Double]$Profit_Bias = [Double]::NaN
     [Boolean]$ReadPowerConsumption
     [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the miner not available?
-    [Boolean]$Restart = $false 
+    [Boolean]$Restart = $false
     hidden [DateTime]$StatStart
     hidden [DateTime]$StatEnd
     [MinerStatus]$Status = [MinerStatus]::Idle
@@ -911,7 +911,7 @@ public static class Kernel32
                 ConhostProcessId = $ProcessInfo.dwProcessId
                 MinerProcessId = $null
             }
-            Return 
+            Return
         }
 
         [PSCustomObject]@{ 
@@ -2628,7 +2628,7 @@ Function Get-Device {
                 If ($Session."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Type_Id.($Device.Type) ++ }
 
                 # Read CPU features
-                $Device.CPUfeatures = $Session.CPUfeatures 
+                $Device.CPUfeatures = $Session.CPUfeatures
 
                 # Add raw data
                 $Device.CIM = $Device_CIM
@@ -2705,7 +2705,7 @@ Function Get-Device {
         { 
             Try { 
                 $OpenCLplatform = $_
-                # Skip devices with negative PCIbus 
+                # Skip devices with negative PCIbus
                 ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).Where({ $_.PCIbus -ge 0 }).ForEach({ $_ | ConvertTo-Json -EnumsAsStrings -WarningAction SilentlyContinue }) | Select-Object -Unique).ForEach(
                     { 
                         $Device_OpenCL = $_ | ConvertFrom-Json
@@ -3113,13 +3113,13 @@ Function Initialize-AutoUpdate {
 
     # Download update script
     $CursorPosition = $Host.UI.RawUI.CursorPosition
-    "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
+    "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
     Try { 
         Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
         [Console]::SetCursorPosition(28, $CursorPosition.y)
         Write-Host " ✔" -ForegroundColor Green
         $CursorPosition = $Host.UI.RawUI.CursorPosition
-        "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose 
+        "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
         [Console]::SetCursorPosition(25, $CursorPosition.y)
         Write-Host " ✔" -ForegroundColor Green
         . $UpdateScript
@@ -3141,7 +3141,7 @@ Function Start-LogReader {
             $LogViewerMainWindowHandle = (Get-Process -Id $SnaketailProcess.ProcessId).MainWindowHandle
             If (@($LogViewerMainWindowHandle).Count -eq 1) { 
                 Try { 
-                    [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 6) | Out-Null # SW_MINIMIZE 
+                    [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 6) | Out-Null # SW_MINIMIZE
                     [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 9) | Out-Null # SW_RESTORE
                 }
                 Catch { }

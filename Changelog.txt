@@ -1,8 +1,16 @@
+Changelog UG-Miner 6.5.16 2025/10/19
+====================================
+
+Miner changes:
+- OneZeroMiner-v1.6.3
+- Wildrig-v0.45.9
+
+
 Changelog UG-Miner 6.5.15 2025/10/12
 ====================================
 
 Fixes:
-- Core / Includes.psm1: Fixed 'Failed to load DAG data from 'https://prohashing.com/api/v1/currencies' - Error: Index operation failed; the array index evaluated to null.'
+- Core / Includes.psm1: Fixed "Failed to load DAG data from 'https://prohashing.com/api/v1/currencies' - Error: Index operation failed; the array index evaluated to null."
 
 Improvements:
 - APIserver: Minor code optimizations

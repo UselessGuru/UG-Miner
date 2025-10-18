@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.5.15 / Updated 2025/10/12
+Version 6.5.16 / Updated 2025/10/19
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -212,23 +212,34 @@ Before starting a miner executable UG-Miner will try to launch one of the follow
 
 **This is for advanced users. Do not use if you do not know what you are doing.**
 
-See '[UG-Miner directory]\Data\PoolsConfig-Template.json' for all available pool configuration options and the basic file structure of '[UG-Miner directory]\Config\PoolsConfig.json'.  
-A separate section can be added to '[UG-Miner directory]\Config\PoolsConfig.json' for each pool. If a pool is listed in this file, the specific settings will be taken into account. If not, the built-in default values will be used.
+UG-Miner stores pool specific configuration information in the file '[UG-Miner directory]\Config\PoolsConfig.json'.  
+See '[UG-Miner directory]\Data\PoolsConfig-Template.json' for the basic file structure and all available pool configuration options.  
+A separate section can be added to for each pool. If a pool is listed in this file, the specific settings will be taken into account, otherwise the built-in default values will be used.
 
 
 **Available per pool configuration options**
 
-- Algorithm [ALGORITHM]: List of included or excluded algorithms per pool
-- Currency [CURRENCY]: List of included or excluded currencies per pool
-- EarningsAdjustmentFactor [Number]: This adds a multiplicator on estimations presented by the pool  
+- Algorithm [ALGORITHM]  
+  List of included or excluded algorithms per pool
+- Currency [CURRENCY]  
+  List of included or excluded currencies per pool
+- EarningsAdjustmentFactor [Number]  
+  This adds a multiplicator on estimations presented by the pool  
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
-- ExcludeRegion [REGION]: One or more of 'Australia', 'Asia', 'Brazil', 'Canada', 'Europe', 'HongKong', 'India', 'Kazakhstan', 'Russia', 'USA East', 'USA West'
-- MinWorker [Number]: Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
-- PayoutThreshold [CURRENCY: Value]: Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
-- PoolAllow0Hashrate [true|false]: Allow mining to the pool even when there is no 0 hashrate reported in the API
-- SSL [ALWAYS|NEVER|PREFER]: One of 'Always' (pools that do not allow SSL connection are marked as unavailable), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection)
-- SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
-- Wallet [CURRENCY: Wallet address]: Your wallet address for [CURRENCY]; some pools, e.g. Hiveon, require wallets in each supported currency
+- ExcludeRegion [REGION]  
+  One or more of 'Australia', 'Asia', 'Brazil', 'Canada', 'Europe', 'HongKong', 'India', 'Kazakhstan', 'Russia', 'USA East', 'USA West'
+- MinWorker [Number]  
+  Minimum workers mining the algorithm at the pool; if less miners are mining the algorithm then the pool will be markes as unavailable
+- PayoutThreshold [CURRENCY: Value]  
+  Minimum balance required for payout (to use same value for ALL currencies use [*] as currency)
+- PoolAllow0Hashrate [true|false]  
+  Allow mining to the pool even when there is no 0 hashrate reported in the API
+- SSL [ALWAYS|NEVER|PREFER]  
+  One of 'Always' (pools that do not allow SSL connection are marked as unavailable), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection)
+- SSLallowSelfSignedCertificate [true|false]  
+  If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
+- Wallet [CURRENCY: Wallet address]  
+  Your wallet address for [CURRENCY]; some pools, e.g. Hiveon, require wallets in each supported currency
 
 **Usage**
 

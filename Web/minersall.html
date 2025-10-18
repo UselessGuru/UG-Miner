@@ -208,7 +208,7 @@
                 $payload = {
                   "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
                   "Type": "Hashrate",
-                  "Value": 0 
+                  "Value": 0
                 };
                 $(".modal-body").load($url, $payload, function() {
                   $(".modal-title").text("Mark miner as failed");

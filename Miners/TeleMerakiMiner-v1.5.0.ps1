@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.15
-Version date:   2025/10/12
+Version:        6.5.16
+Version date:   2025/10/19
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -52,7 +52,7 @@ If ($Algorithms) {
                         # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                         ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB 
+                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                             If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"

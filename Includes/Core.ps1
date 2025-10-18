@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.5.15
-Version date:   2025/10/12
+Version:        6.5.16
+Version date:   2025/10/19
 #>
 
 using module .\Include.psm1
@@ -253,7 +253,7 @@ Try {
                     [Array]$Session.DonationLog += [PSCustomObject]@{ 
                         Start = $Session.DonationStart
                         End   = $Session.DonationEnd
-                        Name  = $Session.DonateUsername 
+                        Name  = $Session.DonateUsername
                     }
                     $Session.DonationLog | Export-CSV -LiteralPath ".\Logs\DonationLog.csv" -Force -ErrorAction Ignore
                     $Session.DonationPoolsConfig = $null
@@ -267,7 +267,7 @@ Try {
             # Skip some stuff when
             # - not donating and
             # - configuration unchanged and
-            # - we have pools and 
+            # - we have pools and
             # - the previous cycle was less than half a cycle duration
             If ($Session.DonationRunning -or $Session.ConfigReadTimestamp -gt $Session.Timer -or -not $Session.Pools -or $Session.PoolDataCollectedTimeStamp.AddSeconds($Session.ConfigRunning.Interval / 2) -lt $Session.Timer) { 
 
@@ -395,7 +395,7 @@ Try {
                                 If ($_.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     If (-not $Session.PoolData.($_.Name).ProfitSwitching -and $Session.DAGdata.Currency.($_.Currency).BlockHeight) { 
                                         $_.BlockHeight = $Session.DAGdata.Currency.($_.Currency).BlockHeight
-                                        $_.DAGsizeGiB  = $Session.DAGdata.Currency.($_.Currency).DAGsize / 1GB 
+                                        $_.DAGsizeGiB  = $Session.DAGdata.Currency.($_.Currency).DAGsize / 1GB
                                         $_.Epoch       = $Session.DAGdata.Currency.($_.Currency).Epoch
                                     }
                                     ElseIf ($Session.DAGdata.Algorithm.($_.Algorithm).BlockHeight) { 

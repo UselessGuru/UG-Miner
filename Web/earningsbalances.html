@@ -424,7 +424,7 @@
                                 if (item.Balance && item.PayoutThresholdCurrency && rates[item.Currency] && rates[item.PayoutThresholdCurrency]) {
                                   var percentage = (item.Balance / item.PayoutThreshold * rates[item.Currency][item.PayoutThresholdCurrency] * 100 * factor).toFixed(2);
                                 } else {
-                                  // No exchangerate, cannot calculate percentage 
+                                  // No exchangerate, cannot calculate percentage
                                   var percentage = null;
                                 }
                               } else { 
