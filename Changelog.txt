@@ -3,7 +3,7 @@ Changelog UG-Miner 6.5.1 2025/10/25
 
 Enhancements:
 - Core / Console window: Add '5' key to enable / disable API and web GUI
-- Web GUI / Conbfiguration editor: Add checkboxes to toggle balances tracker per pool
+- Web GUI / Configuration editor: Add checkboxes to toggle balances tracker per pool
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
