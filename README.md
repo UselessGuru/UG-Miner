@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.5.16 / Updated 2025/10/19
+Version 6.5.17 / Updated 2025/10/25
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -22,7 +22,6 @@ UG-Miner code is partly based on
 
 - NPlusMiner<sup>(*)</sup>  
   https://github.com/MrPlusGH/NPlusMiner
-  
   <sup>(*)</sup>These projects are no longer maintained
 
 ## Main features:
@@ -258,10 +257,12 @@ Supported pools:
 
  - HashCryptos
  - Hiveon
- - ~~MiningDutch~~ (data provided in pool API is incorrect)
+ - MiningDutch <sup>(*)</sup>
  - NiceHash
  - ProHashing
  - Zpool
+
+<sup>(*)</sup> Balances tracking is disabled by default. Collecting balances data is very time consuming.
 
 ## Miner switching log
 
@@ -271,11 +272,12 @@ A simple miner switching log in csv format is written to '[UG-Miner directory]\L
 
 In the main text window (session console) the following hot keys are supported:
 ```
-Hot key legend:
+Hot key legend:                              Status:
 1: Toggle listing pool balances              [off]
 2: Toggle listing all optimal miners         [off]
 3: Toggle UI style [full or light]           [light]
-4: Toggle use of legacy GUI                  [enabled]
+4: Toggle legacy GUI                         [enabled]
+5: Toggle API & web GUI                      [enabled on port 3999]
 
 a: Toggle 'Accuracy' column visibility       [on]
 c: Toggle 'Power cost' column visibility     [on]
@@ -291,6 +293,8 @@ t: Toggle 'Profit' column visibility         [on]
 u: Toggle 'User' column visibility           [off]
 w: Toggle 'Power (W)' column visibility      [on]
 y: Toggle 'Currency' column visibility       [on]
+
+q: Quit UG-Miner
 ```
 UI style can be set to 'light' or 'full':
 
@@ -306,8 +310,8 @@ UI style automatically switches to full during benchmarking or when measuring po
 
 Windows 10.x and PowerShell Version 7.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.5.3.  
-[Download Installer for version 7.5.3](https://github.com/PowerShell/PowerShell/releases/download/v7.5.3/PowerShell-7.5.3-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.5.4.  
+[Download Installer for version 7.5.4](https://github.com/PowerShell/PowerShell/releases/download/v7.5.4/PowerShell-7.5.4-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
