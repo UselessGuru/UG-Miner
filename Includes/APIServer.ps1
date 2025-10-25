@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.5.16
-Version date:   2025/10/19
+Version:        6.5.17
+Version date:   2025/10/25
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.16"
+$APIversion = "6.0.18"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -585,7 +585,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                     }
                 }
                 Remove-Variable Pool
-                If ($Data.Count) {
+                If ($Data.Count) { 
                     $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"

@@ -17,17 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.16
-Version date:   2025/10/19
+Version:        6.5.17
+Version date:   2025/10/25
 #>
 
-# significant improvements of qhash across all gpu's
-# decreased qhash dev-fee to 3%
-# implemented internal watchdog to restart the miner in case of stuck connection
+# slightly increased qhash hashrate for AMD RDNA and NVIDIA Turing, Ampere, Ada and Blackwell gpu's
+# implemented additional checks for stuck connection
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.45.9/wildrig-multi-windows-0.45.9.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.46.2/wildrig-multi-windows-0.46.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"

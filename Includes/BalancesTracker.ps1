@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.5.16
-Version date:   2025/10/19
+Version:        6.5.17
+Version date:   2025/10/25
 #>
 
 using module .\Include.psm1
@@ -70,7 +70,6 @@ Do {
 
     # Get pools to track
     $PoolsToTrack = @((Get-ChildItem -File ".\Balances\*.ps1" -ErrorAction Ignore).BaseName.Where({ $_ -notin (Get-PoolBaseName $Config.BalancesTrackerExcludePools) }))
-    If ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = $PoolsToTrack -notmatch "MiningDutch"; $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
 
     # Check internet connection
     $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
@@ -81,6 +80,7 @@ Do {
         # Fetch balances data from pools
         If ($PoolsToTrack) { 
             Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
+            If ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = [String[]]($PoolsToTrack -notmatch "MiningDutch"); $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
             $PoolsToTrack.ForEach(
                 { 
                     Write-Message -Level Debug "Balances tracker for pool '$_': Start building balances objects"

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.16
-Version date:   2025/10/19
+Version:        6.5.17
+Version date:   2025/10/25
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -90,11 +90,11 @@ Function Resize-Form {
         $Session.TextBoxSystemLog.Height = ($LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.ActiveMinersLabel.Height - $LegacyGUIelements.ActiveMinersDGV.Height - $LegacyGUIelements.SystemLogLabel.Height - 95)
         If (-not $Session.TextBoxSystemLog.SelectionLength) { $Session.TextBoxSystemLog.ScrollToCaret() }
 
-        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.MinersLabel.Height - $LegacyGUIelements.MinersPanel.Height - 74
-        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.PoolsLabel.Height - $LegacyGUIelements.PoolsPanel.Height - 74
-        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 74
-        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 77
-        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 77
+        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.MinersLabel.Height - $LegacyGUIelements.MinersPanel.Height - 76
+        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.PoolsLabel.Height - $LegacyGUIelements.PoolsPanel.Height - 76
+        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 76
+        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 80
+        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 80
     }
     Catch { 
         Start-Sleep 0
@@ -138,9 +138,9 @@ Function CheckBoxSwitchingLog_Click {
 Function Set-DataGridViewDoubleBuffer { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [System.Windows.Forms.DataGridView]$Grid,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Boolean]$Enabled
     )
 
@@ -152,7 +152,7 @@ Function Set-DataGridViewDoubleBuffer {
 Function Set-TableColor { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         $DataGridView
     )
     If ($Session.ConfigRunning.UseColorForMinerStatus) { 
@@ -162,6 +162,7 @@ Function Set-TableColor {
             }
         }
     }
+    $DataGridView.ClearSelection()
 }
 
 # Function Set-WorkerColor { 
@@ -197,7 +198,7 @@ Function Update-TabControl {
             $LegacyGUIelements.ContextMenuStripItem5.Text = "Enable miner"
             $LegacyGUIelements.ContextMenuStripItem5.Visible = $true
             $LegacyGUIelements.ContextMenuStripItem6.Visible = $false
-
+4
             If ($Session.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is stopped"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
@@ -213,7 +214,6 @@ Function Update-TabControl {
             ElseIf ($Session.MinersBest) { 
                 If (-not $LegacyGUIelements.ActiveMinersDGV.SelectedRows) { 
                     $LegacyGUIelements.ActiveMinersDGV.BeginInit()
-                    $LegacyGUIelements.ActiveMinersDGV.ClearSelection()
                     $LegacyGUIelements.ActiveMinersDGV.DataSource = $Session.MinersBest | Select-Object @(
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
@@ -227,10 +227,9 @@ Function Update-TabControl {
                         @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
                         @{ Name = "Hashrate (live)"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.WorkersRunning.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
                         @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
-                        @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
+                        # @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     ) | Out-DataTable
                     $LegacyGUIelements.ActiveMinersDGV.Sort($LegacyGUIelements.ActiveMinersDGV.Columns[2], [System.ComponentModel.ListSortDirection]::Ascending)
-                    $LegacyGUIelements.ActiveMinersDGV.ClearSelection()
                     $LegacyGUIelements.ActiveMinersLabel.Text = "Active miners updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.ActiveMinersDGV.Rows.count) miner$(If ($LegacyGUIelements.ActiveMinersDGV.Rows.count -ne 1) { "s" }))"
 
                     $LegacyGUIelements.ActiveMinersDGV.Columns[0].Visible = $false
@@ -238,20 +237,19 @@ Function Update-TabControl {
                     If (-not $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged -and $LegacyGUIelements.ActiveMinersDGV.Columns) { 
                         $LegacyGUIelements.ActiveMinersDGV.Columns[2].FillWeight = 45 + ($Session.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                         $LegacyGUIelements.ActiveMinersDGV.Columns[3].FillWeight = 190
-                        $LegacyGUIelements.ActiveMinersDGV.Columns[4].FillWeight = 55; $LegacyGUIelements.ActiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.ActiveMinersDGV.Columns[5].FillWeight = 55; $LegacyGUIelements.ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.ActiveMinersDGV.Columns[5].Visible = $Session.CalculatePowerCost
-                        $LegacyGUIelements.ActiveMinersDGV.Columns[6].FillWeight = 55; $LegacyGUIelements.ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.ActiveMinersDGV.Columns[6].Visible = $Session.CalculatePowerCost
-                        $LegacyGUIelements.ActiveMinersDGV.Columns[7].FillWeight = 55; $LegacyGUIelements.ActiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.ActiveMinersDGV.Columns[7].Visible = $Session.CalculatePowerCost
+                        $LegacyGUIelements.ActiveMinersDGV.Columns[4].FillWeight = 52; $LegacyGUIelements.ActiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.ActiveMinersDGV.Columns[5].FillWeight = 52; $LegacyGUIelements.ActiveMinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.ActiveMinersDGV.Columns[5].Visible = $Session.CalculatePowerCost
+                        $LegacyGUIelements.ActiveMinersDGV.Columns[6].FillWeight = 52; $LegacyGUIelements.ActiveMinersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.ActiveMinersDGV.Columns[6].Visible = $Session.CalculatePowerCost
+                        $LegacyGUIelements.ActiveMinersDGV.Columns[7].FillWeight = 52; $LegacyGUIelements.ActiveMinersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.ActiveMinersDGV.Columns[7].Visible = $Session.CalculatePowerCost
                         $LegacyGUIelements.ActiveMinersDGV.Columns[8].FillWeight = 60 + ($Session.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 30
                         $LegacyGUIelements.ActiveMinersDGV.Columns[9].FillWeight = 45 + ($Session.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25
                         $LegacyGUIelements.ActiveMinersDGV.Columns[10].FillWeight = 45 + ($Session.MinersBest.ForEach({ $_.Workers.Count }) | Measure-Object -Maximum).Maximum * 25; $LegacyGUIelements.ActiveMinersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.ActiveMinersDGV.Columns[11].FillWeight = 50; $LegacyGUIelements.ActiveMinersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.ActiveMinersDGV.Columns[12].FillWeight = 50; $LegacyGUIelements.ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
+                        # $LegacyGUIelements.ActiveMinersDGV.Columns[12].FillWeight = 50; $LegacyGUIelements.ActiveMinersDGV.Columns[12].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[12].HeaderCell.Style.Alignment = "MiddleRight"
 
                         $LegacyGUIelements.ActiveMinersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     $LegacyGUIelements.ActiveMinersDGV.EndInit()
-                    Set-TableColor -DataGridView $LegacyGUIelements.ActiveMinersDGV
                 }
             }
             Else { 
@@ -264,9 +262,9 @@ Function Update-TabControl {
 
             Function Get-NextColor { 
                 Param (
-                    [Parameter(Mandatory = $true)]
+                    [Parameter (Mandatory = $true)]
                     [Byte[]]$Color,
-                    [Parameter(Mandatory = $true)]
+                    [Parameter (Mandatory = $true)]
                     [Int[]]$Factors
                 )
 
@@ -370,14 +368,14 @@ Function Update-TabControl {
                         @{ Name = "Avg. $($Session.ConfigRunning.FIATcurrency)/24 hrs"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
                         @{ Name = "Avg. $($Session.ConfigRunning.FIATcurrency)/7 days"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
                         @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
-                        @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Session.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String]($_.PayoutThreshold * $mBTCfactor), $PayoutThresholdCurrency } } # Cast to string to avoid extra decimal places
+                        @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Session.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String](("{0:N$(Get-DecimalsFromValue ($_.PayoutThreshold * $mBTCfactor) $Session.ConfigRunning.DecimalsMax)}" -f [float]($_.PayoutThreshold * $mBTCfactor)) -replace "0*$" -replace "\.$") <# Cast to string to avoid extra decimal places #>, $PayoutThresholdCurrency } }
                     ) | Out-DataTable
 
                     $LegacyGUIelements.BalancesDGV.Sort($LegacyGUIelements.BalancesDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
 
                     If ($LegacyGUIelements.BalancesDGV.Columns) { 
                         $LegacyGUIelements.BalancesDGV.Columns[0].Visible = $false
-                        $LegacyGUIelements.BalancesDGV.Columns[1].FillWeight = 120
+                        $LegacyGUIelements.BalancesDGV.Columns[1].FillWeight = 100
                         $LegacyGUIelements.BalancesDGV.Columns[2].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[2].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.BalancesDGV.Columns[3].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[3].Visible = $Session.ConfigRunning.BalancesShowSums
                         $LegacyGUIelements.BalancesDGV.Columns[4].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[4].Visible = $Session.ConfigRunning.BalancesShowSums
@@ -387,8 +385,8 @@ Function Update-TabControl {
                         $LegacyGUIelements.BalancesDGV.Columns[8].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[8].Visible = $Session.ConfigRunning.BalancesShowAverages
                         $LegacyGUIelements.BalancesDGV.Columns[9].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[9].Visible = $Session.ConfigRunning.BalancesShowAverages
                         $LegacyGUIelements.BalancesDGV.Columns[10].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[10].Visible = $Session.ConfigRunning.BalancesShowAverages
-                        $LegacyGUIelements.BalancesDGV.Columns[11].FillWeight = 80
-                        $LegacyGUIelements.BalancesDGV.Columns[12].FillWeight = 80
+                        $LegacyGUIelements.BalancesDGV.Columns[11].FillWeight = 70
+                        $LegacyGUIelements.BalancesDGV.Columns[12].FillWeight = 100
                     }
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
@@ -411,6 +409,7 @@ Function Update-TabControl {
             }
             Else { 
                 $LegacyGUIelements.BalancesLabel.Text = "Balances tracker is disabled (configuration item 'BalancesTrackerPollInterval' -eq 0)"
+                $LegacyGUIelements.BalancesLabel.DataSource = $null
             }
             Break
         }
@@ -463,7 +462,6 @@ Function Update-TabControl {
             ElseIf ($Session.Miners) { 
                 If (-not $LegacyGUIelements.MinersDGV.SelectedRows) { 
                     $LegacyGUIelements.MinersDGV.BeginInit()
-
                     $LegacyGUIelements.MinersDGV.DataSource = $DataSource | Select-Object @(
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
@@ -479,15 +477,14 @@ Function Update-TabControl {
                         @{ Name = "Hashrate"; Expression = { If ($_.Benchmark) { If ($_.Status -eq "Running") { "Benchmarking..." } Else { "Benchmark pending" } } Else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
                         If ($LegacyGUIelements.RadioButtonMinersUnavailable.checked -or $LegacyGUIelements.RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
-                    $LegacyGUIelements.MinersDGV.ClearSelection()
                     $LegacyGUIelements.MinersLabel.Text = "Miner data updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.MinersDGV.Rows.count) miner$(If ($LegacyGUIelements.MinersDGV.Rows.count -ne 1) { "s" }))"
-
+                    Remove-Variable DataSource
                     $LegacyGUIelements.MinersDGV.Columns[0].Visible = $false
                     $LegacyGUIelements.MinersDGV.Columns[1].Visible = $false
                     If (-not $LegacyGUIelements.MinersDGV.ColumnWidthChanged -and $LegacyGUIelements.MinersDGV.Columns) { 
                         $LegacyGUIelements.MinersDGV.Columns[2].FillWeight = 160
                         $LegacyGUIelements.MinersDGV.Columns[3].FillWeight = 35 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
-                        $LegacyGUIelements.MinersDGV.Columns[4].FillWeight = 40; $LegacyGUIelements.MinersDGV.Columns[4].Visible = -not $LegacyGUIelements.RadioButtonMinersUnavailable.checked
+                        $LegacyGUIelements.MinersDGV.Columns[4].FillWeight = 35; $LegacyGUIelements.MinersDGV.Columns[4].Visible = -not $LegacyGUIelements.RadioButtonMinersUnavailable.checked
                         $LegacyGUIelements.MinersDGV.Columns[5].FillWeight = 40; $LegacyGUIelements.MinersDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIelements.MinersDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.MinersDGV.Columns[6].FillWeight = 40; $LegacyGUIelements.MinersDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIelements.MinersDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.MinersDGV.Columns[6].Visible = $Session.CalculatePowerCost
                         $LegacyGUIelements.MinersDGV.Columns[7].FillWeight = 40; $LegacyGUIelements.MinersDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.MinersDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.MinersDGV.Columns[7].Visible = $Session.CalculatePowerCost
@@ -498,8 +495,8 @@ Function Update-TabControl {
 
                         $LegacyGUIelements.MinersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
-                    $LegacyGUIelements.MinersDGV.EndInit()
                     Set-TableColor -DataGridView $LegacyGUIelements.MinersDGV
+                    $LegacyGUIelements.MinersDGV.EndInit()
                 }
             }
             Else { 
@@ -572,13 +569,13 @@ Function Update-TabControl {
                         $LegacyGUIelements.PoolsDGV.Columns[2].FillWeight = 70
                         $LegacyGUIelements.PoolsDGV.Columns[3].FillWeight = 55; $LegacyGUIelements.PoolsDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[4].FillWeight = 45; $LegacyGUIelements.PoolsDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[5].FillWeight = 80
-                        $LegacyGUIelements.PoolsDGV.Columns[6].FillWeight = 140
+                        $LegacyGUIelements.PoolsDGV.Columns[5].FillWeight = 55
+                        $LegacyGUIelements.PoolsDGV.Columns[6].FillWeight = 120
                         $LegacyGUIelements.PoolsDGV.Columns[7].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[8].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[9].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[10].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-
+                        If ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 140 }
                         $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $true
                     }
                     $LegacyGUIelements.PoolsDGV.EndInit()
@@ -608,7 +605,6 @@ Function Update-TabControl {
         #             Else  { $LegacyGUIelements.WorkersLabel.Text = "Waiting for monitoring data..." }
         #
         #             $LegacyGUIelements.WorkersDGV.BeginInit()
-        #             $LegacyGUIelements.WorkersDGV.ClearSelection()
         #             $LegacyGUIelements.WorkersDGV.DataSource = $Session.Workers | Select-Object @(
         #                 @{ Name = "Worker"; Expression = { $_.worker } },
         #                 @{ Name = "Status"; Expression = { $_.status } },
@@ -767,7 +763,6 @@ $LegacyGUIform = [System.Windows.Forms.Form]::new()
 # For High DPI, First call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode
 # SuspendLayout() is very important to correctly size and position all controls!
 $LegacyGUIform.SuspendLayout()
-# $LegacyGUIform.AutoScaleDimensions = [System.Drawing.SizeF]::new(120, 120)
 $LegacyGUIform.AutoScaleDimensions = [System.Drawing.SizeF]::new(96, 96)
 $LegacyGUIform.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::DPI
 $LegacyGUIform.MaximizeBox = $true
@@ -956,7 +951,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 }
                 "Re-measure power consumption" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerMeasurePowerConsumption $_  
@@ -965,13 +960,14 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                    Remove-Variable Message
                     If ($Session.ConfigRunning.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                     Update-TabControl
                     Break
                 }
                 "Mark miner as failed" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             Set-MinerFailed $_
                             $Data += $_.Name
@@ -980,12 +976,13 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed." 
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                    Remove-Variable Message
                     Update-TabControl
                     Break
                 }
                 "Disable miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).Where({ -not $_.Disabled }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).Where({ -not $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerDisabled $_
@@ -995,16 +992,17 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         $Message = "Disabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message" -Console $false
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                        Remove-Variable Message
                         Update-TabControl
                     }
-                    Else {
+                    Else { 
                         $Data = "No matching miners found."
                     }
                     Break
                 }
                 "Enable miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach{ ($_.Cells[0].Value) } }).Where({ $_.Disabled }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).Where({ $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerEnabled $_
@@ -1014,9 +1012,10 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         $Message = "Enabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message" -Console $false
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                        Remove-Variable Message
                         Update-TabControl
                     }
-                    Else {
+                    Else { 
                         $Data = "No matching miners found."
                     }
                     Break
@@ -1034,8 +1033,6 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
 
                             # Remove Watchdog timers
                             $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -ne $MinerName })
-
-                            Remove-Variable Miner, MinerName
                         }
                     )
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
@@ -1047,6 +1044,8 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     Else { 
                         $Data = "No matching watchdog timer found."
                     }
+                    Remove-Variable Message, Miner, MinerName -ErrorAction Ignore
+                    Break
                 }
             }
             If ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Session.Branding.ProductLabel): $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
@@ -1076,6 +1075,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     $Message = "Pool stats for $($Data.Count) pool$(If ($Data.Count -ne 1) { "s" }) reset."
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                    Remove-Variable Message, SelectedPoolAlgorithm, SelectedPoolName, StatName -ErrorAction Ignore
                     Update-TabControl
                     Break
                 }
@@ -1085,7 +1085,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             $PoolName = $_.Cells[5].Value
                             $PoolAlgorithm = $_.Cells[0].Value
                             # Update pool
-                            ForEach ($Pool in ($Session.Pools.Where({ $_.Name -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm -and $Session.WatchdogTimers.Where({ $_.PoolName -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm }) }))) {
+                            ForEach ($Pool in ($Session.Pools.Where({ $_.Name -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm -and $Session.WatchdogTimers.Where({ $_.PoolName -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm }) }))) { 
                                 $Data += "$($Pool.Key) ($($Pool.Region))"
                                 $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
                                 If (-not $Pool.Reasons.Count) { $Pool.Available = $true }
@@ -1094,7 +1094,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             # Remove Watchdog timers
                             $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.PoolName -ne $PoolName -or $_.Algorithm -ne $PoolAlgorithm })
 
-                            Remove-Variable Pool, PoolAlgorithm, PoolAlgorithm
+                            Remove-Variable Pool, PoolAlgorithm, PoolAlgorithm, PoolName
                         }
                     )
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
@@ -1102,6 +1102,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         $Message = "$($Data.Count) pool watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
                         Write-Message -Level Verbose "GUI: $Message" -Console $false
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                        Remove-Variable Message
                     }
                     Else { 
                         $Data = "No matching watchdog timer found."
@@ -1640,7 +1641,7 @@ $LegacyGUIelements.WatchdogTimersRemoveButton.Add_Click(
         }
         Remove-Variable Miner
 
-        ForEach ($Pool in $Session.Pools.ForEach) { 
+        ForEach ($Pool in $Session.Pools) { 
             $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
             If (-not $Pool.Reasons.Count) { $Pool.Available = $true }
         }
@@ -1771,7 +1772,7 @@ $LegacyGUIform.Add_Load(
 
 $LegacyGUIform.Add_FormClosing(
     { 
-        If ($KeyPressed.KeyChar -ne "4" -and $KeyPressed.KeyChar -ne "q") { # 4: Closing triggered via console window
+        If ($Session.LegacyGUI -and $KeyPressed.KeyChar -ne "q") { 
             If (-not $Session.ConfigRunning.ShowConsole) { # If console is not visible there is no user friendly way to end script
                 $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
                 If ($MsgBoxInput -eq "No") { 
@@ -1784,8 +1785,8 @@ $LegacyGUIform.Add_FormClosing(
                 $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you also want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNoCancel, 32, "Button3")
                 If ($MsgBoxInput -eq "Cancel") { 
                     $_.Cancel = $true
-                    Return
                     Remove-Variable MsgBoxInput
+                    Return
                 }
             }
             $Session.LegacyGUI = $false
@@ -1798,7 +1799,7 @@ $LegacyGUIform.Add_FormClosing(
         Remove-Variable $TimerUI
 
         If ($MsgBoxInput -eq "Yes") { Exit-UGminer }
-        Remove-Variable MsgBoxInput
+        Remove-Variable MsgBoxInput -ErrorAction Ignore
     }
 )
 
@@ -1827,6 +1828,7 @@ $LegacyGUIform.Add_KeyDown(
                     Write-Host $Message -ForegroundColor Cyan
                     If ([DateTime]::Now.ToUniversalTime() -gt $Session.EndCycleTime) { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                 }
+                Remove-Variable Message
             }
         }
         ElseIf ($_.KeyCode -eq "F5") { 

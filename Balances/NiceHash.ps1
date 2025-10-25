@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.5.16
-Version date:   2025/10/19
+Version:        6.5.17
+Version date:   2025/10/25
 #>
 
 If ($Config.NiceHashWallet) { 
@@ -37,15 +37,15 @@ If ($Config.NiceHashWallet) {
 
     Function Get-NiceHashRequest { 
         Param (
-            [Parameter(Mandatory = $true)]
+            [Parameter (Mandatory = $true)]
             [String]$EndPoint,
-            [Parameter(Mandatory = $true)]
+            [Parameter (Mandatory = $true)]
             [String]$Method,
-            [Parameter(Mandatory = $true)]
+            [Parameter (Mandatory = $true)]
             [String]$Key,
-            [Parameter(Mandatory = $true)]
+            [Parameter (Mandatory = $true)]
             [String]$OrganizationID,
-            [Parameter(Mandatory = $true)]
+            [Parameter (Mandatory = $true)]
             [String]$Secret
         )
 

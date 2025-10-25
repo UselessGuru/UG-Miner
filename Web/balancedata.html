@@ -47,52 +47,51 @@
               </tr>
             </thead>
           </table>
-<!-- Start of page scripts 'balalancedata.html' -->
+<!-- Start of page scripts "balalancedata.html" -->
           <script type="text/javascript">
-            var $table = $('#balanceobjects');
+            var $table = $("#balanceobjects");
 
             $table.bootstrapTable({
-              async: 'true',
+              async: "true",
               autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
-              height: $(window).height() - $('#balanceobjects').offset().top - 20,
+              height: $(window).height() - $("#balanceobjects").offset().top - 20,
               onColumnSwitch: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onColumnSwitchAll: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onCreatedControls: function() {
-                $('body').css('cursor', 'wait');
+                $("body").css("cursor", "wait");
               },
               onLoadSuccess: function() {
-                $('body').css('cursor', 'default');
+                $("body").css("cursor", "default");
               },
               onRefresh: function() {
-                $('body').css('cursor', 'wait');
+                $("body").css("cursor", "wait");
               }
             });
 
-            $('#balanceobjects').on('check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table', function () {
-              document.getElementById('btn-remove-entry').disabled = !Boolean($table.bootstrapTable('getSelections').length);
+            $("#balanceobjects").on("check.bs.table check-all.bs.table check-some.bs.table load-success.bs.table uncheck.bs.table uncheck-all.bs.table uncheck-some.bs.table", function () {
+              document.getElementById("btn-remove-entry").disabled = !Boolean($table.bootstrapTable("getSelections").length);
             });
 
-            $('#btn-remove-entry').click(function () {
-              $('body').css('cursor', 'wait');
-              var $data = $table.bootstrapTable('getSelections');
+            $("#btn-remove-entry").click(function () {
+              $("body").css("cursor", "wait");
+              var $data = $table.bootstrapTable("getSelections");
               if ($data.length >= 1) {
-                $url = '/functions/balancedata/remove';
+                $url = "/functions/balancedata/remove";
                 $payload = {
-                  'Data': JSON.stringify($data.map($element => ({DateTime: $element.DateTime, Pool: $element.Pool, Currency: $element.Currency, Wallet: $element.Wallet})))
+                  "Data": JSON.stringify($data.map($element => ({DateTime: $element.DateTime, Pool: $element.Pool, Currency: $element.Currency, Wallet: $element.Wallet})))
                 };
-                $('.modal-body').load($url, $payload, function() {
-                  $('.modal-title').text($('#btn-remove-entry').text());
-                  $('body').css('cursor', 'default');
-                  $('#myModal').modal({ show: true });
+                $(".modal-body").load($url, $payload, function() {
+                  $(".modal-title").text($("#btn-remove-entry").text());
+                  $("body").css("cursor", "default");
+                  $("#myModal").modal({ show: true });
+                  $table.bootstrapTable("refresh");
                 });
-                $('body').css('cursor', 'wait');
-                $table.bootstrapTable('refresh');
               };
-              $('body').css('cursor', 'default');
+              $("body").css("cursor", "default");
             });
 
             $(window).resize(function () {
@@ -104,8 +103,8 @@
 
             $(document).ready(function () {
               // Fix, button text is wrong
-              if (document.getElementsByName('toggle')[0]) document.getElementsByName('toggle')[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+              if (document.getElementsByName("toggle")[0]) document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
             });
           </script>
-<!-- End of page scripts 'balalancedata.html' -->
+<!-- End of page scripts "balalancedata.html" -->
 <!-- #include file="/parts/foot.html" -->

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.16
-Version date:   2025/10/19
+Version:        6.5.17
+Version date:   2025/10/25
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -144,7 +144,7 @@ public static extern Int32 RegQueryInfoKey(
 
 Function Get-RegTime { 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$RegistryPath
     )
 
@@ -791,25 +791,25 @@ Function Invoke-CreateProcess {
     # Based on https://github.com/FuzzySecurity/PowerShell-Suite/blob/master/Invoke-CreateProcess.ps1
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$BinaryPath,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$ArgumentList = "",
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$WorkingDirectory = "",
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String[]]$EnvBlock,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$CreationFlags = 0x00000010, # CREATE_NEW_CONSOLE
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$WindowStyle = "minimized",
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$StartF = 0x00003001, # STARTF_USESHOWWINDOW, STARTF_TITLEISAPPID, STARTF_PREVENTPINNING
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$JobName,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$LogFile,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$StatusInfo
     )
 
@@ -988,7 +988,7 @@ Function Start-Core {
 Function Clear-MinerData { 
         
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Boolean]$KeepMiners = $false
     )
 
@@ -1081,7 +1081,7 @@ Function Stop-Core {
 Function Start-Brain { 
 
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String[]]$Name
     )
 
@@ -1124,7 +1124,7 @@ Function Start-Brain {
 Function Stop-Brain { 
 
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String[]]$Name = $Session.Brains.Keys
     )
 
@@ -1333,11 +1333,11 @@ Function Get-Rate {
 Function Write-Message { 
 
     Param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [Parameter (Mandatory = $true, ValueFromPipeline = $true)]
         [String]$Message,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$Level = "Info",
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Boolean]$Console = $true
     )
 
@@ -1368,28 +1368,24 @@ Function Write-Message {
     }
 
     If ($Session.TextBoxSystemLog) { 
-        # Ignore error when legacy GUI gets closed
-        Try { 
-            If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level) { 
-                $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
-                $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
-                $TextLength = $Session.TextBoxSystemLog.TextLength
+        If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level) { 
+            $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
+            $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
+            $TextLength = $Session.TextBoxSystemLog.TextLength
 
-                # Keep only 200 lines, more lines impact performance
-                If ($Session.TextBoxSystemLog.Lines.Count -gt 250) { $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200 }
+            # Keep only 200 lines, more lines impact performance
+            If ($Session.TextBoxSystemLog.Lines.Count -gt 250) { $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200 }
 
-                $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
-                If ($SelectionLength -and $SelectionStart -ge 0) { 
-                    $Session.TextBoxSystemLog.Lines += $Message
-                    $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
-                    $Session.TextBoxSystemLog.ScrollToCaret()
-                }
-                Else { 
-                    $Session.TextBoxSystemLog.AppendText("`r`n$Message")
-                }
+            $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
+            If ($SelectionLength -and $SelectionStart -ge 0) { 
+                $Session.TextBoxSystemLog.Lines += $Message
+                $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
+                $Session.TextBoxSystemLog.ScrollToCaret()
+            }
+            Else { 
+                $Session.TextBoxSystemLog.AppendText("`r`n$Message")
             }
         }
-        Catch { }
     }
 
     If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level) { 
@@ -1494,7 +1490,7 @@ Function Get-TimeSince {
     # Show friendly time since in days, hours, minutes and seconds
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [DateTime]$TimeStamp
     )
 
@@ -1513,11 +1509,11 @@ Function Get-TimeSince {
 Function Merge-Hashtable { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Object]$HT1,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Object]$HT2,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Boolean]$Unique = $false
     )
 
@@ -1552,7 +1548,7 @@ Function Get-DonationPoolsConfig {
         # Build pool config with available donation data, not all devs have the same set of wallets available
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$DonateUsername
     )
 
@@ -1576,7 +1572,6 @@ Function Get-DonationPoolsConfig {
                 }
                 Default { 
                     # not all devs have a known ETC or ETH address
-                    
                     If ($Wallets = (Compare-Object -PassThru @((@($Session.PoolData.$_.GuaranteedPayoutCurrencies) + @($Session.PoolData.$_.PayoutCurrencies)) | Select-Object -Unique) @($DonationPoolsData.Wallets.Keys | Select-Object) -IncludeEqual -ExcludeDifferent)) { 
                         $DonationPoolConfig.Variant = If ($Session.ConfigRunning.PoolsConfig[$_].Variant) { $Session.ConfigRunning.PoolsConfig[$_].Variant } Else { $Session.ConfigRunning.PoolName -match $_ }
                         $DonationPoolConfig.Wallets = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
@@ -1594,7 +1589,7 @@ Function Get-DonationPoolsConfig {
 Function Read-Config { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$ConfigFile
     )
 
@@ -1795,7 +1790,7 @@ Function Read-Config {
 Function Update-ConfigFile { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$ConfigFile
     )
 
@@ -1844,7 +1839,7 @@ Function Update-ConfigFile {
             "Europe North" { "Europe"; Break }
             "India"        { "Asia"; Break }
             "US"           { "USA West"; Break }
-            Default        { "Europe"; Break }
+            Default        { "Europe" }
         }
         Write-Message -Level Warn "Available mining locations have changed during update ($OldRegion -> $($Config.Region))".
         $Session.ConfigurationHasChangedDuringUpdate += "- Available mining locations have changed ($OldRegion -> $($Config.Region))"
@@ -1916,7 +1911,7 @@ Function Update-ConfigFile {
 Function Write-Config { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [PSCustomObject]$Config
     )
 
@@ -1963,7 +1958,7 @@ Function Write-Config {
 Function Edit-File { 
     # Opens file in notepad. Notepad will remain in foreground until closed.
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$FileName
     )
 
@@ -2020,7 +2015,7 @@ Function Edit-File {
 Function Get-SortedObject { 
 
     Param (
-        [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
+        [Parameter (Mandatory = $false, ValueFromPipeline = $true)]
         [Object]$Object
     )
 
@@ -2079,7 +2074,7 @@ Function Get-SortedObject {
 Function Enable-Stat { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Name
     )
 
@@ -2112,7 +2107,7 @@ Function Enable-Stat {
 Function Disable-Stat { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Name
     )
 
@@ -2144,19 +2139,19 @@ Function Disable-Stat {
 Function Set-Stat { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Name,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double]$Value,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [DateTime]$Updated = ([DateTime]::Now),
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [TimeSpan]$Duration,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Boolean]$FaultDetection = $true,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Boolean]$ChangeDetection = $false,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Int]$ToleranceExceeded = 3
     )
 
@@ -2288,7 +2283,7 @@ Function Set-Stat {
 Function Get-Stat { 
 
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String[]]$Names = (Get-ChildItem $PWD\Stats).BaseName
     )
 
@@ -2337,7 +2332,7 @@ Function Get-Stat {
 Function Remove-Stat { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String[]]$Names
     )
 
@@ -2352,15 +2347,15 @@ Function Remove-Stat {
 Function Invoke-TcpRequest { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Server,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Port,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Request,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Int]$Timeout, # seconds
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Boolean]$ReadToEnd = $false
     )
 
@@ -2514,16 +2509,16 @@ Function Get-CpuId {
     Return [PSCustomObject]@{ 
         Vendor   = $Vendor
         Name     = $Name
-        Features = ($Features.psBase.Keys | Sort-Object).ForEach{ If ($Features.$_) { $_ } }
+        Features = ($Features.psBase.Keys | Sort-Object).ForEach({ If ($Features.$_) { $_ } })
     }
 }
 
 Function Get-GPUArchitectureAMD { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Model,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$Architecture = ""
     )
 
@@ -2540,9 +2535,9 @@ Function Get-GPUArchitectureAMD {
 Function Get-GPUArchitectureNvidia { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Model,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$ComputeCapability = ""
     )
 
@@ -2857,9 +2852,9 @@ Function Get-DecimalsFromValue {
     # Maximal $DecimalsMax are returned
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double]$Value,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Int]$DecimalsMax
     )
 
@@ -2869,11 +2864,11 @@ Function Get-DecimalsFromValue {
 Function Get-Combination { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Array]$Value,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Int]$SizeMax = $Value.Count,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Int]$SizeMin = 1
     )
 
@@ -2904,9 +2899,9 @@ Function Get-Combination {
 Function Expand-WebRequest { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Uri,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$Path = ""
     )
 
@@ -2949,7 +2944,7 @@ Function Expand-WebRequest {
 Function Get-Algorithm { 
 
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$Algorithm
     )
 
@@ -2963,9 +2958,9 @@ Function Get-Algorithm {
 Function Get-Region { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Region,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Switch]$List = $false
     )
 
@@ -2979,11 +2974,11 @@ Function Get-Region {
 Function Add-CoinName { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Algorithm,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Currency,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$CoinName
     )
 
@@ -3017,7 +3012,7 @@ Function Add-CoinName {
 Function Get-CurrencyFromAlgorithm { 
 
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$Algorithm
     )
 
@@ -3027,11 +3022,11 @@ Function Get-CurrencyFromAlgorithm {
 Function Get-EquihashCoinPers { 
 
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$Command = "",
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$Currency = "",
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String]$DefaultCommand = ""
     )
 
@@ -3047,7 +3042,7 @@ Function Get-EquihashCoinPers {
 Function Get-PoolBaseName { 
 
     Param (
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [String[]]$PoolNames
     )
 
@@ -3099,7 +3094,7 @@ Function Get-Version {
 Function Initialize-AutoUpdate { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [PSCustomObject]$UpdateVersion
     )
 
@@ -3107,8 +3102,8 @@ Function Initialize-AutoUpdate {
     If (-not (Test-Path -LiteralPath ".\AutoUpdate" -PathType Container)) { New-Item -Path . -Name "AutoUpdate" -ItemType Directory | Out-Null }
     If (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { New-Item -Path . -Name "Logs" -ItemType Directory | Out-Null }
 
-    $UpdateScriptURL = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/AutoUpdate/AutoUpdate.ps1"
     $UpdateScript = ".\AutoUpdate\AutoUpdate.ps1"
+    $UpdateScriptURL = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/AutoUpdate/AutoUpdate.ps1"
     $UpdateLog = ".\Logs\AutoUpdateLog_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
 
     # Download update script
@@ -3129,6 +3124,8 @@ Function Initialize-AutoUpdate {
         Write-Host " ✖" -ForegroundColor Red
         "Downloading update script failed. Cannot complete auto-update :-(" | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Error
     }
+    $UpdateScript = ".\AutoUpdate\AutoUpdate.ps1"
+    Remove-Variable CursorPosition, UpdateScript, UpdateScriptURL, UpdateLog
 }
 
 Function Start-LogReader { 
@@ -3165,7 +3162,7 @@ Function Get-ObsoleteMinerStats {
 Function Update-PoolWatchdog { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         $Pools
     )
 
@@ -3217,7 +3214,7 @@ Function Update-PoolWatchdog {
 Function Test-Prime { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double]$Number
     )
 
@@ -3237,7 +3234,7 @@ Function Test-Prime {
 Function Get-AllDAGdata { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [PSCustomObject]$DAGdata
     )
 
@@ -3543,11 +3540,11 @@ Function Get-AllDAGdata {
 Function Get-DAGdata { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double]$BlockHeight,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Currency,
-        [Parameter(Mandatory = $false)]
+        [Parameter (Mandatory = $false)]
         [Int16]$EpochReserve = 0
     )
 
@@ -3578,9 +3575,9 @@ Function Get-DAGdata {
 Function Get-DAGsize { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double]$Epoch,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Currency
     )
 
@@ -3662,11 +3659,11 @@ Function Get-DAGsize {
 Function Get-DAGepoch { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double]$BlockHeight,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Algorithm,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [UInt16]$EpochReserve
     )
 
@@ -3683,9 +3680,9 @@ Function Get-DAGepoch {
 Function Get-DAGepochLength { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double]$BlockHeight,
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [String]$Algorithm
     )
 
@@ -3741,7 +3738,7 @@ Function Out-DataTable {
 Function Get-Median { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Double[]]$Numbers
     )
 
@@ -3794,7 +3791,7 @@ Function Get-MemoryUsage {
     # Save last value in script global variable
     $Script:LastMemoryUsageByte = $MemUsageByte
 
-    Return ("Memory usage {0:n1} MB ({1:n0} Bytes{2})" -f $MemUsageMB, $MemUsageByte, $Difftext)
+    Return ("Memory usage {0:n1} MB ({1:n0} Bytes {2})" -f $MemUsageMB, $MemUsageByte, $Difftext)
 }
 
 Function Initialize-Environment { 
@@ -4151,7 +4148,7 @@ Function Stop-APIserver {
 Function Set-MinerEnabled { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Miner]$Miner
     )
 
@@ -4168,7 +4165,7 @@ Function Set-MinerEnabled {
 Function Set-MinerDisabled { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Miner]$Miner
     )
 
@@ -4185,7 +4182,7 @@ Function Set-MinerDisabled {
 Function Set-MinerFailed { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Miner]$Miner
     )
 
@@ -4213,7 +4210,7 @@ Function Set-MinerFailed {
 Function Set-MinerReBenchmark { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Miner]$Miner
     )
 
@@ -4248,7 +4245,7 @@ Function Set-MinerReBenchmark {
 Function Set-MinerMeasurePowerConsumption { 
 
     Param (
-        [Parameter(Mandatory = $true)]
+        [Parameter (Mandatory = $true)]
         [Miner]$Miner
     )
 

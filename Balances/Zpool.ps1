@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.5.16
-Version date:   2025/10/19
+Version:        6.5.17
+Version date:   2025/10/25
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -44,7 +44,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 }
 
-                If ($APIResponse.currency -ne "INVALID" <# -and $APIResponse.currency -and ($APIResponse.unsold -or $APIResponse.balance -or $APIResponse.unpaid) #>) { 
+                If ($APIResponse.currency -and $APIResponse.currency -ne "INVALID" -and ($APIResponse.unsold -or $APIResponse.balance -or $APIResponse.unpaid)) { 
                     [PSCustomObject]@{ 
                         DateTime = [DateTime]::Now.ToUniversalTime()
                         Pool     = $Name
@@ -53,8 +53,8 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
                         Pending  = [Double]$APIResponse.unsold # Pending
                         Balance  = [Double]$APIResponse.balance
                         Unpaid   = [Double]$APIResponse.unpaid # Balance + unsold (pending)
-                        # Paid     = [Double]$APIResponse.total # Reset after payout
-                        # Total    = [Double]$APIResponse.unpaid + [Double]$APIResponse.total # Reset after payout
+                      # Paid     = [Double]$APIResponse.total # Reset after payout
+                      # Total    = [Double]$APIResponse.unpaid + [Double]$APIResponse.total # Reset after payout
                         Url      = "https://zpool.ca/wallet/$Wallet"
                     }
                 }

@@ -1,3 +1,19 @@
+Changelog UG-Miner 6.5.1 2025/10/25
+====================================
+
+Enhancements:
+- Core / Console window: Add '5' key to enable / disable API and web GUI
+- Web GUI / Conbfiguration editor: Add checkboxes to toggle balances tracker per pool
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+- LegacyGUI: Minor code optimizations
+
+Miner changes:
+- OneZeroMiner-v1.6.4
+- Wildrig-v0.46.2
+
+
 Changelog UG-Miner 6.5.16 2025/10/19
 ====================================
 

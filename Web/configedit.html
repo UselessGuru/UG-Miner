@@ -337,7 +337,7 @@
           <!-- Balances tracker settings -->
           <legend class=h6><b>Balances tracker settings</b></legend>
           <fieldset>
-            <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the Web GUI dashboard and API">Poll pools for balances & earnings every
+            <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the web GUI dashboard and API">Poll pools for balances & earnings every
               <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
             <div style="padding-top: 0.6rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
               <input type="checkbox" class="toggle-switch" id="BalancesShowSums" name="BalancesShowSums" style="margin-left:20px"> Show earnings sums for each pool
@@ -362,7 +362,7 @@
         <td style="vertical-align: top; line-height: 125%">
           <!-- Console window display settings -->
           <div class="col-md-12">
-            <legend class=h6 title="These Settings will not affect the information available in the in Web GUI"><b>Console window display settings</b></legend>
+            <legend class=h6 title="These Settings will not affect the information available in the in web GUI"><b>Console window display settings</b></legend>
             <div style="padding-top: 0.3rem;" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle">UI Style
               <select style="height: 1.6em;" name="UIstyle" id="UIstyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>
@@ -625,8 +625,11 @@
         if (!Boolean(document.getElementById('MiningDutchUserName').value)) document.getElementById('pool-miningdutchplus').checked = false;
         document.getElementById('pool-miningdutchplus').disabled = !Boolean(document.getElementById('MiningDutchUserName').value)
       };
+      if (document.getElementById('PoolBalanceTracker-MiningDutch')) document.getElementById('PoolBalanceTracker-MiningDutch').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('MiningDutchUserName').value === "" || document.getElementById('MiningDutchAPIKey').value === "");
     });
-    $(document.getElementById('MiningDutchUserName')).trigger('change');
+    $(document.getElementById('MiningDutchAPIKey')).change(function (event) {
+      if (document.getElementById('PoolBalanceTracker-MiningDutch')) document.getElementById('PoolBalanceTracker-MiningDutch').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('MiningDutchUserName').value === "" || document.getElementById('MiningDutchAPIKey').value === "");
+    });
 
     // NiceHash
     document.getElementById('NiceHashWallet').value = config.NiceHashWallet || '';
@@ -639,7 +642,15 @@
         document.getElementById('pool-nicehash').disabled = !Boolean(document.getElementById('NiceHashWallet').value.match(/^[0-9A-Za-z]{34}$/));
       };
     });
-    $(document.getElementById('NiceHashWallet')).trigger('change');
+    $(document.getElementById('NiceHashAPIKey')).change(function (event) {
+      if (document.getElementById('PoolBalanceTracker-NiceHash')) document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+    });
+    $(document.getElementById('NiceHashOrganizationId')).change(function (event) {
+      if (document.getElementById('PoolBalanceTracker-NiceHash')) document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+    });
+    $(document.getElementById('NiceHashAPISecret')).change(function (event) {
+      if (document.getElementById('PoolBalanceTracker-NiceHash')) document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+    });
 
     // ProHashing
     document.getElementById('ProHashingUserName').value = config.ProHashingUserName || '';
@@ -660,7 +671,10 @@
         document.getElementById('pool-prohashingplus').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
       };
     });
-    $(document.getElementById('ProHashingUserName')).trigger('change');
+
+    $(document.getElementById('ProHashingAPIKey')).change(function (event) {
+      if (document.getElementById('PoolBalanceTracker-ProHashing')) document.getElementById('PoolBalanceTracker-ProHashing').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('ProHashingAPIKey').value === "");
+    });
 
     // Currency settings
     $.each(fiatcurrencies, function(key, value) {
@@ -786,19 +800,26 @@
       url: '/poolvariants',
       success: function (result) {
         poolvariants = result;
+        poolbasenames = [...new Set(poolvariants.map((poolvariant) => poolvariant.replace(regex, '')))];
         var poolbasename = '';
         $.each(poolvariants, function (key, poolvariant) {
-          if (poolbasename != '' && poolbasename != poolvariant.toLowerCase().replace(regex, '')) $('<br>').appendTo(poolscontainer);
+          if (poolbasename != '' && poolbasename != poolvariant.toLowerCase().replace(regex, '')) {
+            $('<br>').appendTo(poolscontainer);
+          }
           poolbasename = poolvariant.toLowerCase().replace(regex, '');
           if (poolvariants.filter((poolvariant) => poolvariant.toLowerCase().replace(regex, '').match(poolbasename)).length == 1) {
             title = "You must select at least one pool";
           } else {
             title = "You cannot select multiple variants of the same pool";
           }
-          $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('pool-' + poolvariant).toLowerCase(), value: poolvariant }).appendTo(poolscontainer);
-            $('<label/>', { for: ('pool-' + poolvariant).toLowerCase(), text: poolvariant, title: title, style: 'margin-left: 5px; line-height: 75%;' }).appendTo(poolscontainer);
-            $('<br>').appendTo(poolscontainer);
-          })
+          $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('pool-' + poolvariant).toLowerCase(), style: 'margin-left: 0px;' }).appendTo(poolscontainer);
+          $('<label/>', { for: ('pool-' + poolvariant).toLowerCase(), text: poolvariant, title: title, style: 'margin-left: 5px; line-height: 75%;' }).appendTo(poolscontainer);
+          if (poolbasename == poolvariant.toLowerCase()) {
+            $('<input/>', { type: 'checkbox', class: 'switch', id: ('PoolBalanceTracker-' + poolvariant), disabled: (config.BalancesTrackerPollInterval <= 0), checked: !(config.BalancesTrackerExcludePools.map((poolname) => { return poolname.toLowerCase() }).includes(poolbasename)), title: "Enable / disable balances tracker for this pool\n\nThis requires balances tracker to be running", style: 'position: absolute; left: 50%; margin-top: 0.14rem;' }).appendTo(poolscontainer);
+            $('<label/>', { for: ('PoolBalanceTracker-' + poolvariant).toLowerCase(), text: "Track balances", title: "Enable / disable balances tracker for this pool\n\nThis requires balances tracker to be running", style: 'position: absolute; left: calc(50% + 20px); padding-top: 0.1rem;' }).appendTo(poolscontainer);
+          }
+          $('<br>').appendTo(poolscontainer);
+        });
       }
     });
 
@@ -903,7 +924,7 @@
     $(document.getElementById('BalancesTrackerPollInterval')).change(function (event) {
       if (document.getElementById('BalancesTrackerPollInterval').value == 9) document.getElementById('BalancesTrackerPollInterval').value = 0;
       if (document.getElementById('BalancesTrackerPollInterval').value == 1) document.getElementById('BalancesTrackerPollInterval').value = 10;
-      if (document.getElementById('BalancesTrackerPollInterval').value > 1 && document.getElementById('BalancesTrackerPollInterval').value < 9) document.getElementById('BalancesTrackerPollInterval').value = 0;
+      if (document.getElementById('BalancesTrackerPollInterval').value > 1 && document.getElementById('BalancesTrackerPollInterval').value < 9) document.getElementById('BalancesTrackerPollInterval').value = 10;
       document.getElementById('BalancesShowSums').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesShowAverages').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesShowInFIATcurrency').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
@@ -911,6 +932,19 @@
       document.getElementById('BalancesKeepAlive').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('BalancesTrackerLog').disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       document.getElementById('ShowPoolBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
+      $.each(poolbasenames, function (key, value) {
+        if (document.getElementById('PoolBalanceTracker-' + value)) document.getElementById('PoolBalanceTracker-' + value).disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
+      });
+      $(document.getElementById('MiningDutchUserName')).trigger('change');
+      $(document.getElementById('MiningDutchAPIKey')).trigger('change');
+
+      $(document.getElementById('NiceHashWallet')).trigger('change');
+      $(document.getElementById('NiceHashAPIKey')).trigger('change');
+      $(document.getElementById('NiceHashOrganizationId')).trigger('change');
+      $(document.getElementById('NiceHashAPISecret')).trigger('change');
+
+      $(document.getElementById('ProHashingUserName')).trigger('change');
+      $(document.getElementById('ProHashingAPIKey')).trigger('change');
     });
     if (config.BalancesShowSums) document.getElementById('BalancesShowSums').checked = true;
     if (config.BalancesShowAverages) document.getElementById('BalancesShowAverages').checked = true;
@@ -988,6 +1022,19 @@
     if (config.AutoUpdate) document.getElementById('AutoUpdate').checked = true;
     if (config.ShowChangeLog) document.getElementById('ShowChangeLog').checked = true;
     if (config.BackupOnAutoUpdate) document.getElementById('BackupOnAutoUpdate').checked = true;
+
+
+    // // Trigger changes to update dependent balances tracker elements
+    // $(document.getElementById('MiningDutchUserName')).trigger('change');
+    // $(document.getElementById('MiningDutchAPIKey')).trigger('change');
+
+    // $(document.getElementById('NiceHashWallet')).trigger('change');
+    // $(document.getElementById('NiceHashAPIKey')).trigger('change');
+    // $(document.getElementById('NiceHashOrganizationId')).trigger('change');
+    // $(document.getElementById('NiceHashAPISecret')).trigger('change');
+
+    // $(document.getElementById('ProHashingUserName')).trigger('change');
+    // $(document.getElementById('ProHashingAPIKey')).trigger('change');
 
     $('body').css('cursor', 'default');
 
@@ -1346,6 +1393,12 @@
           if (document.getElementById(('pool-' + value.toLowerCase())).checked == true) config.PoolName.push(value);
         });
 
+        // BalancesTrackerExcludePools
+        config.BalancesTrackerExcludePools = [];
+        $.each(poolbasenames, function (key, value) {
+          if (document.getElementById('PoolBalanceTracker-' + value) && document.getElementById('PoolBalanceTracker-' + value).checked == false) config.BalancesTrackerExcludePools.push(value);
+        });
+
         // Miner selection
         config.MinerSet = parseInt(document.getElementById('MinerSet').value);
         config.ExcludeMinerName = []; // enforce array
@@ -1494,8 +1547,6 @@
         }
       }
     });
-    // updateSummary();
-    // updateButtonStatus();
   });
 </script>
 <!-- End of page scripts 'configedit.html' -->
