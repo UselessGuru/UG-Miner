@@ -1,4 +1,4 @@
-Changelog UG-Miner 6.5.1 2025/10/25
+Changelog UG-Miner 6.5.17 2025/10/25
 ====================================
 
 Enhancements:
