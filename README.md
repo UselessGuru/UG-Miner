@@ -268,7 +268,7 @@ Supported pools:
 
 A simple miner switching log in csv format is written to '[UG-Miner directory]\Logs\SwitchingLog.csv'.
 
-## Console display options
+## Console hot keys
 
 In the main text window (session console) the following hot keys are supported:
 ```
@@ -331,6 +331,7 @@ UG-Miner is currently tested on the following rigs:
 
 - Windows11-1xGTX1030-2GB/1xRTX-3060-12GB/1xGTX750Ti-2GB/1xRX5700-8GB/1xRX6600-8GB/Inteli5-8600K
 - Windows11-1xMX250/Inteli10-10210u
+- Windows11-1xMX150/Inteli10-8570u
 
 ## Developer donation
 
