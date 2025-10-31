@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PoolConfig = $Config.PoolsConfig.$Name
+$PoolConfig = $Session.Config.Pools.$Name
 $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
     { 
         $APIResponse = $null
@@ -40,7 +40,7 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
             Try { 
                 $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolConfig.PoolAPItimeout -ErrorAction Ignore
 
-                If ($Config.LogBalanceAPIResponse) { 
+                If ($Session.Config.LogBalanceAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

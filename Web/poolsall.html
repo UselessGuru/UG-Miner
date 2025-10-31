@@ -83,7 +83,7 @@
 
             $table.bootstrapTable({
               async: "true",
-              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
+              autoRefreshInterval: parseInt(Math.max(configrunning.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 30,
               onColumnSwitch: function() {
                 $("body").css("cursor", "default");
@@ -100,7 +100,7 @@
               },
               onPostBody: function () {
                 if (this.data.length > 0) {
-                  if (config.UsemBTC) {
+                  if (configrunning.UsemBTC) {
                     $(".addm").each(function () {
                       this.childNodes[0].innerText = ("m" + this.childNodes[0].innerText).replace("mm", "m");
                     });

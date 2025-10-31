@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -44,7 +44,7 @@ $Algorithms = @(
     @{ Algorithms = @("UbqHash", "Blake2s"); Type = "NVIDIA"; Fee = @(0.009, 0); MinMemGiB = 0.77; MinerSet = 0; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 2 -coin UBQ -dcoin blake2s" }
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
@@ -55,7 +55,7 @@ If ($Algorithms) {
         "Blake2s" = @(10, 20, 30, 40)
     }
 
-    If (-not $Session.ConfigRunning.DryRun) { 
+    If (-not $Session.Config.DryRun) { 
         # Build command sets for intensities
         $Algorithms = $Algorithms.ForEach(
             { 
@@ -80,7 +80,7 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
@@ -115,7 +115,7 @@ If ($Algorithms) {
                                             "qtminer"      { " -proto 3"; Break }
                                             Default        { " -proto 1" }
                                         }
-                                        If ($Session.ConfigRunning.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
+                                        If ($Session.Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                         If ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }
 
                                         # kernel 3 does not support dual mining
@@ -126,7 +126,7 @@ If ($Algorithms) {
 
                                         If ($_.Algorithms[1]) { 
                                             $Arguments += " -dpool $(If ($Pool1.PoolPorts[1]) { "ssl://" })$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
-                                            If ($Session.ConfigRunning.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments += " -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
+                                            If ($Session.Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments += " -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                             If ($Pool1.WorkerName) { $Arguments += " -dworker $($Pool1.WorkerName)" }
                                             If ($_.Intensity) { $Arguments += " -sci $($_.Intensity)" }
                                         }

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 using module .\Include.psm1
@@ -69,7 +69,7 @@ Do {
     $Now = [DateTime]::Now
 
     # Get pools to track
-    $PoolsToTrack = @((Get-ChildItem -File ".\Balances\*.ps1" -ErrorAction Ignore).BaseName.Where({ $_ -notin (Get-PoolBaseName $Config.BalancesTrackerExcludePools) }))
+    $PoolsToTrack = @((Get-ChildItem -File ".\Balances\*.ps1" -ErrorAction Ignore).BaseName.Where({ $_ -notin (Get-PoolBaseName $Session.Config.BalancesTrackerExcludePools) }))
 
     # Check internet connection
     $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
@@ -92,7 +92,7 @@ Do {
             )
 
             # Only keep non excluded balances
-            $BalancesTrackerExcludePool = @(Get-PoolBaseName $Config.BalancesTrackerExcludePool)
+            $BalancesTrackerExcludePool = @(Get-PoolBaseName $Session.Config.BalancesTrackerExcludePool)
             $BalanceObjects = @(@($BalanceObjects) + @($Session.BalancesData))
             $BalanceObjects = $BalanceObjects.Where({ $_.Wallet -and $_.Pool -notin $BalancesTrackerExcludePool })
             Remove-Variable BalancesTrackerExcludePool
@@ -119,25 +119,25 @@ Do {
                 $PayoutThreshold = $BalanceObject.PayoutThreshold
                 $PayoutThresholdCurrency = $BalanceObject.Currency
 
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
+                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
                 If (-not $PayoutThreshold) { 
-                    If ($PayoutThresholdCurrency = [String]($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".Keys)) { 
-                        $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
+                    If ($PayoutThresholdCurrency = [String]($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys)) { 
+                        $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                     }
                 }
 
                 If (-not $PayoutThreshold -and $BalanceObject.Currency -eq "BTC") { 
                     $PayoutThresholdCurrency = "mBTC"
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
+                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
                     If (-not $PayoutThreshold) { 
-                        If ($PayoutThresholdCurrency = $Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".Keys[0]) { 
-                            $PayoutThreshold = ($Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
+                        If ($PayoutThresholdCurrency = $Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys[0]) { 
+                            $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                         }
                     }
                 }
@@ -305,7 +305,7 @@ Do {
                 Catch { 
                     Start-Sleep -Seconds 0
                 }
-                If ($Config.BalancesTrackerLog) { 
+                If ($Session.Config.BalancesTrackerLog) { 
                     $EarningsObject | Export-Csv -NoTypeInformation -Append ".\Logs\BalancesTrackerLog.csv" -Force -ErrorAction Ignore
                 }
 
@@ -437,5 +437,5 @@ Do {
     [System.GC]::Collect()
 
     # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
-    While (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
+    While (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
 } While ($true)

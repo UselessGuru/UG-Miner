@@ -53,7 +53,7 @@
 
             $table.bootstrapTable({
               async: "true",
-              autoRefreshInterval: parseInt(Math.min(config.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
+              autoRefreshInterval: parseInt(Math.min(configrunning.BalancesTrackerPollInterval, 30) * 60), // refresh once per interval, at least 30 minutes
               height: $(window).height() - $("#balanceobjects").offset().top - 20,
               onColumnSwitch: function() {
                 $("body").css("cursor", "default");

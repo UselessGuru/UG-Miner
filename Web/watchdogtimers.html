@@ -55,10 +55,10 @@
 
             $table.bootstrapTable({
               async: "true",
-              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
+              autoRefreshInterval: parseInt(Math.max(configrunning.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top - 35,
               onLoadSuccess: function() {
-                if (config.Watchdog) { 
+                if (configrunning.Watchdog) { 
                   document.getElementById("watchdog").style.visibility = "visible";
                   $.ajax({
                     async: false,

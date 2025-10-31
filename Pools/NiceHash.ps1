@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 Param(
@@ -30,7 +30,7 @@ Param(
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $PoolHost = "auto.nicehash.com"
 
-$PoolConfig = $Session.ConfigRunning.PoolsConfig.$Name
+$PoolConfig = $Session.Config.Pools.$Name
 
 $Fee = $PoolConfig.Variant.$PoolVariant.Fee
 $PayoutCurrency = $PoolConfig.PayoutCurrency
@@ -54,9 +54,9 @@ Do {
         $APICallFails ++
         Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
     }
-} While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -le $Session.ConfigRunning.PoolAPIallowedFailureCount)
+} While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
-If ($APICallFails -gt $Session.ConfigRunning.PoolAPIallowedFailureCount) { 
+If ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
     Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://api2.nicehash.com/main/api/v2."
 }
 ElseIf ($Request.miningAlgorithms) { 
@@ -71,15 +71,15 @@ ElseIf ($Request.miningAlgorithms) {
             $Reasons = [System.Collections.Generic.Hashset[String]]::new()
             If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
             If ($RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }).order -eq 0) { $Reasons.Add("No orders at pool") | Out-Null }
-            If ($_.speed -eq 0 -and -not ($Session.ConfigRunning.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+            If ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
             If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
             $Key = "$($Name)_$($AlgorithmNorm)"
             $Value = [Double]$_.paying / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
-        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
+            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
         }
         Else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false

@@ -215,7 +215,9 @@
     }
   },
   "ProHashing": {
-    "Algorithm": [],
+    "Algorithm": [
+      "-Octopus"
+    ],
     "AutoExchange": true,
     "BalancesKeepAlive": 90, // The customer has not mined with the pool for 90 days (https://prohashing.com/help/prohashing-legal-information#terms)
     "BrainConfig": {

@@ -112,7 +112,7 @@
 
             $table.bootstrapTable({
               async: "true",
-              autoRefreshInterval: parseInt(Math.max(config.Interval, 30)), // refresh once per interval, at least 30 seconds
+              autoRefreshInterval: parseInt(Math.max(configrunning.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 40,
               onColumnSwitch: function() {
                 $("body").css("cursor", "default");
@@ -144,7 +144,7 @@
               },
               onPostBody: function () {
                 if (this.data.length > 0) {
-                  if (config.UseColorForMinerStatus == true) {
+                  if (configrunning.UseColorForMinerStatus == true) {
                     $(".statuscolor").each(function () {
                       if (this.innerText) $(this).parent("tr").addClass("color-" + this.innerText.toLowerCase());
                     });
@@ -152,7 +152,7 @@
                 };
 
                 $(".addlocalcurrency").each(function () {
-                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + config.FIATcurrency + " / day";
+                  if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + configrunning.FIATcurrency + " / day";
                 });
               },
               onRefresh: function() {
@@ -165,7 +165,7 @@
 
             $("#miners").on("column-switch.bs.table column-switch-all.bs.table reorder-column.bs.table", function () {
               $(".addlocalcurrency").each(function () {
-                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + config.FIATcurrency + " / day";
+                if (this.childNodes[0].innerText && !this.childNodes[0].innerText.endsWith(" / day")) this.childNodes[0].innerText = this.childNodes[0].innerText + "\n" + configrunning.FIATcurrency + " / day";
               });
             });
 

@@ -18,22 +18,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
-If ($Config.NiceHashWallet) { 
+If ($Session.Config.NiceHashWallet) { 
 
     $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-    $PoolConfig = $Config.PoolsConfig.NiceHash
+    $PoolConfig = $Session.Config.Pools.NiceHash
     $PayoutCurrency = $PoolConfig.PayoutCurrency
     $Wallet = $PoolConfig.Wallets.$PayoutCurrency
     $RetryCount = $PoolConfig.PoolAPIallowedFailureCount
     $RetryInterval = $PoolConfig.PoolAPIretryInterval
 
-    $Key = $Config.NiceHashAPIKey
-    $OrganizationID = $Config.NiceHashOrganizationId
-    $Secret = $Config.NiceHashAPISecret
+    $Key = $Session.Config.NiceHashAPIKey
+    $OrganizationID = $Session.Config.NiceHashOrganizationId
+    $Secret = $Session.Config.NiceHashAPISecret
 
     Function Get-NiceHashRequest { 
         Param (
@@ -63,7 +63,7 @@ If ($Config.NiceHashWallet) {
             "X-Auth"            = "$($Key):$(($Sign -replace "\-").ToLower())"
             "Cache-Control"     = "no-cache"
         }
-        Return Invoke-RestMethod "https://api2.nicehash.com$($EndPoint)?extendedResponse=true" -TimeoutSec $Config.PoolAPItimeout -ErrorAction Stop -Method $Method -Headers $Headers
+        Return Invoke-RestMethod "https://api2.nicehash.com$($EndPoint)?extendedResponse=true" -TimeoutSec $Session.Config.PoolAPItimeout -ErrorAction Stop -Method $Method -Headers $Headers
     }
 
     $Method = "GET"
@@ -71,12 +71,12 @@ If ($Config.NiceHashWallet) {
 
     $Request = "https://api2.nicehash.com$($EndPoint)?extendedResponse=true"
 
-    While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.NiceHashAPIKey -and $Config.NiceHashAPISecret -and $Config.NiceHashOrganizationId) { 
+    While (-not $APIResponse -and $RetryCount -gt 0 -and $Session.Config.NiceHashAPIKey -and $Session.Config.NiceHashAPISecret -and $Session.Config.NiceHashOrganizationId) { 
 
         Try { 
             $APIResponse = Get-NiceHashRequest -EndPoint $EndPoint -Method $Method -Key $Key -OrganizationID $OrganizationID -Secret $Secret
 
-            If ($Config.LogBalanceAPIResponse) { 
+            If ($Session.Config.LogBalanceAPIResponse) { 
                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

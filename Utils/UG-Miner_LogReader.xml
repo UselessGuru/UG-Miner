@@ -15,7 +15,7 @@
       <BookmarkTextColor>Yellow</BookmarkTextColor>
       <BookmarkBackColor>DarkGreen</BookmarkBackColor>
       <Modeless>false</Modeless>
-      <Title>UG-Miner_2025-07-08.log</Title>
+      <Title>UG-Miner_2025-10-30.log</Title>
       <WindowState>Maximized</WindowState>
       <WindowSize>
         <Width>1886</Width>
@@ -82,7 +82,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Downloader: Initiated|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Some miner binaries are missing.*Starting downloader</Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (Downloader: Initiated|Some miner binaries are missing.*Starting downloader)</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -100,16 +100,6 @@
           <AlertHighlight>false</AlertHighlight>
           <TextColor>#C6C600</TextColor>
           <BackColor>Black</BackColor>
-        </Keyword>
-        <Keyword>
-          <Keyword>more profitable than the fastest miner:</Keyword>
-          <MatchCaseSensitive>false</MatchCaseSensitive>
-          <MatchRegularExpression>false</MatchRegularExpression>
-          <LogHitCounter>false</LogHitCounter>
-          <TextColoring>true</TextColoring>
-          <AlertHighlight>false</AlertHighlight>
-          <TextColor>#400040</TextColor>
-          <BackColor>#FFFF80</BackColor>
         </Keyword>
         <Keyword>
           <Keyword>Starting UG-Miner|API and web GUI is running|Stopped API and web GUI</Keyword>
@@ -172,7 +162,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Started new cycle|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Collecting miner data while|enough samples for this cycle|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.+Ending cycle|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.+Exiting cycle</Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (Started new cycle|Collecting miner data while|Ending cycle|Exiting cycle)</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -192,7 +182,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Starting miner .+|^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} Dry run .+</Keyword>
+          <Keyword>^\[.+\] \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (Starting miner .+|Dry run .+)</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>
@@ -211,8 +201,8 @@
     <Height>1163</Height>
   </WindowSize>
   <WindowPosition>
-    <X>124</X>
-    <Y>140</Y>
+    <X>1410</X>
+    <Y>293</Y>
   </WindowPosition>
   <MinimizedToTray>false</MinimizedToTray>
   <AlwaysOnTop>false</AlwaysOnTop>

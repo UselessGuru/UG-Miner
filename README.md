@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.5.17 / Updated 2025/10/25
+Version 6.6.0 / Updated 2025/10/31
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -280,19 +280,18 @@ Hot key legend:                              Status:
 5: Toggle API & web GUI                      [enabled on port 3999]
 
 a: Toggle 'Accuracy' column visibility       [on]
-c: Toggle 'Power cost' column visibility     [on]
+b: Toggle 'Earnings bias' column visibility  [on]
+c: Toggle 'Currency' column visibility       [on]
 e: Toggle 'Earnings' column visibility       [on]
-f: Toggle pool 'Fees' column visibility      [on]
-i: Toggle 'Earnings bias' column visibility  [on]
-m: Toggle miner 'Fees' column visibility     [on]
+m: Toggle 'Miner fee' column visibility      [on]
 n: Toggle 'CoinName' column visibility       [on]
-p: Toggle 'Pool' column visibility           [on]
+o: Toggle 'Power cost' column visibility     [on]
+p: Toggle 'Pool fee' column visibility       [on]
 r: Toggle 'Profit bias' column visibility    [on]
 s: Toggle 'Hashrate(s)' column visibility    [on]
 t: Toggle 'Profit' column visibility         [on]
-u: Toggle 'User' column visibility           [off]
+u: Toggle 'User' column visibility           [on]
 w: Toggle 'Power (W)' column visibility      [on]
-y: Toggle 'Currency' column visibility       [on]
 
 q: Quit UG-Miner
 ```

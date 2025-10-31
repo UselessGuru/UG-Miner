@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
@@ -112,12 +112,12 @@ $Algorithms = @(
     @{ Algorithm = "YespowerUrx";   MinerSet = 2; WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerUrx" } # JayddeeCPU-v25.6 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
 
-    $MinerAPIPort = $Session.ConfigRunning.APIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1) + 1
+    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
     $Algorithms.ForEach(
         { 
@@ -128,7 +128,7 @@ If ($Algorithms) {
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"
-                    Arguments   = "$($_.Arguments) --url $(If ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --hash-meter --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.ConfigRunning.CPUMiningReserveCPUcore) --api-bind $($MinerAPIPort)"
+                    Arguments   = "$($_.Arguments) --url $(If ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --hash-meter --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --api-bind $($MinerAPIPort)"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @(0) # Dev fee
                     MinerSet    = $_.MinerSet

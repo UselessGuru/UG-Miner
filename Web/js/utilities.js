@@ -82,7 +82,7 @@ function formatPools(data) {
   // This function can alter the returned data before building the table, formatting it in a way
   // that is easier to display and manipulate in a table
   $.each(data, function(index, item) {
-    if (config.UsemBTC) factor = 1000;
+    if (configrunning.UsemBTC) factor = 1000;
     else factor = 1;
     item.Price = item.Price * factor;
     item.Price_Bias = item.Price_Bias * factor;
@@ -172,8 +172,8 @@ function formatHashrate(value) {
 
 function getDecimalsFromValue(value) {
   var decimals;
-  decimals = 1 + config.DecimalsMax - parseInt(value).toString().length
-  if (decimals > config.DecimalsMax) decimals = 0;
+  decimals = 1 + configrunning.DecimalsMax - parseInt(value).toString().length
+  if (decimals > configrunning.DecimalsMax) decimals = 0;
   if (decimals <= 0) decimals = 0;
   return decimals;
 };

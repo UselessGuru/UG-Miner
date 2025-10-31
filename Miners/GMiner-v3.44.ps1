@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -69,7 +69,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA512256d", "");               Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.0;  Tuning = " --mt 2"; MinerSet = 1; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @());           AutoCoinPers = "";             Arguments = " --algo radiant --cuda 1 --opencl 0" }
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
@@ -80,7 +80,7 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
@@ -117,7 +117,7 @@ If ($Algorithms) {
                                     }
 
                                     # Contest ETH address (if ETH wallet is specified in config)
-                                    # $Arguments += If ($Session.ConfigRunning.Wallets.ETH) { " --contest_wallet $($Session.ConfigRunning.Wallets.ETH)" } Else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
+                                    # $Arguments += If ($Session.Config.Wallets.ETH) { " --contest_wallet $($Session.Config.Wallets.ETH)" } Else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
 
                                     [PSCustomObject]@{ 
                                         API         = "Gminer"

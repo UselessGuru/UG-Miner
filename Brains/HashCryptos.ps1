@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/10/25
+Version date:   2025/10/31
 #>
 
 using module ..\Includes\Include.psm1
@@ -38,10 +38,10 @@ $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 $Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";"Cache-Control"="no-cache" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
+While ($PoolConfig = $Session.Config.Pools.$BrainName) { 
 
     $APICallFails = 0
-    $PoolVariant = $Config.PoolName.Where({ $_ -like "$BrainName*" })
+    $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
     If ($Session.MyIPaddress) { 
@@ -63,11 +63,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
                     Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
                 }
-            } While ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -lE $Config.PoolAPIallowedFailureCount)
+            } While ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -lE $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
+            If ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
                 Write-Message -Level Warn "Brain $($BrainName): Problem when trying to access https://hashcryptos.com/api [$($APIerror -replace '\.$')]."
             }
             ElseIf ($AlgoData) { 
@@ -143,7 +143,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 }
                 Remove-Variable BasePrice, CurPoolObject, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 
-                If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
+                If ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$BrainName.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }

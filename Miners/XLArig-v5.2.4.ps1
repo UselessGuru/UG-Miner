@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
@@ -33,28 +33,28 @@ $Algorithms = @(
     @{ Algorithm = "Panthera"; MinerSet = 0; WarmupTimes = @(15, 0); ExcludePools = @(); Arguments = " --algo=panthera" }
 )
 
-# $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
+# $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
 
-    $MinerAPIPort = $Session.ConfigRunning.APIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1) + 1
+    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
     $Algorithms.ForEach(
         { 
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
-            $Fee = If ($Session.ConfigRunning.DisableMinerFee) { 0 } Else { 5 }
+            $Fee = If ($Session.Config.DisableMinerFee) { 0 } Else { 5 }
 
             # $ExcludePools = $_.ExcludePools
             # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
             ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Session.ConfigRunning.WorkerName }
+                $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Session.Config.WorkerName }
 
                 [PSCustomObject]@{ 
                     API         = "XmRig"
-                    Arguments   = "$($_.Arguments)$(If ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level=$Fee --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --http-port=$MinerAPIPort --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.ConfigRunning.CPUMiningReserveCPUcore) --retry-pause 1 --keepalive"
+                    Arguments   = "$($_.Arguments)$(If ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level=$Fee --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --http-port=$MinerAPIPort --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --retry-pause 1 --keepalive"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @($Fee) # Dev fee
                     MinerSet    = $_.MinerSet

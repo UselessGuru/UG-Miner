@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 using module .\Include.psm1
@@ -47,7 +47,7 @@ $MIMEtypes = @{
 $Server = [System.Net.HttpListener]::new()
 
 # Listening on anything other than localhost requires admin privileges
-$Server.Prefixes.Add("http://localhost:$($Session.ConfigRunning.APIport)/")
+$Server.Prefixes.Add("http://localhost:$($Session.Config.APIport)/")
 $Server.Start()
 $Session.APIversion = $APIversion
 $Session.APIserver = $Server
@@ -75,7 +75,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                 If ($Key -and $Value) { $Parameters.$Key = $Value }
             }
         )
-        If ($Session.ConfigRunning.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url)" | Out-File $Session.ConfigRunning.APIlogfile -Append -ErrorAction Ignore }
+        If ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url)" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
     }
     ElseIf ($Request.HttpMethod -eq "POST") { 
         $Length = $Request.contentlength64
@@ -84,7 +84,7 @@ While ($Session.APIversion -and $Server.IsListening) {
         [Void]$Request.inputstream.read($Buffer, 0, $Length)
         $Body = [Text.Encoding]::ascii.getstring($Buffer)
 
-        If ($Session.ConfigRunning.APIlogfile -and $Session.ConfigRunning.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File $Session.ConfigRunning.APIlogfile -Append -ErrorAction Ignore }
+        If ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
 
         $Parameters = @{ }
         ($Body -split "&").ForEach(
@@ -112,7 +112,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
             If ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
-                $PoolsConfig = [System.IO.File]::ReadAllLines($Session.ConfigRunning.PoolsConfigFile) | ConvertFrom-Json
+                $Config.Pools = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
                 ForEach ($Pool in $Pools) { 
                     If ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
@@ -128,12 +128,12 @@ While ($Session.APIversion -and $Server.IsListening) {
                 $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                $PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
             }
             Else { 
                 $Data = "No matching stats found."
             }
-            Remove-Variable Algorithms, Message, Pool, PoolNames, Pools, PoolsConfig -ErrorAction Ignore
+            Remove-Variable Algorithms, Message, Pool, PoolNames, Pools, Config.Pools -ErrorAction Ignore
             Break
         }
         "/functions/algorithm/enable" { 
@@ -141,7 +141,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
             If ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
-                $PoolsConfig = [System.IO.File]::ReadAllLines($Session.ConfigRunning.PoolsConfigFile) | ConvertFrom-Json
+                $Config.Pools = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
                 ForEach ($Pool in $Pools) { 
                     If ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
@@ -160,12 +160,12 @@ While ($Session.APIversion -and $Server.IsListening) {
                 $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                $PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
             }
             Else { 
                 $Data = "No matching stats found."
             }
-            Remove-Variable Algorithms, Message, Pool, PoolNames, Pools, PoolsConfig -ErrorAction Ignore
+            Remove-Variable Algorithms, Message, Pool, PoolNames, Pools, Config.Pools -ErrorAction Ignore
             Break
         }
         "/functions/api/stop" { 
@@ -192,15 +192,15 @@ While ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/config/device/disable" { 
             ForEach ($Key in $Parameters.Keys) { 
-                If ($Values = @(($Parameters.$Key -split ",").Where({ $_ -notin $Session.ConfigRunning.ExcludeDeviceName }))) { 
+                If ($Values = @(($Parameters.$Key -split ",").Where({ $_ -notin $Session.Config.ExcludeDeviceName }))) { 
                     Try { 
-                        $ExcludeDeviceName = $Session.ConfigRunning.ExcludeDeviceName
-                        $Session.ConfigRunning.ExcludeDeviceName = @((@($Session.ConfigRunning.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
-                        Write-Config -Config $Session.ConfigRunning
+                        $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
+                        $Session.Config.ExcludeDeviceName = @((@($Session.Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
+                        Write-Config -Config $Session.Config
                         $Data = "Device configuration changed`n`nOld values:"
                         $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                         $Data += "`n`nNew values:"
-                        $Data += "`nExcludeDeviceName: '[$($Session.ConfigRunning."ExcludeDeviceName" -join ", ")]'"
+                        $Data += "`nExcludeDeviceName: '[$($Session.Config."ExcludeDeviceName" -join ", ")]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
                         $Session.Devices.Where({ $Values -contains $_.Name }).ForEach(
                             { 
@@ -212,7 +212,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                                 }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked disabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. Configuration will become active in the next cycle."
+                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked disabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become active in the next cycle."
                     }
                     Catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -227,16 +227,16 @@ While ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/config/device/enable" { 
             ForEach ($Key in $Parameters.Keys) { 
-                If ($Values = @(($Parameters.$Key -split ",").Where({ $Session.ConfigRunning.ExcludeDeviceName -contains $_ }))) { 
+                If ($Values = @(($Parameters.$Key -split ",").Where({ $Session.Config.ExcludeDeviceName -contains $_ }))) { 
                     Try { 
-                        $ExcludeDeviceName = $Session.ConfigRunning.ExcludeDeviceName
-                        $Session.ConfigRunning.ExcludeDeviceName = @($Session.ConfigRunning.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
-                        Write-Config -Config $Session.ConfigRunning
+                        $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
+                        $Session.Config.ExcludeDeviceName = @($Session.Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
+                        Write-Config -Config $Session.Config
                         $Session.ConfigurationHasChangedDuringUpdate = $false
                         $Data = "Device configuration changed`n`nOld values:"
                         $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                         $Data += "`n`nNew values:"
-                        $Data += "`nExcludeDeviceName: '[$($Session.ConfigRunning."ExcludeDeviceName" -join ", " )]'"
+                        $Data += "`nExcludeDeviceName: '[$($Session.Config."ExcludeDeviceName" -join ", " )]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
                         $Session.Devices.Where({ $Values -contains $_.Name }).ForEach(
                             { 
@@ -245,7 +245,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                                 Else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked as enabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. Configuration will become fully active in the next cycle."
+                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked as enabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
                     }
                     Catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -262,13 +262,13 @@ While ($Session.APIversion -and $Server.IsListening) {
             Try { 
                 $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
                 Write-Config -Config $TempConfig
-                Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. Configuration will become fully active in the next cycle."
+                Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
 
                 $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
 
                 $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                     { 
-                        If ($Session.ConfigRunning.ExcludeDeviceName -contains $_.Name) { 
+                        If ($Session.Config.ExcludeDeviceName -contains $_.Name) { 
                             $_.State = [DeviceState]::Disabled
                             If ($_.Status -like "Mining *}") { $_.Status = "$($_.Status); will get disabled at end of cycle" }
                         }
@@ -284,7 +284,6 @@ While ($Session.APIversion -and $Server.IsListening) {
             }
             Catch { 
                 $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
-                $_ > t.txt
             }
             Remove-Variable Key, TempConfig -ErrorAction Ignore
             Break
@@ -292,7 +291,7 @@ While ($Session.APIversion -and $Server.IsListening) {
         "/functions/file/edit" { 
             $Data = Edit-File $Parameters.FileName
             If (Test-Path -LiteralPath $Parameters.FileName) { 
-                If ($Parameters.FileName -eq $Session.ConfigFile -or $Parameters.FileName -eq $Session.PoolsConfigFile) { Read-Config }
+                If ($Parameters.FileName -eq $Session.ConfigFile -or $Parameters.FileName -eq $Session.PoolsConfigFile) { Read-ConfigFiles }
             }
             Break
         }
@@ -355,10 +354,10 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/functions/querypoolapi" { 
-            If (-not $Session.ConfigRunning.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type)) { 
+            If (-not $Session.Config.Pools.$($Parameters.Pool).BrainConfig.$($Parameters.Type)) { 
                 $Data = "No pool configuration data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
             }
-            ElseIf (-not ($Data = (Invoke-RestMethod -Uri $Session.ConfigRunning.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
+            ElseIf (-not ($Data = (Invoke-RestMethod -Uri $Session.Config.Pools.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
                 $Data = "No data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
             }
             Break
@@ -471,7 +470,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                     $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                    If ($Session.ConfigRunning.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    If ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                 }
                 Else { 
                     $Data = "No matching hashrate stats found."
@@ -491,7 +490,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                     $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                    If ($Session.ConfigRunning.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    If ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                 }
                 Else { 
                     $Data = "No matching power consumption stats found."
@@ -647,7 +646,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/btc" { 
-            $Data = $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)
+            $Data = $Session.Rates.BTC.($Session.Config.FIATcurrency)
             Break
         }
         "/braindata" { 
@@ -673,7 +672,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/configrunning" { 
-            $Data = ConvertTo-Json -Depth 10 $Session.ConfigRunning
+            $Data = ConvertTo-Json -Depth 10 $Session.Config
             Break
         }
         "/cpufeatures" { 
@@ -681,7 +680,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/currency" { 
-            $Data = $Session.ConfigRunning.FIATcurrency
+            $Data = $Session.Config.FIATcurrency
             Break
         }
         "/currencyalgorithm" { 
@@ -729,7 +728,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/extracurrencies" { 
-            $Data = ConvertTo-Json -Depth 10 $Session.ConfigRunning.ExtraCurrencies
+            $Data = ConvertTo-Json -Depth 10 $Session.Config.ExtraCurrencies
             Break
         }
         "/fiatcurrencies" { 
@@ -737,13 +736,13 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/miners" { 
-            $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+            $Bias = If ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
             $Data = ConvertTo-Json -Depth 5 @($Session.Miners.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
             Remove-Variable Bias
             Break
         }
         "/miners/available" { 
-            $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+            $Bias = If ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
             $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Available }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
             Remove-Variable Bias
             Break
@@ -753,7 +752,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/miners/best" { 
-            $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+            $Bias = If ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
             $Data = ConvertTo-Json -Depth 5 @($Session.MinersBest.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
             Remove-Variable Bias
             Break
@@ -787,7 +786,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/miners/optimal" { 
-            $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+            $Bias = If ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
             $Data = ConvertTo-Json -Depth 5 @($Session.MinersOptimal.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
             Remove-Variable Bias
             Break
@@ -813,7 +812,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/poolname" { 
-            $Data = ConvertTo-Json -Depth 10 $Session.ConfigRunning.PoolName
+            $Data = ConvertTo-Json -Depth 10 $Session.Config.PoolName
             Break
         }
         "/pooldata" { 
@@ -821,11 +820,11 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/poolsconfig" { 
-            $Data = ConvertTo-Json -Depth 10 ($Session.ConfigRunning.PoolsConfig | Select-Object)
+            $Data = ConvertTo-Json -Depth 10 ($Session.Config.Pools | Select-Object)
             Break
         }
         "/poolsconfigfile" { 
-            $Data = $Session.ConfigRunning.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\")
+            $Data = $Session.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\")
             Break
         }
         "/pools" { 
@@ -921,7 +920,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/wallets" { 
-            $Data = ConvertTo-Json -Depth 10 ($Session.ConfigRunning.Wallets | Select-Object)
+            $Data = ConvertTo-Json -Depth 10 ($Session.Config.Wallets | Select-Object)
             Break
         }
         "/watchdogexpiration" { 
@@ -929,7 +928,7 @@ While ($Session.APIversion -and $Server.IsListening) {
             Break
         }
         "/workers" { 
-            If ($Session.ShowWorkerStatus -and $Session.ConfigRunning.MonitoringUser -and $Session.ConfigRunning.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
+            If ($Session.ShowWorkerStatus -and $Session.Config.MonitoringUser -and $Session.Config.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
                 Read-MonitoringData
             }
             If ($Session.Workers) { 
@@ -1020,7 +1019,7 @@ While ($Session.APIversion -and $Server.IsListening) {
     $Response.StatusCode = $StatusCode
     $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
     $Response.ContentLength64 = $ResponseBuffer.Length
-    If ($Session.ConfigRunning.APIlogfile -and $Session.ConfigRunning.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.ConfigRunning.APIlogfile -Append -ErrorAction Ignore }
+    If ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
     $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
     $Response.Close()
 

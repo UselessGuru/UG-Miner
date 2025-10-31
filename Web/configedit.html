@@ -4,10 +4,10 @@
 </div>
 <div id="ConfigFilenames" class="alert alert-info" role="alert">&ensp;</div>
 <form id="configuration">
-  <input name="submit" type="submit" id="save-button" value="Save configuration" class="btn btn-success" alt="Submit" title="Save configuration&#10;It will become active in next cycle">
+  <input name="submit" type="submit" id="save-button" value="Save configuration" class="btn btn-success" alt="Submit" title="Save configuration&#10;Changes will become active in next cycle">
   <input name="reset" type="reset" id="reset-button" value="Reset" class="btn btn-warning" alt="Reset" title="Reset configuration data to previous values">
-  <button type="button" class="btn btn-primary" id="btn-editconfig" name="btn-editconfig" title="Changed config will become active in next cycle">Edit config file</button>
-  <button type="button" class="btn btn-primary" id="btn-editpoolsconfig" name="btn-editpoolsconfig" title="Changed config will become active in next cycle">Edit pools config file</button>
+  <button type="button" class="btn btn-primary" id="btn-editconfig" name="btn-editconfig" title="Changed config will become active in next cycle">Edit configuration file</button>
+  <button type="button" class="btn btn-primary" id="btn-editpoolsconfig" name="btn-editpoolsconfig" title="Changed config will become active in next cycle">Edit pools configuration file</button>
   <br>
   <br>
   <div>
@@ -88,7 +88,7 @@
             <input type="text" id="ExtraCurrencies" name="ExtraCurrencies" maxlength=45 size=50 value="USD, ETC">
           </div>
           <div style="padding-top: 0.5rem;" title="If enabled UG-Miner will display BTC values in milli BTC">
-            <input type="checkbox" class="toggle-switch" id="UsemBTC" name="UsemBTC"> Show BTC values in mBTC (BTC/1000)
+            <input type="checkbox" class="toggle-switch" id="UsemBTC" name="UsemBTC"> Display BTC values in mBTC (BTC/1000)
           </div>
           <br>
 
@@ -382,26 +382,23 @@
             <div style="padding-top: 0.5rem;" title="Show the 'Coin name' column in the console window&#10;&#10;Can be toggled by pressing 'n' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnCoinName" name="ShowColumnCoinName"> Show 'Coin name' column
             </div>
-            <div style="padding-top: 0.5rem;" title="Show the 'Currency' column in the console window&#10;&#10;Can be toggled by pressing 'y' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem;" title="Show the 'Currency' column in the console window&#10;&#10;Can be toggled by pressing 'c' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnCurrency" name="ShowColumnCurrency"> Show 'Currency' column
             </div>
-            <div style="padding-top: 0.5rem;" title="Show the 'Earnings column in the console window&#10;&#10;Can be toggled by pressing 'e' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowColumnEarnings" name="ShowColumnEarnings"> Show 'Earnings column
+            <div style="padding-top: 0.5rem;" title="Show the 'Earnings column' in the console window&#10;&#10;Can be toggled by pressing 'e' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowColumnEarnings" name="ShowColumnEarnings"> Show 'Earnings' column
             </div>
-            <div style="padding-top: 0.5rem;" title="Show the 'Earnings bias' column in the console window&#10;&#10;Can be toggled by pressing 'i' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem;" title="Show the 'Earnings bias' column in the console window&#10;&#10;Can be toggled by pressing 'b' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnEarningsBias" name="ShowColumnEarningsBias"> Show 'Earnings bias' column
             </div>
             <div style="padding-top: 0.5rem;" title="Show the 'Hashrate(s)' column in the console window&#10;&#10;Can be toggled by pressing 's' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnHashrate" name="ShowColumnHashrate"> Show 'Hashrates(s)' column
             </div>
-            <div style="padding-top: 0.5rem;" title="Show the miner 'Fee' column in the console window&#10;&#10;Can be toggled by pressing 'm' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowColumnMinerFee" name="ShowColumnMinerFee"> Show miner 'Fee' column
+            <div style="padding-top: 0.5rem;" title="Show the 'Miner fee' column in the console window&#10;&#10;Can be toggled by pressing 'm' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowColumnMinerFee" name="ShowColumnMinerFee"> Show 'Miner fee' column
             </div>
-            <div style="padding-top: 0.5rem;" title="Show the 'Pool' column in the console window&#10;&#10;Can be toggled by pressing 'p' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowColumnPool" name="ShowColumnPool"> Show 'Pool' column
-            </div>
-            <div style="padding-top: 0.5rem;" title="Show the pool 'Fee' column in the console window&#10;&#10;Can be toggled by pressing 'f' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowColumnPoolFee" name="ShowColumnPoolFee"> Show pool 'Fee' column
+            <div style="padding-top: 0.5rem;" title="Show the 'Pool fee' column in the console window&#10;&#10;Can be toggled by pressing 'p' in the console window while waiting for the next cycle">
+              <input type="checkbox" class="toggle-switch" id="ShowColumnPoolFee" name="ShowColumnPoolFee"> Show 'Pool fee' column
             </div>
             <div style="padding-top: 0.5rem;" title="Show the 'Profit' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 't' in the console window while waiting for the next cycle&#10;">
               <input type="checkbox" class="toggle-switch" id="ShowColumnProfit" name="ShowColumnProfit"> Show 'Profit' column
@@ -412,7 +409,7 @@
             <div style="padding-top: 0.5rem;" title="Show the 'Power (W)' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'w' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnPowerConsumption" name="ShowColumnPowerConsumption"> Show 'Power (W)' column
             </div>
-            <div style="padding-top: 0.5rem;" title="Show the 'Power cost' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'c' in the console window while waiting for the next cycle">
+            <div style="padding-top: 0.5rem;" title="Show the 'Power cost' column in the console window&#10;(requires 'Calculate power cost' to be enabled)&#10;&#10;Can be toggled by pressing 'o' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowColumnPowerCost" name="ShowColumnPowerCost"> Show 'Power cost' column
             </div>
             <div style="padding-top: 0.5rem;" title="Show the 'User' column in the console window&#10;&#10;Can be toggled by pressing 'u' in the console window while waiting for the next cycle">
@@ -467,6 +464,17 @@
   $(document).ready(function () {
     $('body').css('cursor', 'wait');
 
+    // Get current config
+    $.ajax({
+      async: false,
+      dataType: 'json',
+      timeout: 1,
+      url: '/config',
+      success: function(result) {
+        config = result;
+      }
+    });
+
     // Edit config file
     $('#btn-editconfig').click(function () {
       document.getElementById('btn-editconfig').disabled = true;
@@ -486,7 +494,7 @@
       });
     });
 
-    // Edit poolsconfig file
+    // Edit Config.Pools file
     $('#btn-editpoolsconfig').click(function () {
       document.getElementById('btn-editconfig').disabled = true;
       document.getElementById('btn-editpoolsconfig').disabled = true;
@@ -815,8 +823,8 @@
           $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('pool-' + poolvariant).toLowerCase(), style: 'margin-left: 0px;' }).appendTo(poolscontainer);
           $('<label/>', { for: ('pool-' + poolvariant).toLowerCase(), text: poolvariant, title: title, style: 'margin-left: 5px; line-height: 75%;' }).appendTo(poolscontainer);
           if (poolbasename == poolvariant.toLowerCase()) {
-            $('<input/>', { type: 'checkbox', class: 'switch', id: ('PoolBalanceTracker-' + poolvariant), disabled: (config.BalancesTrackerPollInterval <= 0), checked: !(config.BalancesTrackerExcludePools.map((poolname) => { return poolname.toLowerCase() }).includes(poolbasename)), title: "Enable / disable balances tracker for this pool\n\nThis requires balances tracker to be running", style: 'position: absolute; left: 50%; margin-top: 0.14rem;' }).appendTo(poolscontainer);
-            $('<label/>', { for: ('PoolBalanceTracker-' + poolvariant).toLowerCase(), text: "Track balances", title: "Enable / disable balances tracker for this pool\n\nThis requires balances tracker to be running", style: 'position: absolute; left: calc(50% + 20px); padding-top: 0.1rem;' }).appendTo(poolscontainer);
+            $('<input/>', { type: 'checkbox', class: 'switch', id: ('PoolBalanceTracker-' + poolvariant), disabled: (config.BalancesTrackerPollInterval <= 0), checked: !(config.BalancesTrackerExcludePools.map((poolname) => { return poolname.toLowerCase() }).includes(poolbasename)), title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running)", style: 'position: absolute; left: 50%; margin-top: 0.14rem;' }).appendTo(poolscontainer);
+            $('<label/>', { for: ('PoolBalanceTracker-' + poolvariant).toLowerCase(), text: "Track balances", title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running)", style: 'position: absolute; left: calc(50% + 20px); padding-top: 0.1rem;' }).appendTo(poolscontainer);
           }
           $('<br>').appendTo(poolscontainer);
         });
@@ -970,7 +978,6 @@
       document.getElementById('ShowColumnProfitBias').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowColumnPowerConsumption').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowColumnPowerCost').disabled = !(document.getElementById('ShowConsole').checked);
-      document.getElementById('ShowColumnPool').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowColumnPoolFee').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowColumnUser').disabled = !(document.getElementById('ShowConsole').checked);
       if (!(document.getElementById('ShowConsole').checked)) {
@@ -993,7 +1000,6 @@
     if (config.ShowColumnMinerFee) document.getElementById('ShowColumnMinerFee').checked = true;
     if (config.ShowColumnProfit) document.getElementById('ShowColumnProfit').checked = true;
     if (config.ShowColumnProfitBias) document.getElementById('ShowColumnProfitBias').checked = true;
-    if (config.ShowColumnPool) document.getElementById('ShowColumnPool').checked = true;
     if (config.ShowColumnPoolFee) document.getElementById('ShowColumnPoolFee').checked = true;
     if (config.ShowColumnPowerConsumption) document.getElementById('ShowColumnPowerConsumption').checked = true;
     if (config.ShowColumnPowerCost) document.getElementById('ShowColumnPowerCost').checked = true;
@@ -1466,7 +1472,6 @@
         config.ShowColumnEarningsBias = document.getElementById('ShowColumnEarningsBias').checked;
         config.ShowColumnHashrate = document.getElementById('ShowColumnHashrate').checked;
         config.ShowColumnMinerFee = document.getElementById('ShowColumnMinerFee').checked;
-        config.ShowColumnPool = document.getElementById('ShowColumnPool').checked;
         config.ShowColumnPoolFee = document.getElementById('ShowColumnPoolFee').checked;
         config.ShowColumnProfit = document.getElementById('ShowColumnProfit').checked;
         config.ShowColumnProfitBias = document.getElementById('ShowColumnProfitBias').checked;

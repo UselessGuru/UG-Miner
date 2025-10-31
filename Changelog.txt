@@ -1,8 +1,24 @@
+Changelog UG-Miner 6.5.18 2025/10/31
+====================================
+
+Enhancements:
+- Core: Removed configuration item 'ShowColumnPool' (Information is already contained in the miner name)
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+- LegacyGUI: Minor code optimizations
+
+Miner changes:
+- MiniZ-v2.5e3
+- SRBMinerMulti-v2.9.9
+- Wildrig-v0.46.4
+
+
 Changelog UG-Miner 6.5.17 2025/10/25
 ====================================
 
 Enhancements:
-- Core / Console window: Add '5' key to enable / disable API and web GUI
+- Core / Console window: Add '5' hot key to enable / disable API and web GUI
 - Web GUI / Configuration editor: Add checkboxes to toggle balances tracker per pool
 
 Improvements:
@@ -57,7 +73,7 @@ Changelog UG-Miner 6.5.13 2025/09/30
 ====================================
 
 Enhancements:
-- Core / Console window: Add 'Q' key to shut down UG-Miner
+- Core / Console window: Add 'q' hot key to shut down UG-Miner
 
 Improvements:
 - Pools 'HashCryptos' & 'MiningDutch': Mark unminable algorithms as 'Algorithm not supported by pool'

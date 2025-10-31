@@ -289,13 +289,13 @@
                       enabled: true,
                       callbacks: {
                         label: function(context) {
-                          if (context.parsed.y > 0) return " " + context.dataset.label + ": " + context.parsed.y.toFixed(config.DecimalsMax) + " " + currency;
+                          if (context.parsed.y > 0) return " " + context.dataset.label + ": " + context.parsed.y.toFixed(configrunning.DecimalsMax) + " " + currency;
                         },
                         footer: function(data) {
                           // Loop through all datasets to get the actual total of the index
                           var total = 0;
                           for (var i = 0; i < data.length; i ++) total += data[i].raw;
-                          return "Total: " + total.toFixed(config.DecimalsMax) + " " + currency;
+                          return "Total: " + total.toFixed(configrunning.DecimalsMax) + " " + currency;
                         }
                       },
                       // itemSort: function(a, b) {
@@ -353,11 +353,11 @@
                   allbalances: {},
                   total: true,
                   outdated: false,
-                  FIATcurrency: config.FIATcurrency
+                  FIATcurrency: configrunning.FIATcurrency
               };
-              currencies = [config.FIATcurrency].concat(config.ExtraCurrencies)
+              currencies = [configrunning.FIATcurrency].concat(configrunning.ExtraCurrencies)
 
-              if (config.UsemBTC == true) currencies[currencies.indexOf("BTC")] = "mBTC"
+              if (configrunning.UsemBTC == true) currencies[currencies.indexOf("BTC")] = "mBTC"
 
               var rates = {};
               // get rates
@@ -394,30 +394,30 @@
 
                         $.each(result, function(index, item) {
                           try {
-                            if (config.UsemBTC && item.Currency == "BTC") {
+                            if (configrunning.UsemBTC && item.Currency == "BTC") {
                               var currency = "mBTC";
                             } else {
                               var currency = item.Currency;
                             }
 
-                            if (config.UsemBTC && item.PayoutThresholdCurrency == "BTC") {
+                            if (configrunning.UsemBTC && item.PayoutThresholdCurrency == "BTC") {
                               item.PayoutThresholdCurrency = "mBTC";
                               var factor = 0.001;
                             } else {
                               var factor = 1;
                             }
 
-                            if (config.BalancesShowInAllCurrencies || footer.test(item.Pool)) {
+                            if (configrunning.BalancesShowInAllCurrencies || footer.test(item.Pool)) {
                               item.Currencies = [currency].concat(currencies);
-                            } else if (config.BalancesShowInFIATcurrency || footer.test(item.Pool)) {
-                              item.Currencies = [currency].concat(config.FIATcurrency);
+                            } else if (configrunning.BalancesShowInFIATcurrency || footer.test(item.Pool)) {
+                              item.Currencies = [currency].concat(configrunning.FIATcurrency);
                             } else {
                               item.Currencies = [currency];
                             }
 
                             if (!(footer.test(item.Pool))) {
 
-                              if (rates[item.Currency]) currencyrate = rates[item.Currency][config.FIATcurrency];
+                              if (rates[item.Currency]) currencyrate = rates[item.Currency][configrunning.FIATcurrency];
 
                               if (item.Currency != item.PayoutThresholdCurrency) {
                                 // Payout threshold currency is different from asset currency
@@ -444,16 +444,16 @@
                                 avghourlygrowth: item.AvgHourlyGrowth,
                                 avgdailygrowth: item.AvgDailyGrowth,
                                 avgweeklygrowth: item.AvgWeeklyGrowth,
-                                payoutthreshold: parseFloat(item.PayoutThreshold / factor).toFixed(config.DecimalsMax),
+                                payoutthreshold: parseFloat(item.PayoutThreshold / factor).toFixed(configrunning.DecimalsMax),
                                 payoutthresholdcurrency: item.PayoutThresholdCurrency,
                                 rate: currencyrate,
                                 rates: rates,
                                 currency: currency,
-                                FIATcurrency: config.FIATcurrency,
+                                FIATcurrency: configrunning.FIATcurrency,
                                 percentage: percentage,
                                 paydate: formatDate(item.ProjectedPayDate),
-                                showaverages: config.BalancesShowAverages,
-                                showsums: config.BalancesShowSums,
+                                showaverages: configrunning.BalancesShowAverages,
+                                showsums: configrunning.BalancesShowSums,
                                 title: "Data last collected from pool"
                               };
 
@@ -462,7 +462,7 @@
                                 $.each(item.Currencies, function(cindex, currency) {
                                   if (rates[item.Currency] && rates[currency]) data["balances"][currency] = item.Balance * rates[item.Currency][currency];
                                 });
-                                data.balanceinFIATcurrency = item.Balance * rates[item.Currency][config.FIATcurrency];
+                                data.balanceinFIATcurrency = item.Balance * rates[item.Currency][configrunning.FIATcurrency];
                               } else { 
                                 data["balances"][item.Currency] = item.Balance;
                               }
@@ -498,7 +498,7 @@
                           totals.outdated = true;
                         }
 
-                        if (!(config.BalancesShowInAllCurrencies)) currencies = [config.FIATcurrency];
+                        if (!(configrunning.BalancesShowInAllCurrencies)) currencies = [configrunning.FIATcurrency];
 
                         $.each(currencies, function(cindex, currency) {
                           if (rates[currency]) {
@@ -547,14 +547,14 @@
                     };
                     datasets.push(earnings);
                   }
-                  renderChart(earningsdata.Labels, datasets, config.FIATcurrency);
+                  renderChart(earningsdata.Labels, datasets, configrunning.FIATcurrency);
                 }
               });
             }
 
             $(document).ready(function () {
               $(".addlocalcurrency").each(function () {
-                this.childNodes[0].innerText = this.childNodes[0].innerText + "\n(" + config.FIATcurrency + ")";
+                this.childNodes[0].innerText = this.childNodes[0].innerText + "\n(" + configrunning.FIATcurrency + ")";
               });
 
               updateEarningsChart();

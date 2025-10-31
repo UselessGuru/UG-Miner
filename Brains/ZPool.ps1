@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
 Version:        6.5.8
-Version date:   2025/10/25
+Version date:   2025/10/31
 #>
 
 using module ..\Includes\Include.psm1
@@ -35,10 +35,10 @@ $Durations = [TimeSpan[]]@()
 
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
-While ($PoolConfig = $Config.PoolsConfig.$BrainName) { 
+While ($PoolConfig = $Session.Config.Pools.$BrainName) { 
 
     $APICallFails = 0
-    $PoolVariant = [String]$Config.PoolName.Where({ $_ -like "$BrainName*" })
+    $PoolVariant = [String]$Session.Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
     If ($Session.MyIPaddress) { 
@@ -62,11 +62,11 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                     $APIerror = $_.Exception.Message
                     If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
                 }
-            } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -le $Config.PoolAPIallowedFailureCount)
+            } While (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            If ($APICallFails -gt $Config.PoolAPIallowedFailureCount) { 
+            If ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
                 Write-Message -Level Warn "Brain $($BrainName): Problem when trying to access https://www.zpool.ca/api [$($APIerror -replace '\.$')]."
             }
             ElseIf ($AlgoData -and $CurrenciesData) { 
@@ -190,7 +190,7 @@ While ($PoolConfig = $Config.PoolsConfig.$BrainName) {
                 }
                 Remove-Variable Algo, AlgorithmNorm, BasePrice, BestCurrency, CurrenciesArray, Currency, CurrentPoolObjects, DAGdata, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 
-                If ($PoolConfig.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$BrainName.BrainDebug) { 
+                If ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$BrainName.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }

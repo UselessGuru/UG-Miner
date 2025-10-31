@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { Return }
@@ -178,7 +178,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Uplexa";               Type = "NVIDIA"; MinMemGiB = 0.5;  MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 If ($Algorithms) { 
@@ -188,10 +188,10 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             # Optionally disable dev fee mining, requires change in source code
-            # $Fee = If ($Session.ConfigRunning.DisableMinerFee) { 0 } Else { 1 }
+            # $Fee = If ($Session.Config.DisableMinerFee) { 0 } Else { 1 }
             $Fee = 0
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
@@ -206,13 +206,13 @@ If ($Algorithms) {
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Arguments = $_.Arguments
-                            If ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.ConfigRunning.CPUMiningReserveCPUcore)" }
+                            If ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" }
                             ElseIf ("AMD", "INTEL" -contains $_.Type) { $Arguments += " --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             Else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
                             If (-not $Session.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
 
                             $MinerPath = If ("Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva" -contains $_.Algorithm) { $Path -replace "\\xmrig.exe$", "\xmrig-mo.exe" } Else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
-                            $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Session.ConfigRunning.WorkerName }
+                            $RigID = If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } Else { $Session.Config.WorkerName }
 
                             [PSCustomObject]@{ 
                                 API         = "XmRig"

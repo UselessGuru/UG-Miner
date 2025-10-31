@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HiveON.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 Param(
@@ -31,7 +31,7 @@ $ProgressPreference = "SilentlyContinue"
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PoolConfig = $Session.ConfigRunning.PoolsConfig.$Name
+$PoolConfig = $Session.Config.Pools.$Name
 
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
@@ -46,7 +46,7 @@ Do {
         $APICallFails ++
         Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
     }
-} While (-not $Request -and $APICallFails -lt $Session.ConfigRunning.PoolAPIallowedFailureCount)
+} While (-not $Request -and $APICallFails -lt $Session.Config.PoolAPIallowedFailureCount)
 
 ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
     $Currency = $Pool.name -replace "\s+"
@@ -60,14 +60,14 @@ ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
-        If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Session.ConfigRunning.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
         If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Value = $Request.stats.($Pool.name).expectedReward24H * $Session.Rates.$Currency.BTC / $Divisor
         $Stat = Get-Stat -Name "$($Key)_Profit"
-        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
+            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
         }
         Else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false

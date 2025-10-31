@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -516,7 +516,6 @@ Class Miner : IDisposable {
                 # Sometimes the process cannot be found instantly
                 $Loops = 100
                 Do { 
-                    Start-Sleep -Milliseconds 50
                     If ($this.ProcessId = ($this.ProcessJob | Receive-Job -ErrorAction Ignore).MinerProcessId) { 
                         $this.Activated ++
                         $this.DataSampleTimestamp = [DateTime]0
@@ -527,7 +526,7 @@ Class Miner : IDisposable {
                         Break
                     }
                     Else { 
-                        Start-Sleep 0
+                        Start-Sleep -Milliseconds 50
                     }
                     $Loops --
                     # Start-Sleep -Milliseconds 50
@@ -717,11 +716,11 @@ Class Miner : IDisposable {
         }
     }
 
-    [Void]Refresh([Double]$PowerCostBTCperW, [Hashtable]$ConfigRunning) { 
+    [Void]Refresh([Double]$PowerCostBTCperW, [Hashtable]$Config) { 
         $this.Best = $false
-        $this.MinDataSample = $ConfigRunning.MinDataSample
+        $this.MinDataSample = $Config.MinDataSample
         $this.Prioritize = $this.Workers.Pool.Prioritize -contains $true
-        $this.ProcessPriority = $ConfigRunning."$($this.Type)MinerProcessPriority"
+        $this.ProcessPriority = $Config."$($this.Type)MinerProcessPriority"
         If ($this.ReadPowerConsumption -ne $this.Devices.ReadPowerConsumption -notcontains $false) { $this.Restart = $true }
         $this.ReadPowerConsumption = $this.Devices.ReadPowerConsumption -notcontains $false
 
@@ -783,7 +782,7 @@ Class Miner : IDisposable {
         $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
         $this.LastUsed = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
         $this.Updated = ($this.Workers.Pool.Updated | Measure-Object -Minimum).Minimum
-        $this.WindowStyle = If ($ConfigRunning.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $ConfigRunning.MinerWindowStyle }
+        $this.WindowStyle = If ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } Else { $Config.MinerWindowStyle }
     }
 }
 
@@ -1089,7 +1088,7 @@ Function Start-Brain {
 
         # Starts Brains if necessary
         $BrainsStarted = @()
-        $Name.Where({ $Session.ConfigRunning.PoolsConfig.$_.BrainConfig -and -not $Session.Brains.$_ }).ForEach(
+        $Name.Where({ $Session.Config.Pools.$_.BrainConfig -and -not $Session.Brains.$_ }).ForEach(
             { 
                 $BrainScript = ".\Brains\$($_).ps1"
                 If (Test-Path -LiteralPath $BrainScript -PathType Leaf) { 
@@ -1227,7 +1226,6 @@ Function Get-CoinList {
     ($Data.PSObject.Properties.Name | Sort-Object).ForEach(
         { $CoinList.$_ = $Data.$_.CoinName }
     )
-    $CoinList | ConvertTo-Json > t.txt
 }
 
 Function Get-Rate { 
@@ -1235,9 +1233,9 @@ Function Get-Rate {
     $RatesCacheFileName = "$($Session.MainPath)\Cache\Rates.json"
 
     # Use stored currencies from last run
-    If (-not $Session.BalancesCurrencies -and $Session.ConfigRunning.BalancesTrackerPollInterval) { $Session.BalancesCurrencies = @($Session.Rates.PSObject.Properties.Name -creplace "^m") }
+    If (-not $Session.BalancesCurrencies -and $Session.Config.BalancesTrackerPollInterval) { $Session.BalancesCurrencies = @($Session.Rates.PSObject.Properties.Name -creplace "^m") }
 
-    $Session.AllCurrencies = @(@($Session.ConfigRunning.FIATcurrency) + @($Session.ConfigRunning.Wallets.psBase.Keys) + @($Session.PoolData.Keys.ForEach({ $Session.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Session.ConfigRunning.ExtraCurrencies) + @($Session.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
+    $Session.AllCurrencies = @(@($Session.Config.FIATcurrency) + @($Session.Config.Wallets.psBase.Keys) + @($Session.PoolData.Keys.ForEach({ $Session.PoolData.$_.GuaranteedPayoutCurrencies })) + @($Session.Config.ExtraCurrencies) + @($Session.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
 
     Try { 
         $TSymBatches = @()
@@ -1258,7 +1256,7 @@ Function Get-Rate {
         $Rates = [PSCustomObject]@{ BTC = [PSCustomObject]@{ } }
         $TSymBatches.ForEach(
             { 
-                $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(If ($Session.ConfigRunning.CryptoCompareAPIKeyParam) { "&api_key=$($Session.ConfigRunning.CryptoCompareAPIKeyParam)" })&extraParams=$($Session.Branding.BrandWebSite) Version $($Session.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
+                $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(If ($Session.Config.CryptoCompareAPIKeyParam) { "&api_key=$($Session.Config.CryptoCompareAPIKeyParam)" })&extraParams=$($Session.Branding.BrandWebSite) Version $($Session.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
                 If ($Response.BTC) { 
                     $Response.BTC.ForEach(
                         { 
@@ -1288,7 +1286,7 @@ Function Get-Rate {
             )
 
             # Add mBTC
-            If ($Session.ConfigRunning.UsemBTC) { 
+            If ($Session.Config.UsemBTC) { 
                 $Currencies.ForEach(
                     { 
                         $Currency = $_
@@ -1344,7 +1342,7 @@ Function Write-Message {
     $Message = $Message -replace "(?:<br>)+|(?:&ensp;)+", " "
 
     # Make sure we are in main script
-    If ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level)) { 
+    If ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Session.Config.Keys.Count -or $Session.Config.LogLevel -contains $Level)) { 
         # Write to console
         Switch ($Level) { 
             "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewLine; Break }
@@ -1352,7 +1350,7 @@ Function Write-Message {
             "Info"    { Write-Host $Message -ForegroundColor "White" -NoNewLine; Break }
             "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" -NoNewLine; Break }
             "Verbose" { Write-Host $Message -ForegroundColor "Yello" -NoNewLine; Break }
-            "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewLine; Break }
+            "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewLine }
         }
         $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
         Write-Host ""
@@ -1365,30 +1363,29 @@ Function Write-Message {
         "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
         "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
         "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+        Default   { $Message = "[--???--] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
     }
 
-    If ($Session.TextBoxSystemLog) { 
-        If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level) { 
-            $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
-            $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
-            $TextLength = $Session.TextBoxSystemLog.TextLength
+    If ($Session.TextBoxSystemLog -and (-not $Session.Config.Keys.Count -or $Session.Config.LogLevel -contains $Level)) { 
+        $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
+        $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
+        $TextLength = $Session.TextBoxSystemLog.TextLength
 
-            # Keep only 200 lines, more lines impact performance
-            If ($Session.TextBoxSystemLog.Lines.Count -gt 250) { $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200 }
+        # Keep only 200 lines, more lines impact performance
+        If ($Session.TextBoxSystemLog.Lines.Count -gt 250) { $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200 }
 
-            $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
-            If ($SelectionLength -and $SelectionStart -ge 0) { 
-                $Session.TextBoxSystemLog.Lines += $Message
-                $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
-                $Session.TextBoxSystemLog.ScrollToCaret()
-            }
-            Else { 
-                $Session.TextBoxSystemLog.AppendText("`r`n$Message")
-            }
+        $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
+        If ($SelectionLength -and $SelectionStart -ge 0) { 
+            $Session.TextBoxSystemLog.Lines += $Message
+            $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
+            $Session.TextBoxSystemLog.ScrollToCaret()
+        }
+        Else { 
+            $Session.TextBoxSystemLog.AppendText("`r`n$Message")
         }
     }
 
-    If (-not $Session.ConfigRunning.Keys.Count -or $Session.ConfigRunning.LogLevel -contains $Level) { 
+    If (-not $Session.Config.Keys.Count -or $Session.Config.LogLevel -contains $Level) { 
 
         $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
 
@@ -1409,8 +1406,8 @@ Function Write-MonitoringData {
     # Updates a remote monitoring server, sending this worker's data and pulling data about other workers
 
     # Skip If server and user aren't filled out
-    If (-not $Session.ConfigRunning.MonitoringServer) { Return }
-    If (-not $Session.ConfigRunning.MonitoringUser) { Return }
+    If (-not $Session.Config.MonitoringServer) { Return }
+    If (-not $Session.Config.MonitoringUser) { Return }
 
     # Build object with just the data we need to send, and make sure to use relative paths so we don't accidentally
     # reveal someone's windows username or other system information they might not want sent
@@ -1420,7 +1417,7 @@ Function Write-MonitoringData {
             { 
                 [PSCustomObject]@{ 
                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
-                    Currency       = $Session.ConfigRunning.FIATcurrency
+                    Currency       = $Session.Config.FIATcurrency
                     CurrentSpeed   = $_.Hashrates_Live
                     Earnings       = ($_.WorkersRunning.Earnings | Measure-Object -Sum).Sum
                     EstimatedSpeed = $_.WorkersRunning.Hashrate
@@ -1435,8 +1432,8 @@ Function Write-MonitoringData {
     )
 
     $Body = @{ 
-        user    = $Session.ConfigRunning.MonitoringUser
-        worker  = $Session.ConfigRunning.WorkerName
+        user    = $Session.Config.MonitoringUser
+        worker  = $Session.Config.WorkerName
         version = "$($Session.Branding.ProductLabel) $($Session.Branding.Version.ToString())"
         status  = $Session.NewMiningStatus
         profit  = If ([Double]::IsNaN($Session.MiningProfit)) { "n/a" } Else { [String]$Session.MiningProfit } # Earnings is NOT profit! Needs to be changed in mining monitor server
@@ -1445,24 +1442,24 @@ Function Write-MonitoringData {
 
     # Send the request
     Try { 
-        $Response = Invoke-RestMethod -Uri "$($Session.ConfigRunning.MonitoringServer)/api/report.php" -Method Post -Body $Body -TimeoutSec 10 -ErrorAction Stop
+        $Response = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/report.php" -Method Post -Body $Body -TimeoutSec 10 -ErrorAction Stop
         If ($Response -eq "Success") { 
-            Write-Message -Level Verbose "Reported worker status to monitoring server '$($Session.ConfigRunning.MonitoringServer)' [ID $($Session.ConfigRunning.MonitoringUser)]."
+            Write-Message -Level Verbose "Reported worker status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
         }
         Else { 
-            Write-Message -Level Verbose "Reporting worker status to monitoring server '$($Session.ConfigRunning.MonitoringServer)' failed: [$($Response)]."
+            Write-Message -Level Verbose "Reporting worker status to monitoring server '$($Session.Config.MonitoringServer)' failed: [$($Response)]."
         }
     }
     Catch { 
-        Write-Message -Level Warn "Monitoring: Unable to send status to monitoring server '$($Session.ConfigRunning.MonitoringServer)' [ID $($Session.ConfigRunning.MonitoringUser)]."
+        Write-Message -Level Warn "Monitoring: Unable to send status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
     }
 }
 
 Function Read-MonitoringData { 
 
-    If ($Session.ConfigRunning.ShowWorkerStatus -and $Session.ConfigRunning.MonitoringUser -and $Session.ConfigRunning.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
+    If ($Session.Config.ShowWorkerStatus -and $Session.Config.MonitoringUser -and $Session.Config.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
         Try { 
-            $Workers = Invoke-RestMethod -Uri "$($Session.ConfigRunning.MonitoringServer)/api/workers.php" -Method Post -Body @{ user = $Session.ConfigRunning.MonitoringUser } -TimeoutSec 10 -ErrorAction Stop
+            $Workers = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/workers.php" -Method Post -Body @{ user = $Session.Config.MonitoringUser } -TimeoutSec 10 -ErrorAction Stop
             # Calculate some additional properties and format others
             $Workers.ForEach(
                 { 
@@ -1476,10 +1473,10 @@ Function Read-MonitoringData {
             $Session.Workers = $Workers
             $Session.WorkersLastUpdated = ([DateTime]::Now)
 
-            Write-Message -Level Verbose "Retrieved worker status from '$($Session.ConfigRunning.MonitoringServer)' [ID $($Session.ConfigRunning.MonitoringUser)]."
+            Write-Message -Level Verbose "Retrieved worker status from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
         }
         Catch { 
-            Write-Message -Level Warn "Monitoring: Unable to retrieve worker data from '$($Session.ConfigRunning.MonitoringServer)' [ID $($Session.ConfigRunning.MonitoringUser)]."
+            Write-Message -Level Warn "Monitoring: Unable to retrieve worker data from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
         }
     }
 
@@ -1544,7 +1541,7 @@ Function Merge-Hashtable {
     Return $HT1
 }
 
-Function Get-DonationPoolsConfig { 
+Function Get-DonationConfig { 
         # Build pool config with available donation data, not all devs have the same set of wallets available
 
     Param (
@@ -1556,16 +1553,16 @@ Function Get-DonationPoolsConfig {
     $DonationPoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive hash table
     ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).Where({ $DonationPoolsData.PoolName -contains $_ }).ForEach(
         { 
-            $DonationPoolConfig = $Session.ConfigRunning.PoolsConfig[$_].Clone()
+            $DonationPoolConfig = $Session.Config.Pools[$_].Clone()
             $DonationPoolConfig.EarningsAdjustmentFactor = 1
-            $DonationPoolConfig.Region = $Session.ConfigRunning.PoolsConfig[$_].Region
-            $DonationPoolConfig.WorkerName = "$($Session.Branding.ProductLabel)-$($Session.Branding.Version.ToString())-donate$($Session.ConfigRunning.Donation)"
+            $DonationPoolConfig.Region = $Session.Config.Pools[$_].Region
+            $DonationPoolConfig.WorkerName = "$($Session.Branding.ProductLabel)-$($Session.Branding.Version.ToString())-donate$($Session.Config.Donation)"
             Switch -regex ($_) { 
                 "^MiningDutch$|^ProHashing$" { 
                     If ($DonationPoolsData."$($_)UserName") { 
                         # not all devs have a known HashCryptos, MiningDutch or ProHashing account
                         $DonationPoolConfig.UserName = $DonationPoolsData."$($_)UserName"
-                        $DonationPoolConfig.Variant = If ($Session.ConfigRunning.PoolsConfig[$_].Variant) { $Session.ConfigRunning.PoolsConfig[$_].Variant } Else { $Session.ConfigRunning.PoolName -match $_ }
+                        $DonationPoolConfig.Variant = If ($Session.Config.Pools[$_].Variant) { $Session.Config.Pools[$_].Variant } Else { $Session.Config.PoolName -match $_ }
                         $DonationPoolsConfig.$_ = $DonationPoolConfig
                     }
                     Break
@@ -1573,7 +1570,7 @@ Function Get-DonationPoolsConfig {
                 Default { 
                     # not all devs have a known ETC or ETH address
                     If ($Wallets = (Compare-Object -PassThru @((@($Session.PoolData.$_.GuaranteedPayoutCurrencies) + @($Session.PoolData.$_.PayoutCurrencies)) | Select-Object -Unique) @($DonationPoolsData.Wallets.Keys | Select-Object) -IncludeEqual -ExcludeDifferent)) { 
-                        $DonationPoolConfig.Variant = If ($Session.ConfigRunning.PoolsConfig[$_].Variant) { $Session.ConfigRunning.PoolsConfig[$_].Variant } Else { $Session.ConfigRunning.PoolName -match $_ }
+                        $DonationPoolConfig.Variant = If ($Session.Config.Pools[$_].Variant) { $Session.Config.Pools[$_].Variant } Else { $Session.Config.PoolName -match $_ }
                         $DonationPoolConfig.Wallets = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
                         $Wallets.Where({ $DonationPoolsData.Wallets.$_ }).ForEach({ $DonationPoolConfig.Wallets.$_ = $DonationPoolsData.Wallets.$_ })
                         $DonationPoolsConfig.$_ = $DonationPoolConfig
@@ -1584,207 +1581,6 @@ Function Get-DonationPoolsConfig {
     )
 
     Return $DonationPoolsConfig
-}
-
-Function Read-Config { 
-
-    Param (
-        [Parameter (Mandatory = $true)]
-        [String]$ConfigFile
-    )
-
-    Function Get-DefaultConfig { 
-
-        $DefaultConfig = @{ }
-        $DefaultConfig.ConfigFileVersion = $Session.Branding.Version.ToString()
-
-        # Add default config items
-        $Session.AllCommandLineParameters.psBase.Keys.Where({ $_ -notin $DefaultConfig.psBase.Keys }).ForEach(
-            { 
-                $Value = $Session.AllCommandLineParameters.$_
-                If ($Value -is [Switch]) { $Value = [Boolean]$Value }
-                $DefaultConfig.$_ = $Value
-            }
-        )
-
-        Return $DefaultConfig
-    }
-
-    Function Get-PoolsConfig { 
-
-        # Load pool data
-        If (-not $Session.PoolData) { 
-            $Session.PoolData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable  | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
-            $Session.PoolBaseNames = @($Session.PoolData.Keys)
-            $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach({ $Session.PoolData.$_.Variant.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
-            If (-not $Session.PoolVariants) { 
-                Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-                (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
-                Exit
-            }
-        }
-
-        # Build in memory pool config
-        $PoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
-        ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).ForEach(
-            { 
-                $PoolName = $_
-                If ($PoolConfig = $Session.PoolData.$PoolName.Clone()) { 
-                    # Generic algorithm disabling is done in pool files
-                    $PoolConfig.Remove("Algorithm")
-
-                    # Merge default config data with custom pool config
-                    If ($Session.PoolsConfigData.$PoolName -and ($CustomPoolConfig = [System.Collections.SortedList]::New($Session.PoolsConfigData.$PoolName, [StringComparer]::OrdinalIgnoreCase))) { 
-                        $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $CustomPoolConfig -Unique $true
-                    }
-
-                    If (-not $PoolConfig.EarningsAdjustmentFactor) { $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor }
-                    If ($PoolConfig.EarningsAdjustmentFactor -le 0 -or $PoolConfig.EarningsAdjustmentFactor -gt 10) { 
-                        $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor
-                        Write-Message -Level Warn "Earnings adjustment factor (value: $($PoolConfig.EarningsAdjustmentFactor)) for pool '$PoolName' is not within supported range (0 - 10); using default value $($PoolConfig.EarningsAdjustmentFactor)."
-                    }
-
-                    If (-not $PoolConfig.WorkerName) { $PoolConfig.WorkerName = $ConfigFromFile.WorkerName }
-                    If (-not $PoolConfig.BalancesKeepAlive) { $PoolConfig.BalancesKeepAlive = $PoolData.$PoolName.BalancesKeepAlive }
-
-                    $PoolConfig.Region = $PoolConfig.Region.Where({ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) })
-
-                    Switch ($PoolName) { 
-                        "HiveON" { 
-                            If (-not $PoolConfig.Wallets) { 
-                                $PoolConfig.Wallets = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase) # as ssorted case insensitive hash table
-                                $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach({ 
-                                    $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_
-                                })
-                            }
-                            Break
-                        }
-                        "MiningDutch" { 
-                            If ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
-                            If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.MiningDutchUserName }
-                            Break
-                        }
-                        "MiningPoolHub" { 
-                            If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.MiningPoolHubUserName }
-                            Break
-                        }
-                        "NiceHash" { 
-                            If ($ConfigFromFile.NiceHashWallet) { $PoolConfig.Wallets = @{ "BTC" = $ConfigFromFile.NiceHashWallet } }
-                            Break
-                        }
-                        "ProHashing" { 
-                            If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.ProHashingUserName }
-                            If (-not $PoolConfig.MiningMode) { $PoolConfig.MiningMode = $ConfigFromFile.ProHashingMiningMode }
-                            Break
-                        }
-                        Default { 
-                            If ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
-                            If (-not $PoolConfig.Wallets) { $PoolConfig.Wallets = $ConfigFromFile.Wallets }
-                        }
-                    }
-                }
-                $PoolsConfig.$PoolName = $PoolConfig
-            }
-        )
-        Return $PoolsConfig
-    }
-
-    # Load the configuration
-    $ConfigFromFile = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
-    If (Test-Path -LiteralPath $ConfigFile -PathType Leaf) { 
-        Try { 
-            $ConfigFromFile = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable  | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
-        } 
-        Catch { }
-        If ($ConfigFromFile.Keys.Count -eq 0) { 
-            $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
-            Move-Item -Path $ConfigFile $CorruptConfigFile -Force
-            If ($Config.psBase.Keys.Count -gt 0) { 
-                Write-Message -Level Error "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
-                Write-Config -Config $Config
-                $Session.ConfigFileReadTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime
-                Continue
-            }
-            Else { 
-                Write-Host "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Creating a new configuration using default values." -ForegroundColor "Red"
-                Write-Host
-                $ConfigFromFile = Get-DefaultConfig
-            }
-        }
-        Else { 
-            $Session.ConfigFileReadTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime
-            ($Session.AllCommandLineParameters.Keys | Sort-Object).ForEach(
-                { 
-                    If ($ConfigFromFile.Keys -contains $_) { 
-                        # Upper / lower case conversion of variable keys (config item names are case sensitive)
-                        $Value = $ConfigFromFile.$_
-                        $ConfigFromFile.Remove($_)
-                        If ($Session.AllCommandLineParameters.$_ -is [Switch]) { 
-                            $ConfigFromFile.$_ = [Boolean]$Value
-                        }
-                        ElseIf ($Session.AllCommandLineParameters.$_ -is [Array]) { 
-                            $ConfigFromFile.$_ = [System.Collections.Generic.SortedSet[Object]]($Value)
-                        }
-                        ElseIf ($Session.AllCommandLineParameters.$_ -is [Hashtable]) { 
-                            $ConfigFromFile.$_ = [System.Collections.SortedList]::New($Value, [StringComparer]::OrdinalIgnoreCase)
-                        }
-                        Else { 
-                            $ConfigFromFile.$_ = $Value -as $Session.AllCommandLineParameters.$_.GetType().Name
-                        }
-                    }
-                    Else { 
-                        # Config parameter not in config file - use hardcoded value
-                        $Value = $Session.AllCommandLineParameters.$_
-                        If ($Value -is [Switch]) { $Value = [Boolean]$Value }
-                        $ConfigFromFile.$_ = $Value
-                    }
-                }
-            )
-            If ($ConfigFromFile.EarningsAdjustmentFactor -le 0 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 10) { 
-                $ConfigFromFile.EarningsAdjustmentFactor = $Session.AllCommandLineParameters.EarningsAdjustmentFactor
-                Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.EarningsAdjustmentFactor)) is not within supported range (0 - 10); using default value $($Session.AllCommandLineParameters.EarningsAdjustmentFactor)."
-            }
-            If ($ConfigFromFile.PoolAllowedPriceIncreaseFactor -le 2 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 99) { 
-                $ConfigFromFile.PoolAllowedPriceIncreaseFactor = $Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor
-                Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.PoolAllowedPriceIncreaseFactor)) is not within supported range (1 - 99); using default value $($Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor)."
-            }
-        }
-    }
-    Else { 
-        $ConfigFromFile = Get-DefaultConfig
-    }
-
-    # Build custom pools configuration, create case insensitive hashtable (https://stackoverflow.com/questions/24054147/powershell-hash-tables-double-key-error-a-and-a)
-    If ($Session.PoolsConfigFile -and (Test-Path -LiteralPath $Session.PoolsConfigFile -PathType Leaf)) { 
-        Try { 
-            [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
-            $Session.PoolsConfigData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
-            $Session.PoolsConfigFileReadTimestamp = (Get-Item -Path $Session.PoolsConfigFile).LastWriteTime
-        }
-        Catch { 
-            $Session.PoolsConfigData = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive sorted hashtable
-            Write-Message -Level Warn "Pools configuration file '$($Session.PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt. Will use default values."
-            $Session.Remove("PoolsConfigFileReadTimestamp")
-        }
-    }
-    Else { 
-        $Session.Remove("PoolsConfigFileReadTimestamp")
-    }
-
-    $Global:Config.PoolsConfig = Get-PoolsConfig
-
-    # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
-    $ConfigFromFile.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
-
-    $Session.ConfigReadTimestamp = [DateTime]::Now.ToUniversalTime()
-
-    # Write config file in case they do not exist already
-    If (-not $Session.FreshConfig) { 
-        If (-not (Test-Path -LiteralPath $Session.ConfigFile -PathType Leaf)) { 
-            Write-Config -Config $Config
-            $Session.ConfigFileReadTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime
-        }
-    }
 }
 
 Function Update-ConfigFile { 
@@ -1869,8 +1665,8 @@ Function Update-ConfigFile {
                 "ShowHashrateColumn" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); Break }
                 "ShowMinerFee" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); Break }
                 "ShowMinerFeeColumn" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); Break }
-                "ShowPool" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_); Break }
-                "ShowPoolColumn" { $Config.ShowColumnPool = $Config.$_; $Config.Remove($_); Break }
+                "ShowPool" { $Config.Remove($_); Break }
+                "ShowPoolColumn" { $Config.Remove($_); Break }
                 "ShowPoolFee" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); Break }
                 "ShowPoolFeeColumn" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); Break }
                 "ShowProfit" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); Break }
@@ -1933,25 +1729,6 @@ Function Write-Config {
 "
     "$Header$($NewConfig | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $Session.ConfigFile -Force
 
-    $Session.ShowAllMiners = $Config.ShowAllMiners
-    $Session.ShowColumnAccuracy = $Config.ShowColumnAccuracy
-    $Session.ShowColumnCoinName = $Config.ShowColumnCoinName
-    $Session.ShowColumnCurrency = $Config.ShowColumnCurrency
-    $Session.ShowColumnEarnings = $Config.ShowColumnEarnings
-    $Session.ShowColumnEarningsBias = $Config.ShowColumnEarningsBias
-    $Session.ShowColumnHashrate = $Config.ShowColumnHashrate
-    $Session.ShowColumnMinerFee = $Config.ShowColumnMinerFee
-    $Session.ShowColumnMinerFee = $Config.ShowColumnMinerFee
-    $Session.ShowColumnPool = $Config.ShowColumnPool
-    $Session.ShowColumnPoolFee = $Config.ShowColumnPoolFee
-    $Session.ShowColumnPowerConsumption = $Config.ShowColumnPowerConsumption
-    $Session.ShowColumnPowerCost = $Config.ShowColumnPowerCost
-    $Session.ShowColumnProfit = $Config.ShowColumnProfit
-    $Session.ShowColumnProfitBias = $Config.ShowColumnProfitBias
-    $Session.ShowColumnUser = $Config.ShowColumnUser
-    $Session.ShowPoolBalances = $Config.ShowPoolBalances
-    $Session.ShowShares = $Config.ShowShares
-    $Session.UIstyle = $Config.UIstyle
     $Session.FreshConfig = $false
 }
 
@@ -2005,8 +1782,8 @@ Function Edit-File {
     }
 
     If ($FileWriteTime -ne (Get-Item -Path $FileName).LastWriteTime) { 
-        Write-Message -Level Verbose "Saved '$FileName'. Changes will become fully active in the next cycle."
-        Return "Saved '$FileName'.`nChanges will become fully active in the next cycle."
+        Write-Message -Level Verbose "Configuration saved to '$FileName'. It will become fully active in the next cycle."
+        Return "Configuration saved to '$FileName'.`nIt will become fully active in the next cycle."
     }
 
     Return "No changes to '$FileName' were made."
@@ -3057,29 +2834,29 @@ Function Get-Version {
 
         If ($Session.Branding.ProductLabel -and [System.Version]$UpdateVersion.Version -gt $Session.Branding.Version) { 
             If ($UpdateVersion.AutoUpdate) { 
-                If ($Session.ConfigRunning.AutoUpdate) { 
-                    Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Starting update..."
+                If ($Session.Config.AutoUpdate) { 
+                    Write-Message -Level Verbose "Version checker: New version v$($UpdateVersion.Version) found. Starting update..."
                     [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
                     Write-Host " ✔" -ForegroundColor Green
                     Initialize-AutoUpdate -UpdateVersion $UpdateVersion
                 }
                 Else { 
-                    Write-Message -Level Verbose "Version checker: New version $($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
+                    Write-Message -Level Verbose "Version checker: New version v$($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
                     [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
                     Write-Host " ✔" -ForegroundColor Green
                 }
             }
             Else { 
-                Write-Message -Level Verbose "Version checker: New version is available. $($UpdateVersion.Version) does not support auto-update. You must update manually."
+                Write-Message -Level Verbose "Version checker: New version is available. v$($UpdateVersion.Version) does not support auto-update. You must update manually."
                 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
                 Write-Host " ✔" -ForegroundColor Green
             }
-            If ($Session.ConfigRunning.ShowChangeLog) { 
+            If ($Session.Config.ShowChangeLog) { 
                 Start-Process "https://github.com/UselessGuru/UG-Miner/releases/tag/v$($UpdateVersion.Version)"
             }
         }
         Else { 
-            Write-Message -Level Verbose "Version checker: $($Session.Branding.ProductLabel) $($Session.Branding.Version) is current - no update available."
+            Write-Message -Level Verbose "Version checker: $($Session.Branding.ProductLabel) v$($Session.Branding.Version) is current - no update available."
             [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
             Write-Host " ✔" -ForegroundColor Green
         }
@@ -3130,9 +2907,9 @@ Function Initialize-AutoUpdate {
 
 Function Start-LogReader { 
 
-    If ((Test-Path -LiteralPath $Session.ConfigRunning.LogViewerExe -PathType Leaf) -and (Test-Path -LiteralPath $Session.ConfigRunning.LogViewerConfig -PathType Leaf)) { 
-        $Session.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.ConfigRunning.LogViewerConfig)
-        $Session.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.ConfigRunning.LogViewerExe)
+    If ((Test-Path -LiteralPath $Session.Config.LogViewerExe -PathType Leaf) -and (Test-Path -LiteralPath $Session.Config.LogViewerConfig -PathType Leaf)) { 
+        $Session.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
+        $Session.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
         If ($SnaketailProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" })) { 
             # Activate existing Snaketail window
             $LogViewerMainWindowHandle = (Get-Process -Id $SnaketailProcess.ProcessId).MainWindowHandle
@@ -3167,7 +2944,7 @@ Function Update-PoolWatchdog {
     )
 
     # Apply watchdog to pools
-    If ($Session.ConfigRunning.Watchdog) { 
+    If ($Session.Config.Watchdog) { 
         # We assume that miner is up and running, so watchdog timer is not relevant
         If ($RelevantWatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -notin $Session.MinersRunning })) { 
             # Only pools with a corresponding watchdog timer object are of interest
@@ -3176,7 +2953,7 @@ Function Update-PoolWatchdog {
                 # Add miner reason "Pool suspended by watchdog 'all algorithms'", only if more than one pool
                 ($RelevantWatchdogTimers | Group-Object -Property PoolName).ForEach(
                     { 
-                        If ($Session.ConfigRunning.PoolName.Count -gt 1 -and $_.Count -ge (2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
+                        If ($Session.Config.PoolName.Count -gt 1 -and $_.Count -ge (2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
                             $Group = $_.Group
                             If ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName })) { 
                                 $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") | Out-Null })
@@ -3253,7 +3030,7 @@ Function Get-AllDAGdata {
                             $Currency = $CurrencyDAGdataResponse.coins.$_.tag
                             Add-CoinName -Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm -Currency $Currency -CoinName $_
                             If ($AlgorithmNorm -match $Session.RegexAlgoHasDAG) { 
-                                If ($CurrencyDAGdataResponse.coins.$_.last_block -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                                If ([UInt64]($CurrencyDAGdataResponse.coins.$_.last_block) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
                                     If ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                         $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3293,7 +3070,7 @@ Function Get-AllDAGdata {
                         If ($Currency -notin @("ETF")) { 
                             # ETF has invalid DAG data of 444GiB
                             $BlockHeight = [Math]::Floor(($_ -replace "^<div class='block' title='Current block height of $Currency'>" -replace "</div>"))
-                            If ($Session.CurrencyAlgorithm[$Currency] -and $BlockHeight -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                            If ($Session.CurrencyAlgorithm[$Currency] -and $BlockHeight -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2
                                 If ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3324,12 +3101,12 @@ Function Get-AllDAGdata {
         # Get block data from ProHashing
         Try { 
             Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec $Config.PoolsConfig.ProHashing.PoolAPItimeout
+            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec $Session.Config.Pools.ProHashing.PoolAPItimeout
 
             If ($CurrencyDAGdataResponse.code -eq 200) { 
                 $CurrencyDAGdataResponse.data.PSObject.Properties.Name.Where({ $CurrencyDAGdataResponse.data.$_.enabled -and $CurrencyDAGdataResponse.data.$_.height -and ($Session.RegexAlgoHasDAG -match (Get-Algorithm $CurrencyDAGdataResponse.data.$_.algo) -or $DAGdata.Currency.psBase.Keys -contains $_) }).ForEach(
                     { 
-                        If ($CurrencyDAGdataResponse.data.$_.height -gt $DAGdata.Currency.$_.BlockHeight) { 
+                        If ([UInt64]($CurrencyDAGdataResponse.data.$_.height) -gt $DAGdata.Currency.$_.BlockHeight) { 
                             $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.data.$_.height -Currency $_ -EpochReserve 2
                             If ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                 $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3355,7 +3132,7 @@ Function Get-AllDAGdata {
 
     # Update on script start, once every 24hrs or if unable to get data from source
     # ZPool also supplies TLS DAG data.
-    If (-not ($Session.ConfigRunning.PoolName -match "^ZPool.*")) { 
+    If (-not ($Session.Config.PoolName -match "^ZPool.*")) { 
         If ($Session.CurrencyAlgorithm[$Currency]) { 
             $Currency = "TLS"
             $Url = "https://telestai.cryptoscope.io/api/getblockcount"
@@ -3364,7 +3141,7 @@ Function Get-AllDAGdata {
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    If ($CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ([UInt64]($CurrencyDAGdataResponse.blockcount) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                         If ($CurrencyDAGdata.Epoch) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3385,7 +3162,7 @@ Function Get-AllDAGdata {
     }
 
     # ZPool also supplies SCC DAG data
-    If (-not ($Session.ConfigRunning.PoolName -match "ZPool.*")) { 
+    If (-not ($Session.Config.PoolName -match "ZPool.*")) { 
         # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "SCC"
         If ($Session.CurrencyAlgorithm[$Currency]) { 
@@ -3394,8 +3171,8 @@ Function Get-AllDAGdata {
                 # Get block data from StakeCube block explorer
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
-                    $CurrencyDAGdataResponse = (Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck).result.height
-                    If ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    $CurrencyDAGdataResponse = [UInt64]((Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck).result.height)
+                    If ($CurrencyDAGdataResponse -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         If ($CurrencyDAGdata.Epoch) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3424,7 +3201,7 @@ Function Get-AllDAGdata {
             Try { 
                 Write-Message -Level Info "Loading DAG data from '$Url'..."
                 $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                If ([UInt64]$CurrencyDAGdataResponse.total_blocks -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                If ([UInt64]($CurrencyDAGdataResponse.total_blocks) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.total_blocks -Currency $Currency -EpochReserve 2
                     If ($CurrencyDAGdata.DAGsize) { 
                         $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3444,7 +3221,7 @@ Function Get-AllDAGdata {
     }
 
     # ZPool also supplies PHI DAG data
-    If (-not ($Session.ConfigRunning.PoolName -match "^ZPool.*")) { 
+    If (-not ($Session.Config.PoolName -match "^ZPool.*")) { 
         # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "PHI"
         If ($Session.CurrencyAlgorithm[$Currency]) { 
@@ -3453,8 +3230,8 @@ Function Get-AllDAGdata {
                 # Get block data from PHI block explorer
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
-                    $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    If ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    $CurrencyDAGdataResponse = [Int64](Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck)
+                    If ($CurrencyDAGdataResponse -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
                         If ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3475,7 +3252,7 @@ Function Get-AllDAGdata {
     }
 
     # Zpool also supplies MEWC DAG data
-    If (-not ($Session.ConfigRunning.PoolName -match "^ZPool.+")) { 
+    If (-not ($Session.Config.PoolName -match "^ZPool.+")) { 
         # Update on script start, once every 24hrs or if unable to get data from source
         $Currency = "MEWC"
         If ($Session.CurrencyAlgorithm[$Currency]) { 
@@ -3485,7 +3262,7 @@ Function Get-AllDAGdata {
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    If ($CurrencyDAGdataResponse.blockcount -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ([UInt64]($CurrencyDAGdataResponse.blockcount) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                         If ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3504,6 +3281,37 @@ Function Get-AllDAGdata {
             }
         }
     }
+
+    # Zpool also supplies LAX DAG data
+    # If (-not ($Session.Config.PoolName -match "^ZPool.+")) { 
+        # Update on script start, once every 24hrs or if unable to get data from source
+        $Currency = "LAX"
+        If ($Session.CurrencyAlgorithm[$Currency]) { 
+            $Url = "https://explorer.parallaxchain.org/api/v2/stats"
+            If (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+                # Get block data from Parallax block explorer
+                Try { 
+                    Write-Message -Level Info "Loading DAG data from '$Url'..."
+                    $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
+                    If ([UInt64]($CurrencyDAGdataResponse.total_blocks) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                        $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.total_blocks -Currency $Currency -EpochReserve 2
+                        If ($CurrencyDAGdata.Epoch -ge 0) { 
+                            $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
+                            $CurrencyDAGdata | Add-Member Url $Url -Force
+                            $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                            $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                        }
+                        Else { 
+                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                        }
+                    }
+                }
+                Catch { 
+                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                }
+            }
+        }
+    # }
 
     If ($DAGdata.Updated.PSObject.Properties.Name.Where({ $DAGdata.Updated.$_ -gt $Session.Timer })) { 
         # At least one DAG was updated, get maximum DAG size per algorithm
@@ -4043,16 +3851,16 @@ Function Restart-APIserver {
 
 Function Start-APIserver { 
 
-    If ($Session.APIport -and $Session.ConfigRunning.APIport -ne $Session.APIport) { 
+    If ($Session.APIport -and $Session.Config.APIport -ne $Session.APIport) { 
         Stop-APIserver
     }
 
     If (-not $Global:APIrunspace) { 
 
         $TCPclient = [System.Net.Sockets.TCPClient]::new()
-        $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Session.ConfigRunning.APIport, $null, $null)
+        $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Session.Config.APIport, $null, $null)
         If ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
-            Write-Message -Level Error "Error initializing API and web GUI on port $($Session.ConfigRunning.APIport). Port is in use."
+            Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
             [Void]$TCPclient.Dispose()
 
             Return
@@ -4077,7 +3885,7 @@ Function Start-APIserver {
         $Global:APIrunspace | Add-Member PowerShell $PowerShell
 
         # Initialize API and web GUI
-        Write-Message -Level Verbose "Initializing API and web GUI on 'http://localhost:$($Session.ConfigRunning.APIport)'..."
+        Write-Message -Level Verbose "Initializing API and web GUI on 'http://localhost:$($Session.Config.APIport)'..."
         $Global:APIrunspace | Add-Member Job ($Global:APIrunspace.PowerShell.BeginInvoke())
         $Global:APIrunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
 
@@ -4086,19 +3894,22 @@ Function Start-APIserver {
         While (-not ($Session.APIversion) -and $RetryCount -gt 0) { 
             Start-Sleep -Seconds 1
             Try { 
-                If ($Session.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Session.ConfigRunning.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
-                    $Session.APIport = $Session.ConfigRunning.APIport
-                    If ($Session.ConfigRunning.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.ConfigRunning.APIlogfile -Force -ErrorAction Ignore }
+                If ($Session.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Session.Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
+                    $Session.APIport = $Session.Config.APIport
+                    If ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.Config.APIlogfile -Force -ErrorAction Ignore }
                     Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport)."
                     # Start Web GUI (show configuration edit if no existing config)
-                    If ($Session.ConfigRunning.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(If ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
+                    If ($Session.Config.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(If ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
                     Break
                 }
             }
             Catch { }
             $RetryCount--
         }
-        If (-not $Session.APIversion) { Write-Message -Level Error "Error initializing API and web GUI on port $($Session.ConfigRunning.APIport)." }
+
+        $Session.MinerBaseAPIport = $Session.Config.MinerBaseAPIport
+
+        If (-not $Session.APIversion) { Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)." }
     }
 }
 
@@ -4107,15 +3918,15 @@ Function Stop-APIserver {
     If ($Global:APIrunspace.Job.IsCompleted -eq $false) { 
 
         If ($Session.APIserver.IsListening) { 
-            If ($Session.ConfigRunning.APIport -ne $Session.APIport -or $Session.Miners.Port -contains $Session.ConfigRunning.APIport) { 
-                # API port has changed; must stop all running miners
-                If ($Session.MinersRunning) { 
-                    Write-Message -Level Info "API and web GUI port has changed. Stopping all running miners..."
+            # If ($Session.Config.APIport -ne $Session.APIport -or $Session.Miners.Port -contains $Session.Config.APIport) { 
+            #     # API port has changed; must stop all running miners
+            #     If ($Session.MinersRunning) { 
+            #         Write-Message -Level Info "API port has changed. Stopping all running miners..."
 
-                    Clear-MinerData
-                    Stop-Core
-                }
-            }
+            #         Clear-MinerData
+            #         Stop-Core
+            #     }
+            # }
             $Session.APIserver.Stop()
             Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport)."
         }
@@ -4129,6 +3940,8 @@ Function Stop-APIserver {
         $Session.Remove("APIport")
         $Session.Remove("APIversion")
     }
+
+    $Session.MinerBaseAPIport = $Session.Config.MinerBaseAPIport
 
     If ($Global:APIrunspace) { 
 
@@ -4266,12 +4079,8 @@ Function Set-MinerMeasurePowerConsumption {
 
 Function Exit-UGminer { 
 
-    If ($Session.LegacyGUI) { 
-        # Save window settings
-        If ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
-
-        $TimerUI.Stop()
-        Remove-Variable $TimerUI
+    If ($Session.Config.LegacyGUI) { 
+        $LegacyGUIelements.Timer.Stop()
         $LegacyGUIelements.TabControl.SelectTab(0)
     }
 
@@ -4285,4 +4094,225 @@ Function Exit-UGminer {
     Write-Message -Level Info "$($Session.Branding.ProductLabel) has shut down."
     Start-Sleep -Seconds 2
     Stop-Process $PID -Force
+}
+
+Function Read-Config { 
+
+    Param (
+        [Parameter (Mandatory = $true)]
+        [String]$ConfigFile,
+        [Parameter (Mandatory = $true)]
+        [String]$PoolsConfigFile
+    )
+    Function Read-ConfigFiles { 
+
+        Param (
+            [Parameter (Mandatory = $true)]
+            [String]$ConfigFile,
+            [Parameter (Mandatory = $true)]
+            [String]$PoolsConfigFile
+        )
+
+        Function Get-DefaultConfig { 
+
+            $DefaultConfig = @{ }
+            $DefaultConfig.ConfigFileVersion = $Session.Branding.Version.ToString()
+
+            # Add default config items
+            $Session.AllCommandLineParameters.psBase.Keys.Where({ $_ -notin $DefaultConfig.psBase.Keys }).ForEach(
+                { 
+                    $Value = $Session.AllCommandLineParameters.$_
+                    If ($Value -is [Switch]) { $Value = [Boolean]$Value }
+                    $DefaultConfig.$_ = $Value
+                }
+            )
+
+            Return $DefaultConfig
+        }
+
+        Function Get-PoolsConfig { 
+
+            # Load pool data
+            If (-not $Session.PoolData) { 
+                $Session.PoolData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable  | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
+                $Session.PoolBaseNames = @($Session.PoolData.Keys)
+                $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach({ $Session.PoolData.$_.Variant.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
+                If (-not $Session.PoolVariants) { 
+                    Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
+                    (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+                    Exit
+                }
+            }
+
+            # Build in memory pool config
+            $PoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
+            ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).ForEach(
+                { 
+                    $PoolName = $_
+                    If ($PoolConfig = $Session.PoolData.$PoolName.Clone()) { 
+                        # Generic algorithm disabling is done in pool files
+                        $PoolConfig.Remove("Algorithm")
+
+                        # Merge default config data with custom pool config
+                        If ($Session.Config.Pools.$PoolName -and ($CustomPoolConfig = [System.Collections.SortedList]::New($Session.Config.Pools.$PoolName, [StringComparer]::OrdinalIgnoreCase))) { 
+                            $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $CustomPoolConfig -Unique $true
+                        }
+
+                        If (-not $PoolConfig.EarningsAdjustmentFactor) { $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor }
+                        If ($PoolConfig.EarningsAdjustmentFactor -le 0 -or $PoolConfig.EarningsAdjustmentFactor -gt 10) { 
+                            $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor
+                            Write-Message -Level Warn "Earnings adjustment factor (value: $($PoolConfig.EarningsAdjustmentFactor)) for pool '$PoolName' is not within supported range (0 - 10); using default value $($PoolConfig.EarningsAdjustmentFactor)."
+                        }
+
+                        If (-not $PoolConfig.WorkerName) { $PoolConfig.WorkerName = $ConfigFromFile.WorkerName }
+                        If (-not $PoolConfig.BalancesKeepAlive) { $PoolConfig.BalancesKeepAlive = $PoolData.$PoolName.BalancesKeepAlive }
+
+                        $PoolConfig.Region = $PoolConfig.Region.Where({ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) })
+
+                        Switch ($PoolName) { 
+                            "HiveON" { 
+                                If (-not $PoolConfig.Wallets) { 
+                                    $PoolConfig.Wallets = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase) # as ssorted case insensitive hash table
+                                    $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach({ 
+                                        $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_
+                                    })
+                                }
+                                Break
+                            }
+                            "MiningDutch" { 
+                                If ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
+                                If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.MiningDutchUserName }
+                                Break
+                            }
+                            "MiningPoolHub" { 
+                                If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.MiningPoolHubUserName }
+                                Break
+                            }
+                            "NiceHash" { 
+                                If ($ConfigFromFile.NiceHashWallet) { $PoolConfig.Wallets = @{ "BTC" = $ConfigFromFile.NiceHashWallet } }
+                                Break
+                            }
+                            "ProHashing" { 
+                                If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.ProHashingUserName }
+                                If (-not $PoolConfig.MiningMode) { $PoolConfig.MiningMode = $ConfigFromFile.ProHashingMiningMode }
+                                Break
+                            }
+                            Default { 
+                                If ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
+                                If (-not $PoolConfig.Wallets) { $PoolConfig.Wallets = $ConfigFromFile.Wallets }
+                            }
+                        }
+                    }
+                    $PoolsConfig.$PoolName = $PoolConfig
+                }
+            )
+            Return $PoolsConfig
+        }
+
+        # Load the configuration
+        $ConfigFromFile = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
+        If (Test-Path -LiteralPath $ConfigFile -PathType Leaf) { 
+            Try { 
+                $ConfigFromFile = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable  | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
+            } 
+            Catch { }
+            If ($ConfigFromFile.Keys.Count -eq 0) { 
+                $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
+                Move-Item -Path $ConfigFile $CorruptConfigFile -Force
+                If ($Config.psBase.Keys.Count -gt 0) { 
+                    Write-Message -Level Error "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
+                    Write-Config -Config $Config
+                    $Session.ConfigTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime
+                    Continue
+                }
+                Else { 
+                    Write-Host "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Creating a new configuration using default values." -ForegroundColor "Red"
+                    Write-Host
+                    $ConfigFromFile = Get-DefaultConfig
+                }
+            }
+            Else { 
+                $Session.ConfigTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime
+                ($Session.AllCommandLineParameters.Keys | Sort-Object).ForEach(
+                    { 
+                        If ($ConfigFromFile.Keys -contains $_) { 
+                            # Upper / lower case conversion of variable keys (config item names are case sensitive)
+                            $Value = $ConfigFromFile.$_
+                            $ConfigFromFile.Remove($_)
+                            If ($Session.AllCommandLineParameters.$_ -is [Switch]) { 
+                                $ConfigFromFile.$_ = [Boolean]$Value
+                            }
+                            ElseIf ($Session.AllCommandLineParameters.$_ -is [Array]) { 
+                                $ConfigFromFile.$_ = [System.Collections.Generic.SortedSet[Object]]($Value)
+                            }
+                            ElseIf ($Session.AllCommandLineParameters.$_ -is [Hashtable]) { 
+                                $ConfigFromFile.$_ = [System.Collections.SortedList]::New($Value, [StringComparer]::OrdinalIgnoreCase)
+                            }
+                            Else { 
+                                $ConfigFromFile.$_ = $Value -as $Session.AllCommandLineParameters.$_.GetType().Name
+                            }
+                        }
+                        Else { 
+                            # Config parameter not in config file - use hardcoded value
+                            $Value = $Session.AllCommandLineParameters.$_
+                            If ($Value -is [Switch]) { $Value = [Boolean]$Value }
+                            $ConfigFromFile.$_ = $Value
+                        }
+                    }
+                )
+                If ($ConfigFromFile.EarningsAdjustmentFactor -le 0 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 10) { 
+                    $ConfigFromFile.EarningsAdjustmentFactor = $Session.AllCommandLineParameters.EarningsAdjustmentFactor
+                    Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.EarningsAdjustmentFactor)) is not within supported range (0 - 10); using default value $($Session.AllCommandLineParameters.EarningsAdjustmentFactor)."
+                }
+                If ($ConfigFromFile.PoolAllowedPriceIncreaseFactor -le 2 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 99) { 
+                    $ConfigFromFile.PoolAllowedPriceIncreaseFactor = $Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor
+                    Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.PoolAllowedPriceIncreaseFactor)) is not within supported range (1 - 99); using default value $($Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor)."
+                }
+            }
+        }
+        Else { 
+            $ConfigFromFile = Get-DefaultConfig
+        }
+
+        # Build custom pools configuration, create case insensitive hashtable (https://stackoverflow.com/questions/24054147/powershell-hash-tables-double-key-error-a-and-a)
+        If ($PoolsConfigFile -and (Test-Path -LiteralPath $PoolsConfigFile -PathType Leaf)) { 
+            Try { 
+                [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
+                $Config.Pools = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
+            }
+            Catch { 
+                $Config.Pools = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive sorted hashtable
+                Write-Message -Level Warn "Pools configuration file '$($PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt. Will use default values."
+            }
+        }
+
+        $Global:Config.Pools = Get-PoolsConfig
+
+        # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
+        $ConfigFromFile.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
+
+        $Session.ConfigTimestamp = [DateTime]::Now.ToUniversalTime()
+
+        # Write config file in case they do not exist already
+        If (-not $Session.FreshConfig) { 
+            If (-not (Test-Path -LiteralPath $Session.ConfigFile -PathType Leaf)) { 
+                $Session.ConfigTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime.ToUniversalTime()
+            }
+        }
+    }
+
+    # Read config only if config files have changed
+    If (Test-Path -Path $Session.ConfigFile -PathType Leaf) { 
+        If ((Get-Item -Path $ConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp -or (Get-Item -Path $PoolsConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp) { 
+            Read-ConfigFiles -ConfigFile $ConfigFile -PoolsConfigFile $PoolsConfigFile
+
+            If ($Config.APIport -lt 1024) { 
+                $Config.APIPort = 3990
+                Write-Message -Level Warn "API port in stored configuration in invalid. Will use default port $($Config.APIPort)."
+            }
+            If ($Session.Config) { Write-Message -Level Verbose "Activated changed configuration." }
+            $Session.Config = $Config.Clone()
+            $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
+        }
+    }
 }

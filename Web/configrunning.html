@@ -4,8 +4,8 @@
           </div>
           <div id="configrunning" class="alert alert-info" role="alert">This is the configuration data UG-Miner is currently using.</div>
           <div id="toolbar">
-            <button type="button" class="btn btn-primary" id="btn-editconfig" name="btn-editconfig" title="Edit configuration file&#10;It will become active in next cycle.">Edit "Config" file</button>
-            <button type="button" class="btn btn-primary" id="btn-editpoolsconfig" name="btn-editpoolsconfig" title="Edit pools config file&#10;It will become active in next cycle.">Edit "PoolsConfig" file</button>
+            <button type="button" class="btn btn-primary" id="btn-editconfig" name="btn-editconfig" title="Edit configuration file&#10;Changes will become active in next cycle.">Edit configuration file</button>
+            <button type="button" class="btn btn-primary" id="btn-editpoolsconfig" name="btn-editpoolsconfig" title="Edit pools config file&#10;Changes will become active in next cycle.">Edit pools configuration file</button>
           </div>
           <br>
 
@@ -31,13 +31,13 @@
               });
             });
 
-            //Edit poolsconfig file
+            //Edit configrunning.Pools file
             $("#btn-editpoolsconfig").click(function () {
               document.getElementById("btn-editconfig").disabled = true;
               document.getElementById("btn-editpoolsconfig").disabled = true;
               $(".modal-body").load("/functions/file/edit?FileName=" + encodeURIComponent(poolsConfigFile), function () {
                 if (this.outerText) {
-                  $(".modal-title").text("Edit PoolsConfig file");
+                  $(".modal-title").text("Edit configrunning.Pools file");
                   $("#myModal").modal({ show: true });
                 }
                 document.getElementById("btn-editconfig").disabled = false;

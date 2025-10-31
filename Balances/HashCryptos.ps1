@@ -18,17 +18,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PayoutCurrency = $Config.PoolsConfig.$Name.PayoutCurrency
-$PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
-$RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
-$Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
+$PayoutCurrency = $Session.Config.Pools.$Name.PayoutCurrency
+$PoolAPItimeout = $Session.Config.Pools.$Name.PoolAPItimeout
+$RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
+$RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
+$Wallet = $Session.Config.Pools.$Name.Wallets.$PayoutCurrency
 
 $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 
@@ -40,7 +40,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) {
     Try { 
         $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
 
-        If ($Config.LogBalanceAPIResponse) { 
+        If ($Session.Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

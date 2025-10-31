@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -57,7 +57,7 @@ Function Resize-Form {
         $LegacyGUIelements.EditConfigLink.Location = [System.Drawing.Point]::new(18, ($LegacyGUIform.ClientSize.Height - $LegacyGUIelements.EditConfigLink.Height - 4))
         $LegacyGUIelements.CopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUIelements.TabControl.ClientSize.Width - $LegacyGUIelements.CopyrightLabel.Width - 4), ($LegacyGUIform.ClientSize.Height - $LegacyGUIelements.EditConfigLink.Height - 4))
 
-        If ($Session.ConfigRunning.BalancesTrackerPollInterval -gt 0) { 
+        If ($Session.Config.BalancesTrackerPollInterval -gt 0) { 
             $LegacyGUIelements.BalancesDGV.Visible = $true
             $LegacyGUIelements.EarningsChart.Visible = $true
 
@@ -129,7 +129,7 @@ Function CheckBoxSwitchingLog_Click {
         $LegacyGUIelements.SwitchingLogLabel.Text = "Waiting for switching log data..."
         $LegacyGUIelements.SwitchingLogClearButton.Enabled = $false
     }
-    If ($Session.ConfigRunning.UseColorForMinerStatus) { 
+    If ($Session.Config.UseColorForMinerStatus) { 
         ForEach ($Row in $LegacyGUIelements.SwitchingLogDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action] }
     }
     $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
@@ -155,7 +155,7 @@ Function Set-TableColor {
         [Parameter (Mandatory = $true)]
         $DataGridView
     )
-    If ($Session.ConfigRunning.UseColorForMinerStatus) { 
+    If ($Session.Config.UseColorForMinerStatus) { 
         ForEach ($Row in $DataGridView.Rows) { 
             If ($LegacyGUIelements.Colors[$Row.DataBoundItem.SubStatus]) { 
                 $Row.DefaultCellStyle.Backcolor = $LegacyGUIelements.Colors[$Row.DataBoundItem.SubStatus]
@@ -166,7 +166,7 @@ Function Set-TableColor {
 }
 
 # Function Set-WorkerColor { 
-#     If ($Session.ConfigRunning.UseColorForMinerStatus) { 
+#     If ($Session.Config.UseColorForMinerStatus) { 
 #         ForEach ($Row in $LegacyGUIelements.WorkersDGV.Rows) { 
 #             $Row.DefaultCellStyle.Backcolor = Switch ($Row.DataBoundItem.Status) { 
 #                 "Offline" { $LegacyGUIelements.Colors["disabled"]; Break }
@@ -186,7 +186,7 @@ Function Update-TabControl {
 
             $LegacyGUIelements.ContextMenuStripItem1.Text = "Re-benchmark miner"
             $LegacyGUIelements.ContextMenuStripItem1.Visible = $true
-            $LegacyGUIelements.ContextMenuStripItem2.Enabled = $Session.ConfigRunning.CalculatePowerCost
+            $LegacyGUIelements.ContextMenuStripItem2.Enabled = $Session.Config.CalculatePowerCost
             $LegacyGUIelements.ContextMenuStripItem2.Text = "Re-measure power consumption"
             $LegacyGUIelements.ContextMenuStripItem2.Visible = $true
             $LegacyGUIelements.ContextMenuStripItem3.Enabled = $true
@@ -198,7 +198,7 @@ Function Update-TabControl {
             $LegacyGUIelements.ContextMenuStripItem5.Text = "Enable miner"
             $LegacyGUIelements.ContextMenuStripItem5.Visible = $true
             $LegacyGUIelements.ContextMenuStripItem6.Visible = $false
-4
+
             If ($Session.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is stopped"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
@@ -219,9 +219,9 @@ Function Update-TabControl {
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
                         @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
                         @{ Name = "Status Info"; Expression = { $_.StatusInfo } }
-                        @{ Name = "Earnings (biased) $($Session.ConfigRunning.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings)) { "n/a" } Else { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)) } } }
-                        @{ Name = "Power cost $($Session.ConfigRunning.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } Else { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)) } } }
-                        @{ Name = "Profit (biased) $($Session.ConfigRunning.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } Else { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)) } } }
+                        @{ Name = "Earnings (biased) $($Session.Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings)) { "n/a" } Else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
+                        @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } Else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
+                        @{ Name = "Profit (biased) $($Session.Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } Else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Power consumption (live)"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } Else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
                         @{ Name = "Algorithm (variant) [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
@@ -273,7 +273,7 @@ Function Update-TabControl {
                 $Color
             }
 
-            If ($Session.ConfigRunning.BalancesTrackerPollInterval -gt 0) { 
+            If ($Session.Config.BalancesTrackerPollInterval -gt 0) { 
                 If ($Datasource = [System.IO.File]::ReadAllLines("$PWD\Cache\EarningsChartData.json") | ConvertFrom-Json -ErrorAction Ignore) { 
                     Try { 
                         $ChartTitle = [System.Windows.Forms.DataVisualization.Charting.Title]::new()
@@ -297,7 +297,7 @@ Function Update-TabControl {
                         $ChartArea.AxisY.LabelAutoFitStyle = $ChartArea.AxisY.labelAutoFitStyle - 4
                         $ChartArea.AxisY.MajorGrid.Enabled = $true
                         $ChartArea.AxisY.MajorGrid.LineColor = [System.Drawing.Color]::FromArgb(255, 255, 255, 255) #"#FFFFFF"
-                        $ChartArea.AxisY.Title = $Session.ConfigRunning.FIATcurrency
+                        $ChartArea.AxisY.Title = $Session.Config.FIATcurrency
                         $ChartArea.AxisY.ToolTip = "Total earnings per day"
                         $ChartArea.BackColor = [System.Drawing.Color]::FromArgb(255, 255, 255, 255) #"#2B3232" 
                         $ChartArea.BackGradientStyle = 3
@@ -323,10 +323,10 @@ Function Update-TabControl {
                             $I = 0
                             $Datasource.Earnings.$Pool.ForEach(
                                 { 
-                                    $_ *= $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)
+                                    $_ *= $Session.Rates.BTC.($Session.Config.FIATcurrency)
                                     $LegacyGUIelements.EarningsChart.Series[$Pool].Points.addxy(0, $_) | Out-Null
                                     $Daysum[$I] += $_
-                                    If ($_) { $LegacyGUIelements.TooltipText[$I] = "$($LegacyGUIelements.TooltipText[$I])`r$($Pool): {0:N$($Session.ConfigRunning.DecimalsMax)} $($Session.ConfigRunning.FIATcurrency)" -f $_ }
+                                    If ($_) { $LegacyGUIelements.TooltipText[$I] = "$($LegacyGUIelements.TooltipText[$I])`r$($Pool): {0:N$($Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)" -f $_ }
                                     $I ++
                                 }
                             )
@@ -336,9 +336,9 @@ Function Update-TabControl {
                         $DataSource.Labels.ForEach(
                             { 
                                 $ChartArea.AxisX.CustomLabels.Add($I +0.5, $I + 1.5, " $_ ")
-                                $ChartArea.AxisX.CustomLabels[$I].ToolTip = "$($LegacyGUIelements.TooltipText[$I])`rTotal: {0:N$($Session.ConfigRunning.DecimalsMax)} $($Session.ConfigRunning.FIATcurrency)" -f $Daysum[$I]
+                                $ChartArea.AxisX.CustomLabels[$I].ToolTip = "$($LegacyGUIelements.TooltipText[$I])`rTotal: {0:N$($Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)" -f $Daysum[$I]
                                 ForEach ($Pool in $DataSource.Earnings.PSObject.Properties.Name) { 
-                                    If ($Datasource.Earnings.$Pool[$I]) { $LegacyGUIelements.EarningsChart.Series[$Pool].Points[$I].ToolTip = "$($LegacyGUIelements.TooltipText[$I])`rTotal: {0:N$($Session.ConfigRunning.DecimalsMax)} $($Session.ConfigRunning.FIATcurrency)" -f $Daysum[$I] }
+                                    If ($Datasource.Earnings.$Pool[$I]) { $LegacyGUIelements.EarningsChart.Series[$Pool].Points[$I].ToolTip = "$($LegacyGUIelements.TooltipText[$I])`rTotal: {0:N$($Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)" -f $Daysum[$I] }
                                 }
                                 $I ++
                             }
@@ -358,17 +358,17 @@ Function Update-TabControl {
                     $LegacyGUIelements.BalancesDGV.DataSource = $DataSource | Select-Object @(
                         @{ Name = "Currency"; Expression = { $_.Currency } },
                         @{ Name = "Pool [Currency]"; Expression = { "$($_.Pool) [$($_.Currency)]" } },
-                        @{ Name = "Balance ($($Session.ConfigRunning.FIATcurrency))"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Balance * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "$($Session.ConfigRunning.FIATcurrency) in past 1 hr"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Growth1 * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "$($Session.ConfigRunning.FIATcurrency) in past 6 hrs"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Growth6 * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "$($Session.ConfigRunning.FIATcurrency) in past 24 hrs"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Growth24 * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "$($Session.ConfigRunning.FIATcurrency) in past 7 days"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Growth168 * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "$($Session.ConfigRunning.FIATcurrency) in past 30 days"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Growth720 * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "Avg. $($Session.ConfigRunning.FIATcurrency)/1 hr"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.AvgHourlyGrowth * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "Avg. $($Session.ConfigRunning.FIATcurrency)/24 hrs"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
-                        @{ Name = "Avg. $($Session.ConfigRunning.FIATcurrency)/7 days"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Session.Rates.($_.Currency).($Session.ConfigRunning.FIATcurrency)) } },
+                        @{ Name = "Balance ($($Session.Config.FIATcurrency))"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Balance * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "$($Session.Config.FIATcurrency) in past 1 hr"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth1 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "$($Session.Config.FIATcurrency) in past 6 hrs"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth6 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "$($Session.Config.FIATcurrency) in past 24 hrs"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth24 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "$($Session.Config.FIATcurrency) in past 7 days"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth168 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "$($Session.Config.FIATcurrency) in past 30 days"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth720 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "Avg. $($Session.Config.FIATcurrency)/1 hr"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgHourlyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "Avg. $($Session.Config.FIATcurrency)/24 hrs"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "Avg. $($Session.Config.FIATcurrency)/7 days"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
                         @{ Name = "Projected pay date"; Expression = { If ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } Else { $_.ProjectedPayDate } } },
-                        @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Session.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String](("{0:N$(Get-DecimalsFromValue ($_.PayoutThreshold * $mBTCfactor) $Session.ConfigRunning.DecimalsMax)}" -f [float]($_.PayoutThreshold * $mBTCfactor)) -replace "0*$" -replace "\.$") <# Cast to string to avoid extra decimal places #>, $PayoutThresholdCurrency } }
+                        @{ Name = "Payout threshold"; Expression = { If ($_.PayoutThresholdCurrency -eq "BTC" -and $Session.Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } Else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Session.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String](("{0:N$(Get-DecimalsFromValue ($_.PayoutThreshold * $mBTCfactor) $Session.Config.DecimalsMax)}" -f [float]($_.PayoutThreshold * $mBTCfactor)) -replace "0*$" -replace "\.$") <# Cast to string to avoid extra decimal places #>, $PayoutThresholdCurrency } }
                     ) | Out-DataTable
 
                     $LegacyGUIelements.BalancesDGV.Sort($LegacyGUIelements.BalancesDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
@@ -377,28 +377,28 @@ Function Update-TabControl {
                         $LegacyGUIelements.BalancesDGV.Columns[0].Visible = $false
                         $LegacyGUIelements.BalancesDGV.Columns[1].FillWeight = 100
                         $LegacyGUIelements.BalancesDGV.Columns[2].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[2].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.BalancesDGV.Columns[3].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[3].Visible = $Session.ConfigRunning.BalancesShowSums
-                        $LegacyGUIelements.BalancesDGV.Columns[4].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[4].Visible = $Session.ConfigRunning.BalancesShowSums
-                        $LegacyGUIelements.BalancesDGV.Columns[5].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[5].Visible = $Session.ConfigRunning.BalancesShowSums
-                        $LegacyGUIelements.BalancesDGV.Columns[6].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[6].Visible = $Session.ConfigRunning.BalancesShowSums
-                        $LegacyGUIelements.BalancesDGV.Columns[7].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[7].Visible = $Session.ConfigRunning.BalancesShowSums
-                        $LegacyGUIelements.BalancesDGV.Columns[8].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[8].Visible = $Session.ConfigRunning.BalancesShowAverages
-                        $LegacyGUIelements.BalancesDGV.Columns[9].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[9].Visible = $Session.ConfigRunning.BalancesShowAverages
-                        $LegacyGUIelements.BalancesDGV.Columns[10].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[10].Visible = $Session.ConfigRunning.BalancesShowAverages
+                        $LegacyGUIelements.BalancesDGV.Columns[3].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[3].Visible = $Session.Config.BalancesShowSums
+                        $LegacyGUIelements.BalancesDGV.Columns[4].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[4].Visible = $Session.Config.BalancesShowSums
+                        $LegacyGUIelements.BalancesDGV.Columns[5].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[5].Visible = $Session.Config.BalancesShowSums
+                        $LegacyGUIelements.BalancesDGV.Columns[6].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[6].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[6].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[6].Visible = $Session.Config.BalancesShowSums
+                        $LegacyGUIelements.BalancesDGV.Columns[7].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[7].Visible = $Session.Config.BalancesShowSums
+                        $LegacyGUIelements.BalancesDGV.Columns[8].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[8].Visible = $Session.Config.BalancesShowAverages
+                        $LegacyGUIelements.BalancesDGV.Columns[9].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[9].Visible = $Session.Config.BalancesShowAverages
+                        $LegacyGUIelements.BalancesDGV.Columns[10].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[10].Visible = $Session.Config.BalancesShowAverages
                         $LegacyGUIelements.BalancesDGV.Columns[11].FillWeight = 70
                         $LegacyGUIelements.BalancesDGV.Columns[12].FillWeight = 100
                     }
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
-                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[3].ToolTipText = "{0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[4].ToolTipText = "{0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[5].ToolTipText = "{0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[6].ToolTipText = "{0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[7].ToolTipText = "{0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.ConfigRunning.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.ConfigRunning.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.ConfigRunning.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                         }
                     )
                     $LegacyGUIelements.BalancesDGV.EndInit()
@@ -418,7 +418,7 @@ Function Update-TabControl {
 
             $LegacyGUIelements.ContextMenuStripItem1.Text = "Re-benchmark miner"
             $LegacyGUIelements.ContextMenuStripItem1.Visible = $true
-            $LegacyGUIelements.ContextMenuStripItem2.Enabled = $Session.ConfigRunning.CalculatePowerCost
+            $LegacyGUIelements.ContextMenuStripItem2.Enabled = $Session.Config.CalculatePowerCost
             $LegacyGUIelements.ContextMenuStripItem2.Text = "Re-measure power consumption"
             $LegacyGUIelements.ContextMenuStripItem2.Visible = $true
             $LegacyGUIelements.ContextMenuStripItem3.Enabled = $true
@@ -434,7 +434,7 @@ Function Update-TabControl {
             $LegacyGUIelements.ContextMenuStripItem6.Visible = $true
 
             If ($LegacyGUIelements.RadioButtonMinersOptimal.checked) { 
-                $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+                $Bias = If ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
                 $DataSource = $Session.MinersOptimal.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
                 Remove-Variable Bias
             }
@@ -442,7 +442,7 @@ Function Update-TabControl {
                 $DataSource = $Session.Miners.Where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info, Algorithm
             }
             Else { 
-                $Bias = If ($Session.CalculatePowerCost -and -not $Session.ConfigRunning.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
+                $Bias = If ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } Else { "Earnings_Bias" }
                 $DataSource = $Session.Miners.PsObject.Copy().ForEach({ If ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
                 Remove-Variable Bias
             }
@@ -468,9 +468,9 @@ Function Update-TabControl {
                         @{ Name = "Miner"; Expression = { $_.Name } },
                         @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } },
                         @{ Name = "Status"; Expression = { $_.Status } },
-                        @{ Name = "Earnings (biased) $($Session.ConfigRunning.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } Else { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)) } } },
-                        @{ Name = "Power cost $($Session.ConfigRunning.FIATcurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)) } } },
-                        @{ Name = "Profit (biased) $($Session.ConfigRunning.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Session.CalculatePowerCost) { "n/a" } Else { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.ConfigRunning.FIATcurrency)) } } },
+                        @{ Name = "Earnings (biased) $($Session.Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } Else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
+                        @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { If ( [Double]::IsNaN($_.PowerCost)) { "n/a" } Else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
+                        @{ Name = "Profit (biased) $($Session.Config.FIATcurrency)/day"; Expression = { If ([Double]::IsNaN($_.Profit_Bias) -or -not $Session.CalculatePowerCost) { "n/a" } Else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
                         @{ Name = "Power consumption"; Expression = { If ($_.MeasurePowerConsumption) { If ($_.Status -eq "Running") { "Measuring..." } Else { "Unmeasured" } } Else { If ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } Else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
                         @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } },
@@ -537,7 +537,7 @@ Function Update-TabControl {
             ElseIf ($Session.Pools) { 
                 If (-not $LegacyGUIelements.PoolsDGV.SelectedRows) { 
                     $LegacyGUIelements.PoolsDGV.BeginInit()
-                    If ($Session.ConfigRunning.UsemBTC) { 
+                    If ($Session.Config.UsemBTC) { 
                         $Factor = 1000
                         $Unit = "mBTC"
                     }
@@ -549,7 +549,7 @@ Function Update-TabControl {
                         @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } }
                         @{ Name = "Currency"; Expression = { $_.Currency } }
                         @{ Name = "Coin name"; Expression = { $_.CoinName } }
-                        @{ Name = "$Unit/GH/Day (biased)"; Expression = { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f ($_.Price_Bias * [Math]::Pow(1024, 3) * $Factor) } }
+                        @{ Name = "$Unit/GH/Day (biased)"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Price_Bias * [Math]::Pow(1024, 3) * $Factor) } }
                         @{ Name = "Accuracy"; Expression = { "{0:p2}" -f $_.Accuracy } }
                         @{ Name = "Pool name"; Expression = { $_.Name } }
                         @{ Name = "Host"; Expression = { $_.Host } }
@@ -590,10 +590,10 @@ Function Update-TabControl {
         # "Rig monitor" { 
         #     $LegacyGUIelements.WorkersDGV.ClearSelection()
         # 
-        #     $LegacyGUIelements.WorkersDGV.Visible = $Session.ConfigRunning.ShowWorkerStatus
+        #     $LegacyGUIelements.WorkersDGV.Visible = $Session.Config.ShowWorkerStatus
         #     $LegacyGUIelements.EditMonitoringLink.Visible = $Session.APIport
         #
-        #     If ($Session.ConfigRunning.ShowWorkerStatus) { 
+        #     If ($Session.Config.ShowWorkerStatus) { 
         #         If (-not $LegacyGUIelements.WorkersDGV.SelectedRows) { 
         #
         #             Read-MonitoringData | Out-Null
@@ -611,8 +611,8 @@ Function Update-TabControl {
         #                 @{ Name = "Last seen"; Expression = { (Get-TimeSince $_.date) } },
         #                 @{ Name = "Version"; Expression = { $_.version } },
         #                 @{ Name = "Currency"; Expression = { $_.data.Currency | Select-Object -Unique } },
-        #                 @{ Name = "Estimated earnings/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Session.ConfigRunning.DecimalsMax)}" -f (($_.Data.EarningsWhere({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Session.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
-        #                 @{ Name = "Estimated profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Session.ConfigRunning.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Session.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
+        #                 @{ Name = "Estimated earnings/day"; Expression = { If ($null -ne $_.Data) { "{0:n$($Session.Config.DecimalsMax)}" -f (($_.Data.EarningsWhere({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Session.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
+        #                 @{ Name = "Estimated profit/day"; Expression = { If ($null -ne $_.Data) { " {0:n$($Session.Config.DecimalsMax)}" -f (($_.Data.Profit.Where({ -not [Double]::IsNaN($_) }) | Measure-Object -Sum).Sum * $Session.Rates.BTC.($_.data.Currency | Select-Object -Unique)) } } },
         #                 @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } },
         #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join $nl } },
         #                 @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join " & " }) -join $nl } },
@@ -653,10 +653,10 @@ Function Update-TabControl {
             Break
         }
         "Watchdog timers" { 
-            $LegacyGUIelements.WatchdogTimersRemoveButton.Visible = $Session.ConfigRunning.Watchdog
-            $LegacyGUIelements.WatchdogTimersDGV.Visible = $Session.ConfigRunning.Watchdog
+            $LegacyGUIelements.WatchdogTimersRemoveButton.Visible = $Session.Config.Watchdog
+            $LegacyGUIelements.WatchdogTimersDGV.Visible = $Session.Config.Watchdog
 
-            If ($Session.ConfigRunning.Watchdog) { 
+            If ($Session.Config.Watchdog) { 
                 If ($Session.NewMiningStatus -eq "Idle") { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No data - mining is stopped"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
@@ -945,7 +945,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                    If ($Session.ConfigRunning.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    If ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                     Update-TabControl
                     Break
                 }
@@ -961,7 +961,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     Remove-Variable Message
-                    If ($Session.ConfigRunning.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    If ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                     Update-TabControl
                     Break
                 }
@@ -1527,7 +1527,7 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.SwitchingLogClearButton
 
 $LegacyGUIelements.CheckShowSwitchingLogCPU = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIelements.CheckShowSwitchingLogCPU.AutoSize = $false
-$LegacyGUIelements.CheckShowSwitchingLogCPU.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.ConfigRunning.ExcludeDeviceName -and $_.Type -eq "CPU" }))
+$LegacyGUIelements.CheckShowSwitchingLogCPU.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "CPU" }))
 $LegacyGUIelements.CheckShowSwitchingLogCPU.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIelements.CheckShowSwitchingLogCPU.Height = 20
 $LegacyGUIelements.CheckShowSwitchingLogCPU.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
@@ -1539,7 +1539,7 @@ $LegacyGUIelements.CheckShowSwitchingLogCPU.ForEach({ $_.Add_Click({ CheckBoxSwi
 
 $LegacyGUIelements.CheckShowSwitchingLogAMD = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIelements.CheckShowSwitchingLogAMD.AutoSize = $false
-$LegacyGUIelements.CheckShowSwitchingLogAMD.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.ConfigRunning.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }))
+$LegacyGUIelements.CheckShowSwitchingLogAMD.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }))
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Height = 20
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
@@ -1551,7 +1551,7 @@ $LegacyGUIelements.CheckShowSwitchingLogAMD.ForEach({ $_.Add_Click({ CheckBoxSwi
 
 $LegacyGUIelements.CheckShowSwitchingLogINTEL = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.AutoSize = $false
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.ConfigRunning.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }))
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }))
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Height = 20
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
@@ -1563,7 +1563,7 @@ $LegacyGUIelements.CheckShowSwitchingLogINTEL.ForEach({ $_.Add_Click({ CheckBoxS
 
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA = [System.Windows.Forms.CheckBox]::new()
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.AutoSize = $false
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.ConfigRunning.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Height = 20
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width + $LegacyGUIelements.CheckShowSwitchingLogINTEL.Width), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
@@ -1595,7 +1595,7 @@ $LegacyGUIelements.SwitchingLogDGV.RowHeadersVisible = $false
 $LegacyGUIelements.SwitchingLogDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIelements.SwitchingLogDGV.Add_Sorted(
     { 
-        If ($Session.ConfigRunning.UseColorForMinerStatus) { 
+        If ($Session.Config.UseColorForMinerStatus) { 
             ForEach ($Row in $LegacyGUIelements.SwitchingLogDGV.Rows) { 
                 $Row.DefaultCellStyle.Backcolor = $Row.DefaultCellStyle.SelectionBackColor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action]
                 $Row.DefaultCellStyle.SelectionForeColor = $LegacyGUIelements.SwitchingLogDGV.DefaultCellStyle.ForeColor
@@ -1711,6 +1711,24 @@ $LegacyGUIelements.TabControl.Add_Click(
     }
 )
 
+$LegacyGUIelements.Timer = [System.Windows.Forms.Timer]::new()
+$LegacyGUIelements.Timer.Interval = 500
+$LegacyGUIelements.Timer.Add_Tick(
+    { 
+        If ($Session.APIserver.IsListening) { 
+            If ($LegacyGUIelements.EditConfigLink.Tag -ne "WebGUI") { 
+                $LegacyGUIelements.EditConfigLink.Tag = "WebGUI"
+                $LegacyGUIelements.EditConfigLink.Text = "Edit configuration in the web GUI"
+            }
+        }
+        ElseIf ($LegacyGUIelements.EditConfigLink.Tag -ne "Edit-File") { 
+            $LegacyGUIelements.EditConfigLink.Tag = "Edit-File"
+            $LegacyGUIelements.EditConfigLink.Text = "Edit configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
+        }
+        MainLoop
+    }
+)
+
 $LegacyGUIform.Controls.Add($LegacyGUIelements.TabControl)
 $LegacyGUIform.KeyPreview = $true
 $LegacyGUIform.ResumeLayout()
@@ -1725,9 +1743,8 @@ $LegacyGUIform.Add_Load(
             If ($WindowSettings.Width -gt $LegacyGUIform.MinimumSize.Width) { $LegacyGUIform.Width = $WindowSettings.Width }
             If ($WindowSettings.Height -gt $LegacyGUIform.MinimumSize.Height) { $LegacyGUIform.Height = $WindowSettings.Height }
         }
-        If ($Session.ConfigRunning.LegacyGUIStartMinimized) { $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized }
 
-        Update-GUIstatus
+        If ($Session.Config.LegacyGUIStartMinimized) { $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized }
 
         Switch ($Session.MiningStatus) { 
             "Idle" { 
@@ -1749,31 +1766,20 @@ $LegacyGUIform.Add_Load(
             }
         }
 
-        $TimerUI = [System.Windows.Forms.Timer]::new()
-        $TimerUI.Interval = 500
-        $TimerUI.Add_Tick(
-            { 
-                If ($Session.APIserver.IsListening) { 
-                    If ($LegacyGUIelements.EditConfigLink.Tag -ne "WebGUI") { 
-                        $LegacyGUIelements.EditConfigLink.Tag = "WebGUI"
-                        $LegacyGUIelements.EditConfigLink.Text = "Edit configuration in the web GUI"
-                    }
-                }
-                ElseIf ($LegacyGUIelements.EditConfigLink.Tag -ne "Edit-File") { 
-                    $LegacyGUIelements.EditConfigLink.Tag = "Edit-File"
-                    $LegacyGUIelements.EditConfigLink.Text = "Edit configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
-                }
-                MainLoop
-            }
-        )
-        $TimerUI.Start()
+        $LegacyGUIelements.Timer.Start()
+    }
+)
+
+$LegacyGUIform.Add_Activated(
+    { 
+        Update-TabControl
     }
 )
 
 $LegacyGUIform.Add_FormClosing(
     { 
-        If ($Session.LegacyGUI -and $KeyPressed.KeyChar -ne "q") { 
-            If (-not $Session.ConfigRunning.ShowConsole) { # If console is not visible there is no user friendly way to end script
+        If ($Session.Config.LegacyGUI -and $LegacyGUIform.Tag -ne "q") { 
+            If (-not $Session.Config.ShowConsole) { # If console is not visible there is no user friendly way to end script
                 $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
                 If ($MsgBoxInput -eq "No") { 
                     $_.Cancel = $true
@@ -1789,17 +1795,22 @@ $LegacyGUIform.Add_FormClosing(
                     Return
                 }
             }
-            $Session.LegacyGUI = $false
+            $Session.Config.LegacyGUI = $false
         }
 
-        # Save window settings
-        If ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
+        If ($MsgBoxInput -eq "Yes") { 
+            # Save window settings
+            If ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
 
-        $TimerUI.Stop()
-        Remove-Variable $TimerUI
+            Exit-UGminer
+        }
 
-        If ($MsgBoxInput -eq "Yes") { Exit-UGminer }
-        Remove-Variable MsgBoxInput -ErrorAction Ignore
+        $_.Cancel = $true
+        $Session.Config.LegacyGUI = $false
+        $LegacyGUIform.WindowStateOriginal = $LegacyGUIform.WindowState
+        $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
+
+        Return
     }
 )
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { Return }
@@ -68,10 +68,10 @@ $Algorithms = @(
     @{ Algorithms = @("UbqHash", "");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; MinerSet = 1; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @());             Arguments = @(" -algo Ubqhash") } # PhoenixMiner-v6.2c is fastest
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.ConfigRunning.MinerSet })
+$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
-# $Algorithms = $Algorithms.Where({ $Session.ConfigRunning.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -eq $false)) })
+# $Algorithms = $Algorithms.Where({ $Session.Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -eq $false)) })
 
 If ($Algorithms) { 
 
@@ -80,7 +80,7 @@ If ($Algorithms) {
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.ConfigRunning.APIport + ($MinerDevices.Id | Sort-Object -Top 1) + 1
+            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
@@ -115,8 +115,8 @@ If ($Algorithms) {
                                     }
                                     Remove-Variable Pool
 
-                                    If ($_.Type -eq "CPU") { $Arguments += " -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.ConfigRunning.CPUMiningReserveCPUcore))" }
-                                    $Arguments += " -mport 0 -webPort $MinerAPIPort -rigName $($Session.ConfigRunning.PoolsConfig.($Pool0.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
+                                    If ($_.Type -eq "CPU") { $Arguments += " -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.Config.CPUMiningReserveCPUcore))" }
+                                    $Arguments += " -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.Pools.($Pool0.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
 
                                     # Apply tuning parameters
                                     If ($Session.ApplyMinerTweaks) { $Arguments += $_.Tuning }

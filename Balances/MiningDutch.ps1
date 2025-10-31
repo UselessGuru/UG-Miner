@@ -18,25 +18,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
-$RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+$PoolAPItimeout = $Session.Config.Pools.$Name.PoolAPItimeout
+$RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
+$RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
 
 $Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-While (-not $Currencies -and $RetryCount -gt 0 -and $Config.MiningDutchUserName & $Config.MiningDutchAPIKey) { 
+While (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchUserName & $Session.Config.MiningDutchAPIKey) { 
 
     Try { 
-        $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Config.MiningDutchUserName)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
+        $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Session.Config.MiningDutchUserName)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
 
-        If ($Config.LogBalanceAPIResponse) { 
+        If ($Session.Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -49,15 +49,15 @@ While (-not $Currencies -and $RetryCount -gt 0 -and $Config.MiningDutchUserName 
             $Currencies.ForEach(
                 { 
                     $Currency = $_.tag
-                    $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+                    $RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
 
                     Start-Sleep -Seconds $RetryInterval # Pool does not support immediate requests
 
                     While (-not $APIResponse -and $RetryCount -gt 0) { 
                         Try { 
-                            $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
+                            $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
 
-                            If ($Config.LogBalanceAPIResponse) { 
+                            If ($Session.Config.LogBalanceAPIResponse) { 
                                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                                 $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -74,7 +74,7 @@ While (-not $Currencies -and $RetryCount -gt 0 -and $Config.MiningDutchUserName 
                                         DateTime = [DateTime]::Now.ToUniversalTime()
                                         Pool     = $Name
                                         Currency = $Currency
-                                        Wallet   = $Config.MiningDutchUserName
+                                        Wallet   = $Session.Config.MiningDutchUserName
                                         Pending  = [Double]$APIResponse.getuserbalance.data.unconfirmed
                                         Balance  = [Double]$APIResponse.getuserbalance.data.confirmed
                                         Unpaid   = $Unpaid

@@ -18,24 +18,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ProHashing.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Url = "https://prohashing.com/customer/dashboard"
 
-$RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+$RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
+$RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
 
-$Request = "https://prohashing.com/api/v1/wallet?apiKey=$($Config.ProHashingAPIkey)"
+$Request = "https://prohashing.com/api/v1/wallet?apiKey=$($Session.Config.ProHashingAPIkey)"
 
-While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.ProHashingAPIkey) { 
+While (-not $APIResponse -and $RetryCount -gt 0 -and $Session.Config.ProHashingAPIkey) { 
 
     Try { 
-        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore
+        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Session.Config.PoolAPItimeout -ErrorAction Ignore
 
-        If ($Config.LogBalanceAPIResponse) { 
+        If ($Session.Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -49,7 +49,7 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Config.ProHashingAPIkey) {
                             DateTime = [DateTime]::Now.ToUniversalTime()
                             Pool            = $Name
                             Currency        = $APIResponse.data.balances.$_.abbreviation
-                            Wallet          = $Config.ProHashingUserName
+                            Wallet          = $Session.Config.ProHashingUserName
                             Pending         = 0
                             Balance         = [Double]$APIResponse.data.balances.$_.balance
                             Unpaid          = [Double]$APIResponse.data.balances.$_.unpaid

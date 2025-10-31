@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.5.17
-Version date:   2025/10/25
+Version:        6.6.0
+Version date:   2025/10/31
 #>
 
 Param(
@@ -32,7 +32,7 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Hostsuffix = "mining-dutch.nl"
 
-$PoolConfig = $Session.ConfigRunning.PoolsConfig.$Name
+$PoolConfig = $Session.Config.Pools.$Name
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $PayoutCurrency = $PoolConfig.PayoutCurrency
@@ -67,7 +67,7 @@ If ($DivisorMultiplier -and $PriceField) {
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         If (-not $PoolConfig.UserName) { $Reasons.Add("No username") | Out-Null }
         # Sometimes pool returns $null hashrate for all algorithms
-        If (-not $Request.$Algorithm.hashrate_shared -and -not ($Session.ConfigRunning.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        If (-not $Request.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
         If ($Request.$Algorithm.coins -gt 1 -and [Double]$Request.$Algorithm.$PriceField -eq 0) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
         If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
@@ -75,14 +75,14 @@ If ($DivisorMultiplier -and $PriceField) {
         $Value = $Request.$Algorithm.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
-        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.ConfigRunning.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
+            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
         }
         Else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
         }
 
-        ForEach ($RegionNorm in $Session.Regions[$Session.ConfigRunning.Region]) { 
+        ForEach ($RegionNorm in $Session.Regions[$Session.Config.Region]) { 
             If ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $RegionNorm })) { 
 
                 [PSCustomObject]@{ 
