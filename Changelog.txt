@@ -1,11 +1,12 @@
-Changelog UG-Miner 6.5.18 2025/10/31
-====================================
+Changelog UG-Miner 6.6.0 2025/10/31
+===================================
 
 Enhancements:
 - Core: Removed configuration item 'ShowColumnPool' (Information is already contained in the miner name)
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
+- Core: Use $Session.Config for running configuration
 - LegacyGUI: Minor code optimizations
 
 Miner changes:
