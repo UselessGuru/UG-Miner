@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.6.0
-Version date:   2025/10/31
+Version:        6.6.1
+Version date:   2025/11/02
 #>
 
 using module .\Includes\Include.psm1
@@ -323,7 +323,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.6.0"
+    Version      = [System.Version]"6.6.1"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -355,7 +355,7 @@ While (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Comma
     Write-Host "Waiting for another instance of $($Session.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
     Start-Sleep -Seconds 1
     If ($Loops -eq 0) { 
-        [Console]::SetCursorPosition(55, $CursorPosition.y)
+        [Console]::SetCursorPosition(58, ($CursorPosition.y + 1))
         Write-Host " ✖    " -ForegroundColor Red
         Write-Message -Level Error "Another instance of $($Session.Branding.ProductLabel) is still running. Cannot continue!"
         (New-Object -ComObject Wscript.Shell).Popup("Another instance of $($Session.Branding.ProductLabel) is still running.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
@@ -363,7 +363,7 @@ While (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Comma
     }
 }
 If ($Loops -ne 20) { 
-    [Console]::SetCursorPosition(55, $CursorPosition.y)
+    [Console]::SetCursorPosition(58, ($CursorPosition.y + 1))
     Write-Host " ✔    " -ForegroundColor Green
 }
 Remove-Variable Loops
@@ -917,7 +917,7 @@ Function MainLoop {
                         If ($Session.CalculatePowerCost) { 
                             Write-Host "w: Toggle 'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er (W)' column visibility      [" -NoNewline; If ($Session.Config.CalculatePowerCost -and $Session.Config.ShowColumnPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                         }
-                        Write-Host "`nq: " -NoNewline; Write-Host "Q" -ForegroundColor Blue -NoNewline; Write-Host "uit $($Session.Branding.ProductLabel)"
+                        Write-Host "`nq: " -NoNewline; Write-Host "Q" -ForegroundColor Blue -NoNewline; Write-Host "uit $($Session.Branding.ProductLabel)`n"
                         Break
                     }
                     "m" { 

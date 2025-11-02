@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.6.0 / Updated 2025/10/31
+Version 6.6.1 / Updated 2025/11/02
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -277,7 +277,7 @@ Hot key legend:                              Status:
 2: Toggle listing all optimal miners         [off]
 3: Toggle UI style [full or light]           [light]
 4: Toggle legacy GUI                         [enabled]
-5: Toggle API & web GUI                      [enabled on port 3999]
+5: Toggle API server and web GUI             [running on port 3999]
 
 a: Toggle 'Accuracy' column visibility       [on]
 b: Toggle 'Earnings bias' column visibility  [on]

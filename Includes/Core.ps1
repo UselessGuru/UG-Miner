@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.6.0
-Version date:   2025/10/31
+Version:        6.6.1
+Version date:   2025/11/02
 #>
 
 using module .\Include.psm1
@@ -1270,7 +1270,8 @@ Try {
                     $_.Status = [MinerStatus]::Unavailable
                     $_.SubStatus = "unavailable"
                 }
-                ElseIf ($_.Status -eq [MinerStatus]::Idle) { 
+                ElseIf ($_.Available -and $_.Status -notin [MinerStatus]::DryRun, [MinerStatus]::Running) { 
+                    $_.Status = [MinerStatus]::Idle
                     $_.SubStatus = "idle"
                 }
                 ElseIf ($_.Status -eq [MinerStatus]::Failed) { 
@@ -1335,9 +1336,6 @@ Try {
             $Session.RefreshNeeded = $true
             While ($Session.Config.APIport -ne $Session.APIport) { Start-Sleep -MilliSeconds 100 } # Wail until API has restarted
         }
-        Else { 
-            $Session.RefreshNeeded = $true
-        }
 
         ForEach ($Miner in $Session.MinersBest) { 
 
@@ -1388,7 +1386,7 @@ Try {
 
                 # Add watchdog timer
                 If ($Session.Config.Watchdog) { 
-                    ForEach ($Worker in $Miner.Workers) { 
+                    ForEach ($Worker in $Miner.WorkersRunning) { 
                         $Session.WatchdogTimers.Add(
                             [PSCustomObject]@{ 
                                 Algorithm                    = $Worker.Pool.Algorithm
@@ -1424,6 +1422,8 @@ Try {
             }
         }
         Remove-Variable DataCollectInterval, Miner, Message -ErrorAction Ignore
+
+        $Session.RefreshNeeded = $true
 
         $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBest.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
         $Session.MinersRunning = $Session.MinersBest

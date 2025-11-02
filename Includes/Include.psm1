@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.6.0
-Version date:   2025/10/31
+Version:        6.6.1
+Version date:   2025/11/02
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -4052,7 +4052,7 @@ Function Set-MinerReBenchmark {
     $Miner.Available = $true
 
     # Remove watchdog
-    $Session.WatchdogTimers = $Session.WatchdogTimers | Where-Object MinerName -NE $Miner.Name
+    $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
 }
 
 Function Set-MinerMeasurePowerConsumption { 
@@ -4074,7 +4074,7 @@ Function Set-MinerMeasurePowerConsumption {
     $Miner.Available = $true
 
     # Remove watchdog
-    $Session.WatchdogTimers = $Session.WatchdogTimers | Where-Object MinerName -NE $Miner.Name
+    $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
 }
 
 Function Exit-UGminer { 

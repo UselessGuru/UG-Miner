@@ -1,3 +1,10 @@
+Changelog UG-Miner 6.6.1 2025/11/02
+===================================
+
+Fixes:
+- Core: Miners not changing from 'unavailable' to 'idle' in some scenarios
+
+
 Changelog UG-Miner 6.6.0 2025/10/31
 ===================================
 
