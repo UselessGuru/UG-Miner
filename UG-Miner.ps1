@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.6.1
-Version date:   2025/11/02
+Version:        6.6.2
+Version date:   2025/11/04
 #>
 
 using module .\Includes\Include.psm1
@@ -323,7 +323,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.6.1"
+    Version      = [System.Version]"6.6.2"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -640,7 +640,14 @@ Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition -ErrorAction Igno
 Write-Host ""
 Get-Rate
 
-If ($Session.Config.APIport) { Start-APIserver }
+If ($Session.Config.APIport) { 
+    Start-APIserver
+}
+Else { 
+    # Use port 4000 for miner communication
+    $Session.MinerBaseAPIport = 4000
+    Write-Message -Level Warn "No valid API port; using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+}
 
 Function MainLoop { 
 
@@ -917,7 +924,7 @@ Function MainLoop {
                         If ($Session.CalculatePowerCost) { 
                             Write-Host "w: Toggle 'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er (W)' column visibility      [" -NoNewline; If ($Session.Config.CalculatePowerCost -and $Session.Config.ShowColumnPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } Else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                         }
-                        Write-Host "`nq: " -NoNewline; Write-Host "Q" -ForegroundColor Blue -NoNewline; Write-Host "uit $($Session.Branding.ProductLabel)`n"
+                        Write-Host "`nq: " -NoNewline; Write-Host "Q" -ForegroundColor Blue -NoNewline; Write-Host "uit $($Session.Branding.ProductLabel)"
                         Break
                     }
                     "m" { 

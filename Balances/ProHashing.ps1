@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\ProHashing.ps1
-Version:        6.6.1
-Version date:   2025/11/02
+Version:        6.6.2
+Version date:   2025/11/04
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

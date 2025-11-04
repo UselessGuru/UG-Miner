@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.6.1
-Version date:   2025/11/02
+Version:        6.6.2
+Version date:   2025/11/04
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3030,7 +3030,7 @@ Function Get-AllDAGdata {
                             $Currency = $CurrencyDAGdataResponse.coins.$_.tag
                             Add-CoinName -Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm -Currency $Currency -CoinName $_
                             If ($AlgorithmNorm -match $Session.RegexAlgoHasDAG) { 
-                                If ([UInt64]($CurrencyDAGdataResponse.coins.$_.last_block) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                                If ([UInt64]($CurrencyDAGdataResponse.coins.$_.last_block) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
                                     If ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                         $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3070,7 +3070,7 @@ Function Get-AllDAGdata {
                         If ($Currency -notin @("ETF")) { 
                             # ETF has invalid DAG data of 444GiB
                             $BlockHeight = [Math]::Floor(($_ -replace "^<div class='block' title='Current block height of $Currency'>" -replace "</div>"))
-                            If ($Session.CurrencyAlgorithm[$Currency] -and $BlockHeight -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                            If ($Session.CurrencyAlgorithm[$Currency] -and $BlockHeight -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2
                                 If ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3106,7 +3106,7 @@ Function Get-AllDAGdata {
             If ($CurrencyDAGdataResponse.code -eq 200) { 
                 $CurrencyDAGdataResponse.data.PSObject.Properties.Name.Where({ $CurrencyDAGdataResponse.data.$_.enabled -and $CurrencyDAGdataResponse.data.$_.height -and ($Session.RegexAlgoHasDAG -match (Get-Algorithm $CurrencyDAGdataResponse.data.$_.algo) -or $DAGdata.Currency.psBase.Keys -contains $_) }).ForEach(
                     { 
-                        If ([UInt64]($CurrencyDAGdataResponse.data.$_.height) -gt $DAGdata.Currency.$_.BlockHeight) { 
+                        If ([UInt64]($CurrencyDAGdataResponse.data.$_.height) -ge $DAGdata.Currency.$_.BlockHeight) { 
                             $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.data.$_.height -Currency $_ -EpochReserve 2
                             If ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                 $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3141,7 +3141,7 @@ Function Get-AllDAGdata {
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    If ([UInt64]($CurrencyDAGdataResponse.blockcount) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ([UInt64]($CurrencyDAGdataResponse.blockcount) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                         If ($CurrencyDAGdata.Epoch) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3172,7 +3172,7 @@ Function Get-AllDAGdata {
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = [UInt64]((Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck).result.height)
-                    If ($CurrencyDAGdataResponse -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         If ($CurrencyDAGdata.Epoch) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3201,7 +3201,7 @@ Function Get-AllDAGdata {
             Try { 
                 Write-Message -Level Info "Loading DAG data from '$Url'..."
                 $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                If ([UInt64]($CurrencyDAGdataResponse.total_blocks) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                If ([UInt64]($CurrencyDAGdataResponse.total_blocks) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.total_blocks -Currency $Currency -EpochReserve 2
                     If ($CurrencyDAGdata.DAGsize) { 
                         $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3231,7 +3231,7 @@ Function Get-AllDAGdata {
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = [Int64](Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck)
-                    If ($CurrencyDAGdataResponse -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
                         If ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3262,7 +3262,7 @@ Function Get-AllDAGdata {
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    If ([UInt64]($CurrencyDAGdataResponse.blockcount) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ([UInt64]($CurrencyDAGdataResponse.blockcount) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.blockcount -Currency $Currency -EpochReserve 2
                         If ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3293,7 +3293,7 @@ Function Get-AllDAGdata {
                 Try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    If ([UInt64]($CurrencyDAGdataResponse.total_blocks) -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                    If ([UInt64]($CurrencyDAGdataResponse.total_blocks) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.total_blocks -Currency $Currency -EpochReserve 2
                         If ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
@@ -3861,6 +3861,8 @@ Function Start-APIserver {
         $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Session.Config.APIport, $null, $null)
         If ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
+            $Session.MinerBaseAPIport = 4000
+            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
             [Void]$TCPclient.Dispose()
 
             Return
@@ -3907,9 +3909,14 @@ Function Start-APIserver {
             $RetryCount--
         }
 
-        $Session.MinerBaseAPIport = $Session.Config.MinerBaseAPIport
-
-        If (-not $Session.APIversion) { Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)." }
+        If ($Session.APIversion) { 
+            $Session.MinerBaseAPIport = $Session.Config.MinerBaseAPIport
+        }
+        Else { 
+            Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)."
+            $Session.MinerBaseAPIport = 4000
+            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+        }
     }
 }
 

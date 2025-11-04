@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.6.1
-Version date:   2025/11/02
+Version:        6.6.2
+Version date:   2025/11/04
 #>
 
 using module .\Include.psm1
@@ -237,9 +237,12 @@ Try {
 
             If ($Session.Donation.Running) { 
                 If ($Session.Config.Donation -gt 0 -and [DateTime]::Now -lt $Session.Donation.End) { 
+                    $Session.Donation.PoolsConfigBackup = $Session.Config.Pools
                     # Use donation pool config, use same pool variant to avoid extra benchmarking
                     $Session.Config.PoolName = $Session.Config.PoolName.Where({ (Get-PoolBaseName $_) -in $Session.Donation.PoolsConfig.Keys })
                     $Session.Config.Pools = $Session.Donation.PoolsConfig
+                    # Setting 0 -> miner keepalive will not be of relevance and miners will be restartet at end of donation run
+                    $Session.Config.MinCycle = 0
                 }
                 Else { 
                     # Donation end
@@ -254,7 +257,12 @@ Try {
                     $Session.Donation.Start = $null
                     $Session.Donation.End = $null
                     Write-Message -Level Info "Donation run complete - thank you! Mining for you again. :-)"
+                    $Session.Miners.Where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status }).ForEach({ $_.KeepRunning = $false; $_.Restart = $true})
                     $Session.Donation.Running = $false
+                    # Setting 0 -> miner keepalive will not be of relevance and miners will be restartet at end of donation run
+                    $Session.Config.MinCycle = 0
+                    $Session.Config.Pools = $Session.Donation.PoolsConfigBackup
+                    $Session.Donation.PoolsConfigBackup = $null
                 }
             }
 
@@ -786,7 +794,7 @@ Try {
                                         $_.Devices = [System.Collections.Generic.SortedSet[Object]]::new($MinerDevices.Where({ $Miner.DeviceNames -contains $_.Name }))
                                     }
                                     ElseIf ($Miner = $MinersNewGroup.Where({ $Miner.Info -eq $_.Info })) { 
-                                        If ($_.KeepRunning = [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status -and ($Session.Donation.Running -or $_.ContinousCycle -lt $Session.Config.MinCycle)) { 
+                                        If ($_.KeepRunning = [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status -and $_.ContinousCycle -lt $Session.Config.MinCycle) { 
                                             # Minimum numbers of cycles not yet reached
                                             $_.Restart = $false
                                         }
@@ -1227,6 +1235,7 @@ Try {
             }
             $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
         }
+        Remove-Variable Miner -ErrorAction Ignore
 
         # Kill stuck miners on subsequent cycles
         $MinerPaths = ($Miners.Path | Sort-Object -Unique).ForEach({ "$PWD\$($_)" })
