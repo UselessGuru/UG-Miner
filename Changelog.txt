@@ -3,7 +3,7 @@ Changelog UG-Miner 6.6.2 2025/11/04
 
 Fixes:
 - Core: Miners not mining for donation account (miners were not getting restarted)
-- Core / Includes.psm1: Funtion 'Get-AllDGdata' querying block explorers more often than needed
+- Core / Includes.psm1: Function 'Get-AllDGdata' querying block explorers more often than needed
 
 Miner changes:
 - SRBMinerMulti-v3.0.0
