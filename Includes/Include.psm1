@@ -3862,7 +3862,7 @@ Function Start-APIserver {
         If ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
             [Void]$TCPclient.Dispose()
 
             Return

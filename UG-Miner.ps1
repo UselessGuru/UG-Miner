@@ -646,7 +646,7 @@ If ($Session.Config.APIport) {
 Else { 
     # Use port 4000 for miner communication
     $Session.MinerBaseAPIport = 4000
-    Write-Message -Level Warn "No valid API port; using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+    Write-Message -Level Warn "No valid API port; using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
 }
 
 Function MainLoop { 
