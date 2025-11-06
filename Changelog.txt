@@ -1,3 +1,16 @@
+Changelog UG-Miner 6.6.3 2025/11/06
+===================================
+
+Improvements:
+- Core: Disable close button in text console, use 'Q' key to stop UG-Miner; this ensures closing all running miners
+- Core: Remove obsolete code & minor code optimizations
+
+Miner changes:
+- OneZeroMiner-v1.6.5
+- SRBMinerMulti-v3.0.1
+- Wildrig-v0.46.7
+
+
 Changelog UG-Miner 6.6.2 2025/11/04
 ===================================
 

@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.2
-Version date:   2025/11/04
+Version:        6.6.3
+Version date:   2025/11/06
 #>
 
-# improved power efficiency of qhash for all NVIDIA gpu's and AMD Vega/RDNA gpu's
+# huge speed improvements for qhash across all gpu's(up to 100%)
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.46.4/wildrig-multi-windows-0.46.4.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.46.5/wildrig-multi-windows-0.46.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"

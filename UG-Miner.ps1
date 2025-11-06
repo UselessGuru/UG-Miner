@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.6.2
-Version date:   2025/11/04
+Version:        6.6.3
+Version date:   2025/11/06
 #>
 
 using module .\Includes\Include.psm1
@@ -323,7 +323,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.6.2"
+    Version      = [System.Version]"6.6.3"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -706,6 +706,7 @@ Function MainLoop {
                     $LegacyGUIelements.ButtonStop.Enabled = $false
 
                     If ($Session.MiningStatus) { 
+                        $LegacyGUIelements.TabControl.SelectTab($LegacyGUIelements.StatusPage)
                         Write-Host ""
                         $Message = "'Stop mining' button clicked."
                         Write-Message -Level Info $Message
@@ -739,19 +740,22 @@ Function MainLoop {
                     $LegacyGUIelements.ButtonStart.Enabled = $false
                     $LegacyGUIelements.ButtonStop.Enabled = $false
 
-                    Write-Host ""
-                    $Message = "'Pause mining' button clicked."
-                    Write-Message -Level Info $Message
-                    $Session.Summary = $Message
-                    Remove-Variable Message
+                    If ($Session.MiningStatus) { 
+                        $LegacyGUIelements.TabControl.SelectTab($LegacyGUIelements.StatusPage)
+                        Write-Host ""
+                        $Message = "'Pause mining' button clicked."
+                        Write-Message -Level Info $Message
+                        $Session.Summary = $Message
+                        Remove-Variable Message
 
-                    Update-GUIstatus
+                        Update-GUIstatus
 
-                    Stop-Core
-                    Start-Brain @(Get-PoolBaseName $Session.Config.PoolName)
-                    If ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } Else { Stop-BalancesTracker }
+                        Stop-Core
+                        Start-Brain @(Get-PoolBaseName $Session.Config.PoolName)
+                        If ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } Else { Stop-BalancesTracker }
 
-                    # If ($Session.Config.ReportToServer) { Write-MonitoringData }
+                        # If ($Session.Config.ReportToServer) { Write-MonitoringData }
+                    }
 
                     $LegacyGUIelements.ButtonStart.Enabled = $true
                     $LegacyGUIelements.ButtonStop.Enabled = $true
@@ -774,7 +778,9 @@ Function MainLoop {
                     $LegacyGUIelements.ButtonStart.Enabled = $false
                     $LegacyGUIelements.ButtonStop.Enabled = $false
 
+
                     If ($Session.MiningStatus) { 
+                        $LegacyGUIelements.TabControl.SelectTab($LegacyGUIelements.StatusPage)
                         Write-Host ""
                         $Message = "'Start mining' button clicked."
                         Write-Message -Level Info $Message

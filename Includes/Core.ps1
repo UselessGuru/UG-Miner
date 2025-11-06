@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.6.2
-Version date:   2025/11/04
+Version:        6.6.3
+Version date:   2025/11/06
 #>
 
 using module .\Include.psm1
@@ -237,7 +237,6 @@ Try {
 
             If ($Session.Donation.Running) { 
                 If ($Session.Config.Donation -gt 0 -and [DateTime]::Now -lt $Session.Donation.End) { 
-                    $Session.Donation.PoolsConfigBackup = $Session.Config.Pools
                     # Use donation pool config, use same pool variant to avoid extra benchmarking
                     $Session.Config.PoolName = $Session.Config.PoolName.Where({ (Get-PoolBaseName $_) -in $Session.Donation.PoolsConfig.Keys })
                     $Session.Config.Pools = $Session.Donation.PoolsConfig
@@ -261,8 +260,7 @@ Try {
                     $Session.Donation.Running = $false
                     # Setting 0 -> miner keepalive will not be of relevance and miners will be restartet at end of donation run
                     $Session.Config.MinCycle = 0
-                    $Session.Config.Pools = $Session.Donation.PoolsConfigBackup
-                    $Session.Donation.PoolsConfigBackup = $null
+                    $Session.Config.Pools = $Config.Pools
                 }
             }
 

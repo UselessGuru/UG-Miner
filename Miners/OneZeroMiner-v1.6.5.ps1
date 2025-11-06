@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.2
-Version date:   2025/11/04
+Version:        6.6.3
+Version date:   2025/11/06
 #>
 
-# Performance improvement for Qubitcoin (20-30%)
+# Significant hashrate and efficiency improvement for Qubitcoin (varies by generation)
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { Return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.6.4/onezerominer-win64-1.6.4.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.6.5/onezerominer-win64-1.6.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"

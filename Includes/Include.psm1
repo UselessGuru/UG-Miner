@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.6.2
-Version date:   2025/11/04
+Version:        6.6.3
+Version date:   2025/11/06
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -181,6 +181,15 @@ public static class Win32 {
 
     [DllImport("user32.dll")]
     public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
+
+    [DllImport("user32.dll")] 
+    public static extern long GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+    [DllImport("user32.dll")] 
+    public static extern bool EnableMenuItem(long hMenuItem, long wIDEnableItem, long wEnable);
+
+    [DllImport("user32.dll")]
+    public static extern long SetWindowLongPtr(long hWnd, long nIndex, long dwNewLong);
 }
 "@
 

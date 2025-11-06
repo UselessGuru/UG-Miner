@@ -18,13 +18,41 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.6.2
-Version date:   2025/11/04
+Version:        6.6.3
+Version date:   2025/11/06
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms.DataVisualization")
 [Void][System.Reflection.Assembly]::Load("System.Drawing")
+
+Function Disable-X {
+    # Taken from https://stackoverflow.com/questions/73746912/disable-the-close-x-button-in-powershell
+
+    # Calling user32.dll methods for Windows and Menus
+    $MethodsCall = '
+    [DllImport("user32.dll")] public static extern long GetSystemMenu(IntPtr hWnd, bool bRevert);
+    [DllImport("user32.dll")] public static extern bool EnableMenuItem(long hMenuItem, long wIDEnableItem, long wEnable);
+    [DllImport("user32.dll")] public static extern long SetWindowLongPtr(long hWnd, long nIndex, long dwNewLong);
+    [DllImport("user32.dll")] public static extern bool EnableWindow(long hWnd, int bEnable);
+    '
+
+    $SC_CLOSE = 0xF060
+    $MF_DISABLED = 0x00000002L
+
+
+    # Create a new namespace for the Methods to be able to call them
+    Add-Type -MemberDefinition $MethodsCall -name NativeMethods -namespace Win32
+
+    $PSWindow = Get-Process -Pid $PID
+    $hwnd = $PSWindow.MainWindowHandle
+
+    # Get System menu of windows handled
+    $hMenu = [Win32.NativeMethods]::GetSystemMenu($hwnd, 0)
+
+    # Disable X Button
+    [Win32.NativeMethods]::EnableMenuItem($hMenu, $SC_CLOSE, $MF_DISABLED) | Out-Null
+}
 
 # For High DPI, Call SetProcessDPIAware(need P/Invoke) and EnableVisualStyles
 Add-Type -TypeDefinition @'
@@ -180,8 +208,8 @@ Function Set-TableColor {
 
 Function Update-TabControl { 
 
-    Switch ($LegacyGUIelements.TabControl.SelectedTab.Text) { 
-        "System status" { 
+    Switch ($LegacyGUIelements.TabControl.SelectedTab.Name) { 
+        "SystemStatus" { 
             $LegacyGUIelements.ActiveMinersDGV.ClearSelection()
 
             $LegacyGUIelements.ContextMenuStripItem1.Text = "Re-benchmark miner"
@@ -258,7 +286,7 @@ Function Update-TabControl {
             }
             Break
         }
-        "Earnings and balances" { 
+        "EarningsAndBalances" { 
 
             Function Get-NextColor { 
                 Param (
@@ -587,7 +615,7 @@ Function Update-TabControl {
             }
             Break
         }
-        # "Rig monitor" { 
+        # "RigMonitor" { 
         #     $LegacyGUIelements.WorkersDGV.ClearSelection()
         # 
         #     $LegacyGUIelements.WorkersDGV.Visible = $Session.Config.ShowWorkerStatus
@@ -648,11 +676,11 @@ Function Update-TabControl {
         #     }
         #     Break
         # }
-        "Switching log" { 
+        "SwitchingLog" { 
             CheckBoxSwitchingLog_Click
             Break
         }
-        "Watchdog timers" { 
+        "WatchdogTimers" { 
             $LegacyGUIelements.WatchdogTimersRemoveButton.Visible = $Session.Config.Watchdog
             $LegacyGUIelements.WatchdogTimersDGV.Visible = $Session.Config.Watchdog
 
@@ -774,24 +802,30 @@ $LegacyGUIform.TopMost = $false
 $LegacyGUIelements.Controls = @()
 
 $LegacyGUIelements.StatusPage = [System.Windows.Forms.TabPage]::new()
+$LegacyGUIelements.StatusPage.Name = "SystemStatus"
 $LegacyGUIelements.StatusPage.Text = "System status"
 $LegacyGUIelements.StatusPage.ToolTipText = "Show active miners and system log"
 $LegacyGUIelements.EarningsPage = [System.Windows.Forms.TabPage]::new()
+$LegacyGUIelements.EarningsPage.Name = "EarningsAndBalances"
 $LegacyGUIelements.EarningsPage.Text = "Earnings and balances"
 $LegacyGUIelements.EarningsPage.ToolTipText = "Information about the calculated earnings / profit"
 $LegacyGUIelements.MinersPage = [System.Windows.Forms.TabPage]::new()
+$LegacyGUIelements.MinersPage.Miners = "Miners"
 $LegacyGUIelements.MinersPage.Text = "Miners"
 $LegacyGUIelements.MinersPage.ToolTipText = "Miner data updated in the last cycle"
 $LegacyGUIelements.PoolsPage = [System.Windows.Forms.TabPage]::new()
+$LegacyGUIelements.PoolsPage.Name = "Pools"
 $LegacyGUIelements.PoolsPage.Text = "Pools"
 $LegacyGUIelements.PoolsPage.ToolTipText = "Pool data updated in the last cycle"
 # $LegacyGUIelements.RigMonitorPage = [System.Windows.Forms.TabPage]::new()
 # $LegacyGUIelements.RigMonitorPage.Text = "Rig monitor"
 # $LegacyGUIelements.RigMonitorPage.ToolTipText = "Consolidated overview of all known mining rigs"
 $LegacyGUIelements.SwitchingLogPage = [System.Windows.Forms.TabPage]::new()
+$LegacyGUIelements.SwitchingLogPage.Name = "SwitchingLog"
 $LegacyGUIelements.SwitchingLogPage.Text = "Switching log"
 $LegacyGUIelements.SwitchingLogPage.ToolTipText = "List of the previously launched miners"
 $LegacyGUIelements.WatchdogTimersPage = [System.Windows.Forms.TabPage]::new()
+$LegacyGUIelements.WatchdogTimersPage.Name = "WatchdogTimers"
 $LegacyGUIelements.WatchdogTimersPage.Text = "Watchdog timers"
 $LegacyGUIelements.WatchdogTimersPage.ToolTipText = "List of all watchdog timers"
 
@@ -1765,6 +1799,8 @@ $LegacyGUIform.Add_Load(
                 $LegacyGUIelements.ButtonStop.Enabled = $true
             }
         }
+
+        Disable-X
 
         $LegacyGUIelements.Timer.Start()
     }
