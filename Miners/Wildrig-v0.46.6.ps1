@@ -25,7 +25,7 @@ Version date:   2025/11/06
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.46.5/wildrig-multi-windows-0.46.5.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.46.6/wildrig-multi-windows-0.46.6.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"

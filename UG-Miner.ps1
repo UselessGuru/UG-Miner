@@ -356,7 +356,7 @@ While (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Comma
     Start-Sleep -Seconds 1
     If ($Loops -eq 0) { 
         [Console]::SetCursorPosition(58, ($CursorPosition.y + 1))
-        Write-Host " ✖    " -ForegroundColor Red
+        Write-Host " ✖   " -ForegroundColor Red
         Write-Message -Level Error "Another instance of $($Session.Branding.ProductLabel) is still running. Cannot continue!"
         (New-Object -ComObject Wscript.Shell).Popup("Another instance of $($Session.Branding.ProductLabel) is still running.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         Exit

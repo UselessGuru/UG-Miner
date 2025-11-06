@@ -2919,9 +2919,15 @@ Function Start-LogReader {
     If ((Test-Path -LiteralPath $Session.Config.LogViewerExe -PathType Leaf) -and (Test-Path -LiteralPath $Session.Config.LogViewerConfig -PathType Leaf)) { 
         $Session.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
         $Session.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
-        If ($SnaketailProcess = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" })) { 
+        $LogViewerProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId
+        If (-not $LogViewerProcessId) { 
+            If (Test-Path -LiteralPath "$PWD\Cache\LogViewerProcessId.txt" -PathType Leaf) { 
+                $LogViewerProcessId = (Get-Process -Id [UInt64](Get-Content "$PWD\Cache\LogViewerProcessId.txt" -ErrorAction Ignore)).Where({ $_.ProcessName -eq "SnakeTail"})
+            }
+        }
+        If ($LogViewerProcessId) { 
             # Activate existing Snaketail window
-            $LogViewerMainWindowHandle = (Get-Process -Id $SnaketailProcess.ProcessId).MainWindowHandle
+            $LogViewerMainWindowHandle = (Get-Process -Id $LogViewerProcessId).MainWindowHandle
             If (@($LogViewerMainWindowHandle).Count -eq 1) { 
                 Try { 
                     [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 6) | Out-Null # SW_MINIMIZE
@@ -2932,6 +2938,7 @@ Function Start-LogReader {
         }
         Else { 
             & $($Session.LogViewerExe) $($Session.LogViewerConfig)
+            Set-Content -File -LiteralPath "$PWD\Cache\LogViewerProcessId.txt" -Force (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId
         }
     }
 }

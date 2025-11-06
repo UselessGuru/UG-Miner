@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; MinerSet = 1; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.0.1 is fastest, but has 0.85% miner fee
+    @{ Algorithm = "VerusHash"; MinerSet = 1; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.0.2 is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })

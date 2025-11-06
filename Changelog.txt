@@ -4,6 +4,8 @@ Changelog UG-Miner 6.6.3 2025/11/06
 Improvements:
 - Core: Disable close button in text console, use 'Q' key to stop UG-Miner; this ensures closing all running miners
 - Core: Remove obsolete code & minor code optimizations
+- Core / Includes.psm1: Do not start a second instance of SnakeTail when running as admin / non-admin
+
 
 Miner changes:
 - OneZeroMiner-v1.6.5
