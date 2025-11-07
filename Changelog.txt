@@ -6,7 +6,6 @@ Improvements:
 - Core: Remove obsolete code & minor code optimizations
 - Core / Includes.psm1: Do not start a second instance of SnakeTail when running as admin / non-admin
 
-
 Miner changes:
 - OneZeroMiner-v1.6.5
 - SRBMinerMulti-v3.0.1
