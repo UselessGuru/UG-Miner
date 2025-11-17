@@ -17,21 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.3
-Version date:   2025/11/06
+Version:        6.6.4
+Version date:   2025/11/17
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { Return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.2/SRBMiner-Multi-3-0-2-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.4/SRBMiner-Multi-3-0-4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Minor performance improvement for algorithm 'tht' on CPUs with AVX512
-# Fixed support for algorithm 'xhash' on NVIDIA 4000 series (Ada), broke in previous miner version
-# Fixed support for some NVIDIA GPU's that get the 'couldn't create program for ctx->algorithm' error
-# Removed parameter '--disable-ptx-check' as its not needed anymore
+# Performance improvement for algorithm 'tht' on CPU's*
+# '--disable-auto-affinity' now works with algorithm 'tht' so you can manually manage affinity (numactl)
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 

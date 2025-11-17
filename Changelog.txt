@@ -1,3 +1,12 @@
+Changelog UG-Miner 6.6.4 2025/11/17
+===================================
+
+Miner updates:
+- OneZeroMiner-v1.6.8
+- SRBMinerMulti-v3.0.4
+- Wildrig-v0.47.4
+
+
 Changelog UG-Miner 6.6.3 2025/11/06
 ===================================
 

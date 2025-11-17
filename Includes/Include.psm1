@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.6.3
-Version date:   2025/11/06
+Version:        6.6.4
+Version date:   2025/11/17
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -2922,7 +2922,7 @@ Function Start-LogReader {
         $LogViewerProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId
         If (-not $LogViewerProcessId) { 
             If (Test-Path -LiteralPath "$PWD\Cache\LogViewerProcessId.txt" -PathType Leaf) { 
-                $LogViewerProcessId = (Get-Process -Id [UInt64](Get-Content "$PWD\Cache\LogViewerProcessId.txt" -ErrorAction Ignore)).Where({ $_.ProcessName -eq "SnakeTail"})
+                $LogViewerProcessId = (Get-Process -Id (Get-Content "$PWD\Cache\LogViewerProcessId.txt" -ErrorAction Ignore) -ErrorAction Ignore).Where({ $_.ProcessName -eq "SnakeTail"})
             }
         }
         If ($LogViewerProcessId) { 
@@ -2938,7 +2938,7 @@ Function Start-LogReader {
         }
         Else { 
             & $($Session.LogViewerExe) $($Session.LogViewerConfig)
-            Set-Content -File -LiteralPath "$PWD\Cache\LogViewerProcessId.txt" -Force (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId
+            Set-Content -LiteralPath "$PWD\Cache\LogViewerProcessId.txt" -Force (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId
         }
     }
 }
