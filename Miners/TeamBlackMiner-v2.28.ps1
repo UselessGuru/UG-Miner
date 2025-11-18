@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.4
-Version date:   2025/11/17
+Version:        6.6.5
+Version date:   2025/11/18
 #>
 
 # V2.28 produces nothing but bad shares with kapwow, use v.26 instead

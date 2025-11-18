@@ -1,3 +1,16 @@
+Changelog UG-Miner 6.6.5 2025/11/18
+===================================
+
+Changes:
+- Core: Close Logviewer (Snaketail.exe) when exiting UG-Miner
+
+Enhancements:
+- Core / Includes.psm1: Function 'Get-DAGepoch' supports FiroPow hardfork
+
+Miner updates:
+- Wildrig-v0.47.5
+
+
 Changelog UG-Miner 6.6.4 2025/11/17
 ===================================
 

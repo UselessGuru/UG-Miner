@@ -17,15 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.4
-Version date:   2025/11/17
+Version:        6.6.5
+Version date:   2025/11/18
 #>
 
-# minor improvements to qhash and fix possible rejects
+# implemented support of FiroPow hardfork
+# fixed crash when start miner in benchmark mode
+# fixed power usage values in API(they were 10 times higher in 0.47.4)
+# slightly increased qhash performance(~1.2%)
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { Return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.47.4/wildrig-multi-windows-0.47.4.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.47.5/wildrig-multi-windows-0.47.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Slot"

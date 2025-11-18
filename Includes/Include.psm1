@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.6.4
-Version date:   2025/11/17
+Version:        6.6.5
+Version date:   2025/11/18
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -2914,44 +2914,6 @@ Function Initialize-AutoUpdate {
     Remove-Variable CursorPosition, UpdateScript, UpdateScriptURL, UpdateLog
 }
 
-Function Start-LogReader { 
-
-    If ((Test-Path -LiteralPath $Session.Config.LogViewerExe -PathType Leaf) -and (Test-Path -LiteralPath $Session.Config.LogViewerConfig -PathType Leaf)) { 
-        $Session.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
-        $Session.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
-        $LogViewerProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId
-        If (-not $LogViewerProcessId) { 
-            If (Test-Path -LiteralPath "$PWD\Cache\LogViewerProcessId.txt" -PathType Leaf) { 
-                $LogViewerProcessId = (Get-Process -Id (Get-Content "$PWD\Cache\LogViewerProcessId.txt" -ErrorAction Ignore) -ErrorAction Ignore).Where({ $_.ProcessName -eq "SnakeTail"})
-            }
-        }
-        If ($LogViewerProcessId) { 
-            # Activate existing Snaketail window
-            $LogViewerMainWindowHandle = (Get-Process -Id $LogViewerProcessId).MainWindowHandle
-            If (@($LogViewerMainWindowHandle).Count -eq 1) { 
-                Try { 
-                    [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 6) | Out-Null # SW_MINIMIZE
-                    [Win32]::ShowWindowAsync($LogViewerMainWindowHandle, 9) | Out-Null # SW_RESTORE
-                }
-                Catch { }
-            }
-        }
-        Else { 
-            & $($Session.LogViewerExe) $($Session.LogViewerConfig)
-            Set-Content -LiteralPath "$PWD\Cache\LogViewerProcessId.txt" -Force (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId
-        }
-    }
-}
-
-Function Get-ObsoleteMinerStats { 
-    # Used in AutoUpdate.ps1
-
-    $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_Hashrate.txt", "*_PowerConsumption.txt").BaseName
-    $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
-
-    Return @($StatFiles.Where({ (($_ -split "-")[0, 1] -join "-") -notin $MinerNames }))
-}
-
 Function Update-PoolWatchdog { 
 
     Param (
@@ -3493,6 +3455,7 @@ Function Get-DAGepoch {
 
     Switch ($Algorithm) { 
         "Autolykos2" { $BlockHeight -= 416768; Break } # Epoch 0 starts @ 417792
+        "FiroPow"    { If ($BlockHeight -gt 1205100) { Return 700 }} # https://github.com/firoorg/firo/pull/1648/commits/436d5627bb9b9be6d32f4a24c2fc611e79325189 & https://github.com/firoorg/firo/commit/a3a4be2685ca99b1343de81367596655617a2974
         "FishHash"   { Return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
         "PhiHash"    { Return [Math]::Floor(((Get-Date) - [DateTime]::ParseExact("11/06/2023", "MM/dd/yyyy", $null)).TotalDays / 365.25) -1 }
         Default      { }
@@ -4115,6 +4078,10 @@ Function Exit-UGminer {
     Stop-BalancesTracker
 
     Write-Message -Level Info "$($Session.Branding.ProductLabel) has shut down."
+    Try {
+        Stop-Process (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId -Force
+    }
+    Catch {}
     Start-Sleep -Seconds 2
     Stop-Process $PID -Force
 }
