@@ -18,11 +18,56 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.6.5
-Version date:   2025/11/18
+Version:        6.6.6
+Version date:   2025/11/19
 #>
 
 using module .\Includes\Include.psm1
+
+Function Expand-WebRequest { 
+
+    Param (
+        [Parameter (Mandatory = $true)]
+        [String]$Uri,
+        [Parameter (Mandatory = $false)]
+        [String]$Path = ""
+    )
+
+    # Set current path used by .net methods to the same as the script's path
+    [Environment]::CurrentDirectory = $ExecutionContext.SessionState.Path.CurrentFileSystemLocation
+
+    If (-not $Path) { $Path = Join-Path ".\Downloads" ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName }
+    If (-not (Test-Path -LiteralPath ".\Downloads" -PathType Container)) { New-Item "Downloads" -ItemType "directory" | Out-Null }
+    $FileName = Join-Path ".\Downloads" (Split-Path $Uri -Leaf)
+
+    If (Test-Path -LiteralPath $FileName -PathType Leaf) { Remove-Item $FileName }
+    Invoke-WebRequest -Uri $Uri -OutFile $FileName -TimeoutSec 5
+
+    If (".msi", ".exe" -contains ([IO.FileInfo](Split-Path $Uri -Leaf)).Extension) { 
+        Start-Process $FileName "-qb" -Wait | Out-Null
+    }
+    Else { 
+        $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
+        $Path_New = Split-Path $Path
+
+        If (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item $Path_Old -Recurse -Force }
+        Start-Process ".\Utils\7z" "x `"$([IO.Path]::GetFullPath($FileName))`" -o`"$([IO.Path]::GetFullPath($Path_Old))`" -y -spe" -Wait -WindowStyle Hidden | Out-Null
+
+        If (Test-Path -LiteralPath $Path_New -PathType Container) { Remove-Item $Path_New -Recurse -Force }
+
+        # Use first (topmost) directory, some miners, e.g. ClaymoreDual_v11.9, contain multiple miner binaries for different driver versions in various subdirs
+        $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).Where({ $_.Name -eq $(Split-Path $Path -Leaf) })).Directory | Select-Object -First 1
+
+        If ($Path_Old) { 
+            (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = [DateTime]::Now })
+            $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
+            If (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item -Path $Path_Old -Recurse -Force }
+        }
+        Else { 
+            Throw "Error: Cannot find '$Path'."
+        }
+    }
+}
 
 # $Config = $args.Config
 $DownloadList = $args.DownloadList

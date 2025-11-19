@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.6.5
-Version date:   2025/11/18
+Version:        6.6.6
+Version date:   2025/11/19
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1779,6 +1779,7 @@ $LegacyGUIform.Add_Load(
         }
 
         If ($Session.Config.LegacyGUIStartMinimized) { $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized }
+        $Session.WindowStateOriginal = $LegacyGUIform.WindowState
 
         Switch ($Session.MiningStatus) { 
             "Idle" { 
@@ -1814,7 +1815,7 @@ $LegacyGUIform.Add_Activated(
 
 $LegacyGUIform.Add_FormClosing(
     { 
-        If ($Session.Config.LegacyGUI -and $LegacyGUIform.Tag -ne "q") { 
+        If ($Session.Config.LegacyGUI -and $KeyPressed.Key -ne "q") { 
             If (-not $Session.Config.ShowConsole) { # If console is not visible there is no user friendly way to end script
                 $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
                 If ($MsgBoxInput -eq "No") { 

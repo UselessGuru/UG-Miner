@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.6.5
-Version date:   2025/11/18
+Version:        6.6.6
+Version date:   2025/11/19
 #>
 
 using module .\Includes\Include.psm1
@@ -323,7 +323,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.6.5"
+    Version      = [System.Version]"6.6.6"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -428,8 +428,6 @@ Write-Host " ✔  (IP address: $($Session.MyIPaddress))" -ForegroundColor Green
 # Check if a new version is available and run update if so configured
 Write-Host ""
 Get-Version
-[Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-Write-Host " ✔" -ForegroundColor Green
 
 # Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
@@ -812,7 +810,7 @@ Function MainLoop {
     If ($Session.Config.ShowConsole) { 
         Show-Console
         If ([System.Console]::KeyAvailable) { 
-            $LegacyGUIform.Tag = ([System.Console]::ReadKey($true)).KeyChar
+            $KeyPressed = ([System.Console]::ReadKey($true))
 
             If ($Session.NewMiningStatus -eq "Running" -and $KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Ctrl><Alt> #>) { 
                 If (-not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
@@ -840,7 +838,7 @@ Function MainLoop {
                 }
             }
             Else { 
-                Switch ($LegacyGUIform.Tag) { 
+                Switch ($KeyPressed.KeyChar) { 
                     " " { 
                         $Session.RefreshNeeded = $true
                         Break
@@ -863,14 +861,16 @@ Function MainLoop {
                     "4" { 
                         $Session.Config.LegacyGUI = -not $Session.Config.LegacyGUI
                         Write-Host "`nKey '$_' pressed: Legacy GUI is now " -NoNewline; If ($Session.Config.LegacyGUI) { Write-Host "enabled" -ForegroundColor Green } Else { Write-Host "disabled" -ForegroundColor DarkYellow }
-                        If ($Session.Config.LegacyGUI) { 
-                            $LegacyGUIform.WindowState = $LegacyGUIform.WindowStateOriginal
+                        If ($LegacyGUIform.ShowInTaskbar -ne $Session.Config.LegacyGUI) { 
+                            If ($Session.Config.LegacyGUI) { 
+                                $LegacyGUIform.WindowState = $Session.WindowStateOriginal
+                            }
+                            ElseIf ($LegacyGUIform.WindowState -ne [System.Windows.Forms.FormWindowState]::Minimized) {  
+                                $Session.WindowStateOriginal = $LegacyGUIform.WindowState
+                                $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
+                            }
+                            $LegacyGUIform.ShowInTaskbar = $Session.Config.LegacyGUI
                         }
-                        Else { 
-                            $LegacyGUIform.WindowStateOriginal = $LegacyGUIform.WindowState
-                            $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
-                        }
-                        $LegacyGUIform.ShowInTaskbar = $Session.Config.LegacyGUI
                     }
                     "5" { 
                         $Session.Config.WebGUI = -not $Session.Config.WebGUI
@@ -1064,14 +1064,16 @@ Function MainLoop {
         Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
     }
 
-    If ($Session.Config.LegacyGUI) { 
-        $LegacyGUIform.WindowState = $LegacyGUIform.WindowStateOriginal
+    If ($LegacyGUIform.ShowInTaskbar -ne $Session.Config.LegacyGUI) { 
+        If ($Session.Config.LegacyGUI) { 
+            $LegacyGUIform.WindowState = $Session.WindowStateOriginal
+        }
+        ElseIf ($LegacyGUIform.WindowState -ne [System.Windows.Forms.FormWindowState]::Minimized) {  
+            $Session.WindowStateOriginal = $LegacyGUIform.WindowState
+            $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
+        }
+        $LegacyGUIform.ShowInTaskbar = $Session.Config.LegacyGUI
     }
-    Else { 
-        $LegacyGUIform.WindowStateOriginal = $LegacyGUIform.WindowState
-        $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
-    }
-    $LegacyGUIform.ShowInTaskbar = $Session.Config.LegacyGUI
 
     If ($Session.RefreshBalancesNeeded) { 
         $Session.RefreshBalancesNeeded = $false

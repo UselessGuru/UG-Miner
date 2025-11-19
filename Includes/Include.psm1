@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.6.5
-Version date:   2025/11/18
+Version:        6.6.6
+Version date:   2025/11/19
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -2682,51 +2682,6 @@ Function Get-Combination {
     }
 }
 
-Function Expand-WebRequest { 
-
-    Param (
-        [Parameter (Mandatory = $true)]
-        [String]$Uri,
-        [Parameter (Mandatory = $false)]
-        [String]$Path = ""
-    )
-
-    # Set current path used by .net methods to the same as the script's path
-    [Environment]::CurrentDirectory = $ExecutionContext.SessionState.Path.CurrentFileSystemLocation
-
-    If (-not $Path) { $Path = Join-Path ".\Downloads" ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName }
-    If (-not (Test-Path -LiteralPath ".\Downloads" -PathType Container)) { New-Item "Downloads" -ItemType "directory" | Out-Null }
-    $FileName = Join-Path ".\Downloads" (Split-Path $Uri -Leaf)
-
-    If (Test-Path -LiteralPath $FileName -PathType Leaf) { Remove-Item $FileName }
-    Invoke-WebRequest -Uri $Uri -OutFile $FileName -TimeoutSec 5
-
-    If (".msi", ".exe" -contains ([IO.FileInfo](Split-Path $Uri -Leaf)).Extension) { 
-        Start-Process $FileName "-qb" -Wait | Out-Null
-    }
-    Else { 
-        $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
-        $Path_New = Split-Path $Path
-
-        If (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item $Path_Old -Recurse -Force }
-        Start-Process ".\Utils\7z" "x `"$([IO.Path]::GetFullPath($FileName))`" -o`"$([IO.Path]::GetFullPath($Path_Old))`" -y -spe" -Wait -WindowStyle Hidden | Out-Null
-
-        If (Test-Path -LiteralPath $Path_New -PathType Container) { Remove-Item $Path_New -Recurse -Force }
-
-        # Use first (topmost) directory, some miners, e.g. ClaymoreDual_v11.9, contain multiple miner binaries for different driver versions in various subdirs
-        $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).Where({ $_.Name -eq $(Split-Path $Path -Leaf) })).Directory | Select-Object -First 1
-
-        If ($Path_Old) { 
-            (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = [DateTime]::Now })
-            $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
-            If (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item -Path $Path_Old -Recurse -Force }
-        }
-        Else { 
-            Throw "Error: Cannot find '$Path'."
-        }
-    }
-}
-
 Function Get-Algorithm { 
 
     Param (
@@ -3841,7 +3796,7 @@ Function Start-APIserver {
         If ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
             [Void]$TCPclient.Dispose()
 
             Return
@@ -3878,7 +3833,8 @@ Function Start-APIserver {
                 If ($Session.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Session.Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
                     $Session.APIport = $Session.Config.APIport
                     If ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.Config.APIlogfile -Force -ErrorAction Ignore }
-                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport)."
+                    $Session.MinerBaseAPIport = $Session.APIport + 1
+                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
                     # Start Web GUI (show configuration edit if no existing config)
                     If ($Session.Config.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(If ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
                     Break
@@ -3894,7 +3850,7 @@ Function Start-APIserver {
         Else { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
         }
     }
 }
@@ -3904,15 +3860,6 @@ Function Stop-APIserver {
     If ($Global:APIrunspace.Job.IsCompleted -eq $false) { 
 
         If ($Session.APIserver.IsListening) { 
-            # If ($Session.Config.APIport -ne $Session.APIport -or $Session.Miners.Port -contains $Session.Config.APIport) { 
-            #     # API port has changed; must stop all running miners
-            #     If ($Session.MinersRunning) { 
-            #         Write-Message -Level Info "API port has changed. Stopping all running miners..."
-
-            #         Clear-MinerData
-            #         Stop-Core
-            #     }
-            # }
             $Session.APIserver.Stop()
             Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport)."
         }

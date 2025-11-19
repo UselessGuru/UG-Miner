@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.6.5
-Version date:   2025/11/18
+Version:        6.6.6
+Version date:   2025/11/19
 #>
 
 Class GMiner : Miner { 
@@ -59,7 +59,7 @@ Class GMiner : Miner {
 
             If ($this.ReadPowerConsumption) { 
                 $PowerConsumption = [Double]($Data.devices | Measure-Object power_usage -Sum).Sum
-                If (-not $PowerConsumption) { 
+                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }

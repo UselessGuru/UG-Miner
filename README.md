@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.6.5 / Updated 2025/11/18
+Version 6.6.6 / Updated 2025/11/19
 
 Copyright (c) 2018-2025 UselessGuru
 

@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/11/18
+Version date:   2025/11/19
 #>
 
 using module ..\Includes\Include.psm1
@@ -91,13 +91,12 @@ While ($PoolConfig = $Session.Config.Pools.$BrainName) {
 
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
                     If ($AlgoStats = $TotalStats.result.Where({ $_.Algorithm -eq $Algorithm })) { 
-                        $AlgoData.$Algorithm | Add-Member coins $AlgoData.$Algorithm.coins -Force
                         $AlgoData.$Algorithm | Add-Member hashrate_shared $AlgoStats.hashrate -Force
                         $AlgoData.$Algorithm | Add-Member hashrate_solo $AlgoStats.hashrate_solo -Force
                         $AlgoData.$Algorithm | Add-Member workers_shared $AlgoStats.workers -Force
                         $AlgoData.$Algorithm | Add-Member workers_solo $AlgoStats.workers_solo -Force
                     }
-                    Remove-Variable AlgoStats
+                    Remove-Variable AlgoStats -ErrorAction Ignore
 
                     # Reset history when stat file got removed
                     If ($PoolVariant -like "*Plus") { 
