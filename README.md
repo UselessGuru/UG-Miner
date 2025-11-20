@@ -22,6 +22,7 @@ UG-Miner code is partly based on
 
 - NPlusMiner<sup>(*)</sup>  
   https://github.com/MrPlusGH/NPlusMiner
+
   <sup>(*)</sup>These projects are no longer maintained
 
 ## Main features:
