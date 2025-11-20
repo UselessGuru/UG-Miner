@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
 Version:        6.6.6
-Version date:   2025/11/19
+Version date:   2025/11/20
 #>
 
 using module .\Include.psm1

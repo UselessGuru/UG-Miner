@@ -1,4 +1,11 @@
-Changelog UG-Miner 6.6.6 2025/11/19
+Changelog UG-Miner 6.6.6 2025/11/20
+===================================
+
+Changes:
+- Web GUI / Configuration editor: Properly format profitablility threshold
+
+
+Changelog UG-Miner 6.6.5 2025/11/19
 ===================================
 
 Changes:

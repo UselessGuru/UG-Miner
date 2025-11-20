@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.6.6
-Version date:   2025/11/19
+Version date:   2025/11/20
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "7.5" }))) { Return }
