@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.6.6 / Updated 2025/11/20
+Version 6.6.7 / Updated 2025/11/21
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -43,7 +43,6 @@ UG-Miner code is partly based on
    - [Hiveon](<https://hiveon.net/>)<sup>(2)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
    - [NiceHash](<https://www.nicehash.com/>)<sup>(3)</sup>
-   - [ProHashing](<https://prohashing.com/>)
    - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
 
 <sup>(1)</sup> Optional installation of HWiNFO required, see [ConfigHWinfo64.pdf](<https://github.com/UselessGuru/UG-Miner/blob/main/ConfigHWinfo64.pdf>)

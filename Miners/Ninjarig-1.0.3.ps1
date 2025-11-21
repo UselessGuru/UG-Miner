@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.6
-Version date:   2025/11/20
+Version:        6.6.7
+Version date:   2025/11/21
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -51,7 +51,7 @@ If ($Algorithms) {
                     # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                        If ("MiningPoolHub", "NiceHash", "ProHashing" -contains $Pool.Name) { $Arguments += " --nicehash" }
+                        If ("MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments += " --nicehash" }
                         If ($Pool.PoolPorts[1]) { $Arguments += " --tls" }
 
                         [PSCustomObject]@{ 

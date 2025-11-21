@@ -57,25 +57,6 @@
           </div>
           <br>
 
-          <legend class=h6 title="You must have a registered account with ProHashing">ProHashing
-            <a id="RegisterProHashing" href="https://prohashing.com/auth/register?r=3pH68Dhj" target="_blank" style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
-          </legend>
-          <div style="padding-top: 0.2rem;" title="Your username as registered with ProHashing" for="ProHashingUserName">
-            <label for="ProHashingUserName">ProHashing user name</label>
-            <input type="text" id="ProHashingUserName" name="ProHashingUserName" maxlength=37 size=42>
-          </div>
-          <div title="Your ProHashing API key&#10;taken from your ProHashing account settings&#10;If left empty UG-Miner cannot retrieve balance data from ProHashing" for="ProHashingAPIKey">
-            <label for="ProHashingAPIKey">ProHashing API key</label>
-            <input type="text" id="ProHashingAPIKey" name="ProHashingAPIKey" maxlength=65 size=70>
-          </div>
-          <div title="Select the ProHashing mining mode">
-          <a href="https://prohashing.com/help/configuring-miners-at-prohashing#miningmodes" target="_blank" title="PPLNS is only supported for algorithms&#10;that have a currency assigned">ProHashing mining mode</a>
-          <select style="height: 1.6em;" name="" id="ProHashingMiningMode">
-            <option title="Pay Per Share (high pool fee)" value=PPS>PPS</option>
-            <option title="Pay Per Last N Shares (lower pool fee)" value=PPLNS>PPLNS</option>
-          </select>
-          <br><br>
-
           <!-- Currency settings -->
           <legend class=h6><b>Currency settings</b></legend>
           <div title="Currency used for BTC conversion&#10;Power cost, profit and earnings are shown in this currency">Main (FIAT) currency
@@ -659,30 +640,6 @@
       if (document.getElementById('PoolBalanceTracker-NiceHash')) document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
     });
 
-    // ProHashing
-    document.getElementById('ProHashingUserName').value = config.ProHashingUserName || '';
-    document.getElementById('ProHashingAPIKey').value = config.ProHashingAPIKey || '';
-    if (config.ProHashingMiningMode === 'PPLNS') document.getElementById('ProHashingMiningMode').value = config.ProHashingMiningMode;
-    else document.getElementById('ProHashingMiningMode').value = 'PPS';
-    $(document.getElementById('ProHashingUserName')).change(function (event) {
-      if (document.getElementById('pool-prohashing')) { 
-        if (!Boolean(document.getElementById('ProHashingUserName').value)) document.getElementById('pool-prohashing').checked = false;
-        document.getElementById('pool-prohashing').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
-      };
-      if (document.getElementById('pool-prohashing24hr')) {
-        if (!Boolean(document.getElementById('ProHashingUserName').value)) document.getElementById('pool-prohashing24hr').checked = false;
-        document.getElementById('pool-prohashing24hr').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
-      };
-      if (document.getElementById('pool-prohashingplus')) {
-        if (!Boolean(document.getElementById('ProHashingUserName').value)) document.getElementById('pool-prohashingplus').checked = false;
-        document.getElementById('pool-prohashingplus').disabled = !Boolean(document.getElementById('ProHashingUserName').value)
-      };
-    });
-
-    $(document.getElementById('ProHashingAPIKey')).change(function (event) {
-      if (document.getElementById('PoolBalanceTracker-ProHashing')) document.getElementById('PoolBalanceTracker-ProHashing').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('ProHashingAPIKey').value === "");
-    });
-
     // Currency settings
     $.each(fiatcurrencies, function(key, value) {
       $('<option/>', { value: key, text: key + ' (' + value + ')' }).appendTo(fiatcurrencycontainer);
@@ -949,9 +906,6 @@
       $(document.getElementById('NiceHashAPIKey')).trigger('change');
       $(document.getElementById('NiceHashOrganizationId')).trigger('change');
       $(document.getElementById('NiceHashAPISecret')).trigger('change');
-
-      $(document.getElementById('ProHashingUserName')).trigger('change');
-      $(document.getElementById('ProHashingAPIKey')).trigger('change');
     });
     if (config.BalancesShowSums) document.getElementById('BalancesShowSums').checked = true;
     if (config.BalancesShowAverages) document.getElementById('BalancesShowAverages').checked = true;
@@ -1027,19 +981,6 @@
     if (config.AutoUpdate) document.getElementById('AutoUpdate').checked = true;
     if (config.ShowChangeLog) document.getElementById('ShowChangeLog').checked = true;
     if (config.BackupOnAutoUpdate) document.getElementById('BackupOnAutoUpdate').checked = true;
-
-
-    // // Trigger changes to update dependent balances tracker elements
-    // $(document.getElementById('MiningDutchUserName')).trigger('change');
-    // $(document.getElementById('MiningDutchAPIKey')).trigger('change');
-
-    // $(document.getElementById('NiceHashWallet')).trigger('change');
-    // $(document.getElementById('NiceHashAPIKey')).trigger('change');
-    // $(document.getElementById('NiceHashOrganizationId')).trigger('change');
-    // $(document.getElementById('NiceHashAPISecret')).trigger('change');
-
-    // $(document.getElementById('ProHashingUserName')).trigger('change');
-    // $(document.getElementById('ProHashingAPIKey')).trigger('change');
 
     $('body').css('cursor', 'default');
 
@@ -1125,18 +1066,6 @@
           minlength: 36,
           maxlength: 36,
           pattern: '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$'
-        },
-        ProHashingUserName: {
-          required: false,
-          minlength: 1,
-          maxlength: 32,
-          pattern: '^.{1,32}$'
-        },
-        ProHashingAPIKey: {
-          required: false,
-          minlength: 64,
-          maxlength: 64,
-          pattern: '^[0-9a-f]{64}$'
         },
         WorkerName: {
           required: true,
@@ -1293,12 +1222,6 @@
         NiceHashOrganizationId: {
           pattern: "<br>NiceHash Organisation ID must be exactly 36 characters long<br>and must match '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'"
         },
-        ProHashingUserName: {
-          pattern: "<br>ProHashing user name must be between 1 and 32 characters long"
-        },
-        ProHashingAPIKey: {
-          pattern: "<br>ProHashing API key must be exactly 64 characters long<br>and may only contain lower case letters (a-f) and digits"
-        },
         WorkerName: {
           pattern: "<br>Workername must be between 2 and 32 characters long<br>and may only contain upper and lower case letters and digits<br>(case sensitive)"
         },
@@ -1338,9 +1261,6 @@
         config.NiceHashAPISecret = document.getElementById('NiceHashAPISecret').value = document.getElementById('NiceHashAPISecret').value.toString().trim();
         config.NiceHashWallet = document.getElementById('NiceHashWallet').value = document.getElementById('NiceHashWallet').value.toString().trim();
         config.NiceHashOrganizationId = document.getElementById('NiceHashOrganizationId').value = document.getElementById('NiceHashOrganizationId').value.toString().trim();
-        config.ProHashingAPIKey = document.getElementById('ProHashingAPIKey').value = document.getElementById('ProHashingAPIKey').value.toString().trim();
-        config.ProHashingUserName = document.getElementById('ProHashingUserName').value = document.getElementById('ProHashingUserName').value.toString().trim();
-        config.ProHashingMiningMode = document.getElementById('ProHashingMiningMode').value;
 
         // Currency settings
         config.FIATcurrency = document.getElementById('FIATcurrency').value.trim();
@@ -1492,7 +1412,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0) && /[a-zA-Z]{3}/.test(config.FIATcurrency) && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < availableDevicesCount) {
+        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0) && /[a-zA-Z]{3}/.test(config.FIATcurrency) && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < availableDevicesCount) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1500,7 +1420,7 @@
             $('body').css('cursor', 'default');
             $('#myModal').on('hidden.bs.modal', function () { location.reload(true) })
           });
-        } else if (!(Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0 || config.ProHashingUserName.length > 0)) {
+        } else if (!(Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0)) {
           // No wallet or username
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must set at least one wallet address or username.');

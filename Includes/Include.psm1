@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.6.6
-Version date:   2025/11/20
+Version:        6.6.7
+Version date:   2025/11/21
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1348,65 +1348,65 @@ Function Write-Message {
         [Boolean]$Console = $true
     )
 
-    $Message = $Message -replace "(?:<br>)+|(?:&ensp;)+", " "
-
-    # Make sure we are in main script
-    If ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost" -and (-not $Session.Config.Keys.Count -or $Session.Config.LogLevel -contains $Level)) { 
-        # Write to console
-        Switch ($Level) { 
-            "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewLine; Break }
-            "Error"   { Write-Host $Message -ForegroundColor "Red" -NoNewLine; Break }
-            "Info"    { Write-Host $Message -ForegroundColor "White" -NoNewLine; Break }
-            "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" -NoNewLine; Break }
-            "Verbose" { Write-Host $Message -ForegroundColor "Yello" -NoNewLine; Break }
-            "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewLine }
-        }
-        $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
-        Write-Host ""
-    }
-
-    Switch ($Level) { 
-        "Debug"   { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
-        "Error"   { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
-        "Info"    { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
-        "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
-        "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
-        "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
-        Default   { $Message = "[--???--] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
-    }
-
-    If ($Session.TextBoxSystemLog -and (-not $Session.Config.Keys.Count -or $Session.Config.LogLevel -contains $Level)) { 
-        $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
-        $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
-        $TextLength = $Session.TextBoxSystemLog.TextLength
-
-        # Keep only 200 lines, more lines impact performance
-        If ($Session.TextBoxSystemLog.Lines.Count -gt 250) { $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200 }
-
-        $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
-        If ($SelectionLength -and $SelectionStart -ge 0) { 
-            $Session.TextBoxSystemLog.Lines += $Message
-            $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
-            $Session.TextBoxSystemLog.ScrollToCaret()
-        }
-        Else { 
-            $Session.TextBoxSystemLog.AppendText("`r`n$Message")
-        }
-    }
-
     If (-not $Session.Config.Keys.Count -or $Session.Config.LogLevel -contains $Level) { 
 
-        $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
+        $Message = $Message -replace "(?:<br>)+|(?:&ensp;)+", " "
+
+        # Make sure we are in main script
+        If ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost") { 
+            # Write to console
+            Switch ($Level) { 
+                "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewLine; Break }
+                "Error"   { Write-Host $Message -ForegroundColor "Red" -NoNewLine; Break }
+                "Info"    { Write-Host $Message -ForegroundColor "White" -NoNewLine; Break }
+                "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" -NoNewLine; Break }
+                "Verbose" { Write-Host $Message -ForegroundColor "Yello" -NoNewLine; Break }
+                "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewLine }
+            }
+            $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
+            Write-Host ""
+        }
+
+        Switch ($Level) { 
+            "Debug"   { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+            "Error"   { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+            "Info"    { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+            "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+            "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+            "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; Break }
+            Default   { $Message = "[--???--] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+        }
+
+        If ($Session.TextBoxSystemLog) { 
+            $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
+            $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
+            $TextLength = $Session.TextBoxSystemLog.TextLength
+
+            # Keep only 200 lines, more lines impact performance
+            If ($Session.TextBoxSystemLog.Lines.Count -gt 250) { $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200 }
+
+            $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
+            If ($SelectionLength -and $SelectionStart -ge 0) { 
+                $Session.TextBoxSystemLog.Lines += $Message
+                $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
+                $Session.TextBoxSystemLog.ScrollToCaret()
+            }
+            Else { 
+                $Session.TextBoxSystemLog.AppendText("`r`n$Message")
+            }
+        }
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_Write-Message")
+        $Mutex = [System.Threading.Mutex]::new($false)
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary
         If ($Mutex.WaitOne(1000)) { 
+            $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
             $Message | Out-File -LiteralPath $Session.LogFile -Append -ErrorAction Ignore
             $Mutex.ReleaseMutex()
         }
+        Remove-Variable Mutex
     }
 }
 
@@ -1567,9 +1567,9 @@ Function Get-DonationConfig {
             $DonationPoolConfig.Region = $Session.Config.Pools[$_].Region
             $DonationPoolConfig.WorkerName = "$($Session.Branding.ProductLabel)-$($Session.Branding.Version.ToString())-donate$($Session.Config.Donation)"
             Switch -regex ($_) { 
-                "^MiningDutch$|^ProHashing$" { 
+                "^MiningDutch$" { 
                     If ($DonationPoolsData."$($_)UserName") { 
-                        # not all devs have a known HashCryptos, MiningDutch or ProHashing account
+                        # not all devs have a known HashCryptos, MiningDutch aaccount
                         $DonationPoolConfig.UserName = $DonationPoolsData."$($_)UserName"
                         $DonationPoolConfig.Variant = If ($Session.Config.Pools[$_].Variant) { $Session.Config.Pools[$_].Variant } Else { $Session.Config.PoolName -match $_ }
                         $DonationPoolsConfig.$_ = $DonationPoolConfig
@@ -1619,7 +1619,7 @@ Function Update-ConfigFile {
     }
 
     # Removed pools
-    ("AHashPool", "BlockMasters", "NLPool", "MiningPoolHub", "ZergPool").ForEach(
+    ("AHashPool", "BlockMasters", "NLPool", "MiningPoolHub", "ProHashing", "ZergPool").ForEach(
         { 
             If ($Config.PoolName -like "$_*") { 
                 Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName -like "$_*" -join "; ") removed)."
@@ -1656,10 +1656,8 @@ Function Update-ConfigFile {
             Switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); Break }
-                "LogToFile" { $Config.Remove($_); Break }
                 "LogToScreen" { $Config.LogLevel = $Config.$_; $Config.Remove($_); Break }
                 "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); Break }
-                "MinerInstancePerDeviceModel" { $Config.Remove($_); Break }
                 "ShowAccuracy" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); Break }
                 "ShowAccuracyColumn" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); Break }
                 "ShowCoinName" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); Break }
@@ -1674,8 +1672,6 @@ Function Update-ConfigFile {
                 "ShowHashrateColumn" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); Break }
                 "ShowMinerFee" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); Break }
                 "ShowMinerFeeColumn" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); Break }
-                "ShowPool" { $Config.Remove($_); Break }
-                "ShowPoolColumn" { $Config.Remove($_); Break }
                 "ShowPoolFee" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); Break }
                 "ShowPoolFeeColumn" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); Break }
                 "ShowProfit" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); Break }
@@ -1690,18 +1686,18 @@ Function Update-ConfigFile {
                 "ShowPoolBalancesColumn" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); Break }
                 "ShowUser" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); Break }
                 "ShowUserColumn" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); Break }
-                "Transcript" { $Config.Remove($_); Break }
                 "UnrealMinerEarningFactor" { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); Break }
                 "UnrealPoolPriceFactor" { $Config.UnrealisticPoolPriceFactor = $Config.$_; $Config.Remove($_); Break }
 
-                Default { If ($_ -notin @(@($Session.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } } # Remove unsupported config items
+                # Remove unsupported config items
+                Default { If ($_ -notin @(@($Session.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } }
             }
         }
     )
 
     If (-not $Session.FreshConfig) { 
         $Config.ConfigFileVersion = $Session.Branding.Version.ToString()
-        Write-Config -Config $Config
+        Write-Configuration  -Config $Config
         $Message = "Updated configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' to version $($Session.Branding.Version.ToString())."
         If ($Host.Name -match "ConsoleHost|Visual Studio Code Host") { $CursorPosition = $Host.UI.RawUI.CursorPosition }
         Write-Message -Level Verbose $Message
@@ -1713,7 +1709,7 @@ Function Update-ConfigFile {
     }
 }
 
-Function Write-Config { 
+Function Write-Configuration  { 
 
     Param (
         [Parameter (Mandatory = $true)]
@@ -1736,7 +1732,16 @@ Function Write-Config {
 "// This file was generated by $($Session.Branding.ProductLabel)
 // $($Session.Branding.ProductLabel) will automatically add / convert / rename / update new settings when updating to a new version
 "
-    "$Header$($NewConfig | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $Session.ConfigFile -Force
+    # Get mutex. Mutexes are shared across all threads and processes.
+    # This lets us ensure only one thread is trying to write to the file at a time.
+    $Mutex = [System.Threading.Mutex]::new($false)
+
+    # Attempt to aquire mutex, waiting up to 1 second if necessary
+    If ($Mutex.WaitOne(1000)) { 
+        "$Header$($NewConfig | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $Session.ConfigFile -Force
+        $Mutex.ReleaseMutex()
+    }
+    Remove-Variable Mutex
 
     $Session.FreshConfig = $false
 }
@@ -2043,25 +2048,34 @@ Function Set-Stat {
         }
     }
 
-    @{ 
-        Name                  = $Name
-        Live                  = [Double]$Stat.Live
-        Minute                = [Double]$Stat.Minute
-        Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
-        Minute_5              = [Double]$Stat.Minute_5
-        Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
-        Minute_10             = [Double]$Stat.Minute_10
-        Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
-        Hour                  = [Double]$Stat.Hour
-        Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
-        Day                   = [Double]$Stat.Day
-        Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
-        Week                  = [Double]$Stat.Week
-        Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
-        Duration              = [String]$Stat.Duration
-        Updated               = [DateTime]$Stat.Updated
-        Disabled              = [Boolean]$Stat.Disabled
-    } | ConvertTo-Json | Out-File -LiteralPath $Path -Force
+    # Get mutex. Mutexes are shared across all threads and processes.
+    # This lets us ensure only one thread is trying to write to the file at a time.
+    $Mutex = [System.Threading.Mutex]::new($false)
+
+    # Attempt to aquire mutex, waiting up to 1 second if necessary
+    If ($Mutex.WaitOne(1000)) { 
+        @{ 
+            Name                  = $Name
+            Live                  = [Double]$Stat.Live
+            Minute                = [Double]$Stat.Minute
+            Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
+            Minute_5              = [Double]$Stat.Minute_5
+            Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
+            Minute_10             = [Double]$Stat.Minute_10
+            Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
+            Hour                  = [Double]$Stat.Hour
+            Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
+            Day                   = [Double]$Stat.Day
+            Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
+            Week                  = [Double]$Stat.Week
+            Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
+            Duration              = [String]$Stat.Duration
+            Updated               = [DateTime]$Stat.Updated
+            Disabled              = [Boolean]$Stat.Disabled
+        } | ConvertTo-Json | Out-File -LiteralPath $Path -Force
+        $Mutex.ReleaseMutex()
+    }
+    Remove-Variable Mutex
 
     Return $Stat
 }
@@ -2727,26 +2741,23 @@ Function Add-CoinName {
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
-        $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_DataFiles")
+        $Mutex = [System.Threading.Mutex]::new($false)
 
-        If (-not $Session.CurrencyAlgorithm[$Currency]) { 
-            $Session.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
-            # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the file and release mutex
-            If ($Mutex.WaitOne(1000)) { 
+        # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the file and release mutex
+        If ($Mutex.WaitOne(1000)) { 
+            If (-not $Session.CurrencyAlgorithm[$Currency]) { 
+                $Session.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
                 $Session.CurrencyAlgorithm | ConvertTo-Json | Out-File -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Ignore -Force
-                $Mutex.ReleaseMutex()
             }
-        }
-        If (-not $Session.CoinNames[$Currency]) { 
-            If ($CoinName = ($CoinName.Trim() -replace "[^A-Z0-9 \$\.]" -replace "coin$", " Coin" -replace "bit coin$", "Bitcoin" -replace "ERC20$" , " ERC20" -replace "TRC20$" , " TRC20" -replace " \s+" )) { 
-                $Session.CoinNames[$Currency] = $CoinName
-                # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the file and release mutex
-                If ($Mutex.WaitOne(1000)) { 
+            If (-not $Session.CoinNames[$Currency]) { 
+                If ($CoinName = ($CoinName.Trim() -replace "[^A-Z0-9 \$\.]" -replace "coin$", " Coin" -replace "bit coin$", "Bitcoin" -replace "ERC20$" , " ERC20" -replace "TRC20$" , " TRC20" -replace " \s+" )) { 
+                    $Session.CoinNames[$Currency] = $CoinName
                     $Session.CoinNames | ConvertTo-Json | Out-File -Path ".\Data\CoinNames.json" -ErrorAction Ignore -Force
-                    $Mutex.ReleaseMutex()
                 }
             }
+            $Mutex.ReleaseMutex()
         }
+        Remove-Variable Mutex
     }
 }
 
@@ -3013,41 +3024,6 @@ Function Get-AllDAGdata {
                                 Else { 
                                     Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
                                 }
-                            }
-                        }
-                    }
-                )
-                $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
-            }
-            Else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
-            }
-        }
-        Catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
-        }
-    }
-
-    # Update on script start, once every 24hrs or if unable to get data from source
-    $Url = "https://prohashing.com/api/v1/currencies"
-    If ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from ProHashing
-        Try { 
-            Write-Message -Level Info "Loading DAG data from '$Url'..."
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec $Session.Config.Pools.ProHashing.PoolAPItimeout
-
-            If ($CurrencyDAGdataResponse.code -eq 200) { 
-                $CurrencyDAGdataResponse.data.PSObject.Properties.Name.Where({ $CurrencyDAGdataResponse.data.$_.enabled -and $CurrencyDAGdataResponse.data.$_.height -and ($Session.RegexAlgoHasDAG -match (Get-Algorithm $CurrencyDAGdataResponse.data.$_.algo) -or $DAGdata.Currency.psBase.Keys -contains $_) }).ForEach(
-                    { 
-                        If ([UInt64]($CurrencyDAGdataResponse.data.$_.height) -ge $DAGdata.Currency.$_.BlockHeight) { 
-                            $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.data.$_.height -Currency $_ -EpochReserve 2
-                            If ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
-                                $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                                $CurrencyDAGdata | Add-Member Url $Url -Force
-                                $DAGdata.Currency | Add-Member $_ $CurrencyDAGdata -Force
-                            }
-                            ElseIf ($CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
-                                Write-Message -Level Warn "Failed to load DAG data for '$_' from '$Url'."
                             }
                         }
                     }
@@ -4129,11 +4105,6 @@ Function Read-Config {
                                 If ($ConfigFromFile.NiceHashWallet) { $PoolConfig.Wallets = @{ "BTC" = $ConfigFromFile.NiceHashWallet } }
                                 Break
                             }
-                            "ProHashing" { 
-                                If (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.ProHashingUserName }
-                                If (-not $PoolConfig.MiningMode) { $PoolConfig.MiningMode = $ConfigFromFile.ProHashingMiningMode }
-                                Break
-                            }
                             Default { 
                                 If ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
                                 If (-not $PoolConfig.Wallets) { $PoolConfig.Wallets = $ConfigFromFile.Wallets }
@@ -4158,7 +4129,7 @@ Function Read-Config {
                 Move-Item -Path $ConfigFile $CorruptConfigFile -Force
                 If ($Config.psBase.Keys.Count -gt 0) { 
                     Write-Message -Level Error "Configuration file '$($ConfigFile.Replace($PWD, "."))' is corrupt and was renamed to '$($CorruptConfigFile.Replace($PWD, "."))'. Using previous configuration values."
-                    Write-Config -Config $Config
+                    Write-Configuration  -Config $Config
                     $Session.ConfigTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime
                     Continue
                 }
@@ -4238,7 +4209,7 @@ Function Read-Config {
         }
     }
 
-    # Read config only if config files have changed
+    # Read-Config will read and apply configuration if configuration files have changed
     If (Test-Path -Path $Session.ConfigFile -PathType Leaf) { 
         If ((Get-Item -Path $ConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp -or (Get-Item -Path $PoolsConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp) { 
             Read-ConfigFiles -ConfigFile $ConfigFile -PoolsConfigFile $PoolsConfigFile
@@ -4248,6 +4219,17 @@ Function Read-Config {
                 Write-Message -Level Warn "API port in stored configuration in invalid. Will use default port $($Config.APIPort)."
             }
             If ($Session.Config) { Write-Message -Level Verbose "Activated changed configuration." }
+            If ($Config.IdleDetection -ne $Session.Config.IdleDetection) { 
+                If ($Config.IdleDetection) { 
+                    Write-Message -Level Verbose "Idle detection is enabled. Mining will get suspended on any keyboard or mouse activity."
+                }
+                Else { 
+                    Write-Message -Level Verbose "Idle detection is disabled."
+                }
+            }
+            Else { 
+                Start-Sleep -MilliSeconds 100
+            }
             $Session.Config = $Config.Clone()
             $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
         }

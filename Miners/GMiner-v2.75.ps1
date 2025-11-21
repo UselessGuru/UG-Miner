@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.6
-Version date:   2025/11/20
+Version:        6.6.7
+Version date:   2025/11/21
 #>
 
 If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
@@ -62,7 +62,7 @@ If ($Algorithms) {
                             $Arguments = $_.Arguments
                             $Arguments += " --server $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)"
 
-                            If ($null -ne $Pool.DAGsizeGiB -and "MiningPoolHub", "NiceHash", "ProHashing" -contains $Pool.Name) { $Arguments += " --proto stratum" }
+                            If ($null -ne $Pool.DAGsizeGiB -and "MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments += " --proto stratum" }
                             If ($Pool.PoolPorts[1]) { $Arguments += " --ssl 1" }
                             If ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers }
 

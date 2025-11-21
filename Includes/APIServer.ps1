@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.6.6
-Version date:   2025/11/20
+Version:        6.6.7
+Version date:   2025/11/21
 #>
 
 using module .\Include.psm1
@@ -128,7 +128,17 @@ While ($Session.APIversion -and $Server.IsListening) {
                 $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+
+                # Get mutex. Mutexes are shared across all threads and processes.
+                # This lets us ensure only one thread is trying to write to the file at a time.
+                $Mutex = [System.Threading.Mutex]::new($false)
+
+                # Attempt to aquire mutex, waiting up to 1 second if necessary
+                If ($Mutex.WaitOne(1000)) { 
+                    $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                    $Mutex.ReleaseMutex()
+                }
+                Remove-Variable Mutex
             }
             Else { 
                 $Data = "No matching stats found."
@@ -160,7 +170,17 @@ While ($Session.APIversion -and $Server.IsListening) {
                 $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+
+                # Get mutex. Mutexes are shared across all threads and processes.
+                # This lets us ensure only one thread is trying to write to the file at a time.
+                $Mutex = [System.Threading.Mutex]::new($false)
+
+                # Attempt to aquire mutex, waiting up to 1 second if necessary
+                If ($Mutex.WaitOne(1000)) { 
+                    $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                    $Mutex.ReleaseMutex()
+                }
+                Remove-Variable Mutex
             }
             Else { 
                 $Data = "No matching stats found."
@@ -176,7 +196,18 @@ While ($Session.APIversion -and $Server.IsListening) {
             If ($Parameters.Data) { 
                 $BalanceDataEntries = $Session.BalancesData
                 $Session.BalancesData = @((Compare-Object $Session.BalancesData @($Parameters.Data | ConvertFrom-Json -ErrorAction Ignore) -PassThru -Property DateTime, Pool, Currency, Wallet).Where({ $_.SideIndicator -eq "<=" }) | Select-Object -ExcludeProperty SideIndicator)
-                $Session.BalancesData | ConvertTo-Json | Out-File ".\Data\BalancesTrackerData.json"
+
+                # Get mutex. Mutexes are shared across all threads and processes.
+                # This lets us ensure only one thread is trying to write to the file at a time.
+                $Mutex = [System.Threading.Mutex]::new($false)
+
+                # Attempt to aquire mutex, waiting up to 1 second if necessary
+                If ($Mutex.WaitOne(1000)) { 
+                    $Session.BalancesData | ConvertTo-Json | Out-File ".\Data\BalancesTrackerData.json"
+                    $Mutex.ReleaseMutex()
+                }
+                Remove-Variable Mutex
+
                 $RemovedEntriesCount = $BalanceDataEntries.Count - $Session.BalancesData.Count
                 If ($RemovedEntriesCount -gt 0) { 
                     $Message = "$RemovedEntriesCount balance data $(If ($RemovedEntriesCount -eq 1) { "entry" } Else { "entries" }) removed."
@@ -196,7 +227,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                     Try { 
                         $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
                         $Session.Config.ExcludeDeviceName = @((@($Session.Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
-                        Write-Config -Config $Session.Config
+                        Write-Configuration  -Config $Session.Config
                         $Data = "Device configuration changed`n`nOld values:"
                         $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                         $Data += "`n`nNew values:"
@@ -231,7 +262,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                     Try { 
                         $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
                         $Session.Config.ExcludeDeviceName = @($Session.Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
-                        Write-Config -Config $Session.Config
+                        Write-Configuration  -Config $Session.Config
                         $Session.ConfigurationHasChangedDuringUpdate = $false
                         $Data = "Device configuration changed`n`nOld values:"
                         $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
@@ -261,9 +292,8 @@ While ($Session.APIversion -and $Server.IsListening) {
         "/functions/config/set" { 
             Try { 
                 $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
-                Write-Config -Config $TempConfig
+                Write-Configuration  -Config $TempConfig
                 Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
-
                 $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
 
                 $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
@@ -280,6 +310,7 @@ While ($Session.APIversion -and $Server.IsListening) {
                 )
                 $Session.Remove("ConfigurationHasChangedDuringUpdate")
                 $Session.RestartCycle = $true
+
                 $Data = "Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
             }
             Catch { 
@@ -542,7 +573,17 @@ While ($Session.APIversion -and $Server.IsListening) {
             }
         }
         "/functions/switchinglog/clear" { 
-            Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Remove-Item -Force
+            # Get mutex. Mutexes are shared across all threads and processes.
+            # This lets us ensure only one thread is trying to write to the file at a time.
+            $Mutex = [System.Threading.Mutex]::new($false)
+
+            # Attempt to aquire mutex, waiting up to 1 second if necessary
+            If ($Mutex.WaitOne(1000)) { 
+                Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Remove-Item -Force
+                $Mutex.ReleaseMutex()
+            }
+            Remove-Variable Mutex
+
             Write-Message -Level Verbose "Web GUI: Switching log '.\Logs\SwitchingLog.csv' cleared."
             $Data = "Switching log '.\Logs\SwitchingLog.csv' cleared."
             Break

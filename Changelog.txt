@@ -1,3 +1,16 @@
+Changelog UG-Miner 6.6.7 2025/11/21
+===================================
+
+Improvements:
+- Core: Idle detection can be disabled while being idle (no need to resume mining first)
+
+Miner updates:
+- Wildrig-v0.47.6
+
+Pool changes:
+- Removed ProHashing (pool has closed down end of November 2025) 
+
+
 Changelog UG-Miner 6.6.6 2025/11/20
 ===================================
 
@@ -146,7 +159,7 @@ Miner updates:
 - Wildrig-v0.45.6
 
 Pool changes:
-- Removed ZergPool (pool has closed down beginning of october 2025)
+- Removed ZergPool (pool has closed down beginning of October 2025)
 
 
 Changelog UG-Miner 6.5.12 2025/09/12

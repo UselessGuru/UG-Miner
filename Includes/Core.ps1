@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.6.6
-Version date:   2025/11/20
+Version:        6.6.7
+Version date:   2025/11/21
 #>
 
 using module .\Include.psm1
@@ -39,7 +39,7 @@ Try {
     Do { 
         Write-Message -Level Info "Started new cycle."
 
-        # Read config only if config files have changed
+        # Read-Config will read and apply configuration if configuration files have changed
         Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
 
         $Session.CoreLoopCounter ++
@@ -305,12 +305,13 @@ Try {
                     $Session.PoolsCount = $Session.Pools.Count
 
                     # Wait for pool data message
-                    If ($Session.Brains.Keys.Where({ $Session.Brains[$_].StartTime -gt $Session.Timer.AddSeconds(- $Session.Config.Interval) })) { 
+                    If ($Session.Brains.Keys.Where({ $Session.Brains[$_].StartTime -gt $Session.Timer.AddSeconds(- $Session.Config.Interval) }) -or -not $Session.Miners) { 
                         # Newly started brains, allow extra time for brains to get ready
                         $Session.PoolTimeout = 60
                         $Message = "Loading initial pool data from $((Get-PoolBaseName $Session.Config.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolTimeout) seconds..."
                         If (-not $Session.Miners) { 
                             $Session.Summary = $Message
+                            $Session.RefreshTimestamp = (Get-Date -Format "G")
                             $Session.RefreshNeeded = $true
                         }
                         Write-Message -Level Info ($Message -replace "<br>", " ")

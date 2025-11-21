@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.6.6
-Version date:   2025/11/20
+Version:        6.6.7
+Version date:   2025/11/21
 #>
 
 using module .\Includes\Include.psm1
@@ -182,7 +182,7 @@ Param(
     [Parameter (Mandatory = $false)]
     [String]$PoolsConfigFile = ".\Config\PoolsConfig.json", # Config.Pools file name
     [Parameter (Mandatory = $false)]
-    [String[]]$PoolName = @("HashCryptosPlus", "HiveON", "MiningDutchPlus", "NiceHash", "ProHashingPlus", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "HiveON", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ProHashing", "ProHashing24hr", "ProHashingPlus", "ZPool", "ZPool24hr", "ZPoolPlus"
+    [String[]]$PoolName = @("HashCryptosPlus", "HiveON", "MiningDutchPlus", "NiceHash", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "HiveON", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ZPool", "ZPool24hr", "ZPoolPlus"
     [Parameter (Mandatory = $false)]
     [Int]$PoolTimeout = 20, # Time (in seconds) until it aborts the pool request (useful if a pool's API is stuck). Note: do not set this value too small or UG-Miner will not be able to get any pool data
     [Parameter (Mandatory = $false)]
@@ -193,12 +193,6 @@ Param(
     [Double]$PowerConsumptionIdleSystemW = 60, # Watt, power consumption of idle system. Part of profit calculation.
     [Parameter (Mandatory = $false)]
     [Double]$ProfitabilityThreshold = -99, # Minimum profit threshold, if profit is less than the configured value (in $Currency, e.g. CHF) mining will stop (except for benchmarking & power consumption measuring)
-    [Parameter (Mandatory = $false)]
-    [String]$ProHashingAPIkey = "", # ProHashing API Key (required to retrieve balance information)
-    [Parameter (Mandatory = $false)]
-    [String]$ProHashingMiningMode = "PPS", # Either PPS (Pay Per Share) or PPLNS (Pay per Last N Shares)
-    [Parameter (Mandatory = $false)]
-    [String]$ProHashingUserName = "UselessGuru", # ProHashing UserName, if left empty then $UserName is used
     [Parameter (Mandatory = $false)]
     [String]$Proxy = "", # i.e http://192.0.0.1:8080
     [Parameter (Mandatory = $false)]
@@ -323,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.6.6"
+    Version      = [System.Version]"6.6.7"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -791,8 +785,7 @@ Function MainLoop {
                     }
 
                     Start-Brain @(Get-PoolBaseName $Session.Config.PoolName)
-                    Start-Core
-
+                    Start-Core $Session.Config.IdleDetection
                     If ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } Else { Stop-BalancesTracker }
 
                     $LegacyGUIelements.ButtonPause.Enabled = $true
@@ -1011,6 +1004,7 @@ Function MainLoop {
                     $Message = "System was idle for $($Session.Config.IdleSec) second$(If ($Session.Config.IdleSec -ne 1) { "s" }).<br>Resuming mining..."
                     Write-Message -Level Verbose ($Message -replace "<br>", " ")
                     $Session.Summary = $Message
+                    $Session.RefreshTimestamp = (Get-Date -Format "G")
 
                     Start-Core
 
@@ -1020,7 +1014,7 @@ Function MainLoop {
                 }
                 Remove-Variable Message
             }
-            ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false -and $Global:CoreRunspace.StartTime -lt [DateTime]::Now.ToUniversalTime().AddSeconds( 1 )) { 
+            ElseIf ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
                 $Message = "System activity detected."
                 Write-Message -Level Verbose $Message
                 $Session.Summary = $Message
@@ -1035,12 +1029,21 @@ Function MainLoop {
                 Write-Message -Level Verbose $Message
                 $Session.Summary = $Message
 
-                If ($LegacyGUIform4.ShowInTaskbar) { 
+                If ($LegacyGUIform.ShowInTaskbar) { 
                     Update-GUIstatus
                     $LegacyGUIelements.MiningSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                     $LegacyGUIelements.MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
                 }
+                Else { 
+                    $Session.RefreshTimestamp = (Get-Date -Format "G")
+                }
                 Remove-Variable Message
+
+                $Session.RefreshNeeded = $true
+            }
+            Else { 
+                # Read-Config will read and apply configuration if configuration files have changed
+                Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
             }
         }
         ElseIf ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
@@ -1060,7 +1063,7 @@ Function MainLoop {
         }
     }
     Else { 
-        # Read config only if config files have changed
+        # Read-Config will read and apply configuration if configuration files have changed
         Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
     }
 
@@ -1242,8 +1245,7 @@ Function MainLoop {
                     }
                 }
 
-                If ($Session.MiningStatus -eq "Running") { 
-
+                If ($Session.MiningStatus -eq "Running" -and $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
                     $Colour = If ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement) { "DarkYello" } Else { "White" }
                     Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
                     Remove-Variable Colour

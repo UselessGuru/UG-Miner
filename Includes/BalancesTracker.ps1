@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.6.6
-Version date:   2025/11/20
+Version:        6.6.7
+Version date:   2025/11/21
 #>
 
 using module .\Include.psm1
@@ -198,19 +198,6 @@ Do {
                             # Payout occured
                             $Payout = -$Delta
                             $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings) -Force
-                        }
-                        Else { 
-                            $Payout = 0
-                            $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta) -Force
-                        }
-                    }
-                    ElseIf ($BalanceObject.Pool -match '^ProHashing.*') { 
-                        # ProHashing never reduces earnings
-                        $Delta = $BalanceObject.Balance - ($BalanceDataObjects[-1]).Balance
-                        If ($BalanceObject.Unpaid -lt ($BalanceDataObjects[-1]).Unpaid) { 
-                            # Payout occured
-                            $Payout = ($BalanceDataObjects[-1]).Unpaid - $BalanceObject.Unpaid
-                            $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $BalanceObject.Unpaid) -Force
                         }
                         Else { 
                             $Payout = 0
