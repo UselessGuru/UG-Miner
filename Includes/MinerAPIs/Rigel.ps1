@@ -18,19 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Rigel.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class Rigel : Miner { 
+class Rigel : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/stat"
 
-        Try { 
+        try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
-            If (-not $Data) { Return $null }
+            if (-not $Data) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = ""
@@ -41,8 +41,8 @@ Class Rigel : Miner {
             $Shares = [PSCustomObject]@{ }
             $SharesAccepted = $SharesRejected = $SharesInvalid = [Int64]0
 
-            ForEach ($Algorithm in $Algorithms) { 
-                If ($null -eq $Data.hashrate.$Algorithm) { Return $null }
+            foreach ($Algorithm in $Algorithms) { 
+                if ($null -eq $Data.hashrate.$Algorithm) { return $null }
                 $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
                 $HashrateValue = [Double]$Data.hashrate.$Algorithm
                 $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
@@ -55,22 +55,22 @@ Class Rigel : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = [Double]$Data.power_usage
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

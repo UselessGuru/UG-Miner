@@ -18,24 +18,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class GMiner : Miner { 
+class GMiner : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/stat"
 
-        Try { 
+        try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
-            If (-not $Data.devices) { Return $null }
+            if (-not $Data.devices) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
             $HashrateValue = [Double](($Data.devices.speed | Measure-Object -Sum).Sum)
-            If (-not $HashrateValue -and $Data.devices.speed -contains $null) { Return $null }
+            if (-not $HashrateValue -and $Data.devices.speed -contains $null) { return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $Shares = [PSCustomObject]@{ }
@@ -44,9 +44,9 @@ Class GMiner : Miner {
             $SharesInvalid = [Int64]$Data.total_invalid_shares
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-            If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+            if ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
                 $HashrateValue = [Double](($Data.devices.speed2 | Measure-Object -Sum).Sum)
-                If (-not $HashrateValue -and $Data.devices.speed2 -contains $null) { Return $null }
+                if (-not $HashrateValue -and $Data.devices.speed2 -contains $null) { return $null }
                 $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
                 $SharesAccepted = [Int64]$Data.total_accepted_shares2
@@ -57,22 +57,22 @@ Class GMiner : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = [Double]($Data.devices | Measure-Object power_usage -Sum).Sum
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

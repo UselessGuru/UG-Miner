@@ -1,14 +1,21 @@
-Changelog UG-Miner 6.6.7 2025/11/21
+Changelog UG-Miner 6.7.0 2025/11/21
 ===================================
 
+Fixes:
+- Core: Custom pools config (Config\PoolsConfig.json) file was ignored (regression from v6.6.0)
+- BalancesTracker for MiningDutch not fetching balances (regression from v6.5.17)
+
 Improvements:
+- Core: Create new pool object if algorithm variant changes
 - Core: Idle detection can be disabled while being idle (no need to resume mining first)
+- Core: Avoid extra rates queries to 'min-api.cryptocompare.com'
 
 Miner updates:
+- SRBMinerMulti-v3.0.5
 - Wildrig-v0.47.6
 
 Pool changes:
-- Removed ProHashing (pool has closed down end of November 2025) 
+- Removed ProHashing (pool is closing down end of November 2025) 
 
 
 Changelog UG-Miner 6.6.6 2025/11/20
@@ -1493,7 +1500,7 @@ Fixes:
 - Core: Fix compatibility with WindowsTerminal
 - Core: Miner would get suspended even when it succeeded benchmarking on the 3rd attempt
 - Core: '$MinerInstancePerDeviceModel' not detected on fresh config
-- Core / Includes.psm1: 'Get-DAGdata' &' Update-DAGdata' add support for StakeCube coin (SCC) DAG calculation
+- Core / Includes.psm1: 'Get-DAGdata' & 'Update-DAGdata' add support for StakeCube coin (SCC) DAG calculation
 - Miners: Change algorithm for Blakecoin to Blake2s
 - RrkzCpu-v4.2: Disable mining using an SSL pool connection (not supported by miner)
 - Wildrig-v0.40.5: Invalid device selection in mixed GPU scenarios

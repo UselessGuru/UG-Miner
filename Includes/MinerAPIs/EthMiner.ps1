@@ -18,27 +18,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class EthMiner : Miner { 
+class EthMiner : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = @{ id = 1; jsonrpc = "2.0"; method = "miner_getstat1" } | ConvertTo-Json -Compress
         $Response = ""
 
-        Try { 
+        try { 
             $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout
             $Data = $Response | ConvertFrom-Json -ErrorAction Stop
-            If (-not $Data.result -or ($null -eq ($Data.result[2] -split ";")[0])) { Return $null }
+            if (-not $Data.result -or ($null -eq ($Data.result[2] -split ";")[0])) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
             $HashrateValue = [Double]($Data.result[2] -split ";")[0]
 
-            If ($Data.result[0] -notmatch "^TT-Miner" -and $HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
+            if ($Data.result[0] -notmatch "^TT-Miner" -and $HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $Shares = [PSCustomObject]@{ }
@@ -47,10 +47,10 @@ Class EthMiner : Miner {
             $SharesInvalid = [Int64]0
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-            If ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-                If ($null -eq (($Data.result[4] -split ";")[0])) { Return $null }
+            if ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
+                if ($null -eq (($Data.result[4] -split ";")[0])) { return $null }
                 $HashrateValue = [Double]($Data.result[4] -split ";")[0]
-                If ($HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
+                if ($HashrateName -match "^Blake2s|^Ethash|^EtcHash|^Firopow|^Kawpow|^Keccak|^MeowPow|^Neoscrypt|^ProgPow|^SCCpow|^Ubqhash") { $HashrateValue *= 1000 }
                 $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
                 $SharesAccepted = [Int64]($Data.result[4] -split ";")[1]
@@ -61,19 +61,19 @@ Class EthMiner : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = $this.GetPowerConsumption()
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
 # Added a hint that oc was reset when miner closes and it actually had set options that got successfully reset.
 # Fixed a bug when mining Grin Cuckatoo-32 not submitting shares in 1.96(a)
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -match "GCN4|RDNA[1|2|3]") -or $_.OpenCL.ComputeCapability -ge "6.0" }))) { return }
 
 $URI = "https://github.com/Lolliedieb/lolMiner-releases/releases/download/1.98a/lolMiner_v1.98a_Win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -128,77 +128,77 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    If (-not $Session.Config.DryRun) { 
+    if (-not $Session.Config.DryRun) { 
         # MaxDualImpact for 2. algorithm; The maximum impact on the eth mining speed in dual mining in %. Default is * for automatic mode
         $MaxDualImpactValues = @("*", 5, 10, 15, 20)
 
         # Build command sets for MaxDualImpact (only seems to work with AMD, no hashrates for second algorithm with GTX 1660 Super when --maxdualimpact is a number)
         $Algorithms = $Algorithms.ForEach(
             { 
-                If ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
-                    ForEach ($MaxDualImpactValue in $MaxDualImpactValues) { 
+                if ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
+                    foreach ($MaxDualImpactValue in $MaxDualImpactValues) { 
                         $_.MaxDualImpact = $MaxDualImpactValue
                         $_.PsObject.Copy()
                     }
                 }
-                Else { 
+                else { 
                     $_.PsObject.Copy()
                 }
             }
         )
     }
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                 # Windows 10 requires more memory on some algos
-                                If ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [System.Version]"10.0.0.0")) { $MinMemGiB += 1 }
-                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                if ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [System.Version]"10.0.0.0")) { $MinMemGiB += 1 }
+                                if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)$(If ($_.MaxDualImpact) { "-$($_.MaxDualImpact)" })"})"
 
                                     $Arguments = $_.Arguments
 
-                                    $CoinPers = If ("Equihash1445", "Equihash1927" -contains $_.Algorithms[0]) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" }
+                                    $CoinPers = if ("Equihash1445", "Equihash1927" -contains $_.Algorithms[0]) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" }
 
-                                    If ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
-                                        If ($CoinPers) { $Arguments += $CoinPers }
+                                    if ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
+                                        if ($CoinPers) { $Arguments += $CoinPers }
                                         $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
                                         $Arguments += " --user $($Pool0.User)$(If ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass $($Pool0.Pass)"
-                                        $Arguments += If ($Pool0.PoolPorts[1]) { " --tls on" } Else { " --tls off" }
-                                        Switch ($Pool0.Protocol) { 
-                                            "ethproxy"     { $Arguments += " --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY"; Break }
-                                            "ethstratum1"  { $Arguments += " --ethstratum ETHV1"; Break }
-                                            "ethstratum2"  { $Arguments += " --ethstratum ETHV1"; Break }
+                                        $Arguments += if ($Pool0.PoolPorts[1]) { " --tls on" } else { " --tls off" }
+                                        switch ($Pool0.Protocol) { 
+                                            "ethproxy"     { $Arguments += " --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY"; break }
+                                            "ethstratum1"  { $Arguments += " --ethstratum ETHV1"; break }
+                                            "ethstratum2"  { $Arguments += " --ethstratum ETHV1"; break }
                                             "ethstratumnh" { $Arguments += " --ethstratum ETHV1" }
                                         }
 
-                                        If ($_.Algorithms[1]) { 
+                                        if ($_.Algorithms[1]) { 
                                             $Arguments += " --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
                                             $Arguments += " --dualuser $($Pool1.User)$(If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --dualpass $($Pool1.Pass)"
-                                            If ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
-                                            $Arguments += If ($Pool1.PoolPorts[1]) { " --dualtls on" } Else { " --dualtls off" }
+                                            if ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
+                                            $Arguments += if ($Pool1.PoolPorts[1]) { " --dualtls on" } else { " --dualtls off" }
                                         }
 
                                         [PSCustomObject]@{ 
                                             API         = "lolMiner"
-                                            Arguments   = "$Arguments --log off --apiport $MinerAPIPort --shortstats 1 --longstats 5 --digits 6 --watchdog exit --dns-over-https 1 --devicesbypcie --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0}:0' -f $_ }) -join ',')"
+                                            Arguments   = "$Arguments --log off --apiport $MinerAPIPort --shortstats 1 --longstats 5 --digits 6 --watchdog exit --dns-over-https 1 --devicesbypcie --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0}:0' -f $_ }) -join ',')"
                                             DeviceNames = $AvailableMinerDevices.Name
                                             Fee         = $_.Fee # Dev fee
                                             MinerSet    = $_.MinerSet
@@ -209,7 +209,7 @@ If ($Algorithms) {
                                             Type        = $Type
                                             URI         = $URI
                                             WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers      = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                            Workers     = @(($Pool0, $Pool1).Where({ $_ }).foreach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }

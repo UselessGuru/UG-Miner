@@ -17,17 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Return # Bad shares
+return # Bad shares
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { return }
 
-$URI = Switch ($Session.DriverVersion.CUDA) { 
+$URI = switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/SCCminer/sccminer-1.1.0-Windows.zip" }
-    Default                           { Return }
+    default { return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\sccminer.exe"
@@ -42,37 +42,37 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-                    ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                    foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                            $Protocol = Switch ($Pool.Protocol) { 
-                                "ethstratum1"  { "stratum1"; Break }
-                                "ethstratum2"  { "stratum2"; Break }
-                                "ethstratumnh" { "stratum2"; Break }
-                                Default        { "stratum"; Break }
+                            $Protocol = switch ($Pool.Protocol) { 
+                                "ethstratum1" { "stratum1"; break }
+                                "ethstratum2" { "stratum2"; break }
+                                "ethstratumnh" { "stratum2"; break }
+                                default { "stratum"; break }
                             }
-                            $Protocol += If ($Pool.PoolPorts[1]) { "+tls" } Else { "+tcp" }
+                            $Protocol += if ($Pool.PoolPorts[1]) { "+tls" } else { "+tcp" }
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --exit --api-port -$MinerAPIPort $($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join " ")"
+                                Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --exit --api-port -$MinerAPIPort $($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join " ")"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 EnvVars     = @("SSL_NOVERIFY=TRUE")
                                 Fee         = @(0) # Dev fee
@@ -84,7 +84,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers      = @(@{ Pool = $Pool })
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }

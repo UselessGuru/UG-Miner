@@ -239,7 +239,7 @@
     "PoolAPIAllowedFailureCount": 3,
     "PoolAPIretryInterval": 3,
     "PoolAPItimeout": 30,
-    "ProfitSwitching": false, // Pool changes DAG epoch when best coin switches
+    "ProfitSwitching": true, // true if pool changes DAG epoch when best coin switches, must not use coin name to set algorithm variant
     "Region": [
       "eu",
       "na",

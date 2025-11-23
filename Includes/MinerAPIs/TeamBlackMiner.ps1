@@ -18,19 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class TeamBlackMiner : Miner { 
+class TeamBlackMiner : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/summary"
 
-        Try { 
+        try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
-            If (-not $Data) { Return $null }
+            if (-not $Data) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]""
@@ -41,18 +41,18 @@ Class TeamBlackMiner : Miner {
             $SharesRejected = [Int64]0
             $SharesInvalid = [Int64]0
 
-            ForEach ($Algorithm in $this.Algorithms) { 
+            foreach ($Algorithm in $this.Algorithms) { 
                 $Data.pool.PSObject.Properties.Name.ForEach(
                     { 
-                        If ($null -eq $Data.pool.$_.total_hashrate) { Return $null }
-                        If ($Data.pool.$_.Algo -eq $Algorithm) { 
+                        if ($null -eq $Data.pool.$_.total_hashrate) { return $null }
+                        if ($Data.pool.$_.Algo -eq $Algorithm) { 
                             $HashrateName = [String]$Algorithm
                             $HashrateValue = [Double]($Data.pool.$_.total_hashrate)
                             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
                             $SharesAccepted = [Int64]($Data.pool.$_.total_accepted)
                             $SharesRejected = [Int64]($Data.pool.$_.total_rejected)
-                            $SharesInvalid  = [Int64]($Data.pool.$_.total_stale)
+                            $SharesInvalid = [Int64]($Data.pool.$_.total_stale)
                             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
                         }
                     }
@@ -61,23 +61,23 @@ Class TeamBlackMiner : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $Data.Devices.ForEach({ $PowerConsumption += [Double]$_.PSObject.Properties.Value.watt })
                 $PowerConsumption = [Double]($Data.result | Measure-Object gpu_power_usage -Sum).Sum
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

@@ -19,13 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 using module .\Include.psm1
 
-Do { 
+do { 
     (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
     $Session.BalancesTrackerRunning = $true
@@ -34,22 +34,22 @@ Do {
     $Earnings = @()
 
     # Get pools last earnings
-    $Session.PoolsLastEarnings = If (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
-    If (-not $Session.PoolsLastEarnings.Keys) { $Session.PoolsLastEarnings = @{ } }
+    $Session.PoolsLastEarnings = if (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
+    if (-not $Session.PoolsLastEarnings.Keys) { $Session.PoolsLastEarnings = @{ } }
 
     # Read existing earnings data, use data from last file
-    ForEach ($Filename in (Get-ChildItem ".\Data\BalancesTrackerData*.json" | Sort-Object -Descending)) { 
+    foreach ($Filename in (Get-ChildItem ".\Data\BalancesTrackerData*.json" | Sort-Object -Descending)) { 
         $Session.BalancesData = ([System.IO.File]::ReadAllLines($Filename) | ConvertFrom-Json)
-        If ($Session.BalancesData.Count -gt ($Session.PoolData.Count / 2)) { Break }
+        if ($Session.BalancesData.Count -gt ($Session.PoolData.Count / 2)) { break }
     }
 
-    If ($Session.BalancesData -isnot [Array]) { $Session.BalancesData = @() }
+    if ($Session.BalancesData -isnot [Array]) { $Session.BalancesData = @() }
     $Session.BalancesData.ForEach({ $_.DateTime = [DateTime]$_.DateTime })
 
     # Read existing earnings data, use data from last file
-    ForEach($Filename in (Get-ChildItem ".\Data\DailyEarnings*.csv" | Sort-Object -Descending)) { 
+    foreach ($Filename in (Get-ChildItem ".\Data\DailyEarnings*.csv" | Sort-Object -Descending)) { 
         $Earnings = @(Import-Csv $FileName -ErrorAction Ignore)
-        If ($Earnings.Count -gt $Session.PoolData.Count / 2) { Break }
+        if ($Earnings.Count -gt $Session.PoolData.Count / 2) { break }
     }
     Remove-Variable FileName -ErrorAction Ignore
 
@@ -57,13 +57,13 @@ Do {
 
     $BalanceObjects = @()
 
-    If ($Now.Date -ne [DateTime]::Today) { 
+    if ($Now.Date -ne [DateTime]::Today) { 
         # Keep a copy on start & at date change
-        If (Test-Path -LiteralPath ".\Data\BalancesTrackerData.json" -PathType Leaf) { Copy-Item -Path ".\Data\BalancesTrackerData.json" -Destination ".\Data\BalancesTrackerData_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").json" -ErrorAction Ignore }
-        If (Test-Path -LiteralPath ".\Data\DailyEarnings.csv" -PathType Leaf) { Copy-Item -Path ".\Data\DailyEarnings.csv" -Destination ".\Data\DailyEarnings_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").csv" -ErrorAction Ignore }
+        if (Test-Path -LiteralPath ".\Data\BalancesTrackerData.json" -PathType Leaf) { Copy-Item -Path ".\Data\BalancesTrackerData.json" -Destination ".\Data\BalancesTrackerData_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").json" -ErrorAction Ignore }
+        if (Test-Path -LiteralPath ".\Data\DailyEarnings.csv" -PathType Leaf) { Copy-Item -Path ".\Data\DailyEarnings.csv" -Destination ".\Data\DailyEarnings_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").csv" -ErrorAction Ignore }
         # Keep only the last 3 logs
-        Get-ChildItem ".\Data\BalancesTrackerData_*.json" | Sort-Object | Select-Object -Skiplast 3 | Remove-Item -Force -Recurse -ErrorAction Ignore
-        Get-ChildItem ".\Data\DailyEarnings_*.csv" | Sort-Object | Select-Object -Skiplast 3 | Remove-Item -Force -Recurse -ErrorAction Ignore
+        Get-ChildItem ".\Data\BalancesTrackerData_*.json" | Sort-Object | Select-Object -SkipLast 3 | Remove-Item -Force -Recurse -ErrorAction Ignore
+        Get-ChildItem ".\Data\DailyEarnings_*.csv" | Sort-Object | Select-Object -SkipLast 3 | Remove-Item -Force -Recurse -ErrorAction Ignore
     }
 
     $Now = [DateTime]::Now
@@ -73,21 +73,26 @@ Do {
 
     # Check internet connection
     $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
-    $Session.MyIPaddress = If ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } Else { $null }
+    $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
     Remove-Variable NetworkInterface
 
-    If ($Session.MyIPaddress) { 
+    if ($Session.MyIPaddress) { 
         # Fetch balances data from pools
-        If ($PoolsToTrack) { 
+        if ($PoolsToTrack) { 
             Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
-            If ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = [String[]]($PoolsToTrack -notmatch "MiningDutch"); $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
+            if ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = [String[]]($PoolsToTrack -notmatch "MiningDutch"); $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
             $PoolsToTrack.ForEach(
                 { 
-                    Write-Message -Level Debug "Balances tracker for pool '$_': Start building balances objects"
-                    $BalanceObjects += @(
-                        & ".\Balances\$($_).ps1"
-                    )
-                    Write-Message -Level Debug "Balances tracker for pool '$_': End building balances objects"
+                    try { 
+                        Write-Message -Level Debug "Balances tracker for pool '$_': Start building balances objects"
+                        $BalanceObjects += @(
+                            & ".\Balances\$($_).ps1"
+                        )
+                        Write-Message -Level Debug "Balances tracker for pool '$_': End building balances objects"
+                    }
+                    catch {
+                        Write-Message -Level Debug "Balances tracker for pool '$_': Error building balances objects"
+                    }
                 }
             )
 
@@ -109,47 +114,47 @@ Do {
 
             $Session.BalancesCurrencies = @(@($Session.BalancesCurrencies) + @($BalanceObjects.Currency) | Sort-Object -Unique)
 
-            # Read exchange rates
-            Get-Rate
+            # Read exchange rates every at least 15 minutes
+            if ((Compare-Object $Session.AllCurrencies $Session.BalancesCurrencies).where({ $_.SideIndicator -eq "=>"}) -or $Session.RatesUpdated -lt $Now.ToUniversalTime().AddMinutes(-15)) { Get-Rate }
 
-            ForEach ($BalanceObject in $BalanceObjects) { 
+            foreach ($BalanceObject in $BalanceObjects) { 
                 $BalanceDataObjects = @($Session.BalancesData.Where({ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }) | Sort-Object -Property DateTime)
 
                 # Get threshold currency and value
                 $PayoutThreshold = $BalanceObject.PayoutThreshold
                 $PayoutThresholdCurrency = $BalanceObject.Currency
 
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-                If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
-                If (-not $PayoutThreshold) { 
-                    If ($PayoutThresholdCurrency = [String]($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys)) { 
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
+                if (-not $PayoutThreshold) { 
+                    if ($PayoutThresholdCurrency = [String]($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys)) { 
                         $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                     }
                 }
 
-                If (-not $PayoutThreshold -and $BalanceObject.Currency -eq "BTC") { 
+                if (-not $PayoutThreshold -and $BalanceObject.Currency -eq "BTC") { 
                     $PayoutThresholdCurrency = "mBTC"
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-                    If (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
-                    If (-not $PayoutThreshold) { 
-                        If ($PayoutThresholdCurrency = $Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys[0]) { 
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
+                    if (-not $PayoutThreshold) { 
+                        if ($PayoutThresholdCurrency = $Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys[0]) { 
                             $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                         }
                     }
                 }
 
-                If ($PayoutThresholdCurrency -eq "mBTC") { 
+                if ($PayoutThresholdCurrency -eq "mBTC") { 
                     $PayoutThresholdCurrency = "BTC"
                     $PayoutThreshold /= 1000
                 }
 
                 $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = $GrowthToday = $AvgHourlyGrowth = $AvgDailyGrowth = $AvgWeeklyGrowth = $Delta = $Payout = $HiddenPending = [Double]0
 
-                If ($BalanceDataObjects.Count -eq 0) { 
+                if ($BalanceDataObjects.Count -eq 0) { 
                     $BalanceObject | Add-Member Delta ([Double]0)
                     $BalanceObject | Add-Member Earnings ([Double]($BalanceObject.Unpaid))
                     $BalanceObject | Add-Member Payout ([Double]0)
@@ -157,69 +162,69 @@ Do {
 
                     $AvgHourlyGrowth = $AvgDailyGrowth = $AvgWeeklyGrowth = 0
                 }
-                Else { 
-                    If ($BalanceObject.Pool -like "NiceHash*") { 
-                        If ($BalanceObject.Withdrawal -gt 0) { 
+                else { 
+                    if ($BalanceObject.Pool -like "NiceHash*") { 
+                        if ($BalanceObject.Withdrawal -gt 0) { 
                             # NiceHash temporarily reduces 'Balance' value before paying out
                             $BalanceObject.Balance += $BalanceObject.Withdrawal
                             $Payout = 0
                         }
-                        ElseIf (($BalanceDataObjects[-1]).Withdrawal -gt 0 -and $BalanceObject.Withdrawal -eq 0) { 
+                        elseif (($BalanceDataObjects[-1]).Withdrawal -gt 0 -and $BalanceObject.Withdrawal -eq 0) { 
                             # Payout occurred
                             $Payout = ($BalanceDataObjects[-1]).Withdrawal
                         }
-                        ElseIf ($BalanceObject.Withdrawal -eq 0) { 
+                        elseif ($BalanceObject.Withdrawal -eq 0) { 
                             # NiceHash temporarily hides some 'pending' value while processing payouts
-                            If ($BalanceObject.Pending -lt ($BalanceDataObjects[-1]).Pending) { 
+                            if ($BalanceObject.Pending -lt ($BalanceDataObjects[-1]).Pending) { 
                                 $HiddenPending = ($BalanceDataObjects[-1]).Pending - $BalanceObject.Pending
                                 $BalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
                             }
                             # When payouts are processed the hidden pending value gets added to the balance
-                            If (($BalanceDataObjects[-1]).HiddenPending -gt 0) { 
-                                If ($BalanceObject.Balance -eq (($BalanceDataObjects[-1]).Balance)) { 
+                            if (($BalanceDataObjects[-1]).HiddenPending -gt 0) { 
+                                if ($BalanceObject.Balance -eq (($BalanceDataObjects[-1]).Balance)) { 
                                     # Payout processing complete
                                     $HiddenPending *= -1
                                 }
-                                Else { 
+                                else { 
                                     # Still processing payouts
                                     $HiddenPending = ($BalanceDataObjects[-1]).HiddenPending
                                     $BalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
                                 }
                             }
-                            $Payout = If (($BalanceDataObjects[-1]).Unpaid -gt $BalanceObject.Unpaid) { ($BalanceDataObjects[-1]).Unpaid - $BalanceObject.Unpaid } Else { 0 }
+                            $Payout = if (($BalanceDataObjects[-1]).Unpaid -gt $BalanceObject.Unpaid) { ($BalanceDataObjects[-1]).Unpaid - $BalanceObject.Unpaid } else { 0 }
                         }
                         $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
                         $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta + $HiddenPending + $Payout) -Force
                     }
-                    ElseIf ($BalanceObject.Pool -eq "MiningPoolHub") { 
+                    elseif ($BalanceObject.Pool -eq "MiningPoolHub") { 
                         # MiningHubPool never reduces earnings
                         $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
-                        If ($Delta -lt 0) { 
+                        if ($Delta -lt 0) { 
                             # Payout occured
-                            $Payout = -$Delta
+                            $Payout = - $Delta
                             $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings) -Force
                         }
-                        Else { 
+                        else { 
                             $Payout = 0
                             $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta) -Force
                         }
                     }
-                    Else { 
+                    else { 
                         # HashCryptos, HiveON, MiningDutch, ZPool
                         $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
                         # Current 'Unpaid' is smaller
-                        If ($Delta -lt 0) { 
-                            If (-$Delta -gt $PayoutThreshold * 0.5) { 
+                        if ($Delta -lt 0) { 
+                            if (-$Delta -gt $PayoutThreshold * 0.5) { 
                                 # Payout occured (delta -gt 50% of payout limit)
-                                $Payout = -$Delta
+                                $Payout = - $Delta
                             }
-                            Else { 
+                            else { 
                                 # Pool reduced earnings
                                 $Payout = $Delta = 0
                             }
                             $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings) -Force
                         }
-                        Else { 
+                        else { 
                             $Payout = 0
                             $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta) -Force
                         }
@@ -228,35 +233,35 @@ Do {
                     $BalanceObject | Add-Member Paid ([Double](($BalanceDataObjects.Paid | Measure-Object -Maximum).Maximum + $Payout)) -Force
                     $BalanceObject | Add-Member Delta ([Double]$Delta) -Force
 
-                    If ((($Now - $BalanceDataObjects[0].DateTime).TotalHours) -lt 1) { 
+                    if ((($Now - $BalanceDataObjects[0].DateTime).TotalHours) -lt 1) { 
                         # Only calculate if current balance data
-                        If ($BalanceObject.DateTime -gt $Now.AddMinutes(-1)) { 
+                        if ($BalanceObject.DateTime -gt $Now.AddMinutes(-1)) { 
                             $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = [Double]($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings)
                         }
                     }
-                    Else { 
+                    else { 
                         # Only calculate if current balance data
-                        If ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) }))   { $Growth1   = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        If ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) }))   { $Growth6   = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        If ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) }))  { $Growth24  = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) })  | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        If ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) })) { $Growth168 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        If ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) })) { $Growth720 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) })) { $Growth1 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) })) { $Growth6 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) })) { $Growth24 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) })) { $Growth168 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) })) { $Growth720 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
                     }
 
-                    $AvgHourlyGrowth = If ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddHours(-1) })) { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalHours) }    Else { $Growth1 }
-                    $AvgDailyGrowth  = If ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-1) }))  { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays) }     Else { $Growth24 }
-                    $AvgWeeklyGrowth = If ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-7) }))  { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays * 7) } Else { $Growth168 }
+                    $AvgHourlyGrowth = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddHours(-1) })) { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalHours) }    else { $Growth1 }
+                    $AvgDailyGrowth = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-1) })) { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays) }     else { $Growth24 }
+                    $AvgWeeklyGrowth = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-7) })) { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays * 7) } else { $Growth168 }
 
-                    If ($BalanceDataObjects.Where({ $_.DateTime.Date -eq $Now.Date })) { 
+                    if ($BalanceDataObjects.Where({ $_.DateTime.Date -eq $Now.Date })) { 
                         $GrowthToday = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime.Date -eq $Now.Date }) | Sort-Object -Property DateTime -Top 1).Earnings)
-                        If ($GrowthToday -lt 0) { $GrowthToday = 0 } # to avoid negative numbers
+                        if ($GrowthToday -lt 0) { $GrowthToday = 0 } # to avoid negative numbers
                     }
                 }
 
                 $BalanceDataObjects += $BalanceObject
                 $Session.BalancesData += $BalanceObject
 
-                Try { 
+                try { 
                     $EarningsObject = [PSCustomObject]@{ 
                         Pool                    = $BalanceObject.Pool
                         Wallet                  = $BalanceObject.Wallet
@@ -277,28 +282,28 @@ Do {
                         AvgHourlyGrowth         = [Double]$AvgHourlyGrowth
                         AvgDailyGrowth          = [Double]$AvgDailyGrowth
                         AvgWeeklyGrowth         = [Double]$AvgWeeklyGrowth
-                        ProjectedEndDayGrowth   = If (($Now - $BalanceDataObjects[0].DateTime).TotalHours -ge 1) { [Double]($AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) } Else { [Double]($Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) }
-                        ProjectedPayDate        = If ($PayoutThreshold -and $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { If ([Double]$BalanceObject.Balance -lt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { If (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-7) { [DateTime]$Now.AddDays(($PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency) - $BalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } Else { "Unknown" } } Else { If ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } Else { "Next pool payout" } } } Else { "Unknown" }
+                        ProjectedEndDayGrowth   = if (($Now - $BalanceDataObjects[0].DateTime).TotalHours -ge 1) { [Double]($AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) } else { [Double]($Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) }
+                        ProjectedPayDate        = if ($PayoutThreshold -and $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ([Double]$BalanceObject.Balance -lt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-7) { [DateTime]$Now.AddDays(($PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency) - $BalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } else { "Unknown" } } else { if ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } else { "Next pool payout" } } } else { "Unknown" }
                         TrustLevel              = [Double]((($Now - $BalanceDataObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum).Minimum
                         TotalHours              = [Double]($Now - $BalanceDataObjects[0].DateTime).TotalHours
                         PayoutThreshold         = [Double]$PayoutThreshold
                         PayoutThresholdCurrency = $PayoutThresholdCurrency
                         Payout                  = [Double]$BalanceObject.Payout
                         Uri                     = $BalanceObject.Url
-                        LastEarnings            = If ($Growth24 -gt 0) { $BalanceObject.DateTime } Else { $BalanceDataObjects[0].DateTime }
+                        LastEarnings            = if ($Growth24 -gt 0) { $BalanceObject.DateTime } else { $BalanceDataObjects[0].DateTime }
                     }
                     $Balances."$($BalanceObject.Pool) ($($BalanceObject.Currency):$($BalanceObject.Wallet))" = $EarningsObject
                 }
-                Catch { 
+                catch { 
                     Start-Sleep -Seconds 0
                 }
-                If ($Session.Config.BalancesTrackerLog) { 
+                if ($Session.Config.BalancesTrackerLog) { 
                     $EarningsObject | Export-Csv -NoTypeInformation -Append ".\Logs\BalancesTrackerLog.csv" -Force -ErrorAction Ignore
                 }
 
                 $PoolTodaysEarnings = $Earnings.Where({ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet })[-1]
 
-                If ([String]$PoolTodaysEarnings.Date -eq $Now.ToString("yyyy-MM-dd")) { 
+                if ([String]$PoolTodaysEarnings.Date -eq $Now.ToString("yyyy-MM-dd")) { 
                     $PoolTodaysEarnings.DailyEarnings = [Double]$GrowthToday
                     $PoolTodaysEarnings.EndTime = $Now.ToString("T")
                     $PoolTodaysEarnings.EndValue = [Double]$BalanceObject.Earnings
@@ -306,7 +311,7 @@ Do {
                     $PoolTodaysEarnings.Unpaid = [Double]$BalanceObject.Unpaid
                     $PoolTodaysEarnings.Payout = [Double]$PoolTodaysEarnings.Payout + [Double]$BalanceObject.Payout
                 }
-                Else { 
+                else { 
                     $Earnings += [PSCustomObject]@{ 
                         Date          = $Now.ToString("yyyy-MM-dd")
                         Pool          = $EarningsObject.Pool
@@ -314,7 +319,7 @@ Do {
                         Wallet        = $BalanceObject.Wallet
                         DailyEarnings = [Double]$GrowthToday
                         StartTime     = $Now.ToString("T")
-                        StartValue    = If ($PoolTodaysEarnings) { [Double]$PoolTodaysEarnings.EndValue } Else { [Double]$EarningsObject.Earnings }
+                        StartValue    = if ($PoolTodaysEarnings) { [Double]$PoolTodaysEarnings.EndValue } else { [Double]$EarningsObject.Earnings }
                         EndTime       = $Now.ToString("T")
                         EndValue      = [Double]$EarningsObject.Earnings
                         Balance       = [Double]$EarningsObject.Balance
@@ -328,7 +333,7 @@ Do {
 
         # Always keep pools sorted, even when new pools were added
         $Session.Balances = [Ordered]@{ } # as case insensitive hash table
-        ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -in $PoolsToTrack }) | Sort-Object).ForEach(
+        ($Balances.psbase.Keys.Where({ $Balances.$_.Pool -in $PoolsToTrack }) | Sort-Object).foreach(
             { 
                 $Session.Balances.Remove($_)
                 $Session.Balances.$_ = $Balances.$_
@@ -345,25 +350,25 @@ Do {
         $ChartData = $Earnings.Where({ $_.Pool -in $PoolsToTrack }) | Sort-Object -Property Date | Group-Object -Property Date | Select-Object -Last 30 # days
 
         # One dataset per pool
-        (($ChartData.Group.Where({ $_.DailyEarnings -gt 0 })).Pool | Sort-Object -Unique).ForEach(
+        (($ChartData.Group.Where({ $_.DailyEarnings -gt 0 })).Pool | Sort-Object -Unique).foreach(
             { 
                 $PoolChartData | Add-Member @{ $_ = [Double[]]@() }
             }
         )
 
         # Fill dataset
-        ForEach ($PoolEarnings in $ChartData) { 
+        foreach ($PoolEarnings in $ChartData) { 
             $PoolChartData.PSObject.Properties.Name.ForEach(
                 { 
-                    $PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).ForEach({ [Double]$_.DailyEarnings * $Session.Rates.($_.Currency).BTC }) | Measure-Object -Sum).Sum
+                    $PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).foreach({ [Double]$_.DailyEarnings * $Session.Rates.($_.Currency).BTC }) | Measure-Object -Sum).Sum
                 }
             )
         }
         Remove-Variable PoolEarnings, PoolTodaysEarnings -ErrorAction Ignore
 
         $EarningsChartData = [PSCustomObject]@{ 
-            Labels = @(
-                ($ChartData.Group.Date | Sort-Object -Unique).ForEach(
+            Labels   = @(
+                ($ChartData.Group.Date | Sort-Object -Unique).foreach(
                     { 
                         [DateTime]::parseexact($_, "yyyy-MM-dd", $null).ToShortDateString()
                     }
@@ -384,16 +389,16 @@ Do {
         Remove-Variable OldestEarningsDate
 
         # At least 31 days are needed for Growth720
-        If ($Session.BalancesData.Count -gt 1) { 
+        if ($Session.BalancesData.Count -gt 1) { 
             $Session.BalancesData = @(
-                ($Session.BalancesData.Where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object -Property Pool, Currency).ForEach(
+                ($Session.BalancesData.Where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object -Property Pool, Currency).foreach(
                     { 
                         $Record = $null
-                        ($_.Group | Sort-Object -Property DateTime).ForEach(
+                        ($_.Group | Sort-Object -Property DateTime).foreach(
                             { 
-                                If ($_.DateTime -ge $Now.AddDays(-1)) { $_ } # Keep all records for 1 day
-                                ElseIf ($_.DateTime -ge $Now.AddDays(-7) -and $_.Delta -gt 0) { $_ } # Keep all records of the last 7 days with delta
-                                ElseIf ($_.DateTime.Date -ne $Record.DateTime.Date) { $Record = $_; $_ } # Keep the newest one per day
+                                if ($_.DateTime -ge $Now.AddDays(-1)) { $_ } # Keep all records for 1 day
+                                elseif ($_.DateTime -ge $Now.AddDays(-7) -and $_.Delta -gt 0) { $_ } # Keep all records of the last 7 days with delta
+                                elseif ($_.DateTime.Date -ne $Record.DateTime.Date) { $Record = $_; $_ } # Keep the newest one per day
                             }
                         )
                     }
@@ -401,17 +406,17 @@ Do {
             ) | Sort-Object -Property DateTime -Descending
         }
 
-        Try { 
+        try { 
             $Earnings | Export-Csv ".\Data\DailyEarnings.csv" -NoTypeInformation -Force
         }
-        Catch { 
+        catch { 
             Write-Message -Level Warn "Balances tracker failed to save earnings data to '.\Data\DailyEarnings.csv' (should have $($Earnings.count) entries)."
         }
 
-        If ($Session.BalancesData.Count -ge 1) { $Session.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
-        If ($Session.Balances.Count -ge 1) { $Session.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Cache\Balances.json" -Force -ErrorAction Ignore }
+        if ($Session.BalancesData.Count -ge 1) { $Session.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore }
+        if ($Session.Balances.Count -ge 1) { $Session.Balances | ConvertTo-Json | Out-File -LiteralPath ".\Cache\Balances.json" -Force -ErrorAction Ignore }
 
-        If ($PoolsToTrack.Count -gt 1) { 
+        if ($PoolsToTrack.Count -gt 1) { 
             $Session.RefreshBalancesNeeded = $true
             $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
             Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")."
@@ -423,6 +428,6 @@ Do {
     [System.GC]::WaitForPendingFinalizers()
     [System.GC]::Collect()
 
-    # Sleep until next update (at least 1 minute, maximum 60 minutes) or when no internet connection
-    While (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (1, [Int]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
-} While ($true)
+    # Sleep until next update (at least 5 minutes, maximum 60 minutes) or when no internet connection
+    while (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (5, [Int]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
+} while ($true)

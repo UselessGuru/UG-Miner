@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/PhoenixMiner/PhoenixMiner_6.2c_Windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -48,23 +48,23 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
     # Intensities for 2. algorithm
     $IntensityValues = [PSCustomObject]@{ 
         "Blake2s" = @(10, 20, 30, 40)
     }
 
-    If (-not $Session.Config.DryRun) { 
+    if (-not $Session.Config.DryRun) { 
         # Build command sets for intensities
         $Algorithms = $Algorithms.ForEach(
             { 
                 $_.PsObject.Copy()
-                If ($_.Algorithms[1]) { 
+                if ($_.Algorithms[1]) { 
                     $Intensity = $_.Intensity
                     $WarmupTimes = $_.WarmupTimes.PsObject.Copy()
-                    If ($_.Type -eq "NVIDIA" -and $Intensity) { $Intensity *= 5 } # Nvidia allows much higher intensity
-                    ForEach ($Intensity in $IntensityValues.($_.Algorithms[1]) | Select-Object) { 
+                    if ($_.Type -eq "NVIDIA" -and $Intensity) { $Intensity *= 5 } # Nvidia allows much higher intensity
+                    foreach ($Intensity in $IntensityValues.($_.Algorithms[1]) | Select-Object) { 
                         $_.Intensity = $Intensity
                         # Allow extra time for auto tuning
                         $_.WarmupTimes[1] = $WarmupTimes[1] + 45
@@ -75,60 +75,61 @@ If ($Algorithms) {
         )
     }
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and (($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302) })) { 
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ ($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302 })) { 
-                            # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
+                        # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and (($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302) })) { 
+                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ ($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302 })) { 
+                            # foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] })) { 
+                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
-                                    If ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
-                                        If ($Pool0.DAGsizeGiB -ge 4) { Return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
+                                if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                    if ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
+                                        if ($Pool0.DAGsizeGiB -ge 4) { return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
                                         $AvailableMinerDevices = $AvailableMinerDevices.Where({ [System.Version]$_.CIM.DriverVersion -le [System.Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)
                                     }
 
-                                    If ($AvailableMinerDevices) { 
+                                    if ($AvailableMinerDevices) { 
 
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)$(If ($_.Intensity) { "-$($_.Intensity)" })"})"
 
                                         $Arguments = $_.Arguments
                                         $Arguments += " -pool $(If ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User) -pass $($Pool0.Pass)"
-                                        $Arguments += Switch ($Pool0.Protocol) { 
-                                            "ethproxy"     { " -proto 2"; Break }
-                                            "minerproxy"   { " -proto 1"; Break }
-                                            "ethstratum1"  { " -proto 4"; Break }
-                                            "ethstratum2"  { " -proto 4"; Break }
-                                            "ethstratumnh" { " -proto 4"; Break }
-                                            "qtminer"      { " -proto 3"; Break }
-                                            Default        { " -proto 1" }
+                                        $Arguments += switch ($Pool0.Protocol) { 
+                                            "ethproxy"     { " -proto 2"; break }
+                                            "minerproxy"   { " -proto 1"; break }
+                                            "ethstratum1"  { " -proto 4"; break }
+                                            "ethstratum2"  { " -proto 4"; break }
+                                            "ethstratumnh" { " -proto 4"; break }
+                                            "qtminer"      { " -proto 3"; break }
+                                            default        { " -proto 1" }
                                         }
-                                        If ($Session.Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
-                                        If ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }
+                                        if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
+                                        if ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }
 
                                         # kernel 3 does not support dual mining
-                                        If (($AvailableMinerDevices.Memory | Measure-Object -Minimum).Minimum / 1GB -ge 2 * $MinMemGiB -and -not $_.Algorithms[1]) { # Faster kernels require twice as much VRAM
-                                            If ($AvailableMinerDevices.Vendor -eq "AMD") { $Arguments += " -clkernel 3" }
-                                            ElseIf ($AvailableMinerDevices.Vendor -eq "NVIDIA") { $Arguments += " -nvkernel 3" }
+                                        if (($AvailableMinerDevices.Memory | Measure-Object -Minimum).Minimum / 1GB -ge 2 * $MinMemGiB -and -not $_.Algorithms[1]) {
+                                            # Faster kernels require twice as much VRAM
+                                            if ($AvailableMinerDevices.Vendor -eq "AMD") { $Arguments += " -clkernel 3" }
+                                            elseif ($AvailableMinerDevices.Vendor -eq "NVIDIA") { $Arguments += " -nvkernel 3" }
                                         }
 
-                                        If ($_.Algorithms[1]) { 
+                                        if ($_.Algorithms[1]) { 
                                             $Arguments += " -dpool $(If ($Pool1.PoolPorts[1]) { "ssl://" })$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
-                                            If ($Session.Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments += " -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
-                                            If ($Pool1.WorkerName) { $Arguments += " -dworker $($Pool1.WorkerName)" }
-                                            If ($_.Intensity) { $Arguments += " -sci $($_.Intensity)" }
+                                            if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments += " -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
+                                            if ($Pool1.WorkerName) { $Arguments += " -dworker $($Pool1.WorkerName)" }
+                                            if ($_.Intensity) { $Arguments += " -sci $($_.Intensity)" }
                                         }
 
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -136,11 +137,11 @@ If ($Algorithms) {
                                         $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                         # Apply tuning parameters
-                                        If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                        if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                         [PSCustomObject]@{ 
                                             API         = "EthMiner"
-                                            Arguments   = "$Arguments -vmdag 0 -log 0 -wdog 0 -gsi 10 -cdmport $MinerAPIPort -gpus $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:d}' -f ($_ + 1) }) -join ',')"
+                                            Arguments   = "$Arguments -vmdag 0 -log 0 -wdog 0 -gsi 10 -cdmport $MinerAPIPort -gpus $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:d}' -f ($_ + 1) }) -join ',')"
                                             DeviceNames = $AvailableMinerDevices.Name
                                             Fee         = $_.Fee # Dev fee
                                             MinerSet    = $_.MinerSet
@@ -151,7 +152,7 @@ If ($Algorithms) {
                                             Type        = $Type
                                             URI         = $URI
                                             WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers      = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                            Workers     = @(($Pool0, $Pool1).Where({ $_ }).foreach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }

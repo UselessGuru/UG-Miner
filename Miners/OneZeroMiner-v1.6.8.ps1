@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 # Significant hashrate and efficiency improvement for Qubitcoin (varies by generation)
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { return }
 
 $URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.6.8/onezerominer-win64-1.6.8.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -42,29 +42,29 @@ $Algorithms = @(
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     $MinMemGiB = $_.MinMemGiB
 
-                    If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                    if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
                             [PSCustomObject]@{ 
                                 API         = "OneZero"
-                                Arguments   = "$($_.Arguments) --pool $(If ($Pool.PoolPorts[1]) { "ssl://" })$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.PoolPorts[1] -and $Session.Config.SSLallowSelfSignedCertificate) { " --no-cert-validation" }) --api-port $MinerAPIPort --hashrate-avg 5 --disable-telemetry --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$($_.Arguments) --pool $(If ($Pool.PoolPorts[1]) { "ssl://" })$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --pass $($Pool.Pass)$(If ($Pool.PoolPorts[1] -and $Session.Config.SSLallowSelfSignedCertificate) { " --no-cert-validation" }) --api-port $MinerAPIPort --hashrate-avg 5 --disable-telemetry --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = $_.Fee # Dev fee
                                 MinerSet    = $_.MinerSet
@@ -74,7 +74,7 @@ If ($Algorithms) {
                                 Type        = "NVIDIA"
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers      = @(@{ Pool = $Pool })
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }

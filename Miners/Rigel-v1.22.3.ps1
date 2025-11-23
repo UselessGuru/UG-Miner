@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 # (XEL) Minor performance improvement on 30xx, 40xx, and 170hx cards
 # Bug fixes: Failed to load CUDA / NVML errors when running in Docker
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { return }
 
 $URI = "https://github.com/rigelminer/rigel/releases/download/1.22.3/rigel-1.22.3-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -86,9 +86,9 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Model -Unique).foreach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
@@ -97,30 +97,30 @@ If ($Algorithms) {
             $Algorithms.ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                    ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
-                        # ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
-                        ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
+                    # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                    foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
+                        # foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                        foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
                             $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
                             $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                            If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                            if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                 $Arguments = $_.Arguments
-                                If ("ABEL", "AIPG", "ALPH", "BLOCX", "CFX", "CLORE", "ERGO", "ETC", "ETHW", "GRAM", "HYP", "IRON", "KLS", "NEOX", "NEXA", "NX", "OCTA", "PYI", "RXD", "XEL", "XNA", "XPB", "ZIL" -contains $Pool0.Currency) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
+                                if ("ABEL", "AIPG", "ALPH", "BLOCX", "CFX", "CLORE", "ERGO", "ETC", "ETHW", "GRAM", "HYP", "IRON", "KLS", "NEOX", "NEXA", "NX", "OCTA", "PYI", "RXD", "XEL", "XNA", "XPB", "ZIL" -contains $Pool0.Currency) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
 
                                 $Index = 1
-                                ForEach ($Pool in $Pools) { 
-                                    Switch ($Pool.Protocol) { 
-                                        "ethproxy"     { $Arguments += " --url [$Index]ethproxy"; Break }
-                                        "ethstratum1"  { $Arguments += " --url [$Index]ethstratum"; Break }
-                                        "ethstratum2"  { $Arguments += " --url [$Index]ethstratum"; Break }
-                                        "ethstratumnh" { $Arguments += " --url [$Index]ethstratum"; Break }
-                                        Default        { $Arguments += " --url [$Index]stratum" }
+                                foreach ($Pool in $Pools) { 
+                                    switch ($Pool.Protocol) { 
+                                        "ethproxy"     { $Arguments += " --url [$Index]ethproxy"; break }
+                                        "ethstratum1"  { $Arguments += " --url [$Index]ethstratum"; break }
+                                        "ethstratum2"  { $Arguments += " --url [$Index]ethstratum"; break }
+                                        "ethstratumnh" { $Arguments += " --url [$Index]ethstratum"; break }
+                                        default        { $Arguments += " --url [$Index]stratum" }
                                     }
-                                    $Arguments += If ($Pool.PoolPorts[1]) { "+ssl://" } Else { "+tcp://" }
+                                    $Arguments += if ($Pool.PoolPorts[1]) { "+ssl://" } else { "+tcp://" }
                                     $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
                                     $Arguments += " --username [$Index]$($Pool.User -replace "\..*") --password [$Index]$($Pool.Pass) --worker [$Index]$(If ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } Else { $Session.Config.WorkerName })"
 
@@ -128,18 +128,18 @@ If ($Algorithms) {
                                 }
                                 Remove-Variable Pool
 
-                                $Arguments += If ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { " --no-strict-ssl" } # Parameter cannot be used multiple times
+                                $Arguments += if ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { " --no-strict-ssl" } # Parameter cannot be used multiple times
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes
                                 $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                 # Apply tuning parameters
-                                If ($Session.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments += $_.Tuning }
+                                if ($Session.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "Rigel"
-                                    Arguments   = "$Arguments --api-bind 127.0.0.1:$($MinerAPIPort) --no-watchdog --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    Arguments   = "$Arguments --api-bind 127.0.0.1:$($MinerAPIPort) --no-watchdog --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     Fee         = $_.Fee # Dev fee
                                     MinerSet    = $_.MinerSet
@@ -150,7 +150,7 @@ If ($Algorithms) {
                                     Type        = "NVIDIA"
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers      = @($Pools.ForEach({ @{ Pool = $_ } }))
+                                    Workers     = @($Pools.ForEach({ @{ Pool = $_ } }))
                                 }
                             }
                         }

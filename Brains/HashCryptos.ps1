@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
 Version:        6.5.8
-Version date:   2025/11/21
+Version date:   2025/11/23
 #>
 
 using module ..\Includes\Include.psm1
@@ -35,60 +35,60 @@ $Durations = [TimeSpan[]]@()
 
 $BrainDataFile = "$PWD\Data\BrainData_$BrainName.json"
 
-$Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";"Cache-Control"="no-cache" }
+$Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-While ($PoolConfig = $Session.Config.Pools.$BrainName) { 
+while ($PoolConfig = $Session.Config.Pools.$BrainName) { 
 
     $APICallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$BrainName*" })
     $StartTime = [DateTime]::Now
 
-    If ($Session.MyIPaddress) { 
-        Try { 
+    if ($Session.MyIPaddress) { 
+        try { 
 
             Write-Message -Level Debug "Brain '$BrainName': Start loop$(If ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
-            Do { 
-                Try { 
+            do { 
+                try { 
                     $AlgoData = Invoke-RestMethod -Uri "https://hashcryptos.com/api/status" -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                    If ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
+                    if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                 }
-                Catch { 
+                catch { 
                     $APICallFails ++
                     $APIerror = $_.Exception.Message
-                    If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
+                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
                 }
-                If ($APIResponse.Message -like "Only 1 request *" -or $AlgoData.PSObject.Properties.Name.Count -lt 2) { 
-                    If ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
+                if ($APIResponse.Message -like "Only 1 request *" -or $AlgoData.PSObject.Properties.Name.Count -lt 2) { 
+                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
                     Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
                 }
-            } While ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -lE $Session.Config.PoolAPIallowedFailureCount)
+            } while ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            If ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
+            if ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
                 Write-Message -Level Warn "Brain $($BrainName): Problem when trying to access https://hashcryptos.com/api [$($APIerror -replace '\.$')]."
             }
-            ElseIf ($AlgoData) { 
+            elseif ($AlgoData) { 
                 # Change numeric string to numbers, some values are null
                 $AlgoData = ($AlgoData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
 
-                ForEach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
+                foreach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
                     $AlgorithmNorm = Get-Algorithm $Algorithm
 
                     # Temp fix, incorrect data in API
-                    If ($AlgorithmNorm -eq "Neoscrypt" -and $AlgoData.$Algorithm.mbtc_mh_factor -eq 1) { $AlgoData.$Algorithm.mbtc_mh_factor = 1000 }
+                    if ($AlgorithmNorm -eq "Neoscrypt" -and $AlgoData.$Algorithm.mbtc_mh_factor -eq 1) { $AlgoData.$Algorithm.mbtc_mh_factor = 1000 }
 
-                    $BasePrice = If ($AlgoData.$Algorithm.actual_last24h) { $AlgoData.$Algorithm.actual_last24h } Else { $AlgoData.$Algorithm.estimate_last24h }
+                    $BasePrice = if ($AlgoData.$Algorithm.actual_last24h) { $AlgoData.$Algorithm.actual_last24h } else { $AlgoData.$Algorithm.estimate_last24h }
 
                     $AlgoData.$Algorithm | Add-Member coins $AlgoData.$Algorithm.coins -Force
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
 
                     # Reset history when stat file got removed
-                    If ($PoolVariant -like "*Plus") { 
-                        $StatName = If ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } Else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
-                        If (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
+                    if ($PoolVariant -like "*Plus") { 
+                        $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
+                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
                             # Reset history when stat file got removed
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
                             Write-Message -Level Debug "Pool brain '$BrainName': PlusPrice history cleared for $($StatName -replace "_Profit")"
@@ -103,8 +103,8 @@ While ($PoolConfig = $Session.Config.Pools.$BrainName) {
                         estimate_current    = $AlgoData.$Algorithm.estimate_current
                         estimate_last24h    = $AlgoData.$Algorithm.estimate_last24h
                         Last24hDrift        = $AlgoData.$Algorithm.estimate_current - $BasePrice
-                        Last24hDriftPercent = If ($BasePrice -gt 0) { ($AlgoData.$Algorithm.estimate_current - $BasePrice) / $BasePrice } Else { 0 }
-                        Last24hDriftSign    = If ($AlgoData.$Algorithm.estimate_current -ge $BasePrice) { "Up" } Else { "Down" }
+                        Last24hDriftPercent = if ($BasePrice -gt 0) { ($AlgoData.$Algorithm.estimate_current - $BasePrice) / $BasePrice } else { 0 }
+                        Last24hDriftSign    = if ($AlgoData.$Algorithm.estimate_current -ge $BasePrice) { "Up" } else { "Down" }
                         Name                = $Algorithm
                     }
                 }
@@ -119,7 +119,7 @@ While ($PoolConfig = $Session.Config.Pools.$BrainName) {
                 $GroupMedSampleSizeHalf = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
                 $GroupMedSampleSizeNoPercent = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDrift } }
 
-                ForEach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where({ $AlgoData.PSObject.Properties.Name -contains $_ })) { 
+                foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where({ $AlgoData.PSObject.Properties.Name -contains $_ })) { 
                     $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algorithm })).Median)
                     $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSize.Where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSize.Where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where({ $_.Name -eq $Algorithm })).Median)
                     $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)
@@ -128,11 +128,11 @@ While ($PoolConfig = $Session.Config.Pools.$BrainName) {
                     $LastPrice = [Double]$CurPoolObject.estimate_current
                     $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
 
-                    $StatName = If ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } Else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
+                    $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
                     # Reset history if current estimate is not within +/- 1000% of 24hr stat price
-                    If ($Stat = Get-Stat -Name $StatName) { 
+                    if ($Stat = Get-Stat -Name $StatName) { 
                         $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
-                        If ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
+                        if ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
                             Remove-Stat -Name $StatName
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             $PlusPrice = $LastPrice
@@ -143,11 +143,11 @@ While ($PoolConfig = $Session.Config.Pools.$BrainName) {
                 }
                 Remove-Variable BasePrice, CurPoolObject, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 
-                If ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$BrainName.BrainDebug) { 
+                if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$BrainName.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }
-            Else { 
+            else { 
                 $AlgoData = [PSCustomObject]@{ }
             }
 
@@ -155,9 +155,9 @@ While ($PoolConfig = $Session.Config.Pools.$BrainName) {
             $Session.Brains.$BrainName | Add-Member "Updated" $Timestamp -Force
 
             # Limit to only sample size + 10 minutes history
-            $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes(-($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
+            $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
         }
-        Catch { 
+        catch { 
             Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
             "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
             $_.Exception | Format-List -Force >> "Logs\Brain_$($BrainName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
@@ -178,8 +178,8 @@ While ($PoolConfig = $Session.Config.Pools.$BrainName) {
         [System.GC]::Collect()
     }
 
-    While (-not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
-        Start-Sleep -MilliSeconds 250
+    while (-not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
+        Start-Sleep -Milliseconds 250
     }
 }
 

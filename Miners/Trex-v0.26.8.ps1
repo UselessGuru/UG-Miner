@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/trexminer/T-Rex/releases/download/0.26.8/t-rex-0.26.8-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -56,9 +56,9 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Model -Unique).foreach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
@@ -67,53 +67,53 @@ If ($Algorithms) {
             $Algorithms.ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
-                        ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
+                    foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
+                        foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                            If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                            if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                                If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity .+$" }
+                                if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity .+$" }
 
                                 $Arguments = $_.Arguments
-                                Switch ($Pool0.Protocol) { 
-                                    "ethstratum1"  { $Arguments += " --url stratum2"; Break }
-                                    "ethstratum2"  { $Arguments += " --url stratum2"; Break }
-                                    "ethstratumnh" { $Arguments += " --url stratum2"; Break }
-                                    Default        { $Arguments += " --url stratum" }
+                                switch ($Pool0.Protocol) { 
+                                    "ethstratum1" { $Arguments += " --url stratum2"; break }
+                                    "ethstratum2" { $Arguments += " --url stratum2"; break }
+                                    "ethstratumnh" { $Arguments += " --url stratum2"; break }
+                                    default { $Arguments += " --url stratum" }
                                 }
-                                $Arguments += If ($Pool0.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
+                                $Arguments += if ($Pool0.PoolPorts[1]) { "+ssl" } else { "+tcp" }
                                 $Arguments += "://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
                                 $Arguments += " --user $($Pool0.User) --pass $($Pool0.Pass)"
-                                If ($Pool0.WorkerName) { $Arguments += " --worker $($Pool0.WorkerName)" }
+                                if ($Pool0.WorkerName) { $Arguments += " --worker $($Pool0.WorkerName)" }
 
-                                If ("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool0.Currency) { 
+                                if ("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool0.Currency) { 
                                     $Arguments += " --coin $($Pool0.Currency)"
                                 }
 
-                                If ($_.Algorithms[1]) { 
-                                    Switch ($Pool1.Protocol) { 
-                                        "ethstratum1"  { $Arguments += " --url2 stratum2"; Break }
-                                        "ethstratum2"  { $Arguments += " --url2 stratum2"; Break }
-                                        "ethstratumnh" { $Arguments += " --url2 stratum2"; Break }
-                                        Default        { $Arguments += " --url2 stratum" }
+                                if ($_.Algorithms[1]) { 
+                                    switch ($Pool1.Protocol) { 
+                                        "ethstratum1" { $Arguments += " --url2 stratum2"; break }
+                                        "ethstratum2" { $Arguments += " --url2 stratum2"; break }
+                                        "ethstratumnh" { $Arguments += " --url2 stratum2"; break }
+                                        default { $Arguments += " --url2 stratum" }
                                     }
-                                    $Arguments += If ($Pool1.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
+                                    $Arguments += if ($Pool1.PoolPorts[1]) { "+ssl" } else { "+tcp" }
                                     $Arguments += "://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
                                     $Arguments += " --user2 $($Pool1.User) --pass2 $($Pool1.Pass)"
-                                    If ($Pool1.WorkerName) { $Arguments += " --worker2 $($Pool1.WorkerName)" }
+                                    if ($Pool1.WorkerName) { $Arguments += " --worker2 $($Pool1.WorkerName)" }
                                 }
 
-                                If ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
+                                if ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
 
                                 # Apply tuning parameters
-                                If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "Trex"
-                                    Arguments   = "$Arguments --no-strict-ssl --no-watchdog --gpu-report-interval 5 --quiet --retry-pause 1 --timeout 50000 --api-bind-http 127.0.0.1:$($MinerAPIPort) --api-read-only --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                    Arguments   = "$Arguments --no-strict-ssl --no-watchdog --gpu-report-interval 5 --quiet --retry-pause 1 --timeout 50000 --api-bind-http 127.0.0.1:$($MinerAPIPort) --api-read-only --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     Fee         = $_.Fee # Dev fee
                                     MinerSet    = $_.MinerSet
@@ -124,7 +124,7 @@ If ($Algorithms) {
                                     Type        = "NVIDIA"
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers      = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                    Workers     = @(($Pool0, $Pool1).Where({ $_ }).foreach({ @{ Pool = $_ } }))
                                 }
                             }
                         }

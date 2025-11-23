@@ -18,24 +18,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class NanoMiner : Miner { 
+class NanoMiner : Miner { 
     [Void]CreateConfigFiles() { 
         $Parameters = $this.Arguments | ConvertFrom-Json -ErrorAction Ignore
 
-        Try { 
+        try { 
             $ConfigFile = "$(Split-Path $this.Path)\$($Parameters.ConfigFile.FileName)"
             # Write config files. Do not overwrite existing files to preserve optional manual customization
-            If (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { 
+            if (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { 
                 $Parameters.ConfigFile.Content | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore
             }
         }
-        Catch { 
+        catch { 
             Write-Message -Level Error "Creating miner config files for '$($this.Info)' failed [Error: '$($Error | Select-Object -First 1)']."
-            Return
+            return
         }
     }
 
@@ -44,9 +44,9 @@ Class NanoMiner : Miner {
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/stats"
 
-        Try { 
+        try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
-            If (-not $Data) { Return $null }
+            if (-not $Data) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = ""
@@ -58,10 +58,10 @@ Class NanoMiner : Miner {
 
             $Algorithms = @($Data.Algorithms.ForEach({ $_.PSObject.Properties.Name }) | Select-Object -Unique)
 
-            ForEach ($Algorithm in $Algorithms) { 
+            foreach ($Algorithm in $Algorithms) { 
                 $HashrateName = $this.Algorithms[$Algorithms.IndexOf($Algorithm)]
                 $HashrateValue = [Double](($Data.Algorithms.$Algorithm.Total.Hashrate | Measure-Object -Sum).Sum)
-                If ($null -eq $HashrateValue) { Return $null }
+                if ($null -eq $HashrateValue) { return $null }
                 $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
                 $SharesAccepted = [Int64](($Data.Algorithms.$Algorithm.Total.Accepted | Measure-Object -Sum).Sum)
@@ -72,22 +72,22 @@ Class NanoMiner : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
-                ForEach ($Device in $Data.Devices) { $PowerConsumption += [Double]$Device.PSObject.Members.Value.Power }
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+            if ($this.ReadPowerConsumption) { 
+                foreach ($Device in $Data.Devices) { $PowerConsumption += [Double]$Device.PSObject.Members.Value.Power }
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

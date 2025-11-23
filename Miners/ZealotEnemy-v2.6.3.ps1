@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
-$URI = Switch ($Session.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Z-Enemy/z-enemy-2.6.3-win-cuda11.1.zip"; Break }
-    Default                           { Return }
+$URI = switch ($Session.DriverVersion.CUDA) { 
+    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Z-Enemy/z-enemy-2.6.3-win-cuda11.1.zip"; break }
+    default { return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\z-enemy.exe"
@@ -55,9 +55,9 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Model -Unique).foreach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
@@ -66,21 +66,21 @@ If ($Algorithms) {
             $Algorithms.ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-                    ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                    foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        If ($_.Algorithm -eq "KawPow" -and $MinMemGB -lt 2) { $MinMemGiB = 4 } # No hash rates in time for GPUs with 2GB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        if ($_.Algorithm -eq "KawPow" -and $MinMemGB -lt 2) { $MinMemGiB = 4 } # No hash rates in time for GPUs with 2GB
+                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Arguments = $_.Arguments
-                            If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity [0-9]+" }
+                            if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity [0-9]+" }
 
                             [PSCustomObject]@{ 
                                 API         = "Trex"
-                                Arguments   = "$Arguments $(If ($Pool.PoolPorts[1]) { "$(If ($Session.Config.SSLallowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl" } Else { "--url stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$Arguments $(If ($Pool.PoolPorts[1]) { "$(If ($Session.Config.SSLallowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl" } Else { "--url stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @(0.01) # Dev fee
                                 MinerSet    = $_.MinerSet
@@ -91,7 +91,7 @@ If ($Algorithms) {
                                 Type        = "NVIDIA"
                                 URI         = $URI
                                 WarmupTimes = @($_.WarmupTimes) # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers      = @(@{ Pool = $Pool })
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -28,24 +28,24 @@ $PoolAPItimeout = $Session.Config.Pools.$Name.PoolAPItimeout
 $RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
 $RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
 
-$Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
+$Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-While (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchUserName & $Session.Config.MiningDutchAPIKey) { 
+while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchUserName -and $Session.Config.MiningDutchAPIKey) { 
 
-    Try { 
+    try { 
         $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Session.Config.MiningDutchUserName)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
 
-        If ($Session.Config.LogBalanceAPIResponse) { 
+        if ($Session.Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
         }
 
-        If ($APIResponse.Message -like "Only 1 request *") { 
+        if ($APIResponse.Message -like "Only 1 request *") { 
             Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
         }
-        ElseIf ($Currencies = ($APIResponse.result.Where({ $_.tag -and $_.tag -notlike "*_*" }) | Sort-Object -Property tag)) { 
+        elseif ($Currencies = ($APIResponse.result.Where({ $_.tag -and $_.tag -notlike "*_*" }) | Sort-Object -Property tag)) { 
             $Currencies.ForEach(
                 { 
                     $Currency = $_.tag
@@ -53,23 +53,23 @@ While (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
 
                     Start-Sleep -Seconds $RetryInterval # Pool does not support immediate requests
 
-                    While (-not $APIResponse -and $RetryCount -gt 0) { 
-                        Try { 
+                    while (-not $APIResponse -and $RetryCount -gt 0) { 
+                        try { 
                             $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
 
-                            If ($Session.Config.LogBalanceAPIResponse) { 
+                            if ($Session.Config.LogBalanceAPIResponse) { 
                                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                                 $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                             }
 
-                            If ($APIResponse.Message -like "Only 1 request *") { 
+                            if ($APIResponse.Message -like "Only 1 request *") { 
                                 Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
                             }
-                            ElseIf ($APIResponse.getuserbalance.data) { 
+                            elseif ($APIResponse.getuserbalance.data) { 
 
                                 $Unpaid = [Double]$APIResponse.getuserbalance.data.confirmed + [Double]$APIResponse.getuserbalance.data.unconfirmed
-                                If ($Unpaid -gt 0) { 
+                                if ($Unpaid -gt 0) { 
                                     [PSCustomObject]@{ 
                                         DateTime = [DateTime]::Now.ToUniversalTime()
                                         Pool     = $Name
@@ -83,18 +83,18 @@ While (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
                                 }
                             }
                         }
-                        Catch { 
+                        catch { 
                         }
                         $RetryCount--
                     }
                 }
             )
         }
-        Else { 
+        else { 
             Start-Sleep -Seconds $RetryInterval # Pool does not support immediate requests
         }
     }
-    Catch { 
+    catch { 
         Start-Sleep -Seconds $RetryInterval # Pool does not support immediate requests
     }
     $RetryCount--

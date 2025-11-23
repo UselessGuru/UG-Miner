@@ -18,19 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class OneZero : Miner { 
+class OneZero : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)"
 
-        Try { 
+        try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
-            If (-not $Data.algos -or $null -eq $Data.algos[0].total_hashrate) { Return $null }
+            if (-not $Data.algos -or $null -eq $Data.algos[0].total_hashrate) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
@@ -45,22 +45,22 @@ Class OneZero : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = [Double]($Data.Devices | Measure-Object power -Sum).Sum
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

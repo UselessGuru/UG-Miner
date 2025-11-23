@@ -17,19 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
 $URI = "https://github.com/patrykwnosuch/cpuminer-nosuch/releases/download/3.8.8.1-nosuch-m4/cpu-nosuch-m4-win64.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-If ($AvailableMinerDevices.CPUfeatures -match 'sha')      { $Path = "Bin\$Name\cpuminer-avx2-sha.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match 'avx2') { $Path = "Bin\$Name\cpuminer-avx2.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match 'aes')  { $Path = "Bin\$Name\cpuminer-aes-sse2.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match 'sse2') { $Path = "Bin\$Name\cpuminer-sse2.exe" }
-Else { Return }
+if ($AvailableMinerDevices.CPUfeatures -match 'sha')      { $Path = "Bin\$Name\cpuminer-avx2-sha.exe" }
+elseif ($AvailableMinerDevices.CPUfeatures -match 'avx2') { $Path = "Bin\$Name\cpuminer-avx2.exe" }
+elseif ($AvailableMinerDevices.CPUfeatures -match 'aes')  { $Path = "Bin\$Name\cpuminer-aes-sse2.exe" }
+elseif ($AvailableMinerDevices.CPUfeatures -match 'sse2') { $Path = "Bin\$Name\cpuminer-sse2.exe" }
+else                                                      { return }
 
 $Algorithms = @(
     @{ Algorithm = "BinariumV1"; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @(); Arguments = " --algo binarium-v1" }
@@ -40,7 +40,7 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
     $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
     $Algorithms.ForEach(
@@ -48,8 +48,8 @@ If ($Algorithms) {
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
             # $ExcludePools = $_.ExcludePools
-            # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
-            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"
@@ -63,7 +63,7 @@ If ($Algorithms) {
                     Type        = "CPU"
                     URI         = $URI
                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers      = @(@{ Pool = $Pool })
+                    Workers     = @(@{ Pool = $Pool })
                 }
             }
         }

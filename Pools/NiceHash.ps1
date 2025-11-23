@@ -19,11 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Param(
+param(
     [String]$PoolVariant
 )
 
@@ -39,51 +39,51 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 $APICallFails = 0
 
-Do { 
-    Try { 
-        If (-not $Request) { 
+do { 
+    try { 
+        if (-not $Request) { 
             $Request = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-            If ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
+            if ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
         }
-        If (-not $RequestAlgodetails) { 
+        if (-not $RequestAlgodetails) { 
             $RequestAlgodetails = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/mining/algorithms/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-            If ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
+            if ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
         }
     }
-    Catch { 
+    catch { 
         $APICallFails ++
         Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
     }
-} While (-not ($Request -and $RequestAlgodetails) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
+} while (-not ($Request -and $RequestAlgodetails) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
-If ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
+if ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
     Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://api2.nicehash.com/main/api/v2."
 }
-ElseIf ($Request.miningAlgorithms) { 
+elseif ($Request.miningAlgorithms) { 
     $Request.miningAlgorithms.ForEach(
         { 
             $Algorithm = $_.Algorithm
             $AlgorithmNorm = Get-Algorithm $Algorithm
             $Currencies = Get-CurrencyFromAlgorithm $AlgorithmNorm
-            $Currency = If ($Currencies.Count -eq 1) { [String]$Currencies } Else { "" }
+            $Currency = if ($Currencies.Count -eq 1) { [String]$Currencies } else { "" }
             $Divisor = 100000000
 
             $Reasons = [System.Collections.Generic.Hashset[String]]::new()
-            If (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
-            If ($RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }).order -eq 0) { $Reasons.Add("No orders at pool") | Out-Null }
-            If ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-            If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
+            if (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
+            if ($RequestAlgodetails.miningAlgorithms.Where({ $_.Algorithm -eq $Algorithm }).order -eq 0) { $Reasons.Add("No orders at pool") | Out-Null }
+            if ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+            if ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
             $Key = "$($Name)_$($AlgorithmNorm)"
             $Value = [Double]$_.paying / $Divisor
 
-        $Stat = Get-Stat -Name "$($Key)_Profit"
-        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
-        }
-        Else { 
-            $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
-        }
+            $Stat = Get-Stat -Name "$($Key)_Profit"
+            if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
+                $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+            }
+            else { 
+                $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
+            }
 
             [PSCustomObject]@{ 
                 Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Minute_5_Fluctuation), 1) # Use short timespan to counter price spikes
@@ -99,8 +99,8 @@ ElseIf ($Request.miningAlgorithms) {
                 Port                     = 9200
                 PortSSL                  = 443
                 PoolUri                  = "https://www.nicehash.com/algorithm/$($_.Algorithm.ToLower())"
-                Price                    = If ($null -eq $_.paying) { [Double]::NaN } Else { $Stat.Live }
-                Protocol                 = If ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratumnh" } ElseIf ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } Else { "" }
+                Price                    = if ($null -eq $_.paying) { [Double]::NaN } else { $Stat.Live }
+                Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratumnh" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
                 Region                   = [String]$PoolConfig.Region
                 Reasons                  = $Reasons
                 SendHashrate             = $false

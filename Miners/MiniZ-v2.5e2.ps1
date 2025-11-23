@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -27,7 +27,7 @@ Version date:   2025/11/21
 # Fixed some rare issues with ProgPoW causing error 400.
 # Fixed password integration on the --url: --url=wallet.worker:pass@server:port
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MiniZ/miniZ_v2.5e2_win-x64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -35,50 +35,50 @@ $Path = "Bin\$Name\miniZ.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Equihash1254";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 3.0;  MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 4.0;  MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ ";         ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=150,5 --smart-pers" }
+    @{ Algorithm = "Equihash1254"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 3.0; MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 4.0; MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
   
-    @{ Algorithm = "Equihash1254";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 3.0;  MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 4.0;  MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=150,5 --smart-pers" }
+    @{ Algorithm = "Equihash1254"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0; MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0; MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
 )
 
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0].($_.Algorithm) })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                            If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                            if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                                 $Arguments = $_.Arguments
                                 $Arguments += " --url=$(If ($Pool.PoolPorts[1]) { "ssl://" })$($Pool.User)@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                If ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments += " --worker=$($Pool.WorkerName)" }
-                                If ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers }
+                                if ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments += " --worker=$($Pool.WorkerName)" }
+                                if ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers }
                                 $Arguments += " --pass=$($Pool.Pass)"
 
                                 # Apply tuning parameters
-                                If ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
 
                                 [PSCustomObject]@{ 
                                     API         = "MiniZ"
-                                    Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:d2}' -f $_ }) -join " ")"
+                                    Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:d2}' -f $_ }) -join " ")"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     Fee         = $_.Fee # Dev fee
                                     MinerSet    = $_.MinerSet
@@ -89,7 +89,7 @@ If ($Algorithms) {
                                     Type        = $Type
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers      = @(@{ Pool = $Pool })
+                                    Workers     = @(@{ Pool = $Pool })
                                 }
                             }
                         }

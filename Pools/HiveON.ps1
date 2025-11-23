@@ -19,11 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HiveON.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Param(
+param(
     [String]$PoolVariant
 )
 
@@ -37,39 +37,39 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 $APICallFails = 0
 
-Do { 
-    Try { 
+do { 
+    try { 
         $Request = Invoke-RestMethod -Uri "https://HiveON.net/api/v1/stats/pool" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-        If ($Request -like "<!DOCTYPE html>*") { $Request = $null }
+        if ($Request -like "<!DOCTYPE html>*") { $Request = $null }
     }
-    Catch { 
+    catch { 
         $APICallFails ++
         Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
     }
-} While (-not $Request -and $APICallFails -lt $Session.Config.PoolAPIallowedFailureCount)
+} while (-not $Request -and $APICallFails -lt $Session.Config.PoolAPIallowedFailureCount)
 
-ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
+foreach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
     $Currency = $Pool.name -replace "\s+"
-    If ($AlgorithmNorm = $Session.CurrencyAlgorithm[$Currency]) { 
+    if ($AlgorithmNorm = $Session.CurrencyAlgorithm[$Currency]) { 
         $Divisor = [Double]$Pool.profitPerPower
 
         # Add coin name
-        If ($Pool.title -and $Currency) { 
+        if ($Pool.title -and $Currency) { 
             Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
-        If (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
-        If ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        If ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
+        if (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
+        if ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        if ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
         $Value = $Request.stats.($Pool.name).expectedReward24H * $Session.Rates.$Currency.BTC / $Divisor
         $Stat = Get-Stat -Name "$($Key)_Profit"
-        If ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
+        if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
             $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
         }
-        Else { 
+        else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
         }
 
@@ -95,7 +95,7 @@ ForEach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
             SSLselfSignedCertificate = $false
             StablePrice              = $Stat.Week
             Updated                  = [DateTime]$Stat.Updated
-            User                     = If ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } Else { "" }
+            User                     = if ($PoolConfig.Wallets.$Currency) { [String]$PoolConfig.Wallets.$Currency } else { "" }
             Variant                  = $PoolVariant
             WorkerName               = $PoolConfig.WorkerName
             Workers                  = [UInt]$Request.stats.$($Pool.name).workers

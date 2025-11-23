@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
 $URI = "https://github.com/RickillerZ/cpuminer-RKZ/releases/download/V4.2b/cpuminer-RKZ.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -37,7 +37,7 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
     $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
@@ -46,8 +46,8 @@ If ($Algorithms) {
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
             # $ExcludePools = $_.ExcludePools
-            # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-            ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"
@@ -61,7 +61,7 @@ If ($Algorithms) {
                     Type        = "CPU"
                     URI         = $URI
                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers      = @(@{ Pool = $Pool })
+                    Workers     = @(@{ Pool = $Pool })
                 }
             }
         }

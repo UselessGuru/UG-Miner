@@ -18,29 +18,29 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class XmRig : Miner { 
+class XmRig : Miner { 
     [Void]CreateConfigFiles() { 
         $Parameters = $this.Arguments | ConvertFrom-Json -ErrorAction Ignore
 
-        Try { 
+        try { 
             $ConfigFile = "$(Split-Path $this.Path)\$($Parameters.ConfigFile.FileName)"
 
             $ThreadsConfig = [PSCustomObject]@{ }
             $ThreadsConfigFile = "$(Split-Path $this.Path)\$($Parameters.ThreadsConfigFileName)"
 
-            If ($Parameters.ConfigFile.Content.threads) { 
+            if ($Parameters.ConfigFile.Content.threads) { 
                 # Write full config file, ignore possible hw change
                 $Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore
             }
-            Else { 
+            else { 
                 # Check if we have a valid hw file for all installed hardware. If hardware / device order has changed we need to re-create the config files. 
                 $ThreadsConfig = [System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore
-                If ($ThreadsConfig.Count -lt 1) { 
-                    If (Test-Path -LiteralPath "$(Split-Path $this.Path)\$($this.Algorithms[0] | Select-Object -First 1)-*.json" -PathType Leaf) { 
+                if ($ThreadsConfig.Count -lt 1) { 
+                    if (Test-Path -LiteralPath "$(Split-Path $this.Path)\$($this.Algorithms[0] | Select-Object -First 1)-*.json" -PathType Leaf) { 
                         # Remove old config files, thread info is no longer valid
                         Write-Message -Level Warn "Hardware change detected. Deleting existing configuration files for miner '$($this.Info)'."
                         Remove-Item "$(Split-Path $this.Path)\ThreadsConfig-$($this.Algorithms[0] | Select-Object -First 1)-*.json" -Force -ErrorAction Ignore
@@ -51,69 +51,69 @@ Class XmRig : Miner {
 
                     # Sometimes the process cannot be found instantly
                     $Loops = 100
-                    Do { 
-                        If ($this.ProcessId = ($this.ProcessJob | Receive-Job -ErrorAction Ignore | Select-Object -ExpandProperty ProcessId)) { 
+                    do { 
+                        if ($this.ProcessId = ($this.ProcessJob | Receive-Job -ErrorAction Ignore | Select-Object -ExpandProperty ProcessId)) { 
                             $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
-                            If (Test-Path -LiteralPath $ThreadsConfigFile -PathType Leaf) { 
-                                If ($ThreadsConfig = @([System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads) { 
-                                    If ($this.Type -contains "CPU") { 
+                            if (Test-Path -LiteralPath $ThreadsConfigFile -PathType Leaf) { 
+                                if ($ThreadsConfig = @([System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads) { 
+                                    if ($this.Type -contains "CPU") { 
                                         ConvertTo-Json -InputObject @($ThreadsConfig | Select-Object -Unique) -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -Encoding -ErrorAction Ignore
                                     }
-                                    Else { 
+                                    else { 
                                         ConvertTo-Json -InputObject @($ThreadsConfig | Sort-Object -Property Index -Unique) -Depth 10 | Out-File -LiteralPath $ThreadsConfigFile -Force -ErrorAction Ignore
                                     }
-                                    Break
+                                    break
                                 }
                             }
                         }
                         $Loops --
                         Start-Sleep -Milliseconds 50
-                    } While ($Loops -gt 0)
+                    } while ($Loops -gt 0)
                     Remove-Variable Loops
                 }
 
-                If ((Test-Path -LiteralPath $ConfigFile -PathType Leaf) -and -not (([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads)) { 
+                if ((Test-Path -LiteralPath $ConfigFile -PathType Leaf) -and -not (([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -ErrorAction Ignore).threads)) { 
                     # Threads config in config file is invalid, retrieve from threads config file
                     $ThreadsConfig = [System.IO.File]::ReadAllLines($ThreadsConfigFile) | ConvertFrom-Json
-                    If ($ThreadsConfig.Count -ge 1) { 
+                    if ($ThreadsConfig.Count -ge 1) { 
                         # Write config files. Overwrite because we need to add thread info
-                        If ($this.Type -contains "CPU") { 
+                        if ($this.Type -contains "CPU") { 
                             # CPU thread config does not contain index information
                             $Parameters.ConfigFile.Content | Add-Member threads ([Array]($ThreadsConfig * $Parameters.Threads)) -Force
                         }
-                        Else { 
+                        else { 
                             $Parameters.ConfigFile.Content | Add-Member threads ([Array](($ThreadsConfig.Where({ $Parameters.Devices -contains $_.index }))) * $Parameters.Threads) -Force
                         }
                         $Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore
                     }
-                    Else { 
+                    else { 
                         Write-Message -Level Error "Error parsing threads config file - cannot create miner config files for '$($this.Info)' [Error: '$($Error | Select-Object -First 1)']."
-                        Return
+                        return
                     }
                 }
-                If ($this.ProcessJob) { 
-                    If ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
+                if ($this.ProcessJob) { 
+                    if ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
                     # Jobs are getting removed in core loop (removing immediately after stopping process here may take several seconds)
                     $this.ProcessJob = $null
                 }
 
-                If ($this.Process) { 
-                    If ($this.Process.ParentId) { Stop-Process -Id $this.Process.ParentId -Force -ErrorAction Ignore | Out-Null }
+                if ($this.Process) { 
+                    if ($this.Process.ParentId) { Stop-Process -Id $this.Process.ParentId -Force -ErrorAction Ignore | Out-Null }
                     Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
                     # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                    (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                    (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").foreach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
                 }
             }
             Else { 
                 Write-Message -Level Error "Error running temporary miner - cannot create threads config file '$($this.Info)' ['$($Error | Select-Object -First 1)']."
-                Return
+                return
             }
             $this.Process = $null
             $this.ProcessId = $null
         }
-        Catch { 
+        catch { 
             Write-Message -Level Error "Error creating miner config files for '$($this.Info)' failed ['$($Error | Select-Object -First 1)']."
-            Return
+            return
         }
     }
 
@@ -123,21 +123,21 @@ Class XmRig : Miner {
 
         $Request = "http://127.0.0.1:$($this.Port)/api.json"
 
-        Try { 
+        try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
             # temp fix for https://github.com/scala-network/XLArig/issues/59
-            If ($Data -is [String] -and $Data -match "(?smi)^({.+?`"total`":\s*\[.+?\])") { 
+            if ($Data -is [String] -and $Data -match "(?smi)^({.+?`"total`":\s*\[.+?\])") { 
                 $Data = "$($Matches[1])}}" | ConvertFrom-Json -ErrorAction Stop
             }
-            If (-not $Data.hashrate.total) { Return $null }
+            if (-not $Data.hashrate.total) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
             $HashrateValue = [Double]($Data.hashrate.total.Where({ $_ }) | Measure-Object -Average).Average
-            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[0] } # fix
-            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[1] } # fix
-            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[2] } # fix
-            If ($null -eq $HashrateValue) { Return $null }
+            if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[0] } # fix
+            if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[1] } # fix
+            if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[2] } # fix
+            if ($null -eq $HashrateValue) { return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $Shares = [PSCustomObject]@{ }
@@ -148,22 +148,22 @@ Class XmRig : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = [Double](($Data.hwmon.power | Measure-Object -Sum).Sum)
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

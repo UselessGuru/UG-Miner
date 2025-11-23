@@ -18,14 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolConfig = $Session.Config.Pools.$Name
-$PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
+$PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).foreach(
     { 
         $APIResponse = $null
         $Currency = $_.ToUpper()
@@ -35,18 +35,18 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
 
         $Request = "https://HiveON.net/api/v1/stats/miner/$Wallet/$Currency/billing-acc"
 
-        While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
+        while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
-            Try { 
+            try { 
                 $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolConfig.PoolAPItimeout -ErrorAction Ignore
 
-                If ($Session.Config.LogBalanceAPIResponse) { 
+                if ($Session.Config.LogBalanceAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 }
 
-                If ($APIResponse.earningStats) { 
+                if ($APIResponse.earningStats) { 
                     [PSCustomObject]@{ 
                         DateTime = [DateTime]::Now.ToUniversalTime()
                         Pool     = $Name
@@ -61,7 +61,7 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
                     }
                 }
             }
-            Catch { 
+            catch { 
                 Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
             }
 

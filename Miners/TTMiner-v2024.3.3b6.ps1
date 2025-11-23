@@ -17,17 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
-If (($Session.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { Return }
-If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { Return }
+if (($Session.CPUfeatures -match "^AES$|^AVX2$").count -ne 2) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type }))) { return }
 
-$URI = Switch ($Session.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"11.0" } { "http://www.tradeproject.de/download/Miner/TT-Miner-2024.3.3b6.zip"; Break }
-    Default                           { Return }
+$URI = switch ($Session.DriverVersion.CUDA) { 
+    { $_ -ge [System.Version]"11.0" } { "http://www.tradeproject.de/download/Miner/TT-Miner-2024.3.3b6.zip"; break }
+    default { return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\TT-Miner.exe"
@@ -89,43 +89,43 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.Where({ $_.Algorithm -ne "EtcHash" -or $MinerPools[0][$_.Algorithm].Epoch -lt 383 }) # Miner supports EtcHash up to epoch 382
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
-                    ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
+                    foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                            If ("AKA", "ALPH", "ALT", "ARL", "AVS", "BBC", "BCH", "BLACK", "BNBTC", "BTC", "BTRM", "BUT", "CLO", "CLORE", "EGAZ", "EGEM", "ELH", "EPIC", "ETC", "ETHF", "ETHO", "ETHW", "ETI", "ETP", "EVOX", "EVR", "EXP", "FiroPowFIRO", "FITA", "FRENS", "GRAMS", "GSPC", "HVQ", "IRON", "JGC", "KAW", "KCN", "KIIRO", "LAB", "LTR", "MEOW", "MEWC", "NAPI", "NEOX", "NOVO", "OCTA", "PAPRY", "PRCO", "REDE", "RTH", "RTM", "RVN", "RXD", "SATO", "SATOX", "SCC", "SERO", "THOON", "TTM", "UBQ", "VBK", "VEIL", "VKAX", "VTE", "XNA", "YERB", "ZANO", "ZELS", "ZIL", "ZKBTC" -contains $Pool.Currency) { 
+                            if ("AKA", "ALPH", "ALT", "ARL", "AVS", "BBC", "BCH", "BLACK", "BNBTC", "BTC", "BTRM", "BUT", "CLO", "CLORE", "EGAZ", "EGEM", "ELH", "EPIC", "ETC", "ETHF", "ETHO", "ETHW", "ETI", "ETP", "EVOX", "EVR", "EXP", "FiroPowFIRO", "FITA", "FRENS", "GRAMS", "GSPC", "HVQ", "IRON", "JGC", "KAW", "KCN", "KIIRO", "LAB", "LTR", "MEOW", "MEWC", "NAPI", "NEOX", "NOVO", "OCTA", "PAPRY", "PRCO", "REDE", "RTH", "RTM", "RVN", "RXD", "SATO", "SATOX", "SCC", "SERO", "THOON", "TTM", "UBQ", "VBK", "VEIL", "VKAX", "VTE", "XNA", "YERB", "ZANO", "ZELS", "ZIL", "ZKBTC" -contains $Pool.Currency) { 
                                 $Arguments = "$($_.Arguments -replace " -[a|c] \w+") -c $($Pool.Currency)"
                             }
-                            Else { 
+                            else { 
                                 $Arguments = $_.Arguments
                             }
-                            If ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
+                            if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
                             $Arguments += " -o "
-                            Switch ($Pool.Protocol) { 
-                                "ethstratum1"  { $Arguments += "stratum+"; Break }
-                                "ethstratum2"  { $Arguments += "stratum+"; Break }
-                                "ethstratumnh" { $Arguments += "stratum+"; Break }
+                            switch ($Pool.Protocol) { 
+                                "ethstratum1" { $Arguments += "stratum+"; break }
+                                "ethstratum2" { $Arguments += "stratum+"; break }
+                                "ethstratumnh" { $Arguments += "stratum+"; break }
                                 # Default        { $Arguments += "stratum+" }
                             }
-                            $Arguments += If ($Pool.PoolPorts[1]) { "ssl://" } Else { "tcp://" }
+                            $Arguments += if ($Pool.PoolPorts[1]) { "ssl://" } else { "tcp://" }
                             $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) -u $($Pool.User) -p $($Pool.Pass)"
-                            If ($Pool.WorkerName) { $Arguments += " -w $($Pool.WorkerName)" }
+                            if ($Pool.WorkerName) { $Arguments += " -w $($Pool.WorkerName)" }
 
                             # Allow more time to build larger DAGs, must use type cast to keep values in $_
                             $WarmupTimes = [UInt16[]]$_.WarmupTimes
@@ -133,7 +133,7 @@ If ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = "$Arguments -report-average 5 -report-interval 5$(If ($_.Algorithm -match $Session.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(If ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" } Else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x2}:00' -f $_ }) -join ',')" })"
+                                Arguments   = "$Arguments -report-average 5 -report-interval 5$(If ($_.Algorithm -match $Session.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(If ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" } Else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x2}:00' -f $_ }) -join ',') -cuda-order" })"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = $_.Fee # Dev fee
                                 MinerSet    = $_.MinerSet
@@ -144,7 +144,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers      = @(@{ Pool = $Pool })
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }

@@ -18,19 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NBMiner.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class NBMiner : Miner { 
+class NBMiner : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)/api/v1/status"
 
-        Try { 
+        try { 
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
-            If ($null -eq $Data.miner.total_hashrate_raw) { Return $null }
+            if ($null -eq $Data.miner.total_hashrate_raw) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
@@ -43,8 +43,8 @@ Class NBMiner : Miner {
             $SharesInvalid = [Int64]$Data.stratum.invalid_shares
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-            If ($Data.stratum.dual_mine) { 
-                If ($null -eq $Data.miner.total_hashrate2_raw) { Return $null }
+            if ($Data.stratum.dual_mine) { 
+                if ($null -eq $Data.miner.total_hashrate2_raw) { return $null }
                 $HashrateName = [String]($this.Algorithms -ne $HashrateName)
                 $Hashrate | Add-Member @{ $HashrateName = [Double]$Data.miner.total_hashrate2_raw }
 
@@ -56,22 +56,22 @@ Class NBMiner : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = [Double]($Data.miner | Measure-Object total_power_consume -Sum).Sum
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

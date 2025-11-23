@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/fireice-uk/xmr-stak/releases/download/2.10.8/xmr-stak-win64-2.10.8.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -78,7 +78,7 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
     $Currency = @{ 
         "CryptonightBittube2" = "cryptonight_bittube2"
@@ -97,19 +97,19 @@ If ($Algorithms) {
         "CryptonightV2"       = "cryptonight_v8"
     }
 
-    $Coins = @("aeon7", "bbscoin", "bittube", "freehaven", "graft", "haven", "intense", "masari", "monero" ,"qrl", "ryo", "stellite", "turtlecoin")
+    $Coins = @("aeon7", "bbscoin", "bittube", "freehaven", "graft", "haven", "intense", "masari", "monero" , "qrl", "ryo", "stellite", "turtlecoin")
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     $MinMemGiB = $_.MinMemGiB
-                    If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
+                    if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
@@ -119,14 +119,14 @@ If ($Algorithms) {
                         $PlatformThreadsConfigFileName = [System.Web.HttpUtility]::UrlEncode("$MinerName.txt")
 
                         # $ExcludePools = $_.ExcludePools
-                        # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-                        ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+                        # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                        foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                             # Note: For fine tuning directly edit the configuration files in the miner binary directory
                             $PoolFileName = [System.Web.HttpUtility]::UrlEncode("PoolConf-$($_.Algorithm)-$($Pool.User)-$($Pool.Pass).txt")
 
                             $Arguments = [PSCustomObject]@{ 
-                                PoolFile = [PSCustomObject]@{ 
+                                PoolFile                      = [PSCustomObject]@{ 
                                     FileName = $PoolFileName
                                     Content  = [PSCustomObject]@{ 
                                         pool_list = @(
@@ -141,10 +141,10 @@ If ($Algorithms) {
                                                 rig_id          = $Pool.WorkerName
                                             }
                                         )
-                                        currency = If ($Coins -icontains $Pool.CoinName) { $Pool.CoinName } Else { $Currency.($_.Algorithm) }
+                                        currency  = if ($Coins -icontains $Pool.CoinName) { $Pool.CoinName } else { $Currency.($_.Algorithm) }
                                     }
                                 }
-                                ConfigFile = [PSCustomObject]@{ 
+                                ConfigFile                    = [PSCustomObject]@{ 
                                     FileName = $ConfigFileName
                                     Content  = [PSCustomObject]@{ 
                                         call_timeout    = 10
@@ -165,16 +165,16 @@ If ($Algorithms) {
                                         prefer_ipv4     = $true
                                     }
                                 }
-                                Arguments = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $MinerThreadsConfigFileName --noUAC --httpd $MinerAPIPort" -replace " \s+"
-                                Devices  = @($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique)
-                                HwDetectArguments = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $PlatformThreadsConfigFileName --httpd $MinerAPIPort" -replace " \s+"
-                                MinerThreadsConfigFileName = $MinerThreadsConfigFileName
-                                Platform = $Platform
+                                Arguments                     = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $MinerThreadsConfigFileName --noUAC --httpd $MinerAPIPort" -replace " \s+"
+                                Devices                       = @($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique)
+                                HwDetectArguments             = " --poolconf $PoolFileName --config $ConfigFileName$($_.Arguments) $PlatformThreadsConfigFileName --httpd $MinerAPIPort" -replace " \s+"
+                                MinerThreadsConfigFileName    = $MinerThreadsConfigFileName
+                                Platform                      = $Platform
                                 PlatformThreadsConfigFileName = $PlatformThreadsConfigFileName
-                                Threads = 1
+                                Threads                       = 1
                             }
 
-                            If ($AvailableMinerDevices.PlatformId) { $Arguments.ConfigFile.Content | Add-Member "platform_index" (($AvailableMinerDevices | Select-Object PlatformId -Unique).PlatformId) }
+                            if ($AvailableMinerDevices.PlatformId) { $Arguments.ConfigFile.Content | Add-Member "platform_index" (($AvailableMinerDevices | Select-Object PlatformId -Unique).PlatformId) }
 
                             [PSCustomObject]@{ 
                                 API         = "Fireice"
@@ -189,7 +189,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers      = @(@{ Pool = $Pool })
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }

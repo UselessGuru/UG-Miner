@@ -17,21 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
-$URI = "https://github.com/rplant8/cpuminer-opt-rplant/releases/download/5.0.42/cpuminer-opt-win-5.0.42c.zip"
+$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/RplantCpu/cpuminer-opt-win-5.0.42c.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-If ($AvailableMinerDevices.CPUfeatures -match "avx512")   { $Path = "Bin\$Name\cpuminer-Avx512.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx2") { $Path = "Bin\$Name\cpuminer-Avx2.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "avx")  { $Path = "Bin\$Name\cpuminer-Avx.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "aes")  { $Path = "Bin\$Name\cpuminer-Aes-Sse42.exe" }
-ElseIf ($AvailableMinerDevices.CPUfeatures -match "sse2") { $Path = "Bin\$Name\cpuminer-Sse2.exe" }
-Else { Return }
+if ($AvailableMinerDevices.CPUfeatures -match "avx512")   { $Path = "Bin\$Name\cpuminer-Avx512.exe" }
+elseif ($AvailableMinerDevices.CPUfeatures -match "avx2") { $Path = "Bin\$Name\cpuminer-Avx2.exe" }
+elseif ($AvailableMinerDevices.CPUfeatures -match "avx")  { $Path = "Bin\$Name\cpuminer-Avx.exe" }
+elseif ($AvailableMinerDevices.CPUfeatures -match "aes")  { $Path = "Bin\$Name\cpuminer-Aes-Sse42.exe" }
+elseif ($AvailableMinerDevices.CPUfeatures -match "sse2") { $Path = "Bin\$Name\cpuminer-Sse2.exe" }
+else                                                      { return }
 
 $Algorithms = @(
     @{ Algorithm = "Avian";         MinerSet = 2; WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo avian" }
@@ -115,7 +115,7 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
     $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
@@ -124,7 +124,7 @@ If ($Algorithms) {
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
             $ExcludePools = $_.ExcludePools
-            ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"
@@ -138,7 +138,7 @@ If ($Algorithms) {
                     Type        = "CPU"
                     URI         = $URI
                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers      = @(@{ Pool = $Pool })
+                    Workers     = @(@{ Pool = $Pool })
                 }
             }
         }

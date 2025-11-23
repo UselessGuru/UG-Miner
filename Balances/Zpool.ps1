@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -33,18 +33,18 @@ $Session.Config.Pools.$Name.Wallets.Keys.ForEach(
         $RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
         $Request = "https://zpool.ca/api/wallet?address=$Wallet"
 
-        While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
+        while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
-            Try { 
+            try { 
                 $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Session.Config.PoolAPItimeout -ErrorAction Ignore
 
-                If ($Session.Config.LogBalanceAPIResponse) { 
+                if ($Session.Config.LogBalanceAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 }
 
-                If ($APIResponse.currency -and $APIResponse.currency -ne "INVALID" -and ($APIResponse.unsold -or $APIResponse.balance -or $APIResponse.unpaid)) { 
+                if ($APIResponse.currency -and $APIResponse.currency -ne "INVALID" -and ($APIResponse.unsold -or $APIResponse.balance -or $APIResponse.unpaid)) { 
                     [PSCustomObject]@{ 
                         DateTime = [DateTime]::Now.ToUniversalTime()
                         Pool     = $Name
@@ -53,15 +53,15 @@ $Session.Config.Pools.$Name.Wallets.Keys.ForEach(
                         Pending  = [Double]$APIResponse.unsold # Pending
                         Balance  = [Double]$APIResponse.balance
                         Unpaid   = [Double]$APIResponse.unpaid # Balance + unsold (pending)
-                      # Paid     = [Double]$APIResponse.total # Reset after payout
-                      # Total    = [Double]$APIResponse.unpaid + [Double]$APIResponse.total # Reset after payout
+                        # Paid     = [Double]$APIResponse.total # Reset after payout
+                        # Total    = [Double]$APIResponse.unpaid + [Double]$APIResponse.total # Reset after payout
                         Url      = "https://zpool.ca/wallet/$Wallet"
                     }
                 }
                 $APIResponse = $null
                 $RetryCount = 0
             }
-            Catch { 
+            catch { 
                 Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
             }
 

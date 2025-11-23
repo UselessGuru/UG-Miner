@@ -18,27 +18,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\CCminer.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class CcMiner : Miner { 
+class CcMiner : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "summary"
         $Response = ""
 
-        Try { 
+        try { 
             $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout
             $Data = $Response -split ";" | ConvertFrom-StringData -ErrorAction Stop
-            If (-not $Data.Keys.Count) { Return $null }
+            if (-not $Data.Keys.Count) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
             $HashrateValue = [Double]$Data.HS
-            If (-not $HashrateValue) { $HashrateValue = [Double]$Data.KHS * 1000 }
-            If ($null -eq $HashrateValue) { Return $null }
+            if (-not $HashrateValue) { $HashrateValue = [Double]$Data.KHS * 1000 }
+            if ($null -eq $HashrateValue) { return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $Shares = [PSCustomObject]@{ }
@@ -49,19 +49,19 @@ Class CcMiner : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = $this.GetPowerConsumption()
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

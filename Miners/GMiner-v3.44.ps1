@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/develsoftware/GMinerRelease/releases/download/3.44/gminer_3_44_windows64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -73,47 +73,47 @@ $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    If ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
-                    # If ($SupportedMinerDevices = $MinerDevices) { 
+                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    # if ($SupportedMinerDevices = $MinerDevices) { 
 
                         $ExcludePools = $_.ExcludePools
-                        ForEach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                            ForEach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                                If ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                     $Arguments = $_.Arguments
                                     $Arguments += " --server $($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    Switch ($Pool0.Protocol) { 
-                                        "ethstratum1"  { $Arguments += " --proto stratum"; Break }
-                                        "ethstratum2"  { $Arguments += " --proto stratum"; Break }
+                                    switch ($Pool0.Protocol) { 
+                                        "ethstratum1" { $Arguments += " --proto stratum"; break }
+                                        "ethstratum2" { $Arguments += " --proto stratum"; break }
                                         "ethstratumnh" { $Arguments += " --proto stratum" }
                                     }
-                                    If ($Pool0.PoolPorts[1]) { $Arguments += " --ssl 1" }
+                                    if ($Pool0.PoolPorts[1]) { $Arguments += " --ssl 1" }
                                     $Arguments += " --user $($Pool0.User) --pass $($Pool0.Pass)"
-                                    If ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { $Arguments += " --worker $($Pool0.WorkerName)" }
-                                    If ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand $_.AutoCoinPers }
+                                    if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { $Arguments += " --worker $($Pool0.WorkerName)" }
+                                    if ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand $_.AutoCoinPers }
 
-                                    If (($_.Algorithms[1])) { 
+                                    if (($_.Algorithms[1])) { 
                                         $Arguments += " --dserver $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        If ($Pool1.PoolPorts[1]) { $Arguments += " --dssl 1" }
+                                        if ($Pool1.PoolPorts[1]) { $Arguments += " --dssl 1" }
                                         $Arguments += " --duser $($Pool1.User) --dpass $($Pool1.Pass)"
-                                        If ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { $Arguments += " --dworker $($Pool1.WorkerName)" }
+                                        if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { $Arguments += " --dworker $($Pool1.WorkerName)" }
                                     }
 
                                     # Contest ETH address (if ETH wallet is specified in config)
@@ -121,7 +121,7 @@ If ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API         = "Gminer"
-                                        Arguments   = "$Arguments --api $MinerAPIPort --watchdog 0 --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join " ")"
+                                        Arguments   = "$Arguments --api $MinerAPIPort --watchdog 0 --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join " ")"
                                         DeviceNames = $AvailableMinerDevices.Name
                                         Fee         = $_.Fee # Dev fee
                                         MinerSet    = $_.MinerSet
@@ -132,7 +132,7 @@ If ($Algorithms) {
                                         Type        = $Type
                                         URI         = $URI
                                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers      = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                        Workers     = @(($Pool0, $Pool1).Where({ $_ }).foreach({ @{ Pool = $_ } }))
                                     }
                                 }
                             }

@@ -17,27 +17,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 # Added argon2d1000, argon2d16000 algos.
 # Target specific AES optimizations improve shavite for ARM64 & x86_64.
 
-If (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { Return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
 $URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.6/cpuminer-opt-25.6-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-If     ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX512", "SHA", "VAES") -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 3) { $Path = "Bin\$Name\cpuminer-avx512-sha-vaes.exe" }
-ElseIf ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX512")                -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-avx512.exe" }
-ElseIf ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX2", "SHA", "VAES")   -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 3) { $Path = "Bin\$Name\cpuminer-avx2-sha-vaes.exe" }
-ElseIf ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX2", "SHA")           -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 2) { $Path = "Bin\$Name\cpuminer-avx2-sha.exe" }
-ElseIf ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AES", "SSE42")          -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 2) { $Path = "Bin\$Name\cpuminer-aes-sse42.exe" }
-ElseIf ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX2")                  -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-avx2.exe" }
-ElseIf ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX")                   -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-avx.exe" }
-ElseIf ((Compare-Object $AvailableMinerDevices.CPUfeatures @("SSE2")                  -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-aes-sse2.exe" }
-Else { Return }
+if ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX512", "SHA", "VAES")   -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 3) { $Path = "Bin\$Name\cpuminer-avx512-sha-vaes.exe" }
+elseif ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX512")              -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-avx512.exe" }
+elseif ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX2", "SHA", "VAES") -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 3) { $Path = "Bin\$Name\cpuminer-avx2-sha-vaes.exe" }
+elseif ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX2", "SHA")         -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 2) { $Path = "Bin\$Name\cpuminer-avx2-sha.exe" }
+elseif ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AES", "SSE42")        -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 2) { $Path = "Bin\$Name\cpuminer-aes-sse42.exe" }
+elseif ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX2")                -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-avx2.exe" }
+elseif ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX")                 -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-avx.exe" }
+elseif ((Compare-Object $AvailableMinerDevices.CPUfeatures @("SSE2")                -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 1) { $Path = "Bin\$Name\cpuminer-aes-sse2.exe" }
+else { return }
 
 $Algorithms = @(
     @{ Algorithm = "Allium";               MinerSet = 3; WarmupTimes = @(45, 40); ExcludePools = @(); Arguments = " --algo allium" }
@@ -84,7 +84,7 @@ $Algorithms = @(
 $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
     $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
@@ -92,18 +92,18 @@ If ($Algorithms) {
         { 
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
-            If ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+            if ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                 $PrerequisitePath = $Session.VertHashDatPath
                 $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
             }
-            Else { 
+            else { 
                 $PrerequisitePath = ""
                 $PrerequisiteURI = ""
             }
 
             # $ExcludePools = $_.ExcludePools
-            # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-            ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                 [PSCustomObject]@{ 
                     API              = "CcMiner"
@@ -119,7 +119,7 @@ If ($Algorithms) {
                     Type             = "CPU"
                     URI              = $URI
                     WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers           = @(@{ Pool = $Pool })
+                    Workers          = @(@{ Pool = $Pool })
                 }
             }
         }

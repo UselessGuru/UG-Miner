@@ -18,26 +18,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-Class MiniZ : Miner { 
+class MiniZ : Miner { 
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = '{ "id":"0", "method":"getstat" }'
         $Response = ""
 
-        Try { 
+        try { 
             $Response = Invoke-TcpRequest 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout -ReadToEnd $true -ErrorAction Stop
             $Data = $Response | ConvertFrom-Json -ErrorAction Stop
-            If (-not $Data -or $null -eq $Data.result.speed_sps) { Return $null }
+            if (-not $Data -or $null -eq $Data.result.speed_sps) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
             $HashrateValue = [Double](($Data.result.speed_sps | Measure-Object -Sum).Sum)
-            If (-not $HashrateValue) { $HashrateValue = [Double](($Data.result.sol_ps | Measure-Object -Sum).Sum) } # fix
+            if (-not $HashrateValue) { $HashrateValue = [Double](($Data.result.sol_ps | Measure-Object -Sum).Sum) } # fix
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
             $Shares = [PSCustomObject]@{ }
@@ -48,22 +48,22 @@ Class MiniZ : Miner {
 
             $PowerConsumption = [Double]0
 
-            If ($this.ReadPowerConsumption) { 
+            if ($this.ReadPowerConsumption) { 
                 $PowerConsumption = [Double]($Data.result | Measure-Object gpu_power_usage -Sum).Sum
-                If (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
+                if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()
                 }
             }
 
-            Return [PSCustomObject]@{ 
+            return [PSCustomObject]@{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
                 Shares           = $Shares
             }
         }
-        Catch { 
-            Return $null
+        catch { 
+            return $null
         }
     }
 }

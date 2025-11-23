@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -32,22 +32,22 @@ $Wallet = $Session.Config.Pools.$Name.Wallets.$PayoutCurrency
 
 $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 
-$Headers = @{ "Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
+$Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
+while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
-    Try { 
+    try { 
         $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
 
-        If ($Session.Config.LogBalanceAPIResponse) { 
+        if ($Session.Config.LogBalanceAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
         }
 
-        If ($APIResponse.symbol) { 
-            Return [PSCustomObject]@{ 
+        if ($APIResponse.symbol) { 
+            return [PSCustomObject]@{ 
                 DateTime = [DateTime]::Now.ToUniversalTime()
                 Pool     = $Name
                 Currency = $APIResponse.symbol
@@ -60,11 +60,11 @@ While (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) {
                 Url      = "https://hashcryptos.com/?address=$Wallet"
             }
         }
-        ElseIf ($APIResponse.Message -like "Only 1 request *") { 
+        elseif ($APIResponse.Message -like "Only 1 request *") { 
             Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
         }
     }
-    Catch { 
+    catch { 
         Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
     }
 

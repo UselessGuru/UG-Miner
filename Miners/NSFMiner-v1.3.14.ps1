@@ -17,16 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.6.7
-Version date:   2025/11/21
+Version:        6.7.0
+Version date:   2025/11/23
 #>
 
-If (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1") }))) { Return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1") }))) { return }
 
-$URI = Switch ($Session.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/NSFMiner/nsfminer_1.3.14-windows_10-cuda_11.3-opencl.zip"; Break }
-    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/NSFMiner/nsfminer_1.3.13-windows_10-cuda_11.2-opencl.1.zip"; Break }
-    Default                           { Return }
+$URI = switch ($Session.DriverVersion.CUDA) { 
+    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/NSFMiner/nsfminer_1.3.14-windows_10-cuda_11.3-opencl.zip"; break }
+    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/NSFMiner/nsfminer_1.3.13-windows_10-cuda_11.2-opencl.1.zip"; break }
+    default { return }
 }
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\nsfminer.exe"
@@ -44,40 +44,40 @@ $Algorithms = @(
 # $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
-If ($Algorithms) { 
+if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # ForEach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-                    ForEach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                    foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        If ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                            $Protocol = Switch ($Pool.Protocol) { 
-                                "ethstratum1"  { "stratum2"; Break }
-                                "ethstratum2"  { "stratum3"; Break }
-                                "ethstratumnh" { "stratum2"; Break }
-                                Default        { "stratum"; Break }
+                            $Protocol = switch ($Pool.Protocol) { 
+                                "ethstratum1"  { "stratum2"; break }
+                                "ethstratum2"  { "stratum3"; break }
+                                "ethstratumnh" { "stratum2"; break }
+                                default        { "stratum" }
                             }
-                            $Protocol += If ($Pool.PoolPorts[1]) { "+ssl" } Else { "+tcp" }
+                            $Protocol += if ($Pool.PoolPorts[1]) { "+ssl" } else { "+tcp" }
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --exit --api-port -$MinerAPIPort$($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join " ")"
+                                Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --exit --api-port -$MinerAPIPort$($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join " ")"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @(0) # Dev fee
-                                EnvVars     = If ($MinerDevices.Type -eq "AMD") { @("GPU_FORCE_64BIT_PTR=0") } Else { $null }
+                                EnvVars     = if ($MinerDevices.Type -eq "AMD") { @("GPU_FORCE_64BIT_PTR=0") } else { $null }
                                 MinerSet    = $_.MinerSet
                                 MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
                                 Name        = $MinerName
@@ -86,7 +86,7 @@ If ($Algorithms) {
                                 Type        = $Type
                                 URI         = $URI
                                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers      = @(@{ Pool = $Pool })
+                                Workers     = @(@{ Pool = $Pool })
                             }
                         }
                     }
