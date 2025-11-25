@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -251,14 +251,14 @@ function Update-TabControl {
                         @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Profit (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Power consumption (live)"; Expression = { if ($_.MeasurePowerConsumption) { if ($_.Status -eq "Running") { "Measuring..." } else { "Unmeasured" } } else { if ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
-                        @{ Name = "Algorithm (variant) [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(If ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
+                        @{ Name = "Algorithm (variant) [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(if ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
                         @{ Name = "Hashrate (live)"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.WorkersRunning.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
                         @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         # @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     ) | Out-DataTable
                     $LegacyGUIelements.ActiveMinersDGV.Sort($LegacyGUIelements.ActiveMinersDGV.Columns[2], [System.ComponentModel.ListSortDirection]::Ascending)
-                    $LegacyGUIelements.ActiveMinersLabel.Text = "Active miners updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.ActiveMinersDGV.Rows.count) miner$(If ($LegacyGUIelements.ActiveMinersDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIelements.ActiveMinersLabel.Text = "Active miners updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.ActiveMinersDGV.Rows.count) miner$(if ($LegacyGUIelements.ActiveMinersDGV.Rows.count -ne 1) { "s" }))"
 
                     $LegacyGUIelements.ActiveMinersDGV.Columns[0].Visible = $false
                     $LegacyGUIelements.ActiveMinersDGV.Columns[1].Visible = $false
@@ -418,15 +418,15 @@ function Update-TabControl {
                     }
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
-                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(If ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                         }
                     )
                     $LegacyGUIelements.BalancesDGV.EndInit()
@@ -505,7 +505,7 @@ function Update-TabControl {
                         @{ Name = "Hashrate"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
                         if ($LegacyGUIelements.RadioButtonMinersUnavailable.checked -or $LegacyGUIelements.RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
-                    $LegacyGUIelements.MinersLabel.Text = "Miner data updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.MinersDGV.Rows.count) miner$(If ($LegacyGUIelements.MinersDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIelements.MinersLabel.Text = "Miner data updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.MinersDGV.Rows.count) miner$(if ($LegacyGUIelements.MinersDGV.Rows.count -ne 1) { "s" }))"
                     Remove-Variable DataSource
                     $LegacyGUIelements.MinersDGV.Columns[0].Visible = $false
                     $LegacyGUIelements.MinersDGV.Columns[1].Visible = $false
@@ -581,15 +581,15 @@ function Update-TabControl {
                         @{ Name = "Accuracy"; Expression = { "{0:p2}" -f $_.Accuracy } }
                         @{ Name = "Pool name"; Expression = { $_.Name } }
                         @{ Name = "Host"; Expression = { $_.Host } }
-                        @{ Name = "Port"; Expression = { "$(If ($_.Port) { $_.Port } Else { "-" })" } }
-                        @{ Name = "SSL port"; Expression = { "$(If ($_.PortSSL) { $_.PortSSL } Else { "-" })" } }
+                        @{ Name = "Port"; Expression = { "$(if ($_.Port) { $_.Port } Else { "-" })" } }
+                        @{ Name = "SSL port"; Expression = { "$(if ($_.PortSSL) { $_.PortSSL } Else { "-" })" } }
                         @{ Name = "Earnings adjustment factor"; Expression = { $_.EarningsAdjustmentFactor } }
                         @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
                         if ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
                     $LegacyGUIelements.PoolsDGV.Sort($LegacyGUIelements.PoolsDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIelements.PoolsDGV.ClearSelection()
-                    $LegacyGUIelements.PoolsLabel.Text = "Pool data updated $($Session.PoolsUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.PoolsDGV.Rows.Count) pool$(If ($LegacyGUIelements.PoolsDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIelements.PoolsLabel.Text = "Pool data updated $($Session.PoolsUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.PoolsDGV.Rows.Count) pool$(if ($LegacyGUIelements.PoolsDGV.Rows.count -ne 1) { "s" }))"
 
                     if (-not $LegacyGUIelements.PoolsDGV.ColumnWidthChanged -and $LegacyGUIelements.PoolsDGV.Columns) { 
                         $LegacyGUIelements.PoolsDGV.Columns[0].FillWeight = 80
@@ -976,7 +976,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             Set-MinerReBenchmark $_
                         }
                     )
-                    $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    $Message = "Re-benchmark triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     if ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
@@ -991,7 +991,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             Set-MinerMeasurePowerConsumption $_  
                         }
                     )
-                    $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     Remove-Variable Message
@@ -1007,7 +1007,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             $Data += $_.Name
                         }
                     )
-                    $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed." 
+                    $Message = "Marked $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" }) as failed." 
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     Remove-Variable Message
@@ -1023,7 +1023,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         }
                     )
                     if ($Data.Count) { 
-                        $Message = "Disabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                        $Message = "Disabled $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message" -Console $false
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                         Remove-Variable Message
@@ -1043,7 +1043,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         }
                     )
                     if ($Data.Count) { 
-                        $Message = "Enabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                        $Message = "Enabled $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                         Write-Message -Level Verbose "GUI: $Message" -Console $false
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                         Remove-Variable Message
@@ -1071,7 +1071,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     )
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
                     if ($Data) { 
-                        $Message = "$($Data.Count) miner watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
+                        $Message = "$($Data.Count) miner watchdog timer$(if ($Data.Count -ne 1) { "s" }) removed."
                         Write-Message -Level Verbose "GUI: $Message" -Console $false
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     }
@@ -1094,7 +1094,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             $SelectedPoolAlgorithm = $_.Cells[0].Value
                             $Session.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).foreach(
                                 { 
-                                    $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
+                                    $StatName = "$($_.Name)_$($_.Algorithm)$(if ($_.Currency) { "-$($_.Currency)" })"
                                     $Data += $StatName
                                     Remove-Stat -Name "$($StatName)_Profit"
                                     $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
@@ -1106,7 +1106,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Message = "Pool stats for $($Data.Count) pool$(If ($Data.Count -ne 1) { "s" }) reset."
+                    $Message = "Pool stats for $($Data.Count) pool$(if ($Data.Count -ne 1) { "s" }) reset."
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     Remove-Variable Message, SelectedPoolAlgorithm, SelectedPoolName, StatName -ErrorAction Ignore
@@ -1133,7 +1133,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     )
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
                     if ($Data) { 
-                        $Message = "$($Data.Count) pool watchdog timer$(If ($Data.Count -ne 1) { "s" }) removed."
+                        $Message = "$($Data.Count) pool watchdog timer$(if ($Data.Count -ne 1) { "s" }) removed."
                         Write-Message -Level Verbose "GUI: $Message" -Console $false
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                         Remove-Variable Message

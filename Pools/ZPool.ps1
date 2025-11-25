@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 param(
@@ -67,7 +67,7 @@ if ($PriceField) {
 
         if ($Algorithm -eq "firopow" -and $Request.$Algorithm.currency -eq "SCC") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null } # SCC firo variant is a separate algorithm (SCCPow)
 
-        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(If ($Currency) { "-$Currency" })"
+        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
         $Value = $Request.$Algorithm.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
@@ -91,7 +91,7 @@ if ($PriceField) {
                     Host                     = "$($Algorithm).$($Region).$($HostSuffix)"
                     Key                      = $Key
                     Name                     = $Name
-                    Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(If ($Currency -eq $PayoutCurrency) { ",zap=$PayoutCurrency" })"
+                    Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(if ($Currency -eq $PayoutCurrency) { ",zap=$PayoutCurrency" })"
                     Port                     = [UInt16]$Request.$Algorithm.port
                     PortSSL                  = [UInt16](50000 + $Request.$Algorithm.port)
                     PoolUri                  = "https://zpool.ca/algo/$($Algorithm)"

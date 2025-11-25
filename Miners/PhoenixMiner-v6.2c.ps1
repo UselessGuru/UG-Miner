@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -102,10 +102,9 @@ if ($Algorithms) {
 
                                     if ($AvailableMinerDevices) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)$(If ($_.Intensity) { "-$($_.Intensity)" })"})"
+                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-$($_.Intensity)" })"})"
 
-                                        $Arguments = $_.Arguments
-                                        $Arguments += " -pool $(If ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User) -pass $($Pool0.Pass)"
+                                        $Arguments = "$($_.Arguments) -pool $(if ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User) -pass $($Pool0.Pass)"
                                         $Arguments += switch ($Pool0.Protocol) { 
                                             "ethproxy"     { " -proto 2"; break }
                                             "minerproxy"   { " -proto 1"; break }
@@ -126,7 +125,7 @@ if ($Algorithms) {
                                         }
 
                                         if ($_.Algorithms[1]) { 
-                                            $Arguments += " -dpool $(If ($Pool1.PoolPorts[1]) { "ssl://" })$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
+                                            $Arguments += " -dpool $(if ($Pool1.PoolPorts[1]) { "ssl://" })$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
                                             if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments += " -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
                                             if ($Pool1.WorkerName) { $Arguments += " -dworker $($Pool1.WorkerName)" }
                                             if ($_.Intensity) { $Arguments += " -sci $($_.Intensity)" }

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 # V2.28 produces nothing but bad shares with kapwow, use v.26 instead
@@ -125,10 +125,9 @@ if ($Algorithms) {
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                     if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(If ($Pool1) { "&$($Pool1.AlgorithmVariant)$(If ($_.Intensity) { "-$($_.Intensity)" })"})"
+                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-$($_.Intensity)" })"})"
 
-                                        $Arguments = $_.Arguments
-                                        $Arguments += " --hostname $($Pool0.Host) --wallet $($Pool0.User)"
+                                        $Arguments = "$($_.Arguments) --hostname $($Pool0.Host) --wallet $($Pool0.User)"
                                         $Arguments += if (($Pool0.PoolPorts[1] -and -not $_.Algorithms[1]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { " --ssl --ssl-verify-none --ssl-port $($Pool0.PoolPorts[1])" } else { " --port $($Pool0.PoolPorts[0])" }
                                         if ($Pool0.Pass) { $Arguments += " --server-passwd $($Pool0.Pass)" }
 

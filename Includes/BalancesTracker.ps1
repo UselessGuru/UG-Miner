@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 using module .\Include.psm1
@@ -79,7 +79,7 @@ do {
     if ($Session.MyIPaddress) { 
         # Fetch balances data from pools
         if ($PoolsToTrack) { 
-            Write-Message -Level Info "Balances tracker is requesting data from pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
+            Write-Message -Level Info "Balances tracker is requesting data from pool$(if ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
             if ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = [String[]]($PoolsToTrack -notmatch "MiningDutch"); $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
             $PoolsToTrack.ForEach(
                 { 
@@ -114,8 +114,8 @@ do {
 
             $Session.BalancesCurrencies = @(@($Session.BalancesCurrencies) + @($BalanceObjects.Currency) | Sort-Object -Unique)
 
-            # Read exchange rates every at least 15 minutes
-            if ((Compare-Object $Session.AllCurrencies $Session.BalancesCurrencies).where({ $_.SideIndicator -eq "=>"}) -or $Session.RatesUpdated -lt $Now.ToUniversalTime().AddMinutes(-15)) { Get-Rate }
+            # Read exchange rates at least every 30 minutes or when a balance in a new new currency was added
+            if ((Compare-Object $Session.AllCurrencies $Session.BalancesCurrencies).where({ $_.SideIndicator -eq "=>"}) -or $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((30, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum)) { Get-Rate }
 
             foreach ($BalanceObject in $BalanceObjects) { 
                 $BalanceDataObjects = @($Session.BalancesData.Where({ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }) | Sort-Object -Property DateTime)
@@ -419,7 +419,7 @@ do {
         if ($PoolsToTrack.Count -gt 1) { 
             $Session.RefreshBalancesNeeded = $true
             $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
-            Write-Message -Level Info "Balances tracker updated data for pool$(If ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")."
+            Write-Message -Level Info "Balances tracker updated data for pool$(if ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")."
         }
     }
 

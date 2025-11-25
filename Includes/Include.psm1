@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1114,7 +1114,7 @@ function Start-Brain {
                 }
             }
         )
-        if ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(If ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", " &`$1") started." }
+        if ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(if ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", " &`$1") started." }
     }
     else { 
         Write-Message -Level Error "Failed to start Pool brain backgound jobs. Directory '.\Brains' is missing."
@@ -1152,7 +1152,7 @@ function Stop-Brain {
             }
         )
         if ($BrainsStopped.Count -gt 0) { 
-            Write-Message -Level Info "Pool brain backgound job$(If ($BrainsStopped.Count -gt 1) { "s" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1") stopped."
+            Write-Message -Level Info "Pool brain backgound job$(if ($BrainsStopped.Count -gt 1) { "s" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1") stopped."
             [System.GC]::Collect()
         }
     }
@@ -1259,7 +1259,7 @@ function Get-Rate {
         $Rates = [PSCustomObject]@{ BTC = [PSCustomObject]@{ } }
         $TSymBatches.ForEach(
             { 
-                $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(If ($Session.Config.CryptoCompareAPIKeyParam) { "&api_key=$($Session.Config.CryptoCompareAPIKeyParam)" })&extraParams=$($Session.Branding.BrandWebSite) Version $($Session.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
+                $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(if ($Session.Config.CryptoCompareAPIKeyParam) { "&api_key=$($Session.Config.CryptoCompareAPIKeyParam)" })&extraParams=$($Session.Branding.BrandWebSite) Version $($Session.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
                 if ($Response.BTC) { 
                     $Response.BTC.ForEach(
                         { 
@@ -1310,7 +1310,7 @@ function Get-Rate {
                     }
                 )
             }
-            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(If ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(If ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
+            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
             $Session.Rates = $Rates
             $Session.RefreshTimestamp = (Get-Date -Format "G")
             $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
@@ -1496,10 +1496,10 @@ function Get-TimeSince {
     $TimeSpan = New-TimeSpan -Start $TimeStamp -End ([DateTime]::Now)
     $TimeSince = ""
 
-    if ($TimeSpan.Days -ge 1) { $TimeSince += " {0:n0} day$(If ($TimeSpan.Days -ne 1) { "s" })" -f $TimeSpan.Days }
-    if ($TimeSpan.Hours -ge 1) { $TimeSince += " {0:n0} hour$(If ($TimeSpan.Hours -ne 1) { "s" })" -f $TimeSpan.Hours }
-    if ($TimeSpan.Minutes -ge 1) { $TimeSince += " {0:n0} minute$(If ($TimeSpan.Minutes -ne 1) { "s" })" -f $TimeSpan.Minutes }
-    if ($TimeSpan.Seconds -ge 1) { $TimeSince += " {0:n0} second$(If ($TimeSpan.Seconds -ne 1) { "s" })" -f $TimeSpan.Seconds }
+    if ($TimeSpan.Days -ge 1) { $TimeSince += " {0:n0} day$(if ($TimeSpan.Days -ne 1) { "s" })" -f $TimeSpan.Days }
+    if ($TimeSpan.Hours -ge 1) { $TimeSince += " {0:n0} hour$(if ($TimeSpan.Hours -ne 1) { "s" })" -f $TimeSpan.Hours }
+    if ($TimeSpan.Minutes -ge 1) { $TimeSince += " {0:n0} minute$(if ($TimeSpan.Minutes -ne 1) { "s" })" -f $TimeSpan.Minutes }
+    if ($TimeSpan.Seconds -ge 1) { $TimeSince += " {0:n0} second$(if ($TimeSpan.Seconds -ne 1) { "s" })" -f $TimeSpan.Seconds }
     if ($TimeSince) { $TimeSince += " ago" } else { $TimeSince = "just now" }
 
     return $TimeSince
@@ -1977,10 +1977,10 @@ function Set-Stat {
             if (-not $Stat.Disabled -and ($Value -eq 0 -or $Stat.ToleranceExceeded -ge $ToleranceExceeded -or $Stat.Week_Fluctuation -ge 1)) { 
                 if ($Value -gt 0 -and $Stat.ToleranceExceeded -ge $ToleranceExceeded) { 
                     if ($Name -match ".+_Hashrate$") { 
-                        Write-Message -Level Warn "Hashrate '$($Name -replace "_Hashrate$")' was forcefully updated. $(($Value | ConvertTo-Hash) -replace " ") was outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash) -replace " ") to $(($ToleranceMax | ConvertTo-Hash) -replace " "))$(If ($Stat.Week_Fluctuation -lt 1) { " for $($Stats.($Stat.Name).ToleranceExceeded) times in a row." })"
+                        Write-Message -Level Warn "Hashrate '$($Name -replace "_Hashrate$")' was forcefully updated. $(($Value | ConvertTo-Hash) -replace " ") was outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash) -replace " ") to $(($ToleranceMax | ConvertTo-Hash) -replace " "))$(if ($Stat.Week_Fluctuation -lt 1) { " for $($Stats.($Stat.Name).ToleranceExceeded) times in a row." })"
                     }
                     elseif ($Name -match ".+_PowerConsumption$") { 
-                        Write-Message -Level Warn "Power consumption for '$($Name -replace "_PowerConsumption$")' was forcefully updated. $($Value.ToString("N2"))W was outside fault tolerance ($($ToleranceMin.ToString("N2"))W to $($ToleranceMax.ToString("N2"))W)$(If ($Stat.Week_Fluctuation -lt 1) { " for $($Stats.($Stat.Name).ToleranceExceeded) times in a row." })"
+                        Write-Message -Level Warn "Power consumption for '$($Name -replace "_PowerConsumption$")' was forcefully updated. $($Value.ToString("N2"))W was outside fault tolerance ($($ToleranceMin.ToString("N2"))W to $($ToleranceMax.ToString("N2"))W)$(if ($Stat.Week_Fluctuation -lt 1) { " for $($Stats.($Stat.Name).ToleranceExceeded) times in a row." })"
                     }
                 }
 
@@ -3560,7 +3560,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(If ($Session.DonationData.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load donation log
     if (Test-Path -LiteralPath "$PWD\Logs\DonationLog.csv") { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) }
@@ -3568,7 +3568,7 @@ function Initialize-Environment {
         $Session.DonationLog = @()
     }
     else { 
-        Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(If ($Session.DonationLog.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load algorithm list as sorted case insensitive hash table
@@ -3580,7 +3580,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(If ($Session.Algorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load coin names as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\CoinNames.json") { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3591,7 +3591,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(If ($Session.CoinNames.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load currency algorithm data as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\CurrencyAlgorithm.json") { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3602,7 +3602,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(If ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load EquihashCoinPers data as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\EquihashCoinPers.json") { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3613,7 +3613,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded equihash database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(If ($Session.EquihashCoinPers.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded equihash database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load regions as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\Regions.json") { 
@@ -3627,7 +3627,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(If ($Session.Regions.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load FIAT currencies list as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\FIATcurrencies.json") { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3638,7 +3638,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded fiat currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(If ($Session.FIATcurrencies.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded fiat currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load unprofitable algorithms as sorted case insensitive hash table, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
     $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
@@ -3654,7 +3654,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(If ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load DAG data, if not available it will get recreated
     if (Test-Path -LiteralPath "$PWD\Data\DAGdata.json" ) { $Session.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject }
@@ -3665,7 +3665,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(If ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
 
     # Load PoolsLastUsed data as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json") { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3673,7 +3673,7 @@ function Initialize-Environment {
         $Session.PoolsLastUsed = @{ }
     }
     else { 
-        Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(If ($Session.PoolsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load AlgorithmsLastUsed data as sorted case insensitive hash table
@@ -3682,7 +3682,7 @@ function Initialize-Environment {
         $Session.AlgorithmsLastUsed = @{ }
     }
     else { 
-        Write-Host "Loaded algorithm last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(If ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded algorithm last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load MinersLastUsed data as sorted case insensitive hash table
@@ -3691,7 +3691,7 @@ function Initialize-Environment {
         $Session.MinersLastUsed = @{ }
     }
     else { 
-        Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(If ($Session.MinersLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load EarningsChart data to make it available early in GUI
@@ -3700,7 +3700,7 @@ function Initialize-Environment {
         $Session.EarningsChartData = @{ }
     }
     else { 
-        Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(If ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load Balances data to make it available early in GUI
@@ -3709,7 +3709,7 @@ function Initialize-Environment {
         $Session.Balances = @{ }
     }
     else { 
-        Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(If ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load NVidia GPU architecture table
@@ -3722,7 +3722,7 @@ function Initialize-Environment {
         exit
     }
     else { 
-        Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(If ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load AMD GPU architecture table
@@ -3735,7 +3735,7 @@ function Initialize-Environment {
         exit
     }
     else { 
-        Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(If ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
     }
 
     $Session.BalancesCurrencies = @($Session.Balances.PSObject.Properties.Name.ForEach({ $Session.Balances.$_.Currency }) | Sort-Object -Unique)
@@ -3759,7 +3759,7 @@ function Start-APIserver {
         if ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
             [Void]$TCPclient.Dispose()
 
             return
@@ -3797,9 +3797,9 @@ function Start-APIserver {
                     $Session.APIport = $Session.Config.APIport
                     if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.Config.APIlogfile -Force -ErrorAction Ignore }
                     $Session.MinerBaseAPIport = $Session.APIport + 1
-                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
                     # Start Web GUI (show configuration edit if no existing config)
-                    if ($Session.Config.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(If ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
+                    if ($Session.Config.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
                     break
                 }
             }
@@ -3813,7 +3813,7 @@ function Start-APIserver {
         else { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
         }
     }
 }
@@ -3825,7 +3825,7 @@ function Stop-APIserver {
         if ($Session.APIserver.IsListening) { 
             $Session.APIserver.Stop()
             if (-not $Session.MinerBaseAPIport) { $Session.MinerBaseAPIport = 4000 }
-            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport). Using port $(If ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport). Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
         }
 
         $Session.APIserver.Close()

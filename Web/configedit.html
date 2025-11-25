@@ -71,6 +71,9 @@
           <div style="padding-top: 0.5rem;" title="If enabled UG-Miner will display BTC values in milli BTC">
             <input type="checkbox" class="toggle-switch" id="UsemBTC" name="UsemBTC"> Display BTC values in mBTC (BTC/1000)
           </div>
+          <div style="padding-top: 0.3rem;" title="Interval between exchange rates updates&#10;from min-api.cryptocompare.com&#10;&#10;(min: 10, max: 30; default: 15)"> Update currency exchange rates every
+            <input type="number" id="RatesUpdateInterval" name="RatesUpdateInterval" min=3 max=30 value=15 step=1 style="width: 2.6em; text-align:right;"> minutes
+          </div>
           <br>
 
           <!-- General settings -->
@@ -112,7 +115,7 @@
           <div style="padding-top: 0.7rem;" title="Computer will restart when a dead miner is detected&#10;(e.g. miner cannot get stopped gracefully)">
             <input type="checkbox" class="toggle-switch" id="AutoReboot" name="AutoReboot"> Restart computer on dead miners
           </div>
-          <div style="padding-top: 0.5rem;" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60, default 13 &#8792; 0.9%)">Donation
+          <div style="padding-top: 0.5rem;" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60; default: 13 &#8792; 0.9%)">Donation
             <input type="number" id="Donation" name="Donation" min=0 max=60 value=13 style="width: 2.7em; text-align:right;"> minutes per day
           </div>
           <div style="padding-top: 0.3rem;" title="Cycle duration&#10;This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
@@ -314,32 +317,8 @@
             <input type="checkbox" style="margin-left:20px" class="toggle-switch" id="IgnorePowerCost" name="IgnorePowerCost"> Ignore power cost
           </div>
           <br>
-
-          <!-- Balances tracker settings -->
-          <legend class=h6><b>Balances tracker settings</b></legend>
-          <fieldset>
-            <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the web GUI dashboard and API">Poll pools for balances & earnings every
-              <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
-            <div style="padding-top: 0.6rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
-              <input type="checkbox" class="toggle-switch" id="BalancesShowSums" name="BalancesShowSums" style="margin-left:20px"> Show earnings sums for each pool
-            </div>
-            <div style="padding-top: 0.6rem;" title="Show 1hr / 24hr & 7day pool earnings averages&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
-              <input type="checkbox" class="toggle-switch" id="BalancesShowAverages" name="BalancesShowAverages" style="margin-left:20px"> Show average earnings for each pool
-            </div>
-            <div style="padding-top: 0.6rem;" title="Pool balances will be shown in main (FIAT) currency&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
-              <input type="checkbox" class="toggle-switch" id="BalancesShowInFIATcurrency" name="BalancesShowInFIATcurrency" style="margin-left:20px"> Show pool balances in main (FIAT) currency
-            </div>
-            <div style="padding-top: 0.6rem;" title="Pool balances will be shown in extra currencies &#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
-              <input type="checkbox" class="toggle-switch" id="BalancesShowInAllCurrencies" name="BalancesShowInAllCurrencies" style="margin-left:20px"> Show pool balances all currencies
-            </div>
-            <div style="padding-top: 0.6rem;" title="Most pools clear pending balances after a longer period of inactivity&#10;To avoid forfeiting pool balances UG-Miner will enforce mining&#10;at the pool 10 days before it would clear the balance&#10;(one cycle only, even if it is not the most profitable pool)&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
-              <input type="checkbox" class="toggle-switch" id="BalancesKeepAlive" name="BalancesKeepAlive" style="margin-left:20px"> Keep pool balances alive
-            </div>
-            <div style="padding-top: 0.6rem;" title="UG-Miner will store all balances tracker data in '.\Logs\BalancesTrackerLog.csv'">
-              <input type="checkbox" class="toggle-switch" id="BalancesTrackerLog" name="BalancesTrackerLog" style="margin-left:20px"> Write balances tracker log
-            </div>
-          </fieldset>
         </td>
+
         <td style="vertical-align: top; line-height: 125%">
           <!-- Console window display settings -->
           <div class="col-md-12">
@@ -401,6 +380,32 @@
             <legend class=h6><b>Log level</b></legend>
             <fieldset title="Sets the detail level of information written to the logfile and screen&#10;&#10;It is recommended to keep at least 'Info' enabled">
               <div style="padding-top: 0.3rem;" id="LogLevel"></div>
+            </fieldset>
+            <br>
+
+            <!-- Balances tracker settings -->
+            <legend class=h6><b>Balances tracker settings</b></legend>
+            <fieldset>
+              <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the web GUI dashboard and API">Poll pools for balances & earnings every
+                <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
+              <div style="padding-top: 0.6rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
+                <input type="checkbox" class="toggle-switch" id="BalancesShowSums" name="BalancesShowSums" style="margin-left:20px"> Show earnings sums for each pool
+              </div>
+              <div style="padding-top: 0.6rem;" title="Show 1hr / 24hr & 7day pool earnings averages&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
+                <input type="checkbox" class="toggle-switch" id="BalancesShowAverages" name="BalancesShowAverages" style="margin-left:20px"> Show average earnings for each pool
+              </div>
+              <div style="padding-top: 0.6rem;" title="Pool balances will be shown in main (FIAT) currency&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+                <input type="checkbox" class="toggle-switch" id="BalancesShowInFIATcurrency" name="BalancesShowInFIATcurrency" style="margin-left:20px"> Show pool balances in main (FIAT) currency
+              </div>
+              <div style="padding-top: 0.6rem;" title="Pool balances will be shown in extra currencies &#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+                <input type="checkbox" class="toggle-switch" id="BalancesShowInAllCurrencies" name="BalancesShowInAllCurrencies" style="margin-left:20px"> Show pool balances all currencies
+              </div>
+              <div style="padding-top: 0.6rem;" title="Most pools clear pending balances after a longer period of inactivity&#10;To avoid forfeiting pool balances UG-Miner will enforce mining&#10;at the pool 10 days before it would clear the balance&#10;(one cycle only, even if it is not the most profitable pool)&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+                <input type="checkbox" class="toggle-switch" id="BalancesKeepAlive" name="BalancesKeepAlive" style="margin-left:20px"> Keep pool balances alive
+              </div>
+              <div style="padding-top: 0.6rem;" title="UG-Miner will store all balances tracker data in '.\Logs\BalancesTrackerLog.csv'">
+                <input type="checkbox" class="toggle-switch" id="BalancesTrackerLog" name="BalancesTrackerLog" style="margin-left:20px"> Write balances tracker log
+              </div>
             </fieldset>
             <br>
 
@@ -645,14 +650,13 @@
       $('<option/>', { value: key, text: key + ' (' + value + ')' }).appendTo(fiatcurrencycontainer);
     });
     document.getElementById('FIATcurrency').value = config.FIATcurrency.trim();
-
     $('#ExtraCurrencies').on('focusout', function() {
       document.getElementById('ExtraCurrencies').value = document.getElementById('ExtraCurrencies').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
     })
-
     document.getElementById('ExtraCurrencies').value = config.ExtraCurrencies.toString().trim();
     document.getElementById('PayoutCurrency').value = config.PayoutCurrency.trim();
     if (config.UsemBTC) document.getElementById('UsemBTC').checked = config.UsemBTC;
+    document.getElementById('RatesUpdateInterval').value = parseInt(config.RatesUpdateInterval);
 
     // General settings
     document.getElementById('WorkerName').value = config.WorkerName.trim();
@@ -1079,35 +1083,6 @@
           maxlength: 64,
           pattern: '^([A-Za-z0-9$]{3,4}?)+(?:,([A-Za-z0-9$]{3,4})+)*$'
         },
-        IdleSec: {
-          digits: true,
-          range: [0, 3600],
-          required: true,
-          step: 1
-        },
-        Donation: {
-          digits: true,
-          range: [0, 60],
-          required: true,
-          step: 1
-        },
-        Interval: {
-          digits: true,
-          range: [30, 3600],
-          required: true,
-          step: 1
-        },
-        MinDataSample: {
-          range: [10, 100],
-          required: true,
-          step: 1
-        },
-        MinCycle: {
-          digits: true,
-          range: [0, 10],
-          required: true,
-          step: 1
-        },
         Proxy: {
           required: false,
           pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){4}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
@@ -1135,69 +1110,6 @@
           maxlength: 256,
           // {"00:00":0.26,"12:00":0.3}
           pattern: '^\{"([01][0-9]|2[0-3]):[0-5][0-9]":(\\d+|\\d+\.\\d+)(?:,"([01][0-9]|2[0-3]):[0-5][0-9]":(\\d+|\\d+\.\\d+))*\}$'
-        },
-        PowerConsumptionIdleSystemW: {
-          digits: true,
-          range: [0, 999],
-          required: true,
-          step: 1
-        },
-        UnrealisticPoolPriceFactor: {
-          range: [1, 10],
-          required: true,
-          step: 0.1
-        },
-        MinAccuracy: {
-          range: [0, 100],
-          required: true,
-          step: 1
-        },
-        MinWorker: {
-          range: [0, 100],
-          required: true,
-          step: 1
-        },
-        EarningsAdjustmentFactor: {
-          range: [0, 10],
-          required: true,
-          step: 0.01
-        },
-        UnrealisticAlgorithmDeviceEarningsFactor: {
-          range: [1, 99.9],
-          required: true,
-          step: 0.1
-        },
-        UnrealisticMinerEarningsFactor: {
-          range: [1, 99.9],
-          required: true,
-          step: 0.1
-        },
-        MinerSwitchingThreshold: {
-          range: [0, 99],
-          required: true,
-          step: 0.1
-        },
-        BadShareRatioThreshold: {
-          range: [0, 100],
-          required: true,
-          step: 1
-        },
-        ProfitabilityThreshold: {
-          range: [-999999, 999999],
-          required: true,
-          step: 0.001
-        },
-        BalancesTrackerPollInterval: {
-          digits: true,
-          range: [0, 60],
-          required: true,
-          step: 1
-        },
-        AutoUpdateCheckInterval: {
-          digits: true,
-          range: [0, 30],
-          required: true,
-          step: 1
         }
       },
       messages: {
@@ -1268,6 +1180,7 @@
         if (document.getElementById('ExtraCurrencies').value) config.ExtraCurrencies = (document.getElementById('ExtraCurrencies').value).replace(" ", "").split(",");
         config.PayoutCurrency = document.getElementById('PayoutCurrency').value;
         config.UsemBTC = document.getElementById('UsemBTC').checked;
+        config.RatesUpdateInterval = document.getElementById('RatesUpdateInterval').value;
 
         // General settings
         config.WorkerName = document.getElementById('WorkerName').value.toString().trim();

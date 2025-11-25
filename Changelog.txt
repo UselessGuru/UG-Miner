@@ -1,3 +1,13 @@
+Changelog UG-Miner 6.7.1 2025/11/25
+===================================
+
+Enhancements:
+- Core: Added configuration item 'RatesUpdateInterval' (default value. 10); interval between exchange rates updates from min-api.cryptocompare.com
+
+Miner updates:
+- OneZeroMiner-v1.6.9
+
+
 Changelog UG-Miner 6.7.0 2025/11/21
 ===================================
 

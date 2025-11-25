@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -59,8 +59,7 @@ if ($Algorithms) {
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                            $Arguments = $_.Arguments
-                            $Arguments += " --server $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)"
+                            $Arguments = "$($_.Arguments) --server $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)"
 
                             if ($null -ne $Pool.DAGsizeGiB -and "MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments += " --proto stratum" }
                             if ($Pool.PoolPorts[1]) { $Arguments += " --ssl 1" }

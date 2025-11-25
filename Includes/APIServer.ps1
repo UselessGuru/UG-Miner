@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.0
-Version date:   2025/11/23
+Version:        6.7.1
+Version date:   2025/11/25
 #>
 
 using module .\Include.psm1
@@ -125,7 +125,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     $Pool.Available = $false
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                 }
-                $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
+                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
@@ -167,7 +167,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     }
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                 }
-                $Message = "$($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
+                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
@@ -210,7 +210,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 $RemovedEntriesCount = $BalanceDataEntries.Count - $Session.BalancesData.Count
                 if ($RemovedEntriesCount -gt 0) { 
-                    $Message = "$RemovedEntriesCount balance data $(If ($RemovedEntriesCount -eq 1) { "entry" } Else { "entries" }) removed."
+                    $Message = "$RemovedEntriesCount balance data $(if ($RemovedEntriesCount -eq 1) { "entry" } Else { "entries" }) removed."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = $Message
                 }
@@ -243,7 +243,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                                 }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked disabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become active in the next cycle."
+                        Write-Message -Level Verbose "Web GUI: Device$(if ($Values.Count -ne 1) { "s" }) $($Values -join ", " -replace ",([^,]*)$", " &`$1") marked as disabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become active in the next cycle."
                     }
                     catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -276,7 +276,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                                 else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(If ($Values.Count -ne 1) { "s" }) '$($Values -join ", ")' marked as enabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
+                        Write-Message -Level Verbose "Web GUI: Device$(if ($Values.Count -ne 1) { "s" }) $($Values -join ", " -replace ",([^,]*)$", " &`$1") marked as enabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
                     }
                     catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -360,7 +360,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         "/functions/mining/pause" { 
             if ($Session.MiningStatus -ne "Paused") { 
                 $Session.NewMiningStatus = "Paused"
-                $Data = "Mining is being paused...`n$(If ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
+                $Data = "Mining is being paused...`n$(if ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
                 $Session.SuspendCycle = $false
                 $Session.RestartCycle = $true
             }
@@ -369,7 +369,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         "/functions/mining/start" { 
             if ($Session.MiningStatus -ne "Running") { 
                 $Session.NewMiningStatus = "Running"
-                $Data = "Mining processes starting...`n$(If ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
+                $Data = "Mining processes starting...`n$(if ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
                 $Session.SuspendCycle = $false
                 $Session.RestartCycle = $true
             }
@@ -413,7 +413,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                             $Data += $_.Name
                         }
                     )
-                    $Message = "Disabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    $Message = "Disabled $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
@@ -434,7 +434,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                             $Data += $_.Name
                         }
                     )
-                    $Message = "Enabled $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    $Message = "Enabled $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
@@ -449,8 +449,8 @@ while ($Session.APIversion -and $Server.IsListening) {
             if ($TempStats = @(if ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } else { Get-Stat })) { 
                 if ($null -ne $Parameters.Value) { 
                     ($TempStats.Name | Sort-Object).foreach({ $Data += "$($_ -replace "(_Hashrate|_PowerConsumption)$")`n" })
-                    if ($Parameters.Type -eq "Hashrate") { $Data += "`n$($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)H/s hashrate." }
-                    elseif ($Parameters.Type -eq "PowerConsumption") { $Data += "`n$($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)W power consumption." }
+                    if ($Parameters.Type -eq "Hashrate") { $Data += "`n$($TempStats.Count) stat file$(if ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)H/s hashrate." }
+                    elseif ($Parameters.Type -eq "PowerConsumption") { $Data += "`n$($TempStats.Count) stat file$(if ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)W power consumption." }
                 }
                 else { 
                     $Data = $TempStats | ConvertTo-Json
@@ -468,7 +468,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     $Data = @()
                     ($Pools | Sort-Object -Property Name, Algorithm, Currency).foreach(
                         { 
-                            $StatName = "$($_.Name)_$($_.Algorithm)$(If ($_.Currency) { "-$($_.Currency)" })"
+                            $StatName = "$($_.Name)_$($_.Algorithm)$(if ($_.Currency) { "-$($_.Currency)" })"
                             $Data += $StatName
 
                             Remove-Stat -Name "$($StatName)_Profit"
@@ -479,7 +479,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                             $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
                         }
                     )
-                    $Message = "Reset pool stats for $($Pools.Count) $(If ($Pools.Count -eq 1) { "pool" } Else { "pools" })."
+                    $Message = "Reset pool stats for $($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } Else { "pools" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
@@ -498,7 +498,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                             Set-MinerReBenchmark $_
                         }
                     )
-                    $Message = "Re-benchmark triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    $Message = "Re-benchmark triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     if ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
@@ -518,7 +518,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                             Set-MinerMeasurePowerConsumption $_
                         }
                     )
-                    $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" })."
+                    $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     if ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
@@ -537,9 +537,9 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $Data += $_.Name -replace "(_Hashrate|_PowerConsumption)$"
                     }
                 )
-                if ($Parameters.Type -eq "Hashrate") { $Message = "Reset $($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" })$(If ($null -ne $Parameters.Value) { " with $($Parameters.Value)H/s hashrate" })." }
-                elseif ($Parameters.Type -eq "PowerConsumption") { $Message = "Reset $($TempStats.Count) stat file$(If ($TempStats.Count -ne 1) { "s" })$(If ($null -ne $Parameters.Value) { " with $($Parameters.Value)W power consumption" })." }
-                elseif ($Parameters.Type -eq "Profit") { $Message = "Reset $($TempStats.Count) pool stat file$(If ($TempStats.Count -ne 1) { "s" })." }
+                if ($Parameters.Type -eq "Hashrate") { $Message = "Reset $($TempStats.Count) stat file$(if ($TempStats.Count -ne 1) { "s" })$(if ($null -ne $Parameters.Value) { " with $($Parameters.Value)H/s hashrate" })." }
+                elseif ($Parameters.Type -eq "PowerConsumption") { $Message = "Reset $($TempStats.Count) stat file$(if ($TempStats.Count -ne 1) { "s" })$(if ($null -ne $Parameters.Value) { " with $($Parameters.Value)W power consumption" })." }
+                elseif ($Parameters.Type -eq "Profit") { $Message = "Reset $($TempStats.Count) pool stat file$(if ($TempStats.Count -ne 1) { "s" })." }
                 Write-Message -Level Info "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
             }
@@ -560,7 +560,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                                 $Data += $_.Name
                             }
                         )
-                        $Message = "Marked $($Data.Count) miner$(If ($Data.Count -ne 1) { "s" }) as failed."
+                        $Message = "Marked $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" }) as failed."
                         Write-Message -Level Verbose "Web GUI: $Message"
                         $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message" 
                     }
@@ -638,7 +638,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                 }
                 Remove-Variable Pool
                 if ($Data.Count) { 
-                    $Message = "$($Data.Count) watchdog $(If ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
+                    $Message = "$($Data.Count) watchdog $(if ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
