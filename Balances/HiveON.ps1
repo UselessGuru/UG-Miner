@@ -18,14 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolConfig = $Session.Config.Pools.$Name
-$PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).foreach(
+$PoolConfig.Wallets.psBase.Keys.where({ "ETC", "RVN" -contains $_ }).foreach(
     { 
         $APIResponse = $null
         $Currency = $_.ToUpper()
@@ -40,7 +40,7 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).foreach(
             try { 
                 $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolConfig.PoolAPItimeout -ErrorAction Ignore
 
-                if ($Session.Config.LogBalanceAPIResponse) { 
+                if ($Session.Config.BalancesTrackerLogAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

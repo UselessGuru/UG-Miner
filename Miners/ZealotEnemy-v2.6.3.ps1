@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Z-Enemy/z-enemy-2.6.3-win-cuda11.1.zip"; break }
@@ -52,31 +52,31 @@ $Algorithms = @(
 #   @{ Algorithm = "Xevan";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludePools = @(); Arguments = " --algo xevan --diff-factor 1 --statsavg 1 --intensity 26" } # No hashrate in time
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
     ($Devices | Sort-Object -Property Model -Unique).foreach(
         { 
             $Model = $_.Model
-            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
+            $MinerDevices = $Devices.where({ $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             $Algorithms.ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
                     foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                         if ($_.Algorithm -eq "KawPow" -and $MinMemGB -lt 2) { $MinMemGiB = 4 } # No hash rates in time for GPUs with 2GB
-                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Arguments = $_.Arguments
-                            if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity [0-9]+" }
+                            if ($AvailableMinerDevices.where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity [0-9]+" }
 
                             [PSCustomObject]@{ 
                                 API         = "Trex"

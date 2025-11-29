@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 param(
@@ -54,7 +54,7 @@ if ($DivisorMultiplier -and $PriceField) {
 
     if (-not $Request.PSObject.Properties.Name) { return }
 
-    foreach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp })) { 
+    foreach ($Algorithm in $Request.PSObject.Properties.Name.where({ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp })) { 
         $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = "$($Request.$Algorithm.currency)" -replace "\s+"
         $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
@@ -83,7 +83,7 @@ if ($DivisorMultiplier -and $PriceField) {
         }
 
         foreach ($RegionNorm in $Session.Regions[$Session.Config.Region]) { 
-            if ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $RegionNorm })) { 
+            if ($Region = $PoolConfig.Region.where({ (Get-Region $_) -eq $RegionNorm })) { 
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)

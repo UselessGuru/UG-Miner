@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/fireice-uk/xmr-stak/releases/download/2.10.8/xmr-stak-win64-2.10.8.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -75,8 +75,8 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightXtl";      MinMemGiB = 2; Type = "NVIDIA"; MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
@@ -103,13 +103,13 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).foreach(
                 { 
                     $MinMemGiB = $_.MinMemGiB
-                    if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
+                    if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
@@ -119,7 +119,7 @@ if ($Algorithms) {
                         $PlatformThreadsConfigFileName = [System.Web.HttpUtility]::UrlEncode("$MinerName.txt")
 
                         # $ExcludePools = $_.ExcludePools
-                        # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                        # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
                         foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                             # Note: For fine tuning directly edit the configuration files in the miner binary directory

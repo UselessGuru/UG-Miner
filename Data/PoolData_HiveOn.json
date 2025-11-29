@@ -1,0 +1,33 @@
+{
+  "Algorithm": [],
+  "AutoExchange": false,
+  "BalancesKeepAlive": 90, // No expiration communicated by pool, use 90 days just to be sure
+  "ExcludeRegion": [],
+  "GuaranteedPayoutCurrencies": [
+    "BTC",
+    "ETC",
+    "KAS",
+    "RVN"
+  ],
+  "PayoutCurrencies": [
+    "BTC",
+    "ETC",
+    "KAS",
+    "RVN"
+  ],
+  "PayoutThreshold": {
+    "BTC": 0.005,
+    "ETC": 1,
+    "KAS": 50,
+    "RVN": 10
+  },
+  "Region": [
+    "n/a"
+  ],
+  "PoolAPIAllowedFailureCount": 3,
+  "PoolAPIretryInterval": 3,
+  "PoolAPItimeout": 20,
+  "Variant": {
+    "HiveON": {}
+  }
+}

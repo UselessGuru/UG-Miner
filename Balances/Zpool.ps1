@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -38,7 +38,7 @@ $Session.Config.Pools.$Name.Wallets.Keys.ForEach(
             try { 
                 $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Session.Config.PoolAPItimeout -ErrorAction Ignore
 
-                if ($Session.Config.LogBalanceAPIResponse) { 
+                if ($Session.Config.BalancesTrackerLogAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

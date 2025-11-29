@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 class Fireice : Miner { 
@@ -97,7 +97,7 @@ class Fireice : Miner {
                 # Retrieve hw config from platform config file
                 $ThreadsConfigJson = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore
                 # Filter index for current cards and apply threads
-                $ThreadsConfigJson | Add-Member gpu_threads_conf ([Array]($ThreadsConfigJson.gpu_threads_conf.Where({ $Parameters.Devices -contains $_.Index })) * $Parameters.Threads) -Force
+                $ThreadsConfigJson | Add-Member gpu_threads_conf ([Array]($ThreadsConfigJson.gpu_threads_conf.where({ $Parameters.Devices -contains $_.Index })) * $Parameters.Threads) -Force
                 # Create correct numer of CPU threads
                 $ThreadsConfigJson | Add-Member cpu_threads_conf ([Array]$ThreadsConfigJson.cpu_threads_conf * $Parameters.Threads) -Force
                 # Write config file

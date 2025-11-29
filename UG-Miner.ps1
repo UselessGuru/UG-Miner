@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.1"
+    Version      = [System.Version]"6.7.2"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -344,7 +344,7 @@ Write-Host ")" -ForegroundColor Green
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 
 $Loops = 20
-while (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
+while (((Get-CimInstance CIM_Process).where({ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     $Loops --
     [Console]::SetCursorPosition(0, $CursorPosition.y)
     Write-Host ""
@@ -366,7 +366,7 @@ Remove-Variable Loops
 
 # Convert command line parameters syntax
 $Session.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash table
-($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).foreach(
+($MyInvocation.MyCommand.Parameters.psBase.Keys.where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).foreach(
     { 
         if ($MyInvocation.MyCommandLineParameters.$_ -is [Switch]) { 
             $Session.AllCommandLineParameters.$_ = [Boolean]$Session.AllCommandLineParameters.$_
@@ -400,9 +400,11 @@ else {
 Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
 
 # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
-$Session.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
-$Session.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
-if ($Session.LogViewerConfig -and $Session.LogViewerConfig -and -not (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" })) { & $($Session.LogViewerExe) $($Session.LogViewerConfig) }
+if ($Session.Config.LogViewerConfig -and $Session.Config.LogViewerConfig) { 
+    $Session.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
+    $Session.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
+    if (-not (Get-CimInstance CIM_Process).where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" })) { & $($Session.LogViewerExe) $($Session.LogViewerConfig) }
+}
 
 # Update config file to include all new config items
 if (-not $Session.Config.ConfigFileVersion -or [System.Version]::Parse($Session.Config.ConfigFileVersion) -lt $Session.Branding.Version) { Update-ConfigFile -ConfigFile $Session.ConfigFile }
@@ -410,7 +412,7 @@ if (-not $Session.Config.ConfigFileVersion -or [System.Version]::Parse($Session.
 # Internet connection must be available
 Write-Host ""
 Write-Host "Checking internet connection..." -ForegroundColor Yellow -NoNewline
-$NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+$NetworkInterface = (Get-NetConnectionProfile).where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
 $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
 Remove-Variable NetworkInterface
 if (-not $Session.MyIPaddress) { 
@@ -439,7 +441,7 @@ $Prerequisites = @(
     "$env:SystemRoot\System32\VCRUNTIME140.dll",
     "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
 )
-if ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) })) { 
+if ($PrerequisitesMissing = $Prerequisites.where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) })) { 
     [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
     Write-Host " ✖" -ForegroundColor Red
     $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "'$_' is missing." })
@@ -580,34 +582,34 @@ $Session.GPUArchitectureDbAMD.PSObject.Properties.ForEach({ $_.Value = $_.Value 
 
 $Session.Devices = Get-Device
 
-if ($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion -and (Get-Item -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors).Property -notlike "*\amdocl64.dll") { 
+if ($Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion -and (Get-Item -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors).Property -notlike "*\amdocl64.dll") { 
     Write-Message -Level Error "OpenCL driver installation for AMD GPU devices is incomplete"
     Write-Message -Level Error "Please create the missing registry key as described in https://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143. $($Session.Branding.ProductLabel) will shut down."
     (New-Object -ComObject Wscript.Shell).Popup("The OpenCL driver installation for AMD GPU devices is incomplete.`nPlease create the missing registry key as described here:`n`nhttps://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
 
-$Session.Devices.Where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Session.SupportedCPUDeviceVendors }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
-$Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Session.SupportedGPUDeviceVendors }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
-$Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
+$Session.Devices.where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Session.SupportedCPUDeviceVendors }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
+$Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Session.SupportedGPUDeviceVendors }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
+$Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
 
-$Session.Devices.Where({ $Session.Config.ExcludeDeviceName -contains $_.Name -and $_.State -ne [DeviceState]::Unsupported }).foreach({ $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" })
+$Session.Devices.where({ $Session.Config.ExcludeDeviceName -contains $_.Name -and $_.State -ne [DeviceState]::Unsupported }).foreach({ $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" })
 
 # Build driver version table
 $Session.DriverVersion = [PSCustomObject]@{ }
 if ($Session.Devices.CUDAversion) { $Session.DriverVersion | Add-Member "CUDA" ($Session.Devices.CUDAversion | Sort-Object -Top 1) }
 $Session.DriverVersion | Add-Member "CIM" ([PSCustomObject]@{ })
-$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Session.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
-$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host " ✔  ($($Session.Devices.count) device$(if ($Session.Devices.count -ne 1) { "s" }) found" -ForegroundColor Green -NoNewline
-if ($Session.Devices.Where({ $_.State -eq [DeviceState]::Unsupported })) { Write-Host " [$($Session.Devices.Where({ $_.State -eq [DeviceState]::Unsupported }).Count) unsupported device$(if ($Session.Devices.Where({ $_.State -eq [DeviceState]::Unsupported }).Count -ne 1){ "s" })]" -ForegroundColor DarkYellow -NoNewline } 
+if ($Session.Devices.where({ $_.State -eq [DeviceState]::Unsupported })) { Write-Host " [$($Session.Devices.where({ $_.State -eq [DeviceState]::Unsupported }).Count) unsupported device$(if ($Session.Devices.where({ $_.State -eq [DeviceState]::Unsupported }).Count -ne 1){ "s" })]" -ForegroundColor DarkYellow -NoNewline } 
 Write-Host ")" -ForegroundColor Green
 
 # Driver version changed
@@ -642,7 +644,7 @@ if ($Session.Config.APIport) {
 else { 
     # Use port 4000 for miner communication
     $Session.MinerBaseAPIport = 4000
-    Write-Message -Level Warn "No valid API port; using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+    Write-Message -Level Warn "No valid API port; using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
 }
 
 function MainLoop { 
@@ -661,7 +663,7 @@ function MainLoop {
 
         # Check internet connection every 10 minutes
         if ($Session.NetworkChecked -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-10)) { 
-            $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+            $NetworkInterface = (Get-NetConnectionProfile).where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
             $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
             Remove-Variable NetworkInterface
             if ($Session.MyIPaddress) { $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime() }
@@ -697,7 +699,7 @@ function MainLoop {
                 $PSDefaultParameterValues["*:Proxy"] = $Session.Config.Proxy
             }
 
-            Stop-Brain @($Session.Brains.Keys.Where({ $_ -notin (Get-PoolBaseName $Session.Config.PoolName) }))
+            Stop-Brain @($Session.Brains.Keys.where({ $_ -notin (Get-PoolBaseName $Session.Config.PoolName) }))
 
             switch ($Session.NewMiningStatus) { 
                 "Idle" { 
@@ -764,7 +766,7 @@ function MainLoop {
                     $Message = "$($Session.Branding.ProductLabel) is paused."
                     Write-Message -Level Info $Message
                     $Message += " Click the 'Start mining' button to make money.<br>"
-                    ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).foreach(
+                    ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).foreach(
                         { 
                             $Message += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Session.Rates.$_.($Session.Config.FIATcurrency) -DecimalsMax $Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Session.Rates.$_.($Session.Config.FIATcurrency)
                         }
@@ -1144,7 +1146,7 @@ function MainLoop {
             }
 
             if ($Session.MyIPaddress) { 
-                if ($Session.MiningStatus -eq "Running" -and $Session.Miners.Where({ $_.Available })) { 
+                if ($Session.MiningStatus -eq "Running" -and $Session.Miners.where({ $_.Available })) { 
                     # Miner list format
                     [System.Collections.ArrayList]$MinerTable = @(
                         @{ Label = "Miner"; Expression = { $_.Name } }
@@ -1164,12 +1166,12 @@ function MainLoop {
                     )
                     # Display top 5 optimal miners and all benchmarking of power consumption measuring miners
                     $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                    ($Session.Miners.Where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" } | Sort-Object -Property Name).foreach(
+                    ($Session.Miners.where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" } | Sort-Object -Property Name).foreach(
                         { 
                             $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
-                            $MinersDeviceGroupNeedingBenchmark = $MinersDeviceGroup.Where({ $_.Benchmark })
-                            $MinersDeviceGroupNeedingPowerConsumptionMeasurement = $MinersDeviceGroup.Where({ $_.MeasurePowerConsumption })
-                            $MinersDeviceGroup.Where(
+                            $MinersDeviceGroupNeedingBenchmark = $MinersDeviceGroup.where({ $_.Benchmark })
+                            $MinersDeviceGroupNeedingPowerConsumptionMeasurement = $MinersDeviceGroup.where({ $_.MeasurePowerConsumption })
+                            $MinersDeviceGroup.where(
                                 { 
                                     $Session.Config.ShowAllMiners -or <# List all miners #>
                                     $MinersDeviceGroupNeedingBenchmark.Count -gt 0 -or
@@ -1203,9 +1205,9 @@ function MainLoop {
 
                     if ($Session.NewMiningStatus -eq "running" -and $Session.Config.UIstyle -ne "full") { Write-Host -ForegroundColor DarkYellow "$(if ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(if ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(if ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
 
-                    [System.Collections.ArrayList]$MinersActivatedLast24Hrs = $Session.Miners.Where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now })
+                    [System.Collections.ArrayList]$MinersActivatedLast24Hrs = $Session.Miners.where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now })
 
-                    if ($ProcessesIdle = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Idle" })) { 
+                    if ($ProcessesIdle = $MinersActivatedLast24Hrs.where({ $_.Status -eq "Idle" })) { 
                         Write-Host "$($ProcessesIdle.Count) previously executed miner$(if ($ProcessesIdle.Count -ne 1) { "s" }) (past 24 hrs):"
                         [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
@@ -1222,7 +1224,7 @@ function MainLoop {
                     }
                     Remove-Variable ProcessesIdle
 
-                    if ($ProcessesFailed = $MinersActivatedLast24Hrs.Where({ $_.Status -eq "Failed" })) { 
+                    if ($ProcessesFailed = $MinersActivatedLast24Hrs.where({ $_.Status -eq "Failed" })) { 
                         Write-Host -ForegroundColor Red "$($ProcessesFailed.Count) failed miner$(if ($ProcessesFailed.Count -ne 1) { "s" }) (past 24 hrs):"
                         [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Name"; Expression = { $_.Name } }
@@ -1241,7 +1243,7 @@ function MainLoop {
 
                     if ($Session.Config.Watchdog) { 
                         # Display watchdog timers
-                        $Session.WatchdogTimers.Where({ $_.Kicked -gt $Session.Timer.AddSeconds(-$Session.WatchdogReset) }) | Sort-Object -Property Kicked, @{ Expression = { $_.MinerBaseName_Version_Device -replace ".+-" } } | Format-Table -Wrap (
+                        $Session.WatchdogTimers.where({ $_.Kicked -gt $Session.Timer.AddSeconds(-$Session.WatchdogReset) }) | Sort-Object -Property Kicked, @{ Expression = { $_.MinerBaseName_Version_Device -replace ".+-" } } | Format-Table -Wrap (
                             @{ Label = "Miner watchdog timer"; Expression = { $_.MinerName } },
                             @{ Label = "Pool"; Expression = { $_.PoolName } },
                             @{ Label = "Algorithm"; Expression = { $_.Algorithm } },
@@ -1256,7 +1258,7 @@ function MainLoop {
                     Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
                     Remove-Variable Colour
 
-                    if ($Session.Miners.Where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
+                    if ($Session.Miners.where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                         if ($Session.MiningProfit -lt 0) { 
                             # Mining causes a loss
                             Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and $(if ($Session.Config.DryRun) { "would cause" } Else { "causes" }) a loss of {0} {1:n$($Session.Config.DecimalsMax)}/day (including base power cost)." -f $Session.Config.FIATcurrency, - ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)))

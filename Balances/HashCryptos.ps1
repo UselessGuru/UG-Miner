@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -35,32 +35,32 @@ $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
+while ($Wallet -and -not $APIresponse -and $RetryCount -gt 0) { 
 
     try { 
-        $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
+        $APIresponse = Invoke-RestMethod $Request -TimeoutSec $PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck
 
-        if ($Session.Config.LogBalanceAPIResponse) { 
+        if ($Session.Config.BalancesTrackerLogAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-            $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+            $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
         }
 
-        if ($APIResponse.symbol) { 
+        if ($APIresponse.symbol) { 
             return [PSCustomObject]@{ 
                 DateTime = [DateTime]::Now.ToUniversalTime()
                 Pool     = $Name
-                Currency = $APIResponse.symbol
+                Currency = $APIresponse.symbol
                 Wallet   = $Wallet
-                Pending  = [Double]$APIResponse.unsold # Pending
-                Balance  = [Double]$APIResponse.balance
-                Unpaid   = [Double]$APIResponse.unpaid # Balance + unsold (pending)
-                # Paid     = [Double]$APIResponse.total # Reset after payout
-                # Total    = [Double]$APIResponse.unpaid + [Double]$APIResponse.total # Reset after payout
+                Pending  = [Double]$APIresponse.unsold # Pending
+                Balance  = [Double]$APIresponse.balance
+                Unpaid   = [Double]$APIresponse.unpaid # Balance + unsold (pending)
+                # Paid     = [Double]$APIresponse.total # Reset after payout
+                # Total    = [Double]$APIresponse.unpaid + [Double]$APIresponse.total # Reset after payout
                 Url      = "https://hashcryptos.com/?address=$Wallet"
             }
         }
-        elseif ($APIResponse.Message -like "Only 1 request *") { 
+        elseif ($APIresponse.Message -like "Only 1 request *") { 
             Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
         }
     }

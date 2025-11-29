@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -34,64 +34,85 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchUserName -and $Session.Config.MiningDutchAPIKey) { 
 
     try { 
-        $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Session.Config.MiningDutchUserName)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
+        # Get mutex. Mutexes are shared across all threads and processes.
+        # This lets us ensure only one thread is trying to query the pool API
+        # $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
+        # Attempt to aquire mutex
+        # if ($Mutex.WaitOne($RetryInterval * 2000)) { 
+            # if ($Session."$($Name)APIrequestTimestamp" -and [DateTime]::Now.ToUniversalTime() -lt $Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval)) { 
+            #     Start-Sleep -Seconds ($Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval) - [DateTime]::Now.ToUniversalTime()).TotalSeconds
+            # }
+            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+            $Request = "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Session.Config.MiningDutchUserName)"
+            Write-Message -Level Debug "BalancesTracker '$Name': Querying https://www.mining-dutch.nl/api/v1/public/pooldata/?method=poolstats&algorithm=all&id=$($Session.Config.MiningDutchUserName)"
+            $APIresponse = Invoke-RestMethod $Request -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
+            Write-Message -Level Debug "BalancesTracker '$Name': Response from https://www.mining-dutch.nl/api/status received"
+            # $Mutex.ReleaseMutex()
+        # }
+        # Remove-Variable Mutex
 
-        if ($Session.Config.LogBalanceAPIResponse) { 
+        if ($Session.Config.BalancesTrackerLogAPIResponse) { 
             "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
             $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-            $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+            $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
         }
 
-        if ($APIResponse.Message -like "Only 1 request *") { 
-            Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
-        }
-        elseif ($Currencies = ($APIResponse.result.Where({ $_.tag -and $_.tag -notlike "*_*" }) | Sort-Object -Property tag)) { 
+        if ($Currencies = ($APIresponse.result.where({ $_.tag -and $_.tag -notlike "*_*" -and $_.status -ne "merged" }) | Sort-Object -Property tag)) { 
             $Currencies.ForEach(
                 { 
                     $Currency = $_.tag
                     $RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
+                    $APIresponse = $null
 
-                    Start-Sleep -Seconds $RetryInterval # Pool does not support immediate requests
-
-                    while (-not $APIResponse -and $RetryCount -gt 0) { 
+                    while (-not $APIresponse -and $RetryCount -gt 0) { 
                         try { 
-                            $APIResponse = Invoke-RestMethod "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)" -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
+                            # Get mutex. Mutexes are shared across all threads and processes.
+                            # This lets us ensure only one thread is trying to query the pool API
+                            # $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
+                            # Attempt to aquire mutex
+                            # if ($Mutex.WaitOne($RetryInterval * 2000)) { 
+                                # if ($Session."$($Name)APIrequestTimestamp" -and [DateTime]::Now.ToUniversalTime() -lt $Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval)) { 
+                                #     Start-Sleep -Seconds ($Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval) - [DateTime]::Now.ToUniversalTime()).TotalSeconds
+                                # }
+                                $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                                $Request = "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)"
+                                Write-Message -Level Debug "BalancesTracker '$Name': Querying https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)"
+                                $APIresponse = Invoke-RestMethod $Request -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
+                                Write-Message -Level Debug "BalancesTracker '$Name': Response from https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey) received"
+                                # $Mutex.ReleaseMutex()
+                            # }
+                            # Remove-Variable Mutex
 
-                            if ($Session.Config.LogBalanceAPIResponse) { 
+                            if ($Session.Config.BalancesTrackerLogAPIResponse) { 
                                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                                 $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-                                $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                                $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                             }
 
-                            if ($APIResponse.Message -like "Only 1 request *") { 
-                                Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
-                            }
-                            elseif ($APIResponse.getuserbalance.data) { 
-
-                                $Unpaid = [Double]$APIResponse.getuserbalance.data.confirmed + [Double]$APIResponse.getuserbalance.data.unconfirmed
+                            if ($APIresponse.getuserbalance.data) { 
+                                $Unpaid = [Double]$APIresponse.getuserbalance.data.confirmed + [Double]$APIresponse.getuserbalance.data.unconfirmed
                                 if ($Unpaid -gt 0) { 
                                     [PSCustomObject]@{ 
                                         DateTime = [DateTime]::Now.ToUniversalTime()
                                         Pool     = $Name
                                         Currency = $Currency
                                         Wallet   = $Session.Config.MiningDutchUserName
-                                        Pending  = [Double]$APIResponse.getuserbalance.data.unconfirmed
-                                        Balance  = [Double]$APIResponse.getuserbalance.data.confirmed
+                                        Pending  = [Double]$APIresponse.getuserbalance.data.unconfirmed
+                                        Balance  = [Double]$APIresponse.getuserbalance.data.confirmed
                                         Unpaid   = $Unpaid
                                         Url      = "https://www.mining-dutch.nl/index.php?page=earnings"
                                     }
                                 }
+                                Remove-Variable Unpaid
                             }
                         }
                         catch { 
+                            Start-Sleep 0
                         }
                         $RetryCount--
                     }
                 }
             )
-        }
-        else { 
-            Start-Sleep -Seconds $RetryInterval # Pool does not support immediate requests
         }
     }
     catch { 

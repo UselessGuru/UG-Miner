@@ -472,8 +472,8 @@
           });
           $('#myModal').on('hidden.bs.modal', function () {
             location.reload(true);
-          })
-        }
+          });
+        };
         document.getElementById('btn-editconfig').disabled = false;
         document.getElementById('btn-editpoolsconfig').disabled = false;
       });
@@ -489,7 +489,7 @@
           $('#myModal').modal({ 
             show: true
           });
-        }
+        };
         document.getElementById('btn-editconfig').disabled = false;
         document.getElementById('btn-editpoolsconfig').disabled = false;
       });
@@ -636,13 +636,22 @@
       };
     });
     $(document.getElementById('NiceHashAPIKey')).change(function (event) {
-      if (document.getElementById('PoolBalanceTracker-NiceHash')) document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+      if (document.getElementById('PoolBalanceTracker-NiceHash')) {
+        document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+        if (document.getElementById('PoolBalanceTracker-NiceHash').disabled) document.getElementById('PoolBalanceTracker-NiceHash').checked = false;
+      };
     });
     $(document.getElementById('NiceHashOrganizationId')).change(function (event) {
-      if (document.getElementById('PoolBalanceTracker-NiceHash')) document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+      if (document.getElementById('PoolBalanceTracker-NiceHash')) {
+        document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+        if (document.getElementById('PoolBalanceTracker-NiceHash').disabled) document.getElementById('PoolBalanceTracker-NiceHash').checked = false;
+      };
     });
     $(document.getElementById('NiceHashAPISecret')).change(function (event) {
-      if (document.getElementById('PoolBalanceTracker-NiceHash')) document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+      if (document.getElementById('PoolBalanceTracker-NiceHash')) {
+        document.getElementById('PoolBalanceTracker-NiceHash').disabled = (document.getElementById('BalancesTrackerPollInterval').value == 0 || document.getElementById('NiceHashAPIKey').value === "" || document.getElementById('NiceHashOrganizationId').value === "" || document.getElementById('NiceHashAPISecret').value === "");
+        if (document.getElementById('PoolBalanceTracker-NiceHash').disabled) document.getElementById('PoolBalanceTracker-NiceHash').checked = false;
+      };
     });
 
     // Currency settings
@@ -652,7 +661,7 @@
     document.getElementById('FIATcurrency').value = config.FIATcurrency.trim();
     $('#ExtraCurrencies').on('focusout', function() {
       document.getElementById('ExtraCurrencies').value = document.getElementById('ExtraCurrencies').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
-    })
+    });
     document.getElementById('ExtraCurrencies').value = config.ExtraCurrencies.toString().trim();
     document.getElementById('PayoutCurrency').value = config.PayoutCurrency.trim();
     if (config.UsemBTC) document.getElementById('UsemBTC').checked = config.UsemBTC;
@@ -681,7 +690,7 @@
       if (!(document.getElementById('LegacyGUI').checked)) {
         document.getElementById('ShowConsole').checked = true;
         $(document.getElementById('ShowConsole')).trigger('change');
-      }
+      };
     });
     $(document.getElementById('LegacyGUI')).trigger('change');
     if (config.ShowConsole) document.getElementById('ShowConsole').checked = true;
@@ -717,16 +726,16 @@
           if (device.State == 0) {
             document.getElementById(('device-' + device.Name).toLowerCase()).checked = true;
             document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
-          }
+          };
           if (device.State == 1) {
             document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
             document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
-          }
+          };
           if (device.State == 2) {
             document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
             document.getElementById(('device-' + device.Name).toLowerCase()).disabled = true;
-          }
-        })
+          };
+        });
       }
     });
 
@@ -773,13 +782,13 @@
         $.each(poolvariants, function (key, poolvariant) {
           if (poolbasename != '' && poolbasename != poolvariant.toLowerCase().replace(regex, '')) {
             $('<br>').appendTo(poolscontainer);
-          }
+          };
           poolbasename = poolvariant.toLowerCase().replace(regex, '');
           if (poolvariants.filter((poolvariant) => poolvariant.toLowerCase().replace(regex, '').match(poolbasename)).length == 1) {
             title = "You must select at least one pool";
           } else {
             title = "You cannot select multiple variants of the same pool";
-          }
+          };
           $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('pool-' + poolvariant).toLowerCase(), style: 'margin-left: 0px;' }).appendTo(poolscontainer);
           $('<label/>', { for: ('pool-' + poolvariant).toLowerCase(), text: poolvariant, title: title, style: 'margin-left: 5px; line-height: 75%;' }).appendTo(poolscontainer);
           if (poolbasename == poolvariant.toLowerCase()) {
@@ -811,18 +820,18 @@
     else document.getElementById('MinerSet').value = 2;
     $('#ExcludeMinerName').on('focusout', function() {
       document.getElementById('ExcludeMinerName').value = document.getElementById('ExcludeMinerName').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
-    })
+    });
     if (config.ExcludeMinerName) document.getElementById('ExcludeMinerName').value = (config.ExcludeMinerName).toString().trim();
     $('#Algorithm').on('focusout', function() {
       document.getElementById('Algorithm').value = document.getElementById('Algorithm').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
-    })
+    });
     if (config.Algorithm) document.getElementById('Algorithm').value = (config.Algorithm).toString().trim();
     if (config.DisableMinersWithFee) document.getElementById('DisableMinersWithFee').checked = true;
     if (config.DisableDualAlgoMining) document.getElementById('DisableDualAlgoMining').checked = true;
     if (config.DisableSingleAlgoMining) document.getElementById('DisableSingleAlgoMining').checked = true;
     $('#Currency').on('focusout', function() {
       document.getElementById('Currency').value = document.getElementById('Currency').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
-    })
+    });
     if (config.Currency) document.getElementById('Currency').value = (config.Currency).toString().trim();
 
     // Dual AND single algorithm mining cannot be disabled at the same time
@@ -871,7 +880,7 @@
       document.getElementById('PowerPricekWh').disabled = true;
       document.getElementById('PowerConsumptionIdleSystemW').disabled = true;
       document.getElementById('IgnorePowerCost').disabled = true;
-    }
+    };
     document.getElementById('PowerPricekWh').value = JSON.stringify(config.PowerPricekWh);
     if (config.IgnorePowerCost) document.getElementById('IgnorePowerCost').checked = true;
     if (parseInt(config.PowerConsumptionIdleSystemW) >= 0) document.getElementById('PowerConsumptionIdleSystemW').value = parseInt(config.PowerConsumptionIdleSystemW);
@@ -940,7 +949,7 @@
       if (!(document.getElementById('ShowConsole').checked)) {
         document.getElementById('LegacyGUI').checked = true;
         $(document.getElementById('LegacyGUI')).trigger('change');
-      }
+      };
     });
     $(document.getElementById('ShowConsole')).trigger('change');
 
@@ -1280,7 +1289,7 @@
           $('.modal-body').text('Enter a compressed json, e.g. {"00:00":0.26,"12:00":0.3} (max. 256 chars)');
           $('#myModal').modal({ show: true });
           return false;
-        }
+        };
         config.PowerConsumptionIdleSystemW = parseInt(document.getElementById('PowerConsumptionIdleSystemW').value);
         config.IgnorePowerCost = document.getElementById('IgnorePowerCost').checked;
 
@@ -1358,12 +1367,12 @@
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
         } else if (config.NiceHashWallet == config.Wallets.BTC) {
-          // Niceash wallet
+          // NiceHash wallet
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - NiceHash address must be different from your general BTC wallet.');
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
-        } else if (!config.PoolName){
+        } else if (config.PoolName.length < 1){
           // No pool selected
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must select at least one pool.');
@@ -1381,7 +1390,7 @@
           $('.modal-body').html('Cannot save configuration - it is recommended to delete the existing configuration file and start new.');
           $('body').css('cursor', 'default');
           $('#myModal').modal({ show: true });
-        }
+        };
       }
     });
   });

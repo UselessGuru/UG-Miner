@@ -1,0 +1,46 @@
+{
+  "Algorithm": [],
+  "AutoExchange": true,
+  "BalancesKeepAlive": 90, // Inactive accounts are purged after 90 days
+  "BrainConfig": {
+    "SampleHalfPower": 0,
+    "SampleSizeMinutes": 45,
+    "UseTransferFile": false
+  },
+  "GuaranteedPayoutCurrencies": [
+    "BTC",
+    "DASH",
+    "DGB",
+    "FLUX",
+    "LTC",
+    "RVN"
+  ],
+  "PayoutCurrency": "[Default]",
+  "PayoutThreshold": {
+    "*": 0.05,
+    "BTC": 0.00075
+  },
+  "PoolAPIAllowedFailureCount": 3,
+  "PoolAPIretryInterval": 3,
+  "PoolAPItimeout": 30,
+  "ProfitSwitching": true, // true if pool changes DAG epoch when best coin switches, must not use coin name to set algorithm variant
+  "Region": [
+    "eu",
+    "na",
+    "sea"
+  ],
+  "Variant": {
+    "ZPool": {
+      "DivisorMultiplier": 1000000,
+      "PriceField": "estimate_current"
+    },
+    "ZPool24hr": {
+      "DivisorMultiplier": 1000000,
+      "PriceField": "estimate_last24h"
+    },
+    "ZPoolPlus": {
+      "DivisorMultiplier": 1000000,
+      "PriceField": "PlusPrice"
+    }
+  }
+}

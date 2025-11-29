@@ -1,0 +1,58 @@
+{
+  "Algorithm": [
+    "-Yescrypt",
+    "-YescryptR16"
+  ],
+  "AutoExchange": true,
+  "BalancesKeepAlive": 90, // Inactive accounts are purged after 90 days
+  "BrainConfig": {
+    "SampleHalfPower": 0,
+    "SampleSizeMinutes": 45,
+    "UseTransferFile": false
+  },
+  "PayoutCurrencies": [
+    "BCH",
+    "BSV",
+    "BTC",
+    "DASH",
+    "DGB",
+    "DOGE",
+    "FTC",
+    "GRS",
+    "LTC",
+    "MONA",
+    "PEPEW",
+    "PPC",
+    "RVN",
+    "VTC",
+    "XEC",
+    "XMR",
+    "XMY",
+    "XVG",
+    "ZEC"
+  ],
+  "PayoutCurrency": "[Default]",
+  "PayoutThreshold": {
+    "*": 0.0000075
+  },
+  "PoolAPIAllowedFailureCount": 3,
+  "PoolAPIretryInterval": 11, // Only 1 request every 10 seconds allowed
+  "PoolAPItimeout": 15,
+  "Region": [
+    "n/a"
+  ],
+  "Variant": {
+    "HashCryptos": {
+      "DivisorMultiplier": 1000000,
+      "PriceField": "estimate_current"
+    },
+    "HashCryptos24hr": {
+      "DivisorMultiplier": 1000000,
+      "PriceField": "estimate_last24h"
+    },
+    "HashCryptosPlus": {
+      "DivisorMultiplier": 1000000,
+      "PriceField": "PlusPrice"
+    }
+  }
+}

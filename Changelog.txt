@@ -1,3 +1,19 @@
+Changelog UG-Miner 6.7.2 2025/11/29
+===================================
+
+Changes:
+- Core: Split '.\Data\PooLData.json' into separate files per pool
+- Renamed configuration items 'LogLogBalanceAPIResponseToFile' to 'BalancesTrackerLogAPIResponse'. Configuration file will get updated automatically during update.
+
+Fixes:
+- Core / Includes.psm1: Error in function 'Get-AlLDAGdata' when Zpool was not enabled
+- Web GUI / Configuration editor: Could not disable 'track balances' for NiceHash when no API key, API secret or organisation id were set
+- Web GUI / Configuration editor: Incorrect error message when no pool was selected
+
+Miner updates:
+- OneZeroMiner-v1.7.1
+
+
 Changelog UG-Miner 6.7.1 2025/11/25
 ===================================
 

@@ -17,18 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
-# Added support for dual mining Xelis-Qubitcoin on Nvidia gpus
-# Added a new argument --dual-intensity
-# --dual-intensity is a comma seperated list of intensity pairs of the two algorithms for dual mining( Use * to skip a GPU). Format: <intensityalgo1><intensity_algo2>. eg: 9_7, *, 10_8. The range of each value depends on gpu resources but it's usually between 1 to 11. 
-# Added an autotuner
+# This is just a bug fix for rejected shares issue of v1.7.0 on Pascal cards
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.6.9/onezerominer-win64-1.6.9.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.7.1/onezerominer-win64-1.7.1.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -44,9 +41,9 @@ $Algorithms = @(
     @{ Algorithms = @("XelisHashV2", "");      Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a xelis") }
 )
 
-# $Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
+# $Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
@@ -54,18 +51,18 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).foreach(
                 { 
                     $MinMemGiB = $_.MinMemGiB
 
-                    if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                    if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
@@ -85,7 +82,7 @@ if ($Algorithms) {
                                     Type        = $Type
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(($Pool0, $Pool1).Where({ $_ }).foreach({ @{ Pool = $_ } }))
+                                    Workers     = @(($Pool0, $Pool1).where({ $_ }).foreach({ @{ Pool = $_ } }))
                                 }
                             }
                         }

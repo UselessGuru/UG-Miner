@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.CUDAversion -ge [System.Version]"11.6" -and $_.CUDAversion -lt [System.Version]"12.6" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.where({ $_.CUDAversion -ge [System.Version]"11.6" -and $_.CUDAversion -lt [System.Version]"12.6" }))) { return }
 
 $URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.25/TeamBlackMiner_2_25_cuda_12_2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -58,9 +58,9 @@ $Algorithms = @(
     @{ Algorithms = @("VertHash", "");           SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 3.0;  MinerSet = 0; Tuning = " --tweak 2"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo verthash --verthash-data ..\.$($Session.VertHashDatPath)" }
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
@@ -68,10 +68,10 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).foreach(
                 { 
                     if ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                         $PrerequisitePath = $Session.VertHashDatPath
@@ -82,8 +82,8 @@ if ($Algorithms) {
                         $PrerequisiteURI = ""
                     }
                     # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                    #     foreach($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                    # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                    #     foreach($Pool1 in $MinerPools[1][$_.Algorithms[1]].where({ $ExcludePools[1] -notcontains $_.Name })) { 
                     foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
                         foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
@@ -91,7 +91,7 @@ if ($Algorithms) {
                             if (-not $_.Algorithms[1] -or ($Pool0.PoolPorts[0] -and $Pool1.PoolPorts[0]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                                if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-$($_.Intensity)" })"})"
 
@@ -127,7 +127,7 @@ if ($Algorithms) {
                                         Type             = $Type
                                         URI              = $URI
                                         WarmupTimes      = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers          = @(($Pool0, $Pool1).Where({ $_ }).foreach({ @{ Pool = $_ } }))
+                                        Workers          = @(($Pool0, $Pool1).where({ $_ }).foreach({ @{ Pool = $_ } }))
                                     }
                                 }
                             }

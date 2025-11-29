@@ -238,6 +238,7 @@
   "TRC": "SHA256",
   "TRMP": "Scrypt",
   "TRX": "Token",
+  "TSK": "RandomTuske",
   "TZC": "Neoscrypt",
   "UIS": "Yescrypt",
   "UMO": "Blakecoin",

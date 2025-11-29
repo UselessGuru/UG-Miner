@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -451,7 +451,7 @@ class Miner : IDisposable {
         if ($this.DataReaderJob) { 
             $this.DataReaderJob | Stop-Job
             # Get data before removing read data
-            if ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).Where({ $_.Date }).foreach({ $this.Data.Add($_) | Out-Null }) }
+            if ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).where({ $_.Date }).foreach({ $this.Data.Add($_) | Out-Null }) }
             $this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore | Out-Null
             $this.DataReaderJob = $null
         }
@@ -661,7 +661,7 @@ class Miner : IDisposable {
         # Read power consumption from HwINFO64 reg key, otherwise use hardconfigured value
         $RegistryData = Get-ItemProperty "HKCU:\Software\HWiNFO64\VSB"
         foreach ($Device in $this.Devices) { 
-            if ($RegistryEntry = $RegistryData.PSObject.Properties.Where({ $_.Name -like "Label*" -and $_.Value -split " " -contains $Device.Name })) { 
+            if ($RegistryEntry = $RegistryData.PSObject.Properties.where({ $_.Name -like "Label*" -and $_.Value -split " " -contains $Device.Name })) { 
                 $TotalPowerConsumption += [Double](($RegistryData.($RegistryEntry.Name -replace "Label", "Value") -split " ")[0])
             }
             else { 
@@ -676,7 +676,7 @@ class Miner : IDisposable {
         $HashrateAverage = [Double]0
         $HashrateVariance = [Double]0
 
-        $HashrateSamples = @($this.Data.Where({ $_.Hashrate.$Algorithm })) # Do not use 0 valued samples
+        $HashrateSamples = @($this.Data.where({ $_.Hashrate.$Algorithm })) # Do not use 0 valued samples
 
         $HashrateAverage = ($HashrateSamples.Hashrate.$Algorithm | Measure-Object -Average).Average
         $HashrateVariance = $HashrateSamples.Hashrate.$Algorithm | Measure-Object -Average -Minimum -Maximum | ForEach-Object { if ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
@@ -699,7 +699,7 @@ class Miner : IDisposable {
         $PowerConsumptionAverage = [Double]0
         $PowerConsumptionVariance = [Double]0
 
-        $PowerConsumptionSamples = @($this.Data.Where({ $_.PowerConsumption })) # Do not use 0 valued samples
+        $PowerConsumptionSamples = @($this.Data.where({ $_.PowerConsumption })) # Do not use 0 valued samples
 
         $PowerConsumptionAverage = ($PowerConsumptionSamples.PowerConsumption | Measure-Object -Average).Average
         $PowerConsumptionVariance = $PowerConsumptionSamples.Powerusage | Measure-Object -Average -Minimum -Maximum | ForEach-Object { if ($_.Average) { ($_.Maximum - $_.Minimum) / $_.Average } }
@@ -962,7 +962,7 @@ function Start-Core {
             try { 
                 if ($StatFiles = (Get-ChildItem -Path "Stats" -File).BaseName) { 
                     if ($Stats.psBase.Keys) { 
-                        (Compare-Object -PassThru $StatFiles $Stats.psBase.Keys).Where({ $_.SideIndicator -eq "=>" }).foreach(
+                        (Compare-Object -PassThru $StatFiles $Stats.psBase.Keys).where({ $_.SideIndicator -eq "=>" }).foreach(
                             { 
                                 # Remove stat if deleted on disk
                                 $Stats.Remove($_)
@@ -993,9 +993,9 @@ function Clear-MinerData {
     )
 
     # Stop all miners
-    foreach ($Miner in $Session.Miners.Where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
+    foreach ($Miner in $Session.Miners.where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
         $Miner.SetStatus([MinerStatus]::Idle)
-        $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).foreach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+        $Session.Devices.where({ $Miner.DeviceNames -contains $_.Name }).foreach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
     }
     Remove-Variable Miner -ErrorAction Ignore
 
@@ -1050,9 +1050,9 @@ function Stop-Core {
     }
     else { 
         # Stop all miners
-        foreach ($Miner in $Session.Miners.Where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
+        foreach ($Miner in $Session.Miners.where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
             $Miner.SetStatus([MinerStatus]::Idle)
-            $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).foreach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+            $Session.Devices.where({ $Miner.DeviceNames -contains $_.Name }).foreach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
         }
         Remove-Variable Miner -ErrorAction Ignore
         $Session.MinersBest = [Miner[]]@()
@@ -1089,7 +1089,7 @@ function Start-Brain {
 
         # Starts Brains if necessary
         $BrainsStarted = @()
-        $Name.Where({ $Session.Config.Pools.$_.BrainConfig -and -not $Session.Brains.$_ }).foreach(
+        $Name.where({ $Session.Config.Pools.$_.BrainConfig -and -not $Session.Brains.$_ }).foreach(
             { 
                 $BrainScript = ".\Brains\$($_).ps1"
                 if (Test-Path -LiteralPath $BrainScript -PathType Leaf) { 
@@ -1132,7 +1132,7 @@ function Stop-Brain {
 
         $BrainsStopped = @()
 
-        $Name.Where({ $Session.Brains.$_ }).foreach(
+        $Name.where({ $Session.Brains.$_ }).foreach(
             { 
                 # Stop Brains
                 $Session.Brains.$_.PowerShell.Stop()
@@ -1182,6 +1182,7 @@ function Start-BalancesTracker {
             if ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
                 $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
                 $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+                $Session.BalancesTrackerRunning = $true
 
                 Write-Message -Level Info "Balances tracker background process started."
             }
@@ -1243,7 +1244,7 @@ function Get-Rate {
     try { 
         $TSymBatches = @()
         $TSyms = "BTC"
-        $Session.AllCurrencies.Where({ "BTC", "INVALID" -notcontains $_ }).foreach(
+        $Session.AllCurrencies.where({ "BTC", "INVALID" -notcontains $_ }).foreach(
             { 
                 if (($TSyms.Length + $_.Length) -lt 99) { 
                     $TSyms = "$TSyms,$($_)"
@@ -1276,7 +1277,7 @@ function Get-Rate {
         )
 
         if ($Currencies = $Rates.BTC.PSObject.Properties.Name) { 
-            $Currencies.Where({ $_ -ne "BTC" }).foreach(
+            $Currencies.where({ $_ -ne "BTC" }).foreach(
                 { 
                     $Currency = $_
                     $Rates | Add-Member $Currency $Rates.BTC.PSObject.Copy() -Force
@@ -1301,7 +1302,7 @@ function Get-Rate {
                 $Rates.PSOBject.Properties.Name.ForEach(
                     { 
                         $Currency = $_
-                        $Rates.PSOBject.Properties.Name.Where({ $Currencies -contains $_ }).foreach(
+                        $Rates.PSOBject.Properties.Name.where({ $Currencies -contains $_ }).foreach(
                             { 
                                 $mCurrency = "m$($_)"
                                 $Rates.$Currency | Add-Member $mCurrency ([Double]$Rates.$Currency.$_ * 1000) -Force
@@ -1415,7 +1416,7 @@ function Write-MonitoringData {
     # reveal someone's windows username or other system information they might not want sent
     # For the ones that can be an array, comma separate them
     $Data = @(
-        ($Session.Miners.Where({ $_.Status -eq [MinerStatus]::DryRun -or $_.Status -eq [MinerStatus]::Running }) | Sort-Object { [String]$_.DeviceNames }).foreach(
+        ($Session.Miners.where({ $_.Status -eq [MinerStatus]::DryRun -or $_.Status -eq [MinerStatus]::Running }) | Sort-Object { [String]$_.DeviceNames }).foreach(
             { 
                 [PSCustomObject]@{ 
                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
@@ -1553,7 +1554,7 @@ function Get-DonationConfig {
 
     $DonationPoolsData = $Session.DonationData.$DonateUserName
     $DonationPoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive hash table
-    ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).Where({ $DonationPoolsData.PoolName -contains $_ }).foreach(
+    ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).where({ $DonationPoolsData.PoolName -contains $_ }).foreach(
         { 
             $DonationPoolConfig = $Session.Config.Pools[$_].Clone()
             $DonationPoolConfig.EarningsAdjustmentFactor = 1
@@ -1574,7 +1575,7 @@ function Get-DonationConfig {
                     if ($Wallets = (Compare-Object -PassThru @((@($Session.PoolData.$_.GuaranteedPayoutCurrencies) + @($Session.PoolData.$_.PayoutCurrencies)) | Select-Object -Unique) @($DonationPoolsData.Wallets.Keys | Select-Object) -IncludeEqual -ExcludeDifferent)) { 
                         $DonationPoolConfig.Variant = if ($Session.Config.Pools[$_].Variant) { $Session.Config.Pools[$_].Variant } else { $Session.Config.PoolName -match $_ }
                         $DonationPoolConfig.Wallets = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
-                        $Wallets.Where({ $DonationPoolsData.Wallets.$_ }).foreach({ $DonationPoolConfig.Wallets.$_ = $DonationPoolsData.Wallets.$_ })
+                        $Wallets.where({ $DonationPoolsData.Wallets.$_ }).foreach({ $DonationPoolConfig.Wallets.$_ = $DonationPoolsData.Wallets.$_ })
                         $DonationPoolsConfig.$_ = $DonationPoolConfig
                     }
                 }
@@ -1649,6 +1650,7 @@ function Update-ConfigFile {
             switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); break }
+                "LogBalanceAPIResponse" { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
                 "LogToScreen" { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
                 "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracy" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
@@ -1765,7 +1767,7 @@ function Edit-File {
         }
     }
 
-    if (-not ($NotepadProcessId = (Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "*\Notepad.exe* $($FileName)" })[0].ProcessId)) { 
+    if (-not ($NotepadProcessId = (Get-CimInstance CIM_Process).where({ $_.CommandLine -like "*\Notepad.exe* $($FileName)" })[0].ProcessId)) { 
         $NotepadProcessId = (Start-Process -FilePath Notepad.exe -ArgumentList $FileName -PassThru).Id
     }
 
@@ -1774,7 +1776,7 @@ function Edit-File {
     while (Get-Process -Id $NotepadProcessId) { 
         try { 
             if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process -Id $NotepadProcessId).MainWindowHandle }
-            if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process).Where({ $_.Parent.Id -eq $NotepadProcessId }).MainWindowHandle }
+            if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process).where({ $_.Parent.Id -eq $NotepadProcessId }).MainWindowHandle }
 
             [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid) | Out-Null
             if ($NotepadProcessId -ne $FGWindowPid) { 
@@ -2431,7 +2433,7 @@ function Get-Device {
                 $Device_CIM = [CimInstance]::new($_)
                 $Device_PNP = [PSCustomObject]@{ }
 
-                ($PnpDevices.Where({ $_.DeviceID -eq $Device_CIM.PNPDeviceID }) | Get-PnpDeviceProperty).foreach({ $Device_PNP | Add-Member $_.KeyName $_.Data })
+                ($PnpDevices.where({ $_.DeviceID -eq $Device_CIM.PNPDeviceID }) | Get-PnpDeviceProperty).foreach({ $Device_PNP | Add-Member $_.KeyName $_.Data })
                 $Device_PNP = $Device_PNP.PSObject.Copy()
                 $Device_Reg = (Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)").PSObject.Copy()
                 $Devices += $Device = [Device]@{ 
@@ -2494,7 +2496,7 @@ function Get-Device {
             try { 
                 $OpenCLplatform = $_
                 # Skip devices with negative PCIbus
-                ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).Where({ $_.PCIbus -ge 0 }).foreach({ $_ | ConvertTo-Json -EnumsAsStrings -WarningAction SilentlyContinue }) | Select-Object -Unique).foreach(
+                ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).where({ $_.PCIbus -ge 0 }).foreach({ $_ | ConvertTo-Json -EnumsAsStrings -WarningAction SilentlyContinue }) | Select-Object -Unique).foreach(
                     { 
                         $Device_OpenCL = $_ | ConvertFrom-Json
 
@@ -2542,7 +2544,7 @@ function Get-Device {
 
                         if (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
 
-                        if ($Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })) { $Device = [Device]($Devices.Where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus }) | Select-Object) }
+                        if ($Devices.where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus })) { $Device = [Device]($Devices.where({ $_.Type -eq $Device.Type -and $_.Bus -eq $Device.Bus }) | Select-Object) }
                         elseif ($Device.Type -eq "GPU" -and $Session.SupportedGPUDeviceVendors -contains $Device.Vendor) { 
                             $Devices += $Device
 
@@ -2591,7 +2593,7 @@ function Get-Device {
     )
     Remove-Variable Device, OpenCLplatform -ErrorAction Ignore
 
-    ($Devices.Where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64] }) | Sort-Object -Property Bus).foreach(
+    ($Devices.where({ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64] }) | Sort-Object -Property Bus).foreach(
         { 
             if ($_.Type -eq "GPU") { 
                 if ($_.Vendor -eq "NVIDIA") { $_.Architecture = (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability) }
@@ -2618,9 +2620,9 @@ function Get-Device {
             $Device = $_
 
             $Device.Bus_Index = @($Devices.Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Type_Index = @($Devices.Where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Vendor_Index = @($Devices.Where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Platform_Index = @($Devices.Where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Type_Index = @($Devices.where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Vendor_Index = @($Devices.where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Platform_Index = @($Devices.where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
 
             $Device
         }
@@ -2678,7 +2680,7 @@ function Get-Combination {
 
         while ($X -le [Math]::Pow(2, $Value.Count) - 1) { 
             [PSCustomObject]@{ 
-                Combination = $CombinationKeys.Where({ $_ -band $X }).foreach({ $Combination.$_ })
+                Combination = $CombinationKeys.where({ $_ -band $X }).foreach({ $Combination.$_ })
             }
             $Smallest = $X -band - $X
             $Ripple = $X + $Smallest
@@ -2883,16 +2885,16 @@ function Update-PoolWatchdog {
     # Apply watchdog to pools
     if ($Session.Config.Watchdog) { 
         # We assume that miner is up and running, so watchdog timer is not relevant
-        if ($RelevantWatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -notin $Session.MinersRunning })) { 
+        if ($RelevantWatchdogTimers = $Session.WatchdogTimers.where({ $_.MinerName -notin $Session.MinersRunning })) { 
             # Only pools with a corresponding watchdog timer object are of interest
-            if ($RelevantPools = $Pools.Where({ $RelevantWatchdogTimers.PoolName -contains $_.Name })) { 
+            if ($RelevantPools = $Pools.where({ $RelevantWatchdogTimers.PoolName -contains $_.Name })) { 
 
                 # Add miner reason "Pool suspended by watchdog 'all algorithms'", only if more than one pool
                 ($RelevantWatchdogTimers | Group-Object -Property PoolName).foreach(
                     { 
                         if ($Session.Config.PoolName.Count -gt 1 -and $_.Count -ge (2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
                             $Group = $_.Group
-                            if ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName })) { 
+                            if ($PoolsToSuspend = $RelevantPools.where({ $_.Name -eq $Group[0].PoolName })) { 
                                 $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") | Out-Null })
                                 Write-Message -Level Warn "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Session.WatchdogReset).ToLocalTime().ToString("T"))."
                             }
@@ -2901,13 +2903,13 @@ function Update-PoolWatchdog {
                 )
                 Remove-Variable Group, PoolsToSuspend -ErrorAction Ignore
 
-                if ($RelevantPools = $RelevantPools.Where({ -not ($_.Reasons -match "Pool suspended by watchdog .+") })) { 
+                if ($RelevantPools = $RelevantPools.where({ -not ($_.Reasons -match "Pool suspended by watchdog .+") })) { 
                     # Add miner reason "Pool suspended by watchdog 'Algorithm [Algorithm]'"
                     ($RelevantWatchdogTimers | Group-Object -Property PoolName, Algorithm).foreach(
                         { 
                             if ($_.Count -ge 2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count - 1) { 
                                 $Group = $_.Group
-                                if ($PoolsToSuspend = $RelevantPools.Where({ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm })) { 
+                                if ($PoolsToSuspend = $RelevantPools.where({ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm })) { 
                                     $PoolsToSuspend.ForEach({ $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") | Out-Null })
                                     Write-Message -Level Warn "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Session.WatchdogReset).ToLocalTime().ToString("T"))."
                                 }
@@ -2961,7 +2963,7 @@ function Get-AllDAGdata {
             $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
 
             if ($CurrencyDAGdataResponse.coins.PSObject.Properties.Name) { 
-                $CurrencyDAGdataResponse.coins.PSObject.Properties.Name.Where({ $CurrencyDAGdataResponse.coins.$_.tag -ne "NICEHASH" }).foreach(
+                $CurrencyDAGdataResponse.coins.PSObject.Properties.Name.where({ $CurrencyDAGdataResponse.coins.$_.tag -ne "NICEHASH" }).foreach(
                     { 
                         if ($AlgorithmNorm = Get-Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm) { 
                             $Currency = $CurrencyDAGdataResponse.coins.$_.tag
@@ -3001,7 +3003,7 @@ function Get-AllDAGdata {
             Write-Message -Level Info "Loading DAG data from '$Url'..."
             $CurrencyDAGdataResponse = Invoke-WebRequest -Uri $Url -TimeoutSec 5 # PWSH 6+ no longer supports basic parsing -> parse text
             if ($CurrencyDAGdataResponse.statuscode -eq 200) { 
-                (($CurrencyDAGdataResponse.Content -split "\n" -replace "`"", "'").Where({ $_ -like "<div class='block' title='Current block height of *" })).foreach(
+                (($CurrencyDAGdataResponse.Content -split "\n" -replace "`"", "'").where({ $_ -like "<div class='block' title='Current block height of *" })).foreach(
                     { 
                         $Currency = $_ -replace "^<div class='block' title='Current block height of " -replace "'>.*$"
                         if ($Currency -notin @("ETF")) { 
@@ -3035,10 +3037,10 @@ function Get-AllDAGdata {
     # Update on script start, once every 24hrs or if unable to get data from source
     # ZPool also supplies TLS DAG data.
     if (-not ($Session.Config.PoolName -match "^ZPool.*")) { 
+        $Currency = "TLS"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
-            $Currency = "TLS"
             $Url = "https://telestai.cryptoscope.io/api/getblockcount"
-            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from StakeCube block explorer
                 try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
@@ -3069,7 +3071,7 @@ function Get-AllDAGdata {
         $Currency = "SCC"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
             $Url = "https://www.coinexplorer.net/api/v1/SCC/block/latest"
-            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from StakeCube block explorer
                 try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
@@ -3128,7 +3130,7 @@ function Get-AllDAGdata {
         $Currency = "PHI"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
             $Url = "https://explorer.phicoin.net/api/getblockcount"
-            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from PHI block explorer
                 try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
@@ -3159,7 +3161,7 @@ function Get-AllDAGdata {
         $Currency = "MEWC"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
             $Url = "https://mewc.cryptoscope.io/api/getblockcount"
-            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Updated.$Url -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from MeowCoin block explorer
                 try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
@@ -3184,8 +3186,6 @@ function Get-AllDAGdata {
         }
     }
 
-    # Zpool also supplies LAX DAG data
-    # if (-not ($Session.Config.PoolName -match "^ZPool.+")) { 
     # Update on script start, once every 24hrs or if unable to get data from source
     $Currency = "LAX"
     if ($Session.CurrencyAlgorithm[$Currency]) { 
@@ -3215,19 +3215,19 @@ function Get-AllDAGdata {
     }
     # }
 
-    if ($DAGdata.Updated.PSObject.Properties.Name.Where({ $DAGdata.Updated.$_ -gt $Session.Timer })) { 
+    if ($DAGdata.Updated.PSObject.Properties.Name.where({ $DAGdata.Updated.$_ -gt $Session.Timer })) { 
         # At least one DAG was updated, get maximum DAG size per algorithm
         $CurrencyDAGdataKeys = @($DAGdata.Currency.PSObject.Properties.Name) # Store as array to avoid error 'An error occurred while enumerating through a collection: Collection was modified; enumeration operation may not execute.'
 
         foreach ($Algorithm in @($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.Algorithm }) | Select-Object -Unique)) { 
             $DAGdata.Algorithm | Add-Member $Algorithm (
                 [PSCustomObject]@{ 
-                    BlockHeight = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).foreach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
-                    DAGsize     = [Int64]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).foreach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
-                    Epoch       = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).foreach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
+                    BlockHeight = [Int]($CurrencyDAGdataKeys.where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).foreach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
+                    DAGsize     = [Int64]($CurrencyDAGdataKeys.where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).foreach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
+                    Epoch       = [Int]($CurrencyDAGdataKeys.where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).foreach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
                 }
             ) -Force
-            $DAGdata.Algorithm.$Algorithm | Add-Member Currency ([String]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm }))) -Force
+            $DAGdata.Algorithm.$Algorithm | Add-Member Currency ([String]($CurrencyDAGdataKeys.where({ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm }))) -Force
             $DAGdata.Algorithm.$Algorithm | Add-Member CoinName ([String]($Session.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency])) -Force
         }
 
@@ -3759,7 +3759,7 @@ function Start-APIserver {
         if ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
             [Void]$TCPclient.Dispose()
 
             return
@@ -3797,7 +3797,7 @@ function Start-APIserver {
                     $Session.APIport = $Session.Config.APIport
                     if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.Config.APIlogfile -Force -ErrorAction Ignore }
                     $Session.MinerBaseAPIport = $Session.APIport + 1
-                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
                     # Start Web GUI (show configuration edit if no existing config)
                     if ($Session.Config.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
                     break
@@ -3813,7 +3813,7 @@ function Start-APIserver {
         else { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
         }
     }
 }
@@ -3825,7 +3825,7 @@ function Stop-APIserver {
         if ($Session.APIserver.IsListening) { 
             $Session.APIserver.Stop()
             if (-not $Session.MinerBaseAPIport) { $Session.MinerBaseAPIport = 4000 }
-            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport). Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport). Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
         }
 
         $Session.APIserver.Close()
@@ -3868,7 +3868,7 @@ function Set-MinerEnabled {
 
     $Miner.Disabled = $false
     $Miner.Reasons.Remove("Disabled by user") | Out-Null
-    $Miner.Reasons.Where({ $_ -notlike "Unrealistic *" }).foreach({ $Miner.Reasons.Remove({ $_ }) | Out-Null })
+    $Miner.Reasons.where({ $_ -notlike "Unrealistic *" }).foreach({ $Miner.Reasons.Remove({ $_ }) | Out-Null })
     if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
 }
 
@@ -3949,7 +3949,7 @@ function Set-MinerReBenchmark {
     $Miner.Available = $true
 
     # Remove watchdog
-    $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
+    $Session.WatchdogTimers = $Session.WatchdogTimers.where({ $_.MinerName -ne $Miner.Name })
 }
 
 function Set-MinerMeasurePowerConsumption { 
@@ -3971,7 +3971,7 @@ function Set-MinerMeasurePowerConsumption {
     $Miner.Available = $true
 
     # Remove watchdog
-    $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
+    $Session.WatchdogTimers = $Session.WatchdogTimers.where({ $_.MinerName -ne $Miner.Name })
 }
 
 function Exit-UGminer { 
@@ -3990,7 +3990,7 @@ function Exit-UGminer {
 
     Write-Message -Level Info "$($Session.Branding.ProductLabel) has shut down."
     try {
-        Stop-Process (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId -Force
+        Stop-Process (Get-CimInstance CIM_Process).where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId -Force
     }
     catch {}
     Start-Sleep -Seconds 2
@@ -4020,7 +4020,7 @@ function Read-Config {
             $DefaultConfig.ConfigFileVersion = $Session.Branding.Version.ToString()
 
             # Add default config items
-            $Session.AllCommandLineParameters.psBase.Keys.Where({ $_ -notin $DefaultConfig.psBase.Keys }).foreach(
+            $Session.AllCommandLineParameters.psBase.Keys.where({ $_ -notin $DefaultConfig.psBase.Keys }).foreach(
                 { 
                     $Value = $Session.AllCommandLineParameters.$_
                     if ($Value -is [Switch]) { $Value = [Boolean]$Value }
@@ -4032,17 +4032,19 @@ function Read-Config {
         }
 
         function Get-PoolsConfig { 
-
             # Load pool data
-            if (-not $Session.PoolData) { 
-                $Session.PoolData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
-                $Session.PoolBaseNames = @($Session.PoolData.Keys)
-                $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach({ $Session.PoolData.$_.Variant.Keys }).Where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
-                if (-not $Session.PoolVariants) { 
-                    Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-                    (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
-                    exit
+            $Session.PoolData = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
+            (Get-ChildItem -Path ".\Data\PoolData_*.json" | Sort-Object -Property BaseName).foreach(
+                { 
+                    $Session.PoolData.$($_.BaseName -replace "PoolData_") = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($_.ResolvedTarget) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
                 }
+            )
+            $Session.PoolBaseNames = @($Session.PoolData.Keys)
+            $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach({ $Session.PoolData.$_.Variant.Keys }).where({ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" })) | Sort-Object -Unique)
+            if (-not $Session.PoolVariants) { 
+                Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
+                (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+                exit
             }
 
             # Build in memory pool config
@@ -4068,13 +4070,13 @@ function Read-Config {
                         if (-not $PoolConfig.WorkerName) { $PoolConfig.WorkerName = $ConfigFromFile.WorkerName }
                         if (-not $PoolConfig.BalancesKeepAlive) { $PoolConfig.BalancesKeepAlive = $PoolData.$PoolName.BalancesKeepAlive }
 
-                        $PoolConfig.Region = $PoolConfig.Region.Where({ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) })
+                        $PoolConfig.Region = $PoolConfig.Region.where({ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) })
 
                         switch ($PoolName) { 
                             "HiveON" { 
                                 if (-not $PoolConfig.Wallets) { 
                                     $PoolConfig.Wallets = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase) # as ssorted case insensitive hash table
-                                    $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).foreach({ 
+                                    $ConfigFromFile.Wallets.GetEnumerator().Name.where({ $PoolConfig.PayoutCurrencies -contains $_ }).foreach({ 
                                             $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_
                                         })
                                 }

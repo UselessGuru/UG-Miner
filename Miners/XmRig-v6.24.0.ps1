@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.1
-Version date:   2025/11/25
+Version:        6.7.2
+Version date:   2025/11/29
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { return }
 
 # Fixed detection of L2 cache size for some complex NUMA topologies.
 # Fixed ARMv7 build.
@@ -178,8 +178,8 @@ $Algorithms = @(
 #   @{ Algorithm = "Uplexa";               Type = "NVIDIA"; MinMemGiB = 0.5;  MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 )
 
-$Algorithms = $Algorithms.Where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
@@ -187,21 +187,21 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             # Optionally disable dev fee mining, requires change in source code
             # $Fee = If ($Session.Config.DisableMinerFee) { 0 } Else { 1 }
             $Fee = 0
 
-            $Algorithms.Where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).foreach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
                     foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
+                        if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
@@ -216,7 +216,7 @@ if ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "XmRig"
-                                Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where({ $null -ne $_ })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --retries=90 --retry-pause=1"
+                                Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.where({ $null -ne $_ })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --retries=90 --retry-pause=1"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @($Fee) # Dev fee
                                 MinerSet    = $_.MinerSet
