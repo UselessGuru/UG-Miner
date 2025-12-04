@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -137,7 +137,7 @@ function CheckBoxSwitchingLog_Click {
     $LegacyGUIelements.SwitchingLogPageControls.ForEach({ if ($_.Checked) { $SwitchingLogDisplayTypes += $_.Tag } })
     if (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIelements.SwitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
-        $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).where({ $SwitchingLogDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).foreach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type" | Out-DataTable
+        $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).where({ $SwitchingLogDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type" | Out-DataTable
         if ($LegacyGUIelements.SwitchingLogDGV.Columns) { 
             $LegacyGUIelements.SwitchingLogDGV.Columns[0].FillWeight = 50; $LegacyGUIelements.SwitchingLogDGV.Sort($LegacyGUIelements.SwitchingLogDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Descending)
             $LegacyGUIelements.SwitchingLogDGV.Columns[1].FillWeight = 50
@@ -297,7 +297,7 @@ function Update-TabControl {
                 )
 
                 # Apply change Factor
-                (0..($Color.Count - 1)).foreach({ $Color[$_] = [Math]::Abs(($Color[$_] + $Factors[$_]) % 192) })
+                (0..($Color.Count - 1)).ForEach({ $Color[$_] = [Math]::Abs(($Color[$_] + $Factors[$_]) % 192) })
                 $Color
             }
 
@@ -463,15 +463,15 @@ function Update-TabControl {
 
             if ($LegacyGUIelements.RadioButtonMinersOptimal.checked) { 
                 $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                $DataSource = $Session.MinersOptimal.PsObject.Copy().foreach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                $DataSource = $Session.MinersOptimal.PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
                 Remove-Variable Bias
             }
             elseif ($LegacyGUIelements.RadioButtonMinersUnavailable.checked) { 
-                $DataSource = $Session.Miners.where({ $_.Available -ne $true }).PsObject.Copy().foreach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info, Algorithm
+                $DataSource = $Session.Miners.where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info, Algorithm
             }
             else { 
                 $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                $DataSource = $Session.Miners.PsObject.Copy().foreach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                $DataSource = $Session.Miners.PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
                 Remove-Variable Bias
             }
 
@@ -970,7 +970,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
             switch ($_.ClickedItem.Text) { 
                 "Re-benchmark miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).foreach(
+                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerReBenchmark $_
@@ -985,7 +985,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 }
                 "Re-measure power consumption" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).foreach(
+                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerMeasurePowerConsumption $_  
@@ -1001,7 +1001,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 }
                 "Mark miner as failed" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).foreach(
+                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             Set-MinerFailed $_
                             $Data += $_.Name
@@ -1016,7 +1016,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 }
                 "Disable miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).where({ -not $_.Disabled }).foreach(
+                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).where({ -not $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerDisabled $_
@@ -1036,7 +1036,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 }
                 "Enable miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).where({ $_.Disabled }).foreach(
+                    $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).where({ $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerEnabled $_
@@ -1061,7 +1061,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             # Update miner
                             foreach ($Miner in $Session.Miners.where({ $_.Name -eq $MinerName -and $Session.WatchdogTimers.where({ $_.MinerName -eq $MinerName }) })) { 
                                 $Data += $Miner.Name
-                                $Miner.Reasons.where({ $_ -like "Miner suspended by watchdog *" }).foreach({ $Miner.Reasons.Remove($_) | Out-Null })
+                                $Miner.Reasons.where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
                                 if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
                             }
 
@@ -1092,7 +1092,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         { 
                             $SelectedPoolName = $_.Cells[5].Value
                             $SelectedPoolAlgorithm = $_.Cells[0].Value
-                            $Session.Pools.where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).foreach(
+                            $Session.Pools.where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).ForEach(
                                 { 
                                     $StatName = "$($_.Name)_$($_.Algorithm)$(if ($_.Currency) { "-$($_.Currency)" })"
                                     $Data += $StatName
@@ -1121,7 +1121,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             # Update pool
                             foreach ($Pool in ($Session.Pools.where({ $_.Name -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm -and $Session.WatchdogTimers.where({ $_.PoolName -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm }) }))) { 
                                 $Data += "$($Pool.Key) ($($Pool.Region))"
-                                $Pool.Reasons.where({ $_ -like "Pool suspended by watchdog *" }).foreach({ $Pool.Reasons.Remove($_) | Out-Null })
+                                $Pool.Reasons.where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
                                 if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
                             }
 
@@ -1670,13 +1670,13 @@ $LegacyGUIelements.WatchdogTimersRemoveButton.Add_Click(
         $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
         $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
         foreach ($Miner in $Session.Miners) { 
-            $Miner.Reasons.where({ $_ -like "Miner suspended by watchdog *" }).foreach({ $Miner.Reasons.Remove($_) | Out-Null })
+            $Miner.Reasons.where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
             if (-not $Miner.Reasons.Count) { $_.Available = $true }
         }
         Remove-Variable Miner
 
         foreach ($Pool in $Session.Pools) { 
-            $Pool.Reasons.where({ $_ -like "Pool suspended by watchdog *" }).foreach({ $Pool.Reasons.Remove($_) | Out-Null })
+            $Pool.Reasons.where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
             if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
         }
         Remove-Variable Pool

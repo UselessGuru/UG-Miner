@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$|^RDNA4$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { return }
@@ -29,79 +29,78 @@ $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Aergo";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo aergo" }
-    @{ Algorithm = "AstralHash";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-astralhash" }
-#   @{ Algorithm = "BCD";              Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo bcd" } # ASIC
-    @{ Algorithm = "Blake2bBtcc";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-btcc" }
-    @{ Algorithm = "Blake2bGlt";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-glt" }
-    @{ Algorithm = "Blake3";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3" }
-    @{ Algorithm = "Dedal";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal" } # CryptoDredge-v0.27.0 is fastest
-    @{ Algorithm = "GlobalHash";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash" }
-    @{ Algorithm = "HeavyHash";        Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 1; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo heavyhash" } # FPGA
-    @{ Algorithm = "JeongHash";        Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash" }
-#   @{ Algorithm = "Lyra2RE3";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3" } # ASIC
-    @{ Algorithm = "Lyra2TDC";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc" }
-    @{ Algorithm = "Lyra2vc0ban";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban" }
-    @{ Algorithm = "PadiHash";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash" }
-    @{ Algorithm = "PawelHash";        Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-pawelhash" }
-    @{ Algorithm = "ProgPowVeil";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil" }
-    @{ Algorithm = "ProgPowVeriblock"; Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow" }
-    @{ Algorithm = "RWAHash";          Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash" }
-    @{ Algorithm = "Xevan";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo xevan --gpu-threads 1" } # No hashrate on time for old GPUs
+    @{ Algorithm = "Aergo";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo aergo" }
+    @{ Algorithm = "AstralHash";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-astralhash" }
+#   @{ Algorithm = "BCD";              Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo bcd" } # ASIC
+    @{ Algorithm = "Blake2bBtcc";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-btcc" }
+    @{ Algorithm = "Blake2bGlt";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-glt" }
+    @{ Algorithm = "Blake3";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3" }
+    @{ Algorithm = "Dedal";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal" } # CryptoDredge-v0.27.0 is fastest
+    @{ Algorithm = "GlobalHash";       Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash" }
+    @{ Algorithm = "HeavyHash";        Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo heavyhash" } # FPGA
+    @{ Algorithm = "JeongHash";        Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash" }
+#   @{ Algorithm = "Lyra2RE3";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3" } # ASIC
+    @{ Algorithm = "Lyra2TDC";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc" }
+    @{ Algorithm = "Lyra2vc0ban";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban" }
+    @{ Algorithm = "PadiHash";         Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash" }
+    @{ Algorithm = "PawelHash";        Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-pawelhash" }
+    @{ Algorithm = "ProgPowVeil";      Type = "AMD"; Fee = @(0.0075); MinMemGiB = 0.62; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil" }
+    @{ Algorithm = "ProgPowVeriblock"; Type = "AMD"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow" }
+    @{ Algorithm = "RWAHash";          Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash" }
+    @{ Algorithm = "Xevan";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 3;    WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo xevan --gpu-threads 1" } # No hashrate on time for old GPUs
 
-    @{ Algorithm = "Aergo";            Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo aergo --watchdog" }
-    @{ Algorithm = "AstralHash";       Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-astralhash --watchdog" }
-    @{ Algorithm = "BCD";              Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo bcd --watchdog" } # ASIC
-    @{ Algorithm = "Blake2bBtcc";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-btcc --watchdog" }
-    @{ Algorithm = "Blake2bGlt";       Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-glt --watchdog" }
-    @{ Algorithm = "Blake3";           Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3" }
-    @{ Algorithm = "Dedal";            Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal --watchdog" } # CryptoDredge-v0.27.0 is fastest
-    @{ Algorithm = "GlobalHash";       Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash --watchdog" }
-    @{ Algorithm = "JeongHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
-#   @{ Algorithm = "Lyra2RE3";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
-    @{ Algorithm = "Lyra2TDC";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
-    @{ Algorithm = "Lyra2vc0ban";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban --watchdog" }
-    @{ Algorithm = "PadiHash";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash --watchdog" }
-    @{ Algorithm = "PawelHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @();           Arguments = " --algo glt-pawelhash --watchdog" } # Trex-v0.26.8 is fastest
-    @{ Algorithm = "ProgPowVeil";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
-    @{ Algorithm = "ProgPowVeriblock"; Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
-    @{ Algorithm = "RWAHash";          Type = "INTEL"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash --watchdog" }
-    @{ Algorithm = "Xevan";            Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo xevan --watchdog" }
+    @{ Algorithm = "Aergo";            Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo aergo --watchdog" }
+    @{ Algorithm = "AstralHash";       Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-astralhash --watchdog" }
+    @{ Algorithm = "BCD";              Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo bcd --watchdog" } # ASIC
+    @{ Algorithm = "Blake2bBtcc";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-btcc --watchdog" }
+    @{ Algorithm = "Blake2bGlt";       Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-glt --watchdog" }
+    @{ Algorithm = "Blake3";           Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3" }
+    @{ Algorithm = "Dedal";            Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal --watchdog" } # CryptoDredge-v0.27.0 is fastest
+    @{ Algorithm = "GlobalHash";       Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash --watchdog" }
+    @{ Algorithm = "JeongHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
+#   @{ Algorithm = "Lyra2RE3";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
+    @{ Algorithm = "Lyra2TDC";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
+    @{ Algorithm = "Lyra2vc0ban";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban --watchdog" }
+    @{ Algorithm = "PadiHash";         Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash --watchdog" }
+    @{ Algorithm = "PawelHash";        Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();           Arguments = " --algo glt-pawelhash --watchdog" } # Trex-v0.26.8 is fastest
+    @{ Algorithm = "ProgPowVeil";      Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 0.62; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
+    @{ Algorithm = "ProgPowVeriblock"; Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
+    @{ Algorithm = "RWAHash";          Type = "INTEL"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash --watchdog" }
+    @{ Algorithm = "Xevan";            Type = "INTEL"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo xevan --watchdog" }
 
-    @{ Algorithm = "Aergo";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo aergo --watchdog" }
-    @{ Algorithm = "AstralHash";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-astralhash --watchdog" }
-    @{ Algorithm = "BCD";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo bcd --watchdog" } # ASIC
-    @{ Algorithm = "Blake2bBtcc";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-btcc --watchdog" }
-    @{ Algorithm = "Blake2bGlt";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-glt --watchdog" }
-    @{ Algorithm = "Blake3";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3 --watchdog" }
-    @{ Algorithm = "Dedal";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal --watchdog" } # CryptoDredge-v0.27.0 is fastest
-    @{ Algorithm = "GlobalHash";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash --watchdog" }
-    @{ Algorithm = "HeavyHash";        Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo heavyhash --watchdog" } # FPGA
-    @{ Algorithm = "JeongHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
-#   @{ Algorithm = "Lyra2RE3";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
-    @{ Algorithm = "Lyra2TDC";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
-    @{ Algorithm = "Lyra2vc0ban";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban --watchdog" }
-    @{ Algorithm = "PadiHash";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash --watchdog" }
-    @{ Algorithm = "PawelHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @();           Arguments = " --algo glt-pawelhash --watchdog" } # Trex-v0.26.8 is fastest
-    @{ Algorithm = "ProgPowVeil";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
-    @{ Algorithm = "ProgPowVeriblock"; Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
-    @{ Algorithm = "RWAHash";          Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash --watchdog" }
-    @{ Algorithm = "Xevan";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo xevan --watchdog" }
+    @{ Algorithm = "Aergo";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo aergo --watchdog" }
+    @{ Algorithm = "AstralHash";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-astralhash --watchdog" }
+    @{ Algorithm = "BCD";              Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo bcd --watchdog" } # ASIC
+    @{ Algorithm = "Blake2bBtcc";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-btcc --watchdog" }
+    @{ Algorithm = "Blake2bGlt";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo blake2b-glt --watchdog" }
+    @{ Algorithm = "Blake3";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    WarmupTimes = @(30, 15); ExcludePools = @("NiceHash"); Arguments = " --algo blake3 --watchdog" }
+    @{ Algorithm = "Dedal";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo dedal --watchdog" } # CryptoDredge-v0.27.0 is fastest
+    @{ Algorithm = "GlobalHash";       Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-globalhash --watchdog" }
+    @{ Algorithm = "HeavyHash";        Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo heavyhash --watchdog" } # FPGA
+    @{ Algorithm = "JeongHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-jeonghash --watchdog" } # Trex-v0.26.8 is fastest
+#   @{ Algorithm = "Lyra2RE3";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2v3 --watchdog" } # ASIC
+    @{ Algorithm = "Lyra2TDC";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2tdc --watchdog" }
+    @{ Algorithm = "Lyra2vc0ban";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo lyra2vc0ban --watchdog" }
+    @{ Algorithm = "PadiHash";         Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo glt-padihash --watchdog" }
+    @{ Algorithm = "PawelHash";        Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();           Arguments = " --algo glt-pawelhash --watchdog" } # Trex-v0.26.8 is fastest
+    @{ Algorithm = "ProgPowVeil";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo progpow-veil --watchdog" }
+    @{ Algorithm = "ProgPowVeriblock"; Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo vprogpow --watchdog" }
+    @{ Algorithm = "RWAHash";          Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(30, 15); ExcludePools = @();           Arguments = " --algo rwahash --watchdog" }
+    @{ Algorithm = "Xevan";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 2;    WarmupTimes = @(60, 15); ExcludePools = @();           Arguments = " --algo xevan --watchdog" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludePools = $_.ExcludePools
                     foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
@@ -113,10 +112,9 @@ if ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "XmRig"
-                                Arguments   = "$($_.Arguments) --api-port $MinerAPIPort --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --multiple-instance --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$($_.Arguments) --api-port $MinerAPIPort --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --multiple-instance --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = $_.Fee # Dev fee
-                                MinerSet    = $_.MinerSet
                                 MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
                                 Name        = $MinerName
                                 Path        = $Path

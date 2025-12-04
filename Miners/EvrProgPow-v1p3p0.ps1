@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -29,15 +29,14 @@ $Path = "Bin\$Name\evrprogpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "EvrProgPow"; MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
+    @{ Algorithm = "EvrProgPow"; MinMemGiB = 0.77; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = "" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.where({ $_.Model -eq $Model })
@@ -65,11 +64,10 @@ if ($Algorithms) {
 
                                 [PSCustomObject]@{ 
                                     API         = "EthMiner"
-                                    Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-port -$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                    Arguments   = "$($_.Arguments) --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-port -$($MinerAPIPort) --cuda --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     EnvVars     = @("SSL_NOVERIFY=TRUE")
                                     Fee         = @(0) # Dev fee
-                                    MinerSet    = $_.MinerSet
                                     Name        = $MinerName
                                     Path        = $Path
                                     Port        = $MinerAPIPort

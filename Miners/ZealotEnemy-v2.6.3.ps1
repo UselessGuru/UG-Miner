@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -32,32 +32,31 @@ $Path = "Bin\$Name\z-enemy.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Aergo";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo aergo --statsavg 5 --intensity 23" }
-#   @{ Algorithm = "BCD";        MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo bcd --statsavg 5" } # ASIC
-#   @{ Algorithm = "Bitcore";    MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludePools = @(); Arguments = " --algo bitcore --statsavg 5 --intensity 22" } # Bitcore is using MegaBtx
-    @{ Algorithm = "C11";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo c11 --statsavg 5 --intensity 24" }
-    @{ Algorithm = "Hex";        MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo hex --statsavg 5 --intensity 24" }
-    @{ Algorithm = "KawPow";     MinMemGiB = 0.77; MinerSet = 2; WarmupTimes = @(180, 0); ExcludePools = @(); Arguments = " --algo kawpow --statsavg 1 --intensity 24" }
-#   @{ Algorithm = "Phi";        MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo phi --statsavg 5" } # ASIC
-    @{ Algorithm = "Phi2";       MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo phi2 --statsavg 5" }
-    @{ Algorithm = "Polytimos";  MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo poly --statsavg 5" }
-    @{ Algorithm = "SkunkHash";  MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo skunk --statsavg 1" } # No hashrate in time for old cards
-#   @{ Algorithm = "Sonoa";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo sonoa --statsavg 1" } # No hashrate in time
-    @{ Algorithm = "Timetravel"; MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo timetravel --statsavg 5" }
-#   @{ Algorithm = "Tribus";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo tribus --statsavg 1" } # ASIC
-#   @{ Algorithm = "X16r";       MinMemGiB = 3;    MinerSet = 3; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo x16r --statsavg 1" } # ASIC
-    @{ Algorithm = "X16rv2";     MinMemGiB = 3;    MinerSet = 0; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo x16rv2 --statsavg 5" }
-    @{ Algorithm = "X16s";       MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo x16s --statsavg 5" } # FPGA
-    @{ Algorithm = "X17";        MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(120, 0); ExcludePools = @(); Arguments = " --algo x17 --statsavg 1" }
-#   @{ Algorithm = "Xevan";      MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(90, 0);  ExcludePools = @(); Arguments = " --algo xevan --diff-factor 1 --statsavg 1 --intensity 26" } # No hashrate in time
+    @{ Algorithm = "Aergo";      MinMemGiB = 2;    WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo aergo --statsavg 5 --intensity 23" }
+#   @{ Algorithm = "BCD";        MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo bcd --statsavg 5" } # ASIC
+#   @{ Algorithm = "Bitcore";    MinMemGiB = 2;    WarmupTimes = @(90, 0);  ExcludePools = @(); Arguments = " --algo bitcore --statsavg 5 --intensity 22" } # Bitcore is using MegaBtx
+    @{ Algorithm = "C11";        MinMemGiB = 3;    WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo c11 --statsavg 5 --intensity 24" }
+    @{ Algorithm = "Hex";        MinMemGiB = 2;    WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo hex --statsavg 5 --intensity 24" }
+    @{ Algorithm = "KawPow";     MinMemGiB = 0.77; WarmupTimes = @(180, 0); ExcludePools = @(); Arguments = " --algo kawpow --statsavg 1 --intensity 24" }
+#   @{ Algorithm = "Phi";        MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo phi --statsavg 5" } # ASIC
+    @{ Algorithm = "Phi2";       MinMemGiB = 2;    WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo phi2 --statsavg 5" }
+    @{ Algorithm = "Polytimos";  MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo poly --statsavg 5" }
+    @{ Algorithm = "SkunkHash";  MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo skunk --statsavg 1" } # No hashrate in time for old cards
+#   @{ Algorithm = "Sonoa";      MinMemGiB = 2;    WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo sonoa --statsavg 1" } # No hashrate in time
+    @{ Algorithm = "Timetravel"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo timetravel --statsavg 5" }
+#   @{ Algorithm = "Tribus";     MinMemGiB = 3;    WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo tribus --statsavg 1" } # ASIC
+#   @{ Algorithm = "X16r";       MinMemGiB = 3;    WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo x16r --statsavg 1" } # ASIC
+    @{ Algorithm = "X16rv2";     MinMemGiB = 3;    WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo x16rv2 --statsavg 5" }
+    @{ Algorithm = "X16s";       MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo x16s --statsavg 5" } # FPGA
+    @{ Algorithm = "X17";        MinMemGiB = 2;    WarmupTimes = @(120, 0); ExcludePools = @(); Arguments = " --algo x17 --statsavg 1" }
+#   @{ Algorithm = "Xevan";      MinMemGiB = 2;    WarmupTimes = @(90, 0);  ExcludePools = @(); Arguments = " --algo xevan --diff-factor 1 --statsavg 1 --intensity 26" } # No hashrate in time
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.where({ $_.Model -eq $Model })
@@ -80,10 +79,9 @@ if ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "Trex"
-                                Arguments   = "$Arguments $(if ($Pool.PoolPorts[1]) { "$(if ($Session.Config.SSLallowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl" } Else { "--url stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$Arguments $(if ($Pool.PoolPorts[1]) { "$(if ($Session.Config.SSLallowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl" } Else { "--url stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @(0.01) # Dev fee
-                                MinerSet    = $_.MinerSet
                                 MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
                                 Name        = $MinerName
                                 Path        = $Path

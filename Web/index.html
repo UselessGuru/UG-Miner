@@ -86,7 +86,6 @@
                 <th data-field="EnvVars" data-sortable="true" data-filter-control="input" data-visible="false" data-width=3>Environment variables</th>
                 <th data-field="Port" data-sortable="true" data-filter-control="input" data-visible="false">API Port</th>
                 <th data-field="Best" data-sortable="true" data-filter-control="select" data-visible="false">Best</th>
-                <th data-field="MinerSet" data-sortable="true" data-filter-control="select" data-visible="false">MinerSet</th>
                 <th data-field="Activated" data-sortable="true" data-filter-control="select" data-visible="false">Activated</th>
               </tr> 
             </thead>
@@ -150,6 +149,9 @@
               },
               onResetView: function () {
                 document.getElementById("logtext").style.height = ($(window).height() - $table.height() - 440) + "px";
+              },
+              onReorderColumn: function() {
+                $("body").css("cursor", "default");
               },
               onPostBody: function () {
                 if (configrunning.UseColorForMinerStatus == true) {

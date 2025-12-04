@@ -17,44 +17,45 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
-# This is just a bug fix for rejected shares issue of v1.7.0 on Pascal cards
+# Qubitcoin: 
+# Performance improvement for CMP cards(~5%)
+# Minor improvement for the other gpus
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.7.1/onezerominer-win64-1.7.1.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.7.2/onezerominer-win64-1.7.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @( 
-    @{ Algorithms = @("QHash", "");            Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
-    @{ Algorithms = @("QHash", "XelisHashV2"); Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a qhash", " --a2 xelis") }
-    @{ Algorithms = @("XelisHashV2", "");      Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a xelis") }
+    @{ Algorithms = @("QHash", "");            Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
+    @{ Algorithms = @("QHash", "XelisHashV2"); Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a qhash", " --a2 xelis") }
+    @{ Algorithms = @("XelisHashV2", "");      Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a xelis") }
 
-    @{ Algorithms = @("DynexSolve", "");       Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 120); ExcludePools = @(@(), @()); Arguments = @(" -a dynex") }
-    @{ Algorithms = @("QHash", "");            Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
-    @{ Algorithms = @("Qhash", "XelisHashV2"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash"," --a2 xelis") }
-    @{ Algorithms = @("XelisHashV2", "");      Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a xelis") }
+    @{ Algorithms = @("DynexSolve", "");       Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 120); ExcludePools = @(@(), @()); Arguments = @(" -a dynex") }
+    @{ Algorithms = @("QHash", "");            Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
+    @{ Algorithms = @("Qhash", "XelisHashV2"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash"," --a2 xelis") }
+    @{ Algorithms = @("XelisHashV2", "");      Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a xelis") }
 )
 
-# $Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
+# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $MinMemGiB = $_.MinMemGiB
 
@@ -72,17 +73,16 @@ if ($Algorithms) {
 
                                 [PSCustomObject]@{ 
                                     API         = "OneZero"
-                                    Arguments   = "$Arguments$(if (($Pool0.PoolPorts[1] -or $Pool1.PoolPorts[1]) -and $Session.Config.SSLallowSelfSignedCertificate) { " --no-cert-validation" }) --api-port $MinerAPIPort --hashrate-avg 5 --disable-telemetry --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                    Arguments   = "$Arguments$(if (($Pool0.PoolPorts[1] -or $Pool1.PoolPorts[1]) -and $Session.Config.SSLallowSelfSignedCertificate) { " --no-cert-validation" }) --api-port $MinerAPIPort --hashrate-avg 5 --disable-telemetry --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     Fee         = $_.Fee # Dev fee
-                                    MinerSet    = $_.MinerSet
                                     Name        = $MinerName
                                     Path        = $Path
                                     Port        = $MinerAPIPort
                                     Type        = $Type
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(($Pool0, $Pool1).where({ $_ }).foreach({ @{ Pool = $_ } }))
+                                    Workers     = @(($Pool0, $Pool1).where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                 }
                             }
                         }

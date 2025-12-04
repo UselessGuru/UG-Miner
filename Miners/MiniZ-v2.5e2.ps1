@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -35,26 +35,25 @@ $Path = "Bin\$Name\miniZ.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Equihash1254"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 3.0; MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 4.0; MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
+    @{ Algorithm = "Equihash1254"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 3.0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 4.0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
   
-    @{ Algorithm = "Equihash1254"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0; MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0; MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
+    @{ Algorithm = "Equihash1254"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0].($_.Algorithm) })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     if ($SupportedMinerDevices = $MinerDevices.where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
@@ -77,10 +76,9 @@ if ($Algorithms) {
 
                                 [PSCustomObject]@{ 
                                     API         = "MiniZ"
-                                    Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:d2}' -f $_ }) -join " ")"
+                                    Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:d2}' -f $_ }) -join " ")"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     Fee         = $_.Fee # Dev fee
-                                    MinerSet    = $_.MinerSet
                                     MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
                                     Name        = $MinerName
                                     Path        = $Path

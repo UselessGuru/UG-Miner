@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 using module .\Includes\Include.psm1
@@ -59,7 +59,7 @@ function Expand-WebRequest {
         $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).where({ $_.Name -eq $(Split-Path $Path -Leaf) })).Directory | Select-Object -First 1
 
         if ($Path_Old) { 
-            (Move-Item $Path_Old $Path_New -PassThru).foreach({ $_.LastWriteTime = [DateTime]::Now })
+            (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = [DateTime]::Now })
             $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
             if (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item -Path $Path_Old -Recurse -Force }
         }
@@ -75,7 +75,7 @@ $Session = $args.Session
 
 $ProgressPreference = "SilentlyContinue"
 
-($DownloadList | Select-Object).foreach(
+($DownloadList | Select-Object).ForEach(
     { 
         $URI = $_.URI
         $Path = $_.Path
@@ -109,7 +109,7 @@ $ProgressPreference = "SilentlyContinue"
                 if ($Searchable) { 
                     Write-Message -Level Info "Downloader:<br>Searching for $Type $(Split-Path $Path -Leaf) on local computer..."
 
-                    ($Path_Old = Get-PSDrive -PSProvider FileSystem).foreach({ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse }) | Sort-Object -Property LastWriteTimeUtc -Descending | Select-Object -First 1
+                    ($Path_Old = Get-PSDrive -PSProvider FileSystem).ForEach({ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse }) | Sort-Object -Property LastWriteTimeUtc -Descending | Select-Object -First 1
                     $Path_New = $Path
                 }
 

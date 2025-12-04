@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 # Flex and Xelisv2: Clang and Bionic compatibility by @sig11b in #13
@@ -44,31 +44,30 @@ else { return }
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
-    @{ Algorithm = "Argon2d1000";    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d1000" }
-    @{ Algorithm = "Argon2d16000";   MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d16000" }
-    @{ Algorithm = "Argon2d250";     MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d250" }
-    @{ Algorithm = "Argon2d8192";    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d8192" }
-    @{ Algorithm = "Argon2d500";     MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d500" }
-    @{ Algorithm = "Argon2d4096";    MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d4096" }
-    @{ Algorithm = "Evohash";        MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo evohash" }
-    @{ Algorithm = "EvohashV2";      MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo evohashv2" }
-    @{ Algorithm = "Flex";           MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo flex" }
-    @{ Algorithm = "Rinhash";        MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo Rinhash" }
-    @{ Algorithm = "XelisHashV2";    MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @("NiceHash"); Arguments = " --algo xelisv2" }
-    @{ Algorithm = "YespowerADVC";   MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespoweradvc" }
-    @{ Algorithm = "YespowerARWN";   MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespowerarwn" }
-#   @{ Algorithm = "YespowerEQPAY";  MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = " --algo yespowereqpay" } # https://github.com/Kudaraidee/cpuminer-opt-kudaraidee/issues/17
-    @{ Algorithm = "YespowerIc";     MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC"' }
-    @{ Algorithm = "YespowerIots";   MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
-    @{ Algorithm = "YespowerLitb";   MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"' }
-    @{ Algorithm = "YespowerLtncg";  MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LTNCGYES"' }
-    @{ Algorithm = "YespowerMGPC";   MinerSet = 2; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Magpies are birds of the Corvidae family."' } # MagpieCoin
-    @{ Algorithm = "YespowerSugar";  MinerSet = 1; WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
-    @{ Algorithm = "YespowerTIDE";   MinerSet = 1; WarmupTimes = @(45, 55); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
-    @{ Algorithm = "YespowerUrx";    MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "Argon2d1000";    WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d1000" }
+    @{ Algorithm = "Argon2d16000";   WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d16000" }
+    @{ Algorithm = "Argon2d250";     WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d250" }
+    @{ Algorithm = "Argon2d8192";    WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d8192" }
+    @{ Algorithm = "Argon2d500";     WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d500" }
+    @{ Algorithm = "Argon2d4096";    WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo argon2d4096" }
+    @{ Algorithm = "Evohash";        WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo evohash" }
+    @{ Algorithm = "EvohashV2";      WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo evohashv2" }
+    @{ Algorithm = "Flex";           WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo flex" }
+    @{ Algorithm = "Rinhash";        WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo Rinhash" }
+    @{ Algorithm = "XelisHashV2";    WarmupTimes = @(60, 45); ExcludePools = @("NiceHash"); Arguments = " --algo xelisv2" }
+    @{ Algorithm = "YespowerADVC";   WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespoweradvc" }
+    @{ Algorithm = "YespowerARWN";   WarmupTimes = @(60, 45); ExcludePools = @();           Arguments = " --algo yespowerarwn" }
+#   @{ Algorithm = "YespowerEQPAY";  WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = " --algo yespowereqpay" } # https://github.com/Kudaraidee/cpuminer-opt-kudaraidee/issues/17
+    @{ Algorithm = "YespowerIc";     WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC"' }
+    @{ Algorithm = "YespowerIots";   WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"' }
+    @{ Algorithm = "YespowerLitb";   WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"' }
+    @{ Algorithm = "YespowerLtncg";  WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "LTNCGYES"' }
+    @{ Algorithm = "YespowerMGPC";   WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Magpies are birds of the Corvidae family."' } # MagpieCoin
+    @{ Algorithm = "YespowerSugar";  WarmupTimes = @(45, 45); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerTIDE";   WarmupTimes = @(45, 55); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 8' } # TDC tidecoin
+    @{ Algorithm = "YespowerUrx";    WarmupTimes = @(45, 60); ExcludePools = @();           Arguments = ' --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"' } # SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
@@ -88,7 +87,6 @@ if ($Algorithms) {
                     Arguments   = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+ssl" } Else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --hash-meter --stratum-keepalive --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --api-bind $($MinerAPIPort)"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @(0) # Dev fee
-                    MinerSet    = $_.MinerSet
                     Name        = $MinerName
                     Path        = $Path
                     Port        = $MinerAPIPort

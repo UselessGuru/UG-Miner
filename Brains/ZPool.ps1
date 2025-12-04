@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 using module ..\Includes\Include.psm1
@@ -76,7 +76,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
 
                 # Add currency and convert to array for easy sorting
                 $CurrenciesArray = [PSCustomObject[]]@()
-                $CurrenciesData.PSObject.Properties.Name.where({ $CurrenciesData.$_.algo -and $CurrenciesData.$_.name -notcontains "Hashtap" }).foreach(
+                $CurrenciesData.PSObject.Properties.Name.where({ $CurrenciesData.$_.algo -and $CurrenciesData.$_.name -notcontains "Hashtap" }).ForEach(
                     { 
                         $CurrenciesData.$_ | Add-Member Currency $(if ($CurrenciesData.$_.symbol) { $CurrenciesData.$_.symbol -replace "-.+$" } else { $_ -replace "-.+$" })
                         try { 
@@ -94,7 +94,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 )
 
                 # Get best currency
-                ($CurrenciesArray | Group-Object -Property Algo).foreach(
+                ($CurrenciesArray | Group-Object -Property Algo).ForEach(
                     { 
                         if ($AlgoData.($_.name)) { 
                             $BestCurrency = ($_.Group | Sort-Object -Property conversion_supported, estimate -Descending -Top 1)

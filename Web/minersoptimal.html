@@ -99,7 +99,6 @@
                 <th data-field="KeepRunning" data-sortable="true" data-filter-control="select" data-visible="false">Keep running</th>
                 <th data-field="ContinousCycle" data-sortable="true" data-filter-control="select" data-visible="false">Continous cycles</th>
                 <th data-field="Prioritize" data-sortable="true" data-filter-control="select" data-visible="false">Prioritize</th>
-                <th data-field="MinerSet" data-sortable="true" data-filter-control="select" data-visible="false">MinerSet</th>
               </tr>
             </thead>
           </table>
@@ -142,6 +141,9 @@
               },
               onRefresh: function() {
                 $("body").css("cursor", "wait");
+              },
+              onReorderColumn: function() {
+                $("body").css("cursor", "default");
               },
               onToggle: function() {
                 $("body").css("cursor", "default");

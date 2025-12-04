@@ -101,7 +101,6 @@
                 <th data-field="KeepRunning" data-sortable="true" data-filter-control="select" data-visible="false">Keep running</th>
                 <th data-field="ContinousCycle" data-sortable="true" data-filter-control="select" data-visible="false">Continous cycles</th>
                 <th data-field="Prioritize" data-sortable="true" data-filter-control="select" data-visible="false">Prioritize</th>
-                <th data-field="MinerSet" data-sortable="true" data-filter-control="select" data-visible="false">MinerSet</th>
               </tr>
             </thead>
           </table>
@@ -138,7 +137,7 @@
               //   });
               // },
               onLoadSuccess: function() {
-                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = document.getElementsByName("add-updatedtimestamp")[0].innerHTML.replace(/\.$| \(data updated.+/, "") + " (data updated " + refreshtimestamp + ").";
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = "These are all unavailable miners." + " (data updated " + refreshtimestamp + ")<br>Note: The column 'Reasons' shows the filter criteria(s) that made the miner unavailable."
                 $("body").css("cursor", "default");
               },
               onPostBody: function () {
@@ -156,6 +155,9 @@
               },
               onRefresh: function() {
                 $("body").css("cursor", "wait");
+              },
+              onReorderColumn: function() {
+                $("body").css("cursor", "default");
               },
               onToggle: function() {
                 $("body").css("cursor", "default");

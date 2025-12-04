@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
@@ -32,11 +32,10 @@ $Path = "Bin\$Name\hellminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; Fee = @(0.01); MinerSet = 0; WarmupTimes = @(45, 90); ExcludePools = @("NiceHash"); Arguments = "" }
+    @{ Algorithm = "VerusHash"; Fee = @(0.01); WarmupTimes = @(45, 90); ExcludePools = @("NiceHash"); Arguments = "" }
 )
 
-# $Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
@@ -54,7 +53,6 @@ if ($Algorithms) {
                     Arguments   = " --pool=stratum+$(if ($Pool.PoolPorts[1]) { "ssl" } Else { "tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user=$($Pool.User) --pass=$($Pool.Pass) --api-port=$MinerAPIPort"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = $_.Fee # Dev fee
-                    MinerSet    = $_.MinerSet
                     MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
                     Name        = $MinerName
                     Path        = $Path

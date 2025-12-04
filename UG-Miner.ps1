@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 using module .\Includes\Include.psm1
@@ -104,13 +104,13 @@ param(
     [Parameter (Mandatory = $false)]
     [Int]$IdleSec = 120, # seconds the system must be idle before mining starts
     [Parameter (Mandatory = $false)]
+    [Switch]$Ignore0HashrateSample = $false, # If true will ignore 0 hashrate samples when setting miner status to 'warming up'
+    [Parameter (Mandatory = $false)]
     [Switch]$IgnoreMinerFee = $false, # If true will ignore miner fee for earnings & profit calculation
     [Parameter (Mandatory = $false)]
     [Switch]$IgnorePoolFee = $false, # If true will ignore pool fee for earnings & profit calculation
     [Parameter (Mandatory = $false)]
     [Switch]$IgnorePowerCost = $false, # If true will ignore power cost in best miner selection, instead miners with best earnings will be selected
-    [Parameter (Mandatory = $false)]
-    [Switch]$Ignore0HashrateSample = $false, # If true will ignore 0 hashrate samples when setting miner status to 'warming up'
     [Parameter (Mandatory = $false)]
     [Int]$Interval = 90, # Average cycle loop duration (seconds), min 60, max 3600
     [Parameter (Mandatory = $false)]
@@ -131,8 +131,6 @@ param(
     [Int]$MinCycle = 1, # Minimum number of cycles a miner must mine the same available algorithm@pool continously before switching is allowed (e.g. 3 would force a miner to stick mining algorithm@pool for min. 3 cycles before switching to another algorithm or pool)
     [Parameter (Mandatory = $false)]
     [Int]$MinDataSample = 20, # Minimum number of hashrate samples required to store hashrate
-    [Parameter (Mandatory = $false)]
-    [Int]$MinerSet = 3, # Defines the set of available miners. 0: Benchmark best miner per algorithm and device only; 1: Benchmark optimal miners (more than one per algorithm and device); 2: Benchmark all miners per algorithm and device (except those in the unprofitable algorithms list); 3: Benchmark most miners per algorithm and device (even those in the unprofitable algorithms list, not recommended)
     [Parameter (Mandatory = $false)]
     [Double]$MinerSwitchingThreshold = 10, # Will not switch miners unless another miner has n% higher earnings / profit
     [Parameter (Mandatory = $false)]
@@ -266,6 +264,8 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$UseAnycast = $true, # If true pools will use anycast for best network performance and ping times (currently no available pool supports this feature) 
     [Parameter (Mandatory = $false)]
+    [Switch]$UseUnprofitableAlgorithms = $false, # If true will also use unprofitable algorithms
+    [Parameter (Mandatory = $false)]
     [Hashtable]$Wallets = @{ "BTC" = "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF" },
     [Parameter (Mandatory = $false)]
     [Switch]$Watchdog = $true, # If true will automatically put pools and/or miners temporarily on hold it they fail $WatchdogCount times in a row
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.2"
+    Version      = [System.Version]"6.7.3"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -366,7 +366,7 @@ Remove-Variable Loops
 
 # Convert command line parameters syntax
 $Session.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash table
-($MyInvocation.MyCommand.Parameters.psBase.Keys.where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).foreach(
+($MyInvocation.MyCommand.Parameters.psBase.Keys.where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
     { 
         if ($MyInvocation.MyCommandLineParameters.$_ -is [Switch]) { 
             $Session.AllCommandLineParameters.$_ = [Boolean]$Session.AllCommandLineParameters.$_
@@ -589,11 +589,11 @@ if ($Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenC
     exit
 }
 
-$Session.Devices.where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Session.SupportedCPUDeviceVendors }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
-$Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Session.SupportedGPUDeviceVendors }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
-$Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).foreach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
+$Session.Devices.where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Session.SupportedCPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
+$Session.Devices.where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Session.SupportedGPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
+$Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
 
-$Session.Devices.where({ $Session.Config.ExcludeDeviceName -contains $_.Name -and $_.State -ne [DeviceState]::Unsupported }).foreach({ $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" })
+$Session.Devices.where({ $Session.Config.ExcludeDeviceName -contains $_.Name -and $_.State -ne [DeviceState]::Unsupported }).ForEach({ $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" })
 
 # Build driver version table
 $Session.DriverVersion = [PSCustomObject]@{ }
@@ -766,7 +766,7 @@ function MainLoop {
                     $Message = "$($Session.Branding.ProductLabel) is paused."
                     Write-Message -Level Info $Message
                     $Message += " Click the 'Start mining' button to make money.<br>"
-                    ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).foreach(
+                    ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).ForEach(
                         { 
                             $Message += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Session.Rates.$_.($Session.Config.FIATcurrency) -DecimalsMax $Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Session.Rates.$_.($Session.Config.FIATcurrency)
                         }
@@ -1166,7 +1166,7 @@ function MainLoop {
                     )
                     # Display top 5 optimal miners and all benchmarking of power consumption measuring miners
                     $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                    ($Session.Miners.where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" } | Sort-Object -Property Name).foreach(
+                    ($Session.Miners.where({ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" } | Sort-Object -Property Name).ForEach(
                         { 
                             $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
                             $MinersDeviceGroupNeedingBenchmark = $MinersDeviceGroup.where({ $_.Benchmark })

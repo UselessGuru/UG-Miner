@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" }))) { return }
@@ -29,20 +29,19 @@ $Path = "Bin\$Name\sgminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "0x10";          MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel chainox" }
-    @{ Algorithm = "HeavyHash";     MinMemGiB = 2; MinerSet = 1; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 23 --kernel heavyhash" } # FPGA
-    @{ Algorithm = "Neoscrypt";     MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = "^GCN1$"; ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt" } # FPGA
-    @{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt-xaya" }
-    @{ Algorithm = "YescryptR16";   MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(90, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 20 --pool-nfactor 100 --kernel yescryptr16" }
+    @{ Algorithm = "0x10";          MinMemGiB = 2; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel chainox" }
+    @{ Algorithm = "HeavyHash";     MinMemGiB = 2; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 23 --kernel heavyhash" } # FPGA
+    @{ Algorithm = "Neoscrypt";     MinMemGiB = 2; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = "^GCN1$"; ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt" } # FPGA
+    @{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 17 --kernel neoscrypt-xaya" }
+    @{ Algorithm = "YescryptR16";   MinMemGiB = 2; WarmupTimes = @(90, 30); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " --scan-time 1 --gpu-threads 1 --worksize 256 --intensity 20 --pool-nfactor 100 --kernel yescryptr16" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.where({ $_.Model -eq $Model })
@@ -61,11 +60,10 @@ if ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "Xgminer"
-                                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --api-listen --api-port $MinerAPIPort --gpu-platform $($AvailableMinerDevices.PlatformId | Sort-Object -Unique) --device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --api-listen --api-port $MinerAPIPort --gpu-platform $($AvailableMinerDevices.PlatformId | Sort-Object -Unique) --device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 EnvVars     = @("GPU_MAX_ALLOC_PERCENT=100")
                                 Fee         = @(0) # Dev fee
-                                MinerSet    = $_.MinerSet
                                 Name        = $MinerName
                                 Path        = $Path
                                 Port        = $MinerAPIPort

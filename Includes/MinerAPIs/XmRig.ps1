@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 class XmRig : Miner { 
@@ -101,7 +101,7 @@ class XmRig : Miner {
                     if ($this.Process.ParentId) { Stop-Process -Id $this.Process.ParentId -Force -ErrorAction Ignore | Out-Null }
                     Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
                     # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                    (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").foreach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                    (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
                 }
             }
             Else { 

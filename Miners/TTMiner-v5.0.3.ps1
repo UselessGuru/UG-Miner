@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -29,19 +29,18 @@ $Path = "Bin\$Name\TT-Miner.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-#   @{ Algorithm = "Eaglesong";    MinMemGiB = 2;    MinerSet = 3; WarmupTimes = @(30, 60); ExcludePools = @(); Arguments = " -algo EAGLESONG" } # ASIC
-    @{ Algorithm = "Ethash";       MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -algo ETHASH -intensity 15" }
-    @{ Algorithm = "KawPow";       MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " -algo KAWPOW" }
-#   @{ Algorithm = "Lyra2RE3";     MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludePools = @(); Arguments = " -algo LYRA2V3" } # ASIC
-#   @{ Algorithm = "MTP";          MinMemGiB = 3;    MinerSet = 2; WarmupTimes = @(30, 60); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
-    @{ Algorithm = "ProgPowEpic";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -coin EPIC" }
-    @{ Algorithm = "ProgPowSero";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -coin SERO" }
-    @{ Algorithm = "ProgPowVeil";  MinMemGiB = 1.22; MinerSet = 2; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -coin VEIL" }
-    @{ Algorithm = "ProgPowZ";     MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " -coin ZANO" }
-    @{ Algorithm = "UbqHash";      MinMemGiB = 1.22; MinerSet = 0; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -algo UBQHASH -intensity 15" }
+#   @{ Algorithm = "Eaglesong";    MinMemGiB = 2;    WarmupTimes = @(30, 60); ExcludePools = @(); Arguments = " -algo EAGLESONG" } # ASIC
+    @{ Algorithm = "Ethash";       MinMemGiB = 1.22; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -algo ETHASH -intensity 15" }
+    @{ Algorithm = "KawPow";       MinMemGiB = 1.22; WarmupTimes = @(90, 60); ExcludePools = @(); Arguments = " -algo KAWPOW" }
+#   @{ Algorithm = "Lyra2RE3";     MinMemGiB = 2;    WarmupTimes = @(30, 60); ExcludePools = @(); Arguments = " -algo LYRA2V3" } # ASIC
+#   @{ Algorithm = "MTP";          MinMemGiB = 3;    WarmupTimes = @(30, 60); ExcludePools = @(); Arguments = " -algo MTP -intensity 21" } # Algorithm is dead
+    @{ Algorithm = "ProgPowEpic";  MinMemGiB = 1.22; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -coin EPIC" }
+    @{ Algorithm = "ProgPowSero";  MinMemGiB = 1.22; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -coin SERO" }
+    @{ Algorithm = "ProgPowVeil";  MinMemGiB = 1.22; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -coin VEIL" }
+    @{ Algorithm = "ProgPowZ";     MinMemGiB = 1.22; WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " -coin ZANO" }
+    @{ Algorithm = "UbqHash";      MinMemGiB = 1.22; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -algo UBQHASH -intensity 15" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 $Algorithms = $Algorithms.where({ $_.Algorithm -ne "Ethash" -or $MinerPools[0][$_.Algorithm].Epoch -le 384 }) # Miner supports Ethash up to epoch 384
@@ -50,7 +49,7 @@ $Algorithms = $Algorithms.where({ $_.Algorithm -ne "KawPow" -or $MinerPools[0][$
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.where({ $_.Model -eq $Model })
@@ -79,10 +78,9 @@ if ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"
-                                Arguments   = "$Arguments -PRT 1 -PRS 0 -api-bind 127.0.0.1:$($MinerAPIPort) -device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ",")"
+                                Arguments   = "$Arguments -PRT 1 -PRS 0 -api-bind 127.0.0.1:$($MinerAPIPort) -device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ",")"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @(0) # Dev fee
-                                MinerSet    = $_.MinerSet
                                 Name        = $MinerName
                                 Path        = $Path
                                 Port        = $MinerAPIPort

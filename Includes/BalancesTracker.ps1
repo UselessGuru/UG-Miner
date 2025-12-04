@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 using module .\Include.psm1
@@ -337,7 +337,7 @@ do {
 
         # Always keep pools sorted, even when new pools were added
         $Session.Balances = [Ordered]@{ } # as case insensitive hash table
-        ($Balances.psbase.Keys.where({ $Balances.$_.Pool -in $PoolsToTrack }) | Sort-Object).foreach(
+        ($Balances.psbase.Keys.where({ $Balances.$_.Pool -in $PoolsToTrack }) | Sort-Object).ForEach(
             { 
                 $Session.Balances.Remove($_)
                 $Session.Balances.$_ = $Balances.$_
@@ -354,7 +354,7 @@ do {
 
         # One dataset per pool
         $Session.PoolChartData = [PSCustomObject]@{ }
-        (($Session.ChartData.Group).Pool | Sort-Object -Unique).foreach(
+        (($Session.ChartData.Group).Pool | Sort-Object -Unique).ForEach(
             { 
                 $Session.PoolChartData | Add-Member @{ $_ = [Double[]]@() }
             }
@@ -364,7 +364,7 @@ do {
         foreach ($PoolEarnings in $Session.ChartData) { 
             $Session.PoolChartData.PSObject.Properties.Name.ForEach(
                 { 
-                    $Session.PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).foreach({ [Double]$_.DailyEarnings * $Session.Rates.($_.Currency).BTC }) | Measure-Object -Sum).Sum
+                    $Session.PoolChartData.$_ += (($PoolEarnings.Group | Where-Object Pool -EQ $_).ForEach({ [Double]$_.DailyEarnings * $Session.Rates.($_.Currency).BTC }) | Measure-Object -Sum).Sum
                 }
             )
         }
@@ -385,10 +385,10 @@ do {
         # At least 31 days are needed for Growth720
         if ($Session.BalancesData.Count -gt 1) { 
             $Session.BalancesData = @(
-                ($Session.BalancesData.where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object -Property Pool, Currency).foreach(
+                ($Session.BalancesData.where({ $_.DateTime -ge $Now.AddDays(-31) }) | Group-Object -Property Pool, Currency).ForEach(
                     { 
                         $Record = $null
-                        ($_.Group | Sort-Object -Property DateTime).foreach(
+                        ($_.Group | Sort-Object -Property DateTime).ForEach(
                             { 
                                 if ($_.DateTime -ge $Now.AddDays(-1)) { $_ } # Keep all records for 1 day
                                 elseif ($_.DateTime -ge $Now.AddDays(-7) -and $_.Delta -gt 0) { $_ } # Keep all records of the last 7 days with delta

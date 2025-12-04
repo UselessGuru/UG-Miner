@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
@@ -29,13 +29,12 @@ $Path = "Bin\$Name\a.multiminer.exe"
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
-    @{ Algorithm = "Argon2d16000"; MinerSet = 1; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d16000" }
-    @{ Algorithm = "Argon2d250";   MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d250" }
-    @{ Algorithm = "Argon2d500";   MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d500" }
-    @{ Algorithm = "Argon2d4096";  MinerSet = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d4096" }
+    @{ Algorithm = "Argon2d16000"; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d16000" }
+    @{ Algorithm = "Argon2d250";   WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d250" }
+    @{ Algorithm = "Argon2d500";   WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d500" }
+    @{ Algorithm = "Argon2d4096";  WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d4096" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
@@ -56,7 +55,6 @@ if ($Algorithms) {
                     Arguments   = "$($_.Arguments) --url $($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --api-bind $($MinerAPIPort)"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @(0) # Dev fee
-                    MinerSet    = $_.MinerSet
                     Name        = $MinerName
                     Path        = $Path
                     Port        = $MinerAPIPort

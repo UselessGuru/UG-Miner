@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -33,23 +33,22 @@ $Path = "Bin\$Name\CryptoDredge.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Allium";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo allium --intensity 8" } # FPGA
-    @{ Algorithm = "Exosis";    Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo exosis --intensity 8" }
-    @{ Algorithm = "Dedal";     Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo dedal --intensity 8" }
-    @{ Algorithm = "HMQ1725";   Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo hmq1725 --intensity 8" } # CryptoDredge v0.26.0 is fastest
-    @{ Algorithm = "Neoscrypt"; Fee = @(0.01); MinMemGiB = 2; MinerSet = 0; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 6" } # FPGA
-#   @{ Algorithm = "Phi";       Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo phi --intensity 8" } # ASIC
-    @{ Algorithm = "Phi2";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo phi2 --intensity 8" }
-    @{ Algorithm = "Pipe";      Fee = @(0.01); MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo pipe --intensity 8" }
+    @{ Algorithm = "Allium";    Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo allium --intensity 8" } # FPGA
+    @{ Algorithm = "Exosis";    Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo exosis --intensity 8" }
+    @{ Algorithm = "Dedal";     Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo dedal --intensity 8" }
+    @{ Algorithm = "HMQ1725";   Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo hmq1725 --intensity 8" } # CryptoDredge v0.26.0 is fastest
+    @{ Algorithm = "Neoscrypt"; Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 6" } # FPGA
+#   @{ Algorithm = "Phi";       Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo phi --intensity 8" } # ASIC
+    @{ Algorithm = "Phi2";      Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo phi2 --intensity 8" }
+    @{ Algorithm = "Pipe";      Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo pipe --intensity 8" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.where({ $_.Model -eq $Model })
@@ -72,10 +71,9 @@ if ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "CcMiner"
-                                Arguments   = "$Arguments --cpu-priority $($Session.Config.GPUMinerProcessPriority + 2) --no-watchdog --no-crashreport --retries 1 --retry-pause 1 --api-type ccminer-tcp --api-bind 127.0.0.1:$($MinerAPIPort) --device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$Arguments --cpu-priority $($Session.Config.GPUMinerProcessPriority + 2) --no-watchdog --no-crashreport --retries 1 --retry-pause 1 --api-type ccminer-tcp --api-bind 127.0.0.1:$($MinerAPIPort) --device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = $_.Fee # Dev fee
-                                MinerSet    = $_.MinerSet
                                 Name        = $MinerName
                                 Path        = $Path
                                 Port        = $MinerAPIPort

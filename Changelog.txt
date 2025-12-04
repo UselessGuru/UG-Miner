@@ -1,9 +1,29 @@
+Changelog UG-Miner 6.7.3 2025/12/04
+===================================
+
+Changes:
+- Core: Remove configuration item 'MinerSet'
+
+Enhancements:
+- Core: Added configuration item 'UseUnprofitableAlgorithms' (default value: false)
+- Core / Includes.psm1: Function 'Read-ConfigFile' only builds pool configuration for configured pools
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+
+Miner updates:
+- OneZeroMiner-v1.7.2
+- Wildrig-v0.47.7
+
+
 Changelog UG-Miner 6.7.2 2025/11/29
 ===================================
 
 Changes:
 - Core: Split '.\Data\PooLData.json' into separate files per pool
-- Renamed configuration items 'LogLogBalanceAPIResponseToFile' to 'BalancesTrackerLogAPIResponse'. Configuration file will get updated automatically during update.
+- Renamed configuration item
+    LogLogBalanceAPIResponseToFile -> BalancesTrackerLogAPIResponse
+  Configuration file will get updated automatically during update
 
 Fixes:
 - Core / Includes.psm1: Error in function 'Get-AlLDAGdata' when Zpool was not enabled
@@ -18,7 +38,7 @@ Changelog UG-Miner 6.7.1 2025/11/25
 ===================================
 
 Enhancements:
-- Core: Added configuration item 'RatesUpdateInterval' (default value. 10); interval between exchange rates updates from min-api.cryptocompare.com
+- Core: Added configuration item 'RatesUpdateInterval' (default value: 10); interval between exchange rates updates from min-api.cryptocompare.com
 
 Miner updates:
 - OneZeroMiner-v1.6.9
@@ -169,7 +189,7 @@ Changelog UG-Miner 6.5.14 2025/10/07
 ====================================
 
 Fixes:
-- APIserver: Not using default configuration values when no configuration files exists
+- APIserver: Not using default configuration values when no configuration files exist
 - Core: Miner object not created when algorithm name case mismatched
 
 Improvements:
@@ -222,7 +242,9 @@ Changelog UG-Miner 6.5.10 2025/09/03
 ====================================
 
 Changes:
-- Renamed configuration items 'LogToFile' to 'LogLevel'. Configuration file will get updated automatically during update.
+- Renamed configuration item
+    LogToFile -> LogLevel
+  Configuration file will get updated automatically during update
 - Removed configuration item 'LogToScreen'
 
 Fixes:
@@ -312,7 +334,10 @@ Changelog UG-Miner 6.5.3 2025/08/03
 
 Changes:
 - Generate fresh CoinName.json from 'https://min-api.cryptocompare.com/data/all/coinlist'
-- Renamed configuration items 'UnrealMinerEarningFactor' to 'UnrealisticMinerEarningsFactor' and 'UnrealPoolPriceFactor' to 'UnrealisticPoolPriceFactor'. Configuration file will get updated automatically during update.
+- Renamed configuration items
+    UnrealMinerEarningFactor -> UnrealisticMinerEarningsFactor
+    UnrealPoolPriceFactor -> UnrealisticPoolPriceFactor
+  Configuration file will get updated automatically during update
 - Removed configuration item 'Transcript' (used for debugging)
 
 Enhancements:
@@ -1050,7 +1075,7 @@ Changelog UG-Miner 6.3.10 2024/10/20
 Improvements:
 - Core: Close useless empty cmd window that comes up when starting from cmd file (Windows 11)
 - Core: Minor code optimizations
-- LegacyGUI  / Earnings & balances: Add more columns to balances table
+- LegacyGUI / Earnings & balances: Add more columns to balances table
 - Legacy GUI: Remove obsolete code & minor code optimizations 
 
 
@@ -1264,8 +1289,10 @@ Changelog UG-Miner 6.2.26 2024/08/16
 ====================================
 
 Changes:
-- Renamed configuration item 'BalancesShowInMainCurrency' to 'BalancesShowInFIATcurrency'. Configuration file will get updated automatically during update.
-- Renamed configuration item 'MainCurrency' to 'FIATcurrency'. Configuration file will get updated automatically during update.
+- Renamed configuration items
+    BalancesShowInMainCurrency -> BalancesShowInFIATcurrency
+    MainCurrency -> FIATcurrency
+  Configuration file will get updated automatically during update
 - Web GUI / Configuration editor: Change pool selection logic. Can only select pool when prerequisites are met
 
 Fixes:
@@ -1997,7 +2024,7 @@ Enhancements:
 - Legacy GUI: Add '[Currency] to miner algorithm columns
 
 Fixes:
-- Brains:  No pool data for 'ZergPoolCoins24hr'
+- Brains: No pool data for 'ZergPoolCoins24hr'
 - Core: 'UnrealPoolPriceFactor' not excluding NiceHash & MiningPoolHub (their prices are always right)
 - Web GUI: Fix column alignment
 - Web GUI: Fix 'm' not added to culumn headers

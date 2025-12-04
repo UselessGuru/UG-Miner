@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 # Fixed 192,7/Progpow/Kawpow/Ethash mining.
@@ -33,62 +33,61 @@ $Path = "Bin\$Name\miniZ.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Equihash1445";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^GCN1$";     ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --amd" } # FPGA
-    @{ Algorithm = "Equihash1927";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.3;  MinerSet = 1; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --amd" } # FPGA
-    @{ Algorithm = "Equihash2009";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=BgoldPoW" }
-    @{ Algorithm = "Equihash2109";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=210,9 --smart-pers" }
-    @{ Algorithm = "EtcHash";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=etcHash --dag-fix" }
-    @{ Algorithm = "Ethash";             Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=ethash --dag-fix" }
-    @{ Algorithm = "EthashB3";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @( );          AutoCoinPers = "";             Arguments = " --amd --par=ethashb3 --dag-fix" }
-    @{ Algorithm = "EvrProgPow";         Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" }
-    @{ Algorithm = "FiroPow";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=firo" }
-    @{ Algorithm = "FishHash";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " ";          ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --algo=fishhash" }
-    @{ Algorithm = "KawPow";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(60, 35); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" }
-#   @{ Algorithm = "HeavyHashKarlsen";   Type = "AMD"; Fee = @(0.0085); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=karlsenhash" } # No kernel for AMD
-    @{ Algorithm = "HeavyHashKarlsenV2"; Type = "AMD"; Fee = @(0.0095); MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=karlsenhashv2" }
-#   @{ Algorithm = "Octopus";            Type = "AMD"; Fee = @(0.02);   MinMemGiB = 1.24; Minerset = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=octopus" } # No kernel for AMD
-    @{ Algorithm = "ProgPowSero";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=sero" }
-    @{ Algorithm = "ProgPowTelestai";    Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=telestai" }
-    @{ Algorithm = "ProgPowVeil";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=veil" }
-    @{ Algorithm = "ProgPowVeriblock";   Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=VeriBlock" }
-    @{ Algorithm = "ProgPowZ";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=auto" }
+    @{ Algorithm = "Equihash1445";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^GCN1$";     ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --amd" } # FPGA
+    @{ Algorithm = "Equihash1927";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.3;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --amd" } # FPGA
+    @{ Algorithm = "Equihash2009";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=BgoldPoW" }
+    @{ Algorithm = "Equihash2109";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=210,9 --smart-pers" }
+    @{ Algorithm = "EtcHash";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=etcHash --dag-fix" }
+    @{ Algorithm = "Ethash";             Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=ethash --dag-fix" }
+    @{ Algorithm = "EthashB3";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @( );          AutoCoinPers = "";             Arguments = " --amd --par=ethashb3 --dag-fix" }
+    @{ Algorithm = "EvrProgPow";         Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" }
+    @{ Algorithm = "FiroPow";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=firo" }
+    @{ Algorithm = "FishHash";           Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " ";          ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --algo=fishhash" }
+    @{ Algorithm = "KawPow";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(60, 35); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" }
+#   @{ Algorithm = "HeavyHashKarlsen";   Type = "AMD"; Fee = @(0.0085); MinMemGiB = 1.08; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=karlsenhash" } # No kernel for AMD
+    @{ Algorithm = "HeavyHashKarlsenV2"; Type = "AMD"; Fee = @(0.0095); MinMemGiB = 1.08; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=karlsenhashv2" }
+#   @{ Algorithm = "Octopus";            Type = "AMD"; Fee = @(0.02);   MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=octopus" } # No kernel for AMD
+    @{ Algorithm = "ProgPowSero";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=sero" }
+    @{ Algorithm = "ProgPowTelestai";    Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=telestai" }
+    @{ Algorithm = "ProgPowVeil";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=veil" }
+    @{ Algorithm = "ProgPowVeriblock";   Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=VeriBlock" }
+    @{ Algorithm = "ProgPowZ";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=auto" }
   
-    @{ Algorithm = "BeamV3";             Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 4.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=beam3" }
-    @{ Algorithm = "Equihash1445";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --nvidia" } # FPGA
-    @{ Algorithm = "Equihash1927";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.3;  MinerSet = 0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --nvidia" } # FPGA
-    @{ Algorithm = "Equihash2009";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=BgoldPoW" }
-    @{ Algorithm = "Equihash2109";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=210,9 --smart-pers" }
-    @{ Algorithm = "Equihash965";        Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=96,5 --smart-pers" }
-    @{ Algorithm = "EtcHash";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=etcHash --dag-fix" }
-    @{ Algorithm = "Ethash";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=ethash --dag-fix" }
-    @{ Algorithm = "EthashB3";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=ethashb3 --dag-fix" }
-    @{ Algorithm = "EvrProgPow";         Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" }
-    @{ Algorithm = "FiroPow";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=firo" }
-    @{ Algorithm = "FishHash";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --algo=fishhash" }
-#   @{ Algorithm = "KawPow";             Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(60, 35); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" } # Miner just closes
-    @{ Algorithm = "HeavyHashKarlsen";   Type = "NVIDIA"; Fee = @(0.008);  MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhash" }
-    @{ Algorithm = "HeavyHashKarlsenV2"; Type = "NVIDIA"; Fee = @(0.0095); MinMemGiB = 1.08; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhashv2" }
-    @{ Algorithm = "Octopus";            Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 1.24; Minerset = 0; Tuning = " --ocX"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=octopus" }
-    @{ Algorithm = "ProgPowSero";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=sero" }
-    @{ Algorithm = "ProgPowTelestai";    Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=telestai" }
-    @{ Algorithm = "ProgPowVeil";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=veil" }
-    @{ Algorithm = "ProgPowVeriblock";   Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=VeriBlock" }
-    @{ Algorithm = "ProgPowZ";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; MinerSet = 2; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=auto" }
+    @{ Algorithm = "BeamV3";             Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 4.0;  Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=beam3" }
+    @{ Algorithm = "Equihash1445";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --nvidia" } # FPGA
+    @{ Algorithm = "Equihash1927";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.3;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --nvidia" } # FPGA
+    @{ Algorithm = "Equihash2009";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=BgoldPoW" }
+    @{ Algorithm = "Equihash2109";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=210,9 --smart-pers" }
+    @{ Algorithm = "Equihash965";        Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=96,5 --smart-pers" }
+    @{ Algorithm = "EtcHash";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=etcHash --dag-fix" }
+    @{ Algorithm = "Ethash";             Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=ethash --dag-fix" }
+    @{ Algorithm = "EthashB3";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=ethashb3 --dag-fix" }
+    @{ Algorithm = "EvrProgPow";         Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" }
+    @{ Algorithm = "FiroPow";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=firo" }
+    @{ Algorithm = "FishHash";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --algo=fishhash" }
+#   @{ Algorithm = "KawPow";             Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(60, 35); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" } # Miner just closes
+    @{ Algorithm = "HeavyHashKarlsen";   Type = "NVIDIA"; Fee = @(0.008);  MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhash" }
+    @{ Algorithm = "HeavyHashKarlsenV2"; Type = "NVIDIA"; Fee = @(0.0095); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhashv2" }
+    @{ Algorithm = "Octopus";            Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=octopus" }
+    @{ Algorithm = "ProgPowSero";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=sero" }
+    @{ Algorithm = "ProgPowTelestai";    Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=telestai" }
+    @{ Algorithm = "ProgPowVeil";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=veil" }
+    @{ Algorithm = "ProgPowVeriblock";   Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=VeriBlock" }
+    @{ Algorithm = "ProgPowZ";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=auto" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0].($_.Algorithm) })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     if ($SupportedMinerDevices = $MinerDevices.where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
@@ -111,10 +110,9 @@ if ($Algorithms) {
 
                                 [PSCustomObject]@{ 
                                     API         = "MiniZ"
-                                    Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:d2}' -f $_ }) -join " ")"
+                                    Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:d2}' -f $_ }) -join " ")"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     Fee         = $_.Fee # Dev fee
-                                    MinerSet    = $_.MinerSet
                                     MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
                                     Name        = $MinerName
                                     Path        = $Path

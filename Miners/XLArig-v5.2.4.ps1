@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
@@ -30,11 +30,10 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xlarig.exe"
 
 $Algorithms = @(
-    @{ Algorithm = "Panthera"; MinerSet = 0; WarmupTimes = @(15, 0); ExcludePools = @(); Arguments = " --algo=panthera" }
+    @{ Algorithm = "Panthera"; WarmupTimes = @(15, 0); ExcludePools = @(); Arguments = " --algo=panthera" }
 )
 
-# $Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
@@ -57,7 +56,6 @@ if ($Algorithms) {
                     Arguments   = "$($_.Arguments)$(if ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level=$Fee --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --http-port=$MinerAPIPort --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --retry-pause 1 --keepalive"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @($Fee) # Dev fee
-                    MinerSet    = $_.MinerSet
                     MinerUri    = "http://workers.xmrig.info/worker?url=$([System.Web.HTTPUtility]::UrlEncode("http://127.0.0.1:$($MinerAPIPort)"))?Authorization=Bearer $([System.Web.HTTPUtility]::UrlEncode($MinerName))"
                     Name        = $MinerName
                     Path        = $Path

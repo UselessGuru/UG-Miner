@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 # V2.27 produces nothing but bad shares with kapwow, use v2.26 instead
@@ -33,31 +33,30 @@ $DeviceSelector = @{ AMD = " --cl-devices"; NVIDIA = " --cuda-devices" }
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithms = @("EtcHash", "KawPow");  SecondaryAlgorithmPrefix = "rvn"; Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
-    @{ Algorithms = @("Ethash", "KawPow");   SecondaryAlgorithmPrefix = "rvn"; Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
-    @{ Algorithms = @("EthashB3", "KawPow"); SecondaryAlgorithmPrefix = "rvn"; Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; MinerSet = 2; Tuning = ""; WarmupTimes = @(20, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
-    @{ Algorithms = @("KawPow", "");         SecondaryAlgorithmPrefix = "";    Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
+    @{ Algorithms = @("EtcHash", "KawPow");  SecondaryAlgorithmPrefix = "rvn"; Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
+    @{ Algorithms = @("Ethash", "KawPow");   SecondaryAlgorithmPrefix = "rvn"; Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
+    @{ Algorithms = @("EthashB3", "KawPow"); SecondaryAlgorithmPrefix = "rvn"; Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiB = 1.51; Tuning = ""; WarmupTimes = @(20, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
+    @{ Algorithms = @("KawPow", "");         SecondaryAlgorithmPrefix = "";    Type = "AMD"; Fee = @(0.005);        MinMemGiB = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
  
-    @{ Algorithms = @("EtcHash", "KawPow");  SecondaryAlgorithmPrefix = "rvn"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
-    @{ Algorithms = @("Ethash", "KawPow");   SecondaryAlgorithmPrefix = "rvn"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
-    @{ Algorithms = @("EthashB3", "KawPow"); SecondaryAlgorithmPrefix = "rvn"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(20, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
-    @{ Algorithms = @("KawPow", "");         SecondaryAlgorithmPrefix = "";    Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; MinerSet = 2; Tuning = " --tweak 2"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
+    @{ Algorithms = @("EtcHash", "KawPow");  SecondaryAlgorithmPrefix = "rvn"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; Tuning = " --tweak 2"; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
+    @{ Algorithms = @("Ethash", "KawPow");   SecondaryAlgorithmPrefix = "rvn"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; Tuning = " --tweak 2"; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
+    @{ Algorithms = @("EthashB3", "KawPow"); SecondaryAlgorithmPrefix = "rvn"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.70; Tuning = " --tweak 2"; WarmupTimes = @(20, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
+    @{ Algorithms = @("KawPow", "");         SecondaryAlgorithmPrefix = "";    Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $Type = $_.Type
             $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).foreach(
+            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
                     if ($SupportedMinerDevices = $MinerDevices.where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
@@ -102,10 +101,9 @@ if ($Algorithms) {
 
                                         [PSCustomObject]@{ 
                                             API              = "TeamBlackMiner"
-                                            Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort$($DeviceSelector.($AvailableMinerDevices.Type | Select-Object -Unique)) [$((($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ })) -join ',')]"
+                                            Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort$($DeviceSelector.($AvailableMinerDevices.Type | Select-Object -Unique)) [$((($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ })) -join ',')]"
                                             DeviceNames      = $AvailableMinerDevices.Name
                                             Fee              = $_.Fee # Dev fee
-                                            MinerSet         = $_.MinerSet
                                             MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/summary"
                                             Name             = $MinerName
                                             Path             = $Path
@@ -115,7 +113,7 @@ if ($Algorithms) {
                                             Type             = $Type
                                             URI              = $URI
                                             WarmupTimes      = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers          = @(($Pool0, $Pool1).where({ $_ }).foreach({ @{ Pool = $_ } }))
+                                            Workers          = @(($Pool0, $Pool1).where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }

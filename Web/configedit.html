@@ -165,16 +165,19 @@
             <div style="padding-top: 0.5rem;" title="Minimum workers mining the algorithm at the pool&#10;If less miners are mining the algorithm then the pool will be disabled&#10;&#10;(min: 0, max: 100; default: 10)&#10;Set to 0 to disable this check&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Minimum
               <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinWorker" name="MinWorker" style="width: 3em; text-align:right;"> workers at pool
             </div>
-            <div style="padding-top: 0.4rem;" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
+          <div style="padding-top: 0.6rem;" title="UG-Miner will use unprofitable algorithms (see file '\Data\UnprofitableAlgorithms.json')">
+            <input type="checkbox" class="toggle-switch" id="UseUnprofitableAlgorithms" name="UseUnprofitableAlgorithms"> Use unprofitable algorithms (not recommended)
+          </div>
+            <div style="padding-top: 0.6rem;" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if hashrate@pool is 0 (not recommended)
             </div>
-            <div style="padding-top: 0.8rem;" title="Allow using the pool even if the price reported in the pool API is 0&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
+            <div style="padding-top: 0.6rem;" title="Allow using the pool even if the price reported in the pool API is 0&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Price" class="toggle-switch" name="PoolAllow0Price"> Use pool even if price@pool is 0 (not recommended)
             </div>
             <div style="padding-top: 0.6em;" title="Maxîmal allowed price increase compared with last price.&#10;If the price increase is higher then the pool will be marked as unavaliable.&#10;&#10;(min: 2, max: 99; default: 5)"> Maximal allowed price increase
               <input type="number" step=0.1 min=2 max=99.9 value=3 size=4 id="PoolAllowedPriceIncreaseFactor" name="PoolAllowedPriceIncreaseFactor" style="width: 3.6em; text-align:right;">
             </div>
-            <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at two least pools"> Unrealistic pool price factor
+            <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all other pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at least two pools"> Unrealistic pool price factor
               <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealisticPoolPriceFactor" name="UnrealisticPoolPriceFactor" style="width: 3em; text-align:right;">
             </div>
             <div style="padding-top: 0.5rem;" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This may affect profitability, but is less CPU heavy">
@@ -194,15 +197,7 @@
         <td>
           <!-- Miner selection -->
           <legend class=h6><b>Miner selection</b></legend>
-          <div style="padding-top: 0.3rem;" title="Select miner set to be used by UG-Miner">Use
-            <select style="height: 1.6em;" name="" id="MinerSet" width="10">
-              <option title="The best miners chosen by the developers may not be the best miners for you&#10;(Minerset 0)" value=0>only best miner per algorithm and per device</option>
-              <option title="recommended, select to ensure best profitability&#10;(Minerset 1)" value=1>optimal miners (more than one per algorithm and device)</option>
-              <option title="This will prolongue benchmarking, but may not improve profitability&#10;(Minerset 2)" value=2>most miners (excl. those in UnprofitableAlgorithms.json)</option>
-              <option title="This will prolongue benchmarking, but will not improve profitability&#10;(Minerset 3) - not recommended" value=3>all miners (incl. those in UnprofitableAlgorithms.json)</option>
-            </select>
-          </div>
-          <div style="padding-top: 0.2rem;" title="List of miners to be excluded (case insensitive)&#10;Values must be sparated by commas&#10;&#10;To exclude all versions of a miner specify the short miner name, e.g. 'RigelMiner' (without '-v...')&#10;To exclude a specific miner version use the miner name & version, e.g 'GMiner-v3.44' (incl. version information)&#10;To exclude a specific miner (version & device) use the miner name, version & device, e.g 'GMiner-v3.44-1xRTX306012GB' (incl. version & device information)">Exclude miners
+          <div style="padding-top: 0.2rem;" title="List of miners to be excluded (case insensitive)&#10;Values must be sparated by commas&#10;&#10;Wildcards, e.g. 'RigelMiner*' are supported.&#10;To exclude a specific miner version use the miner name & version,&#10;e.g 'GMiner-v3.44' (incl. version information).&#10;To exclude a specific miner (version & device) use the miner name, version & device,&#10;e.g 'GMiner-v3.44-1xRTX306012GB' (incl. version & device information)."> Exclude miner
             <input type="text" id="ExcludeMinerName" name="ExcludeMinerName" size=47>
           </div>
           <div style="padding-top: 0.2rem;" title="'+[Algorithm]' to enable algorithm or algorithm variant&#10;'-[Algorithm]' to disable algorithm or algorithm variant&#10;Values must be sparated by commas&#10;e.g. '+Ethash,+EtcHash' or '-Ethash(3GiB),-Ethash(4GiB)'&#10;&#10;Leave empty to use ALL available algorithms&#10;If '+' is used, then only the explicitly enabled algorithms or algorithm variants are used&#10;If '-' is used, then all algorithms or algorithm variants are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Include / exclude algorithms
@@ -329,7 +324,7 @@
             <div style="padding-top: 0.5rem;" title="When disabled only the best 5 miners per device are shown&#10;except while not benchmarking or measuring power consumption&#10;&#10;Can be toggled by pressing '2' in the console window while waiting for the next cycle">
               <input type="checkbox" class="toggle-switch" id="ShowAllMiners" name="ShowAllMiners"> Show all optimal miners
             </div>
-            <div style="padding-top: 0.3rem;" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle">UI Style
+            <div style="padding-top: 0.5rem;" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle">UI Style
               <select style="height: 1.6em;" name="UIstyle" id="UIstyle">
                 <option value='full' title="Information about miners run in the past, failed miners & watchdog timers will be shown">full</option>
                 <option value='light' title="Information about miners run in the past, failed miners & watchdog timers will not be shown">light</option>
@@ -748,6 +743,7 @@
       document.getElementById('SSLallowSelfSignedCertificate').disabled = (document.getElementById('SSL').value === 'Never');
     });
     document.getElementById('MinWorker').value = parseInt(config.MinWorker);
+    if (config.UseUnprofitableAlgorithms) document.getElementById('UseUnprofitableAlgorithms').checked = true;
     if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
     if (config.PoolAllow0Price) document.getElementById('PoolAllow0Price').checked = true;
     document.getElementById('UnrealisticPoolPriceFactor').value = parseFloat(config.UnrealisticPoolPriceFactor).toFixed(1);
@@ -816,8 +812,6 @@
     });
 
     // Miner selection
-    if (parseInt(config.MinerSet) >= 0 && parseInt(config.MinerSet) <= 3) document.getElementById('MinerSet').value = config.MinerSet;
-    else document.getElementById('MinerSet').value = 2;
     $('#ExcludeMinerName').on('focusout', function() {
       document.getElementById('ExcludeMinerName').value = document.getElementById('ExcludeMinerName').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
     });
@@ -1100,7 +1094,7 @@
           required: false,
           minlength: 4,
           maxlength: 256,
-          pattern: '^([A-Za-z0-9\-\._]{4,}?)+(?:,(| )([A-Za-z0-9\-\._]{4,})+)*$'
+          pattern: '^([^-][A-Za-z0-9\-\._]{4,}[\*]{0,1})+(?:,(| )([^-][A-Za-z0-9\-\._]{4,}[\*]{0,1})+)*$'
         },
         Algorithm: {
           required: false,
@@ -1154,7 +1148,7 @@
         },
         ExcludeMinerName: {
           minlength: "<br>Miner name is too short",
-          pattern: "<br>Invalid miner name.<br>Only use upper and lower case letters, digits, '.' & '-'.<br>Values must be separated by commas."
+          pattern: "<br>Invalid miner name.<br>Only use upper and lower case letters, digits, '.' & '-'.<br>Values must be separated by commas.<br>Values must not begin with '-'."
         },
         Algorithm: {
           pattern: "<br>All algorithms must be prefixed with either '+' or '-' and separated by commas.<br>Do not use '+' AND '-' together."
@@ -1228,6 +1222,7 @@
         else config.SSL = 'Prefer';
         config.SSLallowSelfSignedCertificate = document.getElementById('SSLallowSelfSignedCertificate').checked;
         config.MinWorker = parseInt(document.getElementById('MinWorker').value);
+        config.UseUnprofitableAlgorithms = document.getElementById('UseUnprofitableAlgorithms').checked;
         config.PoolAllow0Hashrate = document.getElementById('PoolAllow0Hashrate').checked;
         config.PoolAllow0Price = document.getElementById('PoolAllow0Price').checked;
         config.UnrealisticPoolPriceFactor = parseFloat(document.getElementById('UnrealisticPoolPriceFactor').value);
@@ -1247,7 +1242,6 @@
         });
 
         // Miner selection
-        config.MinerSet = parseInt(document.getElementById('MinerSet').value);
         config.ExcludeMinerName = []; // enforce array
         if (document.getElementById('ExcludeMinerName').value) config.ExcludeMinerName = document.getElementById('ExcludeMinerName').value.replace(' ', '').split(',');
         config.Algorithm = []; // enforce array

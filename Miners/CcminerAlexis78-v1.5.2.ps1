@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.1" }))) { return }
@@ -29,27 +29,26 @@ $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Blakecoin";  MinMemGiB = 2; MinerSet = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo blakecoin --intensity 22" } # FPGA
-    @{ Algorithm = "C11";        MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo c11 --intensity 22" }
-#   @{ Algorithm = "Keccak";     MinMemGiB = 3; MinerSet = 3; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
-#   @{ Algorithm = "Lyra2RE2";   MinMemGiB = 3; MinerSet = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
-    @{ Algorithm = "Neoscrypt";  MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 15.5" } # FPGA
-#   @{ Algorithm = "Skein";      MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo skein" } # ASIC
-    @{ Algorithm = "Skein2";     MinMemGiB = 3; MinerSet = 0; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo skein2 --intensity 31.9" }
-    @{ Algorithm = "Veltor";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
-    @{ Algorithm = "Whirlcoin";  MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo whirlcoin" }
-    @{ Algorithm = "Whirlpool";  MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo whirlpool" }
-    @{ Algorithm = "X11evo";     MinMemGiB = 2; MinerSet = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
-    @{ Algorithm = "X17";        MinMemGiB = 3; MinerSet = 1; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo x17 --intensity 22" }
+    @{ Algorithm = "Blakecoin";  MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo blakecoin --intensity 22" } # FPGA
+    @{ Algorithm = "C11";        MinMemGiB = 3; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo c11 --intensity 22" }
+#   @{ Algorithm = "Keccak";     MinMemGiB = 3; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
+#   @{ Algorithm = "Lyra2RE2";   MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
+    @{ Algorithm = "Neoscrypt";  MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 15.5" } # FPGA
+#   @{ Algorithm = "Skein";      MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo skein" } # ASIC
+    @{ Algorithm = "Skein2";     MinMemGiB = 3; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo skein2 --intensity 31.9" }
+    @{ Algorithm = "Veltor";     MinMemGiB = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
+    @{ Algorithm = "Whirlcoin";  MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo whirlcoin" }
+    @{ Algorithm = "Whirlpool";  MinMemGiB = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo whirlpool" }
+    @{ Algorithm = "X11evo";     MinMemGiB = 2; WarmupTimes = @(40, 0); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
+    @{ Algorithm = "X17";        MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo x17 --intensity 22" }
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.where({ $_.Model -eq $Model })
@@ -71,10 +70,9 @@ if ($Algorithms) {
 
                             [PSCustomObject]@{ 
                                 API         = "CcMiner"
-                                Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --retry-pause 1 --api-bind $MinerAPIPort --cuda-schedule 2 --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --retry-pause 1 --api-bind $MinerAPIPort --cuda-schedule 2 --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @(0) # Dev fee
-                                MinerSet    = $_.MinerSet
                                 Name        = $MinerName
                                 Path        = $Path
                                 Port        = $MinerAPIPort

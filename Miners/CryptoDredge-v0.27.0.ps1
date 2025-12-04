@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.2
-Version date:   2025/11/29
+Version:        6.7.3
+Version date:   2025/12/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" }))) { return }
@@ -32,29 +32,28 @@ $Path = "Bin\$Name\CryptoDredge.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Argon2d4096";       Fee = @(0.01); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d4096 --intensity 8" }
-    @{ Algorithm = "Argon2d500";        Fee = @(0.01); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-dyn --intensity 6" }
-    @{ Algorithm = "Argon2dNim";        Fee = @(0.01); MinMemGiB = 2;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-nim --intensity 6" }
-    @{ Algorithm = "Argon2Chukwa";      Fee = @(0.01); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa --intensity 8" }
-    @{ Algorithm = "Argon2ChukwaV2";    Fee = @(0.01); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa2 --intensity 8" }
-    @{ Algorithm = "CryptonightCcx";    Fee = @(0.01); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnconceal --intensity 8" }
-    @{ Algorithm = "CryptonightGpu";    Fee = @(0.01); MinMemGiB = 1;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cngpu --intensity 8" }
-    @{ Algorithm = "CryptonightHeavy";  Fee = @(0.01); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnheavy --intensity 8" }
-    @{ Algorithm = "CryptonightTurtle"; Fee = @(0.01); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnturtle --intensity 8" }
-    @{ Algorithm = "CryptonightUpx";    Fee = @(0.01); MinMemGiB = 2;    MinerSet = 0; WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnupx2 --intensity 8" }
-    @{ Algorithm = "CryptonightXhv";    Fee = @(0.01); MinMemGiB = 1;    MinerSet = 2; WarmupTimes = @(75, 15); ExcludePools = @();                            Arguments = " --algo cnhaven --intensity 8" }
-    @{ Algorithm = "Ethash";            Fee = @(0.01); MinMemGiB = 1.25; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @("MiningPoolHub", "NiceHash"); Arguments = " --algo ethash" }
-    @{ Algorithm = "FiroPow";           Fee = @(0.01); MinMemGiB = 1.25; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo firopow" }
-    @{ Algorithm = "KawPow";            Fee = @(0.01); MinMemGiB = 1.25; MinerSet = 2; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo kawpow --intensity 8" } # TTMiner-v5.0.3 is fastest
+    @{ Algorithm = "Argon2d4096";       Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d4096 --intensity 8" }
+    @{ Algorithm = "Argon2d500";        Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-dyn --intensity 6" }
+    @{ Algorithm = "Argon2dNim";        Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-nim --intensity 6" }
+    @{ Algorithm = "Argon2Chukwa";      Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa --intensity 8" }
+    @{ Algorithm = "Argon2ChukwaV2";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa2 --intensity 8" }
+    @{ Algorithm = "CryptonightCcx";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnconceal --intensity 8" }
+    @{ Algorithm = "CryptonightGpu";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cngpu --intensity 8" }
+    @{ Algorithm = "CryptonightHeavy";  Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnheavy --intensity 8" }
+    @{ Algorithm = "CryptonightTurtle"; Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnturtle --intensity 8" }
+    @{ Algorithm = "CryptonightUpx";    Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnupx2 --intensity 8" }
+    @{ Algorithm = "CryptonightXhv";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(75, 15); ExcludePools = @();                            Arguments = " --algo cnhaven --intensity 8" }
+    @{ Algorithm = "Ethash";            Fee = @(0.01); MinMemGiB = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @("MiningPoolHub", "NiceHash"); Arguments = " --algo ethash" }
+    @{ Algorithm = "FiroPow";           Fee = @(0.01); MinMemGiB = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo firopow" }
+    @{ Algorithm = "KawPow";            Fee = @(0.01); MinMemGiB = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo kawpow --intensity 8" } # TTMiner-v5.0.3 is fastest
 )
 
-$Algorithms = $Algorithms.where({ $_.MinerSet -le $Session.Config.MinerSet })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).foreach(
+    ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
             $MinerDevices = $Devices.where({ $_.Model -eq $Model })
@@ -79,10 +78,9 @@ if ($Algorithms) {
 
                                 [PSCustomObject]@{ 
                                     API         = "CcMiner"
-                                    Arguments   = "$Arguments --cpu-priority $($Session.Config.GPUMinerProcessPriority + 2) --no-watchdog --no-crashreport --retries 1 --retry-pause 1 --api-type ccminer-tcp --api-bind 127.0.0.1:$($MinerAPIPort) --device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).foreach({ '{0:x}' -f $_ }) -join ',')"
+                                    Arguments   = "$Arguments --cpu-priority $($Session.Config.GPUMinerProcessPriority + 2) --no-watchdog --no-crashreport --retries 1 --retry-pause 1 --api-type ccminer-tcp --api-bind 127.0.0.1:$($MinerAPIPort) --device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name
                                     Fee         = $_.Fee # Dev fee
-                                    MinerSet    = $_.MinerSet
                                     Name        = $MinerName
                                     Path        = $Path
                                     Port        = $MinerAPIPort
