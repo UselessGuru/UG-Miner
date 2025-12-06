@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
@@ -74,7 +74,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA512256d", "");                 Type = "AMD"; Fee = @(0.0075);      MinMemGiB = 1.0;  WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo RADIANT" }
     @{ Algorithms = @("SHA3x", "");                      Type = "AMD"; Fee = @(0.01);        MinMemGiB = 1.0;  WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo SHA3X" }
     @{ Algorithms = @("UbqHash", "");                    Type = "AMD"; Fee = @(0.007);       MinMemGiB = 1.24; WarmupTimes = @(60, 70);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = " --algo UBQHASH" }
-  
+
     @{ Algorithms = @("Autolykos2", "");   Type = "INTEL"; Fee = @(0.015); MinMemGiB = 1.24; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo AUTOLYKOS2" }
     @{ Algorithms = @("BeamV3", "");       Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 6.0;  WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo BEAM-III" }
     @{ Algorithms = @("Equihash1254", ""); Type = "INTEL"; Fee = @(0.015); MinMemGiB = 3.0;  WarmupTimes = @(45, 70); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo ZEL --pers ZelProof" }

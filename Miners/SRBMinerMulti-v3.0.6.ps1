@@ -17,19 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.5/SRBMiner-Multi-3-0-5-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.6/SRBMiner-Multi-3-0-6-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Performance improvement for algorithm 'tht' on CPU's*
-# Fixed random crashing on algorithm 'tht'
+# Added algorithm 'xelishashv3' (Xelis) for CPU mining, fee 1.5%*
+# Added support for dual mining XHASH/BLAKE3_DECRED on AMD RDNA architectures and NVIDIA GPUS
+# Performance improvement for algorithm 'tht'
+# Minor performance improvement for algorithms 'xelishashv2/_pepew' , 'ghostrider'
 # Bug fixes
 
 # Algorithm parameter values are case sensitive!

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.3"
+    Version      = [System.Version]"6.7.4"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -644,7 +644,7 @@ if ($Session.Config.APIport) {
 else { 
     # Use port 4000 for miner communication
     $Session.MinerBaseAPIport = 4000
-    Write-Message -Level Warn "No valid API port; using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+    Write-Message -Level Warn "No valid API port; using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
 }
 
 function MainLoop { 
@@ -717,7 +717,7 @@ function MainLoop {
 
                         Update-GUIstatus
 
-                        Stop-Core
+                        Stop-CoreCycle
                         Stop-Brain
                         Stop-BalancesTracker
 
@@ -752,7 +752,7 @@ function MainLoop {
 
                         Update-GUIstatus
 
-                        Stop-Core
+                        Stop-CoreCycle
                         Start-Brain @(Get-PoolBaseName $Session.Config.PoolName)
                         if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
 
@@ -793,7 +793,7 @@ function MainLoop {
                     }
 
                     Start-Brain @(Get-PoolBaseName $Session.Config.PoolName)
-                    Start-Core $Session.Config.IdleDetection
+                    Start-CoreCycle $Session.Config.IdleDetection
                     if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
 
                     $LegacyGUIelements.ButtonPause.Enabled = $true
@@ -814,7 +814,7 @@ function MainLoop {
             $KeyPressed = ([System.Console]::ReadKey($true))
 
             if ($Session.NewMiningStatus -eq "Running" -and $KeyPressed.Key -eq "p" -and $KeyPressed.Modifiers -eq 5 <# <Ctrl><Alt> #>) { 
-                if (-not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+                if (-not $Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
                     # Core is complete / gone. Cycle cannot be suspended anymore
                     $Session.SuspendCycle = $false
                 }
@@ -866,7 +866,7 @@ function MainLoop {
                             if ($Session.Config.LegacyGUI) { 
                                 $LegacyGUIform.WindowState = $Session.WindowStateOriginal
                             }
-                            elseif ($LegacyGUIform.WindowState -ne [System.Windows.Forms.FormWindowState]::Minimized) {  
+                            elseif ($LegacyGUIform.WindowState -ne [System.Windows.Forms.FormWindowState]::Minimized) { 
                                 $Session.WindowStateOriginal = $LegacyGUIform.WindowState
                                 $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
                             }
@@ -1008,13 +1008,13 @@ function MainLoop {
         if ($Session.Config.IdleDetection) { 
             if ([Math]::Round([PInvoke.Win32.UserInput]::IdleTime.TotalSeconds) -gt $Session.Config.IdleSec) { 
                 # System was idle long enough, start mining
-                if (-not $Global:CoreRunspace) { 
+                if (-not $Global:CoreCycleRunspace) { 
                     $Message = "System was idle for $($Session.Config.IdleSec) second$(if ($Session.Config.IdleSec -ne 1) { "s" }).<br>Resuming mining..."
                     Write-Message -Level Verbose ($Message -replace "<br>", " ")
                     $Session.Summary = $Message
                     $Session.RefreshTimestamp = (Get-Date -Format "G")
 
-                    Start-Core
+                    Start-CoreCycle
 
                     Update-GUIstatus
                     $LegacyGUIelements.MiningSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
@@ -1022,7 +1022,7 @@ function MainLoop {
                 }
                 Remove-Variable Message
             }
-            elseif ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+            elseif ($Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
                 $Message = "System activity detected."
                 Write-Message -Level Verbose $Message
                 $Session.Summary = $Message
@@ -1031,7 +1031,7 @@ function MainLoop {
                 $LegacyGUIelements.MiningSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                 $LegacyGUIelements.MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
 
-                Stop-Core
+                Stop-CoreCycle
 
                 $Message = "Mining is suspended until system is idle for $($Session.Config.IdleSec) second$(if ($Session.Config.IdleSec -ne 1) { "s" })."
                 Write-Message -Level Verbose $Message
@@ -1054,19 +1054,19 @@ function MainLoop {
                 Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
             }
         }
-        elseif ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
-            if ($Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+        elseif ($Global:CoreCycleRunspace.Job.IsCompleted -ne $false) { 
+            if ($Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 Write-Message -Level Warn "Core cycle stopped - restarting..."
-                Stop-Core
+                Stop-CoreCycle
             }
-            Start-Core
+            Start-CoreCycle
             Update-GUIstatus
         }
         elseif (-not $Session.SuspendCycle -and -not $Session.MinersBenchmarkingOrMeasuring -and $Session.BeginCycleTimeCycleTime -and [DateTime]::Now.ToUniversalTime() -gt $Session.BeginCycleTimeCycleTime.AddSeconds(1.5 * $Session.Config.Interval)) { 
             # Core watchdog. Sometimes core loop gets stuck
             Write-Message -Level Warn "Core cycle is stuck - restarting..."
-            Stop-Core
-            Start-Core
+            Stop-CoreCycle
+            Start-CoreCycle
             Update-GUIstatus
         }
     }
@@ -1079,7 +1079,7 @@ function MainLoop {
         if ($Session.Config.LegacyGUI) { 
             $LegacyGUIform.WindowState = $Session.WindowStateOriginal
         }
-        elseif ($LegacyGUIform.WindowState -ne [System.Windows.Forms.FormWindowState]::Minimized) {  
+        elseif ($LegacyGUIform.WindowState -ne [System.Windows.Forms.FormWindowState]::Minimized) { 
             $Session.WindowStateOriginal = $LegacyGUIform.WindowState
             $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
         }
@@ -1139,7 +1139,7 @@ function MainLoop {
                             Write-Host ("Average/week:           {0:n$($Session.Config.DecimalsMax)} {1}$(if ($Session.Rates.$Currency.($Session.Config.FIATcurrency)) { " (≈{2:n$($Session.Config.DecimalsMax)} {3}$(if ($Currency -ne $PayoutCurrency) { "≈{4:n$($Session.Config.DecimalsMax)} {5}" }))" })" -f ($_.AvgWeeklyGrowth * $mBTCfactorCurrency), $Currency, ($_.AvgWeeklyGrowth * $Session.Rates.$Currency.($Session.Config.FIATcurrency)), $Session.Config.FIATcurrency, ($_.AvgWeeklyGrowth * $mBTCfactorPayoutCurrency * $Session.Rates.$Currency.$PayoutCurrency), $PayoutCurrency)
                         }
                         Write-Host "Balance:                " -NoNewline; Write-Host ("{0:n$($Session.Config.DecimalsMax)} {1}$(if ($Session.Rates.$Currency.($Session.Config.FIATcurrency)) { " (≈{2:n$($Session.Config.DecimalsMax)} {3}$(if ($Currency -ne $PayoutCurrency) { "≈{4:n$($Session.Config.DecimalsMax)} {5}" }))" })" -f ($_.Balance * $mBTCfactorCurrency), $Currency, ($_.Balance * $Session.Rates.$Currency.($Session.Config.FIATcurrency)), $Session.Config.FIATcurrency, ($_.Balance * $mBTCfactorPayoutCurrency * $Session.Rates.$Currency.$PayoutCurrency), $PayoutCurrency) -ForegroundColor Yellow
-                        Write-Host ("{0} of {1:n$($Session.Config.DecimalsMax)} {2} payment threshold; projected payment date: $(if ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } Else { $_.ProjectedPayDate })`n" -f $Percentage, ($_.PayoutThreshold * $mBTCfactorPayoutCurrency), $PayoutCurrency)
+                        Write-Host ("{0} of {1:n$($Session.Config.DecimalsMax)} {2} payment threshold; projected payment date: $(if ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToString("G") } else { $_.ProjectedPayDate })`n" -f $Percentage, ($_.PayoutThreshold * $mBTCfactorPayoutCurrency), $PayoutCurrency)
                     }
                 )
                 Remove-Variable Currency, mBTCfactorCurrency, mBTCfactorPayoutCurrency, Percentage, PayoutCurrency -ErrorAction Ignore
@@ -1253,7 +1253,7 @@ function MainLoop {
                     }
                 }
 
-                if ($Session.MiningStatus -eq "Running" -and $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+                if ($Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
                     $Colour = if ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement) { "DarkYello" } else { "White" }
                     Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
                     Remove-Variable Colour
@@ -1261,13 +1261,13 @@ function MainLoop {
                     if ($Session.Miners.where({ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) })) { 
                         if ($Session.MiningProfit -lt 0) { 
                             # Mining causes a loss
-                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and $(if ($Session.Config.DryRun) { "would cause" } Else { "causes" }) a loss of {0} {1:n$($Session.Config.DecimalsMax)}/day (including base power cost)." -f $Session.Config.FIATcurrency, - ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)))
+                            Write-Host -ForegroundColor Red ("Mining is currently NOT profitable and $(if ($Session.Config.DryRun) { "would cause" } else { "causes" }) a loss of {0} {1:n$($Session.Config.DecimalsMax)}/day (including base power cost)." -f $Session.Config.FIATcurrency, - ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)))
                         }
                         if ($Session.MiningProfit -lt $Session.Config.ProfitabilityThreshold) { 
                             # Mining profit is below the configured threshold
                             Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Session.Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Session.Config.DecimalsMax)}/day. Mining is suspended until threshold is reached." -f $Session.Config.FIATcurrency, ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.Config.ProfitabilityThreshold)
                         }
-                        $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(if ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } Else { 'n/a (Mining is suspended)' })   |   Hot keys: $(if ($Session.CalculatePowerCost) { "[12345abcemnopqrstuw]" } Else { "[12345abcemnpqsu]" })   |   Press 'h' for help"
+                        $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(if ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } else { 'n/a (Mining is suspended)' })   |   Hot keys: $(if ($Session.CalculatePowerCost) { "[12345abcemnopqrstuw]" } else { "[12345abcemnpqsu]" })   |   Press 'h' for help"
                         Write-Host ("-" * $StatusInfo.Length)
                         Write-Host -ForegroundColor Yellow $StatusInfo
                         Remove-Variable StatusInfo

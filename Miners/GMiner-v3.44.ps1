@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -115,7 +115,7 @@ if ($Algorithms) {
                                     }
 
                                     # Contest ETH address (if ETH wallet is specified in config)
-                                    # $Arguments += If ($Session.Config.Wallets.ETH) { " --contest_wallet $($Session.Config.Wallets.ETH)" } Else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
+                                    # $Arguments += If ($Session.Config.Wallets.ETH) { " --contest_wallet $($Session.Config.Wallets.ETH)" } else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
 
                                     [PSCustomObject]@{ 
                                         API         = "Gminer"

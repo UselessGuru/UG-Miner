@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 using module .\Include.psm1
@@ -217,7 +217,7 @@ try {
                 $UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -AsHashtable
                 $UnprofitableAlgorithms.Keys.ForEach({ $Session.UnprofitableAlgorithms.$_ = $UnprofitableAlgorithms.$_ })
                 Remove-Variable UnprofitableAlgorithms
-                Write-Message -Level Info "$(if ($Session.UnprofitableAlgorithmsTimestamp) { "Updated" } Else { "Loaded" }) list of unprofitable algorithms ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -ne 1) { "entries" } Else { "entry" }))."
+                Write-Message -Level Info "$(if ($Session.UnprofitableAlgorithmsTimestamp) { "Updated" } else { "Loaded" }) list of unprofitable algorithms ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -ne 1) { "entries" } else { "entry" }))."
                 $Session.UnprofitableAlgorithmsTimestamp = (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime
             }
         }
@@ -245,7 +245,7 @@ try {
                     # Ensure full donation period
                     $Session.Donation.End = $Session.Donation.Start.AddMinutes($Session.Config.Donation)
                     $Session.EndCycleTime = ($Session.Donation.End).ToUniversalTime()
-                    Write-Message -Level Info "Donation run: Mining for '$($Session.Donation.Username)' for the next $(if (($Session.Config.Donation - ([DateTime]::Now - $Session.Donation.Start).Minutes) -gt 1) { "$($Session.Config.Donation - ([DateTime]::Now - $Session.Donation.Start).Minutes) minutes" } Else { "minute" })."
+                    Write-Message -Level Info "Donation run: Mining for '$($Session.Donation.Username)' for the next $(if (($Session.Config.Donation - ([DateTime]::Now - $Session.Donation.Start).Minutes) -gt 1) { "$($Session.Config.Donation - ([DateTime]::Now - $Session.Donation.Start).Minutes) minutes" } else { "minute" })."
                     $Session.Donation.Running = $true
                 }
             }
@@ -1075,7 +1075,7 @@ try {
 
         $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
         if ($Miners.where({ $_.Available })) { 
-            Write-Message -Level Info "Selecting best miner$(if (($Session.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { " profit (power cost $($Session.Config.FIATcurrency) $($Session.PowerPricekWh)/kW⋅h)" } Else { " earnings" })..."
+            Write-Message -Level Info "Selecting best miner$(if (($Session.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { " profit (power cost $($Session.Config.FIATcurrency) $($Session.PowerPricekWh)/kW⋅h)" } else { " earnings" })..."
 
             if ($Miners.where({ $_.Available }).Count -eq 1) { 
                 $MinersBest = $Session.MinersBestPerDevice = $MinersOptimal = $Miners.where({ $_.Available })
@@ -1264,12 +1264,12 @@ try {
             $Loops ++
             if ($Loops -gt 50) { 
                 if ($Session.Config.AutoReboot) { 
-                    Write-Message -Level Error "$(if ($StuckMinerProcesses.Count -eq 1) { "A miner is" } Else { "Some miners are" }) stuck and cannot get stopped graciously. Restarting computer in 30 seconds..."
+                    Write-Message -Level Error "$(if ($StuckMinerProcesses.Count -eq 1) { "A miner is" } else { "Some miners are" }) stuck and cannot get stopped graciously. Restarting computer in 30 seconds..."
                     shutdown.exe /r /t 30 /c "$($Session.Branding.ProductLabel) detected stuck miner$(if ($StuckMinerProcesses.Count -ne 1) { "s" }) and will reboot the computer in 30 seconds."
                     Start-Sleep -Seconds 60
                 }
                 else { 
-                    Write-Message -Level Error "$(if ($StuckMinerProcesses.Count -eq 1) { "A miner " } Else { "Some miners are" }) stuck and cannot get stopped graciously. It is recommended to restart the computer."
+                    Write-Message -Level Error "$(if ($StuckMinerProcesses.Count -eq 1) { "A miner " } else { "Some miners are" }) stuck and cannot get stopped graciously. It is recommended to restart the computer."
                     Start-Sleep -Seconds 30
                 }
             }

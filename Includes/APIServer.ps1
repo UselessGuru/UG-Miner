@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 using module .\Include.psm1
@@ -125,7 +125,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     $Pool.Available = $false
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                 }
-                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } Else { "pools" }) disabled."
+                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } else { "pools" }) disabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
@@ -167,7 +167,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     }
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                 }
-                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } Else { "pools" }) enabled."
+                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } else { "pools" }) enabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
@@ -210,7 +210,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 $RemovedEntriesCount = $BalanceDataEntries.Count - $Session.BalancesData.Count
                 if ($RemovedEntriesCount -gt 0) { 
-                    $Message = "$RemovedEntriesCount balance data $(if ($RemovedEntriesCount -eq 1) { "entry" } Else { "entries" }) removed."
+                    $Message = "$RemovedEntriesCount balance data $(if ($RemovedEntriesCount -eq 1) { "entry" } else { "entries" }) removed."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = $Message
                 }
@@ -360,7 +360,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         "/functions/mining/pause" { 
             if ($Session.MiningStatus -ne "Paused") { 
                 $Session.NewMiningStatus = "Paused"
-                $Data = "Mining is being paused...`n$(if ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
+                $Data = "Mining is being paused...`n$(if ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } else { "Balances tracker starting..." } })"
                 $Session.SuspendCycle = $false
                 $Session.RestartCycle = $true
             }
@@ -369,7 +369,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         "/functions/mining/start" { 
             if ($Session.MiningStatus -ne "Running") { 
                 $Session.NewMiningStatus = "Running"
-                $Data = "Mining processes starting...`n$(if ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } Else { "Balances tracker starting..." } })"
+                $Data = "Mining processes starting...`n$(if ($Session.BalancesTrackerPollInterval -gt 0) { If ($Session.BalancesTrackerRunning) { "Balances tracker running." } else { "Balances tracker starting..." } })"
                 $Session.SuspendCycle = $false
                 $Session.RestartCycle = $true
             }
@@ -479,7 +479,8 @@ while ($Session.APIversion -and $Server.IsListening) {
                             $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
                         }
                     )
-                    $Message = "Reset pool stats for $($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } Else { "pools" })."
+                    $Message = "Reset pool stats for $($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } else {
+                    } { "pools" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
@@ -638,7 +639,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                 }
                 Remove-Variable Pool
                 if ($Data.Count) { 
-                    $Message = "$($Data.Count) watchdog $(if ($Data.Count -eq 1) { "timer" } Else { "timers" }) removed."
+                    $Message = "$($Data.Count) watchdog $(if ($Data.Count -eq 1) { "timer" } else { "timers" }) removed."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }

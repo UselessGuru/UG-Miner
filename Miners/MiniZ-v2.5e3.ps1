@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 # Fixed 192,7/Progpow/Kawpow/Ethash mining.
@@ -52,7 +52,7 @@ $Algorithms = @(
     @{ Algorithm = "ProgPowVeil";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=veil" }
     @{ Algorithm = "ProgPowVeriblock";   Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=VeriBlock" }
     @{ Algorithm = "ProgPowZ";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=auto" }
-  
+
     @{ Algorithm = "BeamV3";             Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 4.0;  Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=beam3" }
     @{ Algorithm = "Equihash1445";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --nvidia" } # FPGA
     @{ Algorithm = "Equihash1927";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.3;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --nvidia" } # FPGA

@@ -174,7 +174,7 @@
             <div style="padding-top: 0.6rem;" title="Allow using the pool even if the price reported in the pool API is 0&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Price" class="toggle-switch" name="PoolAllow0Price"> Use pool even if price@pool is 0 (not recommended)
             </div>
-            <div style="padding-top: 0.6em;" title="Maxîmal allowed price increase compared with last price.&#10;If the price increase is higher then the pool will be marked as unavaliable.&#10;&#10;(min: 2, max: 99; default: 5)"> Maximal allowed price increase
+            <div style="padding-top: 0.6rem;" title="Maxîmal allowed price increase compared with last price.&#10;If the price increase is higher then the pool will be marked as unavaliable.&#10;&#10;(min: 2, max: 99; default: 5)"> Maximal allowed price increase
               <input type="number" step=0.1 min=2 max=99.9 value=3 size=4 id="PoolAllowedPriceIncreaseFactor" name="PoolAllowedPriceIncreaseFactor" style="width: 3.6em; text-align:right;">
             </div>
             <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all other pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at least two pools"> Unrealistic pool price factor
@@ -383,22 +383,22 @@
             <fieldset>
               <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the web GUI dashboard and API">Poll pools for balances & earnings every
                 <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
-              <div style="padding-top: 0.6rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
+              <div style="padding-top: 0.5rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
                 <input type="checkbox" class="toggle-switch" id="BalancesShowSums" name="BalancesShowSums" style="margin-left:20px"> Show earnings sums for each pool
               </div>
-              <div style="padding-top: 0.6rem;" title="Show 1hr / 24hr & 7day pool earnings averages&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
+              <div style="padding-top: 0.5rem;" title="Show 1hr / 24hr & 7day pool earnings averages&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
                 <input type="checkbox" class="toggle-switch" id="BalancesShowAverages" name="BalancesShowAverages" style="margin-left:20px"> Show average earnings for each pool
               </div>
-              <div style="padding-top: 0.6rem;" title="Pool balances will be shown in main (FIAT) currency&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+              <div style="padding-top: 0.5rem;" title="Pool balances will be shown in main (FIAT) currency&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
                 <input type="checkbox" class="toggle-switch" id="BalancesShowInFIATcurrency" name="BalancesShowInFIATcurrency" style="margin-left:20px"> Show pool balances in main (FIAT) currency
               </div>
-              <div style="padding-top: 0.6rem;" title="Pool balances will be shown in extra currencies &#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+              <div style="padding-top: 0.5rem;" title="Pool balances will be shown in extra currencies &#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
                 <input type="checkbox" class="toggle-switch" id="BalancesShowInAllCurrencies" name="BalancesShowInAllCurrencies" style="margin-left:20px"> Show pool balances all currencies
               </div>
-              <div style="padding-top: 0.6rem;" title="Most pools clear pending balances after a longer period of inactivity&#10;To avoid forfeiting pool balances UG-Miner will enforce mining&#10;at the pool 10 days before it would clear the balance&#10;(one cycle only, even if it is not the most profitable pool)&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+              <div style="padding-top: 0.5rem;" title="Most pools clear pending balances after a longer period of inactivity&#10;To avoid forfeiting pool balances UG-Miner will enforce mining&#10;at the pool 10 days before it would clear the balance&#10;(one cycle only, even if it is not the most profitable pool)&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
                 <input type="checkbox" class="toggle-switch" id="BalancesKeepAlive" name="BalancesKeepAlive" style="margin-left:20px"> Keep pool balances alive
               </div>
-              <div style="padding-top: 0.6rem;" title="UG-Miner will store all balances tracker data in '.\Logs\BalancesTrackerLog.csv'">
+              <div style="padding-top: 0.5rem;" title="UG-Miner will store all balances tracker data in '.\Logs\BalancesTrackerLog.csv'">
                 <input type="checkbox" class="toggle-switch" id="BalancesTrackerLog" name="BalancesTrackerLog" style="margin-left:20px"> Write balances tracker log
               </div>
             </fieldset>
@@ -412,10 +412,10 @@
             <div style="padding-top: 0.4rem;" title="Automatically update UG-Miner to the newest program version&#10;UG-Miner will check for a new version on each start&#10;and every n days as configured by 'AutoUpdateCheckInterval'">
               <input type="checkbox" class="toggle-switch" id="AutoUpdate" name="AutoUpdate"> Automatically install newest version
             </div>
-            <div style="padding-top: 0.6rem;" title="If enabled UG-Miner will show the changelog when an update is available">
+            <div style="padding-top: 0.5rem;" title="If enabled UG-Miner will show the changelog when an update is available">
               <input type="checkbox" class="toggle-switch" id="ShowChangeLog" name="ShowChangeLog"> Show change log
             </div>
-            <div style="padding-top: 0.6rem;" title="If enabled UG-Miner will backup installed version before updating to a new version">
+            <div style="padding-top: 0.5rem;" title="If enabled UG-Miner will backup installed version before updating to a new version">
               <input type="checkbox" class="toggle-switch" id="BackupOnAutoUpdate" name="BackupOnAutoUpdate"> Backup installed version before updating
             </div>
           </div>

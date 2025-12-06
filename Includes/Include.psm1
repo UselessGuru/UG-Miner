@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -75,7 +75,7 @@ public static class ConsoleModeSettings
                 consoleMode |= modeFlag;
             else
                 consoleMode &= ~modeFlag;
-            
+
             SetConsoleMode(consoleHandle, consoleMode);
         }
     }
@@ -261,17 +261,17 @@ class Pool : IDisposable {
     [String]$AlgorithmVariant
     [Boolean]$Available = $true
     [Boolean]$Best = $false
-    [Nullable[Int64]]$BlockHeight = $null
+    [Nullable[Int64]]$BlockHeight = $null # DAG block height
     [String]$CoinName
     [String]$Currency
     [Nullable[Double]]$DAGsizeGiB = $null
     [Boolean]$Disabled = $false
     [Double]$EarningsAdjustmentFactor = 1
-    [Nullable[UInt16]]$Epoch = $null
+    [Nullable[UInt16]]$Epoch = $null # DAG epoch
     [Double]$Fee
     [String]$Host
     # [String[]]$Hosts # To be implemented for pool failover
-    [String]$Key
+    [String]$Key # Primary key for faster pool updates
     [String]$Name
     [String]$Pass
     $PoolPorts = @() # Cannot define nullable array
@@ -281,7 +281,7 @@ class Pool : IDisposable {
     [Double]$Price
     [Double]$Price_Bias
     [Boolean]$Prioritize = $false # derived from BalancesKeepAlive
-    [String]$Protocol
+    [String]$Protocol # ethproxy, ethstratum1, ethstratum2, ethstratumnh, stratum
     [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the pool not available?
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
@@ -289,7 +289,7 @@ class Pool : IDisposable {
     [Double]$StablePrice
     [DateTime]$Updated
     [String]$User
-    [String]$Variant
+    [String]$Variant # none, 24h or plus
     [String]$WorkerName = ""
     [Nullable[UInt]]$Workers
 
@@ -350,20 +350,21 @@ class Miner : IDisposable {
     [Double]$Earnings_Accuracy = 0 # derived from pool and stats
     [DateTime]$EndTime # UniversalTime
     [String[]]$EnvVars = @()
+    [Double[]]$Fee = @() # miner fee
     [Double[]]$Hashrates_Live = @()
     [String]$Info
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
     [DateTime]$LastUsed # derived from stats
-    [String]$LogFile
+    [String]$LogFile # path to miner log file
     [Boolean]$MeasurePowerConsumption = $false # derived from stats
     [UInt16]$MinDataSample # for safe hashrate values
-    [String]$MinerUri
+    [String]$MinerUri # access to miner API / web interface
     [String]$Name
-    [Bool]$Optimal = $false
+    [Boolean]$Optimal = $false
     [String]$Path
     [String]$PrerequisitePath
     [String]$PrerequisiteURI
-    [UInt16]$Port
+    [UInt16]$Port # miner API port
     [Double]$PowerCost = [Double]::NaN
     [Double]$PowerConsumption = [Double]::NaN
     [Double]$PowerConsumption_Live = [Double]::NaN
@@ -374,18 +375,18 @@ class Miner : IDisposable {
     [Double]$Profit_Bias = [Double]::NaN
     [Boolean]$ReadPowerConsumption
     [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the miner not available?
-    [Boolean]$Restart = $false
-    hidden [DateTime]$StatStart
-    hidden [DateTime]$StatEnd
+    [Boolean]$Restart = $false # if true miner will restart at end of cycle
+    hidden [DateTime]$StatStart # UniversalTime
+    hidden [DateTime]$StatEnd # UniversalTime
     [MinerStatus]$Status = [MinerStatus]::Idle
     [String]$StatusInfo = ""
     [String]$SubStatus = [MinerStatus]::Idle
     [TimeSpan]$TotalMiningDuration # derived from pool and stats
     [String]$Type
-    [DateTime]$Updated
-    [String]$URI
+    [DateTime]$Updated # derived from pool update value
+    [String]$URI # miner binary download address
     [DateTime]$ValidDataSampleTimestamp = 0
-    [String]$Version
+    [String]$Version # Miner version
     [UInt16[]]$WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
     [String]$WindowStyle # "minimized": miner window is minimized (default), but accessible; "normal": miner windows are shown normally; "hidden": miners will run as a hidden background task and are not accessible
     [Worker[]]$Workers = @() # derived from pools
@@ -611,7 +612,7 @@ class Miner : IDisposable {
             $this.Earnings = $this.Earnings_Accuracy = $this.Earnings_Bias = $this.PowerCost = $this.PowerConsumption = $this.PowerConsumption_Live = $this.Profit = $this.Profit_Bias = [Double]::NaN
             $this.Hashrates_Live = @($this.WorkersRunning.ForEach({ [Double]::NaN }))
         }
-        else {  
+        else { 
             $this.Status = [MinerStatus]::Idle
             $this.StatusInfo = "Idle"
             $this.SubStatus = $this.Status
@@ -862,7 +863,7 @@ public static class Kernel32
         $ShowWindow = switch ($WindowStyle) { 
             "hidden" { "0x0000"; break } # SW_HIDE
             "normal" { "0x0001"; break } # SW_SHOWNORMAL
-            default { "0x0007" } # SW_SHOWMINNOACTIVE
+            default  { "0x0007" } # SW_SHOWMINNOACTIVE
         }
 
         # Set local environment
@@ -938,46 +939,41 @@ public static class Kernel32
     }
 }
 
-function Start-Core { 
+function Start-CoreCycle { 
 
     try { 
-        if (-not $Global:CoreRunspace) { 
-            $Global:CoreRunspace = [RunspaceFactory]::CreateRunspace()
-            $Global:CoreRunspace.ApartmentState = "STA"
-            $Global:CoreRunspace.Name = "Core"
-            $Global:CoreRunspace.ThreadOptions = "ReuseThread"
-            $Global:CoreRunspace.Open()
+        if (-not $Global:CoreCycleRunspace) { 
+            $Global:CoreCycleRunspace = [RunspaceFactory]::CreateRunspace()
+            $Global:CoreCycleRunspace.ApartmentState = "STA"
+            $Global:CoreCycleRunspace.Name = "CoreCycle"
+            $Global:CoreCycleRunspace.ThreadOptions = "ReuseThread"
+            $Global:CoreCycleRunspace.Open()
 
-            $Global:CoreRunspace.SessionStateProxy.SetVariable("Config", $Config)
-            $Global:CoreRunspace.SessionStateProxy.SetVariable("Session", $Session)
-            $Global:CoreRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
-            [Void]$Global:CoreRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
+            $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Config", $Config)
+            $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Session", $Session)
+            $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+            [Void]$Global:CoreCycleRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
 
             $PowerShell = [PowerShell]::Create()
-            $PowerShell.Runspace = $Global:CoreRunspace
-            [Void]$Powershell.AddScript("$($Session.MainPath)\Includes\Core.ps1")
-            $Global:CoreRunspace | Add-Member PowerShell $PowerShell
-            
+            $PowerShell.Runspace = $Global:CoreCycleRunspace
+            [Void]$Powershell.AddScript("$($Session.MainPath)\Includes\CoreCycle.ps1")
+            $Global:CoreCycleRunspace | Add-Member PowerShell $PowerShell
             # Remove stats that have been deleted from disk
             try { 
                 if ($StatFiles = (Get-ChildItem -Path "Stats" -File).BaseName) { 
-                    if ($Stats.psBase.Keys) { 
-                        (Compare-Object -PassThru $StatFiles $Stats.psBase.Keys).where({ $_.SideIndicator -eq "=>" }).ForEach(
-                            { 
-                                # Remove stat if deleted on disk
-                                $Stats.Remove($_)
-                            }
-                        )
+                    if ($Stats.Keys) { 
+                        (Compare-Object -PassThru $StatFiles $Stats.Keys).where({ $_.SideIndicator -eq "=>" }).ForEach({ $Stats.Remove($_) })
                     }
                 }
             }
-            catch { }
+            catch {}
+
             Remove-Variable StatFiles -ErrorAction Ignore
         }
 
-        if ($Global:CoreRunspace.Job.IsCompleted -ne $false) { 
-            $Global:CoreRunspace | Add-Member Job ($Global:CoreRunspace.PowerShell.BeginInvoke()) -Force
-            $Global:CoreRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+        if ($Global:CoreCycleRunspace.Job.IsCompleted -ne $false) { 
+            $Global:CoreCycleRunspace | Add-Member Job ($Global:CoreCycleRunspace.PowerShell.BeginInvoke()) -Force
+            $Global:CoreCycleRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
         }
     }
     catch { 
@@ -986,7 +982,7 @@ function Start-Core {
 }
 
 function Clear-MinerData { 
-        
+
     param (
         [Parameter (Mandatory = $false)]
         [Boolean]$KeepMiners = $false
@@ -1031,16 +1027,16 @@ function Clear-PoolData {
     $Session.Remove("PoolsUpdatedTimestamp")
 }
 
-function Stop-Core { 
+function Stop-CoreCycle { 
 
-    if ($Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+    if ($Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
 
-        $Global:CoreRunspace.PowerShell.Stop()
+        $Global:CoreCycleRunspace.PowerShell.Stop()
         $Session.Remove("EndCycleTime")
         if ($Session.Timer) { Write-Message -Level Info "Ending cycle." }
 
         $Session.Remove("Timer")
-        $Global:CoreRunspace.PSObject.Properties.Remove("StartTime")
+        $Global:CoreCycleRunspace.PSObject.Properties.Remove("StartTime")
     }
 
     Clear-MinerData
@@ -1063,16 +1059,16 @@ function Stop-Core {
         $Session.MiningProfit = [Double]0
     }
 
-    if ($Global:CoreRunspace) { 
-        $Global:CoreRunspace.PSObject.Properties.Remove("Job")
+    if ($Global:CoreCycleRunspace) { 
+        $Global:CoreCycleRunspace.PSObject.Properties.Remove("Job")
 
         # Must close runspace after miners were stopped, otherwise methods don't work any longer
-        $Global:CoreRunspace.PowerShell.Dispose()
-        $Global:CoreRunspace.PowerShell = $null
-        $Global:CoreRunspace.Close()
-        $Global:CoreRunspace.Dispose()
+        $Global:CoreCycleRunspace.PowerShell.Dispose()
+        $Global:CoreCycleRunspace.PowerShell = $null
+        $Global:CoreCycleRunspace.Close()
+        $Global:CoreCycleRunspace.Dispose()
 
-        Remove-Variable CoreRunspace -Scope Global
+        Remove-Variable CoreCycleRunspace -Scope Global
 
         [System.GC]::Collect()
     }
@@ -1311,7 +1307,7 @@ function Get-Rate {
                     }
                 )
             }
-            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } Else { "this currency" })." })"
+            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
             $Session.Rates = $Rates
             $Session.RefreshTimestamp = (Get-Date -Format "G")
             $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
@@ -1350,25 +1346,25 @@ function Write-Message {
         if ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost") { 
             # Write to console
             switch ($Level) { 
-                "Debug" { Write-Host $Message -ForegroundColor "Blue" -NoNewline; break }
-                "Error" { Write-Host $Message -ForegroundColor "Red" -NoNewline; break }
-                "Info" { Write-Host $Message -ForegroundColor "White" -NoNewline; break }
-                "MemDbg" { Write-Host $Message -ForegroundColor "Cyan" -NoNewline; break }
+                "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewline; break }
+                "Error"   { Write-Host $Message -ForegroundColor "Red" -NoNewline; break }
+                "Info"    { Write-Host $Message -ForegroundColor "White" -NoNewline; break }
+                "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" -NoNewline; break }
                 "Verbose" { Write-Host $Message -ForegroundColor "Yello" -NoNewline; break }
-                "Warn" { Write-Host $Message -ForegroundColor "Magenta" -NoNewline }
+                "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewline }
             }
             $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
             Write-Host ""
         }
 
         switch ($Level) { 
-            "Debug" { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "Error" { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "Info" { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "MemDbg" { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
+            "Debug"   { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
+            "Error"   { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
+            "Info"    { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
+            "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
             "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "Warn" { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            default { $Message = "[--???--] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
+            "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
+            default   { $Message = "[--???--] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
         }
 
         if ($Session.TextBoxSystemLog) { 
@@ -1633,12 +1629,12 @@ function Update-ConfigFile {
         $OldRegion = $Config.Region
         # Write message about new mining regions
         $Config.Region = switch ($OldRegion) { 
-            "Brazil" { "USA West"; break }
-            "Europe East" { "Europe"; break }
+            "Brazil"       { "USA West"; break }
+            "Europe East"  { "Europe"; break }
             "Europe North" { "Europe"; break }
-            "India" { "Asia"; break }
-            "US" { "USA West"; break }
-            default { "Europe" }
+            "India"        { "Asia"; break }
+            "US"           { "USA West"; break }
+            default        { "Europe" }
         }
         Write-Message -Level Warn "Available mining locations have changed during update ($OldRegion -> $($Config.Region))".
         $Session.ConfigurationHasChangedDuringUpdate += "- Available mining locations have changed ($OldRegion -> $($Config.Region))"
@@ -1650,41 +1646,41 @@ function Update-ConfigFile {
             switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); break }
-                "ExcludeMinerName" { $Config.$_ = $Config.$_ -replace '^-'; break }
+                "ExcludeMinerName"           { $Config.$_ = $Config.$_ -replace '^-'; break }
 
-                "LogBalanceAPIResponse" { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
-                "LogToScreen" { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
-                "MainCurrency" { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
-                "ShowAccuracy" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
-                "ShowAccuracyColumn" { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
-                "ShowCoinName" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
-                "ShowCoinNameColumn" { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
-                "ShowCurrency" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
-                "ShowCurrencyColumn" { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
-                "ShowEarning" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
-                "ShowEarningColumn" { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
-                "ShowEarningBias" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
-                "ShowEarningBiasColumn" { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
-                "ShowHashrate" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
-                "ShowHashrateColumn" { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
-                "ShowMinerFee" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
-                "ShowMinerFeeColumn" { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolFee" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolFeeColumn" { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
-                "ShowProfit" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
-                "ShowProfitColumn" { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
-                "ShowProfitBias" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
-                "ShowProfitBiasColumn" { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
-                "ShowPowerConsumption" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
+                "LogBalanceAPIResponse"      { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
+                "LogToScreen"                { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
+                "MainCurrency"               { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
+                "ShowAccuracy"               { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
+                "ShowAccuracyColumn"         { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
+                "ShowCoinName"               { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
+                "ShowCoinNameColumn"         { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
+                "ShowCurrency"               { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
+                "ShowCurrencyColumn"         { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
+                "ShowEarning"                { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
+                "ShowEarningColumn"          { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
+                "ShowEarningBias"            { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
+                "ShowEarningBiasColumn"      { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
+                "ShowHashrate"               { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
+                "ShowHashrateColumn"         { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
+                "ShowMinerFee"               { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
+                "ShowMinerFeeColumn"         { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolFee"                { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolFeeColumn"          { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
+                "ShowProfit"                 { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
+                "ShowProfitColumn"           { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
+                "ShowProfitBias"             { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
+                "ShowProfitBiasColumn"       { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
+                "ShowPowerConsumption"       { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
                 "ShowPowerConsumptionColumn" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
-                "ShowPowerCost" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
-                "ShowPowerCostColumn" { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolBalances" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolBalancesColumn" { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
-                "ShowUser" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
-                "ShowUserColumn" { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
-                "UnrealMinerEarningFactor" { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); break }
-                "UnrealPoolPriceFactor" { $Config.UnrealisticPoolPriceFactor = $Config.$_; $Config.Remove($_); break }
+                "ShowPowerCost"              { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
+                "ShowPowerCostColumn"        { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolBalances"           { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolBalancesColumn"     { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
+                "ShowUser"                   { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
+                "ShowUserColumn"             { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
+                "UnrealMinerEarningFactor"   { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); break }
+                "UnrealPoolPriceFactor"      { $Config.UnrealisticPoolPriceFactor = $Config.$_; $Config.Remove($_); break }
 
                 # Remove unsupported config items
                 default { if ($_ -notin @(@($Session.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } }
@@ -2395,11 +2391,11 @@ function Get-Device {
                     Vendor    = $(
                         switch -Regex ($Device_CIM.Manufacturer) { 
                             "Advanced Micro Devices" { "AMD"; break }
-                            "AMD" { "AMD"; break }
-                            "Intel" { "INTEL"; break }
-                            "NVIDIA" { "NVIDIA"; break }
-                            "Microsoft" { "MICROSOFT"; break }
-                            default { $Device_CIM.Manufacturer -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
+                            "AMD"                    { "AMD"; break }
+                            "Intel"                  { "INTEL"; break }
+                            "NVIDIA"                 { "NVIDIA"; break }
+                            "Microsoft"              { "MICROSOFT"; break }
+                            default                  { $Device_CIM.Manufacturer -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
                 }
@@ -2452,11 +2448,11 @@ function Get-Device {
                     Vendor    = $(
                         switch -Regex ([String]$Device_CIM.AdapterCompatibility) { 
                             "Advanced Micro Devices" { "AMD"; break }
-                            "AMD" { "AMD"; break }
-                            "Intel" { "INTEL"; break }
-                            "NVIDIA" { "NVIDIA"; break }
-                            "Microsoft" { "MICROSOFT"; break }
-                            default { $Device_CIM.AdapterCompatibility -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
+                            "AMD"                    { "AMD"; break }
+                            "Intel"                  { "INTEL"; break }
+                            "NVIDIA"                 { "NVIDIA"; break }
+                            "Microsoft"              { "MICROSOFT"; break }
+                            default                  { $Device_CIM.AdapterCompatibility -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
                 }
@@ -2515,19 +2511,19 @@ function Get-Device {
                             Model     = $Device_OpenCL.Name
                             Type      = $(
                                 switch -Regex ([String]$Device_OpenCL.Type) { 
-                                    "CPU" { "CPU"; break }
-                                    "GPU" { "GPU"; break }
+                                    "CPU"   { "CPU"; break }
+                                    "GPU"   { "GPU"; break }
                                     default { [String]$Device_OpenCL.Type -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                                 }
                             )
-                            Vendor    = $(
+                            Vendor = $(
                                 switch -Regex ([String]$Device_OpenCL.Vendor) { 
                                     "Advanced Micro Devices" { "AMD"; break }
-                                    "AMD" { "AMD"; break }
-                                    "Intel" { "INTEL"; break }
-                                    "NVIDIA" { "NVIDIA"; break }
-                                    "Microsoft" { "MICROSOFT"; break }
-                                    default { [String]$Device_OpenCL.Vendor -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
+                                    "AMD"                    { "AMD"; break }
+                                    "Intel"                  { "INTEL"; break }
+                                    "NVIDIA"                 { "NVIDIA"; break }
+                                    "Microsoft"              { "MICROSOFT"; break }
+                                    default                  { [String]$Device_OpenCL.Vendor -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                                 }
                             )
                         }
@@ -3375,10 +3371,10 @@ function Get-DAGepoch {
 
     switch ($Algorithm) { 
         "Autolykos2" { $BlockHeight -= 416768; break } # Epoch 0 starts @ 417792
-        "FiroPow" { if ($BlockHeight -gt 1205100) { return 700 } } # https://github.com/firoorg/firo/pull/1648/commits/436d5627bb9b9be6d32f4a24c2fc611e79325189 & https://github.com/firoorg/firo/commit/a3a4be2685ca99b1343de81367596655617a2974
-        "FishHash" { return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
-        "PhiHash" { return [Math]::Floor(((Get-Date) - [DateTime]::ParseExact("11/06/2023", "MM/dd/yyyy", $null)).TotalDays / 365.25) - 1 }
-        default { }
+        "FiroPow"    { if ($BlockHeight -gt 1205100) { return 700 } } # https://github.com/firoorg/firo/pull/1648/commits/436d5627bb9b9be6d32f4a24c2fc611e79325189 & https://github.com/firoorg/firo/commit/a3a4be2685ca99b1343de81367596655617a2974
+        "FishHash"   { return 448 } # IRON (FishHash) has static DAG size of 4608MB (Ethash epoch 448, https://github.com/iron-fish/fish-hash/blob/main/FishHash.pdf Chapter 4)
+        "PhiHash"    { return [Math]::Floor(((Get-Date) - [DateTime]::ParseExact("11/06/2023", "MM/dd/yyyy", $null)).TotalDays / 365.25) - 1 }
+        default      { }
     }
 
     return [Math]::Floor($BlockHeight / (Get-DAGepochLength -BlockHeight $BlockHeight -Algorithm $Algorithm)) + $EpochReserve
@@ -3394,18 +3390,18 @@ function Get-DAGepochLength {
     )
 
     switch ($Algorithm) { 
-        "Autolykos2" { return 1024 }
-        "EtcHash" { if ($BlockHeight -ge 11700000) { return 60000 } else { return 30000 } }
-        "EthashSHA256" { return 4000 }
-        "EvrProgPow" { return 12000 }
-        "FiroPow" { return 1300 }
-        "KawPow" { return 7500 }
-        "MeowPow" { return 7500 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L32
-        "Octopus" { return 524288 }
-        "PhiHash" { return 7500 } # https://github.com/PhicoinProject/phihashminer_v2/blob/main/README.md
-        "SCCpow" { return 3240 } # https://github.com/stakecube/sccminer/commit/16bdfcaccf9cba555f87c05f6b351e1318bd53aa#diff-200991710fe4ce846f543388b9b276e959e53b9bf5c7b7a8154b439ae8c066aeR32
+        "Autolykos2"      { return 1024 }
+        "EtcHash"         { if ($BlockHeight -ge 11700000) { return 60000 } else { return 30000 } }
+        "EthashSHA256"    { return 4000 }
+        "EvrProgPow"      { return 12000 }
+        "FiroPow"         { return 1300 }
+        "KawPow"          { return 7500 }
+        "MeowPow"         { return 7500 } # https://github.com/Meowcoin-Foundation/meowpowminer/blob/6e1f38c1550ab23567960699ba1c05aad3513bcd/libcrypto/ethash.hpp#L32
+        "Octopus"         { return 524288 }
+        "PhiHash"         { return 7500 } # https://github.com/PhicoinProject/phihashminer_v2/blob/main/README.md
+        "SCCpow"          { return 3240 } # https://github.com/stakecube/sccminer/commit/16bdfcaccf9cba555f87c05f6b351e1318bd53aa#diff-200991710fe4ce846f543388b9b276e959e53b9bf5c7b7a8154b439ae8c066aeR32
         "ProgPowTelestai" { return 12000 }
-        default { return 30000 }
+        default           { return 30000 }
     }
 }
 
@@ -3562,7 +3558,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load donation log
     if (Test-Path -LiteralPath "$PWD\Logs\DonationLog.csv") { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) }
@@ -3570,7 +3566,7 @@ function Initialize-Environment {
         $Session.DonationLog = @()
     }
     else { 
-        Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load algorithm list as sorted case insensitive hash table
@@ -3582,7 +3578,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load coin names as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\CoinNames.json") { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3593,7 +3589,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load currency algorithm data as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\CurrencyAlgorithm.json") { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3604,7 +3600,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load EquihashCoinPers data as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\EquihashCoinPers.json") { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3615,7 +3611,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded equihash database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded equihash database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load regions as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\Regions.json") { 
@@ -3629,7 +3625,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load FIAT currencies list as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\FIATcurrencies.json") { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3640,7 +3636,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded fiat currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded fiat currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load unprofitable algorithms as sorted case insensitive hash table, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
     $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
@@ -3656,7 +3652,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load DAG data, if not available it will get recreated
     if (Test-Path -LiteralPath "$PWD\Data\DAGdata.json" ) { $Session.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject }
@@ -3667,7 +3663,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load PoolsLastUsed data as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json") { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
@@ -3675,7 +3671,7 @@ function Initialize-Environment {
         $Session.PoolsLastUsed = @{ }
     }
     else { 
-        Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load AlgorithmsLastUsed data as sorted case insensitive hash table
@@ -3684,7 +3680,7 @@ function Initialize-Environment {
         $Session.AlgorithmsLastUsed = @{ }
     }
     else { 
-        Write-Host "Loaded algorithm last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded algorithm last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load MinersLastUsed data as sorted case insensitive hash table
@@ -3693,7 +3689,7 @@ function Initialize-Environment {
         $Session.MinersLastUsed = @{ }
     }
     else { 
-        Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load EarningsChart data to make it available early in GUI
@@ -3702,7 +3698,7 @@ function Initialize-Environment {
         $Session.EarningsChartData = @{ }
     }
     else { 
-        Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load Balances data to make it available early in GUI
@@ -3711,7 +3707,7 @@ function Initialize-Environment {
         $Session.Balances = @{ }
     }
     else { 
-        Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load NVidia GPU architecture table
@@ -3724,7 +3720,7 @@ function Initialize-Environment {
         exit
     }
     else { 
-        Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load AMD GPU architecture table
@@ -3737,7 +3733,7 @@ function Initialize-Environment {
         exit
     }
     else { 
-        Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } Else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     $Session.BalancesCurrencies = @($Session.Balances.PSObject.Properties.Name.ForEach({ $Session.Balances.$_.Currency }) | Sort-Object -Unique)
@@ -3761,7 +3757,7 @@ function Start-APIserver {
         if ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
             [Void]$TCPclient.Dispose()
 
             return
@@ -3799,7 +3795,7 @@ function Start-APIserver {
                     $Session.APIport = $Session.Config.APIport
                     if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.Config.APIlogfile -Force -ErrorAction Ignore }
                     $Session.MinerBaseAPIport = $Session.APIport + 1
-                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
                     # Start Web GUI (show configuration edit if no existing config)
                     if ($Session.Config.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
                     break
@@ -3815,7 +3811,7 @@ function Start-APIserver {
         else { 
             Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+            Write-Message -Level Warn "Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
         }
     }
 }
@@ -3827,7 +3823,7 @@ function Stop-APIserver {
         if ($Session.APIserver.IsListening) { 
             $Session.APIserver.Stop()
             if (-not $Session.MinerBaseAPIport) { $Session.MinerBaseAPIport = 4000 }
-            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport). Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } Else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport). Using port $(if ($Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
         }
 
         $Session.APIserver.Close()
@@ -3986,7 +3982,7 @@ function Exit-UGminer {
     Write-Message -Level Info "Shutting down $($Session.Branding.ProductLabel)..."
     $Session.NewMiningStatus = "Idle"
 
-    Stop-Core
+    Stop-CoreCycle
     Stop-Brain
     Stop-BalancesTracker
 
@@ -4186,7 +4182,7 @@ function Read-Config {
             }
         }
 
-        # Must update existing thread safe variable. Reassignment breaks updates to instances in other threads
+        # Must update existing thread safe variable. Recreation breaks updates to instances in other threads
         $ConfigFromFile.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
 
         $Global:Config.Pools = Get-PoolsConfig

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 using module .\Include.psm1
@@ -376,8 +376,7 @@ do {
             Earnings = $Session.PoolChartData
         }
         $Session.EarningsChartData | ConvertTo-Json | Out-File -LiteralPath ".\Cache\EarningsChartData.json" -Force -ErrorAction Ignore
-        
-        # Keep earnings for max. 1 year
+      CoreCycleRunspace        # Keep earnings for max. 1 year
         $OldestEarningsDate = [DateTime]::Now.AddYears(-1).ToString("yyyy-MM-dd")
         $Earnings = $Earnings.where({ $_.Date -ge $OldestEarningsDate })
         Remove-Variable OldestEarningsDate

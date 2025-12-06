@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { return }
@@ -190,7 +190,7 @@ if ($Algorithms) {
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             # Optionally disable dev fee mining, requires change in source code
-            # $Fee = If ($Session.Config.DisableMinerFee) { 0 } Else { 1 }
+            # $Fee = If ($Session.Config.DisableMinerFee) { 0 } else { 1 }
             $Fee = 0
 
             $Algorithms.where({ $_.Type -eq $Type }).ForEach(

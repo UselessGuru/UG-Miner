@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.3
-Version date:   2025/12/04
+Version:        6.7.4
+Version date:   2025/12/06
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -235,7 +235,7 @@ function Update-TabControl {
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is paused"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
             }
-            elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+            elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No data - mining is suspended"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
             }
@@ -418,15 +418,15 @@ function Update-TabControl {
                     }
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
-                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } Else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                         }
                     )
                     $LegacyGUIelements.BalancesDGV.EndInit()
@@ -483,7 +483,7 @@ function Update-TabControl {
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is paused"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }
-            elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Miners -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+            elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Miners -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is suspended"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }
@@ -558,7 +558,7 @@ function Update-TabControl {
                 $LegacyGUIelements.PoolsLabel.Text = "No data - mining is paused"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
             }
-            elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+            elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.PoolsLabel.Text = "No data - mining is suspended"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
             }
@@ -581,8 +581,8 @@ function Update-TabControl {
                         @{ Name = "Accuracy"; Expression = { "{0:p2}" -f $_.Accuracy } }
                         @{ Name = "Pool name"; Expression = { $_.Name } }
                         @{ Name = "Host"; Expression = { $_.Host } }
-                        @{ Name = "Port"; Expression = { "$(if ($_.Port) { $_.Port } Else { "-" })" } }
-                        @{ Name = "SSL port"; Expression = { "$(if ($_.PortSSL) { $_.PortSSL } Else { "-" })" } }
+                        @{ Name = "Port"; Expression = { "$(if ($_.Port) { $_.Port } else { "-" })" } }
+                        @{ Name = "SSL port"; Expression = { "$(if ($_.PortSSL) { $_.PortSSL } else { "-" })" } }
                         @{ Name = "Earnings adjustment factor"; Expression = { $_.EarningsAdjustmentFactor } }
                         @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
                         if ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
@@ -629,7 +629,7 @@ function Update-TabControl {
         #             If ($Session.Workers) { $LegacyGUIelements.WorkersLabel.Text = "Worker status updated $($Session.WorkersLastUpdated.ToString())" }
         #             ElseIf ($Session.MiningStatus -eq "Idle") { $LegacyGUIelements.WorkersLabel.Text = "No data - mining is stopped" }
         #             ElseIf ($Session.MiningStatus -eq "Paused" -and -not $DataSource) { $LegacyGUIelements.WorkersLabel.Text = "No data - mining is paused" }
-        #             ElseIf ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreRunspace.Job.IsCompleted -eq $true) {  $LegacyGUIelements.MinersLabel.Text = "No data - mining is suspended" }
+        #             ElseIf ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) {  $LegacyGUIelements.MinersLabel.Text = "No data - mining is suspended" }
         #             Else  { $LegacyGUIelements.WorkersLabel.Text = "Waiting for monitoring data..." }
         #
         #             $LegacyGUIelements.WorkersDGV.BeginInit()
@@ -644,8 +644,8 @@ function Update-TabControl {
         #                 @{ Name = "Miner"; Expression = { $_.data.Name -join $nl } },
         #                 @{ Name = "Pool"; Expression = { $_.data.ForEach({ $_.Pool -split "," -join " & " }) -join $nl } },
         #                 @{ Name = "Algorithm"; Expression = { $_.data.ForEach({ $_.Algorithm -split "," -join " & " }) -join $nl } },
-        #                 @{ Name = "Live hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } },
-        #                 @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.Hashrate.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } Else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } }
+        #                 @{ Name = "Live hashrate"; Expression = { $_.data.ForEach({ $_.CurrentSpeed.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } },
+        #                 @{ Name = "Benchmark hashrate(s)"; Expression = { $_.data.ForEach({ $_.Hashrate.ForEach({ If ([Double]::IsNaN($_)) { "n/a" } else { $_ | ConvertTo-Hash } }) -join " & " }) -join $nl } }
         #             ) | Out-DataTable
         #             $LegacyGUIelements.WorkersDGV.Sort($LegacyGUIelements.WorkersDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
         #             $LegacyGUIelements.WorkersDGV.ClearSelection()
@@ -693,7 +693,7 @@ function Update-TabControl {
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No data - mining is paused"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
                 }
-                elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+                elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No data - mining is suspended"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
                 }
@@ -755,7 +755,7 @@ function Update-GUIstatus {
             break
         }
         "Running" { 
-            if ($Session.MiningStatus -eq "Running" -and - $Global:CoreRunspace.Job.IsCompleted -eq $true) { 
+            if ($Session.MiningStatus -eq "Running" -and - $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.MiningStatusLabel.ForeColor = [System.Drawing.Color]::Blue
                 $LegacyGUIelements.MiningStatusLabel.Text = "$($Session.Branding.ProductLabel) is suspended"
                 $LegacyGUIelements.MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
@@ -988,7 +988,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     $Session.Miners.where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
                         { 
                             $Data += $_.Name
-                            Set-MinerMeasurePowerConsumption $_  
+                            Set-MinerMeasurePowerConsumption $_ 
                         }
                     )
                     $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
@@ -1856,7 +1856,7 @@ $LegacyGUIform.Add_KeyDown(
     { 
         if ($Session.NewMiningStatus -eq "Running" -and $_.Control -and $_.Alt -and $_.KeyCode -eq "P") { 
             # '<Ctrl><Alt>P' pressed
-            if (-not $Global:CoreRunspace.Job.IsCompleted -eq $false) { 
+            if (-not $Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
                 # Core is complete / gone. Cycle cannot be suspended anymore
                 $Session.SuspendCycle = $false
             }
