@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.5
+Version:        6.7.6
 Version date:   2025/12/08
 #>
 
@@ -278,6 +278,7 @@ try {
                 # Setting 0 -> miner keepalive will not be of relevance and miners will be restartet at end of donation run
                 $Session.Config.MinCycle = 0
                 $Session.Config.Pools = $Config.Pools
+                $Session.Config.PoolName = $Config.PoolName
             }
         }
 
