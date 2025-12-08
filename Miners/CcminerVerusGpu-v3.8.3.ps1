@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "7.5" }))) { return }
@@ -32,7 +32,7 @@ $Algorithms = @(
     @{ Algorithm = "VerusHash"; MinMemGiB = 2; WarmupTimes = @(60, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus --intensity 23" }
 )
 
-# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 

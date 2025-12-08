@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
@@ -31,7 +31,7 @@ $Algorithms = @(
     @{ Algorithm = "ScryptN2"; WarmupTimes = @(90, 30); ExcludePools = @(); Arguments = "" } # Empty command
 )
 
-# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 

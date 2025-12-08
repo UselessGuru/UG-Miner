@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" }))) { return } # Cuda error in func 'neoscrypt_hash_k4' at line 1518 : an illegal instruction was encountered on GTX 750
@@ -32,7 +32,7 @@ $Algorithms = @(
     @{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; WarmupTimes = @(120, 0); ExcludePools = @(); Arguments = " --algo neoscrypt-xaya --intensity 21" }
 )
 
-# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 

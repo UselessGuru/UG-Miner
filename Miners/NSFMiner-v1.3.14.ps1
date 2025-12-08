@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1") }))) { return }
@@ -41,7 +41,7 @@ $Algorithms = @(
     @{ Algorithm = "Ethash"; Type = "NVIDIA"; MinMemGiB = 0.87; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --cuda --devices" } # PhoenixMiner-v6.2c is fastest but has dev fee
 )
 
-# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 

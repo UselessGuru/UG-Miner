@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
@@ -33,7 +33,7 @@ $Algorithms = @(
     @{ Algorithm = "Panthera"; WarmupTimes = @(15, 0); ExcludePools = @(); Arguments = " --algo=panthera" }
 )
 
-# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 

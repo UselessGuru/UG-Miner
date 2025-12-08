@@ -1,3 +1,13 @@
+Changelog UG-Miner 6.7.5 2025/12/08
+===================================
+
+Fixes:
+- Core: Miner objects not getting removed when pool is no longer available
+- Core: Unprofitable algorithm list not shrinking when algorithms were removed from '.\Data\UnprofitableAlgorithms.json'
+- Legacy GUI: Algorithm & pool column empty in dry mode
+- Web GUI / index.html: Active miners: 'Re-benchmark' & 'Re-measure power usage' buttons not clickable (regression from v6.5.2)
+
+
 Changelog UG-Miner 6.7.4 2025/12/06
 ===================================
 

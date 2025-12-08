@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -274,7 +274,7 @@ class Pool : IDisposable {
     [String]$Key # Primary key for faster pool updates
     [String]$Name
     [String]$Pass
-    $PoolPorts = @() # Cannot define nullable array
+    [System.Collections.Generic.List[Nullable[UInt16]]]$PoolPorts
     [UInt16]$Port
     [UInt16]$PortSSL
     [String]$PoolUri # Link to pool algorithm web page
@@ -282,7 +282,7 @@ class Pool : IDisposable {
     [Double]$Price_Bias
     [Boolean]$Prioritize = $false # derived from BalancesKeepAlive
     [String]$Protocol # ethproxy, ethstratum1, ethstratum2, ethstratumnh, stratum
-    [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the pool not available?
+    [System.Collections.Generic.SortedSet[String]]$Reasons # Why is the pool not available?
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
     [Boolean]$SSLselfSignedCertificate

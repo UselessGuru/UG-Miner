@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 using module .\Include.psm1
@@ -215,6 +215,7 @@ try {
         try { 
             if (-not $Session.UnprofitableAlgorithmsTimestamp -or (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime -gt $Session.UnprofitableAlgorithmsTimestamp) { 
                 $UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -AsHashtable
+                $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
                 $UnprofitableAlgorithms.Keys.ForEach({ $Session.UnprofitableAlgorithms.$_ = $UnprofitableAlgorithms.$_ })
                 Remove-Variable UnprofitableAlgorithms
                 Write-Message -Level Info "$(if ($Session.UnprofitableAlgorithmsTimestamp) { "Updated" } else { "Loaded" }) list of unprofitable algorithms ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -ne 1) { "entries" } else { "entry" }))."
@@ -410,15 +411,44 @@ try {
                 $Session.Pools = $Session.Pools.where({ $_.Updated -ge $Timestamp })
                 Remove-Variable Timestamp
 
-                if ($Pools = Compare-Object -PassThru @($Session.PoolsNew | Select-Object) @($Session.Pools.where({ $Session.Config.PoolName -contains $_.Variant }) | Select-Object) -Property AlgorithmVariant, Variant -IncludeEqual) { 
+                if ($Pools = Compare-Object -PassThru @($Session.Pools | Select-Object) @($Session.PoolsNew | Select-Object) -Property Key -IncludeEqual) { 
                     # Find added & updated pools
-                    $Session.PoolsAdded = $Pools.where({ $_.SideIndicator -eq "<=" })
+                    $Session.PoolsAdded = $Pools.where({ $_.SideIndicator -eq "=>" })
                     $Session.PoolsUpdated = $Pools.where({ $_.SideIndicator -eq "==" })
-
                     $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
 
-                    # Reduce price on older pool data
-                    $Pools.where({ $_.Updated -lt $Session.CycleStarts[0] }).ForEach({ $_.Price_Bias *= [Math]::Pow(0.9, ($Session.CycleStarts[0] - $_.Updated).TotalMinutes) })
+                    # Update existing pools, must not replace pool object as to not break the referenced to the miner worker pool
+                    $Session.PoolsUpdated.ForEach(
+                        { 
+                            $Key = $_.Key
+                            if ($UpdatedPool = $Session.PoolsNew.where({ $_.Key -eq $Key })[0]) { 
+                                $_.Accuracy = $UpdatedPool.Accuracy
+                                $_.AlgorithmVariant = $UpdatedPool.AlgorithmVariant
+                                $_.BlockHeight = $UpdatedPool.BlockHeight
+                                $_.CoinName = $UpdatedPool.CoinName
+                                $_.Currency = $UpdatedPool.Currency
+                                $_.DAGsizeGiB = $UpdatedPool.DAGsizeGiB
+                                $_.Disabled = $UpdatedPool.Disabled
+                                $_.EarningsAdjustmentFactor = $UpdatedPool.EarningsAdjustmentFactor
+                                $_.Epoch = $UpdatedPool.Epoch
+                                $_.Fee = $UpdatedPool.Fee
+                                $_.Host = $UpdatedPool.Host
+                                $_.Pass = $UpdatedPool.Pass
+                                $_.Port = $UpdatedPool.Port
+                                $_.PortSSL = $UpdatedPool.PortSSL
+                                $_.Price = $UpdatedPool.Price
+                                $_.Price_Bias = $UpdatedPool.Price_Bias
+                                $_.Reasons = $UpdatedPool.Reasons
+                                $_.Region = $UpdatedPool.Region
+                                $_.StablePrice = $UpdatedPool.StablePrice
+                                $_.Updated = $UpdatedPool.Updated
+                                $_.User = $UpdatedPool.User
+                                $_.WorkerName = $UpdatedPool.WorkerName
+                                $_.Workers = $UpdatedPool.Workers
+                            }
+                        }
+                    )
+                    Remove-Variable Key, UpdatedPool -ErrorAction Ignore
 
                     $Pools.ForEach(
                         { 
@@ -429,6 +459,9 @@ try {
                             $_.PoolPorts = @($(if ($Session.Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } else { $null }), $(if ($Session.Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } else { $null }))
                         }
                     )
+
+                    # Reduce price on older pool data
+                    $Pools.where({ $_.Updated -lt $Session.CycleStarts[0] }).ForEach({ $_.Price_Bias *= [Math]::Pow(0.9, ($Session.CycleStarts[0] - $_.Updated).TotalMinutes) })
 
                     # Pool disabled by stat file
                     $Pools.where({ $_.Disabled }).ForEach({ $_.Reasons.Add("Disabled (by stat file)") | Out-Null })
@@ -854,7 +887,7 @@ try {
         $Miners.where({ (Compare-Object $MinerDevices.Name $_.DeviceNames -IncludeEqual | Where-Object -Property SideIndicator -EQ "=>")}).ForEach({ $_.SideIndicator = "!" })
         $Miners.where({ $_.Workers.Pool.Variant.where({ $_ -notin $Session.Config.PoolName }) }).ForEach({ $_.SideIndicator = "!" })
         $Miners.where({ $_.Updated -lt $Session.BeginCycleTime.AddDays(-1) }).ForEach({ $_.SideIndicator = "!" })
-        if (-not $Session.Config.UseUnprofitableAlgorithms) { $Miners.where({ $Session.UnprofitableAlgorithms[$_.Workers.Pool[0].Algorithm] -match "\*|1" -or ($_.Workers.Pool[1] -and $Session.UnprofitableAlgorithms[$_.Workers.Pool[1].Algorithm] -match "\*|2") }).ForEach({ $_.SideIndicator = "!" }) }
+        $Miners.where({ -not $_.Workers.Pool[0].Available -or ($_.Workers.Pool[1] -and -not $_.Workers.Pool[1].Available) }).ForEach({ $_.SideIndicator = "!" })
         $Miners.where({ $_.SideIndicator -eq "!" }).ForEach({ $_.Available = $false; $_.Benchmark = $false; $_.Best = $false; $_.MeasurePowerConsumption = $false; $_.KeepRunning = $false })
         Remove-Variable MinerDevices
 

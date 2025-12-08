@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.4
-Version date:   2025/12/06
+Version:        6.7.5
+Version date:   2025/12/08
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -242,7 +242,7 @@ function Update-TabControl {
             elseif ($Session.MinersBest) { 
                 if (-not $LegacyGUIelements.ActiveMinersDGV.SelectedRows) { 
                     $LegacyGUIelements.ActiveMinersDGV.BeginInit()
-                    $LegacyGUIelements.ActiveMinersDGV.DataSource = $Session.MinersBest | Select-Object @(
+                    $LegacyGUIelements.ActiveMinersDGV.DataSource = $Session.MinersBest.PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object @(
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
                         @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
@@ -251,9 +251,9 @@ function Update-TabControl {
                         @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Profit (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Power consumption (live)"; Expression = { if ($_.MeasurePowerConsumption) { if ($_.Status -eq "Running") { "Measuring..." } else { "Unmeasured" } } else { if ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
-                        @{ Name = "Algorithm (variant) [Currency]"; Expression = { $_.WorkersRunning.ForEach({ "$($_.Pool.AlgorithmVariant)$(if ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
-                        @{ Name = "Pool"; Expression = { $_.WorkersRunning.Pool.Name -join " & " } }
-                        @{ Name = "Hashrate (live)"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.WorkersRunning.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
+                        @{ Name = "Algorithm (variant) [Currency]"; Expression = { $_.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(if ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
+                        @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } }
+                        @{ Name = "Hashrate (live)"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Workers.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
                         @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         # @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     ) | Out-DataTable
