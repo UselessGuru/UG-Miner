@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.5
-Version date:   2025/12/08
+Version:        6.7.6
+Version date:   2025/12/09
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.5"
+    Version      = [System.Version]"6.7.6"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -554,7 +554,7 @@ $env:GPU_MAX_WORKGROUP_SIZE = 256
 $Session.BrainData = @{ }
 $Session.Brains = @{ }
 $Session.CoreLoopCounter = [Int64]0
-$Session.CoreError = @()
+$Session.CoreCycleError = @()
 $Session.CPUfeatures = (Get-CpuId).Features | Sort-Object
 $Session.CycleStarts = @()
 $Session.Donation = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
@@ -798,7 +798,7 @@ function MainLoop {
 
                     $LegacyGUIelements.ButtonPause.Enabled = $true
                     $LegacyGUIelements.ButtonStop.Enabled = $true
-                    if (-not $Session.MiningStatus) { $host.UI.RawUI.FlushInputBuffers() }
+                    if (-not $Session.MiningStatus) { $host.UI.RawUI.FlushInputBuffer() }
                     break
                 }
             }
@@ -959,10 +959,14 @@ function MainLoop {
                         break
                     }
                     "q" { 
-                        $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
-                        if ($MsgBoxInput -eq "Yes") { 
-                            Write-Host
-                            Exit-UGminer
+                        if (-not $Session.PopupActive) { 
+                            $Session.PopupActive = $true
+                            $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (4 + 32 + 4096))
+                            if ($Session.PopupInput -eq 6) { 
+                                Write-Host
+                                Exit-UGminer
+                            }
+                            $Session.Remove("PopupActive")
                         }
                     }
                     "r" { 
@@ -1279,7 +1283,7 @@ function MainLoop {
             }
         }
 
-        $Error.Clear()
+        # $Error.Clear()
         [System.GC]::Collect()
         [System.GC]::WaitForPendingFinalizers()
         [System.GC]::Collect()

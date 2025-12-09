@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.5
-Version date:   2025/12/08
+Version:        6.7.6
+Version date:   2025/12/09
 #>
 
 # Added support for RTX 50XX GPUs.

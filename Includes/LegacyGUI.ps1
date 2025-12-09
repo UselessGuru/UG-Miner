@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.5
-Version date:   2025/12/08
+Version:        6.7.6
+Version date:   2025/12/09
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1818,31 +1818,32 @@ $LegacyGUIform.Add_FormClosing(
         if ($Session.Config.LegacyGUI -and $KeyPressed.Key -ne "q") { 
             if (-not $Session.Config.ShowConsole) {
                 # If console is not visible there is no user friendly way to end script
-                $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNo, 32, "Button2")
-                if ($MsgBoxInput -eq "No") { 
+                $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (4 + 32 + 4096))
+                if ($Session.PopupInput -eq 7 <#No#>) { 
                     $_.Cancel = $true
-                    Remove-Variable MsgBoxInput
+                    $Session.Remove("PopupInput")
                     return
                 }
             }
             else { 
-                $MsgBoxInput = [System.Windows.Forms.MessageBox]::Show("Do you also want to shut down $($Session.Branding.ProductLabel)?", "$($Session.Branding.ProductLabel)", [System.Windows.Forms.MessageBoxButtons]::YesNoCancel, 32, "Button3")
-                if ($MsgBoxInput -eq "Cancel") { 
+                $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you also want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (3 + 32 + 4096))
+                if ($Session.PopupInput -eq 2 <#Cancel#>) { 
                     $_.Cancel = $true
-                    Remove-Variable MsgBoxInput
+                    $Session.Remove("PopupInput")
                     return
                 }
             }
             $Session.Config.LegacyGUI = $false
         }
 
-        if ($MsgBoxInput -eq "Yes") { 
+        if ($Session.PopupInput -eq 6 <#Yes#>) { 
             # Save window settings
             if ($LegacyGUIform.DesktopBounds.Width -ge 0) { [PSCustomObject]@{ Top = $LegacyGUIform.Top; Left = $LegacyGUIform.Left; Height = $LegacyGUIform.Height; Width = $LegacyGUIform.Width } | ConvertTo-Json | Out-File -LiteralPath ".\Config\WindowSettings.json" -Force -ErrorAction Ignore }
 
             Exit-UGminer
         }
 
+        $Session.Remove("PopupInput")
         $_.Cancel = $true
         $Session.Config.LegacyGUI = $false
         $LegacyGUIform.WindowStateOriginal = $LegacyGUIform.WindowState

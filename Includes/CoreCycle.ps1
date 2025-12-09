@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           Core.ps1
 Version:        6.7.6
-Version date:   2025/12/08
+Version date:   2025/12/09
 #>
 
 using module .\Include.psm1
@@ -275,7 +275,7 @@ try {
                 Write-Message -Level Info "Donation run complete - thank you! Mining for you again. :-)"
                 $Session.Miners.where({ [MinerStatus]::Running, [MinerStatus]::DryRun -contains $_.Status }).ForEach({ $_.KeepRunning = $false; $_.Restart = $true })
                 $Session.Donation.Running = $false
-                # Setting 0 -> miner keepalive will not be of relevance and miners will be restartet at end of donation run
+                # Setting 0 -> miner keepalive will not be of relevance and miners will be restarted at end of donation run
                 $Session.Config.MinCycle = 0
                 $Session.Config.Pools = $Config.Pools
                 $Session.Config.PoolName = $Config.PoolName
@@ -1600,7 +1600,7 @@ try {
         Get-Job -State "Stopped" | Remove-Job -Force -ErrorAction Ignore | Out-Null
 
         if ($Error) { 
-            $Session.CoreError += $Error
+            $Session.CoreCycleError += $Error
             $Error.Clear()
         }
         [System.GC]::Collect()

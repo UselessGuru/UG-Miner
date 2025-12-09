@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.5
-Version date:   2025/12/08
+Version:        6.7.6
+Version date:   2025/12/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { return }

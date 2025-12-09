@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.5
-Version date:   2025/12/08
+Version:        6.7.6
+Version date:   2025/12/09
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1165,9 +1165,7 @@ function Start-BalancesTracker {
                 $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
                 $Global:BalancesTrackerRunspace.Open()
 
-                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Config", $Config)
                 $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Session", $Session)
-                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
                 [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
 
                 $PowerShell = [PowerShell]::Create()
@@ -1216,14 +1214,6 @@ function Stop-BalancesTracker {
 
         [System.GC]::Collect()
     }
-}
-
-function Get-CoinList { 
-    $Data = (Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/all/coinlist" -TimeoutSec 5 -ErrorAction Ignore).Data
-    $CoinList = [Ordered]@{ }
-    ($Data.PSObject.Properties.Name | Sort-Object).ForEach(
-        { $CoinList.$_ = $Data.$_.CoinName }
-    )
 }
 
 function Get-Rate { 
@@ -1323,7 +1313,7 @@ function Get-Rate {
         else { 
             Write-Message -Level Warn "Could not load exchange rates from 'min-api.cryptocompare.com'."
         }
-        $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime().AddMinutes(-14) # Trigger next attempt in 1 minute
+        $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime().AddMinutes(-14) # Trigger next attempt 1 minute before 'normal' refresh
     }
 }
 
@@ -1346,12 +1336,12 @@ function Write-Message {
         if ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost") { 
             # Write to console
             switch ($Level) { 
-                "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewline; break }
-                "Error"   { Write-Host $Message -ForegroundColor "Red" -NoNewline; break }
-                "Info"    { Write-Host $Message -ForegroundColor "White" -NoNewline; break }
-                "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" -NoNewline; break }
-                "Verbose" { Write-Host $Message -ForegroundColor "Yello" -NoNewline; break }
-                "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewline }
+                "Debug"   { Write-Host $Message -NoNewline -ForegroundColor "Blue"; break }
+                "Error"   { Write-Host $Message -NoNewline -ForegroundColor "Red"; break }
+                "Info"    { Write-Host $Message -NoNewline -ForegroundColor "White"; break }
+                "MemDbg"  { Write-Host $Message -NoNewline -ForegroundColor "Cyan"; break }
+                "Verbose" { Write-Host $Message -NoNewline -ForegroundColor "Yello"; break }
+                "Warn"    { Write-Host $Message -NoNewline -ForegroundColor "Magenta" }
             }
             $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
             Write-Host ""
@@ -2640,7 +2630,7 @@ filter ConvertTo-Hash {
 }
 
 function Get-DecimalsFromValue { 
-    # Used to limit absolute length of number
+    # Used to limit the absolute length of a number
     # The larger the value, the less decimal digits are returned
     # Maximal $DecimalsMax are returned
 
