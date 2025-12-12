@@ -373,7 +373,7 @@
 
             <!-- Log level -->
             <legend class=h6><b>Log level</b></legend>
-            <fieldset title="Sets the detail level of information written to the logfile and screen&#10;&#10;It is recommended to keep at least 'Info' enabled">
+            <fieldset title="Sets the detail level of information written to the system log&#10;&#10;It is recommended to keep at least 'Info' enabled">
               <div style="padding-top: 0.3rem;" id="LogLevel"></div>
             </fieldset>
             <br>
@@ -383,10 +383,10 @@
             <fieldset>
               <div style="padding-top: 0.3rem;" title="Interval duration to run background task to periodically collect pool balances & earnings data&#10;&#10;(min: 10, max: 60; default: 15)&#10;Set to 0 to disable the balance tracker&#10;&#10;Note: If set to 0 it will also disable pool balances summary in the web GUI dashboard and API">Poll pools for balances & earnings every
                 <input type="number" id="BalancesTrackerPollInterval" name="BalancesTrackerPollInterval" length=2 min=0 max=60 step=1 value=15 style="width: 2.7em; text-align:right;"> minutes
-              <div style="padding-top: 0.5rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
+              <div style="padding-top: 0.5rem;" title="Show 1hr / 6hrs / 24hr / 7 day & 30day pool earnings sums&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the text console and web GUI dashboard">
                 <input type="checkbox" class="toggle-switch" id="BalancesShowSums" name="BalancesShowSums" style="margin-left:20px"> Show earnings sums for each pool
               </div>
-              <div style="padding-top: 0.5rem;" title="Show 1hr / 24hr & 7day pool earnings averages&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the main text window and web dashboard">
+              <div style="padding-top: 0.5rem;" title="Show 1hr / 24hr & 7day pool earnings averages&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)&#10;&#10;This setting applies to the text console and web GUI dashboard">
                 <input type="checkbox" class="toggle-switch" id="BalancesShowAverages" name="BalancesShowAverages" style="margin-left:20px"> Show average earnings for each pool
               </div>
               <div style="padding-top: 0.5rem;" title="Pool balances will be shown in main (FIAT) currency&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
@@ -697,8 +697,8 @@
     if (Number.isInteger(config.Donation)) document.getElementById('Donation').value = parseInt(config.Donation);
     // Donation nag
     if (parseInt(document.getElementById('Donation').value) <= 0) {
-      $('.modal-title').html('&#128546 Donatio44n duration set to 0 minutes  &#128546');
-      $('.modal-body').html('Please help support the great team behind UG-Miner by leaving mining donations turned on&#10;&#10;Thank you!');
+      $('.modal-title').html('&#128546 Donation duration set to 0 minutes &#128546');
+      $('.modal-body').html('Please help support the great team behind UG-Miner by leaving mining donations turned on.&#10;&#10;Thank you!');
       $('#myModal').modal({ show: true });
     };
     document.getElementById('Interval').value = parseInt(config.Interval);

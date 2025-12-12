@@ -1,8 +1,22 @@
+Changelog UG-Miner 6.7.6 2025/12/??
+===================================
+
+Fixes:
+- Web GUI / Configuration editor: Minor rewording and less typos
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+
+Miner updates:
+- JayddeeCPU-v25.7
+- MiniZ-v2.5e3: Algorithm EvrProgPOW broken, use MiniZ-v2.5e2 instead
+
+
 Changelog UG-Miner 6.7.6 2025/12/09
 ===================================
 
 Enhancements:
-- Core / Legacy GUI: Make 'Quit UG-Miner' dialog box modal
+- Core / Legacy GUI: Make 'Do you want to shut down UG-Miner' dialog box modal
 
 Fixes:
 - Core: Not using all configured pools after donation run

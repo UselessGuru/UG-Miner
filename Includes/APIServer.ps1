@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.6
-Version date:   2025/12/09
+Version:        6.7.7
+Version date:   2025/12/12
 #>
 
 using module .\Include.psm1
@@ -1069,15 +1069,15 @@ while ($Session.APIversion -and $Server.IsListening) {
     }
 
     # Send the response
+    $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
     $Response.Headers.Add("Content-Type", $ContentType)
     $Response.StatusCode = $StatusCode
-    $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
     $Response.ContentLength64 = $ResponseBuffer.Length
     if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
     $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
     $Response.Close()
 
-    Remove-Variable ContentType, Data, Parameters, Response, ResponseBuffer, StatusCode -ErrorAction Ignore
+    Remove-Variable ContentType, Context, Data, Parameters, Response, ResponseBuffer, StatusCode -ErrorAction Ignore
 
     if ($GCstopWatch.Elapsed.TotalMinutes -gt 10) { 
         [System.GC]::Collect()

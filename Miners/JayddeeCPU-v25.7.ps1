@@ -17,16 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.6
-Version date:   2025/12/09
+Version:        6.7.7
+Version date:   2025/12/12
 #>
 
-# Added argon2d1000, argon2d16000 algos.
-# Target specific AES optimizations improve shavite for ARM64 & x86_64.
+# Fixed a bug calculating TTF longer than 1 year.
+# Faster argon2d.
+# Faster hamsi AVX512.
+# Faster switfftx AVX2.
+# Other small fixes and improvements.
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
 
-$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.6/cpuminer-opt-25.6-windows.zip"
+$URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.7/cpuminer-opt-25.7-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 if ((Compare-Object $AvailableMinerDevices.CPUfeatures @("AVX512", "SHA", "VAES")   -ExcludeDifferent -IncludeEqual -PassThru).Count -eq 3) { $Path = "Bin\$Name\cpuminer-avx512-sha-vaes.exe" }

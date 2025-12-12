@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.6
-Version date:   2025/12/09
+Version:        6.7.7
+Version date:   2025/12/12
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -867,7 +867,6 @@ public static class Kernel32
         }
 
         # Set local environment
-        New-Item -Path "Env:UGMINER_JOBNAME" -Value $JobName -Force | Out-Null
         ($EnvBlock | Select-Object).ForEach({ New-Item -Path "Env:$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force | Out-Null })
 
         # StartupInfo struct
@@ -905,7 +904,6 @@ public static class Kernel32
             Start-Sleep -Milliseconds 50
             $Loops --
         } while ($Loops -gt 0)
-        $MinerProcessId = $MinerProcess.ProcessId
 
         if ($null -eq $MinerProcess.Count) { 
             [PSCustomObject]@{ 
@@ -915,6 +913,7 @@ public static class Kernel32
             return
         }
 
+        $MinerProcessId = $MinerProcess.ProcessId
         [PSCustomObject]@{ 
             ConhostProcessId = $ProcessInfo.dwProcessId
             MinerProcessId   = $MinerProcessId
@@ -923,11 +922,10 @@ public static class Kernel32
         $ConhostProcess.Handle | Out-Null
         $ControllerProcess.Handle | Out-Null
         $MinerProcess.Handle | Out-Null
-        $ChildProcesses.ForEach({ $_.Handle | Out-Null })
 
         do { 
             if ($ControllerProcess.WaitForExit(250)) { 
-                # Kill process in bottum up order
+                # Kill process in bottom up order
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
                 (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore | Out-Null })
                 Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore | Out-Null
@@ -1043,20 +1041,6 @@ function Stop-CoreCycle {
 
     if ($Session.NewMiningStatus -eq "Idle") { 
         Clear-PoolData
-    }
-    else { 
-        # Stop all miners
-        foreach ($Miner in $Session.Miners.where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
-            $Miner.SetStatus([MinerStatus]::Idle)
-            $Session.Devices.where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-        }
-        Remove-Variable Miner -ErrorAction Ignore
-        $Session.MinersBest = [Miner[]]@()
-        $Session.MinersBestPerDevice = [Miner[]]@()
-        $Session.MiningEarnings = [Double]0
-        $Session.MiningPowerConsumption = [Double]0
-        $Session.MiningPowerCost = [Double]0
-        $Session.MiningProfit = [Double]0
     }
 
     if ($Global:CoreCycleRunspace) { 
@@ -1254,13 +1238,12 @@ function Get-Rate {
                         }
                     )
                 }
-                else { 
-                    if ($Response.Message -eq "You are over your rate limit please upgrade your account!") { 
-                        Write-Message -Level Error "min-api.cryptocompare.com API rate exceeded. You need to register an account with cryptocompare.com and add the API key as 'CryptoCompareAPIKeyParam' to the configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'."
-                    }
+                elseif ($Response.Message -eq "You are over your rate limit please upgrade your account!") { 
+                    Write-Message -Level Error "min-api.cryptocompare.com API rate exceeded. You need to register an account with cryptocompare.com and add the API key as 'CryptoCompareAPIKeyParam' to the configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'."
                 }
             }
         )
+        Remove-Variable TSyms, TSymBatches
 
         if ($Currencies = $Rates.BTC.PSObject.Properties.Name) { 
             $Currencies.where({ $_ -ne "BTC" }).ForEach(
@@ -1282,13 +1265,13 @@ function Get-Rate {
                         $Currency = $_
                         $mCurrency = "m$Currency"
                         $Rates | Add-Member $mCurrency $Rates.$Currency.PSObject.Copy() -Force
-                        $Rates.$mCurrency.PSOBject.Properties.Name.ForEach({ $Rates.$mCurrency | Add-Member $_ ([Double]$Rates.$Currency.$_ / 1000) -Force })
+                        $Rates.$mCurrency.PSObject.Properties.Name.ForEach({ $Rates.$mCurrency | Add-Member $_ ([Double]$Rates.$Currency.$_ / 1000) -Force })
                     }
                 )
-                $Rates.PSOBject.Properties.Name.ForEach(
+                $Rates.PSObject.Properties.Name.ForEach(
                     { 
                         $Currency = $_
-                        $Rates.PSOBject.Properties.Name.where({ $Currencies -contains $_ }).ForEach(
+                        $Rates.PSObject.Properties.Name.where({ $Currencies -contains $_ }).ForEach(
                             { 
                                 $mCurrency = "m$($_)"
                                 $Rates.$Currency | Add-Member $mCurrency ([Double]$Rates.$Currency.$_ * 1000) -Force
@@ -1297,6 +1280,7 @@ function Get-Rate {
                     }
                 )
             }
+
             Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
             $Session.Rates = $Rates
             $Session.RefreshTimestamp = (Get-Date -Format "G")
@@ -1483,10 +1467,10 @@ function Get-TimeSince {
     $TimeSpan = New-TimeSpan -Start $TimeStamp -End ([DateTime]::Now)
     $TimeSince = ""
 
-    if ($TimeSpan.Days -ge 1) { $TimeSince += " {0:n0} day$(if ($TimeSpan.Days -ne 1) { "s" })" -f $TimeSpan.Days }
-    if ($TimeSpan.Hours -ge 1) { $TimeSince += " {0:n0} hour$(if ($TimeSpan.Hours -ne 1) { "s" })" -f $TimeSpan.Hours }
-    if ($TimeSpan.Minutes -ge 1) { $TimeSince += " {0:n0} minute$(if ($TimeSpan.Minutes -ne 1) { "s" })" -f $TimeSpan.Minutes }
-    if ($TimeSpan.Seconds -ge 1) { $TimeSince += " {0:n0} second$(if ($TimeSpan.Seconds -ne 1) { "s" })" -f $TimeSpan.Seconds }
+    if ($TimeSpan.Days -ge 1)    { $TimeSince = "{0:n0} day$(if ($TimeSpan.Days -ne 1) { "s" })" -f $TimeSpan.Days }
+    if ($TimeSpan.Hours -ge 1)   { $TimeSince = "$TimeSince {0:n0} hour$(if ($TimeSpan.Hours -ne 1) { "s" })" -f $TimeSpan.Hours }
+    if ($TimeSpan.Minutes -ge 1) { $TimeSince = "$TimeSince {0:n0} minute$(if ($TimeSpan.Minutes -ne 1) { "s" })" -f $TimeSpan.Minutes }
+    if ($TimeSpan.Seconds -ge 1) { $TimeSince = "$TimeSince {0:n0} second$(if ($TimeSpan.Seconds -ne 1) { "s" })" -f $TimeSpan.Seconds }
     if ($TimeSince) { $TimeSince += " ago" } else { $TimeSince = "just now" }
 
     return $TimeSince
@@ -1549,7 +1533,7 @@ function Get-DonationConfig {
             switch -regex ($_) { 
                 "^MiningDutch$" { 
                     if ($DonationPoolsData."$($_)UserName") { 
-                        # not all devs have a known HashCryptos, MiningDutch aaccount
+                        # not all devs have a known MiningDutch aaccount
                         $DonationPoolConfig.UserName = $DonationPoolsData."$($_)UserName"
                         $DonationPoolConfig.Variant = if ($Session.Config.Pools[$_].Variant) { $Session.Config.Pools[$_].Variant } else { $Session.Config.PoolName -match $_ }
                         $DonationPoolsConfig.$_ = $DonationPoolConfig
@@ -1711,6 +1695,8 @@ function Write-Configuration {
     $NewConfig.Remove("ConfigFile")
     $NewConfig.Remove("PoolsConfig")
 
+    $Session.FreshConfig = $false
+
     $Header = 
     "// This file was generated by $($Session.Branding.ProductLabel)
 // $($Session.Branding.ProductLabel) will automatically add / convert / rename / update new settings when updating to a new version
@@ -1725,8 +1711,6 @@ function Write-Configuration {
         $Mutex.ReleaseMutex()
     }
     Remove-Variable Mutex
-
-    $Session.FreshConfig = $false
 }
 
 function Edit-File { 
@@ -1778,7 +1762,7 @@ function Edit-File {
         catch { }
     }
 
-    if ($FileWriteTime -ne (Get-Item -Path $FileName).LastWriteTime) { 
+    if ((Get-Item -Path $FileName).LastWriteTime -gt $FileWriteTime) { 
         Write-Message -Level Verbose "Configuration saved to '$FileName'. It will become fully active in the next cycle."
         return "Configuration saved to '$FileName'.`nIt will become fully active in the next cycle."
     }

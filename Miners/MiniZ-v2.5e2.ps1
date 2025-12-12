@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.6
-Version date:   2025/12/09
+Version:        6.7.7
+Version date:   2025/12/12
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -35,11 +35,13 @@ $Path = "Bin\$Name\miniZ.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Equihash1254"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 3.0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 4.0; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
+    @{ Algorithm = "Equihash1254"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 3.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 4.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ ";         ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
+    @{ Algorithm = "EvrProgPow";   Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
 
-    @{ Algorithm = "Equihash1254"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
+    @{ Algorithm = "Equihash1254"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505"; Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
+    @{ Algorithm = "EvrProgPow";   Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
 )
 
 $Algorithms = $Algorithms.where({ $MinerPools[0].($_.Algorithm) })

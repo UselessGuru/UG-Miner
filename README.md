@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.7.6 / Updated 2025/12/09
+Version 6.7.7 / Updated 2025/12/12
 
 Copyright (c) 2018-2025 UselessGuru
 
@@ -75,7 +75,7 @@ It is recommended to run UG-Miner with local computer administrator privileges (
 UG-Miner polls the configured pools in regular intervals to get up-to-date pricing and coin availability information.  
 
 You must select at least one pool.  
-If you select several pools, then your earnings might be split across different pools. UG-Miner will always direct the miners to the pools with the highest earnings.  
+If you select several pools, then your earnings might be split across different pools. UG-Miner will always direct the miners to the pools with the highest earnings (or profit depending on your settings).  
 It is recommended to keep the number of configured pools to a minimum as this might dilute your earnings and it could take longer to reach the pools payout thresholds.
 
 #### Poolnames ending in *24h:
