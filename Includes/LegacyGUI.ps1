@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.7
-Version date:   2025/12/12
+Version:        6.7.8
+Version date:   2025/12/14
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -373,7 +373,7 @@ function Update-TabControl {
                         )
                         $ChartArea.AxisY.Maximum = ($DaySum | Measure-Object -Maximum).Maximum * 1.05
 
-                        Remove-Variable I, Pool
+                        Remove-Variable ChartArea, ChartTitle, Color, DaySum, I, Pool
                     }
                     catch { }
                 }
@@ -434,6 +434,7 @@ function Update-TabControl {
                 else { 
                     $LegacyGUIelements.BalancesLabel.Text = "Balances tracker is running - waiting for balances data..."
                 }
+                Remove-Variable DataSource
             }
             else { 
                 $LegacyGUIelements.BalancesLabel.Text = "Balances tracker is disabled (configuration item 'BalancesTrackerPollInterval' -eq 0)"
@@ -531,6 +532,7 @@ function Update-TabControl {
                 $LegacyGUIelements.MinersLabel.Text = "Waiting for miner data..."
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }
+            Remove-Variable DataSource
             break
         }
         "Pools" { 
@@ -607,12 +609,14 @@ function Update-TabControl {
                         $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $true
                     }
                     $LegacyGUIelements.PoolsDGV.EndInit()
+                    Remove-Variable Factor, Unit
                 }
             }
             else { 
                 $LegacyGUIelements.PoolsLabel.Text = "Waiting for pool data..."
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
             }
+            Remove-Variable DataSource
             break
         }
         # "RigMonitor" { 
@@ -1842,9 +1846,10 @@ $LegacyGUIform.Add_FormClosing(
 
             Exit-UGminer
         }
+        # Do not close form
+        $_.Cancel = $true
 
         $Session.Remove("PopupInput")
-        $_.Cancel = $true
         $Session.Config.LegacyGUI = $false
         $LegacyGUIform.WindowStateOriginal = $LegacyGUIform.WindowState
         $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized

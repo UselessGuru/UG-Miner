@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.7
-Version date:   2025/12/12
+Version:        6.7.8
+Version date:   2025/12/14
 #>
 
-# (XEL) Minor performance improvement on 30xx, 40xx, and 170hx cards
-# Bug fixes: Failed to load CUDA / NVML errors when running in Docker
+# (XEL) Add xelishashv3 algorithm (dev fee 2%)
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.22.3/rigel-1.22.3-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.23.0/rigel-1.23.0-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -78,8 +77,7 @@ $Algorithms = @(
     @{ Algorithms = @("ProgPowZano", "");                    Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm progpowz" }
     @{ Algorithms = @("SHA512256d", "");                     Fee = @(0.01);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha512256d" }
     @{ Algorithms = @("SHA3x","");                           Fee = @(0.01);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha3x" }
-    @{ Algorithms = @("XelisHash", "");                      Fee = @(0.03);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm xelishash" }
-    @{ Algorithms = @("XelisHashV2", "");                    Fee = @(0.02);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm xelishashv2" }
+    @{ Algorithms = @("XelisHashV3", "");                    Fee = @(0.02);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm xelishashv3" }
 )
 
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })

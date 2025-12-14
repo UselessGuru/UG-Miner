@@ -17,30 +17,29 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.7
-Version date:   2025/12/12
+Version:        6.7.8
+Version date:   2025/12/14
 #>
 
 # Qubitcoin: 
 # Performance improvement for CMP cards(~5%)
 # Minor improvement for the other gpus
 
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"450.80.02") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"528.33.00") }))) { return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.7.2/onezerominer-win64-1.7.2.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.7.3/onezerominer-win64-1.7.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @( 
-    @{ Algorithms = @("QHash", "");            Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
-    @{ Algorithms = @("QHash", "XelisHashV2"); Type = "AMD"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a qhash", " --a2 xelis") }
-    @{ Algorithms = @("XelisHashV2", "");      Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a xelis") }
+    @{ Algorithms = @("XelisHashV3", "");      Type = "AMD"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 10); ExcludePools = @(@(), @()); Arguments = @(" -a xelishashv3") }
 
+    @{ Algorithms = @("CrypticHashV2", "");    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a cryptix_ox8") }
     @{ Algorithms = @("DynexSolve", "");       Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 120); ExcludePools = @(@(), @()); Arguments = @(" -a dynex") }
     @{ Algorithms = @("QHash", "");            Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
-    @{ Algorithms = @("Qhash", "XelisHashV2"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash"," --a2 xelis") }
-    @{ Algorithms = @("XelisHashV2", "");      Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a xelis") }
+    @{ Algorithms = @("Qhash", "XelisHashV3"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash"," --a2 xelishashv3") }
+    @{ Algorithms = @("XelisHashV3", "");      Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a xelishashv3") }
 )
 
 # $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })

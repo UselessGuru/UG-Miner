@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.7
-Version date:   2025/12/12
+Version:        6.7.8
+Version date:   2025/12/14
 #>
 
 using module .\Include.psm1
@@ -30,10 +30,10 @@ using module .\Include.psm1
 
 $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 
+(Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
+
 $Session.Miners = [Miner[]]@()
 $Session.Pools = [Pool[]]@()
-
-(Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
 
 try { 
     do { 
@@ -786,7 +786,8 @@ try {
             Write-Message -Level Info ($Message -replace "<br>", " ")
             Remove-Variable Message
 
-            $MinersNew = ((Get-ChildItem -Path ".\Miners\*.ps1").ForEach(
+            $MinersNew = (
+                (Get-ChildItem -Path ".\Miners\*.ps1").ForEach(
                     { 
                         $MinerFileName = $_.Name
                         try { 
@@ -811,7 +812,7 @@ try {
                             $Miner.PSObject.Properties.Remove("Fee")
                             $Miner | Add-Member BaseName_Version_Device (($Miner.Name -split "-")[0..2] -join "-")
                             $Miner | Add-Member Info "$($Miner.BaseName_Version_Device) {$($Miner.Workers.ForEach({ $_.Pool.AlgorithmVariant, $_.Pool.Name -join "@" }) -join " & ")}$(if (($Miner.Name -split "-")[4]) { " ($(($Miner.Name -split "-")[4]))" })"
-                            $Miner -as $_.API
+                            $Miner -as $Miner.API
                         }
                         catch { 
                             Write-Message -Level Error "Failed to add miner '$($Miner.Name)' as '$($Miner.API)' ($($Miner | ConvertTo-Json -Compress))"
@@ -820,7 +821,8 @@ try {
                             $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
                         }
                     }
-                ) | Sort-Object -Property Info)
+                )
+             | Sort-Object -Property Info)
             Remove-Variable Algorithm, AvailableMinerPools, Miner, MinerFileName, MinerPools -ErrorAction Ignore
 
             if ($Session.Config.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info }) }
@@ -1179,10 +1181,10 @@ try {
             if ($Session.CalculatePowerCost -and ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) -lt $Session.Config.ProfitabilityThreshold) { 
                 # Mining earnings/profit is below threshold
                 $MinersBest = [Miner[]]@()
-                $Text = "Mining profit of {0} {1:n} / day is below the configured threshold of {0} {2:n} / day. Mining is suspended until the threshold is reached." -f $Session.Config.FIATcurrency, ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.Config.ProfitabilityThreshold
-                Write-Message -Level Warn ($Text -replace " / day", "/day")
-                $Summary += "$Text`n"
-                Remove-Variable Text
+                $Message = "Mining profit of {0} {1:n} / day is below the configured threshold of {0} {2:n} / day. Mining is suspended until the threshold is reached." -f $Session.Config.FIATcurrency, ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.Config.ProfitabilityThreshold
+                Write-Message -Level Warn ($Message -replace " / day", "/day")
+                $Summary += "$Message`n"
+                Remove-Variable Message
             }
             else { 
                 $MinersBest.ForEach({ $_.Best = $true })
@@ -1247,7 +1249,7 @@ try {
             continue
         }
 
-        foreach ($Miner in @($Miners.where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })) { 
+        foreach ($Miner in ($Miners.where({ [MinerStatus]::DryRun, [MinerStatus]::Running -contains $_.Status }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })) { 
             if ($Miner.Status -eq [MinerStatus]::Running -and $Miner.GetStatus() -ne [MinerStatus]::Running) { 
                 $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                 Write-Message -Level Error "Miner $($Miner.StatusInfo)"
@@ -1461,7 +1463,7 @@ try {
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [attempt $($Miner.Activated) of $($Session.WatchdogCount + 1); min. $($Miner.MinDataSample) sample$(if ($Miner.MinDataSample -ne 1) { "s" })]..."
             }
         }
-        Remove-Variable DataCollectInterval, Miner, Message -ErrorAction Ignore
+        Remove-Variable DataCollectInterval, Message, Miner -ErrorAction Ignore
 
         $Session.RefreshNeeded = $true
 
