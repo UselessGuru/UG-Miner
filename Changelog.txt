@@ -1,3 +1,14 @@
+Changelog UG-Miner 6.7.9 2025/12/15
+===================================
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+
+Fixes:
+- Core / Includes.psm1: Error in line 4177 (function Read-ConfigFiles/Get-PoolsConfig, regression from v6.7.3)
+- Web GUI: '/functions/removeorphanedminerstats' not removing stats
+
+
 Changelog UG-Miner 6.7.8 2025/12/14
 ===================================
 
@@ -71,7 +82,7 @@ Changes:
 
 Enhancements:
 - Core: Added configuration item 'UseUnprofitableAlgorithms' (default value: false)
-- Core / Includes.psm1: Function 'Read-ConfigFile' only builds pool configuration for configured pools
+- Core / Includes.psm1: Function 'Read-ConfigFiles' only builds pool configuration for configured pools
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations

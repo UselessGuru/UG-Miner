@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.8
-Version date:   2025/12/14
+Version:        6.7.9
+Version date:   2025/12/15
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return } # Cuda error in func 'argon2d_hash_cuda' at line 89 : an illegal instruction was encountered on GTX 750

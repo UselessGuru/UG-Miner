@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.8
-Version date:   2025/12/14
+Version:        6.7.9
+Version date:   2025/12/15
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3977,6 +3977,7 @@ function Read-Config {
         [Parameter (Mandatory = $true)]
         [String]$PoolsConfigFile
     )
+
     function Read-ConfigFiles { 
 
         param (
@@ -4029,9 +4030,7 @@ function Read-Config {
                         $PoolConfig.Remove("Algorithm")
 
                         # Merge default config data with custom pool config
-                        if ($CustomPoolConfig = [System.Collections.SortedList]::New($Config.Pools.$PoolName, [StringComparer]::OrdinalIgnoreCase)) { 
-                            $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $CustomPoolConfig -Unique $true
-                        }
+                        if ($Config.Pools.$PoolName) { $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $Config.Pools.$PoolName -Unique $true }
 
                         if (-not $PoolConfig.EarningsAdjustmentFactor) { $PoolConfig.EarningsAdjustmentFactor = $ConfigFromFile.EarningsAdjustmentFactor }
                         if ($PoolConfig.EarningsAdjustmentFactor -le 0 -or $PoolConfig.EarningsAdjustmentFactor -gt 10) { 
@@ -4196,4 +4195,11 @@ function Read-Config {
             $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
         }
     }
+}
+
+function Get-ObsoleteMinerStats { 
+    $StatFiles = @(Get-ChildItem ".\Stats\*" -Include "*_Hashrate.txt", "*_PowerConsumption.txt").BaseName
+    $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
+
+    return @($StatFiles.where({ (($_ -split "-")[0, 1] -join "-") -notin $MinerNames }))
 }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.8
-Version date:   2025/12/14
+Version:        6.7.9
+Version date:   2025/12/15
 #>
 
 using module .\Includes\Include.psm1
@@ -178,7 +178,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Int]$PoolAPItimeout = 20, # Time (in seconds) until it aborts the pool request (useful if a pool's API is stuck). Note: do not set this value too small or UG-Miner will not be able to get any pool data
     [Parameter (Mandatory = $false)]
-    [String]$PoolsConfigFile = ".\Config\PoolsConfig.json", # Config.Pools file name
+    [String]$PoolsConfigFile = ".\Config\PoolsConfig.json", # Pools configuration file name
     [Parameter (Mandatory = $false)]
     [String[]]$PoolName = @("HashCryptosPlus", "HiveON", "MiningDutchPlus", "NiceHash", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "HiveON", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ZPool", "ZPool24hr", "ZPoolPlus"
     [Parameter (Mandatory = $false)]
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.8"
+    Version      = [System.Version]"6.7.9"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

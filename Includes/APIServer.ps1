@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.8
-Version date:   2025/12/14
+Version:        6.7.9
+Version date:   2025/12/15
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.20"
+$APIversion = "6.0.22"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -339,7 +339,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             else { 
                 $Data = "Miner with key '$Key' not found."
             }
-            Remove-Variable Miner -ErrorAction Ignore
+            Remove-Variable Miner
             break
         }
         "/functions/log/get" { 
@@ -394,13 +394,14 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/functions/removeorphanedminerstats" { 
-            if ($StatNames = Remove-ObsoleteMinerStats) { 
-                $Data = $StatNames | ConvertTo-Json
+            if ($ObsoleteMinerStats = Get-ObsoleteMinerStats) { 
+                $ObsoleteMinerStats.foreach({ Remove-Stat $_ })
+                $Data = $ObsoleteMinerStats | ConvertTo-Json
             }
             else { 
                 $Data = "No matching stats found."
             }
-            Remove-Variable StatNames -ErrorAction Ignore
+            Remove-Variable ObsoleteMinerStats -ErrorAction Ignore
             break
         }
         "/functions/stat/disable" { 
