@@ -1254,7 +1254,7 @@ function MainLoop {
 
                 if ($Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
 
-                    if ($Session.Config.UIstyle -ne "full" -and $Session.MinersRunning) { Write-Host -ForegroundColor DarkYellow "$(if ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(if ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(if ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
+                    if ($Session.Config.UIstyle -ne "full" -and $Session.MinersBenchmarkingOrMeasuring) { Write-Host -ForegroundColor DarkYellow "$(if ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(if ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(if ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
 
                     $Colour = if ($Session.MinersRunning -and ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement)) { "DarkYello" } else { "White" }
                     Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
