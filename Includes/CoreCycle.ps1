@@ -131,12 +131,12 @@ try {
         )
 
         # Power cost preparations
-        if ($Session.CalculatePowerCost = $Session.Config.CalculatePowerCost) { 
+        if ($Session.Config.CalculatePowerCost) { 
             if ($Session.EnabledDevices.Count -ge 1) { 
                 # HWiNFO64 verification
                 $RegistryPath = "HKCU:\Software\HWiNFO64\VSB"
                 if ($RegValue = Get-ItemProperty -Path $RegistryPath -ErrorAction Ignore) { 
-                    $HWiNFO64RegTime = Get-RegTime "HKCU:\Software\HWiNFO64\VSB"
+                    $HWiNFO64RegTime = Get-RegTime $RegistryPath
                     if ($Session.HWiNFO64RegTime -eq $HWiNFO64RegTime.AddSeconds(5)) { 
                         Write-Message -Level Warn "Power consumption data in registry has not been updated since $($Session.HWiNFO64RegTime.ToString("yyyy-MM-dd HH:mm:ss")) [HWiNFO64 not running???] - disabling power consumption readout and profit calculations."
                         $Session.CalculatePowerCost = $false
