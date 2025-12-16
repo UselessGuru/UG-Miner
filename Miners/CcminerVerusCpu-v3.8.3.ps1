@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.10
+Version:        6.7.11
 Version date:   2025/12/16
 #>
 
@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.0.6 is fastest, but has 0.85% miner fee
+    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } #  SRBMinerMulti-v3.0.7 is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })

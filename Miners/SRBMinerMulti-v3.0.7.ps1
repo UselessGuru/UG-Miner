@@ -17,22 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.10
+Version:        6.7.11
 Version date:   2025/12/16
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.6/SRBMiner-Multi-3-0-6-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.7/SRBMiner-Multi-3-0-7-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Added algorithm 'xelishashv3' (Xelis) for CPU mining, fee 1.5%*
-# Added support for dual mining XHASH/BLAKE3_DECRED on AMD RDNA architectures and NVIDIA GPUS
-# Performance improvement for algorithm 'tht'
-# Minor performance improvement for algorithms 'xelishashv2/_pepew' , 'ghostrider'
-# Bug fixes
+# Performance improvement for algorithm 'xelishashv3'
+# Fixed algorithm 'blake3_decred' and dual implementations [broke because of new Decred node update]
+# Removed algorithm 'xelishashv2'
+# Removed Intel GPU's dual mining kernels
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
@@ -135,7 +134,7 @@ $Algorithms = @(
     @{ Algorithms = @("YespowerTide", "");         Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowertide") }
     @{ Algorithms = @("YespowerUrx", "");          Type = "CPU"; Fee = @(0);      WarmupTimes = @(60, 15);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm YespowerUrx") }
     @{ Algorithms = @("Yescrypt", "");             Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yescrypt") }
-    @{ Algorithms = @("XelisHashV2", "");          Type = "CPU"; Fee = @(0.015);  WarmupTimes = @(90, 20);  ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-gpu --algorithm xelishashv2") }
+    @{ Algorithms = @("XelisHashV3", "");          Type = "CPU"; Fee = @(0.015);  WarmupTimes = @(90, 20);  ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-gpu --algorithm xelishashv3") }
     @{ Algorithms = @("XelisV2PepePow", "");       Type = "CPU"; Fee = @(0.015);  WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm xelishashv2_pepew") }
 
     @{ Algorithms = @("Autolykos2", "");                Type = "INTEL"; Fee = @(0.01);           MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm autolykos2 --autolykos2-preload") }
