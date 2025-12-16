@@ -131,7 +131,7 @@ try {
         )
 
         # Power cost preparations
-        if ($Session.Config.CalculatePowerCost) { 
+        if ($Session.CalculatePowerCost = $Session.Config.CalculatePowerCost) { 
             if ($Session.EnabledDevices.Count -ge 1) { 
                 # HWiNFO64 verification
                 $RegistryPath = "HKCU:\Software\HWiNFO64\VSB"
