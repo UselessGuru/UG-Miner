@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.9
-Version date:   2025/12/15
+Version:        6.7.10
+Version date:   2025/12/16
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.9"
+    Version      = [System.Version]"6.7.10"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -555,7 +555,7 @@ $Session.BrainData = @{ }
 $Session.Brains = @{ }
 $Session.CoreLoopCounter = [Int64]0
 $Session.CoreCycleError = @()
-$Session.CPUfeatures = (Get-CpuId).Features | Sort-Object
+$Session.CPUfeatures = (Get-CpuId).Features
 $Session.CycleStarts = @()
 $Session.Donation = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
 $Session.MiningEarnings = $Session.MiningProfit = $Session.MiningPowerCost = [Double]::NaN
@@ -577,8 +577,6 @@ Write-Message -Level Verbose "$($Session.Summary)"
 
 $Session.SupportedCPUDeviceVendors = @("AMD", "INTEL")
 $Session.SupportedGPUDeviceVendors = @("AMD", "INTEL", "NVIDIA")
-$Session.GPUArchitectureDbNvidia.PSObject.Properties.ForEach({ $_.Value.Model = $_.Value.Model -join "|" })
-$Session.GPUArchitectureDbAMD.PSObject.Properties.ForEach({ $_.Value = $_.Value -join "|" })
 
 $Session.Devices = Get-Device
 
@@ -804,7 +802,6 @@ function MainLoop {
             }
             Update-GUIstatus
             $Session.MiningStatus = $Session.NewMiningStatus
-            $Session.RefreshNeeded = $true
         }
     }
 
@@ -1207,8 +1204,6 @@ function MainLoop {
 
                 if ($Session.Config.UIstyle -eq "full" -or $Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement) { 
 
-                    if ($Session.NewMiningStatus -eq "running" -and $Session.Config.UIstyle -ne "full") { Write-Host -ForegroundColor DarkYellow "$(if ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(if ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(if ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
-
                     [System.Collections.ArrayList]$MinersActivatedLast24Hrs = $Session.Miners.where({ $_.Activated -and $_.EndTime.ToLocalTime().AddHours(24) -gt [DateTime]::Now })
 
                     if ($ProcessesIdle = $MinersActivatedLast24Hrs.where({ $_.Status -eq "Idle" })) { 
@@ -1258,7 +1253,10 @@ function MainLoop {
                 }
 
                 if ($Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
-                    $Colour = if ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement) { "DarkYello" } else { "White" }
+
+                    if ($Session.Config.UIstyle -ne "full" -and $Session.MinersRunning) { Write-Host -ForegroundColor DarkYellow "$(if ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(if ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(if ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
+
+                    $Colour = if ($Session.MinersRunning -and ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement)) { "DarkYello" } else { "White" }
                     Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
                     Remove-Variable Colour
 
@@ -1283,7 +1281,7 @@ function MainLoop {
             }
         }
 
-        # $Error.Clear()
+        $Error.Clear()
         [System.GC]::Collect()
         [System.GC]::WaitForPendingFinalizers()
         [System.GC]::Collect()

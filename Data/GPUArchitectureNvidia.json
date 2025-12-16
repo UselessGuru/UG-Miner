@@ -61,7 +61,7 @@
       "^QUADROGP\\d",
       "^QUADROP\\d",
       "^TESLAP\\d",
-      "TITANX"
+      "^TITANX"
     ]
   },
   "Turing": {
