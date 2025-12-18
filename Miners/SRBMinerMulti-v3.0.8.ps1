@@ -18,20 +18,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.7.11
-Version date:   2025/12/16
+Version date:   2025/12/18
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.7/SRBMiner-Multi-3-0-7-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.0.8/SRBMiner-Multi-3-0-8-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Performance improvement for algorithm 'xelishashv3'
-# Fixed algorithm 'blake3_decred' and dual implementations [broke because of new Decred node update]
-# Removed algorithm 'xelishashv2'
-# Removed Intel GPU's dual mining kernels
+# Added algorithm 'randomjuno' (Juno Cash) for CPU mining, fee 0.85%*
+# Performance improvement for algorithm 'xelishashv3' on some CPU's
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
@@ -109,6 +107,7 @@ $Algorithms = @(
     @{ Algorithms = @("RandomSfx", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(30, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomsfx --Randomx-use-1gb-pages") }
 #   @{ Algorithms = @("RandomxArq", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
     @{ Algorithms = @("RandomxEpic", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(30, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomepic --Randomx-use-1gb-pages") }
+    @{ Algorithms = @("RandomJuno", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomjuno --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomhScx", "");           Type = "CPU"; Fee = @(0.02);   WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomhscx --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomxScash", "");         Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomscash --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomXeq", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomxeq --Randomx-use-1gb-pages") }

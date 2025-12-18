@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.10
-Version date:   2025/12/16
+Version:        6.7.11
+Version date:   2025/12/18
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -759,7 +759,7 @@ function Update-GUIstatus {
             break
         }
         "Running" { 
-            if ($Session.MiningStatus -eq "Running" -and - $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
+            if ($Session.MiningStatus -eq "Running" -and -not $Global:CoreCycleRunspace) { 
                 $LegacyGUIelements.MiningStatusLabel.ForeColor = [System.Drawing.Color]::Blue
                 $LegacyGUIelements.MiningStatusLabel.Text = "$($Session.Branding.ProductLabel) is suspended"
                 $LegacyGUIelements.MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black

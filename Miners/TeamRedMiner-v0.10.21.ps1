@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.10
-Version date:   2025/12/16
+Version:        6.7.11
+Version date:   2025/12/18
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" }))) { return }
