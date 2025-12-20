@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.11
-Version date:   2025/12/18
+Version:        6.7.12
+Version date:   2025/12/20
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { return }
@@ -30,7 +30,7 @@ $DeviceEnumerator = "Type_Slot"
 
 $Algorithms = @(
     @{ Algorithms = @("Autolykos2", "");         Type = "AMD"; Fee = @(0.025); MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -algo Autolykos") }
-    @{ Algorithms = @("EtcHash", "");            Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45,  0); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" -algo Etchash") } # PhoenixMiner-v6.2c is fastest
+    @{ Algorithms = @("EtcHash", "");            Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" -algo Etchash") } # PhoenixMiner-v6.2c is fastest
     @{ Algorithms = @("Ethash", "");             Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" -algo Ethash") } # PhoenixMiner-v6.2c is fastest
     @{ Algorithms = @("EthashB3", "");           Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" -algo EthashB3") }
     @{ Algorithms = @("EvrProgPow", "");         Type = "AMD"; Fee = @(0.02);  MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100 -memTweak 2"; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" -algo Evrprogpow") }

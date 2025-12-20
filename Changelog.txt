@@ -1,3 +1,10 @@
+Changelog UG-Miner 6.7.12 2025/12/20
+====================================
+
+Miner updates:
+- BzMiner-v23.0.4
+
+
 Changelog UG-Miner 6.7.11 2025/12/18
 ====================================
 
@@ -6,7 +13,7 @@ Fixes:
 
 Miner updates:
 - SRBMinerMulti-v3.0.8
-- TeamBlackMiner-v2.29 (For AMD & CUDA -ge 13.1)
+- TeamBlackMiner-v2.29 (for AMD & CUDA -ge 13.1, keep v2.28 for older NVIDIA drivers/cards)
 
 
 Changelog UG-Miner 6.7.10 2025/12/16

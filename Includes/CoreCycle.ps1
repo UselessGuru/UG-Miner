@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           Core.ps1
 Version:        6.7.9
-Version date:   2025/12/18
+Version date:   2025/12/20
 #>
 
 using module .\Include.psm1
@@ -218,7 +218,7 @@ try {
                 $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
                 $UnprofitableAlgorithms.Keys.ForEach({ $Session.UnprofitableAlgorithms.$_ = $UnprofitableAlgorithms.$_ })
                 Remove-Variable UnprofitableAlgorithms
-                Write-Message -Level Info "$(if ($Session.UnprofitableAlgorithmsTimestamp) { "Updated" } else { "Loaded" }) list of unprofitable algorithms ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -ne 1) { "entries" } else { "entry" }))."
+                Write-Message -Level Info "$(if ($Session.UnprofitableAlgorithmsTimestamp) { "Refreshed" } else { "Loaded" }) list of unprofitable algorithms ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -ne 1) { "entries" } else { "entry" }))."
                 $Session.UnprofitableAlgorithmsTimestamp = (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime
             }
         }
@@ -418,46 +418,47 @@ try {
                     $Session.PoolsUpdated = $Pools.where({ $_.SideIndicator -eq "==" })
                     $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
 
-                    # Update existing pools, must not replace pool object as to not break the referenced to the miner worker pool
+                    # Update existing pools, must not replace pool object. Doing so would break the reference to the miner worker pool
                     $Session.PoolsUpdated.ForEach(
                         { 
                             $Key = $_.Key
-                            if ($UpdatedPool = $Session.PoolsNew.where({ $_.Key -eq $Key })[0]) { 
-                                $_.Accuracy = $UpdatedPool.Accuracy
-                                $_.AlgorithmVariant = $UpdatedPool.AlgorithmVariant
-                                $_.BlockHeight = $UpdatedPool.BlockHeight
-                                $_.CoinName = $UpdatedPool.CoinName
-                                $_.Currency = $UpdatedPool.Currency
-                                $_.DAGsizeGiB = $UpdatedPool.DAGsizeGiB
-                                $_.Disabled = $UpdatedPool.Disabled
-                                $_.EarningsAdjustmentFactor = $UpdatedPool.EarningsAdjustmentFactor
-                                $_.Epoch = $UpdatedPool.Epoch
-                                $_.Fee = $UpdatedPool.Fee
-                                $_.Host = $UpdatedPool.Host
-                                $_.Pass = $UpdatedPool.Pass
-                                $_.Port = $UpdatedPool.Port
-                                $_.PortSSL = $UpdatedPool.PortSSL
-                                $_.Price = $UpdatedPool.Price
-                                $_.Price_Bias = $UpdatedPool.Price_Bias
-                                $_.Reasons = $UpdatedPool.Reasons
-                                $_.Region = $UpdatedPool.Region
-                                $_.StablePrice = $UpdatedPool.StablePrice
-                                $_.Updated = $UpdatedPool.Updated
-                                $_.User = $UpdatedPool.User
-                                $_.WorkerName = $UpdatedPool.WorkerName
-                                $_.Workers = $UpdatedPool.Workers
+                            # Get data from new pool and update existing one
+                            if ($Pool = $Session.PoolsNew.where({ $_.Key -eq $Key })[0]) { 
+                                $_.Accuracy = $Pool.Accuracy
+                                $_.AlgorithmVariant = $Pool.AlgorithmVariant
+                                $_.BlockHeight = $Pool.BlockHeight
+                                $_.CoinName = $Pool.CoinName
+                                $_.Currency = $Pool.Currency
+                                $_.DAGsizeGiB = $Pool.DAGsizeGiB
+                                $_.Disabled = $Pool.Disabled
+                                $_.EarningsAdjustmentFactor = $Pool.EarningsAdjustmentFactor
+                                $_.Epoch = $Pool.Epoch
+                                $_.Fee = $Pool.Fee
+                                $_.Host = $Pool.Host
+                                $_.Pass = $Pool.Pass
+                                $_.Port = $Pool.Port
+                                $_.PortSSL = $Pool.PortSSL
+                                $_.Price = $Pool.Price
+                                $_.Price_Bias = $Pool.Price_Bias
+                                $_.Reasons = $Pool.Reasons
+                                $_.Region = $Pool.Region
+                                $_.StablePrice = $Pool.StablePrice
+                                $_.Updated = $Pool.Updated
+                                $_.User = $Pool.User
+                                $_.WorkerName = $Pool.WorkerName
+                                $_.Workers = $Pool.Workers
                             }
                         }
                     )
-                    Remove-Variable Key, UpdatedPool -ErrorAction Ignore
+                    Remove-Variable Key, Pool -ErrorAction Ignore
 
                     $Pools.ForEach(
                         { 
                             $_.Best = $false
                             $_.Prioritize = $false
 
-                            # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL; must cast to array
-                            $_.PoolPorts = @($(if ($Session.Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } else { $null }), $(if ($Session.Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } else { $null }))
+                            # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL
+                            $_.PoolPorts = $(if ($Session.Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } else { $null }), $(if ($Session.Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } else { $null })
                         }
                     )
 

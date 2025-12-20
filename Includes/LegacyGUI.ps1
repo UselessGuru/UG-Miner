@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.11
-Version date:   2025/12/18
+Version:        6.7.12
+Version date:   2025/12/20
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -74,9 +74,9 @@ function Resize-Form {
         $LegacyGUIelements.TabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIelements.MiningStatusLabel.Height - $LegacyGUIelements.MiningSummaryLabel.Height - $LegacyGUIelements.EditConfigLink.Height - $LegacyGUIelements.EditConfigLink.Height + 3
         $LegacyGUIelements.TabControl.Width = $LegacyGUIform.ClientSize.Width - 16
 
-        $LegacyGUIelements.ButtonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - $LegacyGUIelements.ButtonStart.Width - 42), 2)
-        $LegacyGUIelements.ButtonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - 32), 2)
-        $LegacyGUIelements.ButtonStop.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - 22), 2)
+        $LegacyGUIelements.ButtonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - $LegacyGUIelements.ButtonStart.Width - 42), 10)
+        $LegacyGUIelements.ButtonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - 32), 10)
+        $LegacyGUIelements.ButtonStop.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - 22), 10)
 
         # $LegacyGUIelements.EditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUIelements.TabControl.Width - $LegacyGUIelements.EditMonitoringLink.Width - 12), 6)
         $LegacyGUIelements.MiningSummaryLabel.Width = $LegacyGUIelements.ActiveMinersDGV.Width = $LegacyGUIelements.EarningsChart.Width = $LegacyGUIelements.BalancesDGV.Width = $LegacyGUIelements.MinersPanel.Width = $LegacyGUIelements.MinersDGV.Width = $LegacyGUIelements.PoolsPanel.Width = $LegacyGUIelements.PoolsDGV.Width = $LegacyGUIelements.SwitchingLogDGV.Width = $LegacyGUIelements.WatchdogTimersDGV.Width = $LegacyGUIform.ClientSize.Width - 44
@@ -476,15 +476,15 @@ function Update-TabControl {
                 Remove-Variable Bias
             }
 
-            if ($Session.NewMiningStatus -eq "Idle") { 
+            if ($Session.MiningStatus -eq "Idle") { 
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is stopped"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }
-            elseif ($Session.NewMiningStatus -eq "Paused") { 
+            elseif ($Session.MiningStatus -eq "Paused") { 
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is paused"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }
-            elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Miners -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
+            elseif ($Session.MiningStatus -eq "Running" -and -not $Global:CoreCycleRunspace) { 
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is suspended"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }

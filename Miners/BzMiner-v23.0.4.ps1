@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.7.12
-Version date:   2025/12/18
+Version date:   2025/12/20
 #>
 
 # Bug fix: latest nvidia drivers (580+) on windows causing crash

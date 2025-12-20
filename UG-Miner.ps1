@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.11
-Version date:   2025/12/18
+Version:        6.7.12
+Version date:   2025/12/20
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.11"
+    Version      = [System.Version]"6.7.12"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -340,7 +340,7 @@ Write-Host " ✔  (running PWSH version $($PSVersionTable.PSVersion)" -Foregroun
 if ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { Write-Host " [recommended version is $($RecommendedPWSHversion)]" -ForegroundColor DarkYellow -NoNewline }
 Write-Host ")" -ForegroundColor Green
 
-# Another instance might already be running. Wait no more than 20 seconds (previous instance might be from autoupdate)
+# Another instance might already be running. Wait no more than 20 seconds (other instance might be from autoupdate)
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 
 $Loops = 20
