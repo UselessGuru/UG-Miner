@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.12
-Version date:   2025/12/20
+Version:        6.7.13
+Version date:   2025/12/22
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1232,7 +1232,7 @@ function Get-Rate {
         $Rates = [PSCustomObject]@{ BTC = [PSCustomObject]@{ } }
         $TSymBatches.ForEach(
             { 
-                $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(if ($Session.Config.CryptoCompareAPIKeyParam) { "&api_key=$($Session.Config.CryptoCompareAPIKeyParam)" })&extraParams=$($Session.Branding.BrandWebSite) Version $($Session.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
+                $Response = Invoke-RestMethod -Uri "https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=$($_)$(if ($Session.Config.CryptoCompareAPIKeyParam) { "&api_key=$($Session.Config.CryptoCompareAPIKeyParam)" })&extraParams=$($Session.Branding.BrandWebSite) version $($Session.Branding.Version)" -TimeoutSec 5 -ErrorAction Ignore
                 if ($Response.BTC) { 
                     $Response.BTC.ForEach(
                         { 
@@ -1942,10 +1942,10 @@ function Set-Stat {
 
         if ($Value -gt 0 -and $Stat.ToleranceExceeded -gt 0 -and $Stat.ToleranceExceeded -lt $ToleranceExceeded -and $Stat.Week -gt 0) { 
             if ($Name -match ".+_Hashrate$") { 
-                Write-Message -Level Warn "Error saving hashrate for '$($Name -replace "_Hashrate$")'. $(($Value | ConvertTo-Hash) -replace " ") is outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash) -replace " ") to $(($ToleranceMax | ConvertTo-Hash) -replace " ")) [Iteration $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
+                Write-Message -Level Warn "Error saving hashrate for '$($Name -replace "_Hashrate$")'. $(($Value | ConvertTo-Hash) -replace " ") is outside fault tolerance ($(($ToleranceMin | ConvertTo-Hash) -replace " ") to $(($ToleranceMax | ConvertTo-Hash) -replace " ")) [Cycle $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
             }
             elseif ($Name -match ".+_PowerConsumption") { 
-                Write-Message -Level Warn "Error saving power consumption for '$($Name -replace "_PowerConsumption$")'. $($Value.ToString("N2"))W is outside fault tolerance ($($ToleranceMin.ToString("N2"))W to $($ToleranceMax.ToString("N2"))W) [Iteration $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
+                Write-Message -Level Warn "Error saving power consumption for '$($Name -replace "_PowerConsumption$")'. $($Value.ToString("N2"))W is outside fault tolerance ($($ToleranceMin.ToString("N2"))W to $($ToleranceMax.ToString("N2"))W) [Cycle $($Stats.($Stat.Name).ToleranceExceeded) of $ToleranceExceeded until enforced update]."
             }
             return $Stat
         }

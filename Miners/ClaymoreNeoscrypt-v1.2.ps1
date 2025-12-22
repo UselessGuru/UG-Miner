@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.12
-Version date:   2025/12/20
+Version:        6.7.13
+Version date:   2025/12/22
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -and $Session.DriverVersion.CIM.AMD -lt [System.Version]"26.20.15011.10003" }))) { return }

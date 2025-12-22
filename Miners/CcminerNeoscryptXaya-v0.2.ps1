@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.12
-Version date:   2025/12/20
+Version:        6.7.13
+Version date:   2025/12/22
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" }))) { return } # Cuda error in func 'neoscrypt_hash_k4' at line 1518 : an illegal instruction was encountered on GTX 750

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.12
-Version date:   2025/12/20
+Version:        6.7.13
+Version date:   2025/12/22
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.12"
+    Version      = [System.Version]"6.7.13"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

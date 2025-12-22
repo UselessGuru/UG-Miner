@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.12
-Version date:   2025/12/20
+Version:        6.7.13
+Version date:   2025/12/22
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.22"
+$APIversion = "6.0.24"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -300,11 +300,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                     { 
                         if ($Session.Config.ExcludeDeviceName -contains $_.Name) { 
                             $_.State = [DeviceState]::Disabled
-                            if ($_.Status -like "Mining *}") { $_.Status = "$($_.Status); will get disabled at end of cycle" }
+                            if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running -and -$_.Status -notlike "*; will get disabled at end of cycle") { $_.Status = "$($_.Status); will get disabled at end of cycle" }
                         }
                         else { 
                             $_.State = [DeviceState]::Enabled
-                            if ($_.Status -like "*; will get disabled at end of cycle") { $_.Status = $_.Status -replace "; will get disabled at end of cycle" }
+                            $_.Status = $_.Status -replace "; will get disabled at end of cycle"
                         }
                     }
                 )
