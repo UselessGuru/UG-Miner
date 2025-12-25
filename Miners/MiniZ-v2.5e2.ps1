@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -27,7 +27,7 @@ Version date:   2025/12/22
 # Fixed some rare issues with ProgPoW causing error 400.
 # Fixed password integration on the --url: --url=wallet.worker:pass@server:port
 
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MiniZ/miniZ_v2.5e2_win-x64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -44,7 +44,7 @@ $Algorithms = @(
     @{ Algorithm = "EvrProgPow";   Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0].($_.Algorithm) })
+$Algorithms = $Algorithms.Where({ $MinerPools[0].($_.Algorithm) })
 
 if ($Algorithms) { 
 
@@ -52,19 +52,19 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    if ($SupportedMinerDevices = $MinerDevices.where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
+                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
                             $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                            if ($AvailableMinerDevices = $SupportedMinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                            if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 

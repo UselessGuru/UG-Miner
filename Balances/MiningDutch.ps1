@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -57,7 +57,7 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
             $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
         }
 
-        if ($Currencies = ($APIresponse.result.where({ $_.tag -and $_.tag -notlike "*_*" -and $_.status -ne "merged" }) | Sort-Object -Property tag)) { 
+        if ($Currencies = ($APIresponse.result.Where({ $_.tag -and $_.tag -notlike "*_*" -and $_.status -ne "merged" }) | Sort-Object -Property tag)) { 
             $Currencies.ForEach(
                 { 
                     $Currency = $_.tag

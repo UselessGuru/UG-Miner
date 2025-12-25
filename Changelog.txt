@@ -1,3 +1,11 @@
+Changelog UG-Miner 6.7.14 2025/12/25
+====================================
+
+Miner updates:
+- OneZeroMiner-v1.7.4
+- Rigel-v1.23.1
+
+
 Changelog UG-Miner 6.7.13 2025/12/22
 ====================================
 

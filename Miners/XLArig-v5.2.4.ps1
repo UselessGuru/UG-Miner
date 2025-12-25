@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
 
-if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
 $URI = "https://github.com/scala-network/XLArig/releases/download/v5.2.4/xlarig-v5.2.4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -33,7 +33,7 @@ $Algorithms = @(
     @{ Algorithm = "Panthera"; WarmupTimes = @(15, 0); ExcludePools = @(); Arguments = " --algo=panthera" }
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
@@ -46,7 +46,7 @@ if ($Algorithms) {
             $Fee = if ($Session.Config.DisableMinerFee) { 0 } else { 5 }
 
             # $ExcludePools = $_.ExcludePools
-            # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
             foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                 $RigID = if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } else { $Session.Config.WorkerName }

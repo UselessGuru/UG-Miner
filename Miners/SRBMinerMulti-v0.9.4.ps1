@@ -17,12 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -and $_.Architecture -match "GCN[1-3]" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.Architecture -match "GCN[1-3]" }))) { return }
 
 $URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/0.9.4/SRBMiner-Multi-0-9-4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -67,14 +67,14 @@ $Algorithms = @(
     @{ Algorithm = "Yescrypt";          Fee = @(0.0085); MinMemGiB = 1;    WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --disable-cpu --algorithm yescrypt" }
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
     ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
-            $MinerDevices = $Devices.where({ $_.Model -eq $Model })
+            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             $Algorithms.ForEach(
@@ -89,11 +89,11 @@ if ($Algorithms) {
                     }
 
                     # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -gt $MinMemGiB })) { 
+                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 

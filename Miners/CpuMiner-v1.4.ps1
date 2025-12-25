@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
-if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
 $URI = "https://github.com/fireworm71/veriumMiner/releases/download/v1.4/cpuminer_1.4_windows_x64_O2_GCC7.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -31,8 +31,8 @@ $Algorithms = @(
     @{ Algorithm = "ScryptN2"; WarmupTimes = @(90, 30); ExcludePools = @(); Arguments = "" } # Empty command
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
 
 if ($Algorithms) { 
 
@@ -43,8 +43,8 @@ if ($Algorithms) {
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
             # $ExcludePools = $_.ExcludePools
-            # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
-            foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $_.PoolPorts[0] })) { 
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"

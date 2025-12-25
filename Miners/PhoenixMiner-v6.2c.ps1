@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/PhoenixMiner/PhoenixMiner_6.2c_Windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -44,8 +44,8 @@ $Algorithms = @(
     @{ Algorithms = @("UbqHash", "Blake2s"); Type = "NVIDIA"; Fee = @(0.009, 0); MinMemGiB = 0.77; Tuning = " -mi 12 -vmt1 15 -vmt2 12 -vmt3 0 -vmr 15 -mcdag 1"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " -nvidia -eres 2 -coin UBQ -dcoin blake2s" }
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
@@ -78,25 +78,25 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    if ($SupportedMinerDevices = $MinerDevices.where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         # $ExcludePools = $_.ExcludePools
-                        # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].where({ $ExcludePools[0] -notcontains $_.Name[0] -and (($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302) })) { 
-                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].where({ ($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302 })) { 
-                            # foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].where({ $ExcludePools[1] -notcontains $_.Name[1] })) { 
+                        # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name[0] -and (($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302) })) { 
+                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ ($_.Algorithm -eq "EtcHash" -and $_.Epoch -lt 602) -or $_.Epoch -lt 302 })) { 
+                            # foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name[1] })) { 
                             foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                                if ($AvailableMinerDevices = $SupportedMinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
                                     if ($_.Type -eq "AMD" -and $_.Algorithms[1]) { 
                                         if ($Pool0.DAGsizeGiB -ge 4) { return } # AMD: doesn't support Blake2s dual mining with DAG larger 4GB
-                                        $AvailableMinerDevices = $AvailableMinerDevices.where({ [System.Version]$_.CIM.DriverVersion -le [System.Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)
+                                        $AvailableMinerDevices = $AvailableMinerDevices.Where({ [System.Version]$_.CIM.DriverVersion -le [System.Version]"27.20.22023.1004" }) # doesn't support Blake2s dual mining on drivers newer than 21.8.1 (27.20.22023.1004)
                                     }
 
                                     if ($AvailableMinerDevices) { 
@@ -149,7 +149,7 @@ if ($Algorithms) {
                                             Type        = $Type
                                             URI         = $URI
                                             WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers     = @(($Pool0, $Pool1).where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                            Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }

@@ -17,17 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
-# Qubitcoin: 
-# Performance improvement for CMP cards(~5%)
-# Minor improvement for the other gpus
+# Performance improvement for CMP 170hx and AMD cards(mostly Vega and Radeon VII)
+# Improvement in xelis-qubitcoin dual mining stability and autotuning
+# Fixed low performance of dual mining in Windows
+# Fixed the initialization error on Polaris 4GB cards
+# Fixed a dev fee pool issue for miners in some regions
 
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"528.33.00") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"528.33.00") }))) { return }
 
-$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.7.3/onezerominer-win64-1.7.3.zip"
+$URI = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.7.4/onezerominer-win64-1.7.4.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -38,12 +40,12 @@ $Algorithms = @(
     @{ Algorithms = @("CrypticHashV2", "");    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a cryptix_ox8") }
     @{ Algorithms = @("DynexSolve", "");       Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 120); ExcludePools = @(@(), @()); Arguments = @(" -a dynex") }
     @{ Algorithms = @("QHash", "");            Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
-    @{ Algorithms = @("Qhash", "XelisHashV3"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash"," --a2 xelishashv3") }
+    @{ Algorithms = @("Qhash", "XelisHashV3"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash", " --a2 xelishashv3") }
     @{ Algorithms = @("XelisHashV3", "");      Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a xelishashv3") }
 )
 
-# $Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
@@ -51,18 +53,18 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $MinMemGiB = $_.MinMemGiB
 
-                    if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                    if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                         $ExcludePools = $_.ExcludePools
-                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
@@ -81,7 +83,7 @@ if ($Algorithms) {
                                     Type        = $Type
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(($Pool0, $Pool1).where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                    Workers     = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                 }
                             }
                         }

@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
-if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/RplantCpu/cpuminer-opt-win-5.0.42c.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -112,7 +112,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerUrx";   WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerUrx" } # JayddeeCPU-v25.7 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
@@ -123,7 +123,7 @@ if ($Algorithms) {
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
             $ExcludePools = $_.ExcludePools
-            foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
 
                 [PSCustomObject]@{ 
                     API         = "CcMiner"

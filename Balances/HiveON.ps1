@@ -18,14 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolConfig = $Session.Config.Pools.$Name
-$PoolConfig.Wallets.psBase.Keys.where({ "ETC", "RVN" -contains $_ }).ForEach(
+$PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
     { 
         $APIResponse = $null
         $Currency = $_.ToUpper()

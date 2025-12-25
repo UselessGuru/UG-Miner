@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 # Fixed a bug calculating TTF longer than 1 year.
@@ -27,7 +27,7 @@ Version date:   2025/12/22
 # Faster switfftx AVX2.
 # Other small fixes and improvements.
 
-if (-not ($AvailableMinerDevices = $Session.EnabledDevices.where({ $_.Type -eq "CPU" }))) { return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
 
 $URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v25.7/cpuminer-opt-25.7-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -84,7 +84,7 @@ $Algorithms = @(
     @{ Algorithm = "ZR5";                  WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo zr5" }
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
@@ -104,7 +104,7 @@ if ($Algorithms) {
             }
 
             # $ExcludePools = $_.ExcludePools
-            # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
             foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                 [PSCustomObject]@{ 

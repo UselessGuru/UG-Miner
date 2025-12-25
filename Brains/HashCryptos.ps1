@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 using module ..\Includes\Include.psm1
@@ -41,7 +41,7 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 while ($PoolConfig = $Session.Config.Pools.$Name) { 
 
     $APICallFails = 0
-    $PoolVariant = $Session.Config.PoolName.where({ $_ -like "$Name*" })
+    $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
     $StartTime = [DateTime]::Now
 
     if ($Session.MyIPaddress) { 
@@ -88,9 +88,9 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     # Reset history when stat file got removed
                     if ($PoolVariant -like "*Plus") { 
                         $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
-                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.where({ $_.Name -eq $PoolName })) { 
+                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
                             # Reset history when stat file got removed
-                            $PoolObjects = $PoolObjects.where({ $_.Name -ne $PoolName })
+                            $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
                             Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
                         }
                     }
@@ -110,20 +110,20 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 }
 
                 # Created here for performance optimization, minimize # of lookups
-                $CurrentPoolObjects = $PoolObjects.where({ $_.Date -eq $Timestamp })
+                $CurrentPoolObjects = $PoolObjects.Where({ $_.Date -eq $Timestamp })
                 $SampleSizets = New-TimeSpan -Minutes $PoolConfig.BrainConfig.SampleSizeMinutes
                 $SampleSizeHalfts = New-TimeSpan -Minutes ($PoolConfig.BrainConfig.SampleSizeMinutes / 2)
-                $GroupAvgSampleSize = $PoolObjects.where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object -Property Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupMedSampleSize = $PoolObjects.where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupAvgSampleSizeHalf = $PoolObjects.where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object -Property Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupMedSampleSizeHalf = $PoolObjects.where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupMedSampleSizeNoPercent = $PoolObjects.where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDrift } }
+                $GroupAvgSampleSize = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object -Property Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
+                $GroupMedSampleSize = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
+                $GroupAvgSampleSizeHalf = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object -Property Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
+                $GroupMedSampleSizeHalf = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
+                $GroupMedSampleSizeNoPercent = $PoolObjects.Where({ $_.Date -ge ($Timestamp - $SampleSizets) }) | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDrift } }
 
-                foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).where({ $AlgoData.PSObject.Properties.Name -contains $_ })) { 
-                    $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSizeHalf.where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSizeHalf.where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.where({ $_.Name -eq $Algorithm })).Median)
-                    $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSize.where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSize.where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.where({ $_.Name -eq $Algorithm })).Median)
+                foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where({ $AlgoData.PSObject.Properties.Name -contains $_ })) { 
+                    $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSizeHalf.Where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where({ $_.Name -eq $Algorithm })).Median)
+                    $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where({ $_.Name -eq $Algorithm + ", Up" })).Count - ($GroupAvgSampleSize.Where({ $_.Name -eq $Algorithm + ", Down" })).Count) / (($GroupMedSampleSize.Where({ $_.Name -eq $Algorithm })).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where({ $_.Name -eq $Algorithm })).Median)
                     $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)
-                    $CurPoolObject = $CurrentPoolObjects.where({ $_.Name -eq $Algorithm })
+                    $CurPoolObject = $CurrentPoolObjects.Where({ $_.Name -eq $Algorithm })
                     $Currency = $CurPoolObject.currency
                     $LastPrice = [Double]$CurPoolObject.estimate_current
                     $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
@@ -134,7 +134,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                         $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
                         if ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
                             Remove-Stat -Name $StatName
-                            $PoolObjects = $PoolObjects.where({ $_.Name -ne $Algorithm })
+                            $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             $PlusPrice = $LastPrice
                             Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
                         }
@@ -155,7 +155,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
             # Limit to only sample size + 10 minutes history
-            $PoolObjects = @($PoolObjects.where({ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
+            $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
         }
         catch { 
             Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."

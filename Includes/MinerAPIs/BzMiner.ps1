@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 [NoRunspaceAffinity()]
@@ -33,7 +33,7 @@ class BzMiner : Miner {
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
             if (-not $Data) { return $null }
 
-            $Devices = $Data.devices.where({ $_.message[0] })
+            $Devices = $Data.devices.Where({ $_.message[0] })
 
             if ($Devices.Hashrate.Count -ne $this.Algorithms.Count) { return $null }
 

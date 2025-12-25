@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 using module .\Include.psm1
@@ -111,7 +111,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             # Disable algorithm@pool in poolsconfig.json
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
-            if ($Pools = @($Session.Pools.where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
+            if ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
                 $Config.Pools = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
@@ -119,7 +119,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $Pool.Reasons = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
                     }
                     else { 
-                        $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.where({ $_ -ne "+$($Pool.Algorithm)" }) | Sort-Object -Unique)
+                        $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "+$($Pool.Algorithm)" }) | Sort-Object -Unique)
                         $Pool.Reasons = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config") | Out-Null
                     }
                     $Pool.Available = $false
@@ -150,7 +150,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             # Enable algorithm@pool in poolsconfig.json
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
-            if ($Pools = @($Session.Pools.where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
+            if ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
                 $Config.Pools = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
@@ -158,7 +158,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $Pool.Reasons.Remove("Algorithm not enabled in $($Pool.Name) pool config") | Out-Null
                     }
                     else { 
-                        $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.where({ $_ -ne "-$($Pool.Algorithm)" }) | Sort-Object -Unique)
+                        $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "-$($Pool.Algorithm)" }) | Sort-Object -Unique)
                         $Pool.Reasons.Remove("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
                     }
                     if (-not $Pool.Reasons.Count) { 
@@ -195,7 +195,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         "/functions/balancedata/remove" { 
             if ($Parameters.Data) { 
                 $BalanceDataEntries = $Session.BalancesData
-                $Session.BalancesData = @((Compare-Object $Session.BalancesData @($Parameters.Data | ConvertFrom-Json -ErrorAction Ignore) -PassThru -Property DateTime, Pool, Currency, Wallet).where({ $_.SideIndicator -eq "<=" }) | Select-Object -ExcludeProperty SideIndicator)
+                $Session.BalancesData = @((Compare-Object $Session.BalancesData @($Parameters.Data | ConvertFrom-Json -ErrorAction Ignore) -PassThru -Property DateTime, Pool, Currency, Wallet).Where({ $_.SideIndicator -eq "<=" }) | Select-Object -ExcludeProperty SideIndicator)
 
                 # Get mutex. Mutexes are shared across all threads and processes.
                 # This lets us ensure only one thread is trying to write to the file at a time.
@@ -223,7 +223,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/config/device/disable" { 
             foreach ($Key in $Parameters.Keys) { 
-                if ($Values = @(($Parameters.$Key -split ",").where({ $_ -notin $Session.Config.ExcludeDeviceName }))) { 
+                if ($Values = @(($Parameters.$Key -split ",").Where({ $_ -notin $Session.Config.ExcludeDeviceName }))) { 
                     try { 
                         $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
                         $Session.Config.ExcludeDeviceName = @((@($Session.Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
@@ -233,7 +233,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $Data += "`n`nNew values:"
                         $Data += "`nExcludeDeviceName: '[$($Session.Config."ExcludeDeviceName" -join ", ")]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
-                        $Session.Devices.where({ $Values -contains $_.Name }).ForEach(
+                        $Session.Devices.Where({ $Values -contains $_.Name }).ForEach(
                             { 
                                 $_.State = [DeviceState]::Disabled
                                 if ("Benchmarking", "Running", "WarmingUp" -contains $_.SubStatus) { $_.StatusInfo = "$($_.StatusInfo); will get disabled at end of cycle" }
@@ -258,10 +258,10 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/config/device/enable" { 
             foreach ($Key in $Parameters.Keys) { 
-                if ($Values = @(($Parameters.$Key -split ",").where({ $Session.Config.ExcludeDeviceName -contains $_ }))) { 
+                if ($Values = @(($Parameters.$Key -split ",").Where({ $Session.Config.ExcludeDeviceName -contains $_ }))) { 
                     try { 
                         $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
-                        $Session.Config.ExcludeDeviceName = @($Session.Config.ExcludeDeviceName.where({ $_ -notin $Values }) | Sort-Object -Unique)
+                        $Session.Config.ExcludeDeviceName = @($Session.Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
                         Write-Configuration -Config $Session.Config
                         $Session.ConfigurationHasChangedDuringUpdate = $false
                         $Data = "Device configuration changed`n`nOld values:"
@@ -269,7 +269,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $Data += "`n`nNew values:"
                         $Data += "`nExcludeDeviceName: '[$($Session.Config."ExcludeDeviceName" -join ", " )]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
-                        $Session.Devices.where({ $Values -contains $_.Name }).ForEach(
+                        $Session.Devices.Where({ $Values -contains $_.Name }).ForEach(
                             { 
                                 $_.State = [DeviceState]::Enabled
                                 if ($_.StatusInfo -like "* {*@*}; will get enabled at end of cycle") { $_.StatusInfo = $_.StatusInfo -replace "; will get enabled at end of cycle" }
@@ -296,7 +296,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                 Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
                 $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
 
-                $Session.Devices.where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
+                $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                     { 
                         if ($Session.Config.ExcludeDeviceName -contains $_.Name) { 
                             $_.State = [DeviceState]::Disabled
@@ -332,7 +332,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/functions/getminerdetail" { 
-            $Miner = $Session.Miners.where({ $_.Info -eq $Key })
+            $Miner = $Session.Miners.Where({ $_.Info -eq $Key })
             if ($Miner) { 
                 $Data = $Miner | ConvertTo-Json -Depth 10
             }
@@ -406,7 +406,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/stat/disable" { 
             if ($Parameters.Miners) { 
-                if ($Miners = (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info).where({ -not $_.Disabled })) { 
+                if ($Miners = (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info).Where({ -not $_.Disabled })) { 
                     $Data = @()
                     $Miners.ForEach(
                         { 
@@ -427,7 +427,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/stat/enable" { 
             if ($Parameters.Miners) { 
-                if ($Miners = (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info).where({ $_.Disabled })) { 
+                if ($Miners = (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info).Where({ $_.Disabled })) { 
                     $Data = @()
                     $Miners.ForEach(
                         { 
@@ -447,7 +447,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             }
         }
         "/functions/stat/get" { 
-            if ($TempStats = @(if ($null -ne $Parameters.Value) { (Get-Stat).where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } else { Get-Stat })) { 
+            if ($TempStats = @(if ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } else { Get-Stat })) { 
                 if ($null -ne $Parameters.Value) { 
                     ($TempStats.Name | Sort-Object).ForEach({ $Data += "$($_ -replace "(_Hashrate|_PowerConsumption)$")`n" })
                     if ($Parameters.Type -eq "Hashrate") { $Data += "`n$($TempStats.Count) stat file$(if ($TempStats.Count -ne 1) { "s" }) with $($Parameters.Value)H/s hashrate." }
@@ -531,7 +531,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                 Remove-Variable Message, Miners -ErrorAction Ignore
                 break
             }
-            if ($TempStats = @(if ($null -ne $Parameters.Value) { (Get-Stat).where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } else { (Get-Stat).where({ $_.Name -like "*_$($Parameters.Type)" }) })) { 
+            if ($TempStats = @(if ($null -ne $Parameters.Value) { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" -and $_.Live -eq $Parameters.Value }) } else { (Get-Stat).Where({ $_.Name -like "*_$($Parameters.Type)" }) })) { 
                 $Data = @()
                 ($TempStats | Sort-Object -Property Name).ForEach(
                     { 
@@ -615,27 +615,27 @@ while ($Session.APIversion -and $Server.IsListening) {
             if ($Parameters.Miners -or $Parameters.Pools) { 
                 $Data = @()
                 foreach ($Miner in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Name)) { 
-                    if ($Session.WatchdogTimers.where({ $_.MinerName -eq $Miner.Name })) { 
+                    if ($Session.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name })) { 
                         # Update miner
                         $Data += $Miner.Name
-                        $Miner.Reasons.where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                        $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
                         if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
 
                         # Remove Watchdog timers
-                        $Session.WatchdogTimers = $Session.WatchdogTimers.where({ $_.MinerName -ne $Miner.Name })
+                        $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -ne $Miner.Name })
                     }
                 }
                 Remove-Variable Miner
 
                 foreach ($Pool in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Pools | Select-Object) @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Key)) { 
                     # Update pool
-                    if ($Session.Pools.where({ $_.Key -eq $Pool.Key })) { 
+                    if ($Session.Pools.Where({ $_.Key -eq $Pool.Key })) { 
                         $Data += "$($Pool.Key) [$($Pool.Region)]"
-                        $Pool.Reasons.where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                        $Pool.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
                         if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
 
                         # Remove Watchdog timers
-                        $Session.WatchdogTimers = $Session.WatchdogTimers.where({ $_.Key -ne $Pool.Key })
+                        $Session.WatchdogTimers = $Session.WatchdogTimers.Where({ $_.Key -ne $Pool.Key })
                     }
                 }
                 Remove-Variable Pool
@@ -652,13 +652,13 @@ while ($Session.APIversion -and $Server.IsListening) {
             else { 
                 $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
                 foreach ($Miner in $Session.Miners) { 
-                    $Miner.Reasons.where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                    $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
                     if (-not $Miner.Reasons.Count) { $_.Available = $true }
                 }
                 Remove-Variable Miner
 
                 foreach ($Pool in $Session.Pools.ForEach) { 
-                    $Pool.Reasons.where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                    $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
                     if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
                 }
                 Remove-Variable Pool
@@ -751,15 +751,15 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/devices/enabled" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.where({ $_.State -eq "Enabled" }) | Sort-Object -Property Name)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -eq "Enabled" }) | Sort-Object -Property Name)
             break
         }
         "/devices/disabled" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.where({ $_.State -eq "Disabled" }) | Sort-Object -Property Name)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -eq "Disabled" }) | Sort-Object -Property Name)
             break
         }
         "/devices/unsupported" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.where({ $_.State -eq "Unsupported" }) | Sort-Object -Property Name)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -eq "Unsupported" }) | Sort-Object -Property Name)
             break
         }
         "/donationdata" { 
@@ -798,7 +798,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/miners/available" { 
             $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.where({ $_.Available }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Available }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true })
             Remove-Variable Bias
             break
         }
@@ -813,11 +813,11 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/miners/disabled" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.where({ $_.Status -eq [MinerStatus]::Disabled }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Status -eq [MinerStatus]::Disabled }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
             break
         }
         "/miners/failed" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.where({ $_.Status -eq [MinerStatus]::Failed }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Status -eq [MinerStatus]::Failed }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, EndTime)
             break
         }
         "/miners/launched" { 
@@ -847,11 +847,11 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/miners/running" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.where({ $_.Status -eq [MinerStatus]::Running }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Status -eq [MinerStatus]::Running }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" })
             break
         }
         "/miners/unavailable" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Name, Algorithm)
+            $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, SideIndicator, StatEnd, StatStart, ValidDataSampleTimestamp, WorkersRunning | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Name, Algorithm)
             break
         }
         "/miningpowercost" { 
@@ -891,7 +891,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/pools/available" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.where({ $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.Where({ $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
             break
         }
         "/pools/best" { 
@@ -915,7 +915,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/pools/unavailable" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.where({ -not $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.Where({ -not $_.Available }) | Sort-Object -Property Algorithm, Name, Region)
             break
         }
         "/pools/updated" { 
@@ -923,7 +923,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/poolreasons" { 
-            $Data = ConvertTo-Json -Depth 10 ($Session.Pools.where({ -not $_.Available }).Reasons | Sort-Object -Unique)
+            $Data = ConvertTo-Json -Depth 10 ($Session.Pools.Where({ -not $_.Available }).Reasons | Sort-Object -Unique)
             break
         }
         "/poolvariants" { 

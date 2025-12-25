@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
 
 $URI = "https://github.com/UselessGuru/miner-binaries/releases/download/v1.0.3/ninjarig_v1.0.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -32,14 +32,14 @@ $Algorithms = @(
     @{ Algorithm = "Chukwa"; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " -a argon2/chukwa" }
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
 
 if ($Algorithms) { 
 
     ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
-            $AvailableMinerDevices = $Devices.where({ $_.Model -eq $Model })
+            $AvailableMinerDevices = $Devices.Where({ $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
             $Algorithms.ForEach(
@@ -47,7 +47,7 @@ if ($Algorithms) {
                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
                     # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].where({ $ExcludePools -notcontains $_.Name })) { 
+                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
                     foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                         if ("MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments += " --nicehash" }

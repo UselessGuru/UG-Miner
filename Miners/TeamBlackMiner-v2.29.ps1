@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 # V2.28 produces nothing but bad shares with kapwow, use v.26 instead
@@ -27,7 +27,7 @@ Version date:   2025/12/22
 
 # Use v2.28 for older CUDA version (<13.1)
 
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "7.5" -and $_.CUDAversion -ge [System.Version]"13.1") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "7.5" -and $_.CUDAversion -ge [System.Version]"13.1") }))) { return }
 
 $URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/V2.29/TeamBlackMiner_2_29_cuda_13_1.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -90,8 +90,8 @@ $Algorithms = @(
     @{ Algorithms = @("VertHash", "");           SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 3.0;  Tuning = " --tweak 2"; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo verthash --verthash-data ..\.$($Session.VertHashDatPath)" }
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
@@ -99,13 +99,13 @@ if ($Algorithms) {
         { 
             $Model = $_.Model
             $Type = $_.Type
-            $MinerDevices = $Devices.where({ $_.Type -eq $Type -and $_.Model -eq $Model })
+            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.where({ $_.Type -eq $Type }).ForEach(
+            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
                 { 
                     $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    if ($SupportedMinerDevices = $MinerDevices.where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
 
                         if ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                             $PrerequisitePath = $Session.VertHashDatPath
@@ -117,14 +117,14 @@ if ($Algorithms) {
                         }
 
                         $ExcludePools = $_.ExcludePools
-                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
 
                                 # Dual algorithm mining: Both pools must support same protocol (SSL or non-SSL) :-(
                                 if (-not $_.Algorithms[1] -or ($Pool0.PoolPorts[0] -and $Pool1.PoolPorts[0]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { 
 
                                     $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                                    if ($AvailableMinerDevices = $SupportedMinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-$($_.Intensity)" })"})"
 
@@ -159,7 +159,7 @@ if ($Algorithms) {
                                             Type             = $Type
                                             URI              = $URI
                                             WarmupTimes      = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                            Workers          = @(($Pool0, $Pool1).where({ $_ }).ForEach({ @{ Pool = $_ } }))
+                                            Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
                                         }
                                     }
                                 }

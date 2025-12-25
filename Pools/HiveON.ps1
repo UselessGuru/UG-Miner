@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HiveON.ps1
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 param(
@@ -48,7 +48,7 @@ do {
     }
 } while (-not $Request -and $APICallFails -lt $Session.Config.PoolAPIallowedFailureCount)
 
-foreach ($Pool in $Request.cryptoCurrencies.where({ $_.name -ne "ETH" })) { 
+foreach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) { 
     $Currency = $Pool.name -replace "\s+"
     if ($AlgorithmNorm = $Session.CurrencyAlgorithm[$Currency]) { 
         $Divisor = [Double]$Pool.profitPerPower

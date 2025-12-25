@@ -17,15 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
-# (XEL) Add xelishashv3 algorithm (dev fee 2%)
+# (XEL) Major performance increase on 170HX, small improvements on other cards
+# Remove the following algorithms:
+#  - quai (use -a kawpow --coin quai instead)
+#  - xelishash
+#  -xelishashv2
 
-if (-not ($Devices = $Session.EnabledDevices.where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.23.0/rigel-1.23.0-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.23.1/rigel-1.23.1-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -73,34 +77,35 @@ $Algorithms = @(
 #   @{ Algorithms = @("Octopus", "HeavyHashKarlsenV2");      Fee = @(0.02, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+karlsenhashv2" } # Not supported yet
     @{ Algorithms = @("Octopus", "SHA512256d");              Fee = @(0.02, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+sha512256d" }
     @{ Algorithms = @("Octopus", "SHA3x");                   Fee = @(0.02, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+sha3x" }
+    @{ Algorithms = @("ProgPowQuai", "");                    Fee = @(0.01);         MinMemGiB = 1.24; Tuning = " --mt 2"; WarmupTimes = @(45, 30); ExcludePools = @(@(), @()); Arguments = " --algorithm kawpow --coin quai" }
     @{ Algorithms = @("ProgPowZano", "");                    Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm progpowz" }
     @{ Algorithms = @("SHA512256d", "");                     Fee = @(0.01);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha512256d" }
     @{ Algorithms = @("SHA3x","");                           Fee = @(0.01);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha3x" }
     @{ Algorithms = @("XelisHashV3", "");                    Fee = @(0.02);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm xelishashv3" }
 )
 
-$Algorithms = $Algorithms.where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
+$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
+$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
 
 if ($Algorithms) { 
 
     ($Devices | Sort-Object -Property Model -Unique).ForEach(
         { 
             $Model = $_.Model
-            $MinerDevices = $Devices.where({ $_.Model -eq $Model })
+            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
             $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
             $Algorithms.ForEach(
                 { 
                     # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].where({ $ExcludePools[0] -notcontains $_.Name })) { 
+                    # foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
                     foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
-                        # foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                        # foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
                         foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
-                            $Pools = @(($Pool0, $Pool1).where({ $_ }))
+                            $Pools = @(($Pool0, $Pool1).Where({ $_ }))
 
                             $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                            if ($AvailableMinerDevices = $MinerDevices.where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                            if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 

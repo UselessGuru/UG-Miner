@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.7.13
-Version date:   2025/12/22
+Version:        6.7.14
+Version date:   2025/12/25
 #>
 
 [NoRunspaceAffinity()]
@@ -83,7 +83,7 @@ class XmRig : Miner {
                             $Parameters.ConfigFile.Content | Add-Member threads ([Array]($ThreadsConfig * $Parameters.Threads)) -Force
                         }
                         else { 
-                            $Parameters.ConfigFile.Content | Add-Member threads ([Array](($ThreadsConfig.where({ $Parameters.Devices -contains $_.index }))) * $Parameters.Threads) -Force
+                            $Parameters.ConfigFile.Content | Add-Member threads ([Array](($ThreadsConfig.Where({ $Parameters.Devices -contains $_.index }))) * $Parameters.Threads) -Force
                         }
                         $Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore
                     }
@@ -134,7 +134,7 @@ class XmRig : Miner {
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
-            $HashrateValue = [Double]($Data.hashrate.total.where({ $_ }) | Measure-Object -Average).Average
+            $HashrateValue = [Double]($Data.hashrate.total.Where({ $_ }) | Measure-Object -Average).Average
             if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[0] } # fix
             if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[1] } # fix
             if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[2] } # fix
