@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.14
-Version date:   2025/12/25
+Version:        6.7.15
+Version date:   2025/12/29
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -157,9 +157,8 @@ function CheckBoxSwitchingLog_Click {
         $LegacyGUIelements.SwitchingLogLabel.Text = "Waiting for switching log data..."
         $LegacyGUIelements.SwitchingLogClearButton.Enabled = $false
     }
-    if ($Session.Config.UseColorForMinerStatus) { 
-        foreach ($Row in $LegacyGUIelements.SwitchingLogDGV.Rows) { $Row.DefaultCellStyle.Backcolor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action] }
-    }
+    Set-TableColor -DataGridView $LegacyGUIelements.SwitchingLogDGV
+    $LegacyGUIelements.SwitchingLogDGV.ClearSelection()
     $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
 
@@ -190,7 +189,6 @@ function Set-TableColor {
             }
         }
     }
-    $DataGridView.ClearSelection()
 }
 
 # Function Set-WorkerColor { 
@@ -525,6 +523,7 @@ function Update-TabControl {
                         $LegacyGUIelements.MinersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     Set-TableColor -DataGridView $LegacyGUIelements.MinersDGV
+                    $LegacyGUIelements.MinersDGV.ClearSelection()
                     $LegacyGUIelements.MinersDGV.EndInit()
                 }
             }
@@ -1195,7 +1194,13 @@ $LegacyGUIelements.ActiveMinersDGV.ScrollBars = "None"
 $LegacyGUIelements.ActiveMinersDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIelements.ActiveMinersDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "System status" ) { Resize-Form } }) # To fully show grid
 $LegacyGUIelements.ActiveMinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
-$LegacyGUIelements.ActiveMinersDGV.Add_Sorted({ Set-TableColor -DataGridView $LegacyGUIelements.ActiveMinersDGV }) # Re-apply colors after sort
+$LegacyGUIelements.ActiveMinersDGV.Add_Sorted(
+    { 
+        # Re-apply colors after sort
+        Set-TableColor -DataGridView $LegacyGUIelements.ActiveMinersDGV
+        $LegacyGUIelements.ActiveMinersDGV.ClearSelection()
+    }
+) 
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.ActiveMinersDGV -Enabled $true
 $LegacyGUIelements.StatusPageControls += $LegacyGUIelements.ActiveMinersDGV
 
@@ -1363,7 +1368,13 @@ $LegacyGUIelements.MinersDGV.Add_MouseUp(
         }
     }
 )
-$LegacyGUIelements.MinersDGV.Add_Sorted({ Set-TableColor -DataGridView $LegacyGUIelements.MinersDGV }) # Re-apply colors after sort
+$LegacyGUIelements.MinersDGV.Add_Sorted(
+    { 
+        # Re-apply colors after sort
+        Set-TableColor -DataGridView $LegacyGUIelements.MinersDGV
+        $LegacyGUIelements.MinersDGV.ClearSelection()
+    }
+)
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.MinersDGV -Enabled $true
 $LegacyGUIelements.MinersPageControls += $LegacyGUIelements.MinersDGV
 

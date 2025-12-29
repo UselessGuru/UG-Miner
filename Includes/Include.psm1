@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.14
-Version date:   2025/12/25
+Version:        6.7.15
+Version date:   2025/12/29
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3587,7 +3587,7 @@ function Initialize-Environment {
         Start-Sleep -Seconds 5
         exit
     }
-    Write-Host "Loaded equihash database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded equihash coins database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
     # Load regions as sorted case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\Regions.json") { 
@@ -3656,7 +3656,7 @@ function Initialize-Environment {
         $Session.AlgorithmsLastUsed = @{ }
     }
     else { 
-        Write-Host "Loaded algorithm last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+        Write-Host "Loaded algorithms last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
     # Load MinersLastUsed data as sorted case insensitive hash table
@@ -4192,9 +4192,9 @@ function Read-Config {
                     Write-Message -Level Verbose "Idle detection is disabled."
                 }
             }
-            else { 
-                Start-Sleep -Milliseconds 100
-            }
+            # else { 
+            #     Start-Sleep -Milliseconds 100
+            # }
             $Session.Config = $Config.Clone()
             $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
         }

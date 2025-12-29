@@ -206,7 +206,10 @@
           <div style="padding-top: 0.2rem;" title="'+[Currency]' to enable currency&#10;'-[Currency]' to disable currency&#10;Values must be sparated by commas&#10;e.g. '-SATOX,-PAPRY'&#10;&#10;Leave empty to use ALL available currencies&#10;If '+' is used, then only the explicitly enabled currencies are used&#10;If '-' is used, then all currencies are used except the disabled ones&#10;You can either use '+' or '-'; you cannot combine both&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Include / exclude currencies
             <input type="text" id="Currency" name="Currency" size=30 style="text-transform:uppercase;">
           </div>
-          <div style="padding-top: 0.3rem;" title="UG-Miner will disable all miners which sometimes mine to a miner developer wallet (a.k.a. comission or donation)">
+          <div style="padding-top: 0.4rem;" title="UG-Miner will not use CPU miners while computer is running on battery&#10;&#10;Note: Some laptop computers will lower CPU speed while on battery">
+            <input type="checkbox" class="toggle-switch" id="DisableCpuMiningOnBattery" name="DisableCpuMiningOnBattery"> Disable CPU miners while running on battery
+          </div>
+          <div style="padding-top: 0.6rem;" title="UG-Miner will disable all miners which sometimes mine to a miner developer wallet (a.k.a. comission or donation)">
             <input type="checkbox" class="toggle-switch" id="DisableMinersWithFee" name="DisableMinersWithFee"> Disable miners with dev fees
           </div>
           <div style="padding-top: 0.6rem;" title="UG-Miner will disable all dual algorithm miners&#10;&#10;Note: This will enable single algorithm mining">
@@ -248,10 +251,7 @@
             </select>
             <label for="GPUMinerProcessPriority">process priority</label>
           </div>
-          <div style="padding-top: 0.2rem;" title="UG-Miner will not use CPU miners while computer is running on battery&#10;&#10;Note: Some laptop computers will lower CPU speed while on battery">
-            <input type="checkbox" class="toggle-switch" id="DisableCpuMiningOnBattery" name="DisableCpuMiningOnBattery"> Disable CPU miners while running on battery
-          </div>
-          <div style="padding-top: 0.6rem;" title="UG-Miner will disable developer fee mining&#10;&#10;Note: Not all miners support disabling their built in fees, others will reduce the hashrate.&#10;For miners that do not allow disabling the miner fees the effective fee will still be shown in the miner list.">
+          <div style="padding-top: 0.2rem;" title="UG-Miner will disable developer fee mining&#10;&#10;Note: Not all miners support disabling their built in fees, others will reduce the hashrate.&#10;For miners that do not allow disabling the miner fees the effective fee will still be shown in the miner list.">
             <input type="checkbox" class="toggle-switch" id="DisableMinerFee" name="DisableMinerFee"> Disable miner fees (where applicable)
           </div>
           <div style="padding-top: 0.6rem;" title="Enable miner specific tweaks, e.g. sharper memory timings or mild overclock&#10;&#10;Note: This may cause stability issues, use with caution!">
@@ -820,6 +820,7 @@
       document.getElementById('Algorithm').value = document.getElementById('Algorithm').value.replace(/^,/, '').replace(/,+/g, ',').replace(/ /g, '').replace(/,+$/g, '')
     });
     if (config.Algorithm) document.getElementById('Algorithm').value = (config.Algorithm).toString().trim();
+    if (config.DisableCpuMiningOnBattery) document.getElementById('DisableCpuMiningOnBattery').checked = true;
     if (config.DisableMinersWithFee) document.getElementById('DisableMinersWithFee').checked = true;
     if (config.DisableDualAlgoMining) document.getElementById('DisableDualAlgoMining').checked = true;
     if (config.DisableSingleAlgoMining) document.getElementById('DisableSingleAlgoMining').checked = true;
@@ -843,7 +844,6 @@
     else document.getElementById('CPUMinerProcessPriority').value = -2;
     if (parseInt(config.GPUMinerProcessPriority) >= -2 && parseInt(config.GPUMinerProcessPriority) <= 1) document.getElementById('GPUMinerProcessPriority').value = config.GPUMinerProcessPriority;
     else document.getElementById('GPUMinerProcessPriority').value = -1;
-    if (config.DisableCpuMiningOnBattery) document.getElementById('DisableCpuMiningOnBattery').checked = true;
     if (config.DisableMinerFee) document.getElementById('DisableMinerFee').checked = true;
     if (config.UseMinerTweaks) document.getElementById('UseMinerTweaks').checked = true;
 
@@ -1246,6 +1246,7 @@
         if (document.getElementById('ExcludeMinerName').value) config.ExcludeMinerName = document.getElementById('ExcludeMinerName').value.replace(' ', '').split(',');
         config.Algorithm = []; // enforce array
         if (document.getElementById('Algorithm').value) config.Algorithm = document.getElementById('Algorithm').value.replace(' ', '').split(',');
+        config.DisableCpuMiningOnBattery = document.getElementById('DisableCpuMiningOnBattery').checked;
         config.DisableMinersWithFee = document.getElementById('DisableMinersWithFee').checked;
         config.DisableDualAlgoMining = document.getElementById('DisableDualAlgoMining').checked;
         config.DisableSingleAlgoMining = document.getElementById('DisableSingleAlgoMining').checked;
@@ -1258,7 +1259,6 @@
         config.MinerWindowStyleNormalWhenBenchmarking = document.getElementById('MinerWindowStyleNormalWhenBenchmarking').checked;
         config.CPUMinerProcessPriority = parseInt(document.getElementById('CPUMinerProcessPriority').value);
         config.GPUMinerProcessPriority = parseInt(document.getElementById('GPUMinerProcessPriority').value);
-        config.DisableCpuMiningOnBattery = document.getElementById('DisableCpuMiningOnBattery').checked;
         config.DisableMinerFee = document.getElementById('DisableMinerFee').checked;
         config.UseMinerTweaks = document.getElementById('UseMinerTweaks').checked;
 

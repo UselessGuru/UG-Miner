@@ -1,3 +1,13 @@
+Changelog UG-Miner 6.7.15 2025/12/29
+====================================
+
+Improvements:
+- Legacy GUI: Remove obsolete code & minor code optimizations
+
+Miner updates:
+- XmRig-v6.25.0
+
+
 Changelog UG-Miner 6.7.14 2025/12/25
 ====================================
 
