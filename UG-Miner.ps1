@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.15
-Version date:   2025/12/29
+Version:        6.7.16
+Version date:   2025/12/31
 #>
 
 using module .\Includes\Include.psm1
@@ -32,7 +32,7 @@ param(
     [Parameter (Mandatory = $false)]
     [UInt]$APIport = 3999, # TCP Port for API and web GUI
     [Parameter (Mandatory = $false)]
-    [Switch]$AutoReboot = $true, # If true will reboot computer when a miner is completely dead, e.g. unresponsive
+    [Switch]$AutoReboot = $true, # If true computer will reboot if a miner is completely dead, e.g. unresponsive
     [Parameter (Mandatory = $false)]
     [Switch]$AutoUpdate = $true, # If true will automatically update to the new version
     [Parameter (Mandatory = $false)]
@@ -44,13 +44,13 @@ param(
     [Parameter (Mandatory = $false)]
     [Boolean]$BalancesKeepAlive = $true, # If true will force mining at a pool to protect your earnings (some pools auto-purge the wallet after longer periods of inactivity, see '\Data\PoolData.Json' BalancesKeepAlive properties)
     [Parameter (Mandatory = $false)]
-    [Boolean]$BalancesShowSums = $true, # Show 1hr / 6hrs / 24hr / 7day & 30day pool earnings sums in web dashboard
+    [Boolean]$BalancesShowSums = $true, # Show 1hr / 6hrs / 24hr / 7day & 30day pool earnings sums
     [Parameter (Mandatory = $false)]
-    [Boolean]$BalancesShowAverages = $true, # Show 1hr / 24hr & 7day pool earnings averages in web dashboard
+    [Boolean]$BalancesShowAverages = $true, # Show 1hr / 24hr & 7day pool earnings averages
     [Parameter (Mandatory = $false)]
-    [Boolean]$BalancesShowInAllCurrencies = $true, # If true pool balances will be shown in all currencies in web dashboard
+    [Boolean]$BalancesShowInAllCurrencies = $true, # If true pool balances will be shown in all currencies
     [Parameter (Mandatory = $false)]
-    [Boolean]$BalancesShowInFIATcurrency = $true, # If true pool balances will be shown in main currency in web dashboard
+    [Boolean]$BalancesShowInFIATcurrency = $true, # If true pool balances will be shown in main currency
     [Parameter (Mandatory = $false)]
     [String[]]$BalancesTrackerExcludePools = @("MiningDutch"), # Balances tracker will not track these pools
     [Parameter (Mandatory = $false)]
@@ -162,7 +162,7 @@ param(
     [Parameter (Mandatory = $false)]
     [String]$NiceHashOrganizationId = "", # NiceHash organization ID (required to retrieve balance information)
     [Parameter (Mandatory = $false)]
-    [Switch]$OpenFirewallPorts = $true, # If true will open firewall ports for all miners (requires admin rights!)
+    [Switch]$OpenFirewallPorts = $true, # If true will open firewall ports for all miners (administrator privileges are required)
     [Parameter (Mandatory = $false)]
     [String]$PayoutCurrency = "BTC", # i.e. BTC, LTC, ZEC, ETH etc., default PayoutCurrency for all pools that have no other currency configured, PayoutCurrency is also a per pool setting (to be configured in 'PoolsConfig.json')
     [Parameter (Mandatory = $false)]
@@ -218,7 +218,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$ShowColumnHashrate = $true, # Show hashrate(s) column in main text window miner overview
     [Parameter (Mandatory = $false)]
-    [Switch]$ShowColumnMinerFee = $true, # Show miner fee column in main text window miner overview (if fees are available, t.b.d. in miner files, property '[Double]Fee')
+    [Switch]$ShowColumnMinerFee = $true, # Show miner fee column in main text window miner overview
     [Parameter (Mandatory = $false)]
     [Switch]$ShowPoolBalances = $false, # Display pool balances & earnings information in main text window, requires BalancesTrackerPollInterval -gt 0
     [Parameter (Mandatory = $false)]
@@ -246,13 +246,13 @@ param(
     [Parameter (Mandatory = $false)]
     [Boolean]$SubtractBadShares = $true, # If true will deduct bad shares when calculating effective hashrates
     [Parameter (Mandatory = $false)]
-    [Int]$SyncWindow = 3, # Cycles. Pool prices must all be all have been collected within the last 'SyncWindow' cycles, otherwise the biased value of older poll price data will get reduced more the older the data is
+    [Int]$SyncWindow = 3, # Cycles. Pool prices must all be all have been collected within the last 'SyncWindow' cycles, otherwise the biased value of older poll price data will get reduced more and more the older the data is
     [Parameter (Mandatory = $false)]
     [Switch]$UseColorForMinerStatus = $true, # If true miners in web and legacy GUI will be shown with colored background depending on status
     [Parameter (Mandatory = $false)]
     [Switch]$UsemBTC = $true, # If true will display BTC values in milli BTC
     [Parameter (Mandatory = $false)]
-    [Switch]$UseMinerTweaks = $false, # If true will apply miner specific tweaks, e.g mild overclock. This may improve profitability at the expense of system stability (Admin rights are required)
+    [Switch]$UseMinerTweaks = $false, # If true will apply miner specific tweaks, e.g mild overclock. This may improve profitability at the expense of system stability (administrator privileges are required)
     [Parameter (Mandatory = $false)]
     [String]$UIstyle = "light", # light or full. Defines level of info displayed in main text window
     [Parameter (Mandatory = $false)]
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.15"
+    Version      = [System.Version]"6.7.16"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

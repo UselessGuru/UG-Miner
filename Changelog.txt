@@ -1,3 +1,10 @@
+Changelog UG-Miner 6.7.16 202?/??/??
+====================================
+
+Pool changes:
+- MiningDutch: Rework API request retry handling for brains & balances tracker
+
+
 Changelog UG-Miner 6.7.15 2025/12/29
 ====================================
 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.7.15
-Version date:   2025/12/29
+Version:        6.7.16
+Version date:   2025/12/31
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -60,28 +60,25 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
         if ($Currencies = ($APIresponse.result.Where({ $_.tag -and $_.tag -notlike "*_*" -and $_.status -ne "merged" }) | Sort-Object -Property tag)) { 
             $Currencies.ForEach(
                 { 
+                    $APIresponse = $null
                     $Currency = $_.tag
                     $RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
-                    $APIresponse = $null
 
                     while (-not $APIresponse -and $RetryCount -gt 0) { 
                         try { 
                             # Get mutex. Mutexes are shared across all threads and processes.
                             # This lets us ensure only one thread is trying to query the pool API
-                            # $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
+                            $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
                             # Attempt to aquire mutex
-                            # if ($Mutex.WaitOne($RetryInterval * 2000)) { 
-                                # if ($Session."$($Name)APIrequestTimestamp" -and [DateTime]::Now.ToUniversalTime() -lt $Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval)) { 
-                                #     Start-Sleep -Seconds ($Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval) - [DateTime]::Now.ToUniversalTime()).TotalSeconds
-                                # }
+                            if ($Mutex.WaitOne($RetryInterval * 2000)) { 
                                 $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                                 $Request = "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)"
-                                Write-Message -Level Debug "BalancesTracker '$Name': Querying https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)"
+                                Write-Message -Level Debug "BalancesTracker '$Name': Querying $Request"
                                 $APIresponse = Invoke-RestMethod $Request -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
-                                Write-Message -Level Debug "BalancesTracker '$Name': Response from https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey) received"
-                                # $Mutex.ReleaseMutex()
-                            # }
-                            # Remove-Variable Mutex
+                                Write-Message -Level Debug "BalancesTracker '$Name': Response from $Request received"
+                                $Mutex.ReleaseMutex()
+                            }
+                            Remove-Variable Mutex, Request -ErrorAction Ignore
 
                             if ($Session.Config.BalancesTrackerLogAPIResponse) { 
                                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -89,7 +86,11 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
                                 $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                             }
 
-                            if ($APIresponse.getuserbalance.data) { 
+                            if ($APIresponse.message -match "^Only \d request every ") { 
+                                Start-Sleep -Seconds [Int]($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$")
+                                $APIresponse = $null
+                            }
+                            elseif ($APIresponse.getuserbalance.data) { 
                                 $Unpaid = [Double]$APIresponse.getuserbalance.data.confirmed + [Double]$APIresponse.getuserbalance.data.unconfirmed
                                 if ($Unpaid -gt 0) { 
                                     [PSCustomObject]@{ 

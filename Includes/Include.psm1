@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.15
-Version date:   2025/12/29
+Version:        6.7.16
+Version date:   2025/12/31
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -4135,11 +4135,15 @@ function Read-Config {
                 )
                 if ($ConfigFromFile.EarningsAdjustmentFactor -le 0 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 10) { 
                     $ConfigFromFile.EarningsAdjustmentFactor = $Session.AllCommandLineParameters.EarningsAdjustmentFactor
-                    Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.EarningsAdjustmentFactor)) is not within supported range (0 - 10); using default value $($Session.AllCommandLineParameters.EarningsAdjustmentFactor)."
+                    Write-Message -Level Warn "Configured EarningsAdjustmentFactor value $($ConfigFromFile.EarningsAdjustmentFactor) is not within supported range (0 - 10). Using default value $($Session.AllCommandLineParameters.EarningsAdjustmentFactor)."
                 }
                 if ($ConfigFromFile.PoolAllowedPriceIncreaseFactor -le 2 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 99) { 
                     $ConfigFromFile.PoolAllowedPriceIncreaseFactor = $Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor
-                    Write-Message -Level Warn "Default Earnings adjustment factor (value: $($ConfigFromFile.PoolAllowedPriceIncreaseFactor)) is not within supported range (1 - 99); using default value $($Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor)."
+                    Write-Message -Level Warn "Configured PoolAllowedPriceIncreaseFactor value $($ConfigFromFile.PoolAllowedPriceIncreaseFactor) is not within supported range (1 - 99). Using default value $($Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor)."
+                }
+                if ($ConfigFromFile.CPUMiningReserveCPUcore -lt 0 -or $ConfigFromFile.CPUMiningReserveCPUcore -gt [Environment]::ProcessorCount) { 
+                    $ConfigFromFile.CPUMiningReserveCPUcore = $Session.AllCommandLineParameters.CPUMiningReserveCPUcore
+                    Write-Message -Level Warn "Configured CPUMiningReserveCPUcore value $($ConfigFromFile.CPUMiningReserveCPUcore) is not within supported range (0 - $([Environment]::ProcessorCount)). Using default value $($Session.AllCommandLineParameters.CPUMiningReserveCPUcore)."
                 }
             }
         }

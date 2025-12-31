@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.15
-Version date:   2025/12/29
+Version:        6.7.16
+Version date:   2025/12/31
 #>
 
 using module ..\Includes\Include.psm1
@@ -58,9 +58,6 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                         $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
                         # Attempt to aquire mutex
                         if ($Mutex.WaitOne($PoolConfig.PoolAPIretryInterval * 2000)) { 
-                            if ($Session."$($Name)APIrequestTimestamp" -and [DateTime]::Now.ToUniversalTime() -lt $Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval)) { 
-                                Start-Sleep -Seconds ($Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval) - [DateTime]::Now.ToUniversalTime()).TotalSeconds
-                            }
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                             Write-Message -Level Debug "Brain '$Name': Querying https://www.mining-dutch.nl/api/status"
                             $AlgoData = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
@@ -69,6 +66,10 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                         }
                         Remove-Variable Mutex
                         if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
+                        if ($AlgoData.message -match "^Only \d request every ") { 
+                            Start-Sleep -Seconds [Int]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
+                            $AlgoData = $null
+                        }
                     }
                     if (-not $TotalStats) { 
                         # Get mutex. Mutexes are shared across all threads and processes.
@@ -76,9 +77,6 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                         $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
                         # Attempt to aquire mutex
                         if ($Mutex.WaitOne($PoolConfig.PoolAPIretryInterval * 2000)) { 
-                            if ($Session."$($Name)APIrequestTimestamp" -and [DateTime]::Now.ToUniversalTime() -lt $Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval)) { 
-                                Start-Sleep -Seconds ($Session."$($Name)APIrequestTimestamp".AddSeconds($RetryInterval) - [DateTime]::Now.ToUniversalTime()).TotalSeconds
-                            }
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                             Write-Message -Level Debug "Brain '$Name': Querying https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
                             $TotalStats = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
@@ -86,7 +84,11 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                             $Mutex.ReleaseMutex()
                         }
                         Remove-Variable Mutex
-                        if ($TotalStats -like "<!DOCTYPE html>*") { $AlgTotalStatsoData = $null }
+                        if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
+                        if ($TotalStats.message -match "^Only \d request every ") { 
+                            Start-Sleep -Seconds [Int]($TotalStats.message -replace "^Only \d request every " -replace " seconds allowed$")
+                            $TotalStats = $null
+                        }
                     }
                 }
                 catch { 
