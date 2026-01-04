@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.16
-Version date:   2025/12/31
+Version:        6.7.17
+Version date:   2026/01/04
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.16"
+    Version      = [System.Version]"6.7.17"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -656,8 +656,6 @@ function MainLoop {
     }
 
     if ($Session.NewMiningStatus -ne "Idle") { 
-        # Start balances tracker
-        if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
 
         # Check internet connection every 10 minutes
         if ($Session.NetworkChecked -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-10)) { 
@@ -667,9 +665,12 @@ function MainLoop {
             if ($Session.MyIPaddress) { $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime() }
         }
 
+        # Start balances tracker
+        if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
+
         if ($Session.MyIPaddress) { 
-            # Read exchange rates at least every 30 minutes
-            if ((Compare-Object $Session.AllCurrencies $Session.BalancesCurrencies).Where({ $_.SideIndicator -eq "=>"}) -or $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((30, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum)) { Get-Rate }
+            # Read exchange rates at least every hour (only when balances tracker has done the same in the last minute)
+            if ($Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum + 1)) { Get-Rate }
         }
         Else { 
             Write-Message -Level Error "No internet connection - will retry in $($Session.Config.Interval) seconds..."
@@ -677,7 +678,7 @@ function MainLoop {
         }
     }
 
-    # If something (pause button, idle timer, WebGUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
+    # If something (pause button, idle timer, web GUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
     if ($Session.RestartCycle -or ($LegacyGUIform -and -not $LegacyGUIelements.MiningSummaryLabel.Text)) { 
         $Session.RestartCycle = $false
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.16
-Version date:   2025/12/31
+Version:        6.7.17
+Version date:   2026/01/04
 #>
 
 # Fixed 192,7/Progpow/Kawpow/Ethash mining.
@@ -43,7 +43,7 @@ $Algorithms = @(
 #   @{ Algorithm = "EvrProgPow";         Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
     @{ Algorithm = "FiroPow";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=firo" }
     @{ Algorithm = "FishHash";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(55, 45); ExcludeGPUarchitectures = " ";          ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --algo=fishhash" }
-    @{ Algorithm = "KawPow";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(60, 35); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" }
+#   @{ Algorithm = "KawPow";             Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(60, 35); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=kawpow --dag-fix --pers=RAVENCOINKAWPOW" } # Miner just closes
 #   @{ Algorithm = "HeavyHashKarlsen";   Type = "AMD"; Fee = @(0.008);  MinMemGiB = 1.08; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=karlsenhash" } # No kernel for AMD
     @{ Algorithm = "HeavyHashKarlsenV2"; Type = "AMD"; Fee = @(0.0095); MinMemGiB = 1.08; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=karlsenhashv2" }
 #   @{ Algorithm = "Octopus";            Type = "AMD"; Fee = @(0.02);   MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=octopus" } # No kernel for AMD

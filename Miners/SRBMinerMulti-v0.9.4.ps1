@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.16
-Version date:   2025/12/31
+Version:        6.7.17
+Version date:   2026/01/04
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -81,11 +81,11 @@ if ($Algorithms) {
                 { 
                     if ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
                         $PrerequisitePath = $Session.VertHashDatPath
-                        $PrerequisiteURI = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+                        $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
                     }
                     else { 
                         $PrerequisitePath = ""
-                        $PrerequisiteURI = ""
+                        $PrerequisiteURI  = ""
                     }
 
                     # $ExcludePools = $_.ExcludePools

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.16
-Version date:   2025/12/31
+Version:        6.7.17
+Version date:   2026/01/04
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -900,7 +900,7 @@ public static class Kernel32
             $Loops --
         } while ($Loops -gt 0)
         do { 
-            if ($MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")) { break }
+            if ($MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")[0]) { break }
             Start-Sleep -Milliseconds 50
             $Loops --
         } while ($Loops -gt 0)
@@ -1204,8 +1204,6 @@ function Stop-BalancesTracker {
 
 function Get-Rate { 
 
-    $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
-
     $RatesCacheFileName = "$($Session.MainPath)\Cache\Rates.json"
 
     # Use stored currencies from last run
@@ -1285,6 +1283,7 @@ function Get-Rate {
 
             Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
             $Session.Rates = $Rates
+            $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
             $Session.RefreshTimestamp = (Get-Date -Format "G")
             $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
         }
@@ -1322,12 +1321,12 @@ function Write-Message {
         if ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost") { 
             # Write to console
             switch ($Level) { 
-                "Debug"   { Write-Host $Message -NoNewline -ForegroundColor "Blue"; break }
-                "Error"   { Write-Host $Message -NoNewline -ForegroundColor "Red"; break }
-                "Info"    { Write-Host $Message -NoNewline -ForegroundColor "White"; break }
-                "MemDbg"  { Write-Host $Message -NoNewline -ForegroundColor "Cyan"; break }
-                "Verbose" { Write-Host $Message -NoNewline -ForegroundColor "Yello"; break }
-                "Warn"    { Write-Host $Message -NoNewline -ForegroundColor "Magenta" }
+                "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewline; break }
+                "Error"   { Write-Host $Message -ForegroundColor "Red" -NoNewline; break }
+                "Info"    { Write-Host $Message -ForegroundColor "White" -NoNewline; break }
+                "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" -NoNewline; break }
+                "Verbose" { Write-Host $Message -ForegroundColor "Yello" -NoNewline; break }
+                "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewline }
             }
             $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
             Write-Host ""
@@ -3525,7 +3524,7 @@ function Initialize-Environment {
         exit
     }
 
-    # Load donation as sorted case insensitive hash table
+    # Load donation as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\DonationData.json") { $Session.DonationData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.DonationData) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
@@ -3545,7 +3544,7 @@ function Initialize-Environment {
         Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
-    # Load algorithm list as sorted case insensitive hash table
+    # Load algorithm list as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\Algorithms.json") { $Session.Algorithms = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.Algorithms.Keys) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
@@ -3556,7 +3555,7 @@ function Initialize-Environment {
     }
     Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
-    # Load coin names as sorted case insensitive hash table
+    # Load coin names as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\CoinNames.json") { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.CoinNames.Keys) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
@@ -3567,7 +3566,7 @@ function Initialize-Environment {
     }
     Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
-    # Load currency algorithm data as sorted case insensitive hash table
+    # Load currency algorithm data as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\CurrencyAlgorithm.json") { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.CurrencyAlgorithm.Keys) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
@@ -3578,7 +3577,7 @@ function Initialize-Environment {
     }
     Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
-    # Load EquihashCoinPers data as sorted case insensitive hash table
+    # Load EquihashCoinPers data as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\EquihashCoinPers.json") { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.EquihashCoinPers) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
@@ -3589,9 +3588,9 @@ function Initialize-Environment {
     }
     Write-Host "Loaded equihash coins database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
-    # Load regions as sorted case insensitive hash table
+    # Load regions as case insensitive hash table
     if (Test-Path -LiteralPath "$PWD\Data\Regions.json") { 
-        $Session.Regions = [Ordered]@{ } # as case insensitive hash table
+        $Session.Regions = [Ordered]@{ }
         ([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties.ForEach({ $Session.Regions[$_.Name] = @($_.Value) })
     }
     if (-not $Session.Regions.Keys) { 
@@ -3603,7 +3602,7 @@ function Initialize-Environment {
     }
     Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
-    # Load FIAT currencies list as sorted case insensitive hash table
+    # Load FIAT currencies list as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\FIATcurrencies.json") { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.FIATcurrencies) { 
         Write-Error "Terminating error - cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
@@ -3614,7 +3613,7 @@ function Initialize-Environment {
     }
     Write-Host "Loaded fiat currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
-    # Load unprofitable algorithms as sorted case insensitive hash table, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
+    # Load unprofitable algorithms as case insensitive sorted list, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
     $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
     if (Test-Path -LiteralPath "$PWD\Data\UnprofitableAlgorithms.json") { 
         $UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
@@ -3641,7 +3640,7 @@ function Initialize-Environment {
     }
     Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
 
-    # Load PoolsLastUsed data as sorted case insensitive hash table
+    # Load PoolsLastUsed data as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json") { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.PoolsLastUsed.psBase.Keys) { 
         $Session.PoolsLastUsed = @{ }
@@ -3650,7 +3649,7 @@ function Initialize-Environment {
         Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
-    # Load AlgorithmsLastUsed data as sorted case insensitive hash table
+    # Load AlgorithmsLastUsed data as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\AlgorithmsLastUsed.json") { $Session.AlgorithmsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.AlgorithmsLastUsed.psBase.Keys) { 
         $Session.AlgorithmsLastUsed = @{ }
@@ -3659,7 +3658,7 @@ function Initialize-Environment {
         Write-Host "Loaded algorithms last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
     }
 
-    # Load MinersLastUsed data as sorted case insensitive hash table
+    # Load MinersLastUsed data as case insensitive sorted list
     if (Test-Path -LiteralPath "$PWD\Data\MinersLastUsed.json") { $Session.MinersLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\MinersLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
     if (-not $Session.MinersLastUsed.psBase.Keys) { 
         $Session.MinersLastUsed = @{ }
@@ -3669,9 +3668,13 @@ function Initialize-Environment {
     }
 
     # Load EarningsChart data to make it available early in GUI
-    if (Test-Path -LiteralPath "$PWD\Cache\EarningsChartData.json" -PathType Leaf) { $Session.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Cache\EarningsChartData.json") | ConvertFrom-Json }
+    if (Test-Path -LiteralPath "$PWD\Cache\EarningsChartData.json" -PathType Leaf) { 
+        $Session.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Cache\EarningsChartData.json") | ConvertFrom-Json
+        $Session.BalancesUpdatedTimestamp = (Get-ItemProperty -LiteralPath "$PWD\Cache\EarningsChartData.json" -Name LastWriteTime).lastwritetime.ToString("G")
+    }
     if (-not $Session.EarningsChartData.Earnings) { 
         $Session.EarningsChartData = @{ }
+        $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
     }
     else { 
         Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green

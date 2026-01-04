@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.16
-Version date:   2025/12/31
+Version:        6.7.17
+Version date:   2026/01/04
 #>
 
 using module ..\Includes\Include.psm1
@@ -38,6 +38,10 @@ $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
+# Get mutex. Mutexes are shared across all threads and processes.
+# This lets us ensure only one thread is trying to query the pool API
+$Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
+
 while ($PoolConfig = $Session.Config.Pools.$Name) { 
 
     $APICallFails = 0
@@ -53,18 +57,14 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
             do { 
                 try { 
                     if (-not $AlgoData) { 
-                        # Get mutex. Mutexes are shared across all threads and processes.
-                        # This lets us ensure only one thread is trying to query the pool API
-                        $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
                         # Attempt to aquire mutex
-                        if ($Mutex.WaitOne($PoolConfig.PoolAPIretryInterval * 2000)) { 
-                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                        if ($Mutex.WaitOne(1000)) { 
                             Write-Message -Level Debug "Brain '$Name': Querying https://www.mining-dutch.nl/api/status"
                             $AlgoData = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                             Write-Message -Level Debug "Brain '$Name': Response from https://www.mining-dutch.nl/api/status received"
                             $Mutex.ReleaseMutex()
                         }
-                        Remove-Variable Mutex
                         if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                         if ($AlgoData.message -match "^Only \d request every ") { 
                             Start-Sleep -Seconds [Int]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
@@ -72,18 +72,14 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                         }
                     }
                     if (-not $TotalStats) { 
-                        # Get mutex. Mutexes are shared across all threads and processes.
-                        # This lets us ensure only one thread is trying to query the pool API
-                        $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
                         # Attempt to aquire mutex
-                        if ($Mutex.WaitOne($PoolConfig.PoolAPIretryInterval * 2000)) { 
+                        if ($Mutex.WaitOne(1000)) { 
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                             Write-Message -Level Debug "Brain '$Name': Querying https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
                             $TotalStats = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                             Write-Message -Level Debug "Brain '$Name': Response from https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats received"
                             $Mutex.ReleaseMutex()
                         }
-                        Remove-Variable Mutex
                         if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
                         if ($TotalStats.message -match "^Only \d request every ") { 
                             Start-Sleep -Seconds [Int]($TotalStats.message -replace "^Only \d request every " -replace " seconds allowed$")

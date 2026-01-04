@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.16
-Version date:   2025/12/31
+Version:        6.7.17
+Version date:   2026/01/04
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.24"
+$APIversion = "6.0.26"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -54,6 +54,10 @@ $Session.APIserver = $Server
 
 $GCstopWatch = [System.Diagnostics.StopWatch]::new()
 $GCstopWatch.Start()
+
+# Get mutex. Mutexes are shared across all threads and processes.
+# This lets us ensure only one thread is trying to write to the file at a time.
+$Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_PoolsConfigFile")
 
 while ($Session.APIversion -and $Server.IsListening) { 
     $Context = $Server.GetContext()
@@ -129,16 +133,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
-                # Get mutex. Mutexes are shared across all threads and processes.
-                # This lets us ensure only one thread is trying to write to the file at a time.
-                $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_PoolsConfigFile")
-
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
                     $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
                     $Mutex.ReleaseMutex()
                 }
-                Remove-Variable Mutex
             }
             else { 
                 $Data = "No matching stats found."
@@ -171,16 +170,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
-                # Get mutex. Mutexes are shared across all threads and processes.
-                # This lets us ensure only one thread is trying to write to the file at a time.
-                $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_PoolsConfigFile")
-
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
                     $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
                     $Mutex.ReleaseMutex()
                 }
-                Remove-Variable Mutex
             }
             else { 
                 $Data = "No matching stats found."
@@ -197,16 +191,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                 $BalanceDataEntries = $Session.BalancesData
                 $Session.BalancesData = @((Compare-Object $Session.BalancesData @($Parameters.Data | ConvertFrom-Json -ErrorAction Ignore) -PassThru -Property DateTime, Pool, Currency, Wallet).Where({ $_.SideIndicator -eq "<=" }) | Select-Object -ExcludeProperty SideIndicator)
 
-                # Get mutex. Mutexes are shared across all threads and processes.
-                # This lets us ensure only one thread is trying to write to the file at a time.
-                $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_BalancesData")
-
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
                     $Session.BalancesData | ConvertTo-Json | Out-File ".\Data\BalancesTrackerData.json"
                     $Mutex.ReleaseMutex()
                 }
-                Remove-Variable Mutex
 
                 $RemovedEntriesCount = $BalanceDataEntries.Count - $Session.BalancesData.Count
                 if ($RemovedEntriesCount -gt 0) { 
@@ -575,16 +564,11 @@ while ($Session.APIversion -and $Server.IsListening) {
             }
         }
         "/functions/switchinglog/clear" { 
-            # Get mutex. Mutexes are shared across all threads and processes.
-            # This lets us ensure only one thread is trying to write to the file at a time.
-            $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_SwitchingLog")
-
             # Attempt to aquire mutex, waiting up to 1 second if necessary
             if ($Mutex.WaitOne(1000)) { 
                 Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Remove-Item -Force
                 $Mutex.ReleaseMutex()
             }
-            Remove-Variable Mutex
 
             Write-Message -Level Verbose "Web GUI: Switching log '.\Logs\SwitchingLog.csv' cleared."
             $Data = "Switching log '.\Logs\SwitchingLog.csv' cleared."

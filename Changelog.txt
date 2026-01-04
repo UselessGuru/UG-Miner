@@ -1,4 +1,21 @@
-Changelog UG-Miner 6.7.16 202?/??/??
+Changelog UG-Miner 6.7.17 2026/01/04
+====================================
+
+Changes:
+- Rework Mutex handling
+
+Fixes:
+- ZPool brein: Currency not set for some algorithms
+
+Improvements:
+- Core: Avoid extra rates queries to 'min-api.cryptocompare.com'
+- Legacy GUI: Remove obsolete code & minor code optimizations
+
+Miner updates:
+- TeamBlackMiner-v2.36
+
+
+Changelog UG-Miner 6.7.16 2025/12/31
 ====================================
 
 Pool changes:
@@ -1770,7 +1787,7 @@ Enhancements:
 
 Fixes:
 - Core: Power usage meassuring not ending when HWiNFO was not available
-- Core: Includes.psm1 / Get-Rate did not retrieve exchange rates for all guaranteed payout currencies
+- Core: Includes.psm1 / Function 'Get-Rate' did not retrieve exchange rates for all guaranteed payout currencies
 - Legacy GUI: 'All miners' table not listing all miners
 
 Miner updates:
