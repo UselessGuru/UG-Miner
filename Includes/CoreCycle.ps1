@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           Core.ps1
 Version:        6.7.9
-Version date:   2026/01/04
+Version date:   2026/01/06
 #>
 
 using module .\Include.psm1
@@ -41,6 +41,9 @@ try {
 
         # Read-Config will read and apply configuration if configuration files have changed
         Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
+
+        # Read exchange rates when FIAT currency has changed
+        if ($Session.Config.FIATcurrency -notin $Session.AllCurrencies) { Get-Rate }
 
         $Session.CoreLoopCounter ++
         $Session.EndCycleMessage = ""
@@ -355,9 +358,10 @@ try {
                         if (Test-Path -LiteralPath ".\Pools\$PoolName.ps1") { 
                             try { 
                                 Write-Message -Level Debug "Pool definition file '$PoolName': Start building pool objects"
-                                & ".\Pools\$PoolName.ps1" -PoolVariant $_
-                                Write-Message -Level Debug "Pool definition file '$PoolName': End building pool objects"
-                            }
+                                $P = (& ".\Pools\$PoolName.ps1" -PoolVariant $_)
+                                $P
+                                Write-Message -Level Debug "Pool definition file '$PoolName': End building pool objects ($($P.Count) objects)"
+                                Remove-Variable P                            }
                             catch { 
                                 Write-Message -Level Error "Error in pool file 'Pools\$PoolName.ps1'."
                                 "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
@@ -1227,7 +1231,7 @@ try {
 
             # Add currency conversion rates
             if ($Summary -ne "") { $Summary += "`n" }
-            ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).ForEach(
+            ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).where({ $_ -ne $Session.Config.FIATcurrency}).ForEach(
                 { 
                     $Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Session.Rates.$_.($Session.Config.FIATcurrency) -DecimalsMax $Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)   " -f $Session.Rates.$_.($Session.Config.FIATcurrency)
                 }
@@ -1236,7 +1240,7 @@ try {
             Remove-Variable PayoutCurrency, Summary
         }
         else { 
-            $Message = "Error: Could not get BTC exchange rate from 'min-api.cryptocompare.com' for currency '$($Session.Config.PayoutCurrency)'. Cannot determine best miners to run - will retry in $($Session.Config.Interval) seconds..."
+            $Message = "Error: Could not get BTC exchange rate from 'min-api.cryptocompare.com' for main FIAT currency '$($Session.Config.PayoutCurrency)'. Cannot determine best miners to run - will retry in $($Session.Config.Interval) seconds..."
             Write-Message -Level Warn $Message
             $Session.Summary = $Message
             Remove-Variable Message

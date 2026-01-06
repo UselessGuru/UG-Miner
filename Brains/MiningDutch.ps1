@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.17
-Version date:   2026/01/04
+Version:        6.7.18
+Version date:   2026/01/06
 #>
 
 using module ..\Includes\Include.psm1
@@ -43,7 +43,6 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
 
 while ($PoolConfig = $Session.Config.Pools.$Name) { 
-
     $APICallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
     $RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
@@ -59,10 +58,11 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     if (-not $AlgoData) { 
                         # Attempt to aquire mutex
                         if ($Mutex.WaitOne(1000)) { 
-                            Write-Message -Level Debug "Brain '$Name': Querying https://www.mining-dutch.nl/api/status"
-                            $AlgoData = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                            $URI = "https://www.mining-dutch.nl/api/status"
+                            Write-Message -Level Debug "Brain '$Name': Querying $URI"
+                            $AlgoData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            Write-Message -Level Debug "Brain '$Name': Response from https://www.mining-dutch.nl/api/status received"
+                            Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                             $Mutex.ReleaseMutex()
                         }
                         if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
@@ -75,9 +75,10 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                         # Attempt to aquire mutex
                         if ($Mutex.WaitOne(1000)) { 
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            Write-Message -Level Debug "Brain '$Name': Querying https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
-                            $TotalStats = Invoke-RestMethod -Uri "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                            Write-Message -Level Debug "Brain '$Name': Response from https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats received"
+                            $URI = "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
+                            Write-Message -Level Debug "Brain '$Name': Querying $URI"
+                            $TotalStats = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                            Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                             $Mutex.ReleaseMutex()
                         }
                         if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
@@ -86,6 +87,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                             $TotalStats = $null
                         }
                     }
+                    Remove-Variable URI -ErrorAction Ignore
                 }
                 catch { 
                     $APICallFails ++
@@ -218,5 +220,4 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
     }
 }
 
-$Session.Brains.Remove($Name)
-$Session.BrainData.Remove($Name)
+Stop-Brain $Name

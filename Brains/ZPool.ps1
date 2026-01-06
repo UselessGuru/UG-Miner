@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.7.17
-Version date:   2026/01/04
+Version:        6.7.18
+Version date:   2026/01/06
 #>
 
 using module ..\Includes\Include.psm1
@@ -49,11 +49,19 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
             do { 
                 try { 
                     if (-not $AlgoData) { 
-                        $AlgoData = Invoke-RestMethod -Uri "https://www.zpool.ca/api/status" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                            $URI = "https://www.zpool.ca/api/status"
+                            Write-Message -Level Debug "Brain '$Name': Querying $URI"
+                            $AlgoData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                            Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                         if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                     }
                     if (-not $CurrenciesData) { 
-                        $CurrenciesData = Invoke-RestMethod -Uri "https://www.zpool.ca/api/currencies" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                        $URI = "https://www.zpool.ca/api/currencies"
+                        Write-Message -Level Debug "Brain '$Name': Querying $URI"
+                        $CurrenciesData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                        $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                        Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                         if ($CurrenciesData -like "<!DOCTYPE html>*") { $CurrenciesData = $null }
                     }
                 }
@@ -62,6 +70,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     $APIerror = $_.Exception.Message
                     if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
                 }
+                Remove-Variable URI -ErrorAction Ignore
             } while (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
@@ -230,5 +239,4 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
     }
 }
 
-$Session.Brains.Remove($Name)
-$Session.BrainData.Remove($Name)
+Stop-Brain $Name

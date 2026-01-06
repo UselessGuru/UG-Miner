@@ -17,18 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.17
-Version date:   2026/01/04
+Version:        6.7.18
+Version date:   2026/01/06
 #>
 
-# Fixed regression on algorithm 'xelishashv3' for some CPU's
-# Removed algorithms 'progpow_veil', 'progpow_quai', 'ethashr5'
-# Stale shares sending is now enabled by default for progpow based algorithms*
-# Bug fixes
+# Added algorithm 'yespowermwc' (MinersWorldCoin) for CPU mining, fee 0.85%
+# Fixed algorithm 'blake3_decred' pool login issue
+# Removed algorithm 'tht'
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.1.0/SRBMiner-Multi-3-1-0-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.1.1/SRBMiner-Multi-3-1-1-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -118,7 +117,6 @@ $Algorithms = @(
     @{ Algorithms = @("Randomy", "");              Type = "CPU"; Fee = @(0.01);   WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomy") }
     @{ Algorithms = @("RandomVirel", "");          Type = "CPU"; Fee = @(0.01);   WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm randomvirel") }
     @{ Algorithms = @("Rinhash", "");              Type = "CPU"; Fee = @(0.01);   WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm rinhash") }
-    @{ Algorithms = @("ThoughtAI", "");            Type = "CPU"; Fee = @(0.05);   WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm tht") }
     @{ Algorithms = @("VerusHash", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 20);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm verushash") }
     @{ Algorithms = @("YescryptR16", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yescryptr16") }
     @{ Algorithms = @("YescryptR32", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 45);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yescryptr32") }
@@ -131,6 +129,7 @@ $Algorithms = @(
     @{ Algorithms = @("YespowerIc", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespoweric") }
     @{ Algorithms = @("YespowerLtncg", "");        Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowerltncg") }
     @{ Algorithms = @("YespowerMgpc", "");         Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowermgpc") }
+    @{ Algorithms = @("YespowerMwc", "");          Type = "CPU"; Fee = @(0.085);  WarmupTimes = @(60, 0);   ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowermwc") }
     @{ Algorithms = @("YespowerR16", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowerr16") }
     @{ Algorithms = @("YespowerSugar", "");        Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowersugar") }
     @{ Algorithms = @("YespowerTide", "");         Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @());           Arguments = @(" --disable-gpu --algorithm yespowertide") }

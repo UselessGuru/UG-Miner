@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.17
-Version date:   2026/01/04
+Version:        6.7.18
+Version date:   2026/01/06
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.17"
+    Version      = [System.Version]"6.7.18"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -669,8 +669,8 @@ function MainLoop {
         if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
 
         if ($Session.MyIPaddress) { 
-            # Read exchange rates at least every hour (only when balances tracker has done the same in the last minute)
-            if ($Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum + 1)) { Get-Rate }
+            # Read exchange rates
+            if (($Session.Config.FIATcurrency -in $Session.AllCurrencies -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum)) -or ($Session.NewMiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies)) { Get-Rate }
         }
         Else { 
             Write-Message -Level Error "No internet connection - will retry in $($Session.Config.Interval) seconds..."
