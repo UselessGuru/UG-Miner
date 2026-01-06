@@ -3,7 +3,7 @@ Changelog UG-Miner 6.7.18 2026/01/06
 
 Enhancements:
 - Core: Read exchange rate when FIAT currency was changed
-- Core: Use first extra currency (if configured) or USD as fallback for main FIAT currency if crytocompare API does not have exchange rate information for configured main currency
+- Core: Use first extra currency (if configured) or USD as fallback for main FIAT currency if cryptocompare API does not have exchange rate information for configured main currency
 
 Miner updates:
 - SRBMinerMulti-v3.1.1
