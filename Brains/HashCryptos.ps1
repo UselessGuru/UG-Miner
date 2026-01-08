@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.18
-Version date:   2026/01/06
+Version:        6.7.19
+Version date:   2026/01/08
 #>
 
 using module ..\Includes\Include.psm1
@@ -57,15 +57,21 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                     Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                     if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
+                    if ($AlgoData.message -match "^Only \d request every ") { 
+                        Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received"
+                        Start-Sleep -Seconds [Int](($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                        $AlgoData = $null
+                    }
                 }
                 catch { 
                     $APICallFails ++
                     $APIerror = $_.Exception.Message
-                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
+                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed"
+                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
                 }
                 if ($APIResponse.Message -like "Only 1 request *" -or $AlgoData.PSObject.Properties.Name.Count -lt 2) { 
                     if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
-                    Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)))
+                    Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval))
                 }
                 Remove-Variable URI -ErrorAction Ignore
             } while ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)

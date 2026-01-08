@@ -5,7 +5,7 @@
   </body>
 
 <!-- Start of page scripts "foot.html"-->
-  <script type="text/javascript">
+  <script type="text/javascript"> 
     $(document).ready(function () {
 
       // Set the active sidebar item
@@ -15,59 +15,55 @@
 
       $("#btn-miningpause").click(function () {
         $("body").css("cursor", "wait");
-        $command = "/functions/mining/pause";
-        $(".modal-body").load($command, function() {
-          if (this.outerText) {
-            $(".modal-title").text($("#btn-miningpause").text());
-            $("body").css("cursor", "default");
-            $("#myModal").modal({ show: true });
-          };
+        $.ajax({
+          async: false,
+          dataType: "json",
+          url: "/functions/mining/pause",
+          success: function(result) {
+            updateButtonStatus();
+            updateSummary();
+            $("#activeminers").bootstrapTable("refresh");
+            $("#switchinglog").bootstrapTable("refresh");
+            $("#watchdogtimers").bootstrapTable("refresh");
+            if (typeof updatePoolBalances === "function") updatePoolBalances();
+          }
         });
-        $("#myModal").on("hidden.bs.modal", function () {
-          updateButtonStatus();
-          updateSummary();
-          $("#activeminers").bootstrapTable("refresh");
-          $("#switchinglog").bootstrapTable("refresh");
-          $("#watchdogtimers").bootstrapTable("refresh");
-        });
+        $("body").css("cursor", "default");
       });
 
       $("#btn-miningstart").click(function () {
         $("body").css("cursor", "wait");
-        $command = "/functions/mining/start";
-        $(".modal-body").load($command, function() {
-          if (this.outerText) {
-            $(".modal-title").text($("#btn-miningstart").text());
-            $("body").css("cursor", "default");
-            $("#myModal").modal({ show: true });
-          };
+        $.ajax({
+          async: false,
+          dataType: "json",
+          url: "/functions/mining/start",
+          success: function(result) {
+            updateSummary();
+            $("#activeminers").bootstrapTable("refresh");
+            $("#switchinglog").bootstrapTable("refresh");
+            $("#watchdogtimers").bootstrapTable("refresh");
+            if (typeof updatePoolBalances === "function") updatePoolBalances();
+          }
         });
-        $("#myModal").on("hidden.bs.modal", function () {
-          updateButtonStatus();
-          updateSummary();
-          $("#activeminers").bootstrapTable("refresh");
-          $("#switchinglog").bootstrapTable("refresh");
-          $("#watchdogtimers").bootstrapTable("refresh");
-        });
+        $("body").css("cursor", "default");
       });
 
       $("#btn-miningstop").click(function () {
         $("body").css("cursor", "wait");
-        $command = "/functions/mining/stop";
-        $(".modal-body").load($command, function() {
-          if (this.outerText) {
-            $(".modal-title").text($("#btn-miningstop").text());
-            $("body").css("cursor", "default");
-            $("#myModal").modal({ show: true });
-          };
+        $.ajax({
+          async: false,
+          dataType: "json",
+          url: "/functions/mining/stop",
+          success: function(result) {
+            updateButtonStatus();
+            updateSummary();
+            $("#activeminers").bootstrapTable("refresh");
+            $("#switchinglog").bootstrapTable("refresh");
+            $("#watchdogtimers").bootstrapTable("refresh");
+            if (typeof updatePoolBalances === "function") updatePoolBalances();
+          }
         });
-        $("#myModal").on("hidden.bs.modal", function () {
-          updateButtonStatus();
-          updateSummary();
-          $("#activeminers").bootstrapTable("refresh");
-          $("#switchinglog").bootstrapTable("refresh");
-          $("#watchdogtimers").bootstrapTable("refresh");
-        });
+        $("body").css("cursor", "default");
       });
 
       window.setInterval(function() { 
@@ -76,7 +72,7 @@
           // Refresh data only when refreshtimestamp is new
           if (refreshedtimestamp != refreshtimestamp) { 
             $("#activeminers").bootstrapTable("refresh");
-            $("#watchdogtimers").bootstrapTable("refresh");
+            $("#switchinglog").bootstrapTable("refresh");
             $("#watchdogtimers").bootstrapTable("refresh");
             updateData();
             updateSummary();

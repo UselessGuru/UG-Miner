@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.7.18
-Version date:   2026/01/06
+Version:        6.7.19
+Version date:   2026/01/08
 #>
 
 [NoRunspaceAffinity()]

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.7.18
-Version date:   2026/01/06
+Version:        6.7.19
+Version date:   2026/01/08
 #>
 
 using module ..\Includes\Include.psm1
@@ -68,7 +68,8 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 catch { 
                     $APICallFails ++
                     $APIerror = $_.Exception.Message
-                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
+                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed"
+                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
                 }
                 Remove-Variable URI -ErrorAction Ignore
             } while (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)

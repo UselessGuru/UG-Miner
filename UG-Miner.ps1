@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.18
-Version date:   2026/01/06
+Version:        6.7.19
+Version date:   2026/01/08
 #>
 
 using module .\Includes\Include.psm1
@@ -319,7 +319,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.18"
+    Version      = [System.Version]"6.7.19"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -341,9 +341,8 @@ if ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { Write-Host " [recom
 Write-Host ")" -ForegroundColor Green
 
 # Another instance might already be running. Wait no more than 20 seconds (other instance might be from autoupdate)
-$CursorPosition = $Host.UI.RawUI.CursorPosition
-
 $Loops = 20
+$CursorPosition = $Host.UI.RawUI.CursorPosition
 while (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     $Loops --
     [Console]::SetCursorPosition(0, $CursorPosition.y)
@@ -669,8 +668,8 @@ function MainLoop {
         if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
 
         if ($Session.MyIPaddress) { 
-            # Read exchange rates
-            if (($Session.Config.FIATcurrency -in $Session.AllCurrencies -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum)) -or ($Session.NewMiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies)) { Get-Rate }
+            # Read exchange rates at least once every hour
+            if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { Get-Rate }
         }
         Else { 
             Write-Message -Level Error "No internet connection - will retry in $($Session.Config.Interval) seconds..."
@@ -733,6 +732,7 @@ function MainLoop {
                         $Message += " Click the 'Start mining' button to make money."
                         $Session.Summary = $Message
                         Remove-Variable Message
+                        $Session.RefreshTimestamp = (Get-Date -Format "G")
                     }
                     break
                 }
@@ -756,6 +756,7 @@ function MainLoop {
                         if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
 
                         # if ($Session.Config.ReportToServer) { Write-MonitoringData }
+                        $Session.RefreshTimestamp = (Get-Date -Format "G")
                     }
 
                     $LegacyGUIelements.ButtonStart.Enabled = $true
@@ -787,6 +788,7 @@ function MainLoop {
                         Write-Message -Level Info $Message
                         $Message += " Mining processes are starting..."
                         $Session.Summary = $Message
+                        $Session.RefreshTimestamp = (Get-Date -Format "G")
                         Remove-Variable Message
                         Update-GUIstatus
                     }

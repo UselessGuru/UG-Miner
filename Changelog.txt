@@ -1,3 +1,17 @@
+Changelog UG-Miner 6.7.19 2026/01/08
+====================================
+
+Fixes:
+- MiningDutch brain: 'no data received from pool' error after balances tracker has run
+
+Improvements:
+- Balances tracker: Suppress confidential information from log output (Wallet, Secret and APIkey)
+- Core: Avoid extra rates queries to 'min-api.cryptocompare.com'
+
+Changes:
+- Utils: Update 7-Zip to version 25.01
+
+
 Changelog UG-Miner 6.7.18 2026/01/06
 ====================================
 

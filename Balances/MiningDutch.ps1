@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.7.18
-Version date:   2026/01/06
+Version:        6.7.19
+Version date:   2026/01/08
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -33,7 +33,7 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 # Get mutex. Mutexes are shared across all threads and processes.
 # This lets us ensure only one thread is trying to query the pool API
-$Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
+$Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchBalancesAPI")
 
 while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchUserName -and $Session.Config.MiningDutchAPIKey) { 
 
@@ -66,23 +66,23 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
                             # Attempt to aquire mutex
                             if ($Mutex.WaitOne(1000)) { 
                                 $Request = "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Session.Config.MiningDutchAPIKey)"
-                                Write-Message -Level Debug "BalancesTracker '$Name': Querying $Request"
+                                Write-Message -Level Debug "BalancesTracker '$Name': Querying $($Request.Replace("$($Session.Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***"))"
                                 $APIresponse = Invoke-RestMethod $Request -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
                                 $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                                 $Mutex.ReleaseMutex()
-                                Write-Message -Level Debug "BalancesTracker '$Name': Response from $Request received"
+                                Write-Message -Level Debug "BalancesTracker '$Name': Response from $($Request.Replace("$($Session.Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) received"
+                                if ($APIresponse.message -match "^Only \d request every ") { 
+                                    Start-Sleep -Seconds [Int](($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                                    $APIresponse = $null
+                                }
                             }
 
                             if ($Session.Config.BalancesTrackerLogAPIResponse) { 
                                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-                                $Request | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                                ($Request.replace("$($Session.Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                                 $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                             }
 
-                            if ($APIresponse.message -match "^Only \d request every ") { 
-                                Start-Sleep -Seconds [Int]($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$")
-                                $APIresponse = $null
-                            }
                             elseif ($APIresponse.getuserbalance.data) { 
                                 $Unpaid = [Double]$APIresponse.getuserbalance.data.confirmed + [Double]$APIresponse.getuserbalance.data.unconfirmed
                                 if ($Unpaid -gt 0) { 

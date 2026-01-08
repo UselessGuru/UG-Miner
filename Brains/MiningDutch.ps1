@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.18
-Version date:   2026/01/06
+Version:        6.7.19
+Version date:   2026/01/08
 #>
 
 using module ..\Includes\Include.psm1
@@ -43,6 +43,7 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
 
 while ($PoolConfig = $Session.Config.Pools.$Name) { 
+
     $APICallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
     $RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
@@ -62,29 +63,33 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                             Write-Message -Level Debug "Brain '$Name': Querying $URI"
                             $AlgoData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                            $Session.Brains.$Name | Add-Member "APIresponseAlgoData" ($AlgoData | ConvertTo-Json -Compress) -Force
                             Write-Message -Level Debug "Brain '$Name': Response from $URI received"
+                            if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
+                            elseif ($AlgoData.message -match "^Only \d request every ") { 
+                                Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received"
+                                Start-Sleep -Seconds [Int](($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                                $AlgoData = $null
+                            }
                             $Mutex.ReleaseMutex()
-                        }
-                        if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
-                        if ($AlgoData.message -match "^Only \d request every ") { 
-                            Start-Sleep -Seconds [Int]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
-                            $AlgoData = $null
                         }
                     }
                     if (-not $TotalStats) { 
                         # Attempt to aquire mutex
                         if ($Mutex.WaitOne(1000)) { 
-                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
                             $URI = "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
                             Write-Message -Level Debug "Brain '$Name': Querying $URI"
                             $TotalStats = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                            $Session.Brains.$Name | Add-Member "APIresponseTotalStats" ($TotalStats | ConvertTo-Json -Compress) -Force
                             Write-Message -Level Debug "Brain '$Name': Response from $URI received"
+                            if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
+                            elseif ($TotalStats.message -match "^Only \d request every ") { 
+                                Write-Message -Level Debug "Brain '$Name': Response '$($TotalStats.message)' from $URI received"
+                                Start-Sleep -Seconds [Int](($TotalStats.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                                $TotalStats = $null
+                            }
                             $Mutex.ReleaseMutex()
-                        }
-                        if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
-                        if ($TotalStats.message -match "^Only \d request every ") { 
-                            Start-Sleep -Seconds [Int]($TotalStats.message -replace "^Only \d request every " -replace " seconds allowed$")
-                            $TotalStats = $null
                         }
                     }
                     Remove-Variable URI -ErrorAction Ignore
@@ -92,7 +97,8 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 catch { 
                     $APICallFails ++
                     $APIerror = $_.Exception.Message
-                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(60, ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval))) }
+                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed"
+                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
                 }
             } while (-not ($AlgoData -and $TotalStats) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
