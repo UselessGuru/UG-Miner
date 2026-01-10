@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.9
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 using module .\Include.psm1
@@ -30,6 +30,7 @@ using module .\Include.psm1
 
 $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 
+# Read all miner classes
 (Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
 
 $Session.Miners = [Miner[]]@()
@@ -100,7 +101,6 @@ try {
             Write-Message -Level Info "Miner naming scheme has changed. Stopping all running miners..."
 
             Clear-MinerData
-
             $Session.RefreshNeeded = $true
         }
 
@@ -229,7 +229,7 @@ try {
         }
         catch { 
             Write-Message -Level Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-            $Session.Remove("UnprofitableAlgorithms")
+            $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
             $Session.Remove("UnprofitableAlgorithmsTimestamp")
         }
 
@@ -360,8 +360,9 @@ try {
                                 Write-Message -Level Debug "Pool definition file '$PoolName': Start building pool objects"
                                 $P = (& ".\Pools\$PoolName.ps1" -PoolVariant $_)
                                 $P
-                                Write-Message -Level Debug "Pool definition file '$PoolName': End building pool objects ($($P.Count) objects)"
-                                Remove-Variable P                            }
+                                Write-Message -Level Debug "Pool definition file '$PoolName': End building pool objects ($($P.Count))"
+                                Remove-Variable P
+                            }
                             catch { 
                                 Write-Message -Level Error "Error in pool file 'Pools\$PoolName.ps1'."
                                 "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
@@ -799,8 +800,10 @@ try {
                         $MinerFileName = $_.Name
                         try { 
                             Write-Message -Level Debug "Miner definition file '$MinerFileName': Start building miner objects"
-                            & $_.ResolvedTarget
-                            Write-Message -Level Debug "Miner definition file '$MinerFileName': End building miner objects"
+                            $M = (& $_.ResolvedTarget)
+                            $M
+                            Write-Message -Level Debug "Miner definition file '$MinerFileName': End building miner objects ($($M.Count))"
+                            Remove-Variable M
                         }
                         catch { 
                             Write-Message -Level Error "Miner file 'Miners\$MinerFileName': $_."
@@ -1231,7 +1234,7 @@ try {
 
             # Add currency conversion rates
             if ($Summary -ne "") { $Summary += "`n" }
-            ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).where({ $_ -ne $Session.Config.FIATcurrency}).ForEach(
+            ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).ForEach(
                 { 
                     $Summary += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Session.Rates.$_.($Session.Config.FIATcurrency) -DecimalsMax $Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)   " -f $Session.Rates.$_.($Session.Config.FIATcurrency)
                 }
@@ -1240,7 +1243,7 @@ try {
             Remove-Variable PayoutCurrency, Summary
         }
         else { 
-            $Message = "Error: Could not get BTC exchange rate from 'min-api.cryptocompare.com' for main FIAT currency '$($Session.Config.PayoutCurrency)'. Cannot determine best miners to run - will retry in $($Session.Config.Interval) seconds..."
+            $Message = "Error: Could not get BTC exchange rate from 'min-api.cryptocompare.com' for main FIAT currency '$($Session.Config.FIATcurrency)'. Cannot determine best miners to run - will retry in $($Session.Config.Interval) seconds..."
             Write-Message -Level Warn $Message
             $Session.Summary = $Message
             Remove-Variable Message

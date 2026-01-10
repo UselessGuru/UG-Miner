@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 using module ..\Includes\Include.psm1
@@ -37,7 +37,7 @@ $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
 while ($PoolConfig = $Session.Config.Pools.$Name) { 
 
-    $APICallFails = 0
+    $APIcallFails = 0
     $PoolVariant = [String]$Session.Config.PoolName.Where({ $_ -like "$Name*" })
     $StartTime = [DateTime]::Now
 
@@ -66,18 +66,18 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     }
                 }
                 catch { 
-                    $APICallFails ++
+                    $APIcallFails ++
                     $APIerror = $_.Exception.Message
-                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed"
-                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
+                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed ($($APIerror | ConvertTo-Json -Compress))"
+                    if ($APIcallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
                 }
                 Remove-Variable URI -ErrorAction Ignore
-            } while (-not ($AlgoData -and $CurrenciesData) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
+            } while (-not ($AlgoData -and $CurrenciesData) -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            if ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://www.zpool.ca/api [$($APIerror -replace '\.$')]."
+            if ($APIcallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
+                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://www.zpool.ca/api ($($APIerror | ConvertTo-Json -Compress))"
             }
             elseif ($AlgoData -and $CurrenciesData) { 
                 # Change numeric string to numbers, some values are null
@@ -147,7 +147,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     # Reset history when stat file got removed
                     if ($PoolVariant -like "*Plus") { 
                         $StatName = if ($Currency) { "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)_Profit" } else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }
-                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
+                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $Algorithm })) { 
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
                         }
@@ -235,7 +235,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
         [System.GC]::Collect()
     }
 
-    while (-not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
+    while ($Session.BeginCycleTime -ne $Session.Timer -and -not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
         Start-Sleep -Milliseconds 250
     }
 }

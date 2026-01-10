@@ -38,6 +38,7 @@
           dataType: "json",
           url: "/functions/mining/start",
           success: function(result) {
+            updateButtonStatus();
             updateSummary();
             $("#activeminers").bootstrapTable("refresh");
             $("#switchinglog").bootstrapTable("refresh");
@@ -74,9 +75,9 @@
             $("#activeminers").bootstrapTable("refresh");
             $("#switchinglog").bootstrapTable("refresh");
             $("#watchdogtimers").bootstrapTable("refresh");
-            updateData();
-            updateSummary();
             updateButtonStatus();
+            updateSummary();
+            updateData();
             if (typeof updatePoolBalances === "function") updatePoolBalances();
             if (refreshtimestamp !== null) refreshedtimestamp = refreshtimestamp;
             setTimeout(() => { }, 1000); // Wait 1 second after update

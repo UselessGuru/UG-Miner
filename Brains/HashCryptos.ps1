@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 using module ..\Includes\Include.psm1
@@ -40,7 +40,7 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 while ($PoolConfig = $Session.Config.Pools.$Name) { 
 
-    $APICallFails = 0
+    $APIcallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
     $StartTime = [DateTime]::Now
 
@@ -58,28 +58,26 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                     if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                     if ($AlgoData.message -match "^Only \d request every ") { 
-                        Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received"
-                        Start-Sleep -Seconds [Int](($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                        $WaitSeconds = [Int]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
+                        Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
+                        Start-Sleep -Seconds $WaitSeconds
+                        Remove-Variable WaitSeconds
                         $AlgoData = $null
                     }
                 }
                 catch { 
-                    $APICallFails ++
+                    $APIcallFails ++
                     $APIerror = $_.Exception.Message
-                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed"
-                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
-                }
-                if ($APIResponse.Message -like "Only 1 request *" -or $AlgoData.PSObject.Properties.Name.Count -lt 2) { 
-                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { $APICallFails ++ }
-                    Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval))
+                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed ($($APIerror | ConvertTo-Json -Compress))"
+                    if ($APIcallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
                 }
                 Remove-Variable URI -ErrorAction Ignore
-            } while ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
+            } while ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            if ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://hashcryptos.com/api [$($APIerror -replace '\.$')]."
+            if ($APIcallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
+                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://hashcryptos.com/api ($($APIerror | ConvertTo-Json -Compress))"
             }
             elseif ($AlgoData) { 
                 # Change numeric string to numbers, some values are null
@@ -99,9 +97,9 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     # Reset history when stat file got removed
                     if ($PoolVariant -like "*Plus") { 
                         $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
-                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
+                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $Algorithm })) { 
                             # Reset history when stat file got removed
-                            $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
+                            $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
                         }
                     }
@@ -189,7 +187,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
         [System.GC]::Collect()
     }
 
-    while (-not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
+    while ($Session.BeginCycleTime -ne $Session.Timer -and -not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
         Start-Sleep -Milliseconds 250
     }
 }

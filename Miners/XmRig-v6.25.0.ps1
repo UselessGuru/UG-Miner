@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { return }
@@ -168,7 +168,7 @@ $Algorithms = @(
     @{ Algorithm = "CryptonightXao";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
     @{ Algorithm = "CryptonightHeavyXhv";  Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
     @{ Algorithm = "CryptonightZls";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "NVIDIA"; MinMemGiB = 0.77; WarmupTimes = @(45, 15); ExcludePools = @(); Arguments = " --algo kawpow" } # Trex-v0.26.8 is fastest, but has 1% miner fee (Broken: https://github.com/RainbowMiner/RainbowMiner/issues/2224)
+    @{ Algorithm = "KawPow";               Type = "NVIDIA"; MinMemGiB = 0.77; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" } # Trex-v0.26.8 is fastest, but has 1% miner fee (Broken: https://github.com/RainbowMiner/RainbowMiner/issues/2224)
 #   @{ Algorithm = "Randomx";              Type = "NVIDIA"; MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxArq";           Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 #   @{ Algorithm = "RandomxKeva";          Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
@@ -218,7 +218,7 @@ if ($Algorithms) {
                                 Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where({ $null -ne $_ })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --retries=90 --retry-pause=1"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = @($Fee) # Dev fee
-                                MinerUri    = "http://workers.xmrig.info/worker?url=$([System.Web.HTTPUtility]::UrlEncode("http://127.0.0.1:$($MinerAPIPort)"))?Authorization=Bearer $([System.Web.HTTPUtility]::UrlEncode($MinerName))"
+                                MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/api.json"
                                 Name        = $MinerName
                                 Path        = $MinerPath
                                 Port        = $MinerAPIPort

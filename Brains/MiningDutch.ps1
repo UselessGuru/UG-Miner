@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 using module ..\Includes\Include.psm1
@@ -44,7 +44,7 @@ $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel
 
 while ($PoolConfig = $Session.Config.Pools.$Name) { 
 
-    $APICallFails = 0
+    $APIcallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
     $RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
     $StartTime = [DateTime]::Now
@@ -67,8 +67,10 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                             Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                             if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                             elseif ($AlgoData.message -match "^Only \d request every ") { 
-                                Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received"
-                                Start-Sleep -Seconds [Int](($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                                $WaitSeconds = [Int]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
+                                Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
+                                Start-Sleep -Seconds $WaitSeconds
+                                Remove-Variable WaitSeconds
                                 $AlgoData = $null
                             }
                             $Mutex.ReleaseMutex()
@@ -85,8 +87,10 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                             Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                             if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
                             elseif ($TotalStats.message -match "^Only \d request every ") { 
-                                Write-Message -Level Debug "Brain '$Name': Response '$($TotalStats.message)' from $URI received"
-                                Start-Sleep -Seconds [Int](($TotalStats.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                                $WaitSeconds = [Int]($TotalStats.message -replace "^Only \d request every " -replace " seconds allowed$")
+                                Write-Message -Level Debug "Brain '$Name': Response '$($TotalStats.message)' from $URI received -> waiting $WaitSeconds seconds"
+                                Start-Sleep -Seconds $WaitSeconds
+                                Remove-Variable WaitSeconds
                                 $TotalStats = $null
                             }
                             $Mutex.ReleaseMutex()
@@ -95,17 +99,17 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     Remove-Variable URI -ErrorAction Ignore
                 }
                 catch { 
-                    $APICallFails ++
+                    $APIcallFails ++
                     $APIerror = $_.Exception.Message
-                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed"
-                    if ($APICallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
+                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed ($($APIerror | ConvertTo-Json -Compress))"
+                    if ($APIcallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
                 }
-            } while (-not ($AlgoData -and $TotalStats) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
+            } while (-not ($AlgoData -and $TotalStats) -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
-            if ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://www.mining-dutch.nl/api [$($APIerror -replace '\.$')]."
+            if ($APIcallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
+                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://www.mining-dutch.nl/api ($($APIerror | ConvertTo-Json -Compress))"
             }
             else {
                 ($AlgoData.PSObject.Properties.Name).Where({ $TotalStats.result.algorithm -notcontains $_ }).foreach({ $AlgoData.PSObject.Properties.Remove($_) })
@@ -136,8 +140,8 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     # Reset history when stat file got removed
                     if ($PoolVariant -like "*Plus") { 
                         $StatName = "$($PoolVariant)_$($AlgorithmNorm)_Profit"
-                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $PoolName })) { 
-                            $PoolObjects = $PoolObjects.Where({ $_.Name -ne $PoolName })
+                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $Algorithm })) { 
+                            $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
                         }
                     }
@@ -221,9 +225,10 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
         [System.GC]::Collect()
     }
 
-    while (-not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
+    while ($Session.BeginCycleTime -ne $Session.Timer -and -not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
         Start-Sleep -Milliseconds 250
     }
 }
 
+$Mutex.Dispose()
 Stop-Brain $Name

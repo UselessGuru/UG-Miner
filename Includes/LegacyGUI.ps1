@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -69,7 +69,7 @@ $LegacyGUIelements = [System.Collections.SortedList]::New([StringComparer]::Ordi
 
 function Resize-Form { 
 
-    if ($LegacyGUIform.Height -lt $LegacyGUIform.MinimumSize.Height -or $LegacyGUIform.Width -lt $LegacyGUIform.MinimumSize.Width) { return } # Sometimes $LegacyGUIform is smaller than minimum (Why?)
+    if ($LegacyGUIform.WindowState -eq "Minimized") { return }
     try { 
         $LegacyGUIelements.TabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIelements.MiningStatusLabel.Height - $LegacyGUIelements.MiningSummaryLabel.Height - $LegacyGUIelements.EditConfigLink.Height - $LegacyGUIelements.EditConfigLink.Height + 3
         $LegacyGUIelements.TabControl.Width = $LegacyGUIform.ClientSize.Width - 16
@@ -85,20 +85,30 @@ function Resize-Form {
         $LegacyGUIelements.EditConfigLink.Location = [System.Drawing.Point]::new(18, ($LegacyGUIform.ClientSize.Height - $LegacyGUIelements.EditConfigLink.Height - 4))
         $LegacyGUIelements.CopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUIelements.TabControl.ClientSize.Width - $LegacyGUIelements.CopyrightLabel.Width - 4), ($LegacyGUIform.ClientSize.Height - $LegacyGUIelements.EditConfigLink.Height - 4))
 
+        # System status panel height
+        $ActiveMinersDGVheight = $LegacyGUIelements.ActiveMinersDGV.RowTemplate.Height * $LegacyGUIelements.ActiveMinersDGV.RowCount + $LegacyGUIelements.ActiveMinersDGV.ColumnHeadersHeight
+        if ($ActiveMinersDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { $ActiveMinersDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2 }
+        $LegacyGUIelements.ActiveMinersDGV.Height = $ActiveMinersDGVheight
+        $LegacyGUIelements.SystemLogLabel.Location = [System.Drawing.Point]::new(1, ($LegacyGUIelements.ActiveMinersLabel.Height + $LegacyGUIelements.ActiveMinersDGV.Height + 30))
+        $Session.TextBoxSystemLog.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.ActiveMinersLabel.Height + $LegacyGUIelements.ActiveMinersDGV.Height + $LegacyGUIelements.SystemLogLabel.Height + 36))
+        $Session.TextBoxSystemLog.Height = ($LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.ActiveMinersLabel.Height - $LegacyGUIelements.ActiveMinersDGV.Height - $LegacyGUIelements.SystemLogLabel.Height - 93)
+        if (-not $Session.TextBoxSystemLog.SelectionLength) { $Session.TextBoxSystemLog.ScrollToCaret() }
+
+        # Earnings and balances panel height
         if ($Session.Config.BalancesTrackerPollInterval -gt 0) { 
             $LegacyGUIelements.BalancesDGV.Visible = $true
             $LegacyGUIelements.EarningsChart.Visible = $true
 
-            $BalancesDGVHeight = $LegacyGUIelements.BalancesDGV.RowTemplate.Height * $LegacyGUIelements.BalancesDGV.RowCount + $LegacyGUIelements.BalancesDGV.ColumnHeadersHeight
-            if ($BalancesDGVHeight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { 
-                $BalancesDGVHeight = $LegacyGUIelements.TabControl.ClientSize.Height / 2
+            $BalancesDGVheight = $LegacyGUIelements.BalancesDGV.RowTemplate.Height * $LegacyGUIelements.BalancesDGV.RowCount + $LegacyGUIelements.BalancesDGV.ColumnHeadersHeight
+            if ($BalancesDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { 
+                $BalancesDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2
                 $LegacyGUIelements.BalancesDGV.ScrollBars = "Vertical"
             }
             else { 
                 $LegacyGUIelements.BalancesDGV.ScrollBars = "None"
             }
-            $LegacyGUIelements.BalancesDGV.Height = $BalancesDGVHeight
-            $LegacyGUIelements.EarningsChart.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.BalancesDGV.Height - $LegacyGUIelements.BalancesLabel.Height - 59
+            $LegacyGUIelements.BalancesDGV.Height = $BalancesDGVheight
+            $LegacyGUIelements.EarningsChart.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.BalancesDGV.Height - $LegacyGUIelements.BalancesLabel.Height - 57
             $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, $LegacyGUIelements.EarningsChart.Bottom)
             $LegacyGUIelements.BalancesDGV.Top = $LegacyGUIelements.BalancesLabel.Bottom
         }
@@ -109,20 +119,11 @@ function Resize-Form {
             $LegacyGUIelements.EarningsChart.Height = 0
         }
 
-        $ActiveMinersDGVHeight = $LegacyGUIelements.ActiveMinersDGV.RowTemplate.Height * $LegacyGUIelements.ActiveMinersDGV.RowCount + $LegacyGUIelements.ActiveMinersDGV.ColumnHeadersHeight
-        if ($ActiveMinersDGVHeight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { $ActiveMinersDGVHeight = $LegacyGUIelements.TabControl.ClientSize.Height / 2 }
-        $LegacyGUIelements.ActiveMinersDGV.Height = $ActiveMinersDGVHeight
-
-        $LegacyGUIelements.SystemLogLabel.Location = [System.Drawing.Point]::new(1, ($LegacyGUIelements.ActiveMinersLabel.Height + $LegacyGUIelements.ActiveMinersDGV.Height + 30))
-        $Session.TextBoxSystemLog.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.ActiveMinersLabel.Height + $LegacyGUIelements.ActiveMinersDGV.Height + $LegacyGUIelements.SystemLogLabel.Height + 36))
-        $Session.TextBoxSystemLog.Height = ($LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.ActiveMinersLabel.Height - $LegacyGUIelements.ActiveMinersDGV.Height - $LegacyGUIelements.SystemLogLabel.Height - 95)
-        if (-not $Session.TextBoxSystemLog.SelectionLength) { $Session.TextBoxSystemLog.ScrollToCaret() }
-
-        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.MinersLabel.Height - $LegacyGUIelements.MinersPanel.Height - 76
-        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.PoolsLabel.Height - $LegacyGUIelements.PoolsPanel.Height - 76
-        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 76
-        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 80
-        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 80
+        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.MinersLabel.Height - $LegacyGUIelements.MinersPanel.Height - 72
+        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.PoolsLabel.Height - $LegacyGUIelements.PoolsPanel.Height - 72
+        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 72
+        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 75
+        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 75
     }
     catch { 
         Start-Sleep 0
@@ -191,8 +192,8 @@ function Set-TableColor {
     }
 }
 
-# Function Set-WorkerColor { 
-#     If ($Session.Config.UseColorForMinerStatus) { 
+# function Set-WorkerColor { 
+#     if ($Session.Config.UseColorForMinerStatus) { 
 #         foreach($Row in $LegacyGUIelements.WorkersDGV.Rows) { 
 #             $Row.DefaultCellStyle.Backcolor = Switch ($Row.DataBoundItem.Status) { 
 #                 "Offline" { $LegacyGUIelements.Colors["disabled"]; Break }
@@ -390,9 +391,9 @@ function Update-TabControl {
                         @{ Name = "$($Session.Config.FIATcurrency) in past 24 hrs"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth24 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
                         @{ Name = "$($Session.Config.FIATcurrency) in past 7 days"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth168 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
                         @{ Name = "$($Session.Config.FIATcurrency) in past 30 days"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Growth720 * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
-                        @{ Name = "Avg. $($Session.Config.FIATcurrency)/1 hr"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgHourlyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
-                        @{ Name = "Avg. $($Session.Config.FIATcurrency)/24 hrs"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
-                        @{ Name = "Avg. $($Session.Config.FIATcurrency)/7 days"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "Avg. $($Session.Config.FIATcurrency) / 1 hr"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgHourlyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "Avg. $($Session.Config.FIATcurrency) / 24 hrs"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgDailyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
+                        @{ Name = "Avg. $($Session.Config.FIATcurrency) / 7 days"; Expression = { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.AvgWeeklyGrowth * $Session.Rates.($_.Currency).($Session.Config.FIATcurrency)) } },
                         @{ Name = "Projected pay date"; Expression = { if ($_.ProjectedPayDate -is [DateTime]) { $_.ProjectedPayDate.ToShortDateString() } else { $_.ProjectedPayDate } } },
                         @{ Name = "Payout threshold"; Expression = { if ($_.PayoutThresholdCurrency -eq "BTC" -and $Session.Config.UsemBTC) { $PayoutThresholdCurrency = "mBTC"; $mBTCfactor = 1000 } else { $PayoutThresholdCurrency = $_.PayoutThresholdCurrency; $mBTCfactor = 1 }; "{0:P2} of {1} {2} " -f ($_.Balance / $_.PayoutThreshold * $Session.Rates.($_.Currency).($_.PayoutThresholdCurrency)), [String](("{0:N$(Get-DecimalsFromValue ($_.PayoutThreshold * $mBTCfactor) $Session.Config.DecimalsMax)}" -f [float]($_.PayoutThreshold * $mBTCfactor)) -replace "0*$" -replace "\.$") <# Cast to string to avoid extra decimal places #>, $PayoutThresholdCurrency } }
                     ) | Out-DataTable
@@ -417,11 +418,11 @@ function Update-TabControl {
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
                             $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 1hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 6hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 24hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 7days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 30days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 1 hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 6 hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 24 hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 7 days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 30 days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                             $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                             $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                             $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
@@ -777,6 +778,18 @@ function Update-GUIstatus {
     Update-TabControl
 }
 
+$LegacyGUIform = [System.Windows.Forms.Form]::new()
+# For High DPI, First call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode
+# SuspendLayout() is very important to correctly size and position all controls!
+$LegacyGUIform.SuspendLayout()
+$LegacyGUIform.AutoScaleDimensions = [System.Drawing.SizeF]::new(96, 96)
+$LegacyGUIform.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::DPI
+$LegacyGUIform.MaximizeBox = $true
+$LegacyGUIform.MinimumSize = [System.Drawing.Size]::new(800, 600) # best to keep under 800x600
+$LegacyGUIform.Text = $Session.Branding.ProductLabel
+$LegacyGUIform.TopMost = $false
+
+# Define GUI elements
 $LegacyGUIelements.Colors = @{ }
 $LegacyGUIelements.Colors["benchmarking"] = [System.Drawing.Color]::FromArgb(241, 255, 229)
 $LegacyGUIelements.Colors["disabled"] = [System.Drawing.Color]::FromArgb(255, 243, 231)
@@ -789,20 +802,6 @@ $LegacyGUIelements.Colors["unavailable"] = [System.Drawing.Color]::FromArgb(254,
 $LegacyGUIelements.Colors["warmingup"] = [System.Drawing.Color]::FromArgb(231, 255, 230)
 
 $LegacyGUIelements.Tooltip = [System.Windows.Forms.ToolTip]::new()
-
-$LegacyGUIform = [System.Windows.Forms.Form]::new()
-# For High DPI, First call SuspendLayout(), after that, Set AutoScaleDimensions, AutoScaleMode
-# SuspendLayout() is very important to correctly size and position all controls!
-$LegacyGUIform.SuspendLayout()
-$LegacyGUIform.AutoScaleDimensions = [System.Drawing.SizeF]::new(96, 96)
-$LegacyGUIform.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::DPI
-$LegacyGUIform.MaximizeBox = $true
-$LegacyGUIform.MinimumSize = [System.Drawing.Size]::new(800, 600) # best to keep under 800x600
-$LegacyGUIform.Text = $Session.Branding.ProductLabel
-$LegacyGUIform.TopMost = $false
-
-# Form Controls
-$LegacyGUIelements.Controls = @()
 
 $LegacyGUIelements.StatusPage = [System.Windows.Forms.TabPage]::new()
 $LegacyGUIelements.StatusPage.Name = "SystemStatus"
@@ -843,7 +842,7 @@ $LegacyGUIelements.MiningStatusLabel.Text = "$($Session.Branding.ProductLabel)"
 $LegacyGUIelements.MiningStatusLabel.TextAlign = "MiddleLeft"
 $LegacyGUIelements.MiningStatusLabel.Visible = $true
 $LegacyGUIelements.MiningStatusLabel.Width = 360
-$LegacyGUIelements.Controls += $LegacyGUIelements.MiningStatusLabel
+$LegacyGUIform.Controls.Add($LegacyGUIelements.MiningStatusLabel)
 
 $LegacyGUIelements.MiningSummaryLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.MiningSummaryLabel.AutoSize = $false
@@ -856,7 +855,7 @@ $LegacyGUIelements.MiningSummaryLabel.Location = [System.Drawing.Point]::new(12,
 $LegacyGUIelements.MiningSummaryLabel.Tag = ""
 $LegacyGUIelements.MiningSummaryLabel.TextAlign = "MiddleLeft"
 $LegacyGUIelements.MiningSummaryLabel.Visible = $true
-$LegacyGUIelements.Controls += $LegacyGUIelements.MiningSummaryLabel
+$LegacyGUIform.Controls.Add($LegacyGUIelements.MiningSummaryLabel)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.MiningSummaryLabel, "Color legend:`rBlack: Mining profitability is unknown`rGreen: Mining is profitable`rRed: Mining is NOT profitable")
 
 $LegacyGUIelements.ButtonPause = [System.Windows.Forms.Button]::new()
@@ -874,7 +873,7 @@ $LegacyGUIelements.ButtonPause.Add_Click(
         }
     }
 )
-$LegacyGUIelements.Controls += $LegacyGUIelements.ButtonPause
+$LegacyGUIform.Controls.Add($LegacyGUIelements.ButtonPause)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.ButtonPause, "Pause mining processes.`rBrain jobs and balances tracker remain running.")
 
 $LegacyGUIelements.ButtonStart = [System.Windows.Forms.Button]::new()
@@ -892,7 +891,7 @@ $LegacyGUIelements.ButtonStart.Add_Click(
         }
     }
 )
-$LegacyGUIelements.Controls += $LegacyGUIelements.ButtonStart
+$LegacyGUIform.Controls.Add($LegacyGUIelements.ButtonStart)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.ButtonStart, "Start the mining process.`rBrain jobs and balances tracker will also start.")
 
 $LegacyGUIelements.ButtonStop = [System.Windows.Forms.Button]::new()
@@ -910,7 +909,7 @@ $LegacyGUIelements.ButtonStop.Add_Click(
         }
     }
 )
-$LegacyGUIelements.Controls += $LegacyGUIelements.ButtonStop
+$LegacyGUIform.Controls.Add($LegacyGUIelements.ButtonStop)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.ButtonStop, "Stop mining processes.`rBrain jobs and balances tracker will also stop.")
 
 $LegacyGUIelements.EditConfigLink = [System.Windows.Forms.LinkLabel]::new()
@@ -927,7 +926,7 @@ $LegacyGUIelements.EditConfigLink.Add_Click(
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
     }
 )
-$LegacyGUIelements.Controls += $LegacyGUIelements.EditConfigLink
+$LegacyGUIform.Controls.Add($LegacyGUIelements.EditConfigLink)
 
 $LegacyGUIelements.CopyrightLabel = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIelements.CopyrightLabel.ActiveLinkColor = [System.Drawing.Color]::Blue
@@ -938,7 +937,7 @@ $LegacyGUIelements.CopyrightLabel.Size = [System.Drawing.Size]::new(380, 26)
 $LegacyGUIelements.CopyrightLabel.Text = "Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru"
 $LegacyGUIelements.CopyrightLabel.TextAlign = "MiddleRight"
 $LegacyGUIelements.CopyrightLabel.Add_Click({ Start-Process "$($Session.Branding.BrandWebSite)" })
-$LegacyGUIelements.Controls += $LegacyGUIelements.CopyrightLabel
+$LegacyGUIform.Controls.Add($LegacyGUIelements.CopyrightLabel)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.CopyrightLabel, "Click to go to the $($Session.Branding.ProductLabel) page on Github")
 
 # Miner context menu items
@@ -1521,7 +1520,7 @@ $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 
 # $LegacyGUIelements.WorkersDGV.Add_Sorted({ Set-WorkerColor -DataGridView $LegacyGUIelements.WorkersDGV })
 # Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.WorkersDGV -Enabled $true
-# $LegacyGUIelements.RigMonitorPageControls += $LegacyGUIelements.WorkersDGV
+# $LegacyGUIelements.RigMonitorPageControls.Add($LegacyGUIelements.WorkersDGV)
 
 $LegacyGUIelements.EditMonitoringLink = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIelements.EditMonitoringLink.ActiveLinkColor = [System.Drawing.Color]::Blue
@@ -1732,7 +1731,6 @@ $LegacyGUIelements.WatchdogTimersDGV.SelectionMode = "FullRowSelect"
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.WatchdogTimersDGV -Enabled $true
 $LegacyGUIelements.WatchdogTimersPageControls += $LegacyGUIelements.WatchdogTimersDGV
 
-$LegacyGUIform.Controls.AddRange(@($LegacyGUIelements.Controls))
 $LegacyGUIelements.StatusPage.Controls.AddRange(@($LegacyGUIelements.StatusPageControls))
 $LegacyGUIelements.EarningsPage.Controls.AddRange(@($LegacyGUIelements.EarningsPageControls))
 $LegacyGUIelements.MinersPage.Controls.AddRange(@($LegacyGUIelements.MinersPageControls))

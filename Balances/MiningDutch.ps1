@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -72,7 +72,10 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
                                 $Mutex.ReleaseMutex()
                                 Write-Message -Level Debug "BalancesTracker '$Name': Response from $($Request.Replace("$($Session.Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) received"
                                 if ($APIresponse.message -match "^Only \d request every ") { 
-                                    Start-Sleep -Seconds [Int](($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$") + 1)
+                                    $WaitSeconds = [Int]($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$")
+                                    Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
+                                    Start-Sleep -Seconds $WaitSeconds
+                                    Remove-Variable WaitSeconds
                                     $APIresponse = $null
                                 }
                             }
@@ -115,5 +118,6 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
     $RetryCount--
 }
 
+$Mutex.Dispose()
 $Error.Clear()
 [System.GC]::Collect()

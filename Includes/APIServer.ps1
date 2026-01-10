@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 using module .\Include.psm1
@@ -1071,6 +1071,8 @@ while ($Session.APIversion -and $Server.IsListening) {
         $GCstopWatch.Restart()
     }
 }
+
+$Mutex.Dispose()
 
 # Only gets here if something is wrong and the server couldn't start or stops listening
 $Server.Stop()

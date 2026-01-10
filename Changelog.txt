@@ -1,3 +1,11 @@
+Changelog UG-Miner 6.7.20 2026/01/10
+====================================
+
+Improvements:
+- Legacy GUI / Earnings and balances: Show balances as early as possible (use data from cache)
+- Legacy GUI: Remove obsolete code
+
+
 Changelog UG-Miner 6.7.19 2026/01/08
 ====================================
 

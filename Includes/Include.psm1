@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.19
-Version date:   2026/01/08
+Version:        6.7.20
+Version date:   2026/01/10
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1377,6 +1377,7 @@ function Write-Message {
             $Message | Out-File -LiteralPath $Session.LogFile -Append -ErrorAction Ignore
             $Mutex.ReleaseMutex()
         }
+        $Mutex.Dispose()
         Remove-Variable Mutex
     }
 }
@@ -1717,6 +1718,7 @@ function Write-Configuration {
         "$Header$($NewConfig | ConvertTo-Json -Depth 10)" | Out-File -LiteralPath $Session.ConfigFile -Force
         $Mutex.ReleaseMutex()
     }
+    $Mutex.Dispose()
     Remove-Variable Mutex
 }
 
@@ -2049,6 +2051,7 @@ function Set-Stat {
         } | ConvertTo-Json | Out-File -LiteralPath $Path -Force
         $Mutex.ReleaseMutex()
     }
+    $Mutex.Dispose()
     Remove-Variable Mutex
 
     return $Stat
@@ -2731,6 +2734,7 @@ function Add-CoinName {
             }
             $Mutex.ReleaseMutex()
         }
+        $Mutex.Dispose()
         Remove-Variable Mutex
     }
 }
@@ -3687,9 +3691,9 @@ function Initialize-Environment {
     }
 
     # Load Balances data to make it available early in GUI
-    if (Test-Path -LiteralPath "$PWD\Cache\Balances.json" -PathType Leaf) { $Session.Balances = [System.IO.File]::ReadAllLines("$PWD\Cache\Balances.json") | ConvertFrom-Json }
-    if (-not $Session.Balances.PSObject.Properties.Name) { 
-        $Session.Balances = @{ }
+    if (Test-Path -LiteralPath "$PWD\Cache\Balances.json" -PathType Leaf) { $Session.Balances = [System.IO.File]::ReadAllLines("$PWD\Cache\Balances.json") | ConvertFrom-Json -AsHashtable }
+    if (-not $Session.Balances.Keys) { 
+        $Session.Balances = [Ordered]@{ } # as case insensitive hash table
     }
     else { 
         Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
