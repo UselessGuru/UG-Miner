@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.7.20
-Version date:   2026/01/10
+Version:        6.7.21
+Version date:   2026/01/13
 #>
 
 using module ..\Includes\Include.psm1
