@@ -106,7 +106,7 @@ try {
 
         # Use values from config
         $Session.BenchmarkAllPoolAlgorithmCombinations = $Session.Config.BenchmarkAllPoolAlgorithmCombinations
-        $Session.PoolTimeout = [Math]::Floor($Session.Config.PoolTimeout)
+        $Session.PoolsTimeout = [Math]::Floor($Session.Config.PoolsTimeout)
 
         $Session.EnabledDevices = [Device[]]@($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName }).ForEach({ $_ | Select-Object -Property * }))
         if (-not $Session.EnabledDevices) { 
@@ -326,12 +326,13 @@ try {
             # Collect pool data
             if ($Session.Config.PoolName) { 
                 $Session.PoolsCount = $Session.Pools.Count
+                $Session.PoolsTimeout = ($Session.Config.Pools.Keys.ForEach({ $Session.Config.Pools.$_.PoolAPItimeout }) | Measure-Object -Maximum).Maximum
 
                 # Wait for pool data message
                 if ($Session.Brains.Keys.Where({ $Session.Brains[$_].StartTime -gt $Session.Timer.AddSeconds(- $Session.Config.Interval) }) -or -not $Session.Miners) { 
                     # Newly started brains, allow extra time for brains to get ready
-                    $Session.PoolTimeout = 60
-                    $Message = "Loading initial pool data from $((Get-PoolBaseName $Session.Config.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolTimeout) seconds..."
+                    $Session.PoolsTimeout = 2 * $Session.PoolsTimeout
+                    $Message = "Loading initial pool data from $((Get-PoolBaseName $Session.Config.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
                     if (-not $Session.Miners) { 
                         $Session.Summary = $Message
                         $Session.RefreshTimestamp = (Get-Date -Format "G")
@@ -341,15 +342,17 @@ try {
                     Remove-Variable Message
                 }
                 else { 
-                    Write-Message -Level Info "Loading pool data from $((Get-PoolBaseName $Session.Config.PoolName) -join ", " -replace ",([^,]*)$", " &`$1")..."
+                    Write-Message -Level Info "Loading pool data from $((Get-PoolBaseName $Session.Config.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
                 }
 
                 # Wait for all brains
                 $PoolDataCollectedTimeStamp = if ($Session.PoolDataCollectedTimeStamp) { $Session.PoolDataCollectedTimeStamp } else { $Session.ScriptStartTime }
-                while ([DateTime]::Now.ToUniversalTime() -lt $Session.Timer.AddSeconds($Session.PoolTimeout) -and ($Session.Brains.Keys.Where({ $Session.Brains[$_].Updated -lt $PoolDataCollectedTimeStamp }))) { 
+                while ([DateTime]::Now.ToUniversalTime() -lt $Session.Timer.AddSeconds($Session.PoolsTimeout) -and ($Session.Brains.Keys.Where({ $Session.Brains[$_].Updated -lt $PoolDataCollectedTimeStamp }))) { 
                     Start-Sleep -Seconds 1
                 }
                 Remove-Variable PoolDataCollectedTimeStamp
+
+                $PoolsMaxAge = [DateTime]::Now.ToUniversalTime().AddHours(-24)
 
                 $Session.Remove("PoolsNew")
                 $Session.PoolsNew = $Session.Config.PoolName.ForEach(
@@ -371,7 +374,7 @@ try {
                             }
                         }
                     }
-                ).ForEach(
+                ).Where({ $_.Updated -ge $PoolsMaxAge }).ForEach(
                     { 
                         $Pool = [Pool]$_
                         $Pool.CoinName = $Session.CoinNames[$Pool.Currency]
@@ -414,10 +417,9 @@ try {
                 $PoolsDeconfiguredCount = $PoolsCount - $Session.Pools.Count
 
                 # Expire pools that have not been updated for 1 day
-                $Timestamp = [DateTime]::Now.ToUniversalTime().AddHours(-24)
-                $Session.PoolsExpired = $Session.Pools.Where({ $_.Updated -lt $Timestamp })
-                $Session.Pools = $Session.Pools.Where({ $_.Updated -ge $Timestamp })
-                Remove-Variable Timestamp
+                $Session.PoolsExpired = $Session.Pools.Where({ $_.Updated -lt $PoolsMaxAge })
+                $Session.Pools = $Session.Pools.Where({ $_.Updated -ge $PoolsMaxAge })
+                Remove-Variable PoolsMaxAge
 
                 if ($Pools = Compare-Object -PassThru @($Session.Pools | Select-Object) @($Session.PoolsNew | Select-Object) -Property Key -IncludeEqual) { 
                     # Find added & updated pools
@@ -1167,16 +1169,16 @@ try {
                 Remove-Variable DeviceNames, DeviceNamesCombination, MinerCombinations, MinerDeviceNamesCombinations, RunningMinerBonusFactor, SmallestBias -ErrorAction Ignore
             }
 
-            $Session.PowerConsumptionIdleSystemW = (($Session.Config.PowerConsumptionIdleSystemW - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
-            $Session.BasePowerCost = [Double]($Session.PowerConsumptionIdleSystemW / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
+            $Session.PowerConsumptionIdleSystem = (($Session.Config.PowerConsumptionIdleSystem - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
+            $Session.BasePowerCost = [Double]($Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
             $Session.MiningEarnings = [Double]($MinersBest | Measure-Object Earnings_Bias -Sum).Sum
             $Session.MiningPowerCost = [Double]($MinersBest | Measure-Object PowerCost -Sum).Sum
             $Session.MiningPowerConsumption = [Double]($MinersBest | Measure-Object PowerConsumption -Sum).Sum
             $Session.MiningProfit = [Double](($MinersBest | Measure-Object Profit_Bias -Sum).Sum - $Session.BasePowerCost)
         }
         else { 
-            $Session.PowerConsumptionIdleSystemW = (($Session.Config.PowerConsumptionIdleSystemW), 0 | Measure-Object -Maximum).Maximum
-            $Session.BasePowerCost = [Double]($Session.PowerConsumptionIdleSystemW / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
+            $Session.PowerConsumptionIdleSystem = (($Session.Config.PowerConsumptionIdleSystem), 0 | Measure-Object -Maximum).Maximum
+            $Session.BasePowerCost = [Double]($Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
             $Session.MinersBestPerDevice = $MinersBest = $MinersOptimal = [Miner[]]@()
             $Session.MiningEarnings = $Session.MiningProfit = $Session.MiningPowerCost = $Session.MiningPowerConsumption = [Double]0
         }
@@ -1221,13 +1223,13 @@ try {
                     }
 
                     if ([Double]::IsNaN($Session.MiningEarnings) -or [Double]::IsNaN($Session.MiningPowerCost)) { 
-                        $Summary += "`nPower cost / day: n/a [Miner$(if ($MinersBest.Count -ne 1) { "s" }): n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Session.Config.FIATcurrency, ($Session.BasePowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.PowerConsumptionIdleSystemW
+                        $Summary += "`nPower cost / day: n/a [Miner$(if ($MinersBest.Count -ne 1) { "s" }): n/a; Base: {1:n} {0} ({2:n2} W)]" -f $Session.Config.FIATcurrency, ($Session.BasePowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.PowerConsumptionIdleSystem
                     }
                     elseif ($Session.MiningPowerConsumption -gt 0) { 
-                        $Summary += "`nPower cost / day: {1:n} {0} [Miner$(if ($MinersBest.Count -ne 1) { "s" }): {2:n} {0} ({3:n2} W)$(if ($Session.PowerConsumptionIdleSystemW) { "; Base: {4:n} {0} ({5:n2} W)]" })" -f $Session.Config.FIATcurrency, (($Session.MiningPowerCost + $Session.BasePowerCost) * $Session.Rates.BTC.($Session.Config.FIATcurrency)), ($Session.MiningPowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.MiningPowerConsumption, ($Session.BasePowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.PowerConsumptionIdleSystemW
+                        $Summary += "`nPower cost / day: {1:n} {0} [Miner$(if ($MinersBest.Count -ne 1) { "s" }): {2:n} {0} ({3:n2} W)$(if ($Session.PowerConsumptionIdleSystem) { "; Base: {4:n} {0} ({5:n2} W)]" })" -f $Session.Config.FIATcurrency, (($Session.MiningPowerCost + $Session.BasePowerCost) * $Session.Rates.BTC.($Session.Config.FIATcurrency)), ($Session.MiningPowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.MiningPowerConsumption, ($Session.BasePowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.PowerConsumptionIdleSystem
                     }
                     else { 
-                        $Summary += "`nPower cost / day: n/a [Miner: n/a$(if ($Session.PowerConsumptionIdleSystemW) { "; Base: {1:n} {0} ({2:n2} W)]" })" -f $Session.Config.FIATcurrency, ($Session.BasePowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.PowerConsumptionIdleSystemW
+                        $Summary += "`nPower cost / day: n/a [Miner: n/a$(if ($Session.PowerConsumptionIdleSystem) { "; Base: {1:n} {0} ({2:n2} W)]" })" -f $Session.Config.FIATcurrency, ($Session.BasePowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.PowerConsumptionIdleSystem
                     }
                 }
             }

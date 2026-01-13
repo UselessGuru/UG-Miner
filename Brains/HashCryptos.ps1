@@ -58,7 +58,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                     if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                     if ($AlgoData.message -match "^Only \d request every ") { 
-                        $WaitSeconds = [Int]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
+                        $WaitSeconds = [UInt16]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
                         Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
                         Start-Sleep -Seconds $WaitSeconds
                         Remove-Variable WaitSeconds

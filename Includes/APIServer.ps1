@@ -332,7 +332,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/functions/log/get" { 
-            $Lines = if ([Int]$Parameters.Lines) { [Int]$Parameters.Lines } else { 100 }
+            $Lines = if ([UInt16]$Parameters.Lines) { [UInt16]$Parameters.Lines } else { 100 }
             $Data = "$((Get-Content -Path $Session.LogFile -Tail $Lines).ForEach({ "$($_)`n" }))"
             Remove-Variable Lines
             break

@@ -115,8 +115,8 @@
           <div style="padding-top: 0.7rem;" title="Computer will restart when a dead miner is detected&#10;(e.g. miner cannot get stopped gracefully)">
             <input type="checkbox" class="toggle-switch" id="AutoReboot" name="AutoReboot"> Restart computer on dead miners
           </div>
-          <div style="padding-top: 0.5rem;" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60; default: 13 &#8792; 0.9%)">Donation
-            <input type="number" id="Donation" name="Donation" min=0 max=60 value=13 style="width: 2.7em; text-align:right;"> minutes per day
+          <div style="padding-top: 0.5rem;" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60; default: 15 &#8792; 1%)">Donation
+            <input type="number" id="Donation" name="Donation" min=0 max=60 value=15 style="width: 2.7em; text-align:right;"> minutes per day
           </div>
           <div style="padding-top: 0.3rem;" title="Cycle duration&#10;This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
             <input type="number" id="Interval" name="Interval" min=30 max=3600 step=1 value=90 style="width: 3.8em; text-align:right;"> seconds
@@ -173,6 +173,9 @@
             </div>
             <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all other pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at least two pools"> Unrealistic pool price factor
               <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealisticPoolPriceFactor" name="UnrealisticPoolPriceFactor" style="width: 3em; text-align:right;">
+            </div>
+            <div style="padding-top: 0.3rem;" title="Time (in hours) until a pool is seen as too old (e.g. is has not been updated)&#10;and will be removed from the pool list&#10;&#10;(min: 1, max: 240; default: 24)"> Maximal pool age
+              <input type="number" step=1 min=1 max=240 value=24 size=3 id="PoolsMaxAge" name="PoolsMaxAge" style="width: 3.2em; text-align:right;"> hours
             </div>
             <div style="padding-top: 0.5rem;" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This may affect profitability, but is less CPU heavy">
               <input type="checkbox" class="toggle-switch" id="MinerUseBestPoolsOnly" name="MinerUseBestPoolsOnly"> Only use the pools in the best pool list (not recommended)
@@ -305,8 +308,8 @@
             <label id="PowerPricekWhCurrency" for="PowerPricekWh">
           </div>
           <div title="Power consumption of idle system. Part of profit calculation&#10;&#10;(min: 0, max: 999; default: 60)&#10;&#10;Note: When CPU miners are running their&#10;power consumption is deducted from this value">
-            <label style="margin-left:20px" for="PowerConsumptionIdleSystemW">Power consumption of idle system</label>
-            <input type="number" step=1 min=0 max=999 value=60 size=3 id="PowerConsumptionIdleSystemW" name="PowerConsumptionIdleSystemW" style="width: 3.4em; text-align:right;"> W
+            <label style="margin-left:20px" for="PowerConsumptionIdleSystem">Power consumption of idle system</label>
+            <input type="number" step=1 min=0 max=999 value=60 size=3 id="PowerConsumptionIdleSystem" name="PowerConsumptionIdleSystem" style="width: 3.4em; text-align:right;"> W
           </div>
           <div style="padding-top: 0.2rem;" title="UG-Miner will ignore power cost in best miner selection&#10;and will select miners with best earnings (and not best profit)">
             <input type="checkbox" style="margin-left:20px" class="toggle-switch" id="IgnorePowerCost" name="IgnorePowerCost"> Ignore power cost
@@ -746,6 +749,7 @@
     if (config.PoolAllow0Price) document.getElementById('PoolAllow0Price').checked = true;
     document.getElementById('UnrealisticPoolPriceFactor').value = parseFloat(config.UnrealisticPoolPriceFactor).toFixed(1);
     document.getElementById('PoolAllowedPriceIncreaseFactor').value = parseFloat(config.PoolAllowedPriceIncreaseFactor).toFixed(1);
+    document.getElementById('PoolsMaxAge').value = parseInt(config.PoolsMaxAge);
     if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
 
     // Region list
@@ -872,17 +876,17 @@
     if (config.CalculatePowerCost) document.getElementById('CalculatePowerCost').checked = true;
     else {
       document.getElementById('PowerPricekWh').disabled = true;
-      document.getElementById('PowerConsumptionIdleSystemW').disabled = true;
+      document.getElementById('PowerConsumptionIdleSystem').disabled = true;
       document.getElementById('IgnorePowerCost').disabled = true;
     };
     document.getElementById('PowerPricekWh').value = JSON.stringify(config.PowerPricekWh);
     if (config.IgnorePowerCost) document.getElementById('IgnorePowerCost').checked = true;
-    if (parseInt(config.PowerConsumptionIdleSystemW) >= 0) document.getElementById('PowerConsumptionIdleSystemW').value = parseInt(config.PowerConsumptionIdleSystemW);
+    if (parseInt(config.PowerConsumptionIdleSystem) >= 0) document.getElementById('PowerConsumptionIdleSystem').value = parseInt(config.PowerConsumptionIdleSystem);
 
     // CalculatePowerCost click
     $(document.getElementById('CalculatePowerCost')).click(function (event) {
       document.getElementById('PowerPricekWh').disabled = !(document.getElementById('CalculatePowerCost').checked);
-      document.getElementById('PowerConsumptionIdleSystemW').disabled = !(document.getElementById('CalculatePowerCost').checked);
+      document.getElementById('PowerConsumptionIdleSystem').disabled = !(document.getElementById('CalculatePowerCost').checked);
       document.getElementById('IgnorePowerCost').disabled = !(document.getElementById('CalculatePowerCost').checked);
       $(document.getElementById('Currency')).trigger('change');
     });
@@ -1225,6 +1229,7 @@
         config.PoolAllow0Price = document.getElementById('PoolAllow0Price').checked;
         config.UnrealisticPoolPriceFactor = parseFloat(document.getElementById('UnrealisticPoolPriceFactor').value);
         config.PoolAllowedPriceIncreaseFactor = parseFloat(document.getElementById('PoolAllowedPriceIncreaseFactor').value);
+        config.PoolsMaxAge = parseInt(document.getElementById('PoolsMaxAge').value);
         config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
 
         // Select one or more pools
@@ -1284,7 +1289,7 @@
           $('#myModal').modal({ show: true });
           return false;
         };
-        config.PowerConsumptionIdleSystemW = parseInt(document.getElementById('PowerConsumptionIdleSystemW').value);
+        config.PowerConsumptionIdleSystem = parseInt(document.getElementById('PowerConsumptionIdleSystem').value);
         config.IgnorePowerCost = document.getElementById('IgnorePowerCost').checked;
 
         // Balance tracker settings

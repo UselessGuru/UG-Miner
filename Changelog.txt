@@ -1,3 +1,19 @@
+Changelog UG-Miner 6.7.21 2026/01/13
+====================================
+
+Changes:
+- Renamed configuration item
+    PowerConsumptionIdleSystemW -> PowerConsumptionIdleSystem
+  Configuration file will get updated automatically during update
+- Removed configuration item 'PoolTimeout', using calculated value instead. Configuration file will get updated automatically during update
+
+Enhancements:
+- Core: Added configuration item 'PoolsMaxAge' (default value: 24)
+
+Improvements:
+- Core: Avoid Remove obsolete code & minor code optimizations
+
+
 Changelog UG-Miner 6.7.20 2026/01/10
 ====================================
 

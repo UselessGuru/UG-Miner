@@ -72,7 +72,7 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
                                 $Mutex.ReleaseMutex()
                                 Write-Message -Level Debug "BalancesTracker '$Name': Response from $($Request.Replace("$($Session.Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) received"
                                 if ($APIresponse.message -match "^Only \d request every ") { 
-                                    $WaitSeconds = [Int]($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$")
+                                    $WaitSeconds = [UInt16]($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$")
                                     Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
                                     Start-Sleep -Seconds $WaitSeconds
                                     Remove-Variable WaitSeconds

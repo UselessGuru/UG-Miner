@@ -209,43 +209,43 @@ $Global:PriorityNames = [PSCustomObject]@{ -2 = "Idle"; -1 = "BelowNormal"; 0 = 
 class Device { 
     [String]$Architecture
     [Int64]$Bus
-    [Int]$Bus_Index
-    [Int]$Bus_Type_Index
-    [Int]$Bus_Platform_Index
-    [Int]$Bus_Vendor_Index
+    [UInt16]$Bus_Index
+    [UInt16]$Bus_Type_Index
+    [UInt16]$Bus_Platform_Index
+    [UInt16]$Bus_Vendor_Index
     [PSCustomObject]$CIM
     [System.Version]$CUDAversion
     [Double]$ConfiguredPowerConsumption = 0 # Workaround if device does not expose power consumption
     [PSCustomObject]$CPUfeatures
-    [Int]$Id
-    [Int]$Index = 0
+    [UInt16]$Id
+    [UInt16]$Index = 0
     [Int64]$Memory
     [String]$Model
     [Double]$MemoryGiB
     [String]$Name
     [PSCustomObject]$OpenCL
-    [Int]$PlatformId = 0
-    [Int]$PlatformId_Index
+    [UInt16]$PlatformId = 0
+    [UInt16]$PlatformId_Index
     # [PSCustomObject]$PNP
     [Boolean]$ReadPowerConsumption = $false
     # [PSCustomObject]$Reg
-    [Int]$Slot = 0
+    [UInt16]$Slot = 0
     [DeviceState]$State = [DeviceState]::Enabled
     [String]$Status = "Idle"
     [String]$StatusInfo = ""
     [String]$SubStatus
     [String]$Type
-    [Int]$Type_Id
-    [Int]$Type_Index
-    [Int]$Type_PlatformId_Index
-    [Int]$Type_Slot
-    [Int]$Type_Vendor_Id
-    [Int]$Type_Vendor_Index
-    [Int]$Type_Vendor_Slot
+    [UInt16]$Type_Id
+    [UInt16]$Type_Index
+    [UInt16]$Type_PlatformId_Index
+    [UInt16]$Type_Slot
+    [UInt16]$Type_Vendor_Id
+    [UInt16]$Type_Vendor_Index
+    [UInt16]$Type_Vendor_Slot
     [String]$Vendor
-    [Int]$Vendor_Id
-    [Int]$Vendor_Index
-    [Int]$Vendor_Slot
+    [UInt16]$Vendor_Id
+    [UInt16]$Vendor_Index
+    [UInt16]$Vendor_Slot
 }
 
 enum DeviceState { 
@@ -326,7 +326,7 @@ enum MinerStatus {
 
 [NoRunspaceAffinity()]
 class Miner : IDisposable { 
-    [Int]$Activated
+    [UInt16]$Activated
     [TimeSpan]$Active = [TimeSpan]::Zero
     [String[]]$Algorithms = @() # derived from workers, required for GetDataReader & Web GUI
     [String]$API
@@ -370,7 +370,7 @@ class Miner : IDisposable {
     [Double]$PowerConsumption_Live = [Double]::NaN
     [Boolean]$Prioritize = $false # derived from BalancesKeepAlive
     [UInt32]$ProcessId = 0
-    [Int]$ProcessPriority = -1
+    [Int16]$ProcessPriority = -1
     [Double]$Profit = [Double]::NaN
     [Double]$Profit_Bias = [Double]::NaN
     [Boolean]$ReadPowerConsumption
@@ -1630,39 +1630,41 @@ function Update-ConfigFile {
                 "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); break }
                 "ExcludeMinerName"           { $Config.$_ = $Config.$_ -replace '^-'; break }
 
-                "LogBalanceAPIResponse"      { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
-                "LogToScreen"                { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
-                "MainCurrency"               { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
-                "ShowAccuracy"               { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
-                "ShowAccuracyColumn"         { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
-                "ShowCoinName"               { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
-                "ShowCoinNameColumn"         { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
-                "ShowCurrency"               { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
-                "ShowCurrencyColumn"         { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
-                "ShowEarning"                { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
-                "ShowEarningColumn"          { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
-                "ShowEarningBias"            { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
-                "ShowEarningBiasColumn"      { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
-                "ShowHashrate"               { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
-                "ShowHashrateColumn"         { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
-                "ShowMinerFee"               { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
-                "ShowMinerFeeColumn"         { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolFee"                { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolFeeColumn"          { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
-                "ShowProfit"                 { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
-                "ShowProfitColumn"           { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
-                "ShowProfitBias"             { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
-                "ShowProfitBiasColumn"       { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
-                "ShowPowerConsumption"       { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
-                "ShowPowerConsumptionColumn" { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
-                "ShowPowerCost"              { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
-                "ShowPowerCostColumn"        { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolBalances"           { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
-                "ShowPoolBalancesColumn"     { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
-                "ShowUser"                   { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
-                "ShowUserColumn"             { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
-                "UnrealMinerEarningFactor"   { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); break }
-                "UnrealPoolPriceFactor"      { $Config.UnrealisticPoolPriceFactor = $Config.$_; $Config.Remove($_); break }
+                "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
+                "LogToScreen"                 { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
+                "MainCurrency"                { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
+                "PoolsTimeout"                { $Config.Remove($_); break }
+                "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
+                "ShowAccuracy"                { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
+                "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
+                "ShowCoinName"                { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
+                "ShowCoinNameColumn"          { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
+                "ShowCurrency"                { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
+                "ShowCurrencyColumn"          { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
+                "ShowEarning"                 { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
+                "ShowEarningColumn"           { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
+                "ShowEarningBias"             { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
+                "ShowEarningBiasColumn"       { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
+                "ShowHashrate"                { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
+                "ShowHashrateColumn"          { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
+                "ShowMinerFee"                { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
+                "ShowMinerFeeColumn"          { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolFee"                 { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolFeeColumn"           { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
+                "ShowProfit"                  { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
+                "ShowProfitColumn"            { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
+                "ShowProfitBias"              { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
+                "ShowProfitBiasColumn"        { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
+                "ShowPowerConsumption"        { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
+                "ShowPowerConsumptionColumn"  { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
+                "ShowPowerCost"               { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
+                "ShowPowerCostColumn"         { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolBalances"            { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
+                "ShowPoolBalancesColumn"      { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
+                "ShowUser"                    { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
+                "ShowUserColumn"              { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
+                "UnrealMinerEarningFactor"    { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); break }
+                "UnrealPoolPriceFactor"       { $Config.UnrealisticPoolPriceFactor = $Config.$_; $Config.Remove($_); break }
 
                 # Remove unsupported config items
                 default { if ($_ -notin @(@($Session.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } }
@@ -1919,7 +1921,7 @@ function Set-Stat {
         [Parameter (Mandatory = $false)]
         [Boolean]$ChangeDetection = $false,
         [Parameter (Mandatory = $false)]
-        [Int]$ToleranceExceeded = 3
+        [UInt16]$ToleranceExceeded = 3
     )
 
     $Timer = $Updated = $Updated.ToUniversalTime()
@@ -2131,7 +2133,7 @@ function Invoke-TcpRequest {
         [Parameter (Mandatory = $true)]
         [String]$Request,
         [Parameter (Mandatory = $true)]
-        [Int]$Timeout, # seconds
+        [UInt16]$Timeout, # seconds
         [Parameter (Mandatory = $false)]
         [Boolean]$ReadToEnd = $false
     )
@@ -2200,20 +2202,20 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.MMX = ($Info[3] -band ([Int]1 -shl 23)) -ne 0
-        $Features.SSE = ($Info[3] -band ([Int]1 -shl 25)) -ne 0
-        $Features.SSE2 = ($Info[3] -band ([Int]1 -shl 26)) -ne 0
-        $Features.SSE3 = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
+        $Features.MMX = ($Info[3] -band ([UInt16]1 -shl 23)) -ne 0
+        $Features.SSE = ($Info[3] -band ([UInt16]1 -shl 25)) -ne 0
+        $Features.SSE2 = ($Info[3] -band ([UInt16]1 -shl 26)) -ne 0
+        $Features.SSE3 = ($Info[2] -band ([UInt16]1 -shl 00)) -ne 0
 
-        $Features.SSSE3 = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
-        $Features.SSE41 = ($Info[2] -band ([Int]1 -shl 19)) -ne 0
-        $Features.SSE42 = ($Info[2] -band ([Int]1 -shl 20)) -ne 0
-        $Features.AES = ($Info[2] -band ([Int]1 -shl 25)) -ne 0
+        $Features.SSSE3 = ($Info[2] -band ([UInt16]1 -shl 09)) -ne 0
+        $Features.SSE41 = ($Info[2] -band ([UInt16]1 -shl 19)) -ne 0
+        $Features.SSE42 = ($Info[2] -band ([UInt16]1 -shl 20)) -ne 0
+        $Features.AES = ($Info[2] -band ([UInt16]1 -shl 25)) -ne 0
 
-        $Features.AVX = ($Info[2] -band ([Int]1 -shl 28)) -ne 0
-        $Features.FMA3 = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
+        $Features.AVX = ($Info[2] -band ([UInt16]1 -shl 28)) -ne 0
+        $Features.FMA3 = ($Info[2] -band ([UInt16]1 -shl 12)) -ne 0
 
-        $Features.RDRAND = ($Info[2] -band ([Int]1 -shl 30)) -ne 0
+        $Features.RDRAND = ($Info[2] -band ([UInt16]1 -shl 30)) -ne 0
     }
 
     if ($nIds -ge 0x00000007) { 
@@ -2227,40 +2229,40 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.AVX2 = ($Info[1] -band ([Int]1 -shl 05)) -ne 0
+        $Features.AVX2 = ($Info[1] -band ([UInt16]1 -shl 05)) -ne 0
 
-        $Features.BMI1 = ($Info[1] -band ([Int]1 -shl 03)) -ne 0
-        $Features.BMI2 = ($Info[1] -band ([Int]1 -shl 08)) -ne 0
-        $Features.ADX = ($Info[1] -band ([Int]1 -shl 19)) -ne 0
-        $Features.MPX = ($Info[1] -band ([Int]1 -shl 14)) -ne 0
-        $Features.SHA = ($Info[1] -band ([Int]1 -shl 29)) -ne 0
-        $Features.RDSEED = ($Info[1] -band ([Int]1 -shl 18)) -ne 0
-        $Features.PREFETCHWT1 = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
-        $Features.RDPID = ($Info[2] -band ([Int]1 -shl 22)) -ne 0
+        $Features.BMI1 = ($Info[1] -band ([UInt16]1 -shl 03)) -ne 0
+        $Features.BMI2 = ($Info[1] -band ([UInt16]1 -shl 08)) -ne 0
+        $Features.ADX = ($Info[1] -band ([UInt16]1 -shl 19)) -ne 0
+        $Features.MPX = ($Info[1] -band ([UInt16]1 -shl 14)) -ne 0
+        $Features.SHA = ($Info[1] -band ([UInt16]1 -shl 29)) -ne 0
+        $Features.RDSEED = ($Info[1] -band ([UInt16]1 -shl 18)) -ne 0
+        $Features.PREFETCHWT1 = ($Info[2] -band ([UInt16]1 -shl 00)) -ne 0
+        $Features.RDPID = ($Info[2] -band ([UInt16]1 -shl 22)) -ne 0
 
-        $Features.AVX512_F = ($Info[1] -band ([Int]1 -shl 16)) -ne 0
-        $Features.AVX512_CD = ($Info[1] -band ([Int]1 -shl 28)) -ne 0
-        $Features.AVX512_PF = ($Info[1] -band ([Int]1 -shl 26)) -ne 0
-        $Features.AVX512_ER = ($Info[1] -band ([Int]1 -shl 27)) -ne 0
+        $Features.AVX512_F = ($Info[1] -band ([UInt16]1 -shl 16)) -ne 0
+        $Features.AVX512_CD = ($Info[1] -band ([UInt16]1 -shl 28)) -ne 0
+        $Features.AVX512_PF = ($Info[1] -band ([UInt16]1 -shl 26)) -ne 0
+        $Features.AVX512_ER = ($Info[1] -band ([UInt16]1 -shl 27)) -ne 0
 
-        $Features.AVX512_VL = ($Info[1] -band ([Int]1 -shl 31)) -ne 0
-        $Features.AVX512_BW = ($Info[1] -band ([Int]1 -shl 30)) -ne 0
-        $Features.AVX512_DQ = ($Info[1] -band ([Int]1 -shl 17)) -ne 0
+        $Features.AVX512_VL = ($Info[1] -band ([UInt16]1 -shl 31)) -ne 0
+        $Features.AVX512_BW = ($Info[1] -band ([UInt16]1 -shl 30)) -ne 0
+        $Features.AVX512_DQ = ($Info[1] -band ([UInt16]1 -shl 17)) -ne 0
 
-        $Features.AVX512_IFMA = ($Info[1] -band ([Int]1 -shl 21)) -ne 0
-        $Features.AVX512_VBMI = ($Info[2] -band ([Int]1 -shl 01)) -ne 0
+        $Features.AVX512_IFMA = ($Info[1] -band ([UInt16]1 -shl 21)) -ne 0
+        $Features.AVX512_VBMI = ($Info[2] -band ([UInt16]1 -shl 01)) -ne 0
 
-        $Features.AVX512_VPOPCNTDQ = ($Info[2] -band ([Int]1 -shl 14)) -ne 0
-        $Features.AVX512_4FMAPS = ($Info[3] -band ([Int]1 -shl 02)) -ne 0
-        $Features.AVX512_4VNNIW = ($Info[3] -band ([Int]1 -shl 03)) -ne 0
+        $Features.AVX512_VPOPCNTDQ = ($Info[2] -band ([UInt16]1 -shl 14)) -ne 0
+        $Features.AVX512_4FMAPS = ($Info[3] -band ([UInt16]1 -shl 02)) -ne 0
+        $Features.AVX512_4VNNIW = ($Info[3] -band ([UInt16]1 -shl 03)) -ne 0
 
-        $Features.AVX512_VNNI = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
+        $Features.AVX512_VNNI = ($Info[2] -band ([UInt16]1 -shl 11)) -ne 0
 
-        $Features.AVX512_VBMI2 = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
-        $Features.GFNI = ($Info[2] -band ([Int]1 -shl 08)) -ne 0
-        $Features.VAES = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
-        $Features.AVX512_VPCLMUL = ($Info[2] -band ([Int]1 -shl 10)) -ne 0
-        $Features.AVX512_BITALG = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
+        $Features.AVX512_VBMI2 = ($Info[2] -band ([UInt16]1 -shl 06)) -ne 0
+        $Features.GFNI = ($Info[2] -band ([UInt16]1 -shl 08)) -ne 0
+        $Features.VAES = ($Info[2] -band ([UInt16]1 -shl 09)) -ne 0
+        $Features.AVX512_VPCLMUL = ($Info[2] -band ([UInt16]1 -shl 10)) -ne 0
+        $Features.AVX512_BITALG = ($Info[2] -band ([UInt16]1 -shl 12)) -ne 0
     }
 
     if ($nExIds -ge 0x80000001) { 
@@ -2274,12 +2276,12 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.x64 = ($Info[3] -band ([Int]1 -shl 29)) -ne 0
-        $Features.ABM = ($Info[2] -band ([Int]1 -shl 05)) -ne 0
-        $Features.SSE4a = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
-        $Features.FMA4 = ($Info[2] -band ([Int]1 -shl 16)) -ne 0
-        $Features.XOP = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
-        $Features.PREFETCHW = ($Info[2] -band ([Int]1 -shl 08)) -ne 0
+        $Features.x64 = ($Info[3] -band ([UInt16]1 -shl 29)) -ne 0
+        $Features.ABM = ($Info[2] -band ([UInt16]1 -shl 05)) -ne 0
+        $Features.SSE4a = ($Info[2] -band ([UInt16]1 -shl 06)) -ne 0
+        $Features.FMA4 = ($Info[2] -band ([UInt16]1 -shl 16)) -ne 0
+        $Features.XOP = ($Info[2] -band ([UInt16]1 -shl 11)) -ne 0
+        $Features.PREFETCHW = ($Info[2] -band ([UInt16]1 -shl 08)) -ne 0
     }
 
     # Wrap data into PSObject
@@ -2384,10 +2386,10 @@ function Get-Device {
                     )
                 }
 
-                $Device.Id = [Int]$Id
-                $Device.Type_Id = [Int]$Type_Id.($Device.Type)
-                $Device.Vendor_Id = [Int]$Vendor_Id.($Device.Vendor)
-                $Device.Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
+                $Device.Id = [UInt16]$Id
+                $Device.Type_Id = [UInt16]$Type_Id.($Device.Type)
+                $Device.Vendor_Id = [UInt16]$Vendor_Id.($Device.Vendor)
+                $Device.Type_Vendor_Id = [UInt16]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
 
                 $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)"
                 $Device.Model = (($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "@" -notmatch ".*[MG]Hz") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "^\s*" -replace "[^ A-Z0-9\.]" -replace " \s+" -replace "\s*$"
@@ -2441,10 +2443,10 @@ function Get-Device {
                     )
                 }
 
-                $Device.Id = [Int]$Id
-                $Device.Type_Id = [Int]$Type_Id.($Device.Type)
-                $Device.Vendor_Id = [Int]$Vendor_Id.($Device.Vendor)
-                $Device.Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
+                $Device.Id = [UInt16]$Id
+                $Device.Type_Id = [UInt16]$Type_Id.($Device.Type)
+                $Device.Vendor_Id = [UInt16]$Vendor_Id.($Device.Vendor)
+                $Device.Type_Vendor_Id = [UInt16]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
 
                 # Unsupported devices start with DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
                 if ($Session."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
@@ -2512,10 +2514,10 @@ function Get-Device {
                             )
                         }
 
-                        $Device.Id = [Int]$Id
-                        $Device.Type_Id = [Int]$Type_Id.($Device.Type)
-                        $Device.Vendor_Id = [Int]$Vendor_Id.($Device.Vendor)
-                        $Device.Type_Vendor_Id = [Int]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
+                        $Device.Id = [UInt16]$Id
+                        $Device.Type_Id = [UInt16]$Type_Id.($Device.Type)
+                        $Device.Vendor_Id = [UInt16]$Vendor_Id.($Device.Vendor)
+                        $Device.Type_Vendor_Id = [UInt16]$Type_Vendor_Id.($Device.Type).($Device.Vendor)
 
                         # Unsupported devices get DeviceID 100 (to not disrupt device order when running in a Citrix or RDP session)
                         if ($Session."Supported$($Device.Type)DeviceVendors" -contains $Device.Vendor) { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $Device.Type_Id)" }
@@ -2539,13 +2541,13 @@ function Get-Device {
                         }
 
                         # Add OpenCL specific data
-                        $Device.Index = [Int]$Index
-                        $Device.Type_Index = [Int]$Type_Index.($Device.Type)
-                        $Device.Vendor_Index = [Int]$Vendor_Index.($Device.Vendor)
-                        $Device.Type_Vendor_Index = [Int]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
-                        $Device.PlatformId = [Int]$PlatformId
-                        $Device.PlatformId_Index = [Int]$PlatformId_Index.($PlatformId)
-                        $Device.Type_PlatformId_Index = [Int]$Type_PlatformId_Index.($Device.Type).($PlatformId)
+                        $Device.Index = [UInt16]$Index
+                        $Device.Type_Index = [UInt16]$Type_Index.($Device.Type)
+                        $Device.Vendor_Index = [UInt16]$Vendor_Index.($Device.Vendor)
+                        $Device.Type_Vendor_Index = [UInt16]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
+                        $Device.PlatformId = [UInt16]$PlatformId
+                        $Device.PlatformId_Index = [UInt16]$PlatformId_Index.($PlatformId)
+                        $Device.Type_PlatformId_Index = [UInt16]$Type_PlatformId_Index.($Device.Type).($PlatformId)
 
                         # Add raw data
                         $Device.OpenCL = $Device_OpenCL
@@ -2583,10 +2585,10 @@ function Get-Device {
                 else { $_.Architecture = "Other" }
             }
 
-            $_.Slot = [Int]$Slot
-            $_.Type_Slot = [Int]$Type_Slot.($_.Type)
-            $_.Vendor_Slot = [Int]$Vendor_Slot.($_.Vendor)
-            $_.Type_Vendor_Slot = [Int]$Type_Vendor_Slot.($_.Type).($_.Vendor)
+            $_.Slot = [UInt16]$Slot
+            $_.Type_Slot = [UInt16]$Type_Slot.($_.Type)
+            $_.Vendor_Slot = [UInt16]$Vendor_Slot.($_.Vendor)
+            $_.Type_Vendor_Slot = [UInt16]$Type_Vendor_Slot.($_.Type).($_.Vendor)
 
             if (-not $Type_Vendor_Slot.($_.Type)) { $Type_Vendor_Slot.($_.Type) = @{ } }
 
@@ -2601,10 +2603,10 @@ function Get-Device {
         { 
             $Device = $_
 
-            $Device.Bus_Index = @($Devices.Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Type_Index = @($Devices.Where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Vendor_Index = @($Devices.Where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
-            $Device.Bus_Platform_Index = @($Devices.Where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([Int]$Device.Bus)
+            $Device.Bus_Index = @($Devices.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+            $Device.Bus_Type_Index = @($Devices.Where({ $_.Type -eq $Device.Type }).Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+            $Device.Bus_Vendor_Index = @($Devices.Where({ $_.Vendor -eq $Device.Vendor }).Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+            $Device.Bus_Platform_Index = @($Devices.Where({ $_.Platform -eq $Device.Platform }).Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
 
             $Device
         }
@@ -2632,7 +2634,7 @@ function Get-DecimalsFromValue {
         [Parameter (Mandatory = $true)]
         [Double]$Value,
         [Parameter (Mandatory = $true)]
-        [Int]$DecimalsMax
+        [UInt16]$DecimalsMax
     )
 
     return [Math]::Max($DecimalsMax - [Math]::Floor([Math]::Abs($Value)).ToString().Length + 1, 0)
@@ -2644,9 +2646,9 @@ function Get-Combination {
         [Parameter (Mandatory = $true)]
         [Array]$Value,
         [Parameter (Mandatory = $false)]
-        [Int]$SizeMax = $Value.Count,
+        [UInt16]$SizeMax = $Value.Count,
         [Parameter (Mandatory = $false)]
-        [Int]$SizeMin = 1
+        [UInt16]$SizeMin = 1
     )
 
     $Combination = [PSCustomObject]@{ }
@@ -3205,9 +3207,9 @@ function Get-AllDAGdata {
         foreach ($Algorithm in @($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.Algorithm }) | Select-Object -Unique)) { 
             $DAGdata.Algorithm | Add-Member $Algorithm (
                 [PSCustomObject]@{ 
-                    BlockHeight = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
-                    DAGsize     = [Int64]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
-                    Epoch       = [Int]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
+                    BlockHeight = [UInt32]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
+                    DAGsize     = [UInt64]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
+                    Epoch       = [UInt16]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }).ForEach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
                 }
             ) -Force
             $DAGdata.Algorithm.$Algorithm | Add-Member Currency ([String]($CurrencyDAGdataKeys.Where({ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm }))) -Force
@@ -3217,10 +3219,10 @@ function Get-AllDAGdata {
         # Add default '*' (equal to highest)
         $DAGdata.Currency | Add-Member "*" (
             [PSCustomObject]@{ 
-                BlockHeight = [Int]($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
+                BlockHeight = [UInt32]($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.BlockHeight }) | Measure-Object -Maximum).Maximum
                 Currency    = "*"
-                DAGsize     = [Int64]($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
-                Epoch       = [Int]($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
+                DAGsize     = [UInt64]($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.DAGsize }) | Measure-Object -Maximum).Maximum
+                Epoch       = [UInt16]($CurrencyDAGdataKeys.ForEach({ $DAGdata.Currency.$_.Epoch }) | Measure-Object -Maximum).Maximum
             }
         ) -Force
         $DAGdata = $DAGdata | Get-SortedObject
@@ -3234,7 +3236,7 @@ function Get-DAGdata {
 
     param (
         [Parameter (Mandatory = $true)]
-        [Double]$BlockHeight,
+        [UInt32]$BlockHeight,
         [Parameter (Mandatory = $true)]
         [String]$Currency,
         [Parameter (Mandatory = $false)]
@@ -3244,10 +3246,10 @@ function Get-DAGdata {
     if ($Currency -eq "BLOCX") { 
         return [PSCustomObject]@{ 
             Algorithm   = $Session.CurrencyAlgorithm[$Currency]
-            BlockHeight = [Int]$BlockHeight
+            BlockHeight = [UInt32]$BlockHeight
             CoinName    = [String]$Session.CoinNames[$Currency]
-            DAGsize     = [Int64]2GB
-            Epoch       = [UInt16]0
+            DAGsize     = [UInt64]2GB
+            Epoch       = [UInt32]0
         }
     }
     elseif ($Algorithm = $Session.CurrencyAlgorithm[$Currency]) { 
@@ -3255,10 +3257,10 @@ function Get-DAGdata {
 
         return [PSCustomObject]@{ 
             Algorithm   = $Algorithm
-            BlockHeight = [Int]$BlockHeight
+            BlockHeight = [UInt32]$BlockHeight
             CoinName    = [String]$Session.CoinNames[$Currency]
             DAGsize     = [Int64](Get-DAGSize -Epoch $Epoch -Currency $Currency)
-            Epoch       = [UInt16]$Epoch
+            Epoch       = [UInt32]$Epoch
         }
     }
 
@@ -3269,7 +3271,7 @@ function Get-DAGsize {
 
     param (
         [Parameter (Mandatory = $true)]
-        [Double]$Epoch,
+        [UInt32]$Epoch,
         [Parameter (Mandatory = $true)]
         [String]$Currency
     )
@@ -3347,7 +3349,7 @@ function Get-DAGepoch {
 
     param (
         [Parameter (Mandatory = $true)]
-        [Double]$BlockHeight,
+        [UInt32]$BlockHeight,
         [Parameter (Mandatory = $true)]
         [String]$Algorithm,
         [Parameter (Mandatory = $true)]
@@ -3369,7 +3371,7 @@ function Get-DAGepochLength {
 
     param (
         [Parameter (Mandatory = $true)]
-        [Double]$BlockHeight,
+        [UInt32]$BlockHeight,
         [Parameter (Mandatory = $true)]
         [String]$Algorithm
     )
