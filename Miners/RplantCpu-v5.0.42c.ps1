@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.21
+Version:        6.7.22
 Version date:   2026/01/13
 #>
 
@@ -109,7 +109,7 @@ $Algorithms = @(
     @{ Algorithm = "YespowerRes";   WarmupTimes = @(45, 0);   ExcludePools = @();           Arguments = " --algo yespowerRes" }
     @{ Algorithm = "YespowerSugar"; WarmupTimes = @(45, 15);  ExcludePools = @();           Arguments = " --algo yespowerSugar" } # SRBMminerMulti is fastest, but has 0.85% miner fee
     @{ Algorithm = "YespowerTIDE";  WarmupTimes = @(45, 5);   ExcludePools = @("ZPool");    Arguments = " --algo yespowerTIDE" } # https://discord.com/channels/376790817811202050/1371515289824530434
-    @{ Algorithm = "YespowerUrx";   WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerUrx" } # JayddeeCPU-v25.7 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
+    @{ Algorithm = "YespowerUrx";   WarmupTimes = @(45, 5);   ExcludePools = @();           Arguments = " --algo YespowerUrx" } # TJayddeeCPU-v26.1 is faster, SRBMminerMulti is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
