@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.21
-Version date:   2026/01/13
+Version:        6.7.22
+Version date:   2026/01/15
 #>
 
 using module ..\Includes\Include.psm1
@@ -188,7 +188,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     }
                     $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
                 }
-                Remove-Variable Algo, AlgorithmNorm, Baseprice, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
+                Remove-Variable Algorithm, AlgorithmNorm, Baseprice, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 
                 if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$Name.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
@@ -225,7 +225,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
         [System.GC]::Collect()
     }
 
-    while ($Session.BeginCycleTime -ne $Session.Timer -and -not $Session.EndCycleMessage -and -not $Session.MyIPaddress -or ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime))) { 
+    while (-not $Session.MyIPaddress -or $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime)) { 
         Start-Sleep -Milliseconds 250
     }
 }

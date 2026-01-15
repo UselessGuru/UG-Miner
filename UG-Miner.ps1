@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.21
-Version date:   2026/01/13
+Version:        6.7.22
+Version date:   2026/01/15
 #>
 
 using module .\Includes\Include.psm1
@@ -133,8 +133,6 @@ param(
     [UInt16]$MinDataSample = 20, # Minimum number of hashrate samples required to store hashrate
     [Parameter (Mandatory = $false)]
     [Double]$MinerSwitchingThreshold = 10, # Will not switch miners unless another miner has n% higher earnings / profit
-    [Parameter (Mandatory = $false)]
-    [Switch]$MinerUseBestPoolsOnly = $false, # If true UG-Miner will use only the best pools for mining. Some miners / algorithms are incompatible with some pools. In this case the miner will not be available. This can impact profitability, but is less CPU heavy. This was the default algorithm for versions older than 5.x
     [Parameter (Mandatory = $false)]
     [String]$MinerWindowStyle = "minimized", # "minimized": miner window is minimized (default), but accessible; "normal": miner windows are shown normally; "hidden": miners will run as a hidden background task and are not accessible (not recommended)
     [Parameter (Mandatory = $false)]
@@ -319,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.21"
+    Version      = [System.Version]"6.7.22"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

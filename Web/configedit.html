@@ -169,16 +169,13 @@
               <input type="checkbox" id="PoolAllow0Price" class="toggle-switch" name="PoolAllow0Price"> Use pool even if price@pool is 0 (not recommended)
             </div>
             <div style="padding-top: 0.6rem;" title="Maxîmal allowed price increase compared with last price.&#10;If the price increase is higher then the pool will be marked as unavaliable.&#10;&#10;(min: 2, max: 99; default: 5)"> Maximal allowed price increase
-              <input type="number" step=0.1 min=2 max=99.9 value=3 size=4 id="PoolAllowedPriceIncreaseFactor" name="PoolAllowedPriceIncreaseFactor" style="width: 3.6em; text-align:right;">
+              <input type="number" step=0.1 min=2 max=99.9 value=3 size=4 id="PoolAllowedPriceIncreaseFactor" name="PoolAllowedPriceIncreaseFactor" style="width: 3.6em; text-align:right;"> %
             </div>
             <div style="padding-top: 0.3rem;" title="Mark a pool as unavailable if price is x times higher than&#10;the median price of all other pools with same algorithm&#10;&#10;(min: 1, max: 10; default: 1.5)&#10;Set to 1 to disable this check&#10;&#10;Note: This applies only to algorithms that have at least two pools"> Unrealistic pool price factor
-              <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealisticPoolPriceFactor" name="UnrealisticPoolPriceFactor" style="width: 3.4em; text-align:right;">
+              <input type="number" step=0.1 min=1 max=10 value=1.5 size=3 id="UnrealisticPoolPriceFactor" name="UnrealisticPoolPriceFactor" style="width: 3.4em; text-align:right;"> x higher
             </div>
             <div style="padding-top: 0.3rem;" title="Time (in hours) until a pool is seen as too old (e.g. is has not been updated)&#10;and will be removed from the pool list&#10;&#10;(min: 1, max: 240; default: 24)"> Maximal pool age
               <input type="number" step=1 min=1 max=240 value=24 size=3 id="PoolsMaxAge" name="PoolsMaxAge" style="width: 3.2em; text-align:right;"> hours
-            </div>
-            <div style="padding-top: 0.5rem;" title="Some miners / algorithms are incompatible with some pools&#10;&#10;If a miner is not compatible with the pool in the best pool list then the miner will not be available&#10;This may affect profitability, but is less CPU heavy">
-              <input type="checkbox" class="toggle-switch" id="MinerUseBestPoolsOnly" name="MinerUseBestPoolsOnly"> Only use the pools in the best pool list (not recommended)
             </div>
             <br>
 
@@ -277,10 +274,10 @@
             <input type="number" min=0 max=10 value=1 step=0.01 size=34 id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" style="width: 3.4em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem;" title="Mark a miner as unavailable if the calculated biased earnings are&#10;x times higher than any other miner for the device & next best algorithm&#10;&#10;(min: 1, max: 99; default: 10)&#10;Set to 1 to disable this check"> Unrealistic biased earnings factor (device & algorithm)
-            <input type="number" step=0.1 min=1 max=99.9 value=10 size=3 id="UnrealisticAlgorithmDeviceEarningsFactor" name="UnrealisticAlgorithmDeviceEarningsFactor" style="width: 3.4em; text-align:right;">
+            <input type="number" step=0.1 min=1 max=99.9 value=10 size=3 id="UnrealisticAlgorithmDeviceEarningsFactor" name="UnrealisticAlgorithmDeviceEarningsFactor" style="width: 3.4em; text-align:right;"> x higher
           </div>
           <div style="padding-top: 0.3rem;" title="Mark a miner as unavailable if the calculated biased earnings are&#10;x times higher than the average earnings of all other miners with same algorithm & currency&#10;&#10;(min: 1, max: 99.9; default: 5)&#10;Set to 1 to disable this check">Unrealistic biased earnings factor (miner)
-            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealisticMinerEarningsFactor" name="UnrealisticMinerEarningsFactor" style="width: 3.4em; text-align:right;">
+            <input type="number" step=0.1 min=1 max=99.9 value=5 size=3 id="UnrealisticMinerEarningsFactor" name="UnrealisticMinerEarningsFactor" style="width: 3.4em; text-align:right;"> x higher
           </div>
           <div style="padding-top: 0.3rem;" title="UG-Miner will not switch miners&#10;unless another miner has n% higher earnings / profit&#10;&#10;Smaller numbers will cause more switching&#10;&#10;(min: 0%, max: 100%; default: 5%)" for="MinerSwitchingThreshold">Miner switching threshold
             <input type="number" min=0 max=100 value=5 step=0.1 size=3 id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" style="width: 3.8em; text-align:right;"> %
@@ -750,7 +747,6 @@
     document.getElementById('UnrealisticPoolPriceFactor').value = parseFloat(config.UnrealisticPoolPriceFactor).toFixed(1);
     document.getElementById('PoolAllowedPriceIncreaseFactor').value = parseFloat(config.PoolAllowedPriceIncreaseFactor).toFixed(1);
     document.getElementById('PoolsMaxAge').value = parseInt(config.PoolsMaxAge);
-    if (config.MinerUseBestPoolsOnly) document.getElementById('MinerUseBestPoolsOnly').checked = true;
 
     // Region list
     $.ajax({
@@ -1230,7 +1226,6 @@
         config.UnrealisticPoolPriceFactor = parseFloat(document.getElementById('UnrealisticPoolPriceFactor').value);
         config.PoolAllowedPriceIncreaseFactor = parseFloat(document.getElementById('PoolAllowedPriceIncreaseFactor').value);
         config.PoolsMaxAge = parseInt(document.getElementById('PoolsMaxAge').value);
-        config.MinerUseBestPoolsOnly = document.getElementById('MinerUseBestPoolsOnly').checked;
 
         // Select one or more pools
         config.PoolName = [];

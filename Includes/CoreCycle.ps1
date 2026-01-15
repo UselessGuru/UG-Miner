@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.21
-Version date:   2026/01/13
+Version:        6.7.22
+Version date:   2026/01/15
 #>
 
 using module .\Include.psm1
@@ -35,6 +35,7 @@ $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_
 
 $Session.Miners = [Miner[]]@()
 $Session.Pools = [Pool[]]@()
+$Session.Remove("PoolDataCollectedTimeStamp")
 
 try { 
     do { 
@@ -533,10 +534,11 @@ try {
                     if (-not $Session.Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $null -eq $Session.Config.Pools[$_.Name].SSLallowSelfSignedCertificate }).ForEach({ $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") | Out-Null }) }
                     # At least one port (SSL or non-SSL) must be available
                     $Pools.Where({ -not ($_.PoolPorts | Select-Object) }).ForEach({ $_.Reasons.Add("No ports available") | Out-Null })
+                    # Second best pools per algorithm
+                    ($Pools.Where({ -not $_.Reasons.Count }) | Group-Object -Property AlgorithmVariant, Name).ForEach({ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach({ $_.Reasons.Add("There is a better paying pool for this algorithm") | Out-Null }) })
+
                     # Apply watchdog to pools
                     if ($Pools.Count) { $Pools = Update-PoolWatchdog -Pools $Pools }
-                    # Second best pools per algorithm
-                    ($Pools.Where({ -not $_.Reasons.Count }) | Group-Object -Property AlgorithmVariant, Name).ForEach({ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach({ $_.Reasons.Add("Second best algorithm") | Out-Null }) })
 
                     # Make pools unavailable
                     $Pools.ForEach({ $_.Available = -not $_.Reasons.Count })
@@ -578,9 +580,8 @@ try {
                         }
                     }
 
-
-                    # Mark best pools, allow all DAG pools (optimal pool might not fit in GPU memory)
-                    ($Pools.Where({ $_.Available }) | Group-Object -Property Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom $(if ($Session.Config.MinerUseBestPoolsOnly -or $_.Group.Algorithm -notmatch $Session.RegexAlgoHasDAG) { 1 } else { $_.Group.Count })).ForEach({ $_.Best = $true }) })
+                    # Mark best pools
+                    ($Pools.Where({ $_.Available }) | Group-Object -Property Algorithm).ForEach({ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom 1).ForEach({ $_.Best = $true }) })
                 }
                 $Session.PoolsUpdatedTimestamp = [DateTime]::Now.ToUniversalTime()
 
@@ -776,7 +777,7 @@ try {
         while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
 
         # Get new miners
-        if ($AvailableMinerPools = if ($Session.Config.MinerUseBestPoolsOnly) { $Session.Pools.Where({ $_.Available -and ($_.Best -or $_.Prioritize) }) } else { $Session.Pools.Where({ $_.Available }) }) { 
+        if ($AvailableMinerPools = $Session.Pools.Where({ $_.Available })) { 
             $MinerPools = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase), [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
             $MinerPools[1]."" = ""
             if ($Session.Config.UseUnprofitableAlgorithms) { 

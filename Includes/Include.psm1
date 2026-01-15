@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.21
-Version date:   2026/01/13
+Version:        6.7.22
+Version date:   2026/01/15
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1627,13 +1627,11 @@ function Update-ConfigFile {
         { 
             switch ($_) { 
                 # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
-                "BalancesShowInMainCurrency" { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); break }
-                "ExcludeMinerName"           { $Config.$_ = $Config.$_ -replace '^-'; break }
-
+                "BalancesShowInMainCurrency"  { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); break }
+                "ExcludeMinerName"            { $Config.$_ = $Config.$_ -replace '^-'; break }
                 "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
                 "LogToScreen"                 { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
                 "MainCurrency"                { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
-                "PoolsTimeout"                { $Config.Remove($_); break }
                 "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracy"                { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.7.21
-Version date:   2026/01/13
+Version:        6.7.22
+Version date:   2026/01/15
 #>
 
 using module .\Include.psm1
@@ -372,12 +372,12 @@ do {
         Remove-Variable PoolEarnings -ErrorAction Ignore
 
         $Session.EarningsChartData = [PSCustomObject]@{ 
-            Labels = @($Session.ChartData.Name | Sort-Object -Unique)
             # Use dates for x-axis label
+            Labels = @($Session.ChartData.Name | Sort-Object -Unique)
             Earnings = $Session.PoolChartData
         }
         $Session.EarningsChartData | ConvertTo-Json | Out-File -LiteralPath ".\Cache\EarningsChartData.json" -Force -ErrorAction Ignore
-      CoreCycleRunspace        # Keep earnings for max. 1 year
+        # Keep earnings for max. 1 year
         $OldestEarningsDate = [DateTime]::Now.AddYears(-1).ToString("yyyy-MM-dd")
         $Earnings = $Earnings.Where({ $_.Date -ge $OldestEarningsDate })
         Remove-Variable OldestEarningsDate
@@ -426,5 +426,7 @@ do {
     [System.GC]::Collect()
 
     # Sleep until next update (at least 5 minutes, maximum 60 minutes) or when no internet connection
-    while (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (5, [UInt16]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { Start-Sleep -Seconds 5 }
+    while (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (5, [UInt16]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { 
+        Start-Sleep -Seconds 5
+    }
 } while ($true)
