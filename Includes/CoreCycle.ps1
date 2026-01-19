@@ -836,7 +836,7 @@ try {
 
             if ($Session.Config.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info }) }
 
-            $Miners = Compare-Object @($Session.Miners) @($MinersNew) -Property Info -IncludeEqual -PassThru
+            $Miners = Compare-Object @($Session.Miners | Select-Object) @($MinersNew) -Property Info -IncludeEqual -PassThru
             $MinerDevices = $Session.EnabledDevices | Select-Object -Property Bus, ConfiguredPowerConsumption, Name, ReadPowerConsumption, Status
 
             # Make smaller groups for faster update
