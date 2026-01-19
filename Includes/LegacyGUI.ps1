@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.22
-Version date:   2026/01/15
+Version:        6.7.23
+Version date:   2026/01/19
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -139,7 +139,7 @@ function CheckBoxSwitchingLog_Click {
     if (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIelements.SwitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
         $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingLogDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type" | Out-DataTable
-        if ($LegacyGUIelements.SwitchingLogDGV.Columns) { 
+        if (-not $LegacyGUIelements.SwitchingLogDGV.ColumnWidthChanged -and $LegacyGUIelements.SwitchingLogDGV.Columns) { 
             $LegacyGUIelements.SwitchingLogDGV.Columns[0].FillWeight = 50; $LegacyGUIelements.SwitchingLogDGV.Sort($LegacyGUIelements.SwitchingLogDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Descending)
             $LegacyGUIelements.SwitchingLogDGV.Columns[1].FillWeight = 50
             $LegacyGUIelements.SwitchingLogDGV.Columns[2].FillWeight = 90; $LegacyGUIelements.SwitchingLogDGV.Columns[2].HeaderText = "Miner"
@@ -151,6 +151,14 @@ function CheckBoxSwitchingLog_Click {
             $LegacyGUIelements.SwitchingLogDGV.Columns[8].FillWeight = 30 + ($LegacyGUIelements.SwitchingLogDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIelements.SwitchingLogDGV.Columns[8].HeaderText = "Device(s)"
             $LegacyGUIelements.SwitchingLogDGV.Columns[9].FillWeight = 30
             $LegacyGUIelements.SwitchingLogClearButton.Enabled = $true
+
+            $LegacyGUIelements.SwitchingLogDGV | Add-Member ColumnWidthChanged $true -Force
+        }
+        if ($Session.Config.UseColorForMinerStatus) { 
+            foreach ($Row in $LegacyGUIelements.SwitchingLogDGV.Rows) { 
+                $Row.DefaultCellStyle.Backcolor = $Row.DefaultCellStyle.SelectionBackColor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action]
+                $Row.DefaultCellStyle.SelectionForeColor = $LegacyGUIelements.SwitchingLogDGV.DefaultCellStyle.ForeColor
+            }
         }
         $LegacyGUIelements.SwitchingLogDGV.EndInit()
     }
@@ -158,7 +166,6 @@ function CheckBoxSwitchingLog_Click {
         $LegacyGUIelements.SwitchingLogLabel.Text = "Waiting for switching log data..."
         $LegacyGUIelements.SwitchingLogClearButton.Enabled = $false
     }
-    Set-TableColor -DataGridView $LegacyGUIelements.SwitchingLogDGV
     $LegacyGUIelements.SwitchingLogDGV.ClearSelection()
     $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
@@ -229,14 +236,17 @@ function Update-TabControl {
             if ($Session.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is stopped"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
+                $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged = $false
             }
             elseif ($Session.NewMiningStatus -eq "Paused") { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is paused"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
+                $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged = $false
             }
             elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No data - mining is suspended"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
+                $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged = $false
             }
             elseif ($Session.MinersBest) { 
                 if (-not $LegacyGUIelements.ActiveMinersDGV.SelectedRows) { 
@@ -400,7 +410,7 @@ function Update-TabControl {
 
                     $LegacyGUIelements.BalancesDGV.Sort($LegacyGUIelements.BalancesDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
 
-                    if ($LegacyGUIelements.BalancesDGV.Columns) { 
+                    if (-not $LegacyGUIelements.BalancesDGV.ColumnWidthChanged -and $LegacyGUIelements.BalancesDGV.Columns) { 
                         $LegacyGUIelements.BalancesDGV.Columns[0].Visible = $false
                         $LegacyGUIelements.BalancesDGV.Columns[1].FillWeight = 100
                         $LegacyGUIelements.BalancesDGV.Columns[2].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[2].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
@@ -414,6 +424,8 @@ function Update-TabControl {
                         $LegacyGUIelements.BalancesDGV.Columns[10].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"; $LegacyGUIelements.BalancesDGV.Columns[10].Visible = $Session.Config.BalancesShowAverages
                         $LegacyGUIelements.BalancesDGV.Columns[11].FillWeight = 70
                         $LegacyGUIelements.BalancesDGV.Columns[12].FillWeight = 100
+
+                        $LegacyGUIelements.BalancesDGV | Add-Member ColumnWidthChanged $true
                     }
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
@@ -478,14 +490,17 @@ function Update-TabControl {
             if ($Session.MiningStatus -eq "Idle") { 
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is stopped"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
+                $LegacyGUIelements.MinersDGV.ColumnWidthChanged = $false
             }
             elseif ($Session.MiningStatus -eq "Paused") { 
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is paused"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
+                $LegacyGUIelements.MinersDGV.ColumnWidthChanged = $false
             }
             elseif ($Session.MiningStatus -eq "Running" -and -not $Global:CoreCycleRunspace) { 
                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is suspended"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
+                $LegacyGUIelements.MinersDGV.ColumnWidthChanged = $false
             }
             elseif ($Session.Miners) { 
                 if (-not $LegacyGUIelements.MinersDGV.SelectedRows) { 
@@ -506,7 +521,6 @@ function Update-TabControl {
                         if ($LegacyGUIelements.RadioButtonMinersUnavailable.checked -or $LegacyGUIelements.RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
                     $LegacyGUIelements.MinersLabel.Text = "Miner data updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.MinersDGV.Rows.count) miner$(if ($LegacyGUIelements.MinersDGV.Rows.count -ne 1) { "s" }))"
-                    Remove-Variable DataSource
                     $LegacyGUIelements.MinersDGV.Columns[0].Visible = $false
                     $LegacyGUIelements.MinersDGV.Columns[1].Visible = $false
                     if (-not $LegacyGUIelements.MinersDGV.ColumnWidthChanged -and $LegacyGUIelements.MinersDGV.Columns) { 
@@ -555,14 +569,17 @@ function Update-TabControl {
             if ($Session.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIelements.PoolsLabel.Text = "No data - mining is stopped"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
+                $LegacyGUIelements.PoolsDGV.ColumnWidthChanged = $false 
             }
             elseif ($Session.NewMiningStatus -eq "Paused") { 
                 $LegacyGUIelements.PoolsLabel.Text = "No data - mining is paused"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
+                $LegacyGUIelements.PoolsDGV.ColumnWidthChanged = $false 
             }
             elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.PoolsLabel.Text = "No data - mining is suspended"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
+                $LegacyGUIelements.PoolsDGV.ColumnWidthChanged = $false 
             }
             elseif ($Session.Pools) { 
                 if (-not $LegacyGUIelements.PoolsDGV.SelectedRows) { 
@@ -630,11 +647,23 @@ function Update-TabControl {
         #
         #             Read-MonitoringData | Out-Null
         #
-        #             If ($Session.Workers) { $LegacyGUIelements.WorkersLabel.Text = "Worker status updated $($Session.WorkersLastUpdated.ToString())" }
-        #             ElseIf ($Session.MiningStatus -eq "Idle") { $LegacyGUIelements.WorkersLabel.Text = "No data - mining is stopped" }
-        #             ElseIf ($Session.MiningStatus -eq "Paused" -and -not $DataSource) { $LegacyGUIelements.WorkersLabel.Text = "No data - mining is paused" }
-        #             ElseIf ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) {  $LegacyGUIelements.MinersLabel.Text = "No data - mining is suspended" }
-        #             Else  { $LegacyGUIelements.WorkersLabel.Text = "Waiting for monitoring data..." }
+        #             if ($Session.Workers) { $LegacyGUIelements.WorkersLabel.Text = "Worker status updated $($Session.WorkersLastUpdated.ToString())" }
+        #             elseif ($Session.MiningStatus -eq "Idle") { 
+        #                 $LegacyGUIelements.WorkersLabel.Text = "No data - mining is stopped"
+        #                 $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
+        #                 $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+        #             }
+        #             elseif ($Session.MiningStatus -eq "Paused" -and -not $DataSource) { 
+        #                 $LegacyGUIelements.WorkersLabel.Text = "No data - mining is paused"
+        #                 $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
+        #                 $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+        #             }
+        #             elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
+        #                 $LegacyGUIelements.MinersLabel.Text = "No data - mining is suspended"
+        #                 $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
+        #                 $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+        #             }
+        #             else  { $LegacyGUIelements.WorkersLabel.Text = "Waiting for monitoring data..." }
         #
         #             $LegacyGUIelements.WorkersDGV.BeginInit()
         #             $LegacyGUIelements.WorkersDGV.DataSource = $Session.Workers | Select-Object @(
@@ -692,14 +721,17 @@ function Update-TabControl {
                 if ($Session.NewMiningStatus -eq "Idle") { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No data - mining is stopped"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
+                    $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
                 }
                 elseif ($Session.NewMiningStatus -eq "Paused") { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No data - mining is paused"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
+                    $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
                 }
                 elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No data - mining is suspended"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
+                    $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
                 }
                 elseif ($Session.WatchdogTimers) { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "Watchdog timers updated $(($Session.WatchdogTimers.Kicked | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"

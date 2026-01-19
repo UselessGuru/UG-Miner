@@ -1,3 +1,17 @@
+Changelog UG-Miner 6.7.23 2026/01/19
+====================================
+
+Fixes:
+- Web GUI: Retain coloring when switching log tab
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+- Web GUI: Remove obsolete code & minor code optimizations
+
+Miner updates:
+- TeamBlackMiner-v2.41
+
+
 Changelog UG-Miner 6.7.22 2026/01/15
 ====================================
 

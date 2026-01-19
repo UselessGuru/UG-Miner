@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.22
-Version date:   2026/01/15
+Version:        6.7.23
+Version date:   2026/01/19
 #>
 
 using module .\Include.psm1
@@ -32,10 +32,6 @@ $ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_
 
 # Read all miner classes
 (Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
-
-$Session.Miners = [Miner[]]@()
-$Session.Pools = [Pool[]]@()
-$Session.Remove("PoolDataCollectedTimeStamp")
 
 try { 
     do { 
@@ -109,7 +105,7 @@ try {
         $Session.BenchmarkAllPoolAlgorithmCombinations = $Session.Config.BenchmarkAllPoolAlgorithmCombinations
         $Session.PoolsTimeout = [Math]::Floor($Session.Config.PoolsTimeout)
 
-        $Session.EnabledDevices = [Device[]]@($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName }).ForEach({ $_ | Select-Object -Property * }))
+        $Session.EnabledDevices = @($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName }).ForEach({ $_ | Select-Object -Property * }))
         if (-not $Session.EnabledDevices) { 
             $Message = "No enabled devices - will retry in $($Session.Config.Interval) seconds..."
             Write-Message -Level Warn $Message
@@ -840,7 +836,7 @@ try {
 
             if ($Session.Config.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info }) }
 
-            $Miners = Compare-Object @($Session.Miners | Sort-Object -Property Info) @($MinersNew) -Property Info -IncludeEqual -PassThru
+            $Miners = Compare-Object @($Session.Miners) @($MinersNew) -Property Info -IncludeEqual -PassThru
             $MinerDevices = $Session.EnabledDevices | Select-Object -Property Bus, ConfiguredPowerConsumption, Name, ReadPowerConsumption, Status
 
             # Make smaller groups for faster update

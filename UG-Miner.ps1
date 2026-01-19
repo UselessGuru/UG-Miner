@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.22
-Version date:   2026/01/15
+Version:        6.7.23
+Version date:   2026/01/19
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.22"
+    Version      = [System.Version]"6.7.23"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -872,14 +872,9 @@ function MainLoop {
                         }
                     }
                     "5" { 
-                        $Session.Config.WebGUI = -not $Session.Config.WebGUI
-                        $CursorPosition = $Host.UI.RawUI.CursorPosition
-                        Write-Host "`nKey '$_' pressed"
-                        if ($Session.Config.WebGUI) { Start-APIserver } else { Stop-APIserver }
-                        [Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
-                        Write-Host "`nKey '$_' pressed: API and web GUI server is " -NoNewline; if ($Session.APIport) { Write-Host "running on port $($Session.APIport)" -ForegroundColor Green } else { Write-Host "stopped" -ForegroundColor DarkYellow }
-                        [Console]::SetCursorPosition(0, ($Session.CursorPosition.Y + 1))
-                        Remove-Variable CursorPosition
+                        Write-Host "`nKey '$_' pressed: " -NoNewline
+                        if ($Session.Config.WebGUI) { Stop-APIserver } else { Start-APIserver }
+                        $Session.Config.WebGUI = [Boolean]($Session.APIport)
                         break
                     }
                     "a" { 

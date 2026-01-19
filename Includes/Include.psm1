@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.22
-Version date:   2026/01/15
+Version:        6.7.23
+Version date:   2026/01/19
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -939,43 +939,42 @@ public static class Kernel32
 
 function Start-CoreCycle { 
 
-    try { 
-        if (-not $Global:CoreCycleRunspace) { 
-            $Global:CoreCycleRunspace = [RunspaceFactory]::CreateRunspace()
-            $Global:CoreCycleRunspace.ApartmentState = "STA"
-            $Global:CoreCycleRunspace.Name = "CoreCycle"
-            $Global:CoreCycleRunspace.ThreadOptions = "ReuseThread"
-            $Global:CoreCycleRunspace.Open()
+    if (-not $Global:CoreCycleRunspace) { 
+        $Global:CoreCycleRunspace = [RunspaceFactory]::CreateRunspace()
+        $Global:CoreCycleRunspace.ApartmentState = "STA"
+        $Global:CoreCycleRunspace.Name = "CoreCycle"
+        $Global:CoreCycleRunspace.ThreadOptions = "ReuseThread"
+        $Global:CoreCycleRunspace.Open()
 
-            $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Config", $Config)
-            $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Session", $Session)
-            $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
-            [Void]$Global:CoreCycleRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
+        $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Config", $Config)
+        $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Session", $Session)
+        $Global:CoreCycleRunspace.SessionStateProxy.SetVariable("Stats", $Stats)
+        [Void]$Global:CoreCycleRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
 
-            $PowerShell = [PowerShell]::Create()
-            $PowerShell.Runspace = $Global:CoreCycleRunspace
-            [Void]$Powershell.AddScript("$($Session.MainPath)\Includes\CoreCycle.ps1")
-            $Global:CoreCycleRunspace | Add-Member PowerShell $PowerShell
-            # Remove stats that have been deleted from disk
-            try { 
-                if ($StatFiles = (Get-ChildItem -Path "Stats" -File).BaseName) { 
-                    if ($Stats.Keys) { 
-                        (Compare-Object -PassThru $StatFiles $Stats.Keys).Where({ $_.SideIndicator -eq "=>" }).ForEach({ $Stats.Remove($_) })
-                    }
+        $PowerShell = [PowerShell]::Create()
+        $PowerShell.Runspace = $Global:CoreCycleRunspace
+        [Void]$Powershell.AddScript("$($Session.MainPath)\Includes\CoreCycle.ps1")
+        $Global:CoreCycleRunspace | Add-Member PowerShell $PowerShell
+        # Remove stats that have been deleted from disk
+        try { 
+            if ($StatFiles = (Get-ChildItem -Path "Stats" -File).BaseName) { 
+                if ($Stats.Keys) { 
+                    (Compare-Object -PassThru $StatFiles $Stats.Keys).Where({ $_.SideIndicator -eq "=>" }).ForEach({ $Stats.Remove($_) })
                 }
             }
-            catch {}
-
-            Remove-Variable StatFiles -ErrorAction Ignore
         }
+        catch {}
 
-        if ($Global:CoreCycleRunspace.Job.IsCompleted -ne $false) { 
-            $Global:CoreCycleRunspace | Add-Member Job ($Global:CoreCycleRunspace.PowerShell.BeginInvoke()) -Force
-            $Global:CoreCycleRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
-        }
+        Remove-Variable StatFiles -ErrorAction Ignore
     }
-    catch { 
-        Write-Message -Level Error "Failed to start core [$($Error[0])]."
+
+    if ($Global:CoreCycleRunspace.Job.IsCompleted -ne $false) { 
+        $Global:CoreCycleRunspace | Add-Member Job ($Global:CoreCycleRunspace.PowerShell.BeginInvoke()) -Force
+        $Global:CoreCycleRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+        
+        $Session.Miners = [Miner[]]@()
+        $Session.Pools = [Pool[]]@()
+        $Session.Remove("PoolDataCollectedTimeStamp")
     }
 }
 
@@ -1142,37 +1141,32 @@ function Stop-Brain {
 
 function Start-BalancesTracker { 
 
-    try { 
-        if (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
-            if (-not $Global:BalancesTrackerRunspace) { 
-                $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
-                $Global:BalancesTrackerRunspace.ApartmentState = "STA"
-                $Global:BalancesTrackerRunspace.Name = "BalancesTracker"
-                $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
-                $Global:BalancesTrackerRunspace.Open()
+    if (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
+        if (-not $Global:BalancesTrackerRunspace) { 
+            $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
+            $Global:BalancesTrackerRunspace.ApartmentState = "STA"
+            $Global:BalancesTrackerRunspace.Name = "BalancesTracker"
+            $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
+            $Global:BalancesTrackerRunspace.Open()
 
-                $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Session", $Session)
-                [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
+            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Session", $Session)
+            [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
 
-                $PowerShell = [PowerShell]::Create()
-                $PowerShell.Runspace = $Global:BalancesTrackerRunspace
-                [Void]$Powershell.AddScript("$($Session.MainPath)\Includes\BalancesTracker.ps1")
-                $Global:BalancesTrackerRunspace | Add-Member PowerShell $PowerShell
-            }
-            if ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
-                $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
-                $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
-                $Session.BalancesTrackerRunning = $true
-
-                Write-Message -Level Info "Balances tracker background process started."
-            }
+            $PowerShell = [PowerShell]::Create()
+            $PowerShell.Runspace = $Global:BalancesTrackerRunspace
+            [Void]$Powershell.AddScript("$($Session.MainPath)\Includes\BalancesTracker.ps1")
+            $Global:BalancesTrackerRunspace | Add-Member PowerShell $PowerShell
         }
-        else { 
-            Write-Message -Level Error "Failed to start Balances tracker. Directory '.\Balances' is missing."
+        if ($Global:BalancesTrackerRunspace.Job.IsCompleted -ne $false) { 
+            $Global:BalancesTrackerRunspace | Add-Member Job ($Global:BalancesTrackerRunspace.PowerShell.BeginInvoke()) -Force
+            $Global:BalancesTrackerRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
+            $Session.BalancesTrackerRunning = $true
+
+            Write-Message -Level Info "Balances tracker background process started."
         }
     }
-    catch { 
-        Write-Message -Level Error "Failed to start Balances tracker [$($Error[0])]."
+    else { 
+        Write-Message -Level Error "Failed to start Balances tracker. Directory '.\Balances' is missing."
     }
 }
 
@@ -3746,7 +3740,7 @@ function Start-APIserver {
         $TCPclient = [System.Net.Sockets.TCPClient]::new()
         $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Session.Config.APIport, $null, $null)
         if ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
-            Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport). Port is in use."
+            Write-Message -Level Error "Error starting API on port $($Session.Config.APIport). Port is in use."
             $Session.MinerBaseAPIport = 4000
             Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
             [Void]$TCPclient.Dispose()
@@ -3773,7 +3767,7 @@ function Start-APIserver {
         $Global:APIrunspace | Add-Member PowerShell $PowerShell
 
         # Initialize API and web GUI
-        Write-Message -Level Verbose "Initializing API and web GUI on 'http://localhost:$($Session.Config.APIport)'..."
+        Write-Message -Level Verbose "Starting API and web GUI on 'http://localhost:$($Session.Config.APIport)'..."
         $Global:APIrunspace | Add-Member Job ($Global:APIrunspace.PowerShell.BeginInvoke())
         $Global:APIrunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
 
@@ -3800,7 +3794,7 @@ function Start-APIserver {
             $Session.MinerBaseAPIport = $Session.Config.MinerBaseAPIport
         }
         else { 
-            Write-Message -Level Error "Error initializing API on port $($Session.Config.APIport)."
+            Write-Message -Level Error "Error starting API on port $($Session.Config.APIport)."
             $Session.MinerBaseAPIport = 4000
             Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
         }
