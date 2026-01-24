@@ -3,7 +3,7 @@ Changelog UG-Miner 6.7.24 2026/01/24
 
 Enhancements:
 - Web GUI: Add context menu options to switching log table
-- Web GUI: Single click unselects row in miners & switching log tables
+- Web GUI: Single click unselects row in miners, pools & switching log tables
 
 Fixes:
 - Core: Pool reasons not clearing
