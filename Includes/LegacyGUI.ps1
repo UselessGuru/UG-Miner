@@ -1233,14 +1233,6 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
             if ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Session.Branding.ProductLabel): $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
 
         }
-        # elseif ($SourceControl.Name -match "SwitchingLogDGV") { 
-        #     $this.SourceControl.SelectedRows.ForEach(
-        #         { 
-        #             Set-Clipboard $_.Cells[10].Value
-        #             (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 64)) | Out-Null
-        #         }
-        #     )
-        # }
         Remove-Variable SourceControl
     }
 )
@@ -1284,31 +1276,12 @@ $LegacyGUIelements.ActiveMinersDGV.ReadOnly = $true
 $LegacyGUIelements.ActiveMinersDGV.RowHeadersVisible = $false
 $LegacyGUIelements.ActiveMinersDGV.ScrollBars = "None"
 $LegacyGUIelements.ActiveMinersDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.ActiveMinersDGV.Add_CellClick(
-    { 
-        if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { 
-            $this.Rows[$_.RowIndex].Selected = $false
-            $this.Rows[$_.RowIndex].Tag = $null
-        }
-    }
-)
-$LegacyGUIelements.ActiveMinersDGV.Add_CellMouseDown(
-    { 
-        if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { 
-            $this.Rows[$_.RowIndex].Tag = "ToggleSelect"
-        }
-    }
-)
+$LegacyGUIelements.ActiveMinersDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
+$LegacyGUIelements.ActiveMinersDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.ActiveMinersDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "System status" ) { Resize-Form } }) # To fully show grid
 $LegacyGUIelements.ActiveMinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 $LegacyGUIelements.ActiveMinersDGV.Add_SelectionChanged({ $LegacyGUIelements.ContextMenuStripItem7.Enabled = [Boolean]($LegacyGUIelements.ActiveMinersDGV.SelectedRows.Count -eq 1) })
-$LegacyGUIelements.ActiveMinersDGV.Add_Sorted(
-    { 
-        # Re-apply colors after sort
-        Set-TableColor -DataGridView $this
-        $this.ClearSelection()
-    }
-) 
+$LegacyGUIelements.ActiveMinersDGV.Add_Sorted({ Set-TableColor -DataGridView $this; $this.ClearSelection() }) 
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.ActiveMinersDGV -Enabled $true
 $LegacyGUIelements.StatusPageControls += $LegacyGUIelements.ActiveMinersDGV
 
@@ -1471,30 +1444,11 @@ $LegacyGUIelements.MinersDGV.Name = "MinersDGV"
 $LegacyGUIelements.MinersDGV.ReadOnly = $true
 $LegacyGUIelements.MinersDGV.RowHeadersVisible = $false
 $LegacyGUIelements.MinersDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.MinersDGV.Add_CellClick(
-    { 
-        if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { 
-            $this.Rows[$_.RowIndex].Selected = $false
-            $this.Rows[$_.RowIndex].Tag = $null
-        }
-    }
-)
-$LegacyGUIelements.MinersDGV.Add_CellMouseDown(
-    { 
-        if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { 
-            $this.Rows[$_.RowIndex].Tag = "ToggleSelect"
-        }
-    }
-)
+$LegacyGUIelements.MinersDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
+$LegacyGUIelements.MinersDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.MinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 $LegacyGUIelements.MinersDGV.Add_SelectionChanged({ $LegacyGUIelements.ContextMenuStripItem7.Enabled = [Boolean]($LegacyGUIelements.ActiveMinersDGV.SelectedRows.Count -eq 1) })
-$LegacyGUIelements.MinersDGV.Add_Sorted(
-    { 
-        # Re-apply colors after sort
-        Set-TableColor -DataGridView $this
-        $this.ClearSelection()
-    }
-)
+$LegacyGUIelements.MinersDGV.Add_Sorted({ Set-TableColor -DataGridView $this; $this.ClearSelection() })
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.MinersDGV -Enabled $true
 $LegacyGUIelements.MinersPageControls += $LegacyGUIelements.MinersDGV
 
@@ -1597,6 +1551,8 @@ $LegacyGUIelements.PoolsDGV.Name = "PoolsDGV"
 $LegacyGUIelements.PoolsDGV.ReadOnly = $true
 $LegacyGUIelements.PoolsDGV.RowHeadersVisible = $false
 $LegacyGUIelements.PoolsDGV.SelectionMode = "FullRowSelect"
+$LegacyGUIelements.PoolsDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
+$LegacyGUIelements.PoolsDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.PoolsDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.PoolsDGV -Enabled $true
 $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
@@ -1633,7 +1589,9 @@ $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 # $LegacyGUIelements.WorkersDGV.ReadOnly = $true
 # $LegacyGUIelements.WorkersDGV.RowHeadersVisible = $false
 # $LegacyGUIelements.WorkersDGV.SelectionMode = "FullRowSelect"
-
+# $LegacyGUIelements.WorkersDGV.Add_CellClick(
+# $LegacyGUIelements.WorkersDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
+# $LegacyGUIelements.WorkersDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 # $LegacyGUIelements.WorkersDGV.Add_Sorted({ Set-WorkerColor -DataGridView $this })
 # Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.WorkersDGV -Enabled $true
 # $LegacyGUIelements.RigMonitorPageControls.Add($LegacyGUIelements.WorkersDGV)
@@ -1759,31 +1717,10 @@ $LegacyGUIelements.SwitchingLogDGV.Name = "SwitchingLogDGV"
 $LegacyGUIelements.SwitchingLogDGV.ReadOnly = $true
 $LegacyGUIelements.SwitchingLogDGV.RowHeadersVisible = $false
 $LegacyGUIelements.SwitchingLogDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.SwitchingLogDGV.Add_CellClick(
-    { 
-        if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { 
-            $this.Rows[$_.RowIndex].Selected = $false
-            $this.Rows[$_.RowIndex].Tag = $null
-        }
-    }
-)
-$LegacyGUIelements.SwitchingLogDGV.Add_CellMouseDown(
-    { 
-        if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { 
-            $this.Rows[$_.RowIndex].Tag = "ToggleSelect"
-        }
-    }
-)
+$LegacyGUIelements.SwitchingLogDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
+$LegacyGUIelements.SwitchingLogDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.SwitchingLogDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
-$LegacyGUIelements.SwitchingLogDGV.Add_Sorted(
-    { 
-        if ($Session.Config.UseColorForMinerStatus) { 
-            foreach ($Row in $this.Rows) { 
-                $Row.DefaultCellStyle.Backcolor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action]
-            }
-        }
-    }
-)
+$LegacyGUIelements.SwitchingLogDGV.Add_Sorted({ if ($Session.Config.UseColorForMinerStatus) { foreach ($Row in $this.Rows) { $Row.DefaultCellStyle.Backcolor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action] } } })
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.SwitchingLogDGV -Enabled $true
 $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.SwitchingLogDGV
 
@@ -1881,15 +1818,9 @@ $LegacyGUIelements.TabControl.Name = "TabControl"
 $LegacyGUIelements.TabControl.ShowToolTips = $true
 $LegacyGUIelements.TabControl.Padding = [System.Drawing.Point]::new(18, 6)
 $LegacyGUIelements.TabControl.Width = 0
+$LegacyGUIelements.TabControl.Add_Click({ $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor; Update-TabControl; $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal })
 # $LegacyGUIelements.TabControl.Controls.AddRange(@($LegacyGUIelements.StatusPage, $LegacyGUIelements.EarningsPage, $LegacyGUIelements.MinersPage, $LegacyGUIelements.PoolsPage, $LegacyGUIelements.RigMonitorPage, $LegacyGUIelements.SwitchingLogPage, $LegacyGUIelements.WatchdogTimersPage))
 $LegacyGUIelements.TabControl.Controls.AddRange(@($LegacyGUIelements.StatusPage, $LegacyGUIelements.EarningsPage, $LegacyGUIelements.MinersPage, $LegacyGUIelements.PoolsPage, $LegacyGUIelements.SwitchingLogPage, $LegacyGUIelements.WatchdogTimersPage))
-$LegacyGUIelements.TabControl.Add_Click(
-    { 
-        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-        Update-TabControl
-        $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
-    }
-)
 
 $LegacyGUIelements.Timer = [System.Windows.Forms.Timer]::new()
 $LegacyGUIelements.Timer.Interval = 500
