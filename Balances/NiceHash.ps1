@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.7.23
-Version date:   2026/01/19
+Version:        6.7.24
+Version date:   2026/01/24
 #>
 
 if ($Session.Config.NiceHashWallet) { 

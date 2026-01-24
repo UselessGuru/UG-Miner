@@ -17,19 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.23
-Version date:   2026/01/19
+Version:        6.7.24
+Version date:   2026/01/24
 #>
 
-# Removed preconfigured pool requirements. (The miner now will work on any pool)
-# Autodetect stratum settings for pools that are not preconfigured.
-# Fixed dual mining vtc/etc Cuda startup.
-# Fixed slow mining start and rejects on the first job on some pools. (kawpow variants)
+# Added support for --kernel 1 parameter for older AMD cards. (kawpow variants)
 # Performance tuning Kawpow variants.
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "7.5" -and $_.CUDAversion -ge [System.Version]"12.9") }))) { return }
 
-$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.41/TeamBlackMiner_2_41_cuda_12.9.7z"
+$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.42/TeamBlackMiner_2_42_cuda_12.9.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\TBMiner.exe"
 

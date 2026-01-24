@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.23
-Version date:   2026/01/19
+Version:        6.7.24
+Version date:   2026/01/24
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -39,7 +39,6 @@ function Disable-X {
 
     $SC_CLOSE = 0xF060
     $MF_DISABLED = 0x00000002L
-
 
     # Create a new namespace for the Methods to be able to call them
     Add-Type -MemberDefinition $MethodsCall -Name NativeMethods -Namespace Win32
@@ -70,7 +69,7 @@ $LegacyGUIelements = [System.Collections.SortedList]::New([StringComparer]::Ordi
 function Resize-Form { 
 
     if ($LegacyGUIform.WindowState -eq "Minimized") { return }
-    try { 
+    # try { 
         $LegacyGUIelements.TabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIelements.MiningStatusLabel.Height - $LegacyGUIelements.MiningSummaryLabel.Height - $LegacyGUIelements.EditConfigLink.Height - $LegacyGUIelements.EditConfigLink.Height + 3
         $LegacyGUIelements.TabControl.Width = $LegacyGUIform.ClientSize.Width - 16
 
@@ -124,21 +123,36 @@ function Resize-Form {
         # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 72
         $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 75
         $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 75
-    }
-    catch { 
-        Start-Sleep 0
-    }
+#     }
+#     catch { 
+#         Start-Sleep 0
+#     }
 }
 
 function CheckBoxSwitchingLog_Click { 
     $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
     $LegacyGUIelements.SwitchingLogDGV.ClearSelection()
 
-    $SwitchingLogDisplayTypes = @()
-    $LegacyGUIelements.SwitchingLogPageControls.ForEach({ if ($_.Checked) { $SwitchingLogDisplayTypes += $_.Tag } })
+    $LegacyGUIelements.ContextMenuStripItem1.Enabled = $true
+    $LegacyGUIelements.ContextMenuStripItem1.Text = "Re-benchmark miner"
+    $LegacyGUIelements.ContextMenuStripItem1.Visible = $true
+    $LegacyGUIelements.ContextMenuStripItem2.Enabled = $Session.Config.CalculatePowerCost
+    $LegacyGUIelements.ContextMenuStripItem2.Text = "Re-measure power consumption"
+    $LegacyGUIelements.ContextMenuStripItem2.Visible = $true
+    $LegacyGUIelements.ContextMenuStripItem3.Enabled = $true
+    $LegacyGUIelements.ContextMenuStripItem3.Text = "Mark miner as failed"
+    $LegacyGUIelements.ContextMenuStripItem4.Enabled = $true
+    $LegacyGUIelements.ContextMenuStripItem4.Text = "Disable miner"
+    $LegacyGUIelements.ContextMenuStripItem4.Visible = $true
+    $LegacyGUIelements.ContextMenuStripItem6.Visible = $false
+    $LegacyGUIelements.ContextMenuStripItem7.Enabled = $true
+    $LegacyGUIelements.ContextMenuStripItem7.Text = "Copy miner command line to clipboard"
+    $LegacyGUIelements.ContextMenuStripItem7.Visible = $true
+
+    $SwitchingLogDisplayTypes = $LegacyGUIelements.SwitchingLogPageControls.Where({ $_.Checked }).Tag
     if (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIelements.SwitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
-        $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingLogDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type" | Out-DataTable
+        $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where({ $SwitchingLogDisplayTypes -contains $_.Type }) | Select-Object -Last 1000).ForEach({ $_.Datetime = (Get-Date $_.DateTime); $_ }) | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type", "CommandLine" | Out-DataTable
         if (-not $LegacyGUIelements.SwitchingLogDGV.ColumnWidthChanged -and $LegacyGUIelements.SwitchingLogDGV.Columns) { 
             $LegacyGUIelements.SwitchingLogDGV.Columns[0].FillWeight = 50; $LegacyGUIelements.SwitchingLogDGV.Sort($LegacyGUIelements.SwitchingLogDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Descending)
             $LegacyGUIelements.SwitchingLogDGV.Columns[1].FillWeight = 50
@@ -150,14 +164,15 @@ function CheckBoxSwitchingLog_Click {
             $LegacyGUIelements.SwitchingLogDGV.Columns[7].FillWeight = 35; $LegacyGUIelements.SwitchingLogDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIelements.SwitchingLogDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
             $LegacyGUIelements.SwitchingLogDGV.Columns[8].FillWeight = 30 + ($LegacyGUIelements.SwitchingLogDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIelements.SwitchingLogDGV.Columns[8].HeaderText = "Device(s)"
             $LegacyGUIelements.SwitchingLogDGV.Columns[9].FillWeight = 30
+            $LegacyGUIelements.SwitchingLogDGV.Columns[10].FillWeight = 0; $LegacyGUIelements.SwitchingLogDGV.Columns[10].Visible = $false
+
             $LegacyGUIelements.SwitchingLogClearButton.Enabled = $true
 
             $LegacyGUIelements.SwitchingLogDGV | Add-Member ColumnWidthChanged $true -Force
         }
         if ($Session.Config.UseColorForMinerStatus) { 
             foreach ($Row in $LegacyGUIelements.SwitchingLogDGV.Rows) { 
-                $Row.DefaultCellStyle.Backcolor = $Row.DefaultCellStyle.SelectionBackColor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action]
-                $Row.DefaultCellStyle.SelectionForeColor = $LegacyGUIelements.SwitchingLogDGV.DefaultCellStyle.ForeColor
+                $Row.DefaultCellStyle.Backcolor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action]
             }
         }
         $LegacyGUIelements.SwitchingLogDGV.EndInit()
@@ -166,6 +181,7 @@ function CheckBoxSwitchingLog_Click {
         $LegacyGUIelements.SwitchingLogLabel.Text = "Waiting for switching log data..."
         $LegacyGUIelements.SwitchingLogClearButton.Enabled = $false
     }
+    Remove-Variable SwitchingLogDisplayTypes
     $LegacyGUIelements.SwitchingLogDGV.ClearSelection()
     $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::Normal
 }
@@ -218,6 +234,7 @@ function Update-TabControl {
         "SystemStatus" { 
             $LegacyGUIelements.ActiveMinersDGV.ClearSelection()
 
+            $LegacyGUIelements.ContextMenuStripItem1.Enabled = $true
             $LegacyGUIelements.ContextMenuStripItem1.Text = "Re-benchmark miner"
             $LegacyGUIelements.ContextMenuStripItem1.Visible = $true
             $LegacyGUIelements.ContextMenuStripItem2.Enabled = $Session.Config.CalculatePowerCost
@@ -232,6 +249,7 @@ function Update-TabControl {
             $LegacyGUIelements.ContextMenuStripItem5.Text = "Enable miner"
             $LegacyGUIelements.ContextMenuStripItem5.Visible = $true
             $LegacyGUIelements.ContextMenuStripItem6.Visible = $false
+            $LegacyGUIelements.ContextMenuStripItem7.Visible = $false
 
             if ($Session.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is stopped"
@@ -456,6 +474,7 @@ function Update-TabControl {
         "Miners" { 
             $LegacyGUIelements.MinersDGV.ClearSelection()
 
+            $LegacyGUIelements.ContextMenuStripItem1.Enabled = $true
             $LegacyGUIelements.ContextMenuStripItem1.Text = "Re-benchmark miner"
             $LegacyGUIelements.ContextMenuStripItem1.Visible = $true
             $LegacyGUIelements.ContextMenuStripItem2.Enabled = $Session.Config.CalculatePowerCost
@@ -472,6 +491,8 @@ function Update-TabControl {
             $LegacyGUIelements.ContextMenuStripItem6.Enabled = $Session.WatchdogTimers
             $LegacyGUIelements.ContextMenuStripItem6.Text = "Remove watchdog timer"
             $LegacyGUIelements.ContextMenuStripItem6.Visible = $true
+            $LegacyGUIelements.ContextMenuStripItem7.Text = "Copy miner command line to clipboard"
+            $LegacyGUIelements.ContextMenuStripItem7.Visible = $false
 
             if ($LegacyGUIelements.RadioButtonMinersOptimal.checked) { 
                 $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
@@ -546,6 +567,7 @@ function Update-TabControl {
                 $LegacyGUIelements.MinersLabel.Text = "Waiting for miner data..."
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }
+
             Remove-Variable DataSource
             break
         }
@@ -561,6 +583,7 @@ function Update-TabControl {
             $LegacyGUIelements.ContextMenuStripItem4.Text = "Remove watchdog timer"
             $LegacyGUIelements.ContextMenuStripItem5.Visible = $false
             $LegacyGUIelements.ContextMenuStripItem6.Visible = $false
+            $LegacyGUIelements.ContextMenuStripItem7.Visible = $false
 
             if ($LegacyGUIelements.RadioButtonPoolsBest.checked) { $DataSource = $Session.PoolsBest }
             elseif ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked) { $DataSource = $Session.Pools.Where({ -not $_.Available }) }
@@ -994,63 +1017,83 @@ $LegacyGUIelements.ContextMenuStripItem5 = [System.Windows.Forms.ToolStripMenuIt
 $LegacyGUIelements.ContextMenuStripItem6 = [System.Windows.Forms.ToolStripMenuItem]::new()
 [Void]$LegacyGUIelements.ContextMenuStrip.Items.Add($LegacyGUIelements.ContextMenuStripItem6)
 
+$LegacyGUIelements.ContextMenuStripItem7 = [System.Windows.Forms.ToolStripMenuItem]::new()
+[Void]$LegacyGUIelements.ContextMenuStrip.Items.Add($LegacyGUIelements.ContextMenuStripItem7)
+
 $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
     { 
         $Data = @()
 
         $SourceControl = $this.SourceControl
-        if ($SourceControl.Name -match "LaunchedMinersDGV|MinersDGV") { 
+        if ($SourceControl.Name -match "LaunchedMinersDGV|MinersDGV|SwitchingLog") { 
+
+            $MinerInfoColumn = if ($SourceControl.Name -match "LaunchedMinersDGV|MinersDGV") { 0 } else { 2 }
 
             switch ($_.ClickedItem.Text) { 
                 "Re-benchmark miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[$MinerInfoColumn].Value }) }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerReBenchmark $_
                         }
                     )
-                    $Message = "Re-benchmark triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
-                    Write-Message -Level Verbose "GUI: $Message" -Console $false
-                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                    if ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    if ($Data.Count) { 
+                        $Message = "Re-benchmark triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
+                        Write-Message -Level Verbose "GUI: $Message" -Console $false
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                        if ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                    }
+                    else { 
+                        $Data = "No matching miners found."
+                    }
                     Update-TabControl
                     break
                 }
                 "Re-measure power consumption" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[$MinerInfoColumn].Value }) }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerMeasurePowerConsumption $_ 
                         }
                     )
-                    $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
-                    Write-Message -Level Verbose "GUI: $Message" -Console $false
-                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                    Remove-Variable Message
-                    if ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
-                    Update-TabControl
+                    if ($Data.Count) { 
+                        $Message = "Re-measure power consumption triggered for $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" })."
+                        Write-Message -Level Verbose "GUI: $Message" -Console $false
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                        Remove-Variable Message
+                        if ($Session.Config.DryRun -and $Session.NewMiningStatus -eq "Running") { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
+                        Update-TabControl
+                    }
+                    else { 
+                        $Data = "No matching miners found."
+                    }
                     break
                 }
                 "Mark miner as failed" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[$MinerInfoColumn].Value }) }).ForEach(
                         { 
                             Set-MinerFailed $_
                             $Data += $_.Name
                         }
                     )
-                    $Message = "Marked $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" }) as failed." 
-                    Write-Message -Level Verbose "GUI: $Message" -Console $false
-                    $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
-                    Remove-Variable Message
-                    Update-TabControl
+                    if ($Data.Count) { 
+                        $Message = "Marked $($Data.Count) miner$(if ($Data.Count -ne 1) { "s" }) as failed." 
+                        Write-Message -Level Verbose "GUI: $Message" -Console $false
+                        $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
+                        Remove-Variable Message
+                        Update-TabControl
+                    }
+                    else { 
+                        $Data = "No matching miners found."
+                    }
                     break
                 }
                 "Disable miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).Where({ -not $_.Disabled }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[$MinerInfoColumn].Value }) }).Where({ -not $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerDisabled $_
@@ -1070,7 +1113,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 }
                 "Enable miner" { 
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[0].Value }) }).Where({ $_.Disabled }).ForEach(
+                    $Session.Miners.Where({ $_.Info -in $SourceControl.SelectedRows.ForEach({ $_.Cells[$MinerInfoColumn].Value }) }).Where({ $_.Disabled }).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerEnabled $_
@@ -1115,7 +1158,16 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     Remove-Variable Message, Miner, MinerName -ErrorAction Ignore
                     break
                 }
+                "Copy miner command line to clipboard" { 
+                    $this.SourceControl.SelectedRows.ForEach(
+                        { 
+                            Set-Clipboard $_.Cells[10].Value
+                            (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 64)) | Out-Null
+                        }
+                    )
+                }
             }
+            Remove-Variable MinerInfoColumn
             if ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Session.Branding.ProductLabel): $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
 
         }
@@ -1181,6 +1233,14 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
             if ($Data.Count -ge 1) { [Void][System.Windows.Forms.MessageBox]::Show([String]($Data -join "`r`n"), "$($Session.Branding.ProductLabel): $($_.ClickedItem.Text)", [System.Windows.Forms.MessageBoxButtons]::OK, 64) }
 
         }
+        # elseif ($SourceControl.Name -match "SwitchingLogDGV") { 
+        #     $this.SourceControl.SelectedRows.ForEach(
+        #         { 
+        #             Set-Clipboard $_.Cells[10].Value
+        #             (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 64)) | Out-Null
+        #         }
+        #     )
+        # }
         Remove-Variable SourceControl
     }
 )
@@ -1218,18 +1278,35 @@ $LegacyGUIelements.ActiveMinersDGV.EnableHeadersVisualStyles = $false
 $LegacyGUIelements.ActiveMinersDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
 $LegacyGUIelements.ActiveMinersDGV.Height = 3
 $LegacyGUIelements.ActiveMinersDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.ActiveMinersLabel.Height + 6))
+$LegacyGUIelements.ActiveMinersDGV.MultiSelect = $true
 $LegacyGUIelements.ActiveMinersDGV.Name = "LaunchedMinersDGV"
 $LegacyGUIelements.ActiveMinersDGV.ReadOnly = $true
 $LegacyGUIelements.ActiveMinersDGV.RowHeadersVisible = $false
 $LegacyGUIelements.ActiveMinersDGV.ScrollBars = "None"
 $LegacyGUIelements.ActiveMinersDGV.SelectionMode = "FullRowSelect"
+$LegacyGUIelements.ActiveMinersDGV.Add_CellClick(
+    { 
+        if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { 
+            $this.Rows[$_.RowIndex].Selected = $false
+            $this.Rows[$_.RowIndex].Tag = $null
+        }
+    }
+)
+$LegacyGUIelements.ActiveMinersDGV.Add_CellMouseDown(
+    { 
+        if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { 
+            $this.Rows[$_.RowIndex].Tag = "ToggleSelect"
+        }
+    }
+)
 $LegacyGUIelements.ActiveMinersDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "System status" ) { Resize-Form } }) # To fully show grid
 $LegacyGUIelements.ActiveMinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
+$LegacyGUIelements.ActiveMinersDGV.Add_SelectionChanged({ $LegacyGUIelements.ContextMenuStripItem7.Enabled = [Boolean]($LegacyGUIelements.ActiveMinersDGV.SelectedRows.Count -eq 1) })
 $LegacyGUIelements.ActiveMinersDGV.Add_Sorted(
     { 
         # Re-apply colors after sort
-        Set-TableColor -DataGridView $LegacyGUIelements.ActiveMinersDGV
-        $LegacyGUIelements.ActiveMinersDGV.ClearSelection()
+        Set-TableColor -DataGridView $this
+        $this.ClearSelection()
     }
 ) 
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.ActiveMinersDGV -Enabled $true
@@ -1289,6 +1366,7 @@ $LegacyGUIelements.BalancesDGV.EnableHeadersVisualStyles = $false
 $LegacyGUIelements.BalancesDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
 $LegacyGUIelements.BalancesDGV.Height = 3
 $LegacyGUIelements.BalancesDGV.Location = [System.Drawing.Point]::new(0, 0)
+$LegacyGUIelements.BalancesDGV.MultiSelect = $true
 $LegacyGUIelements.BalancesDGV.Name = "EarningsDGV"
 $LegacyGUIelements.BalancesDGV.ReadOnly = $true
 $LegacyGUIelements.BalancesDGV.RowHeadersVisible = $false
@@ -1388,22 +1466,33 @@ $LegacyGUIelements.MinersDGV.EnableHeadersVisualStyles = $false
 $LegacyGUIelements.MinersDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
 $LegacyGUIelements.MinersDGV.Height = 3
 $LegacyGUIelements.MinersDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.MinersLabel.Height + $LegacyGUIelements.MinersPanel.Height + 10))
+$LegacyGUIelements.MinersDGV.MultiSelect = $true
 $LegacyGUIelements.MinersDGV.Name = "MinersDGV"
 $LegacyGUIelements.MinersDGV.ReadOnly = $true
 $LegacyGUIelements.MinersDGV.RowHeadersVisible = $false
 $LegacyGUIelements.MinersDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.MinersDGV.Add_MouseUp(
+$LegacyGUIelements.MinersDGV.Add_CellClick(
     { 
-        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
-            $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows
+        if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { 
+            $this.Rows[$_.RowIndex].Selected = $false
+            $this.Rows[$_.RowIndex].Tag = $null
         }
     }
 )
+$LegacyGUIelements.MinersDGV.Add_CellMouseDown(
+    { 
+        if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { 
+            $this.Rows[$_.RowIndex].Tag = "ToggleSelect"
+        }
+    }
+)
+$LegacyGUIelements.MinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
+$LegacyGUIelements.MinersDGV.Add_SelectionChanged({ $LegacyGUIelements.ContextMenuStripItem7.Enabled = [Boolean]($LegacyGUIelements.ActiveMinersDGV.SelectedRows.Count -eq 1) })
 $LegacyGUIelements.MinersDGV.Add_Sorted(
     { 
         # Re-apply colors after sort
-        Set-TableColor -DataGridView $LegacyGUIelements.MinersDGV
-        $LegacyGUIelements.MinersDGV.ClearSelection()
+        Set-TableColor -DataGridView $this
+        $this.ClearSelection()
     }
 )
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.MinersDGV -Enabled $true
@@ -1503,17 +1592,12 @@ $LegacyGUIelements.PoolsDGV.EnableHeadersVisualStyles = $false
 $LegacyGUIelements.PoolsDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
 $LegacyGUIelements.PoolsDGV.Height = 3
 $LegacyGUIelements.PoolsDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.PoolsLabel.Height + $LegacyGUIelements.PoolsPanel.Height + 10))
+$LegacyGUIelements.PoolsDGV.MultiSelect = $true
 $LegacyGUIelements.PoolsDGV.Name = "PoolsDGV"
 $LegacyGUIelements.PoolsDGV.ReadOnly = $true
 $LegacyGUIelements.PoolsDGV.RowHeadersVisible = $false
 $LegacyGUIelements.PoolsDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.PoolsDGV.Add_MouseUp(
-    { 
-        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { 
-            $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows
-        }
-    }
-)
+$LegacyGUIelements.PoolsDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.PoolsDGV -Enabled $true
 $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 
@@ -1550,7 +1634,7 @@ $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 # $LegacyGUIelements.WorkersDGV.RowHeadersVisible = $false
 # $LegacyGUIelements.WorkersDGV.SelectionMode = "FullRowSelect"
 
-# $LegacyGUIelements.WorkersDGV.Add_Sorted({ Set-WorkerColor -DataGridView $LegacyGUIelements.WorkersDGV })
+# $LegacyGUIelements.WorkersDGV.Add_Sorted({ Set-WorkerColor -DataGridView $this })
 # Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.WorkersDGV -Enabled $true
 # $LegacyGUIelements.RigMonitorPageControls.Add($LegacyGUIelements.WorkersDGV)
 
@@ -1664,21 +1748,38 @@ $LegacyGUIelements.SwitchingLogDGV.ColumnHeadersDefaultCellStyle.BackColor = [Sy
 $LegacyGUIelements.SwitchingLogDGV.ColumnHeadersDefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::MenuBar
 $LegacyGUIelements.SwitchingLogDGV.ColumnHeadersHeightSizeMode = "AutoSize"
 $LegacyGUIelements.SwitchingLogDGV.ColumnHeadersVisible = $true
+$LegacyGUIelements.SwitchingLogDGV.ContextMenuStrip = $LegacyGUIelements.ContextMenuStrip
 $LegacyGUIelements.SwitchingLogDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIelements.SwitchingLogDGV.EnableHeadersVisualStyles = $false
 $LegacyGUIelements.SwitchingLogDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
 $LegacyGUIelements.SwitchingLogDGV.Height = 3
 $LegacyGUIelements.SwitchingLogDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.SwitchingLogLabel.Height + $LegacyGUIelements.SwitchingLogClearButton.Height + 12))
+$LegacyGUIelements.SwitchingLogDGV.MultiSelect = $false
 $LegacyGUIelements.SwitchingLogDGV.Name = "SwitchingLogDGV"
 $LegacyGUIelements.SwitchingLogDGV.ReadOnly = $true
 $LegacyGUIelements.SwitchingLogDGV.RowHeadersVisible = $false
 $LegacyGUIelements.SwitchingLogDGV.SelectionMode = "FullRowSelect"
+$LegacyGUIelements.SwitchingLogDGV.Add_CellClick(
+    { 
+        if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { 
+            $this.Rows[$_.RowIndex].Selected = $false
+            $this.Rows[$_.RowIndex].Tag = $null
+        }
+    }
+)
+$LegacyGUIelements.SwitchingLogDGV.Add_CellMouseDown(
+    { 
+        if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { 
+            $this.Rows[$_.RowIndex].Tag = "ToggleSelect"
+        }
+    }
+)
+$LegacyGUIelements.SwitchingLogDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 $LegacyGUIelements.SwitchingLogDGV.Add_Sorted(
     { 
         if ($Session.Config.UseColorForMinerStatus) { 
-            foreach ($Row in $LegacyGUIelements.SwitchingLogDGV.Rows) { 
-                $Row.DefaultCellStyle.Backcolor = $Row.DefaultCellStyle.SelectionBackColor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action]
-                $Row.DefaultCellStyle.SelectionForeColor = $LegacyGUIelements.SwitchingLogDGV.DefaultCellStyle.ForeColor
+            foreach ($Row in $this.Rows) { 
+                $Row.DefaultCellStyle.Backcolor = $LegacyGUIelements.Colors[$Row.DataBoundItem.Action]
             }
         }
     }

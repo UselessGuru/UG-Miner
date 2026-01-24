@@ -1,3 +1,17 @@
+Changelog UG-Miner 6.7.24 2026/01/24
+====================================
+
+Enhancements:
+- Web GUI: Add context menu options to switching log table
+- Web GUI: Single click unselects row in miners & switching log tables
+
+Fixes:
+- Core: Pool reasons not clearing
+
+Miner updates:
+- TeamBlackMiner-v2.42
+
+
 Changelog UG-Miner 6.7.23 2026/01/19
 ====================================
 

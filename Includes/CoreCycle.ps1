@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.23
-Version date:   2026/01/19
+Version:        6.7.24
+Version date:   2026/01/24
 #>
 
 using module .\Include.psm1
@@ -393,12 +393,7 @@ try {
                                 $Pool.Epoch = $Session.DAGdata.Algorithm.($Pool.Algorithm).Epoch
                             }
                         }
-                        if ($Pool.DAGsizeGiB -and $Pool.Algorithm -match $Session.RegexAlgoHasDynamicDAG) { 
-                            $Pool.AlgorithmVariant = "$($Pool.Algorithm)($([Math]::Ceiling($Pool.DAGsizeGiB))GiB)"
-                        }
-                        else { 
-                            $Pool.AlgorithmVariant = $Pool.Algorithm
-                        }
+                        $Pool.AlgorithmVariant = if ($Pool.DAGsizeGiB -and $Pool.Algorithm -match $Session.RegexAlgoHasDynamicDAG) { "$($Pool.Algorithm)($([Math]::Ceiling($Pool.DAGsizeGiB))GiB)" } else { $Pool.Algorithm }
                         $Pool
                     }
                 )
@@ -416,12 +411,15 @@ try {
                 # Expire pools that have not been updated for 1 day
                 $Session.PoolsExpired = $Session.Pools.Where({ $_.Updated -lt $PoolsMaxAge })
                 $Session.Pools = $Session.Pools.Where({ $_.Updated -ge $PoolsMaxAge })
+
                 Remove-Variable PoolsMaxAge
 
                 if ($Pools = Compare-Object -PassThru @($Session.Pools | Select-Object) @($Session.PoolsNew | Select-Object) -Property Key -IncludeEqual) { 
                     # Find added & updated pools
                     $Session.PoolsAdded = $Pools.Where({ $_.SideIndicator -eq "=>" })
                     $Session.PoolsUpdated = $Pools.Where({ $_.SideIndicator -eq "==" })
+                    $Session.PoolsUpdated.ForEach({ $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New() })
+
                     $Pools.ForEach({ $_.PSObject.Properties.Remove("SideIndicator") })
 
                     # Update existing pools, must not replace pool object. Doing so would break the reference to the miner worker pool
@@ -481,7 +479,7 @@ try {
                     $Pools.Where({ $_.Price -eq 0 -and -not ($Session.Config.Pools[$_.Name].PoolAllow0Price -or $Session.Config.PoolAllow0Price) }).ForEach({ $_.Reasons.Add("Price -eq 0") | Out-Null })
                     # No price data
                     $Pools.Where({ [Double]::IsNaN($_.Price) }).ForEach({ $_.Reasons.Add("Price information not available") | Out-Null })
-                    # Ignore pool if price is more than $Session.Config.UnrealisticPoolPriceFactor higher than the medium price of all pools with same algorithm; NiceHash & MiningPoolHub are always right
+                    # Ignore pool if price is more than UnrealisticPoolPriceFactor higher than the medium price of all pools with same algorithm; NiceHash & MiningPoolHub are always right
                     if ($Session.Config.UnrealisticPoolPriceFactor -gt 1) { 
                         ($Pools.Where({ $_.Price_Bias -gt 0 }) | Group-Object -Property Algorithm).Where({ $_.Count -gt 3 }).ForEach(
                             { 

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           demo.psm1
 Version:        4.3.4.7
-Version date:   2026/01/19
+Version date:   2026/01/24
 #>
 
 Write-Message -Level Info "Stop-APIserver"
