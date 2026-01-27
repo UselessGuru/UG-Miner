@@ -18,13 +18,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.24
-Version date:   2026/01/24
+Version:        6.7.25
+Version date:   2026/01/27
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms.DataVisualization")
 [Void][System.Reflection.Assembly]::Load("System.Drawing")
+
+$Font = "Segoe UI"
+$Font2 = "Microsoft Sans Serif"
 
 function Disable-X {
     # Taken from https://stackoverflow.com/questions/73746912/disable-the-close-x-button-in-powershell
@@ -69,64 +72,59 @@ $LegacyGUIelements = [System.Collections.SortedList]::New([StringComparer]::Ordi
 function Resize-Form { 
 
     if ($LegacyGUIform.WindowState -eq "Minimized") { return }
-    # try { 
-        $LegacyGUIelements.TabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIelements.MiningStatusLabel.Height - $LegacyGUIelements.MiningSummaryLabel.Height - $LegacyGUIelements.EditConfigLink.Height - $LegacyGUIelements.EditConfigLink.Height + 3
-        $LegacyGUIelements.TabControl.Width = $LegacyGUIform.ClientSize.Width - 16
+    $LegacyGUIelements.TabControl.Height = $LegacyGUIform.ClientSize.Height - $LegacyGUIelements.MiningStatusLabel.Height - $LegacyGUIelements.MiningSummaryLabel.Height - $LegacyGUIelements.EditConfigLink.Height - $LegacyGUIelements.EditConfigLink.Height + 3
+    $LegacyGUIelements.TabControl.Width = $LegacyGUIform.ClientSize.Width - 20
 
-        $LegacyGUIelements.ButtonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - $LegacyGUIelements.ButtonStart.Width - 42), 10)
-        $LegacyGUIelements.ButtonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - 32), 10)
-        $LegacyGUIelements.ButtonStop.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - 22), 10)
+    $LegacyGUIelements.ButtonStart.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - $LegacyGUIelements.ButtonStart.Width - 44), 10)
+    $LegacyGUIelements.ButtonPause.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - $LegacyGUIelements.ButtonPause.Width - 34), $LegacyGUIelements.ButtonStart.Top)
+    $LegacyGUIelements.ButtonStop.Location = [System.Drawing.Point]::new(($LegacyGUIform.ClientSize.Width - $LegacyGUIelements.ButtonStop.Width - 24), $LegacyGUIelements.ButtonStart.Top)
 
-        # $LegacyGUIelements.EditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUIelements.TabControl.Width - $LegacyGUIelements.EditMonitoringLink.Width - 12), 6)
-        $LegacyGUIelements.MiningSummaryLabel.Width = $LegacyGUIelements.ActiveMinersDGV.Width = $LegacyGUIelements.EarningsChart.Width = $LegacyGUIelements.BalancesDGV.Width = $LegacyGUIelements.MinersPanel.Width = $LegacyGUIelements.MinersDGV.Width = $LegacyGUIelements.PoolsPanel.Width = $LegacyGUIelements.PoolsDGV.Width = $LegacyGUIelements.SwitchingLogDGV.Width = $LegacyGUIelements.WatchdogTimersDGV.Width = $LegacyGUIform.ClientSize.Width - 44
-        $Session.TextBoxSystemLog.Width = $LegacyGUIelements.TabControl.ClientSize.Width - 20
+    # $LegacyGUIelements.EditMonitoringLink.Location = [System.Drawing.Point]::new(($LegacyGUIelements.TabControl.Width - $LegacyGUIelements.EditMonitoringLink.Width - 12), 6)
+    $LegacyGUIelements.MiningSummaryLabel.Width = $LegacyGUIelements.ActiveMinersDGV.Width = $LegacyGUIelements.EarningsChart.Width = $LegacyGUIelements.BalancesDGV.Width = $LegacyGUIelements.MinersPanel.Width = $LegacyGUIelements.MinersDGV.Width = $LegacyGUIelements.PoolsPanel.Width = $LegacyGUIelements.PoolsDGV.Width = $LegacyGUIelements.SwitchingLogDGV.Width = $LegacyGUIelements.WatchdogTimersDGV.Width = $LegacyGUIform.ClientSize.Width - 44
+    $Session.TextBoxSystemLog.Width = $LegacyGUIelements.TabControl.ClientSize.Width - 16
 
-        $LegacyGUIelements.EditConfigLink.Location = [System.Drawing.Point]::new(18, ($LegacyGUIform.ClientSize.Height - $LegacyGUIelements.EditConfigLink.Height - 4))
-        $LegacyGUIelements.CopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUIelements.TabControl.ClientSize.Width - $LegacyGUIelements.CopyrightLabel.Width - 4), ($LegacyGUIform.ClientSize.Height - $LegacyGUIelements.EditConfigLink.Height - 4))
+    $LegacyGUIelements.EditConfigLink.Location = [System.Drawing.Point]::new(18, ($LegacyGUIform.ClientSize.Height - $LegacyGUIelements.EditConfigLink.Height - 2))
+    $LegacyGUIelements.CopyrightLabel.Location = [System.Drawing.Point]::new(($LegacyGUIelements.TabControl.ClientSize.Width - $LegacyGUIelements.CopyrightLabel.Width - 4), $LegacyGUIelements.EditConfigLink.Top)
 
-        # System status panel height
-        $ActiveMinersDGVheight = $LegacyGUIelements.ActiveMinersDGV.RowTemplate.Height * $LegacyGUIelements.ActiveMinersDGV.RowCount + $LegacyGUIelements.ActiveMinersDGV.ColumnHeadersHeight
-        if ($ActiveMinersDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { $ActiveMinersDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2 }
-        $LegacyGUIelements.ActiveMinersDGV.Height = $ActiveMinersDGVheight
-        $LegacyGUIelements.SystemLogLabel.Location = [System.Drawing.Point]::new(1, ($LegacyGUIelements.ActiveMinersLabel.Height + $LegacyGUIelements.ActiveMinersDGV.Height + 30))
-        $Session.TextBoxSystemLog.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.ActiveMinersLabel.Height + $LegacyGUIelements.ActiveMinersDGV.Height + $LegacyGUIelements.SystemLogLabel.Height + 36))
-        $Session.TextBoxSystemLog.Height = ($LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.ActiveMinersLabel.Height - $LegacyGUIelements.ActiveMinersDGV.Height - $LegacyGUIelements.SystemLogLabel.Height - 93)
-        if (-not $Session.TextBoxSystemLog.SelectionLength) { $Session.TextBoxSystemLog.ScrollToCaret() }
+    # System status panel height
+    $ActiveMinersDGVheight = $LegacyGUIelements.ActiveMinersDGV.RowTemplate.Height * $LegacyGUIelements.ActiveMinersDGV.RowCount + $LegacyGUIelements.ActiveMinersDGV.ColumnHeadersHeight
+    if ($ActiveMinersDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { $ActiveMinersDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2 }
+    $LegacyGUIelements.ActiveMinersDGV.Height = $ActiveMinersDGVheight
+    $LegacyGUIelements.SystemLogLabel.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.ActiveMinersDGV.Bottom + 8))
+    $Session.TextBoxSystemLog.Location = [System.Drawing.Point]::new(0, $LegacyGUIelements.SystemLogLabel.Bottom)
+    if (-not $Session.TextBoxSystemLog.SelectionLength) { $Session.TextBoxSystemLog.ScrollToCaret() }
 
-        # Earnings and balances panel height
-        if ($Session.Config.BalancesTrackerPollInterval -gt 0) { 
-            $LegacyGUIelements.BalancesDGV.Visible = $true
-            $LegacyGUIelements.EarningsChart.Visible = $true
+    # Earnings and balances panel height
+    if ($Session.Config.BalancesTrackerPollInterval -gt 0) { 
+        $LegacyGUIelements.BalancesDGV.Visible = $true
+        $LegacyGUIelements.EarningsChart.Visible = $true
 
-            $BalancesDGVheight = $LegacyGUIelements.BalancesDGV.RowTemplate.Height * $LegacyGUIelements.BalancesDGV.RowCount + $LegacyGUIelements.BalancesDGV.ColumnHeadersHeight
-            if ($BalancesDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { 
-                $BalancesDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2
-                $LegacyGUIelements.BalancesDGV.ScrollBars = "Vertical"
-            }
-            else { 
-                $LegacyGUIelements.BalancesDGV.ScrollBars = "None"
-            }
-            $LegacyGUIelements.BalancesDGV.Height = $BalancesDGVheight
-            $LegacyGUIelements.EarningsChart.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.BalancesDGV.Height - $LegacyGUIelements.BalancesLabel.Height - 57
-            $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, $LegacyGUIelements.EarningsChart.Bottom)
-            $LegacyGUIelements.BalancesDGV.Top = $LegacyGUIelements.BalancesLabel.Bottom
+        $BalancesDGVheight = $LegacyGUIelements.BalancesDGV.RowTemplate.Height * $LegacyGUIelements.BalancesDGV.RowCount + $LegacyGUIelements.BalancesDGV.ColumnHeadersHeight
+        if ($BalancesDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { 
+            $BalancesDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2
+            $LegacyGUIelements.BalancesDGV.ScrollBars = "Vertical"
         }
         else { 
-            $LegacyGUIelements.BalancesDGV.Visible = $false
-            $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, 20)
-            $LegacyGUIelements.EarningsChart.Visible = $false
-            $LegacyGUIelements.EarningsChart.Height = 0
+            $LegacyGUIelements.BalancesDGV.ScrollBars = "None"
         }
+        $LegacyGUIelements.BalancesDGV.Height = $BalancesDGVheight
+        $LegacyGUIelements.EarningsChart.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.BalancesDGV.Height - $LegacyGUIelements.BalancesLabel.Height - 58
+        $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, $LegacyGUIelements.EarningsChart.Bottom)
+        $LegacyGUIelements.BalancesDGV.Top = $LegacyGUIelements.BalancesLabel.Bottom
+    }
+    else { 
+        $LegacyGUIelements.BalancesDGV.Visible = $false
+        $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, 20)
+        $LegacyGUIelements.EarningsChart.Visible = $false
+        $LegacyGUIelements.EarningsChart.Height = 0
+    }
 
-        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.MinersLabel.Height - $LegacyGUIelements.MinersPanel.Height - 72
-        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.PoolsLabel.Height - $LegacyGUIelements.PoolsPanel.Height - 72
-        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 72
-        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 75
-        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 75
-#     }
-#     catch { 
-#         Start-Sleep 0
-#     }
+    $Session.TextBoxSystemLog.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.ActiveMinersLabel.Height - $LegacyGUIelements.ActiveMinersDGV.Height - $LegacyGUIelements.SystemLogLabel.Height - 75
+    $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.MinersLabel.Height - $LegacyGUIelements.MinersPanel.Height - 73
+    $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.PoolsLabel.Height - $LegacyGUIelements.PoolsPanel.Height - 73
+    # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 72
+    $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 76
+    $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 76
 }
 
 function CheckBoxSwitchingLog_Click { 
@@ -343,11 +341,11 @@ function Update-TabControl {
                         $ChartArea.AxisX.Interval = 1
                         $ChartArea.AxisY.IsMarginVisible = $false
                         $ChartArea.AxisY.LabelAutoFitStyle = 16
+                        $ChartArea.AxisX.IsMarginVisible = $false
                         $ChartArea.AxisX.LabelStyle.Enabled = $true
+                        $ChartArea.AxisX.MajorGrid.Enabled = $false
                         $ChartArea.AxisX.Maximum = $Datasource.Labels.Count + 1
                         $ChartArea.AxisX.Minimum = 0
-                        $ChartArea.AxisX.IsMarginVisible = $false
-                        $ChartArea.AxisX.MajorGrid.Enabled = $false
                         $ChartArea.AxisY.Interval = [Math]::Ceiling(($Datasource.DaySum | Measure-Object -Maximum).Maximum / 4)
                         $ChartArea.AxisY.LabelAutoFitStyle = $ChartArea.AxisY.labelAutoFitStyle - 4
                         $ChartArea.AxisY.MajorGrid.Enabled = $true
@@ -645,7 +643,7 @@ function Update-TabControl {
                         $LegacyGUIelements.PoolsDGV.Columns[8].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[9].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[10].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                        if ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 140 }
+                        $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = if ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { 140 } else { 0 }
                         $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $true
                     }
                     $LegacyGUIelements.PoolsDGV.EndInit()
@@ -889,7 +887,7 @@ $LegacyGUIelements.WatchdogTimersPage.ToolTipText = "List of all watchdog timers
 $LegacyGUIelements.MiningStatusLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.MiningStatusLabel.AutoSize = $false
 $LegacyGUIelements.MiningStatusLabel.BackColor = [System.Drawing.Color]::Transparent
-$LegacyGUIelements.MiningStatusLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 12)
+$LegacyGUIelements.MiningStatusLabel.Font = [System.Drawing.Font]::new($Font2, 12)
 $LegacyGUIelements.MiningStatusLabel.ForeColor = [System.Drawing.Color]::Black
 $LegacyGUIelements.MiningStatusLabel.Height = 20
 $LegacyGUIelements.MiningStatusLabel.Location = [System.Drawing.Point]::new(11, 10)
@@ -903,7 +901,7 @@ $LegacyGUIelements.MiningSummaryLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.MiningSummaryLabel.AutoSize = $false
 $LegacyGUIelements.MiningSummaryLabel.BackColor = [System.Drawing.Color]::Transparent
 $LegacyGUIelements.MiningSummaryLabel.BorderStyle = 'None'
-$LegacyGUIelements.MiningSummaryLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.MiningSummaryLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
 $LegacyGUIelements.MiningSummaryLabel.Height = 60
 $LegacyGUIelements.MiningSummaryLabel.Location = [System.Drawing.Point]::new(12, 36)
@@ -914,7 +912,7 @@ $LegacyGUIform.Controls.Add($LegacyGUIelements.MiningSummaryLabel)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.MiningSummaryLabel, "Color legend:`rBlack: Mining profitability is unknown`rGreen: Mining is profitable`rRed: Mining is NOT profitable")
 
 $LegacyGUIelements.ButtonPause = [System.Windows.Forms.Button]::new()
-$LegacyGUIelements.ButtonPause.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.ButtonPause.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.ButtonPause.Height = 24
 $LegacyGUIelements.ButtonPause.Text = "Pause mining"
 $LegacyGUIelements.ButtonPause.Visible = $true
@@ -932,7 +930,7 @@ $LegacyGUIform.Controls.Add($LegacyGUIelements.ButtonPause)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.ButtonPause, "Pause mining processes.`rBrain jobs and balances tracker remain running.")
 
 $LegacyGUIelements.ButtonStart = [System.Windows.Forms.Button]::new()
-$LegacyGUIelements.ButtonStart.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.ButtonStart.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.ButtonStart.Height = 24
 $LegacyGUIelements.ButtonStart.Text = "Start mining"
 $LegacyGUIelements.ButtonStart.Visible = $true
@@ -950,7 +948,7 @@ $LegacyGUIform.Controls.Add($LegacyGUIelements.ButtonStart)
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.ButtonStart, "Start the mining process.`rBrain jobs and balances tracker will also start.")
 
 $LegacyGUIelements.ButtonStop = [System.Windows.Forms.Button]::new()
-$LegacyGUIelements.ButtonStop.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.ButtonStop.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.ButtonStop.Height = 24
 $LegacyGUIelements.ButtonStop.Text = "Stop mining"
 $LegacyGUIelements.ButtonStop.Visible = $true
@@ -969,11 +967,11 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.ButtonStop, "Stop minin
 
 $LegacyGUIelements.EditConfigLink = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIelements.EditConfigLink.ActiveLinkColor = [System.Drawing.Color]::Blue
-$LegacyGUIelements.EditConfigLink.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.EditConfigLink.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.EditConfigLink.LinkColor = [System.Drawing.Color]::Blue
-$LegacyGUIelements.EditConfigLink.Location = [System.Drawing.Point]::new(18, ($LegacyGUIform.Bottom - 26))
+$LegacyGUIelements.EditConfigLink.Location = [System.Drawing.Point]::new(18, ($LegacyGUIform.Bottom - 28))
 $LegacyGUIelements.EditConfigLink.TextAlign = "MiddleLeft"
-$LegacyGUIelements.EditConfigLink.Size = [System.Drawing.Size]::new(380, 26)
+$LegacyGUIelements.EditConfigLink.Size = [System.Drawing.Size]::new(380, 22)
 $LegacyGUIelements.EditConfigLink.Add_Click(
     { 
         $LegacyGUIform.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
@@ -985,10 +983,10 @@ $LegacyGUIform.Controls.Add($LegacyGUIelements.EditConfigLink)
 
 $LegacyGUIelements.CopyrightLabel = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIelements.CopyrightLabel.ActiveLinkColor = [System.Drawing.Color]::Blue
-$LegacyGUIelements.CopyrightLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$LegacyGUIelements.CopyrightLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIform.Bottom - 26))
+$LegacyGUIelements.CopyrightLabel.Font = [System.Drawing.Font]::new($Font2, 10)
+$LegacyGUIelements.CopyrightLabel.Location = [System.Drawing.Point]::new(8, ($LegacyGUIform.Bottom - 28))
 $LegacyGUIelements.CopyrightLabel.LinkColor = [System.Drawing.Color]::Blue
-$LegacyGUIelements.CopyrightLabel.Size = [System.Drawing.Size]::new(380, 26)
+$LegacyGUIelements.CopyrightLabel.Size = [System.Drawing.Size]::new(380, 22)
 $LegacyGUIelements.CopyrightLabel.Text = "Copyright (c) 2018-$([DateTime]::Now.Year) UselessGuru"
 $LegacyGUIelements.CopyrightLabel.TextAlign = "MiddleRight"
 $LegacyGUIelements.CopyrightLabel.Add_Click({ Start-Process "$($Session.Branding.BrandWebSite)" })
@@ -1248,7 +1246,7 @@ $LegacyGUIelements.StatusPageControls = @()
 
 $LegacyGUIelements.ActiveMinersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.ActiveMinersLabel.AutoSize = $false
-$LegacyGUIelements.ActiveMinersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.ActiveMinersLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.ActiveMinersLabel.Height = 20
 $LegacyGUIelements.ActiveMinersLabel.Location = [System.Drawing.Point]::new(0, 5)
 $LegacyGUIelements.ActiveMinersLabel.Width = 600
@@ -1267,7 +1265,7 @@ $LegacyGUIelements.ActiveMinersDGV.ColumnHeadersHeightSizeMode = "AutoSize"
 $LegacyGUIelements.ActiveMinersDGV.ContextMenuStrip = $LegacyGUIelements.ContextMenuStrip
 $LegacyGUIelements.ActiveMinersDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIelements.ActiveMinersDGV.EnableHeadersVisualStyles = $false
-$LegacyGUIelements.ActiveMinersDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
+$LegacyGUIelements.ActiveMinersDGV.Font = [System.Drawing.Font]::new($Font, 9)
 $LegacyGUIelements.ActiveMinersDGV.Height = 3
 $LegacyGUIelements.ActiveMinersDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.ActiveMinersLabel.Height + 6))
 $LegacyGUIelements.ActiveMinersDGV.MultiSelect = $true
@@ -1287,7 +1285,7 @@ $LegacyGUIelements.StatusPageControls += $LegacyGUIelements.ActiveMinersDGV
 
 $LegacyGUIelements.SystemLogLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.SystemLogLabel.AutoSize = $false
-$LegacyGUIelements.SystemLogLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.SystemLogLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.SystemLogLabel.Height = 20
 $LegacyGUIelements.SystemLogLabel.Text = "System Log"
 $LegacyGUIelements.SystemLogLabel.Width = 600
@@ -1317,7 +1315,7 @@ $LegacyGUIelements.EarningsPageControls += $LegacyGUIelements.EarningsChart
 $LegacyGUIelements.BalancesLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.BalancesLabel.AutoSize = $false
 $LegacyGUIelements.BalancesLabel.BringToFront()
-$LegacyGUIelements.BalancesLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.BalancesLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.BalancesLabel.Height = 20
 $LegacyGUIelements.BalancesLabel.Width = 600
 $LegacyGUIelements.EarningsPageControls += $LegacyGUIelements.BalancesLabel
@@ -1336,7 +1334,7 @@ $LegacyGUIelements.BalancesDGV.DefaultCellStyle.SelectionBackColor = $LegacyGUIe
 $LegacyGUIelements.BalancesDGV.DefaultCellStyle.SelectionForeColor = $LegacyGUIelements.BalancesDGV.DefaultCellStyle.ForeColor
 $LegacyGUIelements.BalancesDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIelements.BalancesDGV.EnableHeadersVisualStyles = $false
-$LegacyGUIelements.BalancesDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
+$LegacyGUIelements.BalancesDGV.Font = [System.Drawing.Font]::new($Font, 9)
 $LegacyGUIelements.BalancesDGV.Height = 3
 $LegacyGUIelements.BalancesDGV.Location = [System.Drawing.Point]::new(0, 0)
 $LegacyGUIelements.BalancesDGV.MultiSelect = $true
@@ -1354,7 +1352,7 @@ $LegacyGUIelements.MinersPageControls = @()
 $LegacyGUIelements.RadioButtonMinersOptimal = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonMinersOptimal.AutoSize = $false
 $LegacyGUIelements.RadioButtonMinersOptimal.Checked = $true
-$LegacyGUIelements.RadioButtonMinersOptimal.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.RadioButtonMinersOptimal.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.RadioButtonMinersOptimal.Height = 22
 $LegacyGUIelements.RadioButtonMinersOptimal.Location = [System.Drawing.Point]::new(0, 0)
 $LegacyGUIelements.RadioButtonMinersOptimal.Text = "Optimal miners"
@@ -1372,7 +1370,7 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersOptima
 
 $LegacyGUIelements.RadioButtonMinersUnavailable = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonMinersUnavailable.AutoSize = $false
-$LegacyGUIelements.RadioButtonMinersUnavailable.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.RadioButtonMinersUnavailable.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.RadioButtonMinersUnavailable.Height = $LegacyGUIelements.RadioButtonMinersOptimal.Height
 $LegacyGUIelements.RadioButtonMinersUnavailable.Location = [System.Drawing.Point]::new(150, 0)
 $LegacyGUIelements.RadioButtonMinersUnavailable.Text = "Unavailable miners"
@@ -1390,7 +1388,7 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersUnavai
 
 $LegacyGUIelements.RadioButtonMiners = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonMiners.AutoSize = $false
-$LegacyGUIelements.RadioButtonMiners.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.RadioButtonMiners.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.RadioButtonMiners.Height = $LegacyGUIelements.RadioButtonMinersUnavailable.Height
 $LegacyGUIelements.RadioButtonMiners.Location = [System.Drawing.Point]::new(320, 0)
 $LegacyGUIelements.RadioButtonMiners.Text = "All miners"
@@ -1408,7 +1406,7 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMiners, "Sho
 
 $LegacyGUIelements.MinersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.MinersLabel.AutoSize = $false
-$LegacyGUIelements.MinersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.MinersLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.MinersLabel.Height = 20
 $LegacyGUIelements.MinersLabel.Location = [System.Drawing.Point]::new(0, 6)
 $LegacyGUIelements.MinersLabel.Width = 600
@@ -1436,7 +1434,7 @@ $LegacyGUIelements.MinersDGV.ColumnHeadersVisible = $true
 $LegacyGUIelements.MinersDGV.ContextMenuStrip = $LegacyGUIelements.ContextMenuStrip
 $LegacyGUIelements.MinersDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIelements.MinersDGV.EnableHeadersVisualStyles = $false
-$LegacyGUIelements.MinersDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
+$LegacyGUIelements.MinersDGV.Font = [System.Drawing.Font]::new($Font, 9)
 $LegacyGUIelements.MinersDGV.Height = 3
 $LegacyGUIelements.MinersDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.MinersLabel.Height + $LegacyGUIelements.MinersPanel.Height + 10))
 $LegacyGUIelements.MinersDGV.MultiSelect = $true
@@ -1457,7 +1455,7 @@ $LegacyGUIelements.PoolsPageControls = @()
 
 $LegacyGUIelements.RadioButtonPoolsBest = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonPoolsBest.AutoSize = $false
-$LegacyGUIelements.RadioButtonPoolsBest.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.RadioButtonPoolsBest.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.RadioButtonPoolsBest.Height = 22
 $LegacyGUIelements.RadioButtonPoolsBest.Location = [System.Drawing.Point]::new(0, 0)
 $LegacyGUIelements.RadioButtonPoolsBest.Tag = ""
@@ -1477,7 +1475,7 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsBest, "
 
 $LegacyGUIelements.RadioButtonPoolsUnavailable = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonPoolsUnavailable.AutoSize = $false
-$LegacyGUIelements.RadioButtonPoolsUnavailable.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.RadioButtonPoolsUnavailable.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.RadioButtonPoolsUnavailable.Height = $LegacyGUIelements.RadioButtonPoolsBest.Height
 $LegacyGUIelements.RadioButtonPoolsUnavailable.Location = [System.Drawing.Point]::new(120, 0)
 $LegacyGUIelements.RadioButtonPoolsUnavailable.Tag = ""
@@ -1496,7 +1494,7 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsUnavail
 
 $LegacyGUIelements.RadioButtonPools = [System.Windows.Forms.RadioButton]::new()
 $LegacyGUIelements.RadioButtonPools.AutoSize = $false
-$LegacyGUIelements.RadioButtonPools.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.RadioButtonPools.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.RadioButtonPools.Height = $LegacyGUIelements.RadioButtonPoolsUnavailable.Height
 $LegacyGUIelements.RadioButtonPools.Location = [System.Drawing.Point]::new((120 + 175), 0)
 $LegacyGUIelements.RadioButtonPools.Tag = ""
@@ -1515,7 +1513,7 @@ $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPools, "Show
 
 $LegacyGUIelements.PoolsLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.PoolsLabel.AutoSize = $false
-$LegacyGUIelements.PoolsLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.PoolsLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.PoolsLabel.Location = [System.Drawing.Point]::new(0, 6)
 $LegacyGUIelements.PoolsLabel.Height = 20
 $LegacyGUIelements.PoolsLabel.Width = 600
@@ -1543,7 +1541,7 @@ $LegacyGUIelements.PoolsDGV.ColumnHeadersVisible = $true
 $LegacyGUIelements.PoolsDGV.ContextMenuStrip = $LegacyGUIelements.ContextMenuStrip
 $LegacyGUIelements.PoolsDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIelements.PoolsDGV.EnableHeadersVisualStyles = $false
-$LegacyGUIelements.PoolsDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
+$LegacyGUIelements.PoolsDGV.Font = [System.Drawing.Font]::new($Font, 9)
 $LegacyGUIelements.PoolsDGV.Height = 3
 $LegacyGUIelements.PoolsDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.PoolsLabel.Height + $LegacyGUIelements.PoolsPanel.Height + 10))
 $LegacyGUIelements.PoolsDGV.MultiSelect = $true
@@ -1562,7 +1560,7 @@ $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 
 # $LegacyGUIelements.WorkersLabel = [System.Windows.Forms.Label]::new()
 # $LegacyGUIelements.WorkersLabel.AutoSize = $false
-# $LegacyGUIelements.WorkersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+# $LegacyGUIelements.WorkersLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 # $LegacyGUIelements.WorkersLabel.Height = 20
 # $LegacyGUIelements.WorkersLabel.Location = [System.Drawing.Point]::new(0, 6)
 # $LegacyGUIelements.WorkersLabel.Width = 900
@@ -1583,7 +1581,7 @@ $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 # $LegacyGUIelements.WorkersDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 # $LegacyGUIelements.WorkersDGV.DefaultCellStyle.WrapMode = "True"
 # $LegacyGUIelements.WorkersDGV.EnableHeadersVisualStyles = $false
-# $LegacyGUIelements.WorkersDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
+# $LegacyGUIelements.WorkersDGV.Font = [System.Drawing.Font]::new($Font, 9)
 # $LegacyGUIelements.WorkersDGV.Height = 3
 # $LegacyGUIelements.WorkersDGV.Location = [System.Drawing.Point]::new(6, ($LegacyGUIelements.WorkersLabel.Height + 8))
 # $LegacyGUIelements.WorkersDGV.ReadOnly = $true
@@ -1598,7 +1596,7 @@ $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 
 $LegacyGUIelements.EditMonitoringLink = [System.Windows.Forms.LinkLabel]::new()
 $LegacyGUIelements.EditMonitoringLink.ActiveLinkColor = [System.Drawing.Color]::Blue
-$LegacyGUIelements.EditMonitoringLink.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.EditMonitoringLink.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.EditMonitoringLink.Height = 20
 $LegacyGUIelements.EditMonitoringLink.Location = [System.Drawing.Point]::new(0, 6)
 $LegacyGUIelements.EditMonitoringLink.LinkColor = [System.Drawing.Color]::Blue
@@ -1616,14 +1614,14 @@ $LegacyGUIelements.SwitchingLogPageControls = @()
 
 $LegacyGUIelements.SwitchingLogLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.SwitchingLogLabel.AutoSize = $false
-$LegacyGUIelements.SwitchingLogLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.SwitchingLogLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.SwitchingLogLabel.Height = 20
 $LegacyGUIelements.SwitchingLogLabel.Location = [System.Drawing.Point]::new(0, 6)
 $LegacyGUIelements.SwitchingLogLabel.Width = 600
 $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.SwitchingLogLabel
 
 $LegacyGUIelements.SwitchingLogClearButton = [System.Windows.Forms.Button]::new()
-$LegacyGUIelements.SwitchingLogClearButton.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.SwitchingLogClearButton.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.SwitchingLogClearButton.Height = 24
 $LegacyGUIelements.SwitchingLogClearButton.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.SwitchingLogLabel.Height + 8))
 $LegacyGUIelements.SwitchingLogClearButton.Text = "Clear switching log"
@@ -1648,50 +1646,50 @@ $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.SwitchingLogCl
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.SwitchingLogClearButton, "This will clear the switching log '.\Logs\SwitchingLog.csv'")
 
 $LegacyGUIelements.CheckShowSwitchingLogCPU = [System.Windows.Forms.CheckBox]::new()
-$LegacyGUIelements.CheckShowSwitchingLogCPU.AutoSize = $false
+$LegacyGUIelements.CheckShowSwitchingLogCPU.AutoSize = $true
 $LegacyGUIelements.CheckShowSwitchingLogCPU.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "CPU" }))
-$LegacyGUIelements.CheckShowSwitchingLogCPU.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.CheckShowSwitchingLogCPU.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.CheckShowSwitchingLogCPU.Height = 20
-$LegacyGUIelements.CheckShowSwitchingLogCPU.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
+$LegacyGUIelements.CheckShowSwitchingLogCPU.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 30), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
 $LegacyGUIelements.CheckShowSwitchingLogCPU.Tag = "CPU"
 $LegacyGUIelements.CheckShowSwitchingLogCPU.Text = "CPU"
-$LegacyGUIelements.CheckShowSwitchingLogCPU.Width = 70
+$LegacyGUIelements.CheckShowSwitchingLogCPU.Width = 40
 $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.CheckShowSwitchingLogCPU
 $LegacyGUIelements.CheckShowSwitchingLogCPU.ForEach({ $_.Add_Click({ CheckBoxSwitchingLog_Click($this) }) })
 
 $LegacyGUIelements.CheckShowSwitchingLogAMD = [System.Windows.Forms.CheckBox]::new()
-$LegacyGUIelements.CheckShowSwitchingLogAMD.AutoSize = $false
+$LegacyGUIelements.CheckShowSwitchingLogAMD.AutoSize = $true
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }))
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Height = 20
-$LegacyGUIelements.CheckShowSwitchingLogAMD.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
-$LegacyGUIelements.CheckShowSwitchingLogAMD.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
+$LegacyGUIelements.CheckShowSwitchingLogAMD.Font = [System.Drawing.Font]::new($Font2, 10)
+$LegacyGUIelements.CheckShowSwitchingLogAMD.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + 30), $LegacyGUIelements.CheckShowSwitchingLogCPU.Top)
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Tag = "AMD"
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Text = "AMD"
-$LegacyGUIelements.CheckShowSwitchingLogAMD.Width = 70
+$LegacyGUIelements.CheckShowSwitchingLogAMD.Width = 40
 $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.CheckShowSwitchingLogAMD
 $LegacyGUIelements.CheckShowSwitchingLogAMD.ForEach({ $_.Add_Click({ CheckBoxSwitchingLog_Click($this) }) })
 
 $LegacyGUIelements.CheckShowSwitchingLogINTEL = [System.Windows.Forms.CheckBox]::new()
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.AutoSize = $false
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.AutoSize = $true
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }))
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Height = 20
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width + 30), $LegacyGUIelements.CheckShowSwitchingLogAMD.Top)
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Tag = "INTEL"
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Text = "INTEL"
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.Width = 77
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.Width = 50
 $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.CheckShowSwitchingLogINTEL
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.ForEach({ $_.Add_Click({ CheckBoxSwitchingLog_Click($this) }) })
 
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA = [System.Windows.Forms.CheckBox]::new()
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.AutoSize = $false
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.AutoSize = $true
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Height = 20
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 40 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width + $LegacyGUIelements.CheckShowSwitchingLogINTEL.Width), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogINTEL.Width + 30), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Tag = "NVIDIA"
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Text = "NVIDIA"
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Width = 80
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Width = 55
 $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.CheckShowSwitchingLogNVIDIA
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.ForEach({ $_.Add_Click({ CheckBoxSwitchingLog_Click($this) }) })
 
@@ -1709,7 +1707,7 @@ $LegacyGUIelements.SwitchingLogDGV.ColumnHeadersVisible = $true
 $LegacyGUIelements.SwitchingLogDGV.ContextMenuStrip = $LegacyGUIelements.ContextMenuStrip
 $LegacyGUIelements.SwitchingLogDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIelements.SwitchingLogDGV.EnableHeadersVisualStyles = $false
-$LegacyGUIelements.SwitchingLogDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
+$LegacyGUIelements.SwitchingLogDGV.Font = [System.Drawing.Font]::new($Font, 9)
 $LegacyGUIelements.SwitchingLogDGV.Height = 3
 $LegacyGUIelements.SwitchingLogDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.SwitchingLogLabel.Height + $LegacyGUIelements.SwitchingLogClearButton.Height + 12))
 $LegacyGUIelements.SwitchingLogDGV.MultiSelect = $false
@@ -1734,14 +1732,14 @@ $LegacyGUIelements.WatchdogTimersPageControls = @()
 
 $LegacyGUIelements.WatchdogTimersLabel = [System.Windows.Forms.Label]::new()
 $LegacyGUIelements.WatchdogTimersLabel.AutoSize = $false
-$LegacyGUIelements.WatchdogTimersLabel.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.WatchdogTimersLabel.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.WatchdogTimersLabel.Height = 20
 $LegacyGUIelements.WatchdogTimersLabel.Location = [System.Drawing.Point]::new(0, 6)
 $LegacyGUIelements.WatchdogTimersLabel.Width = 600
 $LegacyGUIelements.WatchdogTimersPageControls += $LegacyGUIelements.WatchdogTimersLabel
 
 $LegacyGUIelements.WatchdogTimersRemoveButton = [System.Windows.Forms.Button]::new()
-$LegacyGUIelements.WatchdogTimersRemoveButton.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.WatchdogTimersRemoveButton.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.WatchdogTimersRemoveButton.Height = 24
 $LegacyGUIelements.WatchdogTimersRemoveButton.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.WatchdogTimersLabel.Height + 8))
 $LegacyGUIelements.WatchdogTimersRemoveButton.Text = "Remove all watchdog timers"
@@ -1791,7 +1789,7 @@ $LegacyGUIelements.WatchdogTimersDGV.DefaultCellStyle.SelectionBackColor = $Lega
 $LegacyGUIelements.WatchdogTimersDGV.DefaultCellStyle.SelectionForeColor = $LegacyGUIelements.WatchdogTimersDGV.DefaultCellStyle.ForeColor
 $LegacyGUIelements.WatchdogTimersDGV.DataBindings.DefaultDataSourceUpdateMode = 0
 $LegacyGUIelements.WatchdogTimersDGV.EnableHeadersVisualStyles = $false
-$LegacyGUIelements.WatchdogTimersDGV.Font = [System.Drawing.Font]::new("Segoe UI", 9)
+$LegacyGUIelements.WatchdogTimersDGV.Font = [System.Drawing.Font]::new($Font, 9)
 $LegacyGUIelements.WatchdogTimersDGV.Height = 3
 $LegacyGUIelements.WatchdogTimersDGV.Location = [System.Drawing.Point]::new(0, ($LegacyGUIelements.WatchdogTimersLabel.Height + $LegacyGUIelements.WatchdogTimersRemoveButton.Height + 12))
 $LegacyGUIelements.WatchdogTimersDGV.Name = "WatchdogTimersDGV"
@@ -1811,7 +1809,7 @@ $LegacyGUIelements.WatchdogTimersPage.Controls.AddRange(@($LegacyGUIelements.Wat
 
 $LegacyGUIelements.TabControl = [System.Windows.Forms.TabControl]::new()
 $LegacyGUIelements.TabControl.Appearance = "Buttons"
-$LegacyGUIelements.TabControl.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 10)
+$LegacyGUIelements.TabControl.Font = [System.Drawing.Font]::new($Font2, 10)
 $LegacyGUIelements.TabControl.Height = 0
 $LegacyGUIelements.TabControl.Location = [System.Drawing.Point]::new(12, $LegacyGUIelements.MiningSummaryLabel.Bottom + 10)
 $LegacyGUIelements.TabControl.Name = "TabControl"

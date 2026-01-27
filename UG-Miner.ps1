@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.24
-Version date:   2026/01/24
+Version:        6.7.25
+Version date:   2026/01/27
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.24"
+    Version      = [System.Version]"6.7.25"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -325,8 +325,7 @@ $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Brand
 
 Write-Message -Level Info "Starting $($Session.Branding.ProductLabel)® v$($Session.Branding.Version) © 2017-$([DateTime]::Now.Year) UselessGuru..."
 
-Write-Host ""
-Write-Host "Checking PWSH version..." -ForegroundColor Yellow -NoNewline
+Write-Host "`nChecking PWSH version..." -ForegroundColor Yellow -NoNewline
 if ($PSVersiontable.PSVersion -lt [System.Version]"7.4.0") { 
     Write-Host " ✖" -ForegroundColor Red
     Write-Message -Level Error "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected. $($Session.Branding.BrandName) requires at least PWSH version 7.4.0."
@@ -344,8 +343,7 @@ $CursorPosition = $Host.UI.RawUI.CursorPosition
 while (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
     $Loops --
     [Console]::SetCursorPosition(0, $CursorPosition.y)
-    Write-Host ""
-    Write-Host "Waiting for another instance of $($Session.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
+    Write-Host "`nWaiting for another instance of $($Session.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
     Start-Sleep -Seconds 1
     if ($Loops -eq 0) { 
         [Console]::SetCursorPosition(58, ($CursorPosition.y + 1))

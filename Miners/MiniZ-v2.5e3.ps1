@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.24
-Version date:   2026/01/24
+Version:        6.7.25
+Version date:   2026/01/27
 #>
 
 # Fixed 192,7/Progpow/Kawpow/Ethash mining.
@@ -48,7 +48,7 @@ $Algorithms = @(
     @{ Algorithm = "HeavyHashKarlsenV2"; Type = "AMD"; Fee = @(0.0095); MinMemGiB = 1.08; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --algo=karlsenhashv2" }
 #   @{ Algorithm = "Octopus";            Type = "AMD"; Fee = @(0.02);   MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=octopus" } # No kernel for AMD
     @{ Algorithm = "ProgPowSero";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=sero" }
-    @{ Algorithm = "ProgPowTelestai";    Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=telestai" }
+    @{ Algorithm = "ProgPowTelestai";    Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow" }
     @{ Algorithm = "ProgPowVeil";        Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=veil" }
     @{ Algorithm = "ProgPowVeriblock";   Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=VeriBlock" }
     @{ Algorithm = "ProgPowZ";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=progpow --pers=auto" }
@@ -68,11 +68,11 @@ $Algorithms = @(
     @{ Algorithm = "HeavyHashKarlsen";   Type = "NVIDIA"; Fee = @(0.008);  MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhash" }
     @{ Algorithm = "HeavyHashKarlsenV2"; Type = "NVIDIA"; Fee = @(0.0095); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --algo=karlsenhashv2" }
     @{ Algorithm = "Octopus";            Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=octopus" }
-    @{ Algorithm = "ProgPowSero";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=sero" }
-    @{ Algorithm = "ProgPowTelestai";    Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=telestai" }
-    @{ Algorithm = "ProgPowVeil";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=veil" }
-    @{ Algorithm = "ProgPowVeriblock";   Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=VeriBlock" }
-    @{ Algorithm = "ProgPowZ";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=auto" }
+    @{ Algorithm = "ProgPowSero";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=progpow --pers=sero" }
+#   @{ Algorithm = "ProgPowTelestai";    Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=progpow" } # Miner just closes, use 2.5e2 instead
+    @{ Algorithm = "ProgPowVeil";        Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=progpow --pers=veil" }
+    @{ Algorithm = "ProgPowVeriblock";   Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=progpow --pers=VeriBlock" }
+    @{ Algorithm = "ProgPowZ";           Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1.24; Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=progpow --pers=auto" }
 )
 
 $Algorithms = $Algorithms.Where({ $MinerPools[0].($_.Algorithm) })

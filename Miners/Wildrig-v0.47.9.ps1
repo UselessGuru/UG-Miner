@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.24
-Version date:   2026/01/24
+Version:        6.7.25
+Version date:   2026/01/27
 #>
 
 # removed progpow-ethercore(dead) and progpow-quai(this one moves to kawpow)
