@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           UG-Miner.ps1
 Version:        6.7.25
-Version date:   2026/01/27
+Version date:   2026/01/29
 #>
 
 using module .\Includes\Include.psm1
@@ -354,7 +354,7 @@ while (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Comma
     }
 }
 if ($Loops -ne 20) { 
-    [Console]::SetCursorPosition(58, ($CursorPosition.y + 1))
+    [Console]::SetCursorPosition((56 + $Loops.Tostring().Length), ($CursorPosition.y + 1))
     Write-Host " ✔    " -ForegroundColor Green
 }
 Remove-Variable Loops

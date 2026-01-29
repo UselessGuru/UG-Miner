@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
 Version:        6.7.25
-Version date:   2026/01/27
+Version date:   2026/01/29
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -57,14 +57,33 @@ function Disable-X {
 }
 
 # For High DPI, Call SetProcessDPIAware(need P/Invoke) and EnableVisualStyles
-Add-Type -TypeDefinition @'
+Add-Type -TypeDefinition '
+using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
-public class ProcessDPI { 
-    [DllImport("user32.dll", SetLastError=true)]
-    public static extern bool SetProcessDPIAware(); 
+
+public class DPIAware
+{
+    public static readonly IntPtr UNAWARE              = (IntPtr) (-1);
+    public static readonly IntPtr SYSTEM_AWARE         = (IntPtr) (-2);
+    public static readonly IntPtr PER_MONITOR_AWARE    = (IntPtr) (-3);
+    public static readonly IntPtr PER_MONITOR_AWARE_V2 = (IntPtr) (-4);
+    public static readonly IntPtr UNAWARE_GDISCALED    = (IntPtr) (-5);
+
+    [DllImport("user32.dll", EntryPoint = "SetProcessDpiAwarenessContext", SetLastError = true)]
+    private static extern bool NativeSetProcessDpiAwarenessContext(IntPtr Value);
+
+    public static void SetProcessDpiAwarenessContext(IntPtr Value)
+    {
+        if (!NativeSetProcessDpiAwarenessContext(Value))
+        {
+            throw new Win32Exception();
+        }
+    }
 }
-'@
-$null = [ProcessDPI]::SetProcessDPIAware()
+'
+[DPIAware]::SetProcessDpiAwarenessContext([DPIAware]::PER_MONITOR_AWARE_V2)
+
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 $LegacyGUIelements = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
@@ -94,37 +113,40 @@ function Resize-Form {
     $Session.TextBoxSystemLog.Location = [System.Drawing.Point]::new(0, $LegacyGUIelements.SystemLogLabel.Bottom)
     if (-not $Session.TextBoxSystemLog.SelectionLength) { $Session.TextBoxSystemLog.ScrollToCaret() }
 
-    # Earnings and balances panel height
-    if ($Session.Config.BalancesTrackerPollInterval -gt 0) { 
-        $LegacyGUIelements.BalancesDGV.Visible = $true
-        $LegacyGUIelements.EarningsChart.Visible = $true
+    if ($LegacyGUIelements.TabControl.SelectedTab.Name -eq "EarningsAndBalances") { 
+        # Earnings and balances panel height
+        if ($Session.Config.BalancesTrackerPollInterval -gt 0) { 
+            $LegacyGUIelements.BalancesDGV.Visible = $true
+            $LegacyGUIelements.EarningsChart.Visible = $true
 
-        $BalancesDGVheight = $LegacyGUIelements.BalancesDGV.RowTemplate.Height * $LegacyGUIelements.BalancesDGV.RowCount + $LegacyGUIelements.BalancesDGV.ColumnHeadersHeight
-        if ($BalancesDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { 
-            $BalancesDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2
-            $LegacyGUIelements.BalancesDGV.ScrollBars = "Vertical"
+            $BalancesDGVheight = $LegacyGUIelements.BalancesDGV.RowTemplate.Height * $LegacyGUIelements.BalancesDGV.RowCount + $LegacyGUIelements.BalancesDGV.ColumnHeadersHeight
+            if ($BalancesDGVheight -gt $LegacyGUIelements.TabControl.ClientSize.Height / 2) { 
+                $BalancesDGVheight = $LegacyGUIelements.TabControl.ClientSize.Height / 2
+                $LegacyGUIelements.BalancesDGV.ScrollBars = "Vertical"
+            }
+            else { 
+                $LegacyGUIelements.BalancesDGV.ScrollBars = "None"
+            }
+            $LegacyGUIelements.BalancesDGV.Height = $BalancesDGVheight
+            $LegacyGUIelements.EarningsChart.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.BalancesDGV.Height - $LegacyGUIelements.BalancesLabel.Height - 62
+            $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, $LegacyGUIelements.EarningsChart.Bottom)
+            $LegacyGUIelements.BalancesDGV.Top = $LegacyGUIelements.BalancesLabel.Bottom
         }
         else { 
-            $LegacyGUIelements.BalancesDGV.ScrollBars = "None"
+            $LegacyGUIelements.BalancesDGV.Visible = $false
+            $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, 20)
+            $LegacyGUIelements.EarningsChart.Visible = $false
+            $LegacyGUIelements.EarningsChart.Height = 0
         }
-        $LegacyGUIelements.BalancesDGV.Height = $BalancesDGVheight
-        $LegacyGUIelements.EarningsChart.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.BalancesDGV.Height - $LegacyGUIelements.BalancesLabel.Height - 58
-        $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, $LegacyGUIelements.EarningsChart.Bottom)
-        $LegacyGUIelements.BalancesDGV.Top = $LegacyGUIelements.BalancesLabel.Bottom
     }
     else { 
-        $LegacyGUIelements.BalancesDGV.Visible = $false
-        $LegacyGUIelements.BalancesLabel.Location = [System.Drawing.Point]::new(0, 20)
-        $LegacyGUIelements.EarningsChart.Visible = $false
-        $LegacyGUIelements.EarningsChart.Height = 0
+        $Session.TextBoxSystemLog.Height = $LegacyGUIelements.StatusPage.Bottom - $LegacyGUIelements.SystemLogLabel.Bottom - 58
+        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.MinersPage.Bottom - $LegacyGUIelements.MinersPanel.Bottom - 64
+        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.PoolsPage.Bottom - $LegacyGUIelements.PoolsPanel.Bottom - 64
+        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.WorkersPage.Bottom - $LegacyGUIelements.WorkersLabel.Bottom - 64
+        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.SwitchingLogPage.Bottom - $LegacyGUIelements.SwitchingLogClearButton.Bottom - 64
+        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.WatchdogTimersPage.Bottom - $LegacyGUIelements.WatchdogTimersRemoveButton.Bottom - 64
     }
-
-    $Session.TextBoxSystemLog.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.ActiveMinersLabel.Height - $LegacyGUIelements.ActiveMinersDGV.Height - $LegacyGUIelements.SystemLogLabel.Height - 75
-    $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.MinersLabel.Height - $LegacyGUIelements.MinersPanel.Height - 73
-    $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.PoolsLabel.Height - $LegacyGUIelements.PoolsPanel.Height - 73
-    # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WorkersLabel.Height - 72
-    $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.SwitchingLogLabel.Height - $LegacyGUIelements.SwitchingLogClearButton.Height - 76
-    $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.TabControl.ClientSize.Height - $LegacyGUIelements.WatchdogTimersLabel.Height - $LegacyGUIelements.WatchdogTimersRemoveButton.Height - 76
 }
 
 function CheckBoxSwitchingLog_Click { 
@@ -227,6 +249,8 @@ function Set-TableColor {
 # }
 
 function Update-TabControl { 
+
+    Resize-Form
 
     switch ($LegacyGUIelements.TabControl.SelectedTab.Name) { 
         "SystemStatus" { 
@@ -1839,9 +1863,9 @@ $LegacyGUIelements.Timer.Add_Tick(
 )
 
 $LegacyGUIform.Controls.Add($LegacyGUIelements.TabControl)
-$LegacyGUIform.KeyPreview = $true
 $LegacyGUIform.ResumeLayout()
 
+$LegacyGUIform.KeyPreview = $true
 $LegacyGUIform.Add_Load(
     { 
         # Restore window size
@@ -1879,12 +1903,6 @@ $LegacyGUIform.Add_Load(
         Disable-X
 
         $LegacyGUIelements.Timer.Start()
-    }
-)
-
-$LegacyGUIform.Add_Activated(
-    { 
-        Update-TabControl
     }
 )
 
