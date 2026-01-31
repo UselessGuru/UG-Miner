@@ -78,7 +78,7 @@
             updateButtonStatus();
             updateSummary();
             updateData();
-            if (typeof updatePoolBalances === "function") updatePoolBalances();
+            if (typeof updatePoolBalances === "function" && configrunning.BalancesTrackerPollInterval > 0) updatePoolBalances();
             if (refreshtimestamp !== null) refreshedtimestamp = refreshtimestamp;
             setTimeout(() => { }, 1000); // Wait 1 second after update
           }

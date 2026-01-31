@@ -158,7 +158,7 @@
             $(document.getElementById("useColor")).change(function (event) {
               useColor = Boolean(document.getElementById("useColor").checked);
               localStorage.setItem("useColor", useColor);
-              updateEarningsChart();
+              if (configrunning.BalancesTrackerPollInterval > 0) { updateEarningsChart() };
             });
 
             function GetColor (items, item) {
@@ -553,12 +553,15 @@
             }
 
             $(document).ready(function () {
-              $(".addlocalcurrency").each(function () {
-                this.childNodes[0].innerText = this.childNodes[0].innerText + "\n(" + configrunning.FIATcurrency + ")";
-              });
-
-              updateEarningsChart();
-              updatePoolBalances();
+              if (configrunning.BalancesTrackerPollInterval == 0) {
+                document.getElementsByName("add-balancesupdatedtimestamp")[0].innerHTML = "Balances tracker is disabled (configuration item 'BalancesTrackerPollInterval' -eq 0)";
+              } else { 
+                $(".addlocalcurrency").each(function () {
+                  this.childNodes[0].innerText = this.childNodes[0].innerText + "\n(" + configrunning.FIATcurrency + ")";
+                });
+                updateEarningsChart();
+                updatePoolBalances();
+              };
             });
             </script>
 <!-- End of page scripts "earningsbalances.html" -->
