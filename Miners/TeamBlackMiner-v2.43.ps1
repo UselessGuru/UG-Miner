@@ -17,16 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.25
-Version date:   2026/01/29
+Version:        6.7.26
+Version date:   2026/02/01
 #>
 
-# Added support for --kernel 1 parameter for older AMD cards. (kawpow variants)
-# Performance tuning Kawpow variants.
+# Kawpow variants OpenCL tuning.
+# Kernel 1 is now using OpenCL 1.1 and adding support for older cards like the AMD Radeon R9 390.
+# Improved gpu memory usage on Nvidia cards.
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "7.5" -and $_.CUDAversion -ge [System.Version]"12.9") }))) { return }
 
-$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.42/TeamBlackMiner_2_42_cuda_12.9.7z"
+$URI = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.43/TeamBlackMiner_2_43_cuda_12.9.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\TBMiner.exe"
 
@@ -64,7 +65,7 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash", "EthashB3");    SecondaryAlgorithmPrefix = "ethb3"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+ethb3" }
     @{ Algorithms = @("EtcHash", "EvrProgPow");  SecondaryAlgorithmPrefix = "evr";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+evr" }
     @{ Algorithms = @("EtcHash", "FiroPow");     SecondaryAlgorithmPrefix = "firo";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+firo" }
-    @{ Algorithms = @("EtcHash", "KawPow");      SecondaryAlgorithmPrefix = "rvn";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
+    @{ Algorithms = @("EtcHash", "KawPow");      SecondaryAlgorithmPrefix = "rvn";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn --kernel 1" }
     @{ Algorithms = @("EtcHash", "MeowPow");     SecondaryAlgorithmPrefix = "meow";  Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+meow" }
     @{ Algorithms = @("EtcHash", "VertHash");    SecondaryAlgorithmPrefix = "vtc";   Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiB = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc --verthash-data ..\.$($Session.VertHashDatPath)" }
     @{ Algorithms = @("Ethash", "");             SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiB = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo ethash" }

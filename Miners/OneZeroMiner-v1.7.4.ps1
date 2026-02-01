@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.25
-Version date:   2026/01/29
+Version:        6.7.26
+Version date:   2026/02/01
 #>
 
 # Performance improvement for CMP 170hx and AMD cards(mostly Vega and Radeon VII)

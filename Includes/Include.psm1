@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.25
-Version date:   2026/01/29
+Version:        6.7.26
+Version date:   2026/02/01
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -516,8 +516,10 @@ class Miner : IDisposable {
             Type                    = $this.Type
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
-        if ($this.Status -ne [MinerStatus]::DryRun) { 
-
+        if ($this.Status -eq [MinerStatus]::DryRun) { 
+            $this.WorkersRunning = $this.Workers
+        }
+        else { 
             $this.ProcessJob = Invoke-CreateProcess -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile -Status $this.StatusInfo
 
             # Sometimes the process cannot be found instantly

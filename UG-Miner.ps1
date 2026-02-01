@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.25
-Version date:   2026/01/29
+Version:        6.7.26
+Version date:   2026/02/01
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.25"
+    Version      = [System.Version]"6.7.26"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -929,7 +929,7 @@ function MainLoop {
                     }
                     "m" { 
                         $Session.Config.ShowColumnMinerFee = -not $Session.Config.ShowColumnMinerFee
-                        Write-Host "`nKey '$_' pressed: '" -NoNewline; Write-Host "M" -ForegroundColor Cyan -NoNewline; Write-Host "iner 'Fees' column visibility is now " -NoNewline; if ($Session.Config.ShowColumnMinerFee) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
+                        Write-Host "`nKey '$_' pressed: '" -NoNewline; Write-Host "M" -ForegroundColor Cyan -NoNewline; Write-Host "iner Fees' column visibility is now " -NoNewline; if ($Session.Config.ShowColumnMinerFee) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
                         break
                     }
                     "n" { 
@@ -975,7 +975,7 @@ function MainLoop {
                     "t" { 
                         if ($Session.CalculatePowerCost) { 
                             $Session.Config.ShowColumnProfit = -not $Session.Config.ShowColumnProfit
-                            Write-Host "`nKey '$_' pressed: '" -NoNewline; Write-Host "P" -ForegroundColor Cyan -NoNewline; Write-Host "rofit' column visibility is now " -NoNewline; if ($Session.Config.ShowColumnProfit) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
+                            Write-Host "`nKey '$_' pressed: 'Profi" -NoNewline; Write-Host "t" -ForegroundColor Cyan -NoNewline; Write-Host "' column visibility is now " -NoNewline; if ($Session.Config.ShowColumnProfit) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
                         }
                         break
                     }

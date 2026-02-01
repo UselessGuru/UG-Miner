@@ -1,8 +1,17 @@
-Changelog UG-Miner 6.7.26 2026/01/??
+Changelog UG-Miner 6.7.26 2026/02/01
 ====================================
 
+Enhancements:
+- Web GUI: Show message when balances tracker is disabled
 
-Changelog UG-Miner 6.7.25 2026/01/27
+Fixes:
+- Core: In dryrun switching log was not updated completely when miner stopped
+
+Miner updates:
+- TeamBlackMiner-v2.43
+
+
+Changelog UG-Miner 6.7.25 2026/01/29
 ====================================
 
 Improvements:
