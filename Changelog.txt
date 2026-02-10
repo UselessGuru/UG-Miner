@@ -5,7 +5,7 @@ Improvements:
 - Core: Less array additions
 
 Miner updates:
-- SRBMinerMulti-v3.1.2
+- SRBMinerMulti-v3.1.3
 
 
 Changelog UG-Miner 6.7.26 2026/02/01

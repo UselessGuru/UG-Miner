@@ -279,7 +279,6 @@ param(
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$ErrorLogFile = ".\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 $RecommendedPWSHversion = [Version]"7.5.4"
 
 # Close useless empty cmd window that comes up when starting from bat file
@@ -311,6 +310,7 @@ $Global:Stats = [System.Collections.SortedList]::Synchronized([System.Collection
 $Session.MainPath = (Split-Path $MyInvocation.MyCommand.Path)
 $Session.ConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigFile)
 $Session.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PoolsConfigFile)
+$Session.ErrorLogFile = "$($Session.MainPath)\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 
 # Branding data
 $Session.Branding = [PSCustomObject]@{ 

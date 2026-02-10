@@ -29,7 +29,7 @@ Version date:   2026/02/10
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.1.2/SRBMiner-Multi-3-1-2-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.1.3/SRBMiner-Multi-3-1-3-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
