@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.26
-Version date:   2026/02/01
+Version:        6.7.27
+Version date:   2026/02/10
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.26"
+    Version      = [System.Version]"6.7.27"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -667,7 +667,7 @@ function MainLoop {
             # Read exchange rates at least once every hour
             if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { Get-Rate }
         }
-        Else { 
+        else { 
             Write-Message -Level Error "No internet connection - will retry in $($Session.Config.Interval) seconds..."
             Start-Sleep -Seconds $Session.Config.Interval
         }
@@ -1292,7 +1292,7 @@ if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) {
         (New-Object -ComObject Wscript.Shell).Popup("No configuration file found.`n`nEdit and save your configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 48)) | Out-Null
     }
     elseif ($Session.Config.StartupMode -ne "Running") {
-        # Always accept changed config when StartupMode is running
+        # Always accept changed config when StartupMode is 'running'
         Write-Message -Level Warn "Configuration has changed during update. Verify and save your configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html)"
         $Session.Summary = "Verify your settings and save the configuration.<br>Then click the 'Start mining' button."
         (New-Object -ComObject Wscript.Shell).Popup("The configuration has changed during update:`n`n$($Session.ConfigurationHasChangedDuringUpdate -join $nl)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version) - configuration has changed", (4096 + 64)) | Out-Null

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.7.26
-Version date:   2026/02/01
+Version:        6.7.27
+Version date:   2026/02/10
 #>
 
 using module .\Include.psm1
@@ -162,70 +162,74 @@ do {
                     $AvgHourlyGrowth = $AvgDailyGrowth = $AvgWeeklyGrowth = 0
                 }
                 else { 
-                    if ($BalanceObject.Pool -like "NiceHash*") { 
-                        if ($BalanceObject.Withdrawal -gt 0) { 
-                            # NiceHash temporarily reduces 'Balance' value before paying out
-                            $BalanceObject.Balance += $BalanceObject.Withdrawal
-                            $Payout = 0
-                        }
-                        elseif (($BalanceDataObjects[-1]).Withdrawal -gt 0 -and $BalanceObject.Withdrawal -eq 0) { 
-                            # Payout occurred
-                            $Payout = ($BalanceDataObjects[-1]).Withdrawal
-                        }
-                        elseif ($BalanceObject.Withdrawal -eq 0) { 
-                            # NiceHash temporarily hides some 'pending' value while processing payouts
-                            if ($BalanceObject.Pending -lt ($BalanceDataObjects[-1]).Pending) { 
-                                $HiddenPending = ($BalanceDataObjects[-1]).Pending - $BalanceObject.Pending
-                                $BalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
+                    switch ($BalanceObject.Pool) { 
+                        "NiceHash" { 
+                            if ($BalanceObject.Withdrawal -gt 0) { 
+                                # NiceHash temporarily reduces 'Balance' value before paying out
+                                $BalanceObject.Balance += $BalanceObject.Withdrawal
+                                $Payout = 0
                             }
-                            # When payouts are processed the hidden pending value gets added to the balance
-                            if (($BalanceDataObjects[-1]).HiddenPending -gt 0) { 
-                                if ($BalanceObject.Balance -eq (($BalanceDataObjects[-1]).Balance)) { 
-                                    # Payout processing complete
-                                    $HiddenPending *= -1
-                                }
-                                else { 
-                                    # Still processing payouts
-                                    $HiddenPending = ($BalanceDataObjects[-1]).HiddenPending
+                            elseif (($BalanceDataObjects[-1]).Withdrawal -gt 0 -and $BalanceObject.Withdrawal -eq 0) { 
+                                # Payout occurred
+                                $Payout = ($BalanceDataObjects[-1]).Withdrawal
+                            }
+                            elseif ($BalanceObject.Withdrawal -eq 0) { 
+                                # NiceHash temporarily hides some 'pending' value while processing payouts
+                                if ($BalanceObject.Pending -lt ($BalanceDataObjects[-1]).Pending) { 
+                                    $HiddenPending = ($BalanceDataObjects[-1]).Pending - $BalanceObject.Pending
                                     $BalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
                                 }
+                                # When payouts are processed the hidden pending value gets added to the balance
+                                if (($BalanceDataObjects[-1]).HiddenPending -gt 0) { 
+                                    if ($BalanceObject.Balance -eq (($BalanceDataObjects[-1]).Balance)) { 
+                                        # Payout processing complete
+                                        $HiddenPending *= -1
+                                    }
+                                    else { 
+                                        # Still processing payouts
+                                        $HiddenPending = ($BalanceDataObjects[-1]).HiddenPending
+                                        $BalanceObject | Add-Member HiddenPending ([Double]$HiddenPending)
+                                    }
+                                }
+                                $Payout = if (($BalanceDataObjects[-1]).Unpaid -gt $BalanceObject.Unpaid) { ($BalanceDataObjects[-1]).Unpaid - $BalanceObject.Unpaid } else { 0 }
                             }
-                            $Payout = if (($BalanceDataObjects[-1]).Unpaid -gt $BalanceObject.Unpaid) { ($BalanceDataObjects[-1]).Unpaid - $BalanceObject.Unpaid } else { 0 }
+                            $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
+                            $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta + $HiddenPending + $Payout) -Force
+                            break
                         }
-                        $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
-                        $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta + $HiddenPending + $Payout) -Force
-                    }
-                    elseif ($BalanceObject.Pool -eq "MiningPoolHub") { 
-                        # MiningHubPool never reduces earnings
-                        $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
-                        if ($Delta -lt 0) { 
-                            # Payout occured
-                            $Payout = - $Delta
-                            $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings) -Force
-                        }
-                        else { 
-                            $Payout = 0
-                            $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta) -Force
-                        }
-                    }
-                    else { 
-                        # HashCryptos, HiveON, MiningDutch, ZPool
-                        $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
-                        # Current 'Unpaid' is smaller
-                        if ($Delta -lt 0) { 
-                            if (-$Delta -gt $PayoutThreshold * 0.5) { 
-                                # Payout occured (delta -gt 50% of payout limit)
+                        "MiningPoolHub" { 
+                            # MiningHubPool never reduces earnings
+                            $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
+                            if ($Delta -lt 0) { 
+                                # Payout occured
                                 $Payout = - $Delta
+                                $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings) -Force
                             }
                             else { 
-                                # Pool reduced earnings
-                                $Payout = $Delta = 0
+                                $Payout = 0
+                                $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta) -Force
                             }
-                            $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings) -Force
+                            break
                         }
-                        else { 
-                            $Payout = 0
-                            $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta) -Force
+                        default {
+                            # HashCryptos, HiveON, MiningDutch, ZPool
+                            $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
+                            # Current 'Unpaid' is smaller
+                            if ($Delta -lt 0) { 
+                                if (-$Delta -gt $PayoutThreshold * 0.5) { 
+                                    # Payout occured (delta -gt 50% of payout limit)
+                                    $Payout = - $Delta
+                                }
+                                else { 
+                                    # Pool reduced earnings
+                                    $Payout = $Delta = 0
+                                }
+                                $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings) -Force
+                            }
+                            else { 
+                                $Payout = 0
+                                $BalanceObject | Add-Member Earnings ([Double]($BalanceDataObjects[-1]).Earnings + $Delta) -Force
+                            }
                         }
                     }
                     $BalanceObject | Add-Member Payout ([Double]$Payout) -Force
@@ -233,7 +237,7 @@ do {
                     $BalanceObject | Add-Member Delta ([Double]$Delta) -Force
                     Remove-Variable Delta, HiddenPending, Payout -ErrorAction Ignore
 
-                    if ((($Now - $BalanceDataObjects[0].DateTime).TotalHours) -lt 1) { 
+                    if (($Now - $BalanceDataObjects[0].DateTime).TotalHours -lt 1) { 
                         # Only calculate if current balance data
                         if ($BalanceObject.DateTime -gt $Now.AddMinutes(-1)) { 
                             $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = [Double]($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings)
@@ -241,16 +245,16 @@ do {
                     }
                     else { 
                         # Only calculate if current balance data
-                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) })) { $Growth1 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) })) { $Growth6 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
-                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) })) { $Growth24 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) }))   { $Growth1   = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-1) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) }))   { $Growth6   = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-6) })   | Sort-Object -Property DateTime -Top 1).Earnings) }
+                        if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) }))  { $Growth24  = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-24) })  | Sort-Object -Property DateTime -Top 1).Earnings) }
                         if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) })) { $Growth168 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-168) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
                         if ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) })) { $Growth720 = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime -ge $Now.AddHours(-720) }) | Sort-Object -Property DateTime -Top 1).Earnings) }
                     }
 
                     $AvgHourlyGrowth = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddHours(-1) })) { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalHours) }    else { $Growth1 }
-                    $AvgDailyGrowth = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-1) })) { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays) }     else { $Growth24 }
-                    $AvgWeeklyGrowth = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-7) })) { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays * 7) } else { $Growth168 }
+                    $AvgDailyGrowth  = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-1) }))  { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays) }     else { $Growth24 }
+                    $AvgWeeklyGrowth = if ($BalanceDataObjects.Where({ $_.DateTime -lt $Now.AddDays(-7) }))  { [Double](($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays * 7) } else { $Growth168 }
 
                     if ($BalanceDataObjects.Where({ $_.DateTime.Date -eq $Now.Date })) { 
                         $GrowthToday = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where({ $_.DateTime.Date -eq $Now.Date }) | Sort-Object -Property DateTime -Top 1).Earnings)
@@ -299,7 +303,7 @@ do {
                 }
                 Remove-Variable AvgHourlyGrowth, AvgDailyGrowth, AvgWeeklyGrowth, Growth1, Growth6, Growth24, Growth168, Growth720, PayoutThreshold, PayoutThresholdCurrency -ErrorAction Ignore
 
-                if ($Session.Config.BalancesTrackerLog) { -
+                if ($Session.Config.BalancesTrackerLog) { 
                     $EarningsObject | Export-Csv -NoTypeInformation -Append ".\Logs\BalancesTrackerLog.csv" -Force -ErrorAction Ignore
                 }
 

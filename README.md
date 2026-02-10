@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.7.26 / Updated 2026/02/01
+Version 6.7.27 / Updated 2026/02/10
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -290,7 +290,7 @@ p: Toggle 'Pool fee' column visibility       [on]
 r: Toggle 'Profit bias' column visibility    [on]
 s: Toggle 'Hashrate(s)' column visibility    [on]
 t: Toggle 'Profit' column visibility         [on]
-u: Toggle 'User' column visibility           [on]
+u: Toggle 'User' column visibility           [off]
 w: Toggle 'Power (W)' column visibility      [on]
 
 q: Quit UG-Miner
@@ -348,13 +348,13 @@ Example for default parameters (15 minutes):
 - UG-Miner was started at 10:00h
 - First donation cycle starts somewhen between 10:01h and 23:45h and will then donate for 15 minutes. After that it will mine for you again until the next donation run.
 - After 00:00h the donation start time is randomized again.
-- When donation start time is reached it will then donate for 15 minutes. After that it will mine for you again until the next donation run.
+- When donation start time is reached it will mine to the donation wallet/username for 15 minutes. After that it will mine for you again until the next donation run.
 The donation data is stored in '[UG-Miner directory]\Data\DonationData.json'.  
 All donation times and addresses are recorded in the donation log file '[UG-Miner directory]\Log\DonationLog.csv'.
 
 ## Known issues
 
-- Balance Tracker / Earnings Graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
+- Balances tracker / Earnings graph: Date change does not respect local time zone (accumulated data is calculated in UTC time)
 
 ## Experimental support for running multiple instances (not recommended)
 

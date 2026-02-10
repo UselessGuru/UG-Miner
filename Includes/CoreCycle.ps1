@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.26
-Version date:   2026/02/01
+Version:        6.7.27
+Version date:   2026/02/10
 #>
 
 using module .\Include.psm1
@@ -544,12 +544,12 @@ try {
                     }
 
                     $Message = if ($PoolsCount -gt 0) { "Had $($PoolsCount) pool$(if ($PoolsCount -ne 1) { "s" }) from previous run" } else { "Loaded $($Session.PoolsNew.Count) pool$(if ($Session.PoolsNew.Count -ne 1) { "s" })" }
-                    if ($Session.PoolsExpired.Count) { $Message += ", expired $($Session.PoolsExpired.Count) pool$(if ($Session.PoolsExpired.Count -gt 1) { "s" })" }
-                    if ($PoolsDeconfiguredCount) { $Message += ", removed $PoolsDeconfiguredCount deconfigured pool$(if ($PoolsDeconfiguredCount -gt 1) { "s" })" }
-                    if ($Session.Pools.Count -and $Session.PoolsAdded.Count) { $Message += ", found $($Session.PoolsAdded.Count) new pool$(if ($Session.PoolsAdded.Count -ne 1) { "s" })" }
-                    if ($Session.PoolsUpdated.Count) { $Message += ", updated $($Session.PoolsUpdated.Count) existing pool$(if ($Session.PoolsUpdated.Count -ne 1) { "s" })" }
-                    if ($Pools.Where({ -not $_.Available })) { $Message += ", filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(if (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }
-                    $Message += ". $(@($Pools.Where({ $_.Available })).Count) available pool$(if (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(if (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
+                    if ($Session.PoolsExpired.Count) { $Message = "$Message, expired $($Session.PoolsExpired.Count) pool$(if ($Session.PoolsExpired.Count -gt 1) { "s" })" }
+                    if ($PoolsDeconfiguredCount) { $Message = "$Message, removed $PoolsDeconfiguredCount deconfigured pool$(if ($PoolsDeconfiguredCount -gt 1) { "s" })" }
+                    if ($Session.Pools.Count -and $Session.PoolsAdded.Count) { $Message = "$Message, found $($Session.PoolsAdded.Count) new pool$(if ($Session.PoolsAdded.Count -ne 1) { "s" })" }
+                    if ($Session.PoolsUpdated.Count) { $Message = "$Message, updated $($Session.PoolsUpdated.Count) existing pool$(if ($Session.PoolsUpdated.Count -ne 1) { "s" })" }
+                    if ($Pools.Where({ -not $_.Available })) { $Message = "$Message, filtered out $(@($Pools.Where({ -not $_.Available })).Count) pool$(if (@($Pools.Where({ -not $_.Available })).Count -ne 1) { "s" })" }
+                    $Message = "$($Message). $(@($Pools.Where({ $_.Available })).Count) available pool$(if (@($Pools.Where({ $_.Available })).Count -ne 1) { "s" }) remain$(if (@($Pools.Where({ $_.Available })).Count -eq 1) { "s" })."
                     Write-Message -Level Info $Message
                     Remove-Variable Message, PoolsCount
 
@@ -778,7 +778,7 @@ try {
                 ($AvailableMinerPools | Group-Object -Property Algorithm).ForEach({ $MinerPools[0][$_.Name] = $_.Group })
                 ($AvailableMinerPools | Group-Object -Property Algorithm).ForEach({ $MinerPools[1][$_.Name] = $_.Group })
             }
-            Else { 
+            else { 
                 ($AvailableMinerPools.Where({ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|1" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[0][$_.Name] = $_.Group })
                 ($AvailableMinerPools.Where({ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|2" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[1][$_.Name] = $_.Group })
             }
@@ -1092,11 +1092,11 @@ try {
         $MinersUpdatedCount = $Miners.Where({ $_.SideIndicator -eq "==" }).Count
 
         $Message = if ($Session.Miners) { "Had $($Session.Miners.Count) miner$(if ($Session.Miners.Count -ne 1) { "s" }) from previous run" } else { "Loaded $($Miners.Count) miner$(if ($Miners.Count -ne 1) { "s" })" }
-        if ($Session.Miners.Count -and $MinersAdded.Count) { $Message += ", added $($MinersAdded.Count) miner$(if ($Miners.Where({ $_.SideIndicator -ne "=>" }).Count -ne 1) { "s" })" }
-        if ($MinersToBeRemoved.Count) { $Message += ", removed $($MinersToBeRemoved.Count) miner$(if ($MinersToBeRemoved.Count -ne 1) { "s" })" }
-        if ($MinersUpdatedCount) { $Message += ", updated $MinersUpdatedCount existing miner$(if ($MinersUpdatedCount -ne 1) { "s" })" }
-        if ($MinersFilteredCount) { $Message += ", filtered out $MinersFilteredCount miner$(if ($MinersFilteredCount -ne 1) { "s" })" }
-        $Message += ". $MinersAvailableCount available miner$(if ($MinersAvailableCount -ne 1) { "s" }) remain$(if ($MinersAvailableCount -eq 1) { "s" })."
+        if ($Session.Miners.Count -and $MinersAdded.Count) { $Message = "$Message, added $($MinersAdded.Count) miner$(if ($Miners.Where({ $_.SideIndicator -ne "=>" }).Count -ne 1) { "s" })" }
+        if ($MinersToBeRemoved.Count) { $Message = "$Message, removed $($MinersToBeRemoved.Count) miner$(if ($MinersToBeRemoved.Count -ne 1) { "s" })" }
+        if ($MinersUpdatedCount) { $Message = "$Message, updated $MinersUpdatedCount existing miner$(if ($MinersUpdatedCount -ne 1) { "s" })" }
+        if ($MinersFilteredCount) { $Message = "$Message, filtered out $MinersFilteredCount miner$(if ($MinersFilteredCount -ne 1) { "s" })" }
+        $Message = "$($Message). $MinersAvailableCount available miner$(if ($MinersAvailableCount -ne 1) { "s" }) remain$(if ($MinersAvailableCount -eq 1) { "s" })."
         Write-Message -Level Info $Message
         Remove-Variable Message, MinersAdded, MinersAvailableCount, MinersFilteredCount, MinersUpdatedCount
 
@@ -1466,7 +1466,7 @@ try {
             # Do not wait for stable hash rates, for quick and dirty benchmarking
             if ($Session.Config.DryRun -and $Miner.Benchmark) { $Miner.WarmupTimes[1] = 0 }
 
-            if ($Message = "$(if ($Miner.Benchmark) { "Benchmarking" })$(if ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
+            if ($Message = "$(if ($Miner.Benchmark) { "Benchmarking" })$(if ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
                 Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [attempt $($Miner.Activated) of $($Session.WatchdogCount + 1); min. $($Miner.MinDataSample) sample$(if ($Miner.MinDataSample -ne 1) { "s" })]..."
             }
         }
@@ -1527,7 +1527,7 @@ try {
                                     $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp }).ForEach({ $Miner.Data.Add($_) | Out-Null })
                                     Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(if ($Session.Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(if ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" }))"
                                     if ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
-                                        $Miner.StatusInfo = "$($Miner.Info) is $(if ($Miner.Benchmark) { "benchmarking" })$(if ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } ElseIf ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
+                                        $Miner.StatusInfo = "$($Miner.Info) is $(if ($Miner.Benchmark) { "benchmarking" })$(if ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
                                         $Miner.SubStatus = "benchmarking"
                                         if ($Miner.Data.Count -ge $Miner.MinDataSample ) { 
                                             # Enough samples collected for this loop, exit loop immediately

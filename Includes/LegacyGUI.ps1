@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.26
-Version date:   2026/02/01
+Version:        6.7.27
+Version date:   2026/02/10
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -748,7 +748,7 @@ function Update-TabControl {
         #             $LegacyGUIelements.WorkersDGV.EndInit()
         #         }
         #     }
-        #     Else { 
+        #     else { 
         #         $LegacyGUIelements.WorkersLabel.Text = "Worker status reporting is disabled (Configuration item 'ShowWorkerStatus' -eq `$false)."
         #         $LegacyGUIelements.WorkersDGV.DataSource = $null
         #     }

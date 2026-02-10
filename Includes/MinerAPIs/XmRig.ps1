@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.7.26
-Version date:   2026/02/01
+Version:        6.7.27
+Version date:   2026/02/10
 #>
 
 [NoRunspaceAffinity()]
@@ -105,7 +105,7 @@ class XmRig : Miner {
                     (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
                 }
             }
-            Else { 
+            else { 
                 Write-Message -Level Error "Error running temporary miner - cannot create threads config file '$($this.Info)' ['$($Error | Select-Object -First 1)']."
                 return
             }

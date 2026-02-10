@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.26
-Version date:   2026/02/01
+Version:        6.7.27
+Version date:   2026/02/10
 #>
 
 # (XEL) Major performance increase on 170HX, small improvements on other cards
@@ -123,7 +123,7 @@ if ($Algorithms) {
                                     }
                                     $Arguments += if ($Pool.PoolPorts[1]) { "+ssl://" } else { "+tcp://" }
                                     $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " --username [$Index]$($Pool.User -replace "\..*") --password [$Index]$($Pool.Pass) --worker [$Index]$(if ($Pool.WorkerName) { $Pool.WorkerName } ElseIf ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } else { $Session.Config.WorkerName })"
+                                    $Arguments += " --username [$Index]$($Pool.User -replace "\..*") --password [$Index]$($Pool.Pass) --worker [$Index]$(if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } else { $Session.Config.WorkerName })"
 
                                     $Index ++
                                 }

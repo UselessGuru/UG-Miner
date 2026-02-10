@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.26
-Version date:   2026/02/01
+Version:        6.7.27
+Version date:   2026/02/10
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.26"
+$APIversion = "6.0.28"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -282,7 +282,6 @@ while ($Session.APIversion -and $Server.IsListening) {
             try { 
                 $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
                 Write-Configuration -Config $TempConfig
-                Write-Message -Level Verbose "Web GUI: Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
                 $TempConfig.Keys.ForEach({ $Config.$_ = $TempConfig.$_ })
 
                 $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
@@ -301,6 +300,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                 $Session.RestartCycle = $true
 
                 $Data = "Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
+                Write-Message -Level Verbose "Web GUI: $Data"
             }
             catch { 
                 $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
