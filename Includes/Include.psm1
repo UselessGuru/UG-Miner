@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.27
-Version date:   2026/02/10
+Version:        6.7.28
+Version date:   2026/02/16
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1673,8 +1673,10 @@ function Update-ConfigFile {
         if ($Host.Name -match "ConsoleHost|Visual Studio Code Host") { $CursorPosition = $Host.UI.RawUI.CursorPosition }
         Write-Message -Level Verbose $Message
         if ($Host.Name -match "ConsoleHost|Visual Studio Code Host") { 
-            [Console]::SetCursorPosition($CursorPosition.X + $Message.length, $CursorPosition.y)
-            Write-Host " ✔" -ForegroundColor Green
+            try { 
+                [Console]::SetCursorPosition($CursorPosition.X + $Message.length, $CursorPosition.y)
+                Write-Host " ✔" -ForegroundColor Green
+            } catch { }
         }
         Remove-Variable Message
     }
@@ -2563,9 +2565,9 @@ function Get-Device {
             }
             catch { 
                 Write-Message -Level Warn "Device detection for OpenCL platform '$($OpenCLplatform.Version)' has failed."
-                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-                $_.Exception | Format-List -Force >> $ErrorLogFile
-                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $Session.ErrorLogFile
+                $_.Exception | Format-List -Force >> $Session.ErrorLogFile
+                $_.InvocationInfo | Format-List -Force >> $Session.ErrorLogFile
             }
         }
     )
@@ -2785,20 +2787,26 @@ function Get-Version {
             if ($UpdateVersion.AutoUpdate) { 
                 if ($Session.Config.AutoUpdate) { 
                     Write-Message -Level Verbose "Version checker: New version v$($UpdateVersion.Version) found. Starting update..."
-                    [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-                    Write-Host " ✔" -ForegroundColor Green
+                    try { 
+                        [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+                        Write-Host " ✔" -ForegroundColor Green
+                    } catch { }
                     Initialize-AutoUpdate -UpdateVersion $UpdateVersion
                 }
                 else { 
                     Write-Message -Level Verbose "Version checker: New version v$($UpdateVersion.Version) found. Auto Update is disabled in config - You must update manually."
-                    [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-                    Write-Host " ✔" -ForegroundColor Green
+                    try { 
+                        [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+                        Write-Host " ✔" -ForegroundColor Green
+                    } catch { }
                 }
             }
             else { 
                 Write-Message -Level Verbose "Version checker: New version is available. v$($UpdateVersion.Version) does not support auto-update. You must update manually."
-                [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-                Write-Host " ✔" -ForegroundColor Green
+                try { 
+                    [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+                    Write-Host " ✔" -ForegroundColor Green
+                } catch { }
             }
             if ($Session.Config.ShowChangeLog) { 
                 Start-Process "https://github.com/UselessGuru/UG-Miner/releases/tag/v$($UpdateVersion.Version)"
@@ -2806,14 +2814,18 @@ function Get-Version {
         }
         else { 
             Write-Message -Level Verbose "Version checker: $($Session.Branding.ProductLabel) v$($Session.Branding.Version) is current - no update available."
-            [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-            Write-Host " ✔" -ForegroundColor Green
+            try { 
+                [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+                Write-Host " ✔" -ForegroundColor Green
+            } catch { }
         }
     }
     catch { 
         Write-Message -Level Warn "Version checker could not contact update server."
-        [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-        Write-Host " ✖" -ForegroundColor Red
+        try { 
+            [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+            Write-Host " ✖" -ForegroundColor Red
+        } catch { }
     }
 }
 
@@ -2837,17 +2849,23 @@ function Initialize-AutoUpdate {
     "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
     try { 
         Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
-        [Console]::SetCursorPosition(28, $CursorPosition.y)
-        Write-Host " ✔" -ForegroundColor Green
+        try {
+            [Console]::SetCursorPosition(28, $CursorPosition.y)
+            Write-Host " ✔" -ForegroundColor Green
+        } catch { }
         $CursorPosition = $Host.UI.RawUI.CursorPosition
         "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
-        [Console]::SetCursorPosition(25, $CursorPosition.y)
-        Write-Host " ✔" -ForegroundColor Green
+        try { 
+            [Console]::SetCursorPosition(25, $CursorPosition.y)
+            Write-Host " ✔" -ForegroundColor Green
+        } catch { }
         . $UpdateScript
     }
     catch { 
-        [Console]::SetCursorPosition(29, $CursorPosition.y)
-        Write-Host " ✖" -ForegroundColor Red
+        try { 
+            [Console]::SetCursorPosition(29, $CursorPosition.y) 
+            Write-Host " ✖" -ForegroundColor Red
+        } catch { }
         "Downloading update script failed. Cannot complete auto-update :-(" | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Error
     }
     $UpdateScript = ".\AutoUpdate\AutoUpdate.ps1"

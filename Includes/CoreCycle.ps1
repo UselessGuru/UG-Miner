@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.27
-Version date:   2026/02/10
+Version:        6.7.28
+Version date:   2026/02/16
 #>
 
 using module .\Include.psm1
@@ -28,7 +28,7 @@ using module .\Include.psm1
 # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
-$ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
+$Session.ErrorLogFile = "Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 
 # Read all miner classes
 (Get-ChildItem -Path ".\Includes\MinerAPIs" -File).ForEach({ . $_.FullName })
@@ -295,10 +295,10 @@ try {
             if (-not $Session.Donation.Running -and $Session.Config.AutoUpdateCheckInterval -and $Session.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Session.Config.AutoUpdateCheckInterval)) { Get-Version }
 
             # Stop / start brain background jobs
-            $PoolBaseNames = Get-PoolBaseName $Session.Config.PoolName
+            $PoolBaseNames = @(Get-PoolBaseName $Session.Config.PoolName)
             $Session.Brains.Keys.Where({ $PoolBaseNames -notcontains $_ }).ForEach({ Stop-Brain $_ })
+            Start-Brain PoolBaseNames
             Remove-Variable PoolBaseNames
-            Start-Brain @(Get-PoolBaseName $Session.Config.PoolName)
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -365,9 +365,9 @@ try {
                             }
                             catch { 
                                 Write-Message -Level Error "Error in pool file 'Pools\$PoolName.ps1'."
-                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-                                $_.Exception | Format-List -Force >> $ErrorLogFile
-                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $Session.ErrorLogFile
+                                $_.Exception | Format-List -Force >> $Session.ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $Session.ErrorLogFile
                             }
                         }
                     }
@@ -717,7 +717,7 @@ try {
                         $StatName = "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
                         $Stat = Set-Stat -Name $StatName -Value $MinerHashrates.$Algorithm -Duration $StatSpan -FaultDetection ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Session.WatchdogCount) -ToleranceExceeded ($Session.WatchdogCount + 1)
                         if ($Stat.Updated -gt $Miner.StatStart) { 
-                            Write-Message -Level Info "Saved hashrate for '$($Miner.Name)'$(if ($Miner.Workers.Count -gt 1) { " [$($Worker.Pool.Algorithm)]" }): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ")$(if ($Factor -le 0.999) { " (adjusted by factor $($Factor.ToString("N3")) [Shares: A$($MinerData.$Algorithm[0])|R$($MinerData.$Algorithm[1])|I$($MinerData.$Algorithm[2])|T$($MinerData.$Algorithm[3])])" }) ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" }))$(if ($Miner.Benchmark) { " [Benchmark done]" })."
+                            Write-Message -Level Info "Saved hashrate for '$($Miner.Name)'$(if ($Miner.Workers.Count -gt 1) { " [$($Worker.Pool.Algorithm)]" }): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ")$(if ($Factor -lt 1) { " (adjusted by factor $($Factor.ToString("N3")) [Shares: A$($MinerData.$Algorithm[0])|R$($MinerData.$Algorithm[1])|I$($MinerData.$Algorithm[2])|T$($MinerData.$Algorithm[3])])" }) ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" }))$(if ($Miner.Benchmark) { " [Benchmark done]" })."
                             $Session.AlgorithmsLastUsed.($Worker.Pool.Algorithm) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; MinerName = $Miner.Name }
                             $Session.PoolsLastUsed.($Worker.Pool.Name) = $Stat.Updated # most likely this will count at the pool to keep balances alive
                         }
@@ -736,7 +736,7 @@ try {
                     $Session.MinersLastUsed.($Miner.Name) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; Info = $Miner.Info }
 
                     if ($Miner.ReadPowerConsumption) { 
-                        if ([Double]::IsNaN($MinerPowerConsumption )) { $MinerPowerConsumption = 0 }
+                        if ([Double]::IsNaN($MinerPowerConsumption)) { $MinerPowerConsumption = 0 }
                         $StatName = "$($Miner.Name)_PowerConsumption"
                         # Always update power consumption when benchmarking
                         $Stat = Set-Stat -Name $StatName -Value $MinerPowerConsumption -Duration $StatSpan -FaultDetection (-not $Miner.Benchmark -and ($Miner.Data.Count -lt $Miner.MinDataSample -or $Miner.Activated -lt $Session.WatchdogCount)) -ToleranceExceeded ($Session.WatchdogCount + 1)
@@ -804,9 +804,9 @@ try {
                         }
                         catch { 
                             Write-Message -Level Error "Miner file 'Miners\$MinerFileName': $_."
-                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-                            $_.Exception | Format-List -Force >> $ErrorLogFile
-                            $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $Session.ErrorLogFile
+                            $_.Exception | Format-List -Force >> $Session.ErrorLogFile
+                            $_.InvocationInfo | Format-List -Force >> $Session.ErrorLogFile
                         }
                     }
                 ).ForEach(
@@ -823,9 +823,9 @@ try {
                         }
                         catch { 
                             Write-Message -Level Error "Failed to add miner '$($Miner.Name)' as '$($Miner.API)' ($($Miner | ConvertTo-Json -Compress))"
-                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-                            $_.Exception | Format-List -Force >> $ErrorLogFile
-                            $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                            "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $Session.ErrorLogFile
+                            $_.Exception | Format-List -Force >> $Session.ErrorLogFile
+                            $_.InvocationInfo | Format-List -Force >> $Session.ErrorLogFile
                         }
                     }
                 )
@@ -879,9 +879,9 @@ try {
                             }
                             catch { 
                                 Write-Message -Level Error "Failed to update miner '$($Miner.Name)': Error $_ ($($Miner | ConvertTo-Json -Compress))"
-                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-                                $_.Exception | Format-List -Force >> $ErrorLogFile
-                                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $Session.ErrorLogFile
+                                $_.Exception | Format-List -Force >> $Session.ErrorLogFile
+                                $_.InvocationInfo | Format-List -Force >> $Session.ErrorLogFile
                             }
                         }
                     )
@@ -1577,9 +1577,9 @@ try {
             }
             catch { 
                 Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting cycle..."
-                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-                $_.Exception | Format-List -Force >> $ErrorLogFile
-                $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+                "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $Session.ErrorLogFile
+                $_.Exception | Format-List -Force >> $Session.ErrorLogFile
+                $_.InvocationInfo | Format-List -Force >> $Session.ErrorLogFile
             }
 
             $Session.MinersRunning = $Session.MinersRunning.Where({ $_ -notin $Session.MinersFailed })
@@ -1625,9 +1625,9 @@ try {
 }
 catch { 
     Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected."
-    "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $ErrorLogFile
-    $_.Exception | Format-List -Force >> $ErrorLogFile
-    $_.InvocationInfo | Format-List -Force >> $ErrorLogFile
+    "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> $Session.ErrorLogFile
+    $_.Exception | Format-List -Force >> $Session.ErrorLogFile
+    $_.InvocationInfo | Format-List -Force >> $Session.ErrorLogFile
     # Reset timers
     $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime()
 }

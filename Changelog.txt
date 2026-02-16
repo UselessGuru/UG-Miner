@@ -1,3 +1,16 @@
+Changelog UG-Miner 6.7.28 2026/02/16
+====================================
+
+Fixes:
+- Core: Error in file 'Includes\Include.psm1' line 2815
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+
+Miner updates:
+- SRBMinerMulti-v3.1.4
+
+
 Changelog UG-Miner 6.7.27 2026/02/10
 ====================================
 

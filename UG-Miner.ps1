@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.27
-Version date:   2026/02/10
+Version:        6.7.28
+Version date:   2026/02/16
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.27"
+    Version      = [System.Version]"6.7.28"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -503,35 +503,69 @@ if (Test-Path -LiteralPath $Session.VertHashDatPath -PathType Leaf) {
 $VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Session.MainPath)'")) -ScriptBlock { if (Test-Path -LiteralPath ".\Cache\VertHash.dat" -PathType Leaf) { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
 
 Write-Message -Level Verbose "Importing modules..."
-[Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.y)
+Write-Host "- ~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
-    Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Stop
-    Write-Host "    (~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
+    Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
+    Write-Host " ✔" -ForegroundColor Green
 }
 catch { 
     if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
-    Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
-    Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
-    Write-Host "    (~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
+    try { 
+        Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
+        Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
+        Write-Host " ✔" -ForegroundColor Green
+    }
+    catch { 
+        Write-Host " ✖" -ForegroundColor Red
+        $ErrorLoadingModules = $true
+    }
 }
-
+Write-Host "- ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
-    Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Stop
-    Write-Host ", ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
+    Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
+    Write-Host " ✔" -ForegroundColor Green
 }
 catch { 
     if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
-    Add-Type -Path ".\Includes\CPUID.cs" -OutputAssembly ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
-    Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
-    Write-Host ", ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ForegroundColor Green -NoNewline
+    try { 
+        Add-Type -Path ".\Includes\CPUID.cs" -OutputAssembly ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
+        Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
+        Write-Host " ✔" -ForegroundColor Green
+    }
+    catch { 
+        Write-Host " ✖" -ForegroundColor Red
+        $ErrorLoadingModules = $true
+    }
 }
-
-Import-Module NetSecurity -ErrorAction Ignore
-Write-Host ", NetSecurity" -ForegroundColor Green -NoNewline
-Import-Module Defender -ErrorAction Ignore -SkipEditionCheck
-Write-Host ", Defender)" -ForegroundColor Green
-[Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.y)
+Write-Host "- NetSecurity" -NoNewline
+try { 
+    Import-Module NetSecurity -ErrorAction Stop
+    Write-Host " ✔" -ForegroundColor Green
+}
+catch { 
+    Write-Host " ✖" -ForegroundColor Red
+    $ErrorLoadingModules = $true
+}
+Write-Host "- Defender" -NoNewline
+try {
+    Import-Module Defender -ErrorAction Stop -SkipEditionCheck
+    Write-Host " ✔" -ForegroundColor Green
+}
+catch { 
+    Write-Host " ✖" -ForegroundColor Red
+        $ErrorLoadingModules = $true
+}
+if ($ErrorLoadingModules) { 
+    Write-Error "Terminating error - cannot import required modules."
+    (New-Object -ComObject Wscript.Shell).Popup("Cannot import required modules.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+$CursorPosition = $Host.UI.RawUI.CursorPosition
+[Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host " ✔" -ForegroundColor Green
+[Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
 
 Write-Message -Level Verbose "Setting variables..."
 $nl = "`n" # Must use variable, cannot join with "`n" with Write-Host
