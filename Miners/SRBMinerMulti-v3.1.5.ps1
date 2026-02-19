@@ -17,19 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.28
-Version date:   2026/02/16
+Version:        6.7.29
+Version date:   2026/02/19
 #>
 
-# Added AMD GPU support for algorithm 'xelishashv3'
-# Added INTEL ARC Series GPU support for algorithm 'xelishashv3'
-
-# Fixed crashing of randomx algorithms on ZEN4 and ZEN5 CPU's (introduced in previous version)
-# Added support for NVIDIA V100 GPU's on algorithm 'xelishashv3'
+# Added algorithm 'randomc64' (C64 Chain) for CPU mining, fee 0.85%
+# Algorithm 'randomy' mining now works on catchthatrabbit.com pool too
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.1.4/SRBMiner-Multi-3-1-4-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.1.5/SRBMiner-Multi-3-1-5-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -107,18 +104,19 @@ $Algorithms = @(
     @{ Algorithms = @("MinotaurX", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(40, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm minotaurx") }
 #   @{ Algorithms = @("Panthera"), "";             Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm panthera") } # Broken with 2.7.1
     @{ Algorithms = @("RandomAlpha", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomalpha --Randomx-use-1gb-pages") }
-    @{ Algorithms = @("RandomL", "");              Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randoml --Randomx-use-1gb-pages") }
-    @{ Algorithms = @("RandomSfx", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomsfx --Randomx-use-1gb-pages") }
-#   @{ Algorithms = @("RandomxArq", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
-    @{ Algorithms = @("RandomxEpic", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomepic --Randomx-use-1gb-pages") }
-    @{ Algorithms = @("RandomJuno", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomjuno --Randomx-use-1gb-pages") }
+    @{ Algorithms = @("RandomC64", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomc64 --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomhScx", "");           Type = "CPU"; Fee = @(0.02);   WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomhscx --Randomx-use-1gb-pages") }
+    @{ Algorithms = @("RandomL", "");              Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randoml --Randomx-use-1gb-pages") }
+    @{ Algorithms = @("RandomJuno", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomjuno --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomScash", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomscash --Randomx-use-1gb-pages") }
+    @{ Algorithms = @("RandomSfx", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomsfx --Randomx-use-1gb-pages") }
     @{ Algorithms = @("RandomSnap", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomsnap --Randomx-use-1gb-pages") }
+#   @{ Algorithms = @("RandomxArq", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomarq --Randomx-use-1gb-pages") } # FPGA
     @{ Algorithms = @("RandomXeq", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(90, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomxeq --Randomx-use-1gb-pages") }
-    @{ Algorithms = @("RandomYada", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomyada --Randomx-use-1gb-pages") }
+    @{ Algorithms = @("RandomxEpic", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomepic --Randomx-use-1gb-pages") }
     @{ Algorithms = @("Randomy", "");              Type = "CPU"; Fee = @(0.01);   WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomy") }
     @{ Algorithms = @("RandomVirel", "");          Type = "CPU"; Fee = @(0.01);   WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomvirel") }
+    @{ Algorithms = @("RandomYada", "");           Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm randomyada --Randomx-use-1gb-pages") }
     @{ Algorithms = @("Rinhash", "");              Type = "CPU"; Fee = @(0.01);   WarmupTimes = @(60, 0);   ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm rinhash") }
     @{ Algorithms = @("VerusHash", "");            Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 20);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm verushash") }
     @{ Algorithms = @("YescryptR16", "");          Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25);  ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yescryptr16") }

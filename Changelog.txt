@@ -1,3 +1,11 @@
+Changelog UG-Miner 6.7.29 2026/02/19
+====================================
+
+Miner updates:
+- BzMiner-v24.0.1
+- SRBMinerMulti-v3.1.5
+
+
 Changelog UG-Miner 6.7.28 2026/02/16
 ====================================
 

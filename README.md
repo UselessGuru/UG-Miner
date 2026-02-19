@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.7.28 / Updated 2026/02/16
+Version 6.7.29 / Updated 2026/02/19
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -38,7 +38,7 @@ UG-Miner code is partly based on
 - Low developer fee of 1% (can be set to 0%)
 - Calculate power cost<sup>(1)</sup>
 - Miner switching log
-- Supported pools: 
+- Supported pools:
    - [HashCryptos](<https://hashcryptos.com/>)
    - [Hiveon](<https://hiveon.net/>)<sup>(2)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
@@ -259,7 +259,6 @@ Supported pools:
  - Hiveon
  - MiningDutch <sup>(*)</sup>
  - NiceHash
- - ProHashing
  - Zpool
 
 <sup>(*)</sup> Balances tracking is disabled by default. Collecting balances data is very time consuming.
