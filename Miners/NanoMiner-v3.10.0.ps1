@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.29
-Version date:   2026/02/19
+Version:        6.7.30
+Version date:   2026/02/26
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { return }
@@ -47,12 +47,6 @@ $Algorithms = @(
 
     @{ Algorithms = @("EtcHash", "");            Type = "INTEL"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Etchash") }
     @{ Algorithms = @("Ethash", "");             Type = "INTEL"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Ethash") }
-    @{ Algorithms = @("EthashB3", "");           Type = "INTEL"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo EthashB3") }
-    @{ Algorithms = @("EvrProgPow", "");         Type = "INTEL"; Fee = @(0.02); MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Evrprogpow") }
-    @{ Algorithms = @("FishHash", "");           Type = "INTEL"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Fishhash") }
-    @{ Algorithms = @("HeavyHashKarlsenV2", ""); Type = "INTEL"; Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Karlsen") }
-    @{ Algorithms = @("KawPow", "");             Type = "INTEL"; Fee = @(0.02); MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo KawPow") } # Trex-v0.26.8 is fastest
-    @{ Algorithms = @("Octopus", "");            Type = "INTEL"; Fee = @(0.02); MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Octopus") }
     @{ Algorithms = @("UbqHash", "");            Type = "INTEL"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(75, 45); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -algo Ubqhash") }
 
     @{ Algorithms = @("Autolykos2", "");         Type = "NVIDIA"; Fee = @(0.025); MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -algo Autolykos") } # Trex-v0.26.8 is fastest
@@ -70,7 +64,6 @@ $Algorithms = @(
 
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
 $Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
-# $Algorithms = $Algorithms.Where({ $Session.Config.SSL -ne "Always" -or ($MinerPools[0][$_.Algorithms[0]].SSLselfSignedCertificate -ne $true -and (-not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]].SSLselfSignedCertificate -eq $false)) })
 
 if ($Algorithms) { 
 

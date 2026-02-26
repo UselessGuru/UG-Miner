@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.29
-Version date:   2026/02/19
+Version:        6.7.30
+Version date:   2026/02/26
 #>
 
 using module .\Include.psm1
@@ -1490,10 +1490,10 @@ try {
         if ($Session.CycleStarts.Count -eq 1) { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime().AddSeconds($Session.Config.Interval) }
 
         do { 
-            $LoopEnd = if ($Session.Config.DryRun -and $Session.Config.BenchmarkAllPoolAlgorithmCombinations) { [DateTime]::Now.AddSeconds(0.5) } else { [DateTime]::Now.AddSeconds(1) }
+            $LoopInterval = if ($Session.Config.DryRun -and $Session.Config.BenchmarkAllPoolAlgorithmCombinations) { [DateTime]::Now.AddSeconds(0.5) } else { [DateTime]::Now.AddSeconds(1) }
 
             # Wait until 1 (0.5) second since loop start has passed
-            while ([DateTime]::Now -le $LoopEnd) { Start-Sleep -Milliseconds 50 }
+            while ([DateTime]::Now -le $LoopInterval) { Start-Sleep -Milliseconds 50 }
 
             try { 
                 foreach ($Miner in $Session.MinersRunning.Where({ $_.Status -ne [MinerStatus]::DryRun })) { 
@@ -1591,15 +1591,11 @@ try {
             # Exit loop when
             # - end cycle message is set
             # - when not benchmarking: Interval time is over
-            # - no more running miners
         } while ($Session.NewMiningStatus -eq "Running" -and -not $Session.EndCycleMessage -and ([DateTime]::Now.ToUniversalTime() -le $Session.EndCycleTime -or $Session.MinersBenchmarkingOrMeasuring))
-        Remove-Variable LoopEnd
+        Remove-Variable LoopInterval
 
         # Set end cycle time to end brains loop to collect data
         if ($Session.EndCycleMessage) { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
-
-        $Session.MinersRunning = $Session.MinersRunning.Where({ $_ -notin $Session.MinersFailed })
-        $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBenchmarkingOrMeasuring.Where({ $_ -notin $Session.MinersFailed })
 
         Get-Job -State "Completed" | Receive-Job -ErrorAction Ignore | Out-Null
         Get-Job -State "Completed" | Remove-Job -Force -ErrorAction Ignore | Out-Null

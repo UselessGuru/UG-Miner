@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.29
-Version date:   2026/02/19
+Version:        6.7.30
+Version date:   2026/02/26
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -862,7 +862,7 @@ $LegacyGUIform.SuspendLayout()
 $LegacyGUIform.AutoScaleDimensions = [System.Drawing.SizeF]::new(96, 96)
 $LegacyGUIform.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::DPI
 $LegacyGUIform.MaximizeBox = $true
-$LegacyGUIform.MinimumSize = [System.Drawing.Size]::new(800, 600) # best to keep under 800x600
+$LegacyGUIform.MinimumSize = [System.Drawing.Size]::new(800, 600)
 $LegacyGUIform.Text = $Session.Branding.ProductLabel
 $LegacyGUIform.TopMost = $false
 

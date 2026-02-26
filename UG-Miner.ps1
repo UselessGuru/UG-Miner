@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.29
-Version date:   2026/02/19
+Version:        6.7.30
+Version date:   2026/02/26
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.29"
+    Version      = [System.Version]"6.7.30"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -553,7 +553,7 @@ try {
 }
 catch { 
     Write-Host " ✖" -ForegroundColor Red
-        $ErrorLoadingModules = $true
+    $ErrorLoadingModules = $true
 }
 if ($ErrorLoadingModules) { 
     Write-Error "Terminating error - cannot import required modules."
