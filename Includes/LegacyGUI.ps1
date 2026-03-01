@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.30
-Version date:   2026/02/26
+Version:        6.7.31
+Version date:   2026/03/01
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1300,7 +1300,7 @@ $LegacyGUIelements.ActiveMinersDGV.ScrollBars = "None"
 $LegacyGUIelements.ActiveMinersDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIelements.ActiveMinersDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
 $LegacyGUIelements.ActiveMinersDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
-$LegacyGUIelements.ActiveMinersDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "System status" ) { Resize-Form } }) # To fully show grid
+$LegacyGUIelements.ActiveMinersDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "System status") { Resize-Form } }) # To fully show grid
 $LegacyGUIelements.ActiveMinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 $LegacyGUIelements.ActiveMinersDGV.Add_SelectionChanged({ $LegacyGUIelements.ContextMenuStripItem7.Enabled = [Boolean]($LegacyGUIelements.ActiveMinersDGV.SelectedRows.Count -eq 1) })
 $LegacyGUIelements.ActiveMinersDGV.Add_Sorted({ Set-TableColor -DataGridView $this; $this.ClearSelection() }) 
@@ -1366,7 +1366,7 @@ $LegacyGUIelements.BalancesDGV.Name = "EarningsDGV"
 $LegacyGUIelements.BalancesDGV.ReadOnly = $true
 $LegacyGUIelements.BalancesDGV.RowHeadersVisible = $false
 $LegacyGUIelements.BalancesDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.BalancesDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "Earnings and balances" ) { Resize-Form } }) # To fully show grid
+$LegacyGUIelements.BalancesDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "Earnings and balances") { Resize-Form } }) # To fully show grid
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.BalancesDGV -Enabled $true
 $LegacyGUIelements.EarningsPageControls += $LegacyGUIelements.BalancesDGV
 

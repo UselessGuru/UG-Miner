@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.30
-Version date:   2026/02/26
+Version:        6.7.31
+Version date:   2026/03/01
 #>
 
 using module .\Include.psm1
@@ -189,7 +189,7 @@ try {
             }
             else { $Session.CalculatePowerCost = $false }
         }
-        if (-not $Session.CalculatePowerCost ) { $Session.EnabledDevices.ForEach({ $_.ReadPowerConsumption = $false }) }
+        if (-not $Session.CalculatePowerCost) { $Session.EnabledDevices.ForEach({ $_.ReadPowerConsumption = $false }) }
 
         # Power price
         if (-not $Session.Config.PowerPricekWh.psBase.Keys) { 
@@ -1265,7 +1265,7 @@ try {
             }
             else { 
                 if ($Miner.Benchmark -or $Miner.MeasurePowerConsumption) { 
-                    if ($Miner.Activated -le 0 -or $Miner.Status -eq [MinerStatus]::DryRun ) { $Miner.Restart = $true } # Re-benchmark sets Activated to 0
+                    if ($Miner.Activated -le 0 -or $Miner.Status -eq [MinerStatus]::DryRun) { $Miner.Restart = $true } # Re-benchmark sets Activated to 0
                 }
                 elseif (($Session.Config.DryRun -and $Miner.Status -ne [MinerStatus]::DryRun) -or (-not $Session.Config.DryRun -and $Miner.Status -eq [MinerStatus]::DryRun)) { 
                     $Miner.Restart = $true
@@ -1529,7 +1529,7 @@ try {
                                     if ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
                                         $Miner.StatusInfo = "$($Miner.Info) is $(if ($Miner.Benchmark) { "benchmarking" })$(if ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
                                         $Miner.SubStatus = "benchmarking"
-                                        if ($Miner.Data.Count -ge $Miner.MinDataSample ) { 
+                                        if ($Miner.Data.Count -ge $Miner.MinDataSample) { 
                                             # Enough samples collected for this loop, exit loop immediately
                                             $Session.EndCycleMessage = " (a$(if ($Session.MinersBenchmarkingOrMeasuring.Where({ $_.Benchmark })) { " benchmarking" })$(if ($Session.MinersBenchmarkingOrMeasuring.Where({ $_.Benchmark -and $_.MeasurePowerConsumption })) { " and" })$(if ($Session.MinersBenchmarkingOrMeasuring.Where({ $_.MeasurePowerConsumption })) { " power consumption measuring" }) miner has collected enough samples for this cycle)"
                                             break

@@ -1,3 +1,13 @@
+Changelog UG-Miner 6.7.31 2026/03/01
+====================================
+
+Fixes:
+- NiceHash Pool: Fee (2%) was not applied
+
+Miner updates:
+- SRBMinerMulti-v3.1.8
+
+
 Changelog UG-Miner 6.7.30 2026/02/26
 ====================================
 
