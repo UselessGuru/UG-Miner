@@ -2,6 +2,7 @@
   "Product": "UG-Miner",
   "Version": "6.7.32",
   "AutoUpdate": true,
+  "AutoUpdateScript": "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/AutoUpdate/Autoupdate.ps1"
   "Uri": "https://github.com/UselessGuru/UG-Miner/archive/refs/heads/master.zip",
   "Message": "https://github.com/UselessGuru/UG-Miner/releases"
 }
