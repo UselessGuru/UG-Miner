@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -61,7 +61,7 @@ if ($Algorithms) {
                         foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                             $Arguments = $_.Arguments
-                            if ($_.Algorithm -eq "SHA512256d" -and $AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments += " --intensity 27.1" } # Default intensity is too high for 2GB cards
+                            if ($_.Algorithm -eq "SHA512256d" -and $AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = "$Arguments --intensity 27.1" } # Default intensity is too high for 2GB cards
 
                             [PSCustomObject]@{ 
                                 API         = "CcMiner"

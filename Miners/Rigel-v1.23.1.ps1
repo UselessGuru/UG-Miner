@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 # (XEL) Major performance increase on 170HX, small improvements on other cards
@@ -110,33 +110,33 @@ if ($Algorithms) {
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                 $Arguments = $_.Arguments
-                                if ("ABEL", "AIPG", "ALPH", "BLOCX", "CFX", "CLORE", "ERGO", "ETC", "ETHW", "GRAM", "HYP", "IRON", "KLS", "NEOX", "NEXA", "NX", "OCTA", "PYI", "RXD", "XEL", "XNA", "XPB", "ZIL" -contains $Pool0.Currency) { $Arguments += " --coin $($Pool0.Currency.ToLower())" }
+                                if ("ABEL", "AIPG", "ALPH", "BLOCX", "CFX", "CLORE", "ERGO", "ETC", "ETHW", "GRAM", "HYP", "IRON", "KLS", "NEOX", "NEXA", "NX", "OCTA", "PYI", "RXD", "XEL", "XNA", "XPB", "ZIL" -contains $Pool0.Currency) { $Arguments = "$Arguments --coin $($Pool0.Currency.ToLower())" }
 
                                 $Index = 1
                                 foreach ($Pool in $Pools) { 
                                     switch ($Pool.Protocol) { 
-                                        "ethproxy"     { $Arguments += " --url [$Index]ethproxy"; break }
-                                        "ethstratum1"  { $Arguments += " --url [$Index]ethstratum"; break }
-                                        "ethstratum2"  { $Arguments += " --url [$Index]ethstratum"; break }
-                                        "ethstratumnh" { $Arguments += " --url [$Index]ethstratum"; break }
-                                        default        { $Arguments += " --url [$Index]stratum" }
+                                        "ethproxy"     { $Arguments = "$Arguments --url [$Index]ethproxy"; break }
+                                        "ethstratum1"  { $Arguments = "$Arguments --url [$Index]ethstratum"; break }
+                                        "ethstratum2"  { $Arguments = "$Arguments --url [$Index]ethstratum"; break }
+                                        "ethstratumnh" { $Arguments = "$Arguments --url [$Index]ethstratum"; break }
+                                        default        { $Arguments = "$Arguments --url [$Index]stratum" }
                                     }
-                                    $Arguments += if ($Pool.PoolPorts[1]) { "+ssl://" } else { "+tcp://" }
-                                    $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " --username [$Index]$($Pool.User -replace "\..*") --password [$Index]$($Pool.Pass) --worker [$Index]$(if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } else { $Session.Config.WorkerName })"
+                                    $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
+                                    $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
+                                    $Arguments = "$Arguments --username [$Index]$($Pool.User -replace "\..*") --password [$Index]$($Pool.Pass) --worker [$Index]$(if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace "^.+\." } else { $Session.Config.WorkerName })"
 
                                     $Index ++
                                 }
                                 Remove-Variable Pool
 
-                                $Arguments += if ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { " --no-strict-ssl" } # Parameter cannot be used multiple times
+                                $Arguments = if ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { "$Arguments --no-strict-ssl" } # Parameter cannot be used multiple times
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes
                                 $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                 # Apply tuning parameters
-                                if ($Session.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments += $_.Tuning }
+                                if ($Session.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments = "$Arguments$($_.Tuning)" }
 
                                 [PSCustomObject]@{ 
                                     API         = "Rigel"

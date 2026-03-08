@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -78,37 +78,37 @@ if ($Algorithms) {
 
                                 $Arguments = $_.Arguments
                                 switch ($Pool0.Protocol) { 
-                                    "ethstratum1"  { $Arguments += " --url stratum2"; break }
-                                    "ethstratum2"  { $Arguments += " --url stratum2"; break }
-                                    "ethstratumnh" { $Arguments += " --url stratum2"; break }
-                                    default        { $Arguments += " --url stratum" }
+                                    "ethstratum1"  { $Arguments = "$Arguments --url stratum2"; break }
+                                    "ethstratum2"  { $Arguments = "$Arguments --url stratum2"; break }
+                                    "ethstratumnh" { $Arguments = "$Arguments --url stratum2"; break }
+                                    default        { $Arguments = "$Arguments --url stratum" }
                                 }
-                                $Arguments += if ($Pool0.PoolPorts[1]) { "+ssl" } else { "+tcp" }
-                                $Arguments += "://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                $Arguments += " --user $($Pool0.User) --pass $($Pool0.Pass)"
-                                if ($Pool0.WorkerName) { $Arguments += " --worker $($Pool0.WorkerName)" }
+                                $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments+ssl" } else { "$Arguments+tcp" }
+                                $Arguments = "$($Arguments)://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
+                                $Arguments = "$Arguments --user $($Pool0.User) --pass $($Pool0.Pass)"
+                                if ($Pool0.WorkerName) { $Arguments = "$Arguments --worker $($Pool0.WorkerName)" }
 
                                 if ("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool0.Currency) { 
-                                    $Arguments += " --coin $($Pool0.Currency)"
+                                    $Arguments = "$Arguments --coin $($Pool0.Currency)"
                                 }
 
                                 if ($_.Algorithms[1]) { 
                                     switch ($Pool1.Protocol) { 
-                                        "ethstratum1"  { $Arguments += " --url2 stratum2"; break }
-                                        "ethstratum2"  { $Arguments += " --url2 stratum2"; break }
-                                        "ethstratumnh" { $Arguments += " --url2 stratum2"; break }
-                                        default        { $Arguments += " --url2 stratum" }
+                                        "ethstratum1"  { $Arguments = "$Arguments --url2 stratum2"; break }
+                                        "ethstratum2"  { $Arguments = "$Arguments --url2 stratum2"; break }
+                                        "ethstratumnh" { $Arguments = "$Arguments --url2 stratum2"; break }
+                                        default        { $Arguments = "$Arguments --url2 stratum" }
                                     }
-                                    $Arguments += if ($Pool1.PoolPorts[1]) { "+ssl" } else { "+tcp" }
-                                    $Arguments += "://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " --user2 $($Pool1.User) --pass2 $($Pool1.Pass)"
-                                    if ($Pool1.WorkerName) { $Arguments += " --worker2 $($Pool1.WorkerName)" }
+                                    $Arguments = if ($Pool1.PoolPorts[1]) { "+ssl" } else { "+tcp" }
+                                    $Arguments = "$($Arguments)://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                    $Arguments = "$Arguments --user2 $($Pool1.User) --pass2 $($Pool1.Pass)"
+                                    if ($Pool1.WorkerName) { $Arguments = "$Arguments --worker2 $($Pool1.WorkerName)" }
                                 }
 
                                 if ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
 
                                 # Apply tuning parameters
-                                if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
                                 [PSCustomObject]@{ 
                                     API         = "Trex"

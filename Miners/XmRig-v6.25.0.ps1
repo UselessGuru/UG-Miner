@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { return }
@@ -205,10 +205,10 @@ if ($Algorithms) {
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                             $Arguments = $_.Arguments
-                            if ($_.Type -eq "CPU") { $Arguments += " --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" }
-                            elseif ("AMD", "INTEL" -contains $_.Type) { $Arguments += " --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
-                            else { $Arguments += " --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
-                            if (-not $Session.IsLocalAdmin) { $Arguments += " --randomx-wrmsr=-1" } #  disable MSR mod
+                            if ($_.Type -eq "CPU") { $Arguments = "$Arguments --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" }
+                            elseif ("AMD", "INTEL" -contains $_.Type) { $Arguments = "$Arguments --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
+                            else { $Arguments = "$Arguments --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
+                            if (-not $Session.IsLocalAdmin) { $Arguments = "$Arguments --randomx-wrmsr=-1" } #  disable MSR mod
 
                             $MinerPath = if ($_.Algorithm -in "Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva") { $Path -replace "\\xmrig.exe$", "\xmrig-mo.exe" } else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
                             $RigID = if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } else { $Session.Config.WorkerName }

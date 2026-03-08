@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 # Kawpow variants OpenCL tuning.
@@ -127,13 +127,13 @@ if ($Algorithms) {
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-$($_.Intensity)" })"})"
 
                                         $Arguments = "$($_.Arguments) --hostname $($Pool0.Host) --wallet $($Pool0.User)"
-                                        $Arguments += if (($Pool0.PoolPorts[1] -and -not $_.Algorithms[1]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { " --ssl --ssl-verify-none --ssl-port $($Pool0.PoolPorts[1])" } else { " --port $($Pool0.PoolPorts[0])" }
-                                        if ($Pool0.Pass) { $Arguments += " --server-passwd $($Pool0.Pass)" }
+                                        $Arguments = if (($Pool0.PoolPorts[1] -and -not $_.Algorithms[1]) -or ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1])) { "$Arguments --ssl --ssl-verify-none --ssl-port $($Pool0.PoolPorts[1])" } else { "$Arguments --port $($Pool0.PoolPorts[0])" }
+                                        if ($Pool0.Pass) { $Arguments = "$Arguments --server-passwd $($Pool0.Pass)" }
 
                                         if ($_.SecondaryAlgorithmPrefix) { 
-                                            $Arguments += " --$($_.SecondaryAlgorithmPrefix)-hostname $($Pool1.Host) --$($_.SecondaryAlgorithmPrefix)-wallet $($Pool1.User) --$($_.SecondaryAlgorithmPrefix)-passwd $($Pool1.Pass)"
-                                            $Arguments += if ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1]) { " --$($_.SecondaryAlgorithmPrefix)-port $($Pool1.PoolPorts[1])" } else { " --$($_.SecondaryAlgorithmPrefix)-port $($Pool1.PoolPorts[0])" }
-                                            if ($_.Intensity) { $Arguments += " --dual-xintensity $($_.Intensity)" }
+                                            $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)-hostname $($Pool1.Host) --$($_.SecondaryAlgorithmPrefix)-wallet $($Pool1.User) --$($_.SecondaryAlgorithmPrefix)-passwd $($Pool1.Pass)"
+                                            $Arguments = if ($Pool0.PoolPorts[1] -and $Pool1.PoolPorts[1]) { "$Arguments --$($_.SecondaryAlgorithmPrefix)-port $($Pool1.PoolPorts[1])" } else { "$Arguments --$($_.SecondaryAlgorithmPrefix)-port $($Pool1.PoolPorts[0])" }
+                                            if ($_.Intensity) { $Arguments = "$Arguments --dual-xintensity $($_.Intensity)" }
                                         }
 
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -141,7 +141,7 @@ if ($Algorithms) {
                                         $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 5)
 
                                         # Apply tuning parameters
-                                        if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                        if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
                                         [PSCustomObject]@{ 
                                             API              = "TeamBlackMiner"

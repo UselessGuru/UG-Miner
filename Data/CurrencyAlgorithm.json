@@ -269,6 +269,7 @@
   "VTC": "VertHash",
   "WDC": "Scrypt",
   "WIN": "Token",
+  "WJK": "SHA256",
   "XBT": "SHA256",
   "XBTX": "ScryptN2",
   "XCCX": "Scrypt",

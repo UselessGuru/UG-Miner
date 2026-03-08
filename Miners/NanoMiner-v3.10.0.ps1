@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { return }
@@ -100,18 +100,18 @@ if ($Algorithms) {
 
                                     $Arguments = ""
                                     foreach ($Pool in $Pools) { 
-                                        $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)])"
-                                        $Arguments += if ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { " -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } else { " -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
-                                        $Arguments += " -wallet $($Pool.User)"
-                                        if ($_.Type -ne "CPU") { $Arguments += " -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
+                                        $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)])"
+                                        $Arguments = if ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
+                                        $Arguments = "$Arguments -wallet $($Pool.User)"
+                                        if ($_.Type -ne "CPU") { $Arguments = "$Arguments -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
                                     }
                                     Remove-Variable Pool
 
-                                    if ($_.Type -eq "CPU") { $Arguments += " -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.Config.CPUMiningReserveCPUcore))" }
-                                    $Arguments += " -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.Pools.($Pool0.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
+                                    if ($_.Type -eq "CPU") { $Arguments = "$Arguments -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.Config.CPUMiningReserveCPUcore))" }
+                                    $Arguments = "$Arguments -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.Pools.($Pool0.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
 
                                     # Apply tuning parameters
-                                    if ($Session.ApplyMinerTweaks) { $Arguments += $_.Tuning }
+                                    if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
                                     [PSCustomObject]@{ 
                                         API              = "NanoMiner"

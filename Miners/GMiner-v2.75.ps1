@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -60,15 +60,15 @@ if ($Algorithms) {
 
                             $Arguments = "$($_.Arguments) --server $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)"
 
-                            if ($null -ne $Pool.DAGsizeGiB -and "MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments += " --proto stratum" }
-                            if ($Pool.PoolPorts[1]) { $Arguments += " --ssl 1" }
-                            if ($_.AutoCoinPers) { $Arguments += Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers }
+                            if ($null -ne $Pool.DAGsizeGiB -and "MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments = "$Arguments --proto stratum" }
+                            if ($Pool.PoolPorts[1]) { $Arguments = "$Arguments --ssl 1" }
+                            if ($_.AutoCoinPers) { $Arguments = "$Arguments $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers)" }
 
                             # Contest ETH address (if ETH wallet is specified in config)
-                            # $Arguments += If ($Session.Config.Wallets.ETH) { " --contest_wallet $($Session.Config.Wallets.ETH)" } else { " --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
+                            # $Arguments = if ($Session.Config.Wallets.ETH) { "$Arguments --contest_wallet $($Session.Config.Wallets.ETH)" } else { "$Arguments --contest_wallet 0x92e6F22C1493289e6AD2768E1F502Fc5b414a287" }
 
                             # Apply tuning parameters
-                            if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                            if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
                             [PSCustomObject]@{ 
                                 API         = "Gminer"

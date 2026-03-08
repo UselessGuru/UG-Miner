@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
@@ -177,22 +177,22 @@ if ($Algorithms) {
                                     $CoinPers = if ("Equihash1445", "Equihash1927" -contains $_.Algorithms[0]) { Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand "" }
 
                                     if ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
-                                        if ($CoinPers) { $Arguments += $CoinPers }
-                                        $Arguments += " --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
-                                        $Arguments += " --user $($Pool0.User)$(if ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass $($Pool0.Pass)"
-                                        $Arguments += if ($Pool0.PoolPorts[1]) { " --tls on" } else { " --tls off" }
+                                        if ($CoinPers) { $Arguments = "$Arguments $CoinPers" }
+                                        $Arguments = "$Arguments --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
+                                        $Arguments = "$Arguments --user $($Pool0.User)$(if ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass $($Pool0.Pass)"
+                                        $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments --tls on" } else { "$Arguments --tls off" }
                                         switch ($Pool0.Protocol) { 
-                                            "ethproxy"     { $Arguments += " --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY"; break }
-                                            "ethstratum1"  { $Arguments += " --ethstratum ETHV1"; break }
-                                            "ethstratum2"  { $Arguments += " --ethstratum ETHV1"; break }
-                                            "ethstratumnh" { $Arguments += " --ethstratum ETHV1" }
+                                            "ethproxy"     { $Arguments = "$Arguments --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY"; break }
+                                            "ethstratum1"  { $Arguments = "$Arguments --ethstratum ETHV1"; break }
+                                            "ethstratum2"  { $Arguments = "$Arguments --ethstratum ETHV1"; break }
+                                            "ethstratumnh" { $Arguments = "$Arguments --ethstratum ETHV1" }
                                         }
 
                                         if ($_.Algorithms[1]) { 
-                                            $Arguments += " --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                            $Arguments += " --dualuser $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --dualpass $($Pool1.Pass)"
-                                            if ($_.MaxDualImpact) { $Arguments += " --maxdualimpact $($_.MaxDualImpact)" }
-                                            $Arguments += if ($Pool1.PoolPorts[1]) { " --dualtls on" } else { " --dualtls off" }
+                                            $Arguments = "$Arguments --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                            $Arguments = "$Arguments --dualuser $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --dualpass $($Pool1.Pass)"
+                                            if ($_.MaxDualImpact) { $Arguments = "$Arguments --maxdualimpact $($_.MaxDualImpact)" }
+                                            $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments --dualtls on" } else { "$Arguments --dualtls off" }
                                         }
 
                                         [PSCustomObject]@{ 

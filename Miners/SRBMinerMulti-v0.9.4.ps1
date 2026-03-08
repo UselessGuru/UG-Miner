@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -99,15 +99,15 @@ if ($Algorithms) {
 
                             $Arguments = $_.Arguments
                             switch ($Pool.Protocol) { 
-                                "ethproxy"     { $Arguments += " --esm 0"; break }
-                                "ethstratum1"  { $Arguments += " --esm 1"; break }
-                                "ethstratum2"  { $Arguments += " --esm 2"; break }
-                                "ethstratumnh" { $Arguments += " --esm 2"; break }
-                                "minerproxy"   { $Arguments += " --esm 1" }
+                                "ethproxy"     { $Arguments = "$Arguments --esm 0"; break }
+                                "ethstratum1"  { $Arguments = "$Arguments --esm 1"; break }
+                                "ethstratum2"  { $Arguments = "$Arguments --esm 2"; break }
+                                "ethstratumnh" { $Arguments = "$Arguments --esm 2"; break }
+                                "minerproxy"   { $Arguments = "$Arguments --esm 1" }
                             }
-                            $Arguments += " --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
-                            if ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
-                            if ($Pool.PoolPorts[1]) { $Arguments += " --tls true" }
+                            $Arguments = "$Arguments --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
+                            if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
+                            if ($Pool.PoolPorts[1]) { $Arguments = "$Arguments --tls true" }
 
                             [PSCustomObject]@{ 
                                 API              = "SRBMiner"

@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
+Version:        6.7.32
 Version date:   2024/01/29
 #>
 
@@ -73,18 +73,18 @@ if ($Algorithms) {
 
                                 $Arguments = $_.Arguments
                                 switch ($Pool.Protocol) { 
-                                    "ethstratum1"  { $Arguments += " --url stratum"; break }
-                                    "ethstratum2"  { $Arguments += " --url nicehash"; break }
-                                    "ethstratumnh" { $Arguments += " --url nicehash"; break }
-                                    default        { $Arguments += " --url stratum" }
+                                    "ethstratum1"  { $Arguments = "$Arguments --url stratum"; break }
+                                    "ethstratum2"  { $Arguments = "$Arguments --url nicehash"; break }
+                                    "ethstratumnh" { $Arguments = "$Arguments --url nicehash"; break }
+                                    default        { $Arguments = "$Arguments --url stratum" }
                                 }
-                                $Arguments += if ($Pool.PoolPorts[1]) { "+ssl://" } else { "+tcp://" }
-                                $Arguments += "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --password $($Pool.Pass)"
+                                $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
+                                $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --password $($Pool.Pass)"
 
                                 # Optionally disable dev fee mining
                                 if ($Session.Config.DisableMinerFee) { 
                                     $_.Fee = 0
-                                    $Arguments += " --fee 0"
+                                    $Arguments = "$Arguments --fee 0"
                                 }
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -92,7 +92,7 @@ if ($Algorithms) {
                                 $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 2)
 
                                 # Apply tuning parameters
-                                if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
                                 [PSCustomObject]@{ 
                                     API         = "NBMiner"

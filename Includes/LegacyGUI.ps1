@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -53,7 +53,7 @@ function Disable-X {
     $hMenu = [Win32.NativeMethods]::GetSystemMenu($hwnd, 0)
 
     # Disable X Button
-    [Win32.NativeMethods]::EnableMenuItem($hMenu, $SC_CLOSE, $MF_DISABLED) | Out-Null
+    $null = [Win32.NativeMethods]::EnableMenuItem($hMenu, $SC_CLOSE, $MF_DISABLED)
 }
 
 # For High DPI, Call SetProcessDPIAware(need P/Invoke) and EnableVisualStyles
@@ -401,7 +401,7 @@ function Update-TabControl {
                             $Datasource.Earnings.$Pool.ForEach(
                                 { 
                                     $_ *= $Session.Rates.BTC.($Session.Config.FIATcurrency)
-                                    $LegacyGUIelements.EarningsChart.Series[$Pool].Points.addxy(0, $_) | Out-Null
+                                    $null = $LegacyGUIelements.EarningsChart.Series[$Pool].Points.addxy(0, $_)
                                     $Daysum[$I] += $_
                                     if ($_) { $LegacyGUIelements.TooltipText[$I] = "$($LegacyGUIelements.TooltipText[$I])`r$($Pool): {0:N$($Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)" -f $_ }
                                     $I ++
@@ -555,7 +555,7 @@ function Update-TabControl {
                         @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } },
                         @{ Name = "Status"; Expression = { $_.Status } },
                         @{ Name = "Earnings (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
-                        @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ( [Double]::IsNaN($_.PowerCost)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
+                        @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
                         @{ Name = "Profit (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.Profit_Bias) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
                         @{ Name = "Power consumption"; Expression = { if ($_.MeasurePowerConsumption) { if ($_.Status -eq "Running") { "Measuring..." } else { "Unmeasured" } } else { if ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
                         @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & " } },
@@ -690,7 +690,7 @@ function Update-TabControl {
         #     If ($Session.Config.ShowWorkerStatus) { 
         #         If (-not $LegacyGUIelements.WorkersDGV.SelectedRows) { 
         #
-        #             Read-MonitoringData | Out-Null
+        #             Read-MonitoringData
         #
         #             if ($Session.Workers) { $LegacyGUIelements.WorkersLabel.Text = "Worker status updated $($Session.WorkersLastUpdated.ToString())" }
         #             elseif ($Session.MiningStatus -eq "Idle") { 
@@ -1160,7 +1160,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             # Update miner
                             foreach ($Miner in $Session.Miners.Where({ $_.Name -eq $MinerName -and $Session.WatchdogTimers.Where({ $_.MinerName -eq $MinerName }) })) { 
                                 $Data += $Miner.Name
-                                $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                                $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $null = $Miner.Reasons.Remove($_) })
                                 if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
                             }
 
@@ -1184,7 +1184,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                     $this.SourceControl.SelectedRows.ForEach(
                         { 
                             Set-Clipboard $_.Cells[10].Value
-                            (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 64)) | Out-Null
+                            $null = (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 64))
                         }
                     )
                 }
@@ -1229,7 +1229,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             # Update pool
                             foreach ($Pool in ($Session.Pools.Where({ $_.Name -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm -and $Session.WatchdogTimers.Where({ $_.PoolName -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm }) }))) { 
                                 $Data += "$($Pool.Key) ($($Pool.Region))"
-                                $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                                $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $null = $Pool.Reasons.Remove($_) })
                                 if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
                             }
 
@@ -1776,13 +1776,13 @@ $LegacyGUIelements.WatchdogTimersRemoveButton.Add_Click(
         $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
         $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
         foreach ($Miner in $Session.Miners) { 
-            $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+            $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $null = $Miner.Reasons.Remove($_) })
             if (-not $Miner.Reasons.Count) { $_.Available = $true }
         }
         Remove-Variable Miner
 
         foreach ($Pool in $Session.Pools) { 
-            $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+            $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $null = $Pool.Reasons.Remove($_) })
             if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
         }
         Remove-Variable Pool

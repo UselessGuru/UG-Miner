@@ -7,7 +7,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 using module ..\Includes\Include.psm1
@@ -56,9 +56,9 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
 
             do { 
                 try { 
-                    if (-not $AlgoData) { 
-                        # Attempt to aquire mutex
-                        if ($Mutex.WaitOne(1000)) { 
+                    # Attempt to aquire mutex
+                    if ($Mutex.WaitOne(1000)) { 
+                        if (-not $AlgoData) { 
                             $URI = "https://www.mining-dutch.nl/api/status"
                             Write-Message -Level Debug "Brain '$Name': Querying $URI"
                             $AlgoData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
@@ -73,12 +73,8 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                                 Remove-Variable WaitSeconds
                                 $AlgoData = $null
                             }
-                            $Mutex.ReleaseMutex()
                         }
-                    }
-                    if (-not $TotalStats) { 
-                        # Attempt to aquire mutex
-                        if ($Mutex.WaitOne(1000)) { 
+                        if (-not $TotalStats) { 
                             $URI = "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
                             Write-Message -Level Debug "Brain '$Name': Querying $URI"
                             $TotalStats = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
@@ -93,8 +89,8 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                                 Remove-Variable WaitSeconds
                                 $TotalStats = $null
                             }
-                            $Mutex.ReleaseMutex()
                         }
+                        $Mutex.ReleaseMutex()
                     }
                     Remove-Variable URI -ErrorAction Ignore
                 }
@@ -112,7 +108,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://www.mining-dutch.nl/api ($($APIerror | ConvertTo-Json -Compress))"
             }
             else {
-                ($AlgoData.PSObject.Properties.Name).Where({ $TotalStats.result.algorithm -notcontains $_ }).foreach({ $AlgoData.PSObject.Properties.Remove($_) })
+                ($AlgoData.PSObject.Properties.Name).Where({ $TotalStats.result.algorithm -notcontains $_ }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })
             }
 
             if ($AlgoData -and $TotalStats) { 

@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -66,15 +66,17 @@ if ($Algorithms) {
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                            $Arguments = $_.Arguments
                             if ("CLO", "ETC", "ETH", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool.Currency) { 
                                 $Arguments = " -coin $($Pool.Currency)$($_.Arguments -replace " -algo \w+")"
                             }
+                            else { 
+                                $Arguments = $_.Arguments
+                            }
                             if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
 
-                            $Arguments += if ($Pool.Protocol -like "ethproxy*" -or $_.Algorithm -eq "ProgPowZ") { " -pool stratum1+tcp://" } else { " -pool stratum+tcp://" }
-                            $Arguments += "$($Pool.Host):$($Pool.PoolPorts[0]) -user $($Pool.User) -pass $($Pool.Pass)"
-                            if ($Pool.WorkerName) { $Arguments += " -worker $($Pool.WorkerName)" }
+                            $Arguments = if ($Pool.Protocol -like "ethproxy*" -or $_.Algorithm -eq "ProgPowZ") { "$Arguments -pool stratum1+tcp://" } else { "$Arguments -pool stratum+tcp://" }
+                            $Arguments = "$Arguments $($Pool.Host):$($Pool.PoolPorts[0]) -user $($Pool.User) -pass $($Pool.Pass)"
+                            if ($Pool.WorkerName) { $Arguments = "$Arguments -worker $($Pool.WorkerName)" }
 
                             [PSCustomObject]@{ 
                                 API         = "EthMiner"

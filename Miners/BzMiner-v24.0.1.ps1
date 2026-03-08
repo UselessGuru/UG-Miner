@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 # New Coin: Xelis (Currently CPU Only)
@@ -131,29 +131,29 @@ if ($Algorithms) {
                                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
                                     $Arguments = $_.Arguments[0]
-                                    switch ($Pool0.Protocol) { 
-                                        "ethproxy"     { $Arguments += " -p ethproxy"; break }
-                                        "ethstratum1"  { $Arguments += " -p ethstratum"; break }
-                                        "ethstratum2"  { $Arguments += " -p ethstratum2"; break }
-                                        "ethstratumnh" { $Arguments += " -p ethstratum"; break }
-                                        default        { $Arguments += " -p stratum" }
+                                    $Arguments = switch ($Pool0.Protocol) { 
+                                        "ethproxy"     { "$Arguments -p ethproxy"; break }
+                                        "ethstratum1"  { "$Arguments -p ethstratum"; break }
+                                        "ethstratum2"  { "$Arguments -p ethstratum2"; break }
+                                        "ethstratumnh" { "$Arguments -p ethstratum"; break }
+                                        default        { "$Arguments -p stratum" }
                                     }
-                                    $Arguments += if ($Pool0.PoolPorts[1]) { "+ssl://" } else { "+tcp://" }
-                                    $Arguments += "$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments += " -w $($Pool0.User -replace "\..*") --pool_password $($Pool0.Pass) -r $(if ($Pool0.WorkerName) { $Pool0.WorkerName } elseif ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } else { $Session.Config.WorkerName })"
+                                    $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
+                                    $Arguments = "$Arguments$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
+                                    $Arguments = "$Arguments -w $($Pool0.User -replace "\..*") --pool_password $($Pool0.Pass) -r $(if ($Pool0.WorkerName) { $Pool0.WorkerName } elseif ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } else { $Session.Config.WorkerName })"
 
                                     if ($_.Algorithms[1]) { 
-                                        $Arguments += $_.Arguments[1]
-                                        switch ($Pool1.Protocol) { 
-                                            "ethproxy"     { $Arguments += " --p2 ethproxy"; break }
-                                            "ethstratum1"  { $Arguments += " --p2 ethstratum"; break }
-                                            "ethstratum2"  { $Arguments += " --p2 ethstratum2"; break }
-                                            "ethstratumnh" { $Arguments += " --p2 ethstratum"; break }
-                                            default        { $Arguments += " --p2 stratum" }
+                                        $Arguments = "$Arguments$($_.Arguments[1])"
+                                        $Arguments = switch ($Pool1.Protocol) { 
+                                            "ethproxy"     { "$Arguments --p2 ethproxy"; break }
+                                            "ethstratum1"  { "$Arguments --p2 ethstratum"; break }
+                                            "ethstratum2"  { "$Arguments --p2 ethstratum2"; break }
+                                            "ethstratumnh" { "$Arguments --p2 ethstratum"; break }
+                                            default        { "$Arguments --p2 stratum" }
                                         }
-                                        $Arguments += if ($Pool1.PoolPorts[1]) { "+ssl://" } else { "+tcp://" }
-                                        $Arguments += "$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --w2 $($Pool1.User -replace "\..*") --pool_password2 $($Pool1.Pass) --r2 $(if ($Pool1.WorkerName) { $Pool1.WorkerName } elseif ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } else { $Session.Config.WorkerName })"
+                                        $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
+                                        $Arguments = "$Arguments$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                        $Arguments = "$Arguments --w2 $($Pool1.User -replace "\..*") --pool_password2 $($Pool1.Pass) --r2 $(if ($Pool1.WorkerName) { $Pool1.WorkerName } elseif ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } else { $Session.Config.WorkerName })"
                                     }
 
                                     # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -161,7 +161,7 @@ if ($Algorithms) {
                                     $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                     # Apply tuning parameters
-                                    if ($Session.ApplyMinerTweaks) { $Arguments += $_.Tuning }
+                                    if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
                                     [PSCustomObject]@{ 
                                         API         = "BzMiner"

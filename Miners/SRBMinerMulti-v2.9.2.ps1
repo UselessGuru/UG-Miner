@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
@@ -37,6 +37,8 @@ $DeviceEnumerator = "Type_Vendor_Slot"
 # UG: Added Liberty (removed in v2.9.8)
 # UG: Added SHA256dt (removed in v2.9.8)
 # UG: Added FpHash (removed in v3.1.2)
+# UG: Added YescryptR16 for AMD (removed in v3.1.9)
+# UG: Added YescryptR32 for AMD (removed in v3.1.9)
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
@@ -57,6 +59,8 @@ $Algorithms = @(
     @{ Algorithms = @("ProgPowVeil", "");       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_veil") }
     @{ Algorithms = @("SHA256dt", "");          Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm sha256dt") }
     @{ Algorithms = @("XeChain", "");           Type = "AMD"; Fee = @(0.01);           MinMemGiB = 1;    WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm xechain") }
+    @{ Algorithms = @("YescryptR16", "");       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm yescryptr16") }
+    @{ Algorithms = @("YescryptR32", "");       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm yescryptr32") }
 
     @{ Algorithms = @("Argon2d16000", "");     Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 15); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2d_16000") } # Bad shares in v2.9.9
     @{ Algorithms = @("YespowerDogemone", ""); Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerdogemone") }
@@ -157,36 +161,36 @@ if ($Algorithms) {
                                     foreach ($Pool in $Pools) { 
                                         if ($Pool.Algorithm -match $Session.RegexAlgoIsEthash) { 
                                             switch ($Pool.Protocol) { 
-                                                "minerproxy"   { $Arguments += " --esm 0"; break }
-                                                "ethproxy"     { $Arguments += " --esm 0"; break }
-                                                "ethstratum1"  { $Arguments += " --esm 1"; break }
-                                                "ethstratum2"  { $Arguments += " --esm 2"; break }
-                                                "ethstratumnh" { $Arguments += " --esm 2" }
+                                                "minerproxy"   { $Arguments = "$Arguments --esm 0"; break }
+                                                "ethproxy"     { $Arguments = "$Arguments --esm 0"; break }
+                                                "ethstratum1"  { $Arguments = "$Arguments --esm 1"; break }
+                                                "ethstratum2"  { $Arguments = "$Arguments --esm 2"; break }
+                                                "ethstratumnh" { $Arguments = "$Arguments --esm 2" }
                                             }
                                         }
-                                        $Arguments += "$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
-                                        if ($Pool.Name -eq "NiceHash") { $Arguments += " --nicehash true" }
-                                        if ($Pool.WorkerName) { $Arguments += " --worker $($Pool.WorkerName)" }
-                                        $Arguments += if ($Pool.PoolPorts[1]) { " --tls true" } else { " --tls false" }
-                                        if ($_.GpuDualMaxLoss) { $Arguments += " --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
+                                        $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
+                                        if ($Pool.Name -eq "NiceHash") { $Arguments = "$Arguments --nicehash true" }
+                                        if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
+                                        $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments --tls true" } else { "$Arguments --tls false" }
+                                        if ($_.GpuDualMaxLoss) { $Arguments = "$Arguments --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
                                     }
                                     Remove-Variable Pool
 
                                     if ($_.Type -eq "CPU") { 
-                                        $Arguments += " --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)"
+                                        $Arguments = "$Arguments --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)"
                                     }
                                     else { 
-                                        $Arguments += " --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
+                                        $Arguments = "$Arguments --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
                                     }
 
                                     # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                     $WarmupTimes = [UInt16[]]$_.WarmupTimes
                                     $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
-                                    if ($_.Algorithms[0] -eq "KawPow" -and "HashCryptos", "MiningDutch" -contains $Pool0) { $Arguments += " --retry-time 1" }
+                                    if ($_.Algorithms[0] -eq "KawPow" -and "HashCryptos", "MiningDutch" -contains $Pool0) { $Arguments = "$Arguments --retry-time 1" }
 
                                     # Apply tuning parameters
-                                    if ($_.Type -eq "CPU" -and -not $Session.ApplyMinerTweaks) { $_.Arguments += " --disable-msr-tweaks" }
+                                    if ($_.Type -eq "CPU" -and -not $Session.ApplyMinerTweaks) { $Arguments = "$Arguments --disable-msr-tweaks" }
 
                                     [PSCustomObject]@{ 
                                         API              = "SRBMiner"

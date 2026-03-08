@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.28"
+$APIversion = "6.0.30"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -120,11 +120,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
-                        $Pool.Reasons = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
+                        $null = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
                     }
                     else { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "+$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                        $Pool.Reasons = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config") | Out-Null
+                        $null = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")
                     }
                     $Pool.Available = $false
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
@@ -154,11 +154,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
-                        $Pool.Reasons.Remove("Algorithm not enabled in $($Pool.Name) pool config") | Out-Null
+                        $null = $Pool.Reasons.Remove("Algorithm not enabled in $($Pool.Name) pool config")
                     }
                     else { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where({ $_ -ne "-$($Pool.Algorithm)" }) | Sort-Object -Unique)
-                        $Pool.Reasons.Remove("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)") | Out-Null
+                        $null = $Pool.Reasons.Remove("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
                     }
                     if (-not $Pool.Reasons.Count) { 
                         $Pool.Available = $true
@@ -384,7 +384,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/removeorphanedminerstats" { 
             if ($ObsoleteMinerStats = Get-ObsoleteMinerStats) { 
-                $ObsoleteMinerStats.foreach({ Remove-Stat $_ })
+                $ObsoleteMinerStats.ForEach({ Remove-Stat $_ })
                 $Data = $ObsoleteMinerStats | ConvertTo-Json
             }
             else { 
@@ -483,7 +483,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             elseif ($Parameters.Miners -and $Parameters.Type -eq "Hashrate") { 
                 if ($Miners = Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info) { 
                     $Data = @()
-                    $Miners.ForEach(
+                    ($Miners | Sort-Object -Property Info).ForEach(
                         { 
                             $Data += $_.Name
                             Set-MinerReBenchmark $_
@@ -602,7 +602,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     if ($Session.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name })) { 
                         # Update miner
                         $Data += $Miner.Name
-                        $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                        $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $null = $Miner.Reasons.Remove($_) })
                         if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
 
                         # Remove Watchdog timers
@@ -615,7 +615,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     # Update pool
                     if ($Session.Pools.Where({ $_.Key -eq $Pool.Key })) { 
                         $Data += "$($Pool.Key) [$($Pool.Region)]"
-                        $Pool.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                        $Pool.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $null = $Pool.Reasons.Remove($_) })
                         if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
 
                         # Remove Watchdog timers
@@ -636,13 +636,13 @@ while ($Session.APIversion -and $Server.IsListening) {
             else { 
                 $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
                 foreach ($Miner in $Session.Miners) { 
-                    $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $Miner.Reasons.Remove($_) | Out-Null })
+                    $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $null = $Miner.Reasons.Remove($_) })
                     if (-not $Miner.Reasons.Count) { $_.Available = $true }
                 }
                 Remove-Variable Miner
 
                 foreach ($Pool in $Session.Pools.ForEach) { 
-                    $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $Pool.Reasons.Remove($_) | Out-Null })
+                    $Pool.Reasons.Where({ $_ -like "Pool suspended by watchdog *" }).ForEach({ $null = $Pool.Reasons.Remove($_) })
                     if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
                 }
                 Remove-Variable Pool

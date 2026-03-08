@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -104,30 +104,30 @@ if ($Algorithms) {
                                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-$($_.Intensity)" })"})"
 
                                         $Arguments = "$($_.Arguments) -pool $(if ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User) -pass $($Pool0.Pass)"
-                                        $Arguments += switch ($Pool0.Protocol) { 
-                                            "ethproxy"     { " -proto 2"; break }
-                                            "minerproxy"   { " -proto 1"; break }
-                                            "ethstratum1"  { " -proto 4"; break }
-                                            "ethstratum2"  { " -proto 4"; break }
-                                            "ethstratumnh" { " -proto 4"; break }
-                                            "qtminer"      { " -proto 3"; break }
-                                            default        { " -proto 1" }
+                                        $Arguments = switch ($Pool0.Protocol) { 
+                                            "ethproxy"     { "$Arguments -proto 2"; break }
+                                            "minerproxy"   { "$Arguments -proto 1"; break }
+                                            "ethstratum1"  { "$Arguments -proto 4"; break }
+                                            "ethstratum2"  { "$Arguments -proto 4"; break }
+                                            "ethstratumnh" { "$Arguments -proto 4"; break }
+                                            "qtminer"      { "$Arguments -proto 3"; break }
+                                            default        { "$Arguments -proto 1" }
                                         }
-                                        if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments += " -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
-                                        if ($Pool0.WorkerName) { $Arguments += " -worker $($Pool0.WorkerName)" }
+                                        if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments = "$Arguments -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
+                                        if ($Pool0.WorkerName) { $Arguments = "$Arguments -worker $($Pool0.WorkerName)" }
 
                                         # kernel 3 does not support dual mining
                                         if (($AvailableMinerDevices.Memory | Measure-Object -Minimum).Minimum / 1GB -ge 2 * $MinMemGiB -and -not $_.Algorithms[1]) {
                                             # Faster kernels require twice as much VRAM
-                                            if ($AvailableMinerDevices.Vendor -eq "AMD") { $Arguments += " -clkernel 3" }
-                                            elseif ($AvailableMinerDevices.Vendor -eq "NVIDIA") { $Arguments += " -nvkernel 3" }
+                                            if ($AvailableMinerDevices.Vendor -eq "AMD") { $Arguments = "$Arguments -clkernel 3" }
+                                            elseif ($AvailableMinerDevices.Vendor -eq "NVIDIA") { $Arguments = "$Arguments -nvkernel 3" }
                                         }
 
                                         if ($_.Algorithms[1]) { 
-                                            $Arguments += " -dpool $(if ($Pool1.PoolPorts[1]) { "ssl://" })$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
-                                            if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments += " -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
-                                            if ($Pool1.WorkerName) { $Arguments += " -dworker $($Pool1.WorkerName)" }
-                                            if ($_.Intensity) { $Arguments += " -sci $($_.Intensity)" }
+                                            $Arguments = "$Arguments -dpool $(if ($Pool1.PoolPorts[1]) { "ssl://" })$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
+                                            if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments = "$Arguments -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
+                                            if ($Pool1.WorkerName) { $Arguments = "$Arguments -dworker $($Pool1.WorkerName)" }
+                                            if ($_.Intensity) { $Arguments = "$Arguments -sci $($_.Intensity)" }
                                         }
 
                                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -135,7 +135,7 @@ if ($Algorithms) {
                                         $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                                         # Apply tuning parameters
-                                        if ($Session.ApplyMinerTweaks) { $_.Arguments += $_.Tuning }
+                                        if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
                                         [PSCustomObject]@{ 
                                             API         = "EthMiner"

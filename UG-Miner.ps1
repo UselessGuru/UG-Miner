@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.31"
+    Version      = [System.Version]"6.7.32"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -759,7 +759,7 @@ function MainLoop {
                         Write-Host ""
                         $Message = "$($Session.Branding.ProductLabel) is stopped."
                         Write-Message -Level Info $Message
-                        $Message += " Click the 'Start mining' button to make money."
+                        $Message = "$Message Click the 'Start mining' button to make money."
                         $Session.Summary = $Message
                         Remove-Variable Message
                         $Session.RefreshTimestamp = (Get-Date -Format "G")
@@ -795,10 +795,10 @@ function MainLoop {
                     Write-Host ""
                     $Message = "$($Session.Branding.ProductLabel) is paused."
                     Write-Message -Level Info $Message
-                    $Message += " Click the 'Start mining' button to make money.<br>"
+                    $Message = "$Message Click the 'Start mining' button to make money.<br>"
                     ((@(if ($Session.Config.UsemBTC) { "mBTC" } else { ($Session.Config.PayoutCurrency) }) + @($Session.Config.ExtraCurrencies)) | Select-Object -Unique).Where({ $Session.Rates.$_.($Session.Config.FIATcurrency) }).ForEach(
                         { 
-                            $Message += "1 $_ = {0:N$(Get-DecimalsFromValue -Value $Session.Rates.$_.($Session.Config.FIATcurrency) -DecimalsMax $Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Session.Rates.$_.($Session.Config.FIATcurrency)
+                            $Message = "$($Message)1 $_ = {0:N$(Get-DecimalsFromValue -Value $Session.Rates.$_.($Session.Config.FIATcurrency) -DecimalsMax $Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)&ensp;&ensp;&ensp;" -f $Session.Rates.$_.($Session.Config.FIATcurrency)
                         }
                     )
                     $Session.Summary = $Message
@@ -816,7 +816,7 @@ function MainLoop {
                         Write-Host ""
                         $Message = "'Start mining' button clicked."
                         Write-Message -Level Info $Message
-                        $Message += " Mining processes are starting..."
+                        $Message = "$Message Mining processes are starting..."
                         $Session.Summary = $Message
                         $Session.RefreshTimestamp = (Get-Date -Format "G")
                         Remove-Variable Message

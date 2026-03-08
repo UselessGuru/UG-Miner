@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 # Performance improvement for CMP 170hx and AMD cards(mostly Vega and Radeon VII)
@@ -70,7 +70,7 @@ if ($Algorithms) {
 
                                 $Arguments = "$($_.Arguments[0]) -o stratum+$(if ($Pool0.PoolPorts[1]) { "ssl" })://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -w $($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) -p $($Pool0.Pass)"
 
-                                if (($_.Algorithms[1])) { $Arguments += "$($_.Arguments[1]) --o2 stratum$(if ($Pool1.PoolPorts[1]) { "+ssl" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) --w2 $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --p2 $($Pool1.Pass)" }
+                                if (($_.Algorithms[1])) { $Arguments = "$Arguments$($_.Arguments[1]) --o2 stratum$(if ($Pool1.PoolPorts[1]) { "+ssl" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) --w2 $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --p2 $($Pool1.Pass)" }
 
                                 [PSCustomObject]@{ 
                                     API         = "OneZero"

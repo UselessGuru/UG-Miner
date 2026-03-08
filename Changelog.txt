@@ -1,3 +1,18 @@
+Changelog UG-Miner 6.7.32 2026/03/08
+====================================
+
+Fixes:
+- Core / Includes.psm1: Function 'Test-IsPrime' giving incorrect results
+
+Improvements:
+- Core: Less array additions
+- Core: Remove obsolete code & minor code optimizations
+- Miners: No more array additions
+
+Miner updates:
+- SRBMinerMulti-v3.1.9
+
+
 Changelog UG-Miner 6.7.31 2026/03/01
 ====================================
 

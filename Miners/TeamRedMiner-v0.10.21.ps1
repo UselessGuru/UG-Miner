@@ -6,7 +6,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-UG-Miner is distributed in the hope that it will be useful, 
+UG-Miner is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.31
-Version date:   2026/03/01
+Version:        6.7.32
+Version date:   2026/03/08
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" }))) { return }
@@ -124,16 +124,16 @@ if ($Algorithms) {
 
                                     $Arguments = "$($_.Arguments) --pool_force_ensub --url=$(if ($Pool0.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
                                     switch ($Pool0.Protocol) { 
-                                        "ethstratumnh" { $Arguments += " --eth_stratum_mode=nicehash"; break }
+                                        "ethstratumnh" { $Arguments = "$Arguments --eth_stratum_mode=nicehash"; break }
                                     }
-                                    $Arguments += " --user=$($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass=$($Pool0.Pass)"
+                                    $Arguments = "$Arguments --user=$($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass=$($Pool0.Pass)"
 
                                     if ($_.SecondaryAlgorithmPrefix) { 
-                                        $Arguments += " --$($_.SecondaryAlgorithmPrefix)_start"
-                                        $Arguments += " --url=$(if ($Pool1.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments += " --user=$($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
-                                        $Arguments += " --pass=$($Pool1.Pass)"
-                                        $Arguments += " --$($_.SecondaryAlgorithmPrefix)_end"
+                                        $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_start"
+                                        $Arguments = "$Arguments --url=$(if ($Pool1.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                        $Arguments = "$Arguments --user=$($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
+                                        $Arguments = "$Arguments --pass=$($Pool1.Pass)"
+                                        $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_end"
                                     }
                                     if ($_.Algorithms[0] -match '^Et(c)hash.+' -and $AvailableMinerDevices.Model -notmatch "^Radeon RX [0-9]{3} .+") { $_.Fee = @(0.0075) } # Polaris cards 0.75%
 
