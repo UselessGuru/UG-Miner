@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.32
-Version date:   2026/03/08
+Version:        6.7.33
+Version date:   2026/03/13
 #>
 
 using module .\Include.psm1
@@ -105,7 +105,8 @@ try {
         $Session.BenchmarkAllPoolAlgorithmCombinations = $Session.Config.BenchmarkAllPoolAlgorithmCombinations
         $Session.PoolsTimeout = [Math]::Floor($Session.Config.PoolsTimeout)
 
-        $Session.EnabledDevices = @($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName }).ForEach({ $_ | Select-Object -Property * }))
+        $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach({ if ($_.Name -in $Session.Config.ExcludeDeviceName) { $_.State = [DeviceState]::Disabled } else { $_.State = [DeviceState]::Enabled } })
+        $Session.EnabledDevices = @($Session.Devices.Where({ $_.State -eq [DeviceState]::Enabled }).ForEach({ $_ | Select-Object -Property * }))
         if (-not $Session.EnabledDevices) { 
             $Message = "No enabled devices - will retry in $($Session.Config.Interval) seconds..."
             Write-Message -Level Warn $Message
@@ -664,7 +665,6 @@ try {
                                     Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                                     $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
                                     $Miner.SetStatus([MinerStatus]::Failed)
-                                    $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                 }
                             }
                         }
@@ -675,9 +675,9 @@ try {
                     $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                     Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                     $Miner.SetStatus([MinerStatus]::Failed)
-                    $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                 }
             }
+            $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $(if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { "Running $($Miner.Info)" } else { "Idle" }); $_.SubStatus = $Miner.SubStatus })
 
             # Do not save data if stat just got removed (Miner.Activated < 1, set by API)
             if ($Miner.Activated -gt 0 -and $Miner.Status -ne [MinerStatus]::DryRun) { 
@@ -726,7 +726,6 @@ try {
                                 # Stop miner if new value is outside ±200% of current value
                                 Write-Message -Level Warn "Reported hashrate by '$($Miner.Name)' is unrealistic ($($Algorithm): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ") is not within ±200% of stored value of $(($Stat.Week | ConvertTo-Hash) -replace " "))"
                                 $Miner.SetStatus([MinerStatus]::Idle)
-                                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                 if ($Stat.ToleranceExceeded -ge $Session.Config.WatchdogCount) { Remove-Stat $StatName }
                             }
                         }
@@ -748,12 +747,12 @@ try {
                                 # Stop miner if new value is outside ±200% of current value
                                 Write-Message -Level Warn "Reported power consumption by '$($Miner.Name)' is unrealistic ($($MinerPowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
                                 $Miner.SetStatus([MinerStatus]::Idle)
-                                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
                                 if ($Stat.ToleranceExceeded -ge $Session.Config.WatchdogCount) { Remove-Stat $StatName }
                             }
                         }
                     }
                 }
+                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $(if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { "Running $($Miner.Info)" } else { "Idle" }); $_.SubStatus = $Miner.SubStatus })
                 Remove-Variable Algorithm, CollectedHashrateFactor, CollectedPowerConsumption, MinerData, MinerHashrates, MinerPowerConsumption, Stat, StatName, StatSpan, Worker -ErrorAction Ignore
             }
         }
@@ -817,8 +816,9 @@ try {
                                 $Miner.Workers[$Miner.Workers.IndexOf($Worker)].Fee = if ($Session.Config.IgnoreMinerFee) { 0 } else { $Miner.Fee[$Miner.Workers.IndexOf($Worker)] }
                             }
                             $Miner.PSObject.Properties.Remove("Fee")
-                            $Miner | Add-Member BaseName_Version_Device (($Miner.Name -split "-")[0..2] -join "-")
-                            $Miner | Add-Member Info "$($Miner.BaseName_Version_Device) {$($Miner.Workers.ForEach({ $_.Pool.AlgorithmVariant, $_.Pool.Name -join "@" }) -join " & ")}$(if (($Miner.Name -split "-")[4]) { " ($(($Miner.Name -split "-")[4]))" })"
+                            $Parts = $Miner.Name -split "-"
+                            $Miner | Add-Member BaseName_Version_Device "$($Parts[0])-$($Parts[1])-$($Parts[2])"
+                            $Miner | Add-Member Info "$($Miner.BaseName_Version_Device) {$($Miner.Workers.ForEach({ $_.Pool.AlgorithmVariant, $_.Pool.Name -join "@" }) -join " & ")}$(if ($Parts[4]) { " ($($Parts[4]))" })"
                             $Miner -as $Miner.API
                         }
                         catch { 
@@ -830,7 +830,7 @@ try {
                     }
                 )
              | Sort-Object -Property Info)
-            Remove-Variable Algorithm, AvailableMinerPools, Miner, MinerFileName, MinerPools -ErrorAction Ignore
+            Remove-Variable Algorithm, AvailableMinerPools, Miner, MinerFileName, MinerPools, Parts -ErrorAction Ignore
 
             if ($Session.Config.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info }) }
 
@@ -849,8 +849,7 @@ try {
                                 $Miner = $_
                                 if ($_.SideIndicator -eq "=>") { 
                                     # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
-                                    $_.BaseName = ($_.Name -split "-")[0]
-                                    $_.Version = ($_.Name -split "-")[1]
+                                    $_.BaseName, $_.Version = ($_.Name -split "-")[0, 1]
                                     $_.BaseName_Version = "$($_.BaseName)-$($_.Version)"
 
                                     $_.Algorithms = $_.Workers.Pool.Algorithm
@@ -862,17 +861,19 @@ try {
                                         # Minimum numbers of cycles not yet reached
                                         $_.Restart = $false
                                     }
-                                    # Update existing miners
-                                    elseif ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
-                                        $_.Arguments = $Miner.Arguments
-                                        $_.CommandLine = $Miner.GetCommandLine()
-                                        $_.Port = $Miner.Port
+                                    else { 
+                                        # Update existing miners
+                                        if ($_.Restart = $_.Arguments -ne $Miner.Arguments) { 
+                                            $_.Arguments = $Miner.Arguments
+                                            $_.CommandLine = $Miner.GetCommandLine()
+                                            $_.Port = $Miner.Port
+                                        }
+                                        $_.PrerequisitePath = $Miner.PrerequisitePath
+                                        $_.PrerequisiteURI = $Miner.PrerequisiteURI
+                                        $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
+                                        $_.WarmupTimes = $Miner.WarmupTimes
+                                        $_.Workers = $Miner.Workers
                                     }
-                                    $_.PrerequisitePath = $Miner.PrerequisitePath
-                                    $_.PrerequisiteURI = $Miner.PrerequisiteURI
-                                    $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-                                    $_.WarmupTimes = $Miner.WarmupTimes
-                                    $_.Workers = $Miner.Workers
                                 }
                                 $_.MeasurePowerConsumption = $Session.CalculatePowerCost
                                 $_.Refresh($Session.PowerCostBTCperW, $Session.Config)
@@ -1259,7 +1260,6 @@ try {
                 $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" })) exited unexpectedly"
                 Write-Message -Level Error "Miner $($Miner.StatusInfo)"
                 $Miner.SetStatus([MinerStatus]::Failed)
-                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
             }
             else { 
                 if ($Miner.Benchmark -or $Miner.MeasurePowerConsumption) { 
@@ -1281,7 +1281,7 @@ try {
                     Remove-Variable WatchdogTimers, Worker -ErrorAction Ignore
                 }
             }
-            $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+            $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $(if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { "Running $($Miner.Info)" } else { "Idle" }); $_.SubStatus = $Miner.SubStatus })
         }
         Remove-Variable Miner -ErrorAction Ignore
 
@@ -1334,7 +1334,7 @@ try {
                     $_.Status = [MinerStatus]::Idle
                     $_.StatusInfo = $_.SubStatus = "idle"
                 }
-                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $(if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { "Running $($Miner.Info)" } else { "Idle" }); $_.SubStatus = $Miner.SubStatus })
             }
         )
 
@@ -1425,7 +1425,7 @@ try {
                     $Miner.DataCollectInterval = $DataCollectInterval
                     $Miner.SetStatus([MinerStatus]::Running)
                 }
-                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+                $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = "Running $($Miner.Info)"; $_.SubStatus = $Miner.SubStatus })
 
                 # Add watchdog timer
                 if ($Session.Config.Watchdog) { 
@@ -1458,19 +1458,23 @@ try {
             }
 
             # Do not wait for stable hash rates, for quick and dirty benchmarking
-            if ($Session.Config.DryRun -and $Miner.Benchmark) { $Miner.WarmupTimes[1] = 0 }
-
-            if ($Message = "$(if ($Miner.Benchmark) { "Benchmarking" })$(if ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($Miner.MeasurePowerConsumption) { "Measuring power consumption" })") { 
-                Write-Message -Level Verbose "$Message for miner '$($Miner.Info)' in progress [attempt $($Miner.Activated) of $($Session.WatchdogCount + 1); min. $($Miner.MinDataSample) sample$(if ($Miner.MinDataSample -ne 1) { "s" })]..."
-            }
+            if ($Session.Config.DryRun -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { $Miner.WarmupTimes[1] = 0 }
         }
-        Remove-Variable DataCollectInterval, Message, Miner -ErrorAction Ignore
+        Remove-Variable DataCollectInterval, Miner -ErrorAction Ignore
 
         $Session.RefreshNeeded = $true
 
         $Session.MinersBenchmarkingOrMeasuring = $Session.MinersBest.Where({ $_.Benchmark -or $_.MeasurePowerConsumption })
         $Session.MinersRunning = $Session.MinersBest
         $Session.MinersFailed = [Miner[]]@()
+
+        $Session.MinersBenchmarkingOrMeasuring.ForEach(
+            { 
+                $Message = "$(if ($_.Benchmark) { "Benchmarking" })$(if ($_.Benchmark -and $Min_er.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($_.MeasurePowerConsumption) { "Measuring power consumption" })"
+                Write-Message -Level Verbose "$Message for miner '$($_.Info)' in progress [attempt $($_.Activated) of $($Session.WatchdogCount + 1); min. $($_.MinDataSample) sample$(if ($Min_er.MinDataSample -ne 1) { "s" })]..."
+            }
+        )
+        Remove-Variable Message -ErrorAction Ignore
 
         if ($Session.MinersNeedingBenchmark) { Write-Message -Level Info "Benchmarking: $($Session.MinersNeedingBenchmark.Count) miner$(if ($Session.MinersNeedingBenchmark.Count -ne 1) { "s" }) left [$((($Session.MinersNeedingBenchmark | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }
         if ($Session.MinersNeedingPowerConsumptionMeasurement) { Write-Message -Level Info "Measuring power consumption: $($Session.MinersNeedingPowerConsumptionMeasurement.Count) miner$(if ($Session.MinersNeedingPowerConsumptionMeasurement.Count -ne 1) { "s" }) left [$((($Session.MinersNeedingPowerConsumptionMeasurement | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach({ "$($_.Group[0].BaseName_Version_Device -replace(".+-")): $($_.Count)" }) | Sort-Object) -join ", ")]" }
@@ -1501,13 +1505,6 @@ try {
                         break
                     }
                     else { 
-                        # Set process priority and window title
-                        try { 
-                            $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
-                            [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
-                        }
-                        catch { }
-
                         if ($Miner.DataReaderJob.HasMoreData) { 
                             # Need hashrates for all algorithms to count as a valid sample
                             if ($Samples = @($Miner.DataReaderJob | Receive-Job).Where({ $_.Hashrate.PSObject.Properties.Name -and [Double[]]$_.Hashrate.PSObject.Properties.Value -notcontains 0 })) { 
@@ -1565,7 +1562,15 @@ try {
                             Remove-Variable Seconds
                         }
                     }
-                    $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
+
+                    # Set process priority and window title
+                    try { 
+                        $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
+                        [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
+                    }
+                    catch { }
+
+                    $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $(if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { "Running $($Miner.Info)" } else { "Idle" }); $_.SubStatus = $Miner.SubStatus })
                 }
                 Remove-Variable Miner, Sample, Samples -ErrorAction Ignore
             }

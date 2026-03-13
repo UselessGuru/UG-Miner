@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.32
-Version date:   2026/03/08
+Version:        6.7.33
+Version date:   2026/03/13
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -72,6 +72,7 @@ if ($Algorithms) {
                 }
             }
         )
+        Remove-Variable Intensity, IntensityValues -ErrorAction Ignore
     }
 
     ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
@@ -101,7 +102,7 @@ if ($Algorithms) {
 
                                     if ($AvailableMinerDevices) { 
 
-                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-$($_.Intensity)" })"})"
+                                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-Intensity $($_.Intensity)" })"})"
 
                                         $Arguments = "$($_.Arguments) -pool $(if ($Pool0.PoolPorts[1]) { "ssl://" })$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -wal $($Pool0.User) -pass $($Pool0.Pass)"
                                         $Arguments = switch ($Pool0.Protocol) { 

@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.7.32 / Updated 2026/03/08
+Version 6.7.33 / Updated 2026/03/13
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -243,9 +243,9 @@ A separate section can be added to for each pool. If a pool is listed in this fi
 **Usage**
 
 - Edit '[UG-Miner directory]\Config\PoolsConfig.json' (**be careful with json formatting!**)
-- Add an entry for the pool you want to customize  
-  The name must be the pool base name (omit *24hrs or *Plus), e.g ZPool (even if you have configured ZPoolPlus in the pool list)
-- Add the pool specific configuration items
+- Add an entry for the pool you want to customize
+  The entry name must be the pool base name (omit *24hrs or *Plus), e.g "ZPool" (even if you have configured ZPoolPlus in the pool list)
+- Add the pool specific configuration items, see '' for the supported configuration items.
 
 Note: The configuration editor in the web GUI only updates the generic pool settings. Pool specific settings override the generic settings.
 

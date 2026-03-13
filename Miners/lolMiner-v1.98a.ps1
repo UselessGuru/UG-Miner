@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.32
-Version date:   2026/03/08
+Version:        6.7.33
+Version date:   2026/03/13
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
@@ -82,8 +82,8 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash", "");      Type = "INTEL"; Fee = @(0.007); MinMemGiB = 1.24; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo ETCHASH" } # PhoenixMiner-v6.2c is faster
 
     @{ Algorithms = @("Autolykos2", "");                         Type = "NVIDIA"; Fee = @(0.015);       MinMemGiB = 1.24; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2" }
-    @{ Algorithms = @("Autolykos2", "HeavyHashPyrinV2");         Type = "NVIDIA"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode PYRINV2DUAL --maxdualimpact *" }
-    @{ Algorithms = @("Autolykos2", "SHA3x");                    Type = "NVIDIA"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode SHA3XDUAL --maxdualimpact *" }
+    @{ Algorithms = @("Autolykos2", "HeavyHashPyrinV2");         Type = "NVIDIA"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode PYRINV2DUAL" }
+    @{ Algorithms = @("Autolykos2", "SHA3x");                    Type = "NVIDIA"; Fee = @(0.015, 0.01); MinMemGiB = 1.24; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo AUTOLYKOS2 --dualmode SHA3XDUAL" }
     @{ Algorithms = @("Blake3", "");                             Type = "NVIDIA"; Fee = @(0.075);       MinMemGiB = 2.0;  WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ALEPH" }
     @{ Algorithms = @("BeamV3", "");                             Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 3.0;  WarmupTimes = @(45, 50);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo BEAM-III" }
     @{ Algorithms = @("Cuckoo29", "");                           Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 8.0;  WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@("NiceHash"), @()); Arguments = " --algo C29AE" }
@@ -98,22 +98,22 @@ $Algorithms = @(
 #   @{ Algorithms = @("Equihash1927", "");                       Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 3.0;  WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo EQUI192_7" } # Does not work on Nvidia
     @{ Algorithms = @("Equihash2109", "");                       Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 2.0;  WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo EQUI210_9" }
     @{ Algorithms = @("EtcHash", "");                            Type = "NVIDIA"; Fee = @(0.007);       MinMemGiB = 1.24; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ETCHASH" } # PhoenixMiner-v6.2c is faster
-    @{ Algorithms = @("EtcHash", "Blake3");                      Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(90, 100); ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETCHASH --dualmode ALEPHDUAL --maxdualimpact *" }
+    @{ Algorithms = @("EtcHash", "Blake3");                      Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(90, 100); ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETCHASH --dualmode ALEPHDUAL" }
     @{ Algorithms = @("Ethash", "");                             Type = "NVIDIA"; Fee = @(0.007);       MinMemGiB = 1.24; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ETHASH" } # PhoenixMiner-v6.2c is faster
-    @{ Algorithms = @("Ethash", "Blake3");                       Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(60, 100); ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASH --dualmode ALEPHDUAL --maxdualimpact *" }
+    @{ Algorithms = @("Ethash", "Blake3");                       Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(60, 100); ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASH --dualmode ALEPHDUAL" }
     @{ Algorithms = @("EthashB3", "");                           Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 1.24; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ETHASHB3" }
-    @{ Algorithms = @("EthashB3", "Blake3");                     Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASHB3 --dualmode ALEPHDUAL --maxdualimpact *" }
-    @{ Algorithms = @("EthashB3", "SHA512256d");                 Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(60, 90);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ETHASHB3 --dualmode RXDDUAL --maxdualimpact *" }
+    @{ Algorithms = @("EthashB3", "Blake3");                     Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(45, 90);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo ETHASHB3 --dualmode ALEPHDUAL" }
+    @{ Algorithms = @("EthashB3", "SHA512256d");                 Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(60, 90);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo ETHASHB3 --dualmode RXDDUAL" }
     @{ Algorithms = @("FishHash", "");                           Type = "NVIDIA"; Fee = @(0.0075);      MinMemGiB = 1.24; WarmupTimes = @(45, 20);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH" }
-    @{ Algorithms = @("FishHash", "Blake3");                     Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo FISHHASH --dualmode ALEPHDUAL --maxdualimpact *" }
-    @{ Algorithms = @("FishHash", "HeavyHashPyrinV2");           Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode PYRINV2DUAL --maxdualimpact *" }
-    @{ Algorithms = @("FishHash", "SHA512256d");                 Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode RXDDUAL --maxdualimpact *" }
-    @{ Algorithms = @("FishHash", "SHA3x");                      Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode SHA3XDUAL --maxdualimpact *" }
+    @{ Algorithms = @("FishHash", "Blake3");                     Type = "NVIDIA"; Fee = @(0.01, 0);     MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @("NiceHash")); Arguments = " --algo FISHHASH --dualmode ALEPHDUAL" }
+    @{ Algorithms = @("FishHash", "HeavyHashPyrinV2");           Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode PYRINV2DUAL" }
+    @{ Algorithms = @("FishHash", "SHA512256d");                 Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode RXDDUAL" }
+    @{ Algorithms = @("FishHash", "SHA3x");                      Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(75, 90);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo FISHHASH --dualmode SHA3XDUAL" }
     @{ Algorithms = @("Flux", "");                               Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 1.00; WarmupTimes = @(45, 70);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo FLUX" }
     @{ Algorithms = @("HeavyHashKarlsen", "");                   Type = "NVIDIA"; Fee = @(0.0075);      MinMemGiB = 2.0;  WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo KARLSEN" }
     @{ Algorithms = @("HeavyHashKarlsenV2", "");                 Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 1.24; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2" }
-    @{ Algorithms = @("HeavyHashKarlsenV2", "HeavyHashPyrinV2"); Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2 --dualmode PYRINV2DUAL --maxdualimpact *" }
-    @{ Algorithms = @("HeavyHashKarlsenV2", "SHA3x");            Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2 --dualmode SHA3XDUAL --maxdualimpact *" }
+    @{ Algorithms = @("HeavyHashKarlsenV2", "HeavyHashPyrinV2"); Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2 --dualmode PYRINV2DUAL" }
+    @{ Algorithms = @("HeavyHashKarlsenV2", "SHA3x");            Type = "NVIDIA"; Fee = @(0.01, 0.01);  MinMemGiB = 1.24; WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo KARLSENV2 --dualmode SHA3XDUAL" }
     @{ Algorithms = @("HeavyHashPyrin", "");                     Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 2.0;  WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo PYRIN" }
     @{ Algorithms = @("HeavyHashPyrinV2", "");                   Type = "NVIDIA"; Fee = @(0.01);        MinMemGiB = 2.0;  WarmupTimes = @(30, 0);   ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @(@(), @());           Arguments = " --algo PYRINV2" }
     @{ Algorithms = @("NexaPow", "");                            Type = "NVIDIA"; Fee = @(0.02);        MinMemGiB = 3.0;  WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";                ExcludePools = @(@(), @());           Arguments = " --algo NEXA" }
@@ -147,6 +147,7 @@ if ($Algorithms) {
                 }
             }
         )
+        Remove-Variable MaxDualImpactValue, MaxDualImpactValues -ErrorAction Ignore
     }
 
     ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
@@ -170,7 +171,7 @@ if ($Algorithms) {
                                 if ($_.Algorithms[0] -match '^Cuckaroo.*$|^Cuckoo.*$' -and ([System.Environment]::OSVersion.Version -ge [System.Version]"10.0.0.0")) { $MinMemGiB += 1 }
                                 if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
 
-                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.MaxDualImpact) { "-$($_.MaxDualImpact)" })"})"
+                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.MaxDualImpact -gt 0) { "-MaxDualImpact $($_.MaxDualImpact)" })"})"
 
                                     $Arguments = $_.Arguments
 

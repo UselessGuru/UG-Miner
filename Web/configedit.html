@@ -716,17 +716,15 @@
           $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('device-' + device.Name).toLowerCase(), value: device.Name, style: 'margin-top:0.3rem' }).appendTo(devicescontainer);
           $('<label/>', { for: ('device-' + device.Name).toLowerCase(), text: (device.Name + ': ' + device.Model), style: 'margin-left:5px' }).appendTo(devicescontainer);
           $('<br>').appendTo(devicescontainer);
-          if (device.State == 0) {
-            document.getElementById(('device-' + device.Name).toLowerCase()).checked = true;
-            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
-          };
-          if (device.State == 1) {
-            document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
-            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
-          };
           if (device.State == 2) {
             document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
             document.getElementById(('device-' + device.Name).toLowerCase()).disabled = true;
+          } else if (config.ExcludeDeviceName.indexOf(device.Name) == -1) {
+            document.getElementById(('device-' + device.Name).toLowerCase()).checked = true;
+            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
+          } else {
+            document.getElementById(('device-' + device.Name).toLowerCase()).checked = false;
+            document.getElementById(('device-' + device.Name).toLowerCase()).disabled = false;
           };
         });
       }

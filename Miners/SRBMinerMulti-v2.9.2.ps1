@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.32
-Version date:   2026/03/08
+Version:        6.7.33
+Version date:   2026/03/13
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
@@ -37,8 +37,6 @@ $DeviceEnumerator = "Type_Vendor_Slot"
 # UG: Added Liberty (removed in v2.9.8)
 # UG: Added SHA256dt (removed in v2.9.8)
 # UG: Added FpHash (removed in v3.1.2)
-# UG: Added YescryptR16 for AMD (removed in v3.1.9)
-# UG: Added YescryptR32 for AMD (removed in v3.1.9)
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
@@ -59,8 +57,6 @@ $Algorithms = @(
     @{ Algorithms = @("ProgPowVeil", "");       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_veil") }
     @{ Algorithms = @("SHA256dt", "");          Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(45, 20); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm sha256dt") }
     @{ Algorithms = @("XeChain", "");           Type = "AMD"; Fee = @(0.01);           MinMemGiB = 1;    WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm xechain") }
-    @{ Algorithms = @("YescryptR16", "");       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm yescryptr16") }
-    @{ Algorithms = @("YescryptR32", "");       Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm yescryptr32") }
 
     @{ Algorithms = @("Argon2d16000", "");     Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 15); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm argon2d_16000") } # Bad shares in v2.9.9
     @{ Algorithms = @("YespowerDogemone", ""); Type = "CPU"; Fee = @(0.0085); WarmupTimes = @(60, 25); ExcludePools = @(@(), @()); Arguments = @(" --disable-gpu --algorithm yespowerdogemone") }
@@ -109,8 +105,8 @@ if ($Algorithms) {
 
     if (-not $Session.Config.DryRun) { 
         # Allowed max loss for 1. algorithm
-        # $GpuDualMaxLosses = @(2, 4, 7, 10, 15, 21, 30)
-        $GpuDualMaxLosses = @(5)
+        $GpuDualMaxLosses = @(2, 4, 7, 10, 15, 21, 30)
+        # $GpuDualMaxLosses = @(5)
 
         # Build command sets for max loss
         $Algorithms = $Algorithms.ForEach(
@@ -124,6 +120,7 @@ if ($Algorithms) {
                 }
             }
         )
+        Remove-Variable GpuDualMaxLosses, GpuDualMaxLoss -ErrorAction Ignore
     }
 
     ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
@@ -155,7 +152,7 @@ if ($Algorithms) {
                                 $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
                                 if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
 
-                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.GpuDualMaxLoss) { "-$($_.GpuDualMaxLoss)" })"})"
+                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.GpuDualMaxLoss) { "-DualMaxLoss $($_.GpuDualMaxLoss)" })"})"
 
                                     $Arguments = ""
                                     foreach ($Pool in $Pools) { 

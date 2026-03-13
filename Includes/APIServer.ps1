@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.32
-Version date:   2026/03/08
+Version:        6.7.33
+Version date:   2026/03/13
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.30"
+$APIversion = "6.0.32"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -212,27 +212,29 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/config/device/disable" { 
             foreach ($Key in $Parameters.Keys) { 
-                if ($Values = @(($Parameters.$Key -split ",").Where({ $_ -notin $Session.Config.ExcludeDeviceName }))) { 
+                if ($Values = @(($Parameters.$Key -split ",").Where({ $_ -notin $Config.ExcludeDeviceName }))) { 
                     try { 
-                        $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
-                        $Session.Config.ExcludeDeviceName = @((@($Session.Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
-                        Write-Configuration -Config $Session.Config
+                        $ExcludeDeviceName = $Config.ExcludeDeviceName
+                        $Config.ExcludeDeviceName = @((@($Config.ExcludeDeviceName) + $Values) | Sort-Object -Unique)
+                        Write-Configuration -Config $Config
                         $Data = "Device configuration changed`n`nOld values:"
                         $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                         $Data += "`n`nNew values:"
-                        $Data += "`nExcludeDeviceName: '[$($Session.Config."ExcludeDeviceName" -join ", ")]'"
+                        $Data += "`nExcludeDeviceName: '[$($Config.ExcludeDeviceName -join ", ")]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
-                        $Session.Devices.Where({ $Values -contains $_.Name }).ForEach(
+                        $Session.Devices.Where({ $_.Name -in $Values }).ForEach(
                             { 
-                                $_.State = [DeviceState]::Disabled
-                                if ("Benchmarking", "Running", "WarmingUp" -contains $_.SubStatus) { $_.StatusInfo = "$($_.StatusInfo); will get disabled at end of cycle" }
+                                if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running ) { 
+                                    $_.StatusInfo = "$($_.StatusInfo); will get disabled in the next cycle"
+                                }
                                 else { 
                                     $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')"
-                                    $_.Status = "Idle"
+                                    $_.State = [DeviceState]::Disabled
+                                    $_.Status = [MinerStatus]::Idle
                                 }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(if ($Values.Count -ne 1) { "s" }) $($Values -join ", " -replace ",([^,]*)$", " &`$1") marked as disabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become active in the next cycle."
+                        Write-Message -Level Verbose "Web GUI: Device$(if ($Values.Count -ne 1) { "s" }) '$($Values -join "', '" -replace ",([^,]*)$", " &`$1")' marked as disabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become active in the next cycle."
                     }
                     catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -247,25 +249,28 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/config/device/enable" { 
             foreach ($Key in $Parameters.Keys) { 
-                if ($Values = @(($Parameters.$Key -split ",").Where({ $Session.Config.ExcludeDeviceName -contains $_ }))) { 
+                if ($Values = @(($Parameters.$Key -split ",").Where({ $Config.ExcludeDeviceName -contains $_ }))) { 
                     try { 
-                        $ExcludeDeviceName = $Session.Config.ExcludeDeviceName
-                        $Session.Config.ExcludeDeviceName = @($Session.Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
-                        Write-Configuration -Config $Session.Config
+                        $ExcludeDeviceName = $Config.ExcludeDeviceName
+                        $Config.ExcludeDeviceName = @($Config.ExcludeDeviceName.Where({ $_ -notin $Values }) | Sort-Object -Unique)
+                        Write-Configuration -Config $Config
                         $Session.ConfigurationHasChangedDuringUpdate = $false
                         $Data = "Device configuration changed`n`nOld values:"
                         $Data += "`nExcludeDeviceName: '[$($ExcludeDeviceName -join ", ")]'"
                         $Data += "`n`nNew values:"
-                        $Data += "`nExcludeDeviceName: '[$($Session.Config."ExcludeDeviceName" -join ", " )]'"
+                        $Data += "`nExcludeDeviceName: '[$($Config.ExcludeDeviceName -join ", " )]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
-                        $Session.Devices.Where({ $Values -contains $_.Name }).ForEach(
+                        $Session.Devices.Where({ $_.Name -in $Values }).ForEach(
                             { 
-                                $_.State = [DeviceState]::Enabled
-                                if ($_.StatusInfo -like "* {*@*}; will get enabled at end of cycle") { $_.StatusInfo = $_.StatusInfo -replace "; will get enabled at end of cycle" }
-                                else { $_.Status = $_.StatusInfo = $_.SubStatus = "Idle" }
+                                if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running ) { 
+                                    $_.StatusInfo = $_.StatusInfo -replace "; will get disabled in the next cycle" }
+                                else { 
+                                    $_.State = [DeviceState]::Enabled
+                                    $_.Status = $_.StatusInfo = $_.SubStatus = [MinerStatus]::Idle
+                                }
                             }
                         )
-                        Write-Message -Level Verbose "Web GUI: Device$(if ($Values.Count -ne 1) { "s" }) $($Values -join ", " -replace ",([^,]*)$", " &`$1") marked as enabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
+                        Write-Message -Level Verbose "Web GUI: Device$(if ($Values.Count -ne 1) { "s" }) '$($Values -join "', '" -replace ",([^,]*)$", " &`$1")' marked as enabled. Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'. It will become fully active in the next cycle."
                     }
                     catch { 
                         $Data = "Error saving configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`n`n[ $($_) ]"
@@ -286,13 +291,20 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach(
                     { 
-                        if ($Session.Config.ExcludeDeviceName -contains $_.Name) { 
-                            $_.State = [DeviceState]::Disabled
-                            if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running -and -$_.Status -notlike "*; will get disabled at end of cycle") { $_.Status = "$($_.Status); will get disabled at end of cycle" }
+                        if ($Config.ExcludeDeviceName -contains $_.Name) { 
+                            if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running ) { 
+                                $_.StatusInfo = "$($_.StatusInfo); will get disabled in the next cycle"
+                            }
+                            else { 
+                                $_.State = [DeviceState]::Disabled
+                                $_.Status = [MinerStatus]::Idle
+                                $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')"
+                            }
                         }
                         else { 
                             $_.State = [DeviceState]::Enabled
-                            $_.Status = $_.Status -replace "; will get disabled at end of cycle"
+                            if ($_.Status -notin [MinerStatus]::DryRun, [MinerStatus]::Running ) { $_.Status = [MinerStatus]::Idle }
+                            $_.StatusInfo = $_.StatusInfo -replace "; will get disabled in the next cycle"
                         }
                     }
                 )
@@ -735,15 +747,15 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/devices/enabled" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -eq "Enabled" }) | Sort-Object -Property Name)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Config.ExcludeDeviceName }) | Sort-Object -Property Name)
             break
         }
         "/devices/disabled" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -eq "Disabled" }) | Sort-Object -Property Name)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -in $Config.ExcludeDeviceName }) | Sort-Object -Property Name)
             break
         }
         "/devices/unsupported" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -eq "Unsupported" }) | Sort-Object -Property Name)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where({ $_.State -eq [DeviceState]::Unsupported }) | Sort-Object -Property Name)
             break
         }
         "/donationdata" { 

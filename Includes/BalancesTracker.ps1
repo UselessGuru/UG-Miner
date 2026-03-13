@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.7.32
-Version date:   2026/03/08
+Version:        6.7.33
+Version date:   2026/03/13
 #>
 
 using module .\Include.psm1
@@ -89,7 +89,7 @@ do {
                         Write-Message -Level Debug "Balances tracker for pool '$_': End building balances objects"
                     }
                     catch {
-                        Write-Message -Level Debug "Balances tracker for pool '$_': Error building balances objects"
+                        Write-Message -Level Error "Balances tracker for pool '$_': Error building balances objects"
                     }
                 }
             )

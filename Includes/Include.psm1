@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.32
-Version date:   2026/03/08
+Version:        6.7.33
+Version date:   2026/03/13
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -401,8 +401,8 @@ class Miner : IDisposable {
         $this = $null
     }
 
-    [String[]]GetProcessNames() { 
-        return @(([IO.FileInfo]($this.Path | Split-Path -Leaf)).BaseName)
+    [String]GetCommandLine() { 
+        return "$($this.Path)$($this.GetCommandLineParameters())"
     }
 
     [String]GetCommandLineParameters() { 
@@ -414,8 +414,8 @@ class Miner : IDisposable {
         }
     }
 
-    [String]GetCommandLine() { 
-        return "$($this.Path)$($this.GetCommandLineParameters())"
+    [String[]]GetProcessNames() { 
+        return @(([IO.FileInfo]($this.Path | Split-Path -Leaf)).BaseName)
     }
 
     hidden [Void]StartDataReader() { 
@@ -449,10 +449,10 @@ class Miner : IDisposable {
 
     hidden [Void]StopDataReader() { 
         if ($this.DataReaderJob) { 
-            $this.DataReaderJob | Stop-Job
+            $null = ($this.DataReaderJob | Stop-Job)
             # Get data before removing read data
             if ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).Where({ $_.Date }).ForEach({ $null = $this.Data.Add($_) }) }
-            $null =( $this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore)
+            $null = ($this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore)
             $this.DataReaderJob = $null
         }
     }
@@ -761,10 +761,12 @@ class Miner : IDisposable {
             $this.Earnings = 0
             $this.Earnings_Accuracy = 0
             $this.Earnings_Bias = 0
-            $this.Workers.ForEach({ 
-                $this.Earnings += $_.Earnings
-                $this.Earnings_Bias += $_.Earnings_Bias
-            })
+            $this.Workers.ForEach(
+                { 
+                    $this.Earnings += $_.Earnings
+                    $this.Earnings_Bias += $_.Earnings_Bias
+                }
+            )
             if ($this.Earnings) { $this.Workers.ForEach({ $this.Earnings_Accuracy += $_.Earnings_Accuracy * $_.Earnings / $this.Earnings }) }
         }
 
@@ -1616,13 +1618,15 @@ function Update-ConfigFile {
         }
         Write-Message -Level Warn "Available mining locations have changed during update ($OldRegion -> $($Config.Region))".
         $Session.ConfigurationHasChangedDuringUpdate += "- Available mining locations have changed ($OldRegion -> $($Config.Region))"
+        Remove-Variable OldRegion
     }
 
     # Changed config items
     ($Config.GetEnumerator().Name | Sort-Object).ForEach(
         { 
             switch ($_) { 
-                # "OldParameterName" { $Config.NewParameterName = $Config.$_; $Config.Remove($_) }
+                # To replace a configuration item: 
+                # "OldConfigItemName" { $Config.NewConfigItemName = $Config.$_; $Config.Remove($_) }
                 "BalancesShowInMainCurrency"  { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); break }
                 "ExcludeMinerName"            { $Config.$_ = $Config.$_ -replace '^-'; break }
                 "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
@@ -2840,28 +2844,34 @@ function Initialize-AutoUpdate {
     if (-not (Test-Path -LiteralPath ".\AutoUpdate" -PathType Container)) { $null = (New-Item -Path . -Name "AutoUpdate" -ItemType Directory) }
     if (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { $null = (New-Item -Path . -Name "Logs" -ItemType Directory) }
 
-    $UpdateScript = ".\AutoUpdate\AutoUpdate.ps1"
-    $UpdateScriptURL = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/AutoUpdate/AutoUpdate.ps1"
     $UpdateLog = ".\Logs\AutoUpdateLog_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
+    $UpdateScript = ".\AutoUpdate\$($UpdateVersion.UpdateScript -replace ".+/")"
+    $UpdateScriptURL = $UpdateVersion.UpdateScript
 
     # Download update script
-    $CursorPosition = $Host.UI.RawUI.CursorPosition
-    "Downloading update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
     try { 
-        Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
-        try {
-            [Console]::SetCursorPosition(28, $CursorPosition.y)
-            Write-Host " ✔" -ForegroundColor Green
-        }
-        catch { }
         $CursorPosition = $Host.UI.RawUI.CursorPosition
-        "Executing update script..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
-        try { 
-            [Console]::SetCursorPosition(25, $CursorPosition.y)
+        "Downloading update script '$($UpdateScript)'..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
+        try {
+            Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
+            [Console]::SetCursorPosition((32  + $UpdateScript.length), $CursorPosition.y)
             Write-Host " ✔" -ForegroundColor Green
         }
-        catch { }
-        . $UpdateScript
+        catch { 
+            [Console]::SetCursorPosition((32  + $UpdateScript.length), $CursorPosition.y)
+            Write-Host " ✖" -ForegroundColor Red
+        }
+        $CursorPosition = $Host.UI.RawUI.CursorPosition
+       "Executing update script '$($UpdateScript)'..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
+        try { 
+            . $UpdateScript
+            [Console]::SetCursorPosition((29 + $UpdateScript.length), $CursorPosition.y)
+            Write-Host " ✔" -ForegroundColor Green
+        }
+        catch { 
+            [Console]::SetCursorPosition((29 + $UpdateScript.length), $CursorPosition.y)
+            Write-Host " ✖" -ForegroundColor Red
+        }
     }
     catch { 
         try { 
@@ -2871,7 +2881,6 @@ function Initialize-AutoUpdate {
         catch { }
         "Downloading update script failed. Cannot complete auto-update :-(" | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Error
     }
-    $UpdateScript = ".\AutoUpdate\AutoUpdate.ps1"
     Remove-Variable CursorPosition, UpdateScript, UpdateScriptURL, UpdateLog
 }
 
@@ -2928,6 +2937,7 @@ function Update-PoolWatchdog {
 }
 
 function Test-IsPrime { 
+
     param (
         [Parameter (Mandatory = $true)]
         [UInt64]$Number
