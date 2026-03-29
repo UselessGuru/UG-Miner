@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.33
-Version date:   2026/03/13
+Version:        6.7.34
+Version date:   2026/03/29
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -3742,9 +3742,9 @@ function Start-APIserver {
         $TCPclient = [System.Net.Sockets.TCPClient]::new()
         $AsyncResult = $TCPclient.BeginConnect("127.0.0.1", $Session.Config.APIport, $null, $null)
         if ($AsyncResult.AsyncWaitHandle.WaitOne(100)) { 
-            Write-Message -Level Error "Error starting API on port $($Session.Config.APIport). Port is in use."
+            Write-Message -Level Error "Error starting API on TCP port $($Session.Config.APIport). Port is in use."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Warn "Using TCP port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
             [Void]$TCPclient.Dispose()
 
             return
@@ -3782,7 +3782,7 @@ function Start-APIserver {
                     $Session.APIport = $Session.Config.APIport
                     if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.Config.APIlogfile -Force -ErrorAction Ignore }
                     $Session.MinerBaseAPIport = $Session.APIport + 1
-                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+                    Write-Message -Level Info "API and web GUI is running on http://localhost:$($Session.APIport). Using TCP port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
                     # Start Web GUI (show configuration edit if no existing config)
                     if ($Session.Config.WebGUI) { Start-Process "http://localhost:$($Session.APIport)$(if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { "/configedit.html" })" }
                     break
@@ -3796,9 +3796,9 @@ function Start-APIserver {
             $Session.MinerBaseAPIport = $Session.Config.MinerBaseAPIport
         }
         else { 
-            Write-Message -Level Error "Error starting API on port $($Session.Config.APIport)."
+            Write-Message -Level Error "Error starting API on TCP port $($Session.Config.APIport)."
             $Session.MinerBaseAPIport = 4000
-            Write-Message -Level Warn "Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
+            Write-Message -Level Warn "Using TCP port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count)" }) for miner communication."
         }
     }
 }
@@ -3810,7 +3810,7 @@ function Stop-APIserver {
         if ($Session.APIserver.IsListening) { 
             $Session.APIserver.Stop()
             if (-not $Session.MinerBaseAPIport) { $Session.MinerBaseAPIport = 4000 }
-            Write-Message -Level Verbose "Stopped API and web GUI on port $($Session.APIport). Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Verbose "Stopped API and web GUI on TCP port $($Session.APIport). Using TCP port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
         }
 
         $Session.APIserver.Close()
@@ -4059,9 +4059,11 @@ function Read-Config {
                             "HiveON" { 
                                 if (-not $PoolConfig.Wallets) { 
                                     $PoolConfig.Wallets = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase) # as ssorted case insensitive hash table
-                                    $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach({ 
+                                    $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach(
+                                        { 
                                             $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_
-                                        })
+                                        }
+                                    )
                                 }
                                 break
                             }

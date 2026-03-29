@@ -1,3 +1,14 @@
+Changelog UG-Miner 6.7.34 2026/03/29
+====================================
+
+Fixes:
+- Core: Typo in benchmarking output (regression from 6.7.33)
+
+Miner updates:
+- SRBMinerMulti-v3.2.3
+- XmRig-v6.25.0
+
+
 Changelog UG-Miner 6.7.33 2026/03/13
 ====================================
 

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.33
-Version date:   2026/03/13
+Version:        6.7.34
+Version date:   2026/03/29
 #>
 
 using module .\Include.psm1
@@ -1470,7 +1470,7 @@ try {
 
         $Session.MinersBenchmarkingOrMeasuring.ForEach(
             { 
-                $Message = "$(if ($_.Benchmark) { "Benchmarking" })$(if ($_.Benchmark -and $Min_er.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($_.MeasurePowerConsumption) { "Measuring power consumption" })"
+                $Message = "$(if ($_.Benchmark) { "Benchmarking" })$(if ($_.Benchmark -and $_.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($_.MeasurePowerConsumption) { "Measuring power consumption" })"
                 Write-Message -Level Verbose "$Message for miner '$($_.Info)' in progress [attempt $($_.Activated) of $($Session.WatchdogCount + 1); min. $($_.MinDataSample) sample$(if ($Min_er.MinDataSample -ne 1) { "s" })]..."
             }
         )

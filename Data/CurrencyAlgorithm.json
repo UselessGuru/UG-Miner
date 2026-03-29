@@ -75,6 +75,7 @@
   "DOGE": "Scrypt",
   "DOGM": "Scrypt",
   "DOGPU": "KawPow",
+  "DUTA": "DutaHashV4",
   "DVT": "SHA256",
   "DYN": "Argon2d500",
   "EAC": "Scrypt",

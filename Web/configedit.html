@@ -987,6 +987,12 @@
     if (config.ShowChangeLog) document.getElementById('ShowChangeLog').checked = true;
     if (config.BackupOnAutoUpdate) document.getElementById('BackupOnAutoUpdate').checked = true;
 
+    $(document.getElementById('AutoUpdateCheckInterval')).change(function (event) {
+      document.getElementById('AutoUpdate').disabled = (document.getElementById('AutoUpdateCheckInterval').value == 0);
+      document.getElementById('ShowChangeLog').disabled = (document.getElementById('AutoUpdateCheckInterval').value == 0);
+      document.getElementById('BackupOnAutoUpdate').disabled = (document.getElementById('AutoUpdateCheckInterval').value == 0);
+    });
+
     $('body').css('cursor', 'default');
 
     $.ajax({

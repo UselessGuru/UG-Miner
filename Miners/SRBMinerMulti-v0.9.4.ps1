@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.33
-Version date:   2026/03/13
+Version:        6.7.34
+Version date:   2026/03/29
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -29,7 +29,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
-# Algorithm parameter values are case sensitive!
+# Algorithm names in arguments values are case sensitive!
 $Algorithms = @( 
     @{ Algorithm = "0x10";              Fee = @(0.0085); MinMemGiB = 2;    WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu --algorithm 0x10" }
     @{ Algorithm = "Argon2d16000";      Fee = @(0.0085); MinMemGiB = 1;    WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --disable-cpu --algorithm argon2d_16000" }
