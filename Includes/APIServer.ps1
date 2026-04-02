@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.34
-Version date:   2026/03/29
+Version:        6.7.35
+Version date:   2026/04/02
 #>
 
 using module .\Include.psm1
@@ -309,6 +309,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     }
                 )
                 $Session.Remove("ConfigurationHasChangedDuringUpdate")
+                $Session.Config.UseColorForMinerStatus = $Config.UseColorForMinerStatus
                 $Session.RestartCycle = $true
 
                 $Data = "Configuration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."

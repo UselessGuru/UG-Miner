@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.34
-Version date:   2026/03/29
+Version:        6.7.35
+Version date:   2026/04/02
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -93,7 +93,7 @@ namespace PInvoke.Win32 {
 
     public static class UserInput { 
 
-        [DllImport("user32.dll", SetLastError=false)]
+        [DllImport("user32.dll", SetLastError = false)]
         private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
         [StructLayout(LayoutKind.Sequential)]
@@ -1261,9 +1261,8 @@ function Get-Rate {
                 $Currencies.ForEach(
                     { 
                         $Currency = $_
-                        $mCurrency = "m$Currency"
-                        $Rates | Add-Member $mCurrency $Rates.$Currency.PSObject.Copy() -Force
-                        $Rates.$mCurrency.PSObject.Properties.Name.ForEach({ $Rates.$mCurrency | Add-Member $_ ([Double]$Rates.$Currency.$_ / 1000) -Force })
+                        $Rates | Add-Member "m$Currency" $Rates.$Currency.PSObject.Copy() -Force
+                        $Rates.$mCurrency.PSObject.Properties.Name.ForEach({ $Rates."m$Currency" | Add-Member $_ ([Double]$Rates.$Currency.$_ / 1000) -Force })
                     }
                 )
                 $Rates.PSObject.Properties.Name.ForEach(
@@ -1271,13 +1270,13 @@ function Get-Rate {
                         $Currency = $_
                         $Rates.PSObject.Properties.Name.Where({ $Currencies -contains $_ }).ForEach(
                             { 
-                                $mCurrency = "m$($_)"
-                                $Rates.$Currency | Add-Member $mCurrency ([Double]$Rates.$Currency.$_ * 1000) -Force
+                                $Rates.$Currency | Add-Member $"m$Currency" ([Double]$Rates.$Currency.$_ * 1000) -Force
                             }
                         )
                     }
                 )
             }
+            Remove-Variable Currency -ErrorAction Ignore
 
             Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
             if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
@@ -1349,12 +1348,14 @@ function Write-Message {
         if ($Session.TextBoxSystemLog) { 
             $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
             $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
-            $TextLength = $Session.TextBoxSystemLog.TextLength
 
             # Keep only 200 lines, more lines impact performance
-            if ($Session.TextBoxSystemLog.Lines.Count -gt 250) { $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200 }
+            if ($Session.TextBoxSystemLog.Lines.Count -gt 200) { 
+                $TextLength = $Session.TextBoxSystemLog.TextLength
+                $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200
+                $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
+            }
 
-            $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
             if ($SelectionLength -and $SelectionStart -ge 0) { 
                 $Session.TextBoxSystemLog.Lines += $Message
                 $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)

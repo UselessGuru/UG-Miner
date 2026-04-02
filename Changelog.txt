@@ -1,3 +1,13 @@
+Changelog UG-Miner 6.7.35 2026/04/02
+====================================
+
+Improvements:
+- Core: Remove obsolete code & minor code optimizations
+
+Miner uodates:
+- SRBMinerMulti-v3.2.5
+
+
 Changelog UG-Miner 6.7.34 2026/03/29
 ====================================
 
@@ -16,7 +26,7 @@ Changes:
 - Miners: Rename dual miner stat file names
 
 Fixes:
-- Core & API: Confguration change when enabling / disabling devices not getting activated in core cyle
+- Core & API: Configuration change when enabling / disabling devices not getting activated in core cycle
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations

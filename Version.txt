@@ -4,5 +4,5 @@
   "Product": "UG-Miner",
   "Uri": "https://github.com/UselessGuru/UG-Miner/archive/refs/heads/master.zip",
   "UpdateScript": "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/AutoUpdate/Autoupdate.ps1",
-  "Version": "6.7.34"
+  "Version": "6.7.35"
 }
