@@ -4,7 +4,7 @@ Changelog UG-Miner 6.7.35 2026/04/02
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner uodates:
+Miner updates:
 - SRBMinerMulti-v3.2.5
 
 
