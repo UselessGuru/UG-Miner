@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 using module ..\Includes\Include.psm1
@@ -214,11 +214,6 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
         $DurationsAvg = ($Durations | Measure-Object -Average).Average
 
         Write-Message -Level Debug "Brain '$Name': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$Name.PSObject.Properties.Name.Count) valid pools."
-
-        $Error.Clear()
-        [System.GC]::Collect()
-        [System.GC]::WaitForPendingFinalizers()
-        [System.GC]::Collect()
     }
 
     while (-not $Session.MyIPaddress -or $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime)) { 

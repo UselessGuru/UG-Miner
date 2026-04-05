@@ -1,3 +1,14 @@
+Changelog UG-Miner 6.7.36 2026/04/??
+====================================
+
+Changes:
+- Core: No more programmatically triggered memory garbaga collection
+
+Fixes:
+- Core: 'Data\PoolsLastEarnings.json' getting cleared on each run
+- Core / LegacyGUI.ps1: Various cosmetic errors
+
+
 Changelog UG-Miner 6.7.35 2026/04/02
 ====================================
 
@@ -391,7 +402,7 @@ Changelog UG-Miner 6.7.2 2025/11/29
 ===================================
 
 Changes:
-- Core: Split '.\Data\PooLData.json' into separate files per pool
+- Core: Split '.\Data\PoolData.json' into separate files per pool
 - Renamed configuration item
     LogLogBalanceAPIResponseToFile -> BalancesTrackerLogAPIResponse
   Configuration file will get updated automatically during update
@@ -932,7 +943,7 @@ Enhancements:
 
 Fixes:
 - Core: Frequent failed miners on fast PCs (thanks to Szentigrade)
-- Core: On crashed miner an invalid miner exit status written to .\Logs\SwitchingLog.txt
+- Core: On crashed miner an invalid miner exit status written to '.\Logs\SwitchingLog.txt'
 - HashCryptos pool: Verify validity of payout currency (Add reason 'Payout currency [...] not supported by by pool')
 - Web GUI / Configuration editor: Incorrect error message when invalid main (FIAT) currency was configured (thanks to Szentigrade)
 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -69,6 +69,3 @@ $PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
         }
     }
 )
-
-$Error.Clear()
-[System.GC]::Collect()

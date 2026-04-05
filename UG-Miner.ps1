@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 using module .\Includes\Include.psm1
@@ -264,7 +264,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$UseUnprofitableAlgorithms = $false, # If true UG-Miner will also use unprofitable algorithms
     [Parameter (Mandatory = $false)]
-    [Hashtable]$Wallets = @{ "BTC" = "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF" }, # list of currenc = wyalletaddress pairs
+    [Hashtable]$Wallets = @{ "BTC" = "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF" }, # list of currency = walletaddress pairs
     [Parameter (Mandatory = $false)]
     [Switch]$Watchdog = $true, # If true UG-Miner will automatically put pools and/or miners temporarily on hold it they fail $WatchdogCount times in a row
     [Parameter (Mandatory = $false)]
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.7.35"
+    Version      = [System.Version]"6.7.36"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

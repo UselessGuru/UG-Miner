@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 [NoRunspaceAffinity()]
@@ -36,6 +36,7 @@ class NanoMiner : Miner {
         }
         catch { 
             Write-Message -Level Error "Creating miner config files for '$($this.Info)' failed [Error: '$($Error | Select-Object -First 1)']."
+            $Error.Remove($Error[$Error.Count - 1])
             return
         }
     }

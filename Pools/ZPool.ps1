@@ -118,6 +118,3 @@ if ($PriceField) {
 }
 
 Write-Message -Level Debug "Pool '$PoolVariant': End"
-
-$Error.Clear()
-[System.GC]::Collect()

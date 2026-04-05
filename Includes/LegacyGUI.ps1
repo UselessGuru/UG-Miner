@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -180,7 +180,7 @@ function CheckBoxSwitchingLog_Click {
             $LegacyGUIelements.SwitchingLogDGV.Columns[7].FillWeight = 35; $LegacyGUIelements.SwitchingLogDGV.Columns[7].DefaultCellStyle.Alignment = "MiddleRight"; $LegacyGUIelements.SwitchingLogDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
             $LegacyGUIelements.SwitchingLogDGV.Columns[8].FillWeight = 30 + ($LegacyGUIelements.SwitchingLogDGV.MinersBest_Combo.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15; $LegacyGUIelements.SwitchingLogDGV.Columns[8].HeaderText = "Device(s)"
             $LegacyGUIelements.SwitchingLogDGV.Columns[9].FillWeight = 30
-            $LegacyGUIelements.SwitchingLogDGV.Columns[10].FillWeight = 0; $LegacyGUIelements.SwitchingLogDGV.Columns[10].Visible = $false
+            $LegacyGUIelements.SwitchingLogDGV.Columns[10].Visible = $false
 
             $LegacyGUIelements.SwitchingLogClearButton.Enabled = $true
 
@@ -309,7 +309,7 @@ function Update-TabControl {
 
                     $LegacyGUIelements.ActiveMinersDGV.Columns[0].Visible = $false
                     $LegacyGUIelements.ActiveMinersDGV.Columns[1].Visible = $false
-                    if (-not $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged -and $LegacyGUIelements.ActiveMinersDGV.Columns) { 
+                    if ($LegacyGUIelements.ActiveMinersDGV.Columns -and -not $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged) { 
                         $LegacyGUIelements.ActiveMinersDGV.Columns[2].FillWeight = 45 + ($Session.MinersBest.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                         $LegacyGUIelements.ActiveMinersDGV.Columns[3].FillWeight = 190
                         $LegacyGUIelements.ActiveMinersDGV.Columns[4].FillWeight = 52; $LegacyGUIelements.ActiveMinersDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.ActiveMinersDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
@@ -448,7 +448,7 @@ function Update-TabControl {
 
                     $LegacyGUIelements.BalancesDGV.Sort($LegacyGUIelements.BalancesDGV.Columns[1], [System.ComponentModel.ListSortDirection]::Ascending)
 
-                    if (-not $LegacyGUIelements.BalancesDGV.ColumnWidthChanged -and $LegacyGUIelements.BalancesDGV.Columns) { 
+                    if ($LegacyGUIelements.BalancesDGV.Columns -and -not $LegacyGUIelements.BalancesDGV.ColumnWidthChanged) { 
                         $LegacyGUIelements.BalancesDGV.Columns[0].Visible = $false
                         $LegacyGUIelements.BalancesDGV.Columns[1].FillWeight = 100
                         $LegacyGUIelements.BalancesDGV.Columns[2].FillWeight = 70; $LegacyGUIelements.BalancesDGV.Columns[2].DefaultCellStyle.Alignment = $LegacyGUIelements.BalancesDGV.Columns[2].HeaderCell.Style.Alignment = "MiddleRight"
@@ -463,7 +463,7 @@ function Update-TabControl {
                         $LegacyGUIelements.BalancesDGV.Columns[11].FillWeight = 70
                         $LegacyGUIelements.BalancesDGV.Columns[12].FillWeight = 100
 
-                        $LegacyGUIelements.BalancesDGV | Add-Member ColumnWidthChanged $true
+                        $LegacyGUIelements.BalancesDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
@@ -515,17 +515,21 @@ function Update-TabControl {
             $LegacyGUIelements.ContextMenuStripItem7.Visible = $false
 
             if ($LegacyGUIelements.RadioButtonMinersOptimal.checked) { 
-                $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                $DataSource = $Session.MinersOptimal.PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
-                Remove-Variable Bias
+                if ($Session.MinersOptimal) { 
+                    $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
+                    $DataSource = $Session.MinersOptimal.PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                    Remove-Variable Bias
+                }
             }
             elseif ($LegacyGUIelements.RadioButtonMinersUnavailable.checked) { 
                 $DataSource = $Session.Miners.Where({ $_.Available -ne $true }).PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info, Algorithm
             }
             else { 
-                $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                $DataSource = $Session.Miners.PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
-                Remove-Variable Bias
+                if ($Session.Miners) {
+                    $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
+                    $DataSource = $Session.Miners.PsObject.Copy().ForEach({ if ($_.WorkersRunning) { $_.Workers = $_.WorkersRunning }; $_ }) | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                    Remove-Variable Bias
+                }
             }
 
             if ($Session.MiningStatus -eq "Idle") { 
@@ -562,9 +566,9 @@ function Update-TabControl {
                         if ($LegacyGUIelements.RadioButtonMinersUnavailable.checked -or $LegacyGUIelements.RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
                     $LegacyGUIelements.MinersLabel.Text = "Miner information updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.MinersDGV.Rows.count) miner$(if ($LegacyGUIelements.MinersDGV.Rows.count -ne 1) { "s" }))"
-                    $LegacyGUIelements.MinersDGV.Columns[0].Visible = $false
-                    $LegacyGUIelements.MinersDGV.Columns[1].Visible = $false
-                    if (-not $LegacyGUIelements.MinersDGV.ColumnWidthChanged -and $LegacyGUIelements.MinersDGV.Columns) { 
+                    if ($LegacyGUIelements.MinersDGV.Columns -and -not $LegacyGUIelements.MinersDGV.ColumnWidthChanged) { 
+                        $LegacyGUIelements.MinersDGV.Columns[0].Visible = $false
+                        $LegacyGUIelements.MinersDGV.Columns[1].Visible = $false
                         $LegacyGUIelements.MinersDGV.Columns[2].FillWeight = 160
                         $LegacyGUIelements.MinersDGV.Columns[3].FillWeight = 35 + ($DataSource.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 15
                         $LegacyGUIelements.MinersDGV.Columns[4].FillWeight = 35; $LegacyGUIelements.MinersDGV.Columns[4].Visible = -not $LegacyGUIelements.RadioButtonMinersUnavailable.checked
@@ -588,7 +592,7 @@ function Update-TabControl {
                 $LegacyGUIelements.MinersDGV.DataSource = $null
             }
 
-            Remove-Variable DataSource
+            Remove-Variable DataSource -ErrorAction Ignore
             break
         }
         "Pools" { 
@@ -649,11 +653,12 @@ function Update-TabControl {
                         @{ Name = "Fee"; Expression = { "{0:p2}" -f $_.Fee } }
                         if ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
+                    Remove-Variable Factor, Unit
                     $LegacyGUIelements.PoolsDGV.Sort($LegacyGUIelements.PoolsDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIelements.PoolsDGV.ClearSelection()
                     $LegacyGUIelements.PoolsLabel.Text = "Pool information updated $($Session.PoolsUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.PoolsDGV.Rows.Count) pool$(if ($LegacyGUIelements.PoolsDGV.Rows.count -ne 1) { "s" }))"
 
-                    if (-not $LegacyGUIelements.PoolsDGV.ColumnWidthChanged -and $LegacyGUIelements.PoolsDGV.Columns) { 
+                    if ($LegacyGUIelements.PoolsDGV.Columns -and -not $LegacyGUIelements.PoolsDGV.ColumnWidthChanged) { 
                         $LegacyGUIelements.PoolsDGV.Columns[0].FillWeight = 80
                         $LegacyGUIelements.PoolsDGV.Columns[1].FillWeight = 40
                         $LegacyGUIelements.PoolsDGV.Columns[2].FillWeight = 70
@@ -665,11 +670,10 @@ function Update-TabControl {
                         $LegacyGUIelements.PoolsDGV.Columns[8].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[9].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[10].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = if ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { 140 } else { 0 }
-                        $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $true
+                        if ($LegacyGUIelements.PoolsDGV.Columns[11]) { $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 140 }
+                        $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     $LegacyGUIelements.PoolsDGV.EndInit()
-                    Remove-Variable Factor, Unit
                 }
             }
             else { 
@@ -726,7 +730,7 @@ function Update-TabControl {
         #             $LegacyGUIelements.WorkersDGV.Sort($LegacyGUIelements.WorkersDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
         #             $LegacyGUIelements.WorkersDGV.ClearSelection()
         #
-        #             If (-not $LegacyGUIelements.WorkersDGV.ColumnWidthChanged -and $LegacyGUIelements.WorkersDGV.Columns) { 
+        #             If ($LegacyGUIelements.WorkersDGV.Columns -and -not $LegacyGUIelements.WorkersDGV.ColumnWidthChanged) { 
         #                 $LegacyGUIelements.WorkersDGV.Columns[0].FillWeight = 70
         #                 $LegacyGUIelements.WorkersDGV.Columns[1].FillWeight = 60
         #                 $LegacyGUIelements.WorkersDGV.Columns[2].FillWeight = 80
@@ -740,7 +744,7 @@ function Update-TabControl {
         #                 $LegacyGUIelements.WorkersDGV.Columns[10].FillWeight = 65; $LegacyGUIelements.WorkersDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.WorkersDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
         #                 $LegacyGUIelements.WorkersDGV.Columns[11].FillWeight = 65; $LegacyGUIelements.WorkersDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIelements.WorkersDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
         #
-        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged $true
+        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged $true -Force
         #             }
         #             Set-WorkerColor
         #             $LegacyGUIelements.WorkersDGV.EndInit()
@@ -791,7 +795,7 @@ function Update-TabControl {
                     $LegacyGUIelements.WatchdogTimersDGV.Sort($LegacyGUIelements.WatchdogTimersDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIelements.WatchdogTimersDGV.ClearSelection()
 
-                    if (-not $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged -and $LegacyGUIelements.WatchdogTimersDGV.Columns) { 
+                    if ($LegacyGUIelements.WatchdogTimersDGV.Columns -and -not $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged) { 
                         $LegacyGUIelements.WatchdogTimersDGV.Columns[0].FillWeight = 200
                         $LegacyGUIelements.WatchdogTimersDGV.Columns[1].FillWeight = 60
                         $LegacyGUIelements.WatchdogTimersDGV.Columns[2].FillWeight = 60
@@ -800,7 +804,7 @@ function Update-TabControl {
                         $LegacyGUIelements.WatchdogTimersDGV.Columns[5].FillWeight = 35 + ($Session.WatchdogTimers.ForEach({ $_.DeviceNames.Count }) | Measure-Object -Maximum).Maximum * 20
                         $LegacyGUIelements.WatchdogTimersDGV.Columns[6].FillWeight = 55
 
-                        $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged $true
+                        $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     $LegacyGUIelements.WatchdogTimersDGV.EndInit()
                 }
@@ -1130,7 +1134,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         Update-TabControl
                     }
                     else { 
-                        $Data = "No matching miners found."
+                        $Data = "No miners to disable."
                     }
                     break
                 }
@@ -1150,7 +1154,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         Update-TabControl
                     }
                     else { 
-                        $Data = "No matching miners found."
+                        $Data = "No miners to enable."
                     }
                     break
                 }

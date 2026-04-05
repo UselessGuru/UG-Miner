@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           Core.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 using module .\Include.psm1
@@ -799,7 +799,6 @@ try {
                             $M = (& $_.ResolvedTarget)
                             $M
                             Write-Message -Level Debug "Miner definition file '$MinerFileName': End building miner objects ($($M.Count))"
-                            Remove-Variable M
                         }
                         catch { 
                             Write-Message -Level Error "Miner file 'Miners\$MinerFileName': $_."
@@ -830,7 +829,7 @@ try {
                     }
                 )
              | Sort-Object -Property Info)
-            Remove-Variable Algorithm, AvailableMinerPools, Miner, MinerFileName, MinerPools, Parts -ErrorAction Ignore
+            Remove-Variable Algorithm, AvailableMinerPools, M, Miner, MinerFileName, MinerPools, Parts -ErrorAction Ignore
 
             if ($Session.Config.BenchmarkAllPoolAlgorithmCombinations) { $MinersNew.ForEach({ $_.Name = $_.Info }) }
 
@@ -1607,9 +1606,9 @@ try {
             $Session.CoreCycleError += $Error
             $Error.Clear()
         }
-        [System.GC]::Collect()
-        [System.GC]::WaitForPendingFinalizers()
-        [System.GC]::Collect()
+        # [System.GC]::Collect()
+        # [System.GC]::WaitForPendingFinalizers()
+        # [System.GC]::Collect()
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }

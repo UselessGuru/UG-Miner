@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 using module .\Include.psm1
@@ -421,7 +421,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 else { 
-                    $Data = "No matching miners found."
+                    $Data = "No miners to disable."
                 }
                 Remove-Variable Miners, Message, Worker -ErrorAction Ignore
                 break
@@ -442,7 +442,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                 }
                 else { 
-                    $Data = "No matching miners found."
+                    $Data = "No miners to enable."
                 }
                 Remove-Variable Message, Miners, Worker -ErrorAction Ignore
                 break

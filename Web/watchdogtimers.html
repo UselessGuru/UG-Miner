@@ -64,7 +64,7 @@
                     dataType: "text",
                     url: "/watchdogexpiration",
                     success: function(minutes) {
-                      document.getElementById("watchdogalert").innerHTML = ("Shows all watchdog timers (data updated " + refreshtimestamp + ").<br>Watchdog timers expire after " + formatTime(minutes) + ".");
+                      document.getElementById("watchdogalert").innerHTML = ("Shows all watchdog timers (information updated " + refreshtimestamp + ").<br>Watchdog timers expire after " + formatTime(minutes) + ".");
                     }
                   });
                 } else {

@@ -138,6 +138,13 @@
             </fieldset>
             <br>
 
+            <!-- Pool selection -->
+            <fieldset title="You must select at least one pool">
+              <legend class=h6><b>Pool selection</b></legend>
+              <div style="padding-top: 0.1rem" id="Pools"></div>
+            </fieldset>
+            <br>
+
             <!-- Pool settings -->
             <legend class=h6><b>Pool settings</b></legend>
             <label title="For best network performance UG-Miner will use&#10;the pools closest to the selected region" for="Region">Region</label>
@@ -159,9 +166,9 @@
             <div style="padding-top: 0.5rem;" title="Minimum workers mining the algorithm at the pool&#10;If less miners are mining the algorithm then the pool will be disabled&#10;&#10;(min: 0, max: 100; default: 10)&#10;Set to 0 to disable this check&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')"> Minimum
               <input type="number" step=1 min=0 max=100 value=10 size=3 id="MinWorker" name="MinWorker" style="width: 3em; text-align:right;"> workers at pool
             </div>
-          <div style="padding-top: 0.6rem;" title="UG-Miner will use unprofitable algorithms (see file '\Data\UnprofitableAlgorithms.json')">
-            <input type="checkbox" class="toggle-switch" id="UseUnprofitableAlgorithms" name="UseUnprofitableAlgorithms"> Use unprofitable algorithms (not recommended)
-          </div>
+            <div style="padding-top: 0.6rem;" title="UG-Miner will use unprofitable algorithms (see file '\Data\UnprofitableAlgorithms.json')">
+              <input type="checkbox" class="toggle-switch" id="UseUnprofitableAlgorithms" name="UseUnprofitableAlgorithms"> Use unprofitable algorithms (not recommended)
+            </div>
             <div style="padding-top: 0.6rem;" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if hashrate@pool is 0 (not recommended)
             </div>
@@ -177,13 +184,6 @@
             <div style="padding-top: 0.3rem;" title="Time (in hours) until a pool is seen as too old (e.g. is has not been updated)&#10;and will be removed from the pool list&#10;&#10;(min: 1, max: 240; default: 24)"> Maximal pool age
               <input type="number" step=1 min=1 max=240 value=24 size=3 id="PoolsMaxAge" name="PoolsMaxAge" style="width: 3.2em; text-align:right;"> hours
             </div>
-            <br>
-
-            <!-- Pool selection -->
-            <fieldset title="You must select at least one pool">
-              <legend class=h6><b>Pool selection</b></legend>
-              <div style="padding-top: 0.1rem" id="Pools"></div>
-            </fieldset>
             <br>
           </div>
         </td>
@@ -215,7 +215,7 @@
           <br>
 
           <!-- Miner runtime settings -->
-          <legend title="Miner runtime settings" class=h6><b>Miner runtime settings</b></legend>
+          <legend class=h6><b>Miner runtime settings</b></legend>
           <label for="MinerWindowStyle">Run miner</label>
           <select style="height: 1.6em;" name="" id="MinerWindowStyle">
             <option value = "hidden" title="Miners will run as a hidden background task and are not accessible (not recommended)">as a hidden background task</option>
@@ -730,36 +730,6 @@
       }
     });
 
-    // Pool settings
-    if (config.UseAnycast) document.getElementById('UseAnycast').checked = true;
-    if (config.SSL === 'Never' || config.SSL === 'Prefer' || config.SSL === 'Always') document.getElementById('SSL').value = config.SSL;
-    else document.getElementById('SSL').value = 'Prefer';
-    if (config.SSLallowSelfSignedCertificate) document.getElementById('SSLallowSelfSignedCertificate').checked = true;
-    $(document.getElementById('SSL')).click(function (event) {
-      document.getElementById('SSLallowSelfSignedCertificate').disabled = (document.getElementById('SSL').value === 'Never');
-    });
-    document.getElementById('MinWorker').value = parseInt(config.MinWorker);
-    if (config.UseUnprofitableAlgorithms) document.getElementById('UseUnprofitableAlgorithms').checked = true;
-    if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
-    if (config.PoolAllow0Price) document.getElementById('PoolAllow0Price').checked = true;
-    document.getElementById('UnrealisticPoolPriceFactor').value = parseFloat(config.UnrealisticPoolPriceFactor).toFixed(1);
-    document.getElementById('PoolAllowedPriceIncreaseFactor').value = parseFloat(config.PoolAllowedPriceIncreaseFactor).toFixed(1);
-    document.getElementById('PoolsMaxAge').value = parseInt(config.PoolsMaxAge);
-
-    // Region list
-    $.ajax({
-      async: false,
-      dataType: 'json',
-      url: '/regions',
-      success: function (result) {
-        regions = result;
-        $.each(regions, function(key, value) {
-          $('<option/>', { text: value }).appendTo(regionscontainer);
-        });
-      }
-    });
-    document.getElementById('Region').value = config.Region.trim();
-
     // Populate pool checkbox list
     const Pools = document.getElementById('Pools');
     const regex = /24hr$|plus$/
@@ -806,6 +776,36 @@
     $.each([config.PoolName].flat(), function (key, poolvariant) {
       if (document.getElementById(('pool-' + poolvariant).toString().toLowerCase())) document.getElementById(('pool-' + poolvariant).toString().toLowerCase()).checked = true;
     });
+
+    // Pool settings
+    if (config.UseAnycast) document.getElementById('UseAnycast').checked = true;
+    if (config.SSL === 'Never' || config.SSL === 'Prefer' || config.SSL === 'Always') document.getElementById('SSL').value = config.SSL;
+    else document.getElementById('SSL').value = 'Prefer';
+    if (config.SSLallowSelfSignedCertificate) document.getElementById('SSLallowSelfSignedCertificate').checked = true;
+    $(document.getElementById('SSL')).click(function (event) {
+      document.getElementById('SSLallowSelfSignedCertificate').disabled = (document.getElementById('SSL').value === 'Never');
+    });
+    document.getElementById('MinWorker').value = parseInt(config.MinWorker);
+    if (config.UseUnprofitableAlgorithms) document.getElementById('UseUnprofitableAlgorithms').checked = true;
+    if (config.PoolAllow0Hashrate) document.getElementById('PoolAllow0Hashrate').checked = true;
+    if (config.PoolAllow0Price) document.getElementById('PoolAllow0Price').checked = true;
+    document.getElementById('UnrealisticPoolPriceFactor').value = parseFloat(config.UnrealisticPoolPriceFactor).toFixed(1);
+    document.getElementById('PoolAllowedPriceIncreaseFactor').value = parseFloat(config.PoolAllowedPriceIncreaseFactor).toFixed(1);
+    document.getElementById('PoolsMaxAge').value = parseInt(config.PoolsMaxAge);
+
+    // Region list
+    $.ajax({
+      async: false,
+      dataType: 'json',
+      url: '/regions',
+      success: function (result) {
+        regions = result;
+        $.each(regions, function(key, value) {
+          $('<option/>', { text: value }).appendTo(regionscontainer);
+        });
+      }
+    });
+    document.getElementById('Region').value = config.Region.trim();
 
     // Miner selection
     $('#ExcludeMinerName').on('focusout', function() {
@@ -1217,6 +1217,12 @@
           if (document.getElementById(('device-' + device.Name.toLowerCase())).checked == false && device.State != 2) config.ExcludeDeviceName.push(device.Name);
         });
 
+        // Select one or more pools
+        config.PoolName = [];
+        $.each(poolvariants, function (key, value) {
+          if (document.getElementById(('pool-' + value.toLowerCase())).checked == true) config.PoolName.push(value);
+        });
+
         // Pool settings
         config.Region = document.getElementById('Region').value.trim();
         config.UseAnycast = document.getElementById('UseAnycast').checked;
@@ -1230,12 +1236,6 @@
         config.UnrealisticPoolPriceFactor = parseFloat(document.getElementById('UnrealisticPoolPriceFactor').value);
         config.PoolAllowedPriceIncreaseFactor = parseFloat(document.getElementById('PoolAllowedPriceIncreaseFactor').value);
         config.PoolsMaxAge = parseInt(document.getElementById('PoolsMaxAge').value);
-
-        // Select one or more pools
-        config.PoolName = [];
-        $.each(poolvariants, function (key, value) {
-          if (document.getElementById(('pool-' + value.toLowerCase())).checked == true) config.PoolName.push(value);
-        });
 
         // BalancesTrackerExcludePools
         config.BalancesTrackerExcludePools = [];

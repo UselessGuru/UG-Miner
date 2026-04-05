@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 using module .\Include.psm1
@@ -33,7 +33,7 @@ do {
 
     # Get pools last earnings
     $Session.PoolsLastEarnings = if (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
-    if (-not $Session.PoolsLastEarnings.Keys) { $Session.PoolsLastEarnings = @{ } }
+    if (-not $Session.PoolsLastEarnings.PSObject.Properties.Name) { $Session.PoolsLastEarnings = @{ } }
 
     # Read existing earnings data, use data from last file
     foreach ($Filename in (Get-ChildItem ".\Data\BalancesTrackerData*.json" | Sort-Object -Descending)) { 
@@ -423,11 +423,6 @@ do {
         }
         Remove-Variable PoolsToTrack -ErrorAction Ignore
     }
-
-    $Error.Clear()
-    [System.GC]::Collect()
-    [System.GC]::WaitForPendingFinalizers()
-    [System.GC]::Collect()
 
     # Sleep until next update (at least 5 minutes, maximum 60 minutes) or when no internet connection
     while (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (5, [UInt16]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { 

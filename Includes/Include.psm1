@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 $Global:DebugPreference = "SilentlyContinue"
@@ -1350,7 +1350,7 @@ function Write-Message {
             $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
 
             # Keep only 200 lines, more lines impact performance
-            if ($Session.TextBoxSystemLog.Lines.Count -gt 200) { 
+            if ($Session.TextBoxSystemLog.Lines.Count -gt 250) { 
                 $TextLength = $Session.TextBoxSystemLog.TextLength
                 $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200
                 $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
@@ -1381,87 +1381,87 @@ function Write-Message {
     }
 }
 
-function Write-MonitoringData { 
+# function Write-MonitoringData { 
 
-    # Updates a remote monitoring server, sending this worker's data and pulling data about other workers
+#     # Updates a remote monitoring server, sending this worker's data and pulling data about other workers
 
-    # Skip If server and user aren't filled out
-    if (-not $Session.Config.MonitoringServer) { return }
-    if (-not $Session.Config.MonitoringUser) { return }
+#     # Skip If server and user aren't filled out
+#     if (-not $Session.Config.MonitoringServer) { return }
+#     if (-not $Session.Config.MonitoringUser) { return }
 
-    # Build object with just the data we need to send, and make sure to use relative paths so we don't accidentally
-    # reveal someone's windows username or other system information they might not want sent
-    # For the ones that can be an array, comma separate them
-    $Data = @(
-        ($Session.Miners.Where({ $_.Status -eq [MinerStatus]::DryRun -or $_.Status -eq [MinerStatus]::Running }) | Sort-Object { [String]$_.DeviceNames }).ForEach(
-            { 
-                [PSCustomObject]@{ 
-                    Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
-                    Currency       = $Session.Config.FIATcurrency
-                    CurrentSpeed   = $_.Hashrates_Live
-                    Earnings       = ($_.WorkersRunning.Earnings | Measure-Object -Sum).Sum
-                    EstimatedSpeed = $_.WorkersRunning.Hashrate
-                    Name           = $_.Name
-                    Path           = Resolve-Path -Relative $_.Path
-                    Pool           = $_.WorkersRunning.Pool.Name -join ","
-                    Profit         = if ($_.Profit) { $_.Profit } elseif ($Session.CalculatePowerCost) { ($_.WorkersRunning.Profit | Measure-Object -Sum).Sum - $_.PowerConsumption_Live * $Session.PowerCostBTCperW } else { [Double]::NaN }
-                    Type           = $_.Type
-                }
-            }
-        )
-    )
+#     # Build object with just the data we need to send, and make sure to use relative paths so we don't accidentally
+#     # reveal someone's windows username or other system information they might not want sent
+#     # For the ones that can be an array, comma separate them
+#     $Data = @(
+#         ($Session.Miners.Where({ $_.Status -eq [MinerStatus]::DryRun -or $_.Status -eq [MinerStatus]::Running }) | Sort-Object { [String]$_.DeviceNames }).ForEach(
+#             { 
+#                 [PSCustomObject]@{ 
+#                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
+#                     Currency       = $Session.Config.FIATcurrency
+#                     CurrentSpeed   = $_.Hashrates_Live
+#                     Earnings       = ($_.WorkersRunning.Earnings | Measure-Object -Sum).Sum
+#                     EstimatedSpeed = $_.WorkersRunning.Hashrate
+#                     Name           = $_.Name
+#                     Path           = Resolve-Path -Relative $_.Path
+#                     Pool           = $_.WorkersRunning.Pool.Name -join ","
+#                     Profit         = if ($_.Profit) { $_.Profit } elseif ($Session.CalculatePowerCost) { ($_.WorkersRunning.Profit | Measure-Object -Sum).Sum - $_.PowerConsumption_Live * $Session.PowerCostBTCperW } else { [Double]::NaN }
+#                     Type           = $_.Type
+#                 }
+#             }
+#         )
+#     )
 
-    $Body = @{ 
-        user    = $Session.Config.MonitoringUser
-        worker  = $Session.Config.WorkerName
-        version = "$($Session.Branding.ProductLabel) $($Session.Branding.Version.ToString())"
-        status  = $Session.NewMiningStatus
-        profit  = if ([Double]::IsNaN($Session.MiningProfit)) { "n/a" } else { [String]$Session.MiningProfit } # Earnings is NOT profit! Needs to be changed in mining monitor server
-        data    = ConvertTo-Json $Data
-    }
+#     $Body = @{ 
+#         user    = $Session.Config.MonitoringUser
+#         worker  = $Session.Config.WorkerName
+#         version = "$($Session.Branding.ProductLabel) $($Session.Branding.Version.ToString())"
+#         status  = $Session.NewMiningStatus
+#         profit  = if ([Double]::IsNaN($Session.MiningProfit)) { "n/a" } else { [String]$Session.MiningProfit } # Earnings is NOT profit! Needs to be changed in mining monitor server
+#         data    = ConvertTo-Json $Data
+#     }
 
-    # Send the request
-    try { 
-        $Response = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/report.php" -Method Post -Body $Body -TimeoutSec 10 -ErrorAction Stop
-        if ($Response -eq "Success") { 
-            Write-Message -Level Verbose "Reported worker status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-        }
-        else { 
-            Write-Message -Level Verbose "Reporting worker status to monitoring server '$($Session.Config.MonitoringServer)' failed: [$($Response)]."
-        }
-    }
-    catch { 
-        Write-Message -Level Warn "Monitoring: Unable to send status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-    }
-}
+#     # Send the request
+#     try { 
+#         $Response = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/report.php" -Method Post -Body $Body -TimeoutSec 10 -ErrorAction Stop
+#         if ($Response -eq "Success") { 
+#             Write-Message -Level Verbose "Reported worker status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
+#         }
+#         else { 
+#             Write-Message -Level Verbose "Reporting worker status to monitoring server '$($Session.Config.MonitoringServer)' failed: [$($Response)]."
+#         }
+#     }
+#     catch { 
+#         Write-Message -Level Warn "Monitoring: Unable to send status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
+#     }
+# }
 
-function Read-MonitoringData { 
+# function Read-MonitoringData { 
 
-    if ($Session.Config.ShowWorkerStatus -and $Session.Config.MonitoringUser -and $Session.Config.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
-        try { 
-            $Workers = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/workers.php" -Method Post -Body @{ user = $Session.Config.MonitoringUser } -TimeoutSec 10 -ErrorAction Stop
-            # Calculate some additional properties and format others
-            $Workers.ForEach(
-                { 
-                    # Convert the unix timestamp to a datetime object, taking into account the local time zone
-                    $_ | Add-Member @{ date = [TimeZone]::CurrentTimeZone.ToLocalTime(([datetime]'1/1/1970').AddSeconds($_.lastseen)) } -Force
+#     if ($Session.Config.ShowWorkerStatus -and $Session.Config.MonitoringUser -and $Session.Config.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
+#         try { 
+#             $Workers = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/workers.php" -Method Post -Body @{ user = $Session.Config.MonitoringUser } -TimeoutSec 10 -ErrorAction Stop
+#             # Calculate some additional properties and format others
+#             $Workers.ForEach(
+#                 { 
+#                     # Convert the unix timestamp to a datetime object, taking into account the local time zone
+#                     $_ | Add-Member @{ date = [TimeZone]::CurrentTimeZone.ToLocalTime(([datetime]'1/1/1970').AddSeconds($_.lastseen)) } -Force
 
-                    # If a machine hasn't reported in for more than 10 minutes, mark it as offline
-                    if ((New-TimeSpan -Start $_.date -End ([DateTime]::Now)).TotalMinutes -gt 10) { $_.status = "Offline" }
-                }
-            )
-            $Session.Workers = $Workers
-            $Session.WorkersLastUpdated = ([DateTime]::Now)
+#                     # If a machine hasn't reported in for more than 10 minutes, mark it as offline
+#                     if ((New-TimeSpan -Start $_.date -End ([DateTime]::Now)).TotalMinutes -gt 10) { $_.status = "Offline" }
+#                 }
+#             )
+#             $Session.Workers = $Workers
+#             $Session.WorkersLastUpdated = ([DateTime]::Now)
 
-            Write-Message -Level Verbose "Retrieved worker status from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-        }
-        catch { 
-            Write-Message -Level Warn "Monitoring: Unable to retrieve worker data from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-        }
-    }
+#             Write-Message -Level Verbose "Retrieved worker status from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
+#         }
+#         catch { 
+#             Write-Message -Level Warn "Monitoring: Unable to retrieve worker data from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
+#         }
+#     }
 
-    return $null
-}
+#     return $null
+# }
 
 function Get-TimeSince { 
     # Show friendly time since in days, hours, minutes and seconds
@@ -1774,12 +1774,15 @@ function Edit-File {
         catch { }
     }
     if ((Get-Item -Path $FileName).LastWriteTime -gt $FileWriteTime) { 
-        Write-Message -Level Verbose "Configuration saved to '$FileName'. It will become fully active in the next cycle."
-        return "Configuration saved to '$FileName'.`nIt will become fully active in the next cycle."
+        if (($FileName -eq $Session.PoolsConfigFile.Replace($PWD, ".")) -or ($FileName -eq $Session.ConfigFile.Replace($PWD, "."))) { 
+            Write-Message -Level Verbose "Configuration saved to '$FileName'. It will become fully active in the next cycle."
+            "Configuration saved to '$FileName'.`nIt will become active in the next cycle."
+        }
     }
-    Remove-Variable FGWindowPid, FileWriteTime, MainWindowHandle, NotepadProcessId -ErrorAction Ignore
-
-    return "No changes to '$FileName' were made."
+    else { 
+        "No changes to '$FileName' were made."
+    }
+    Remove-Variable FGWindowPid, FileName, FileWriteTime, MainWindowHandle, NotepadProcessId -ErrorAction Ignore
 }
 
 function Get-SortedObject { 
@@ -4196,9 +4199,11 @@ function Read-Config {
 
             if ($Config.APIport -lt 1024) { 
                 $Config.APIPort = 3990
-                Write-Message -Level Warn "API port in stored configuration in invalid. Will use default port $($Config.APIPort)."
+                Write-Message -Level Warn "API port in stored configuration is invalid. Will use default TCP port $($Config.APIPort)."
             }
+
             if ($Session.Config) { Write-Message -Level Verbose "Activated changed configuration." }
+
             if ($Config.IdleDetection -ne $Session.Config.IdleDetection) { 
                 if ($Config.IdleDetection) { 
                     Write-Message -Level Verbose "Idle detection is enabled. Mining will get suspended on any keyboard or mouse activity."

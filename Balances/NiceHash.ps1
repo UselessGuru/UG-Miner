@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 if ($Session.Config.NiceHashWallet) { 
@@ -101,7 +101,4 @@ if ($Session.Config.NiceHashWallet) {
 
         $RetryCount--
     }
-
-    $Error.Clear()
-    [System.GC]::Collect()
 }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.7.35
-Version date:   2026/04/02
+Version:        6.7.36
+Version date:   2026/04/05
 #>
 
 param(
@@ -118,6 +118,3 @@ elseif ($Request.miningAlgorithms) {
 }
 
 Write-Message -Level Debug "Pool '$PoolVariant': End"
-
-$Error.Clear()
-[System.GC]::Collect()
