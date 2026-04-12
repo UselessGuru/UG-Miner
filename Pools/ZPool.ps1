@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 
 UG-Miner is free software: you can redistribute it and/or modify
@@ -94,7 +94,7 @@ if ($PriceField) {
                     Host                     = "$($Algorithm).$($Region).$($HostSuffix)"
                     Key                      = $Key
                     Name                     = $Name
-                    Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(if ($Currency -eq $PayoutCurrency) { ",zap=$PayoutCurrency" })"
+                    Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(if ($Currency) { ",zap=$Currency" })"
                     Port                     = [UInt16]$Request.$Algorithm.port
                     PortSSL                  = [UInt16](50000 + $Request.$Algorithm.port)
                     PoolUri                  = "https://zpool.ca/algo/$($Algorithm)"

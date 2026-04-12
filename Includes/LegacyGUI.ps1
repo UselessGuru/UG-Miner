@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -46,7 +46,7 @@ function Disable-X {
     # Create a new namespace for the Methods to be able to call them
     Add-Type -MemberDefinition $MethodsCall -Name NativeMethods -Namespace Win32
 
-    $PSWindow = Get-Process -Pid $PID
+    $PSWindow = Get-Process -Id $PID -ErrorAction Ignore
     $hwnd = $PSWindow.MainWindowHandle
 
     # Get System menu of windows handled
@@ -215,6 +215,38 @@ function Set-DataGridViewDoubleBuffer {
     $PropInfo = $Type.GetProperty("DoubleBuffered", ("Instance", "NonPublic"))
     $PropInfo.SetValue($Grid, $Enabled, $null)
 }
+function Out-DataTable { 
+    # based on http://thepowershellguy.com/blogs/posh/archive/2007/01/21/powershell-gui-scripblock-monitor-script.aspx
+
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
+        [PSObject[]]$InputObject
+    )
+
+    begin { 
+        $DataTable = [Data.DataTable]::new()
+        $First = $true
+    }
+    process { 
+        foreach ($Object in $InputObject) { 
+            $DataRow = $DataTable.NewRow()
+            foreach ($Property in $Object.PSObject.Properties) { 
+                if ($First) { 
+                    $Col = [Data.DataColumn]::new()
+                    $Col.ColumnName = $Property.Name.ToString()
+                    $DataTable.Columns.Add($Col)
+                }
+                $DataRow.Item($Property.Name) = $Property.Value
+            }
+            $DataTable.Rows.Add($DataRow)
+            $First = $false
+        }
+    }
+    end { 
+        return @(, $DataTable)
+    }
+}
 
 function Set-TableColor { 
 
@@ -274,17 +306,17 @@ function Update-TabControl {
             if ($Session.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is stopped"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
-                $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged = $false
+                $LegacyGUIelements.ActiveMinersDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.NewMiningStatus -eq "Paused") { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners running - mining is paused"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
-                $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged = $false
+                $LegacyGUIelements.ActiveMinersDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.ActiveMinersLabel.Text = "No miners - mining is suspended"
                 $LegacyGUIelements.ActiveMinersDGV.DataSource = $null
-                $LegacyGUIelements.ActiveMinersDGV.ColumnWidthChanged = $false
+                $LegacyGUIelements.ActiveMinersDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.MinersBest) { 
                 if (-not $LegacyGUIelements.ActiveMinersDGV.SelectedRows) { 
@@ -535,17 +567,17 @@ function Update-TabControl {
             if ($Session.MiningStatus -eq "Idle") { 
                 $LegacyGUIelements.MinersLabel.Text = "No miners - mining is stopped"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
-                $LegacyGUIelements.MinersDGV.ColumnWidthChanged = $false
+                $LegacyGUIelements.MinersDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.MiningStatus -eq "Paused") { 
                 $LegacyGUIelements.MinersLabel.Text = "No miners - mining is paused"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
-                $LegacyGUIelements.MinersDGV.ColumnWidthChanged = $false
+                $LegacyGUIelements.MinersDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.MiningStatus -eq "Running" -and -not $Global:CoreCycleRunspace) { 
                 $LegacyGUIelements.MinersLabel.Text = "No miners - mining is suspended"
                 $LegacyGUIelements.MinersDGV.DataSource = $null
-                $LegacyGUIelements.MinersDGV.ColumnWidthChanged = $false
+                $LegacyGUIelements.MinersDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.Miners) { 
                 if (-not $LegacyGUIelements.MinersDGV.SelectedRows) { 
@@ -616,17 +648,17 @@ function Update-TabControl {
             if ($Session.NewMiningStatus -eq "Idle") { 
                 $LegacyGUIelements.PoolsLabel.Text = "No pools - mining is stopped"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
-                $LegacyGUIelements.PoolsDGV.ColumnWidthChanged = $false 
+                $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.NewMiningStatus -eq "Paused") { 
                 $LegacyGUIelements.PoolsLabel.Text = "No pools - mining is paused"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
-                $LegacyGUIelements.PoolsDGV.ColumnWidthChanged = $false 
+                $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                 $LegacyGUIelements.PoolsLabel.Text = "No pools - mining is suspended"
                 $LegacyGUIelements.PoolsDGV.DataSource = $null
-                $LegacyGUIelements.PoolsDGV.ColumnWidthChanged = $false 
+                $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $false -Force
             }
             elseif ($Session.Pools) { 
                 if (-not $LegacyGUIelements.PoolsDGV.SelectedRows) { 
@@ -697,18 +729,18 @@ function Update-TabControl {
         #             if ($Session.Workers) { $LegacyGUIelements.WorkersLabel.Text = "Worker status updated $($Session.WorkersLastUpdated.ToString())" }
         #             elseif ($Session.MiningStatus -eq "Idle") { 
         #                 $LegacyGUIelements.WorkersLabel.Text = "No workers - mining is stopped"
-        #                 $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-        #                 $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+        #                 $LegacyGUIelements.WorkersDGV.DataSource = $null
+        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged
         #             }
         #             elseif ($Session.MiningStatus -eq "Paused" -and -not $DataSource) { 
         #                 $LegacyGUIelements.WorkersLabel.Text = "No workers - mining is paused"
-        #                 $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-        #                 $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+        #                 $LegacyGUIelements.WorkersDGV.DataSource = $null
+        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged
         #             }
         #             elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
         #                 $LegacyGUIelements.MinersLabel.Text = "No workers - mining is suspended"
-        #                 $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-        #                 $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+        #                 $LegacyGUIelements.WorkersDGV.DataSource = $null
+        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged
         #             }
         #             else  { $LegacyGUIelements.WorkersLabel.Text = "Waiting for monitoring information..." }
         #
@@ -768,17 +800,17 @@ function Update-TabControl {
                 if ($Session.NewMiningStatus -eq "Idle") { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No watchdog timers - mining is stopped"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-                    $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged
                 }
                 elseif ($Session.NewMiningStatus -eq "Paused") { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No watchdog timers - mining is paused"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-                    $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged
                 }
                 elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No watchdog timers - mining is suspended"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-                    $LegacyGUIelements.WatchdogTimersDGV.ColumnWidthChanged = $false
+                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged
                 }
                 elseif ($Session.WatchdogTimers) { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "Watchdog timers updated $(($Session.WatchdogTimers.Kicked | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
@@ -1207,9 +1239,10 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                             $SelectedPoolAlgorithm = $_.Cells[0].Value
                             $Session.Pools.Where({ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }).ForEach(
                                 { 
-                                    $StatName = "$($_.Name)_$($_.Algorithm)$(if ($_.Currency) { "-$($_.Currency)" })"
-                                    $Data += $StatName
-                                    Remove-Stat -Name "$($StatName)_Profit"
+                                    $Data += "$($_.Algorithm)$(if ($_.Currency) { "-$($_.Currency)" })@$($_.Name)$(if ($($_.Variant -replace $_.Name)) { "[$($_.Variant -replace $_.Name)]" })"
+
+                                    Remove-Stat -Name "$($_.Variant)_$($_.Algorithm)$(if ($_.Currency) { "-$($_.Currency)" })_Profit"
+
                                     $_.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
                                     $_.Price = $_.Price_Bias = $_.StablePrice = $_.Accuracy = [Double]::NaN
                                     $_.Available = $true
@@ -1219,7 +1252,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         }
                     )
                     $LegacyGUIelements.ContextMenuStrip.Visible = $false
-                    $Message = "Pool stats for $($Data.Count) pool$(if ($Data.Count -ne 1) { "s" }) reset."
+                    $Message = "Reset pool stats for $($Data.Count) pool$(if ($Data.Count -ne 1) { "s" })."
                     Write-Message -Level Verbose "GUI: $Message" -Console $false
                     $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
                     Remove-Variable Message, SelectedPoolAlgorithm, SelectedPoolName, StatName -ErrorAction Ignore
@@ -1861,10 +1894,10 @@ $LegacyGUIelements.Timer.Add_Tick(
     { 
         if ($Session.MinersRunning) { 
             # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
-            (Get-Process -Id $PID).PriorityClass = "BelowNormal"
+            (Get-Process -Id $PID -ErrorAction Ignore).PriorityClass = "BelowNormal"
         }
         else { 
-            (Get-Process -Id $PID).PriorityClass = "Normal"
+            (Get-Process -Id $PID -ErrorAction Ignore).PriorityClass = "Normal"
         }
 
         if ($Session.APIserver.IsListening) { 
@@ -1876,29 +1909,6 @@ $LegacyGUIelements.Timer.Add_Tick(
         elseif ($LegacyGUIelements.EditConfigLink.Tag -ne "Edit-File") { 
             $LegacyGUIelements.EditConfigLink.Tag = "Edit-File"
             $LegacyGUIelements.EditConfigLink.Text = "Edit configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' in notepad"
-        }
-
-        if ($Session.NewMiningStatus -ne "Idle") { 
-
-            # Check internet connection every 10 minutes
-            if ($Session.NetworkChecked -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-10)) { 
-                $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
-                $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
-                Remove-Variable NetworkInterface
-                if ($Session.MyIPaddress) { $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime() }
-            }
-
-            if ($Session.MyIPaddress) { 
-                # Read exchange rates at least once every hour
-                if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { Get-Rate }
-            }
-            else { 
-                Write-Message -Level Error "No internet connection - will retry in $($Session.Config.Interval) seconds..."
-                Start-Sleep -Seconds $Session.Config.Interval
-            }
-
-            # Start balances tracker
-            if ($Session.MyIPaddress -and $Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
         }
 
         # If something (pause button, idle timer, web GUI/config) has set the RestartCycle flag, stop and start mining to switch modes immediately
@@ -2030,6 +2040,36 @@ $LegacyGUIelements.Timer.Add_Tick(
                 $Session.MiningStatus = $Session.NewMiningStatus
             }
             Update-GUIstatus
+
+            # Remove all closed runspaces
+            (Get-Runspace).Where({ $_.RunspaceStateInfo.State -eq "Closed" }).ForEach({ $_.Dispose() })
+
+            [System.GC]::Collect()
+            [System.GC]::WaitForPendingFinalizers()
+            [System.GC]::Collect()
+        }
+
+        if ($Session.NewMiningStatus -ne "Idle") { 
+
+            # Check internet connection every 10 minutes
+            if ($Session.NetworkChecked -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-10)) { 
+                $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+                $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
+                Remove-Variable NetworkInterface
+                if ($Session.MyIPaddress) { $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime() }
+            }
+
+            if ($Session.MyIPaddress) { 
+                # Read exchange rates at least once every hour
+                if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { Get-Rate }
+            }
+            else { 
+                Write-Message -Level Error "No internet connection - will retry in $($Session.Config.Interval) seconds..."
+                Start-Sleep -Seconds $Session.Config.Interval
+            }
+
+            # Start balances tracker
+            if ($Session.MyIPaddress -and $Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
         }
 
         if ($Session.Config.ShowConsole) { 
@@ -2244,8 +2284,9 @@ $LegacyGUIelements.Timer.Add_Tick(
                         Update-GUIstatus
                         $LegacyGUIelements.MiningSummaryLabel.Text = ($Message -replace "&", "&&" -split "<br>") -join "`r`n"
                         $LegacyGUIelements.MiningSummaryLabel.ForeColor = [System.Drawing.Color]::Black
+
+                        Remove-Variable Message
                     }
-                    Remove-Variable Message
                 }
                 elseif ($Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
                     $Message = "System activity detected."

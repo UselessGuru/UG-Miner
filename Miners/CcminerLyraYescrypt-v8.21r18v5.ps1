@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.1" }))) { return }
@@ -33,7 +33,7 @@ $Algorithms = @(
 #   @{ Algorithm = "Lyra2RE3";    MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2v3 --intensity 24" } # ASIC
 #   @{ Algorithm = "Lyra2z330";   MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2z330 --intensity 13.2" } # Algorithm is dead
 #   @{ Algorithm = "Yescrypt";    MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescrypt" } # bad shares, CcminerLyra2z330-v8.21r9 is fastest
-    @{ Algorithm = "YescryptR16"; MinMemGiB = 3; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr16 --intensity 13.2" }
+    @{ Algorithm = "YescryptR16"; MinMemGiB = 4; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr16" }
 #   @{ Algorithm = "YescryptR32"; MinMemGiB = 3; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr32" } # No hashrate in time
     @{ Algorithm = "YescryptR8";  MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescryptr8 --intensity 13.2" }
 )
@@ -61,7 +61,7 @@ if ($Algorithms) {
                         foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
 
                             $Arguments = $_.Arguments
-                            if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " --intensity .+$" }
+                            if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
 
                             [PSCustomObject]@{ 
                                 API         = "CcMiner"

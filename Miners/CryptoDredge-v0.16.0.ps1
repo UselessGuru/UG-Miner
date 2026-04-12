@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
@@ -37,7 +37,7 @@ $Algorithms = @(
     @{ Algorithm = "Exosis";    Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo exosis --intensity 8" }
     @{ Algorithm = "Dedal";     Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo dedal --intensity 8" }
     @{ Algorithm = "HMQ1725";   Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo hmq1725 --intensity 8" } # CryptoDredge v0.26.0 is fastest
-    @{ Algorithm = "Neoscrypt"; Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 6" } # FPGA
+    @{ Algorithm = "Neoscrypt"; Fee = @(0.01); MinMemGiB = 4; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 5" } # FPGA
 #   @{ Algorithm = "Phi";       Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo phi --intensity 8" } # ASIC
     @{ Algorithm = "Phi2";      Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo phi2 --intensity 8" }
     @{ Algorithm = "Pipe";      Fee = @(0.01); MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo pipe --intensity 8" }

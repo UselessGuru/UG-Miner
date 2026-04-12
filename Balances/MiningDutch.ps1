@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -59,6 +59,7 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
                 { 
                     $APIresponse = $null
                     $Currency = $_.tag
+                    if ($Currency -eq "SKY") { $Currency = "SKYDOGE" }
                     $RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
 
                     while (-not $APIresponse -and $RetryCount -gt 0) { 

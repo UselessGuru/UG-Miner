@@ -1,8 +1,37 @@
+Changelog UG-Miner 6.8.0 2026/04/12
+===================================
+
+Changes:
+- Core: Include.psm1 / function 'Get-Device': Changed device naming, VRAM memory info is now separated by (), e.g. RX6600(12GB). This will trigger re-benchmarking all miners unless the stat files are renamed manually
+- Core: Remove closed runspaces to mitigate memory leak
+- Core: Re-addedd programmatically triggered memory garbage collection
+
+Fixes:
+- API: Fix typo
+- Core: Core cycle without waiting time when UG-Miner was paused
+- Core: No data from pool (brain) when core cycle was shorter than normal
+- Core: Remove obsolete code & minor code optimizations
+- Core: Include.ps1 / function 'Get-CpuId': List of returned CPU features incomplete (regression from 6.7.0)
+- Core: Include.ps1 / function 'Get-CurrencyFromAlgorithm': Returning incomplete currency list
+- Core: LegacyGUI.ps1: Fix various glitches
+- Core: No more 'No available miners' when CoreCyle has been restart multiple times
+
+Improvements:
+- Brains: Do not immediately query pool data when UG-Miner gets paused
+- Brains: When UG-Miner is paused then query pool data every $Interval seconds
+
+Miner updates:
+-Rigel-v1.23.2
+
+Pool changes:
+- ZPool: Support 'zap=$Currency' parameter
+
+
 Changelog UG-Miner 6.7.36 2026/04/05
 ====================================
 
 Changes:
-- Core: No more programmatically triggered memory garbaga collection
+- Core: No more programmatically triggered memory garbage collection
 
 Fixes:
 - Core: 'Data\PoolsLastEarnings.json' getting cleared on each run
@@ -50,7 +79,7 @@ Changelog UG-Miner 6.7.32 2026/03/08
 ====================================
 
 Fixes:
-- Core / Includes.psm1: Function 'Test-IsPrime' giving incorrect results
+- Core: Include.psm1 / function 'Test-IsPrime': Giving incorrect results
 
 Improvements:
 - Core: Less array additions
@@ -311,7 +340,7 @@ Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
 Fixes:
-- Core / Includes.psm1: Error in line 4177 (function Read-ConfigFiles/Get-PoolsConfig, regression from v6.7.3)
+- Core / Include.psm1 / functions 'Read-ConfigFiles' & 'Get-PoolsConfig': Error in line 4177, regression from v6.7.3
 - Web GUI: '/functions/removeorphanedminerstats' not removing stats
 
 
@@ -388,7 +417,7 @@ Changes:
 
 Enhancements:
 - Core: Added configuration item 'UseUnprofitableAlgorithms' (default value: false)
-- Core / Includes.psm1: Function 'Read-ConfigFiles' only builds pool configuration for configured pools
+- Core: Include.psm1 / function 'Read-ConfigFiles': Only builds pool configuration for configured pools
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
@@ -408,7 +437,7 @@ Changes:
   Configuration file will get updated automatically during update
 
 Fixes:
-- Core / Includes.psm1: Error in function 'Get-AlLDAGdata' when Zpool was not enabled
+- Core: Include.psm1 / function 'Get-AlLDAGdata': Error when Zpool was not enabled
 - Web GUI / Configuration editor: Could not disable 'track balances' for NiceHash when no API key, API secret or organisation id were set
 - Web GUI / Configuration editor: Incorrect error message when no pool was selected
 
@@ -460,7 +489,7 @@ Changes:
 - Core: Close Logviewer (Snaketail.exe) when exiting UG-Miner
 
 Enhancements:
-- Core / Includes.psm1: Function 'Get-DAGepoch' supports FiroPow hardfork
+- Core: Include.psm1 / function 'Get-DAGepoch': Supports FiroPow hardfork
 
 Miner updates:
 - Wildrig-v0.47.5
@@ -481,7 +510,7 @@ Changelog UG-Miner 6.6.3 2025/11/06
 Improvements:
 - Core: Disable close button in text console, use 'Q' key to stop UG-Miner; this ensures closing all running miners
 - Core: Remove obsolete code & minor code optimizations
-- Core / Includes.psm1: Do not start a second instance of SnakeTail when running as admin / non-admin
+- Core / Include.psm1: Do not start a second instance of SnakeTail when running as admin / non-admin
 
 Miner changes:
 - OneZeroMiner-v1.6.5
@@ -494,7 +523,7 @@ Changelog UG-Miner 6.6.2 2025/11/04
 
 Fixes:
 - Core: Miners not mining for donation account (miners were not getting restarted)
-- Core / Includes.psm1: Function 'Get-AllDAGdata' querying block explorers more often than needed
+- Core: Include.psm1 / function 'Get-AllDAGdata': Querying block explorers more often than needed
 
 Miner changes:
 - SRBMinerMulti-v3.0.0
@@ -544,7 +573,7 @@ Changelog UG-Miner 6.5.16 2025/10/19
 ====================================
 
 Fixes:
-- Core / Includes.psm1: Do not show "Failed to load DAG data from 'https://prohashing.com/api/v1/currencies'." for non-DAG currencies
+- Core / Include.psm1: Do not show "Failed to load DAG data from 'https://prohashing.com/api/v1/currencies'." for non-DAG currencies
 - Legacy GUI: Do not ask for confirmation when unloading GUI from console window ('4' key)
 
 Miner changes:
@@ -556,7 +585,7 @@ Changelog UG-Miner 6.5.15 2025/10/12
 ====================================
 
 Fixes:
-- Core / Includes.psm1: Fixed "Failed to load DAG data from 'https://prohashing.com/api/v1/currencies' - Error: Index operation failed; the array index evaluated to null."
+- Core / Include.psm1: Fixed "Failed to load DAG data from 'https://prohashing.com/api/v1/currencies' - Error: Index operation failed; the array index evaluated to null."
 
 Improvements:
 - APIserver: Minor code optimizations
@@ -648,7 +677,7 @@ Enhancements:
 - Brain 'Prohashing': Do not create pool objects for algorithms in error state @ pool
 
 Improvements:
-- Core / Includes.psm1: Function 'Get-AllDGdata' uses configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
+- Core: Include.psm1 / function 'Get-AllDGdata': Uses configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
 
 Miner changes:
 - MiniZ-v2.5e2
@@ -859,17 +888,17 @@ Changes:
 - Core: Streamline startup messages
 
 Fixes:
-- Core / Includes.psm1: 'Error 500' when querying for BLOCX DAG data (API at blocxscan.com has changed)
+- Core: Include.psm1 / function 'Get-AllDAGdata': Error 500 when querying for BLOCX DAG data (API at blocxscan.com has changed)
 
 Improvements:
-- Core / Includes.psm1: Function 'Get-Device' is faster
+- Core: Include.psm1 / function 'Get-Device': Speed improvements
 
 
 Changelog UG-Miner 6.4.30 2025/06/07
 ====================================
 
 Fixes:
-- Core / Includes.psm1: Suppress double error message in function 'Start-APIserver' when API port is in use
+- Core: Include.psm1 / function 'Start-APIserver': Suppress double error message when API port is in use
 - Web GUI: Restore mouse pointer
 
 Improvements:
@@ -969,7 +998,7 @@ Changelog UG-Miner 6.4.23 2025/04/10
 ====================================
 
 Improvements:
-- Core / Includes.psm1: Function 'Get-AllDAGdata' will only query external block explorers if DAG data is not available in pool API data
+- Core: Include.psm1 / function 'Get-AllDAGdata': Will only query external block explorers if DAG data is not available in pool API data
 - Core: Minor performance improvements and optimize memory footprint
 
 Fixes:
@@ -1016,7 +1045,7 @@ Enhancements:
 
 Fixes:
 - All ZPool algorithms marked as unavailable; Reason: 'No wallet address for [xxx] (conversion disabled at pool)' (Pool API had changed)
-- Core / Includes.psm1: Frequent failed / stuck miners on fast PCs (thanks to Szentigrade)
+- Core / Include.psm1: Frequent failed / stuck miners on fast PCs (thanks to Szentigrade)
 - Core: Crash in main cycle when no miner devices are selected
 
 Miner changes:
@@ -1088,7 +1117,7 @@ Enhancements:
 - Core: Support for AMD RDNA4 architecture
 
 Fixes:
-- Core / Includes.psm1: Function 'Get-AllDAGdata' querying 'telestai.cryptoscope.io' twice for TLS block data
+- Core: Include.psm1 / function 'Get-AllDAGdata': Querying 'telestai.cryptoscope.io' twice for TLS block data
 
 Miner updates:
 - SRBMinerMulti-v2.8.0
@@ -1388,7 +1417,7 @@ Changelog UG-Miner 6.3.16 2024/11/20
 ====================================
 
 Fixes:
-- Includes.psm1: Mitigate memory leak with runspace handling
+- Include.psm1: Mitigate memory leak with runspace handling
 
 Miner updates:
 - SRBMinerMulti-v2.7.1
@@ -1433,7 +1462,7 @@ Changelog UG-Miner 6.3.12 2024/11/02
 ====================================
 
 Fixes:
-- Core / Includes.psm1: Method 'StartDataReader' creating truncated job names
+- Core / Include.psm1: Method 'StartDataReader' creating truncated job names
 - Web GUI / Miners & pools tables: clear hourglass cursor when hiding/showing columns or toggling view
 
 Improvements:
@@ -1483,9 +1512,9 @@ Enhancements:
 
 Fixes:
 - BalancesTracker: NiceHash balances not working
-- Core / Includes.psm1: Function 'Get-AllDAGdata' querying API's too often
-- Core / Includes.psm1: Function 'Get-Stat' not returning all stats if called without parameter
-- Core / Includes.psm1: Function 'Update-PoolWatchdog' Pool watchdog marking pools unavailable with two reasons simultaneously (Regression from 6.3.3)
+- Core: Include.psm1 / function 'Get-AllDAGdata': Querying API's too often
+- Core: Include.psm1 / function 'Get-Stat': Not returning all stats if called without parameter
+- Core: Include.psm1 / function 'Update-PoolWatchdog': Pool watchdog marking pools unavailable with two reasons simultaneously (Regression from 6.3.3)
 - Miner API 'EthMiner': Error when miner crashed
 - Web GUI / Miners & pools tables: Reasons filter not working
 
@@ -1503,8 +1532,8 @@ Changelog UG-Miner 6.3.7 2024/10/05
 
 Improvements:
 - Core & Miner APIs: Remove obsolete code & minor code optimizations
-- Core / Includes.psm1: Function 'Update-DAGdata' sets CUDAversion property. No need for 'CUDAversion.json' anymore
-- Core: Streamline failed miner reason text in switching log file
+- Core: Include.psm1 / function 'Update-DAGdata': Sets CUDAversion property. No need for 'CUDAversion.json' anymore
+- Core: Rework failed miner reason texts in switching log file
 - Log viewer (SnakeTail): Change color for 'WARN' messages to magenta to match color in text console
 
 Miner changes:
@@ -1575,7 +1604,7 @@ Changes:
 - Keep miners when mining is paused
 
 Enhancements:
-- Core / Includes.psm1: Function 'Update-DAGdata' can now handle TLS (ProgPowTelestai) data
+- Core: Include.psm1 / function 'Update-DAGdata': Can now handle TLS (ProgPowTelestai) data
 - Core: Add support for 'HeavyHashKarlsenV2' & 'HeavyHashPyrinV2' algorithms
 
 Fixes:
@@ -1592,7 +1621,7 @@ Changelog UG-Miner 6.3.1 2024/09/06
 ===================================
 
 Enhancements
-- Core / Includes.psm1: Function 'Update-DAGdata' can now handle BLOCX (SCCpow) data
+- Core: Include.psm1 / function 'Update-DAGdata': Can now handle BLOCX (SCCpow) data
 - Legacy GUI / Miners: Do not update tables when data is selected
 - Legacy GUI / Switching log: Do not reset check boxes on each data update
 
@@ -1825,12 +1854,12 @@ Enhancements:
 Fixes:
 - Core: Error when request to pen firewall ports is declined ('Error in file 'Includes\Core.ps1' line 1001 detected. Restarting core...')
 - Core: Watchdog timeout message incorrect (regression from 6.2.5)
-- Core / Includes.psm1: Function 'Get-DAGdata' returning incorrect DAG size for IRON
+- Core: Include.psm1 / function 'Get-DAGdata': Returning incorrect DAG size for IRON
 - CPU Miners broken (regression from 6.2.16)
 - HiveOn balances querying for unsupported BTC balance
 
 Improvements:
-- Core / Includes.psm1: Minor code optimizations
+- Core / Include.psm1: Minor code optimizations
 
 Miner changes:
 - ClaymoreDualME-v2.7.ps1 (removed - would only work with Nvidia drivers older than 20.12.1)
@@ -1877,7 +1906,7 @@ Changelog UG-Miner 6.2.14 2024/07/04
 
 Fixes:
 - Core: Double watchdog expiration messages (regression from 6.2.9)
-- Core / Includes.psm1: Function 'Get-Rate' could not read cache file
+- Core: Include.psm1 / function 'Get-Rate': Could not read cache file
 
 Miner changes:
 - JayddeeCpu-v24.4
@@ -1887,8 +1916,8 @@ Changelog UG-Miner 6.2.13 2024/06/30
 ====================================
 
 Fixes
-- Core / Includes.psm1: Functions 'Show-Console' & 'Hide-Console' broken (regression from 6.2.10)
-- Core / Includes.psm1: Function 'Write-Config' temporarily removed 'PoolsConfig' property 
+- Core: Include.psm1 / functions 'Show-Console' & 'Hide-Console': Broken (regression from 6.2.10)
+- Core: Include.psm1 / function 'Write-Config': Temporarily removed 'PoolsConfig' property 
 - Legacy GUI: 'Miners' tab sort order incorrect
 
 Improvements:
@@ -1913,7 +1942,7 @@ Changelog UG-Miner 6.2.11 2024/06/23
 ====================================
 
 Enhancements:
-- Core / Includes.psm1: 'Get-Device' Ignore devices with negative PCIbus
+- Core / Include.psm1: 'Get-Device' Ignore devices with negative PCIbus
 
 Fixes:
 - AutoUpdater: Do not add 'Debug' to configuration items 'LogToFile' & 'LogToScreen' if not set in current config
@@ -1935,7 +1964,7 @@ Fixes:
 - Core: Fix compatibility with WindowsTerminal
 - Core: Miner would get suspended even when it succeeded benchmarking on the 3rd attempt
 - Core: '$MinerInstancePerDeviceModel' not detected on fresh config
-- Core / Includes.psm1: 'Get-DAGdata' & 'Update-DAGdata' add support for StakeCube coin (SCC) DAG calculation
+- Core / Include.psm1: 'Get-DAGdata' & 'Update-DAGdata' add support for StakeCube coin (SCC) DAG calculation
 - Miners: Change algorithm for Blakecoin to Blake2s
 - RrkzCpu-v4.2: Disable mining using an SSL pool connection (not supported by miner)
 - Wildrig-v0.40.5: Invalid device selection in mixed GPU scenarios
@@ -1970,8 +1999,8 @@ Changelog UG-Miner 6.2.8 2024/06/08
 ===================================
 
 Fixes:
-- Core / Includes.psm1: Restarting core loop when internet connection is lost
-- Core / Includes.psm1: Not stopping running miners when exiting UG-Miner
+- Core / Include.psm1: Restarting core loop when internet connection is lost
+- Core / Include.psm1: Not stopping running miners when exiting UG-Miner
 
 Improvements:
 - Core: Suspend balances tracker und brains when internet connection is lost
@@ -2013,7 +2042,7 @@ Enhancements:
 
 Fixes:
 - Core: Power usage meassuring not ending when HWiNFO was not available
-- Core: Includes.psm1 / Function 'Get-Rate' did not retrieve exchange rates for all guaranteed payout currencies
+- Core: Include.psm1 / function 'Get-Rate': Did not retrieve exchange rates for all guaranteed payout currencies
 - Legacy GUI: 'All miners' table not listing all miners
 
 Miner updates:
@@ -2118,7 +2147,7 @@ Enhancements:
 - Core: Speed up benchmark & power consumption measurement. End cycle as soon as one miner has collected enough samples.
 
 Fixes:
-- Core / Includes.psm1: Running miners not shut down when closing main window
+- Core / Include.psm1: Running miners not shut down when closing main window
 - Brain 'ProHashing': Invalid currency 'Syncroot'
 
 Improvements:
@@ -2134,8 +2163,8 @@ Changelog UG-Miner 6.1.15 2024/03/16
 ====================================
 
 Fixes:
-- Core / Includes.psm1: Error when deselecting pool with brain (regression from 6.1.14)
-- Core / Includes.psm1: TotalMiningDuration empty (regression from 6.1.10)
+- Core / Include.psm1: Error when deselecting pool with brain (regression from 6.1.14)
+- Core / Include.psm1: TotalMiningDuration empty (regression from 6.1.10)
 - Legacy GUI: Earnings chart corrupt (regression from 6.1.14)
 
 Improvements:
@@ -2153,7 +2182,7 @@ Changelog UG-Miner 6.1.14 2024/03/06
 ====================================
 
 Fixes:
-- Includes.psm1: Mitigate memory leak with runspace handling (regression from 6.1.13)
+- Include.psm1: Mitigate memory leak with runspace handling (regression from 6.1.13)
 - Legacy GUI: ToolTips broken on some controls
 
 Improvements:
@@ -2299,7 +2328,7 @@ Changelog UG-Miner 6.1.3 2024/01/26
 Fixes:
 - APIServer: Enable/Disable devices not updating device status colors in Web GUI.
 - BalancesTracker.ps1: DailyEarnings broken (regression from 6.1.1)
-- Includes.psm1/Write-Config: Do not remove 'PoolsConfig' property from $Config
+- Include.psm1/Write-Config: Do not remove 'PoolsConfig' property from $Config
 
 Improvements:
 - Minor code optimizations
@@ -2318,7 +2347,7 @@ Changelog UG-Miner 6.1.2 2024/01/20
 ===================================
 
 Fixes:
-- Core / Includes.psm1: Get-Stat not setting 'Name' property (regression from 6.1.1)
+- Core / Include.psm1: Get-Stat not setting 'Name' property (regression from 6.1.1)
 - No profitable miners found if only one miner is available
 
 Improvements:
@@ -2363,7 +2392,7 @@ Changelog UG-Miner 6.0.4 2024/01/10
 ===================================
 
 Fixes:
-- Includes.psm1 / ConvertTo-Hash: Converted values 1000 to high
+- Include.psm1 / ConvertTo-Hash: Converted values 1000 to high
 - Legacy GUI: Fix errors in line 58: Exception setting "Backcolor": "Cannot convert null to type "System.Drawing.Color"."
 - Legacy GUI: Fix errors in line 141: The property 'Enable' cannot be found on this object.
 - Main text window: Invalid best miner listed when '$IgnorePowerCost -eq $true'
@@ -2402,7 +2431,7 @@ Changes:
 - Minimize memory leak
 
 Enhancements:
-- Includes.psm1 / Update-DAGdata: Do not query 'evr.cryptoscope.io' unless needed
+- Include.psm1 / Update-DAGdata: Do not query 'evr.cryptoscope.io' unless needed
 - Legacy GUI: Add '[Currency] to miner algorithm columns
 
 Fixes:

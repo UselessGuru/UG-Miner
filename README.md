@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.7.36 / Updated 2026/04/05
+Version 6.8.0 / Updated 2026/04/12
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -327,7 +327,7 @@ Recommended/optimal Windows AMD driver
 
 UG-Miner is currently tested on the following rigs: 
 
-- Windows11-1xGTX1030-2GB/1xRTX-3060-12GB/1xGTX750Ti-2GB/1xRX5700-8GB/1xRX6600-8GB/Inteli5-8600K
+- Windows11-1xGTX1030-2GB/1xGTX-1650-4GB/1xRTX-3060-12GB/1xRX5700-8GB/1xRX6600-8GB/Inteli5-8600K
 - Windows11-1xMX250/Inteli10-10210u
 - Windows11-1xMX150/Inteli10-8570u
 

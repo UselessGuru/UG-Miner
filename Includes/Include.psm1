@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,16 +18,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
-$Global:DebugPreference = "SilentlyContinue"
-$Global:ErrorActionPreference = "SilentlyContinue"
-$Global:InformationPreference = "SilentlyContinue"
-$Global:ProgressPreference = "SilentlyContinue"
-$Global:WarningPreference = "SilentlyContinue"
-$Global:VerbosePreference = "SilentlyContinue"
+# $Global:DebugPreference = "SilentlyContinue"
+# $Global:ErrorActionPreference = "SilentlyContinue"
+# $Global:InformationPreference = "SilentlyContinue"
+# $Global:ProgressPreference = "SilentlyContinue"
+# $Global:WarningPreference = "SilentlyContinue"
+# $Global:VerbosePreference = "SilentlyContinue"
 
 # Fix TLS Version erroring
 if ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls10) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls10 }
@@ -453,6 +453,7 @@ class Miner : IDisposable {
             # Get data before removing read data
             if ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).Where({ $_.Date }).ForEach({ $null = $this.Data.Add($_) }) }
             $null = ($this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore)
+            $this.DataReaderJob.Dispose()
             $this.DataReaderJob = $null
         }
     }
@@ -554,6 +555,7 @@ class Miner : IDisposable {
             if ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
             try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } catch { }
             # Jobs are getting removed in core loop (removing here immediately after stopping process may take several seconds)
+            $this.ProcessJob.Dispose()
             $this.ProcessJob = $null
         }
 
@@ -822,7 +824,7 @@ function Invoke-CreateProcess {
     Start-Job -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $JobName, $StatusInfo { 
         param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $JobName, $StatusInfo)
 
-        $ControllerProcess = Get-Process -Id $ControllerProcessID
+        $ControllerProcess = Get-Process -Id $ControllerProcessID -ErrorAction Ignore
         if ($null -eq $ControllerProcess) { return }
 
         # Define all the structures for CreateProcess
@@ -959,6 +961,9 @@ function Start-CoreCycle {
         $PowerShell.Runspace = $Global:CoreCycleRunspace
         [Void]$Powershell.AddScript("$($Session.MainPath)\Includes\CoreCycle.ps1")
         $Global:CoreCycleRunspace | Add-Member PowerShell $PowerShell
+    }
+
+    if ($Global:CoreCycleRunspace.Job.IsCompleted -ne $false) { 
         # Remove stats that have been deleted from disk
         try { 
             if ($StatFiles = (Get-ChildItem -Path "Stats" -File).BaseName) { 
@@ -968,17 +973,14 @@ function Start-CoreCycle {
             }
         }
         catch {}
-
         Remove-Variable StatFiles -ErrorAction Ignore
-    }
 
-    if ($Global:CoreCycleRunspace.Job.IsCompleted -ne $false) { 
+        Clear-Miners
+        Clear-Pools
+        $Session.Remove("PoolDataCollectedTimeStamp")
+
         $Global:CoreCycleRunspace | Add-Member Job ($Global:CoreCycleRunspace.PowerShell.BeginInvoke()) -Force
         $Global:CoreCycleRunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime()) -Force
-
-        $Session.Miners = [Miner[]]@()
-        $Session.Pools = [Pool[]]@()
-        $Session.Remove("PoolDataCollectedTimeStamp")
     }
 }
 
@@ -998,7 +1000,22 @@ function Clear-Miners {
 
     $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-    $Session.Miners.ForEach({ $_.Dispose() })
+    $Session.Miners.ForEach({ 
+        $_.Workers.ForEach({ $_.Dispose() })
+        $_.Dispose()
+    })
+    $Session.MinersBenchmarkingOrMeasuring.ForEach({ $_.Dispose() })
+    $Session.MinersBest.ForEach({ $_.Dispose() })
+    $Session.MinersBestPerDevice.ForEach({ $_.Dispose() })
+    $Session.MinersFailed.ForEach({ $_.Dispose() })
+    $Session.MinersMissingBinary.ForEach({ $_.Dispose() })
+    $Session.MinersMissingFirewallRule.ForEach({ $_.Dispose() })
+    $Session.MinersMissingPrerequisite.ForEach({ $_.Dispose() })
+    $Session.MinersNeedingBenchmark.ForEach({ $_.Dispose() })
+    $Session.MinersNeedingPowerConsumptionMeasurement.ForEach({ $_.Dispose() })
+    $Session.MinersOptimal.ForEach({ $_.Dispose() })
+    $Session.MinersRunning.ForEach({ $_.Dispose() })
+
     if (-not $KeepMiners) { $Session.Miners = [Miner[]]@() }
     $Session.MinersBenchmarkingOrMeasuring = [Miner[]]@()
     $Session.MinersBest = [Miner[]]@()
@@ -1022,6 +1039,12 @@ function Clear-Miners {
 function Clear-Pools { 
 
     $Session.Pools.ForEach({ $_.Dispose() })
+    $Session.Pools.ForEach({ $_.Dispose() })
+    $Session.PoolsAdded.ForEach({ $_.Dispose() })
+    $Session.PoolsExpired.ForEach({ $_.Dispose() })
+    $Session.PoolsNew.ForEach({ $_.Dispose() })
+    $Session.PoolsUpdated.ForEach({ $_.Dispose() })
+
     $Session.Pools = [Pool[]]@()
     $Session.PoolsAdded = [Pool[]]@()
     $Session.PoolsExpired = [Pool[]]@()
@@ -1032,34 +1055,32 @@ function Clear-Pools {
 
 function Stop-CoreCycle { 
 
-    if ($Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
-
-        $Global:CoreCycleRunspace.PowerShell.Stop()
-        $Session.Remove("EndCycleTime")
-        if ($Session.Timer) { Write-Message -Level Info "Ending cycle." }
-
-        $Session.Remove("Timer")
-        $Global:CoreCycleRunspace.PSObject.Properties.Remove("StartTime")
-    }
-
-    Clear-Miners
-
-    if ($Session.NewMiningStatus -eq "Idle") { 
-        Clear-Pools
-    }
-
     if ($Global:CoreCycleRunspace) { 
-        $Global:CoreCycleRunspace.PSObject.Properties.Remove("Job")
+        if ($Global:CoreCycleRunspace.Job.IsCompleted -eq $false) { 
+            $Global:CoreCycleRunspace.PowerShell.Stop()
+
+            if ($Session.Timer) { Write-Message -Level Info "Ending cycle." }
+        }
+
+        Clear-Miners
+
+        if ($Session.NewMiningStatus -eq "Idle") { 
+            Clear-Pools
+        }
+
+        $Session.Remove("EndCycleTime")
+        $Session.Remove("Timer")
 
         # Must close runspace after miners were stopped, otherwise methods don't work any longer
         $Global:CoreCycleRunspace.PowerShell.Dispose()
-        $Global:CoreCycleRunspace.PowerShell = $null
         $Global:CoreCycleRunspace.Close()
         $Global:CoreCycleRunspace.Dispose()
 
-        Remove-Variable CoreCycleRunspace -Scope Global
+        $Global:CoreCycleRunspace.PSObject.Properties.Remove("Job")
+        $Global:CoreCycleRunspace.PSObject.Properties.Remove("PowerShell")
+        $Global:CoreCycleRunspace.PSObject.Properties.Remove("StartTime")
 
-        [System.GC]::Collect()
+        Remove-Variable CoreCycleRunspace -Scope Global
     }
 }
 
@@ -1099,10 +1120,10 @@ function Start-Brain {
                 }
             }
         )
-        if ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound job$(if ($BrainsStarted.Count -gt 1) { "s" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", " &`$1") started." }
+        if ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound process$(if ($BrainsStarted.Count -gt 1) { "es" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", " &`$1") started." }
     }
     else { 
-        Write-Message -Level Error "Failed to start Pool brain backgound jobs. Directory '.\Brains' is missing."
+        Write-Message -Level Error "Failed to start Pool brain backgound process$(if ($BrainsStarted.Count -gt 1) { "es" }). Directory '.\Brains' is missing."
     }
 }
 
@@ -1137,8 +1158,7 @@ function Stop-Brain {
             }
         )
         if ($BrainsStopped.Count -gt 0) { 
-            Write-Message -Level Info "Pool brain backgound job$(if ($BrainsStopped.Count -gt 1) { "s" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1") stopped."
-            [System.GC]::Collect()
+            Write-Message -Level Info "Pool brain backgound process$(if ($BrainsStopped.Count -gt 1) { "es" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1") stopped."
         }
     }
 }
@@ -1176,27 +1196,24 @@ function Start-BalancesTracker {
 
 function Stop-BalancesTracker { 
 
-    if ($Global:BalancesTrackerRunspace.Job.IsCompleted -eq $false) { 
-        $Global:BalancesTrackerRunspace.PowerShell.Stop()
-        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("StartTime")
-
-        $Session.BalancesTrackerRunning = $false
-
-        Write-Message -Level Info "Balances tracker background process stopped."
-    }
-
     if ($Global:BalancesTrackerRunspace) { 
+        if ($Global:BalancesTrackerRunspace.Job.IsCompleted -eq $false) { 
+            $Global:BalancesTrackerRunspace.PowerShell.Stop()
 
-        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("Job")
+            $Session.BalancesTrackerRunning = $false
+
+            Write-Message -Level Info "Balances tracker background process stopped."
+        }
 
         $Global:BalancesTrackerRunspace.PowerShell.Dispose()
-        $Global:BalancesTrackerRunspace.PowerShell = $null
         $Global:BalancesTrackerRunspace.Close()
         $Global:BalancesTrackerRunspace.Dispose()
 
-        Remove-Variable BalancesTrackerRunspace -Scope Global
+        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("Job")
+        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("PowerShell")
+        $Global:BalancesTrackerRunspace.PSObject.Properties.Remove("StartTime")
 
-        [System.GC]::Collect()
+        Remove-Variable BalancesTrackerRunspace -Scope Global
     }
 }
 
@@ -1759,7 +1776,7 @@ function Edit-File {
     $FGWindowPid = [IntPtr]::Zero
     while (Get-Process -Id $NotepadProcessId) { 
         try { 
-            if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process -Id $NotepadProcessId).MainWindowHandle }
+            if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process -Id $NotepadProcessId -ErrorAction Ignore).MainWindowHandle }
             if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process).Where({ $_.Parent.Id -eq $NotepadProcessId }).MainWindowHandle }
 
             $null = [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid)
@@ -2206,20 +2223,20 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.MMX = ($Info[3] -band ([UInt16]1 -shl 23)) -ne 0
-        $Features.SSE = ($Info[3] -band ([UInt16]1 -shl 25)) -ne 0
-        $Features.SSE2 = ($Info[3] -band ([UInt16]1 -shl 26)) -ne 0
-        $Features.SSE3 = ($Info[2] -band ([UInt16]1 -shl 00)) -ne 0
+        $Features.MMX = ($Info[3] -band ([Int]1 -shl 23)) -ne 0
+        $Features.SSE = ($Info[3] -band ([Int]1 -shl 25)) -ne 0
+        $Features.SSE2 = ($Info[3] -band ([Int]1 -shl 26)) -ne 0
+        $Features.SSE3 = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
 
-        $Features.SSSE3 = ($Info[2] -band ([UInt16]1 -shl 09)) -ne 0
-        $Features.SSE41 = ($Info[2] -band ([UInt16]1 -shl 19)) -ne 0
-        $Features.SSE42 = ($Info[2] -band ([UInt16]1 -shl 20)) -ne 0
-        $Features.AES = ($Info[2] -band ([UInt16]1 -shl 25)) -ne 0
+        $Features.SSSE3 = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
+        $Features.SSE41 = ($Info[2] -band ([Int]1 -shl 19)) -ne 0
+        $Features.SSE42 = ($Info[2] -band ([Int]1 -shl 20)) -ne 0
+        $Features.AES = ($Info[2] -band ([Int]1 -shl 25)) -ne 0
 
-        $Features.AVX = ($Info[2] -band ([UInt16]1 -shl 28)) -ne 0
-        $Features.FMA3 = ($Info[2] -band ([UInt16]1 -shl 12)) -ne 0
+        $Features.AVX = ($Info[2] -band ([Int]1 -shl 28)) -ne 0
+        $Features.FMA3 = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
 
-        $Features.RDRAND = ($Info[2] -band ([UInt16]1 -shl 30)) -ne 0
+        $Features.RDRAND = ($Info[2] -band ([Int]1 -shl 30)) -ne 0
     }
 
     if ($nIds -ge 0x00000007) { 
@@ -2233,40 +2250,40 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.AVX2 = ($Info[1] -band ([UInt16]1 -shl 05)) -ne 0
+        $Features.AVX2 = ($Info[1] -band ([Int]1 -shl 05)) -ne 0
 
-        $Features.BMI1 = ($Info[1] -band ([UInt16]1 -shl 03)) -ne 0
-        $Features.BMI2 = ($Info[1] -band ([UInt16]1 -shl 08)) -ne 0
-        $Features.ADX = ($Info[1] -band ([UInt16]1 -shl 19)) -ne 0
-        $Features.MPX = ($Info[1] -band ([UInt16]1 -shl 14)) -ne 0
-        $Features.SHA = ($Info[1] -band ([UInt16]1 -shl 29)) -ne 0
-        $Features.RDSEED = ($Info[1] -band ([UInt16]1 -shl 18)) -ne 0
-        $Features.PREFETCHWT1 = ($Info[2] -band ([UInt16]1 -shl 00)) -ne 0
-        $Features.RDPID = ($Info[2] -band ([UInt16]1 -shl 22)) -ne 0
+        $Features.BMI1 = ($Info[1] -band ([Int]1 -shl 03)) -ne 0
+        $Features.BMI2 = ($Info[1] -band ([Int]1 -shl 08)) -ne 0
+        $Features.ADX = ($Info[1] -band ([Int]1 -shl 19)) -ne 0
+        $Features.MPX = ($Info[1] -band ([Int]1 -shl 14)) -ne 0
+        $Features.SHA = ($Info[1] -band ([Int]1 -shl 29)) -ne 0
+        $Features.RDSEED = ($Info[1] -band ([Int]1 -shl 18)) -ne 0
+        $Features.PREFETCHWT1 = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
+        $Features.RDPID = ($Info[2] -band ([Int]1 -shl 22)) -ne 0
 
-        $Features.AVX512_F = ($Info[1] -band ([UInt16]1 -shl 16)) -ne 0
-        $Features.AVX512_CD = ($Info[1] -band ([UInt16]1 -shl 28)) -ne 0
-        $Features.AVX512_PF = ($Info[1] -band ([UInt16]1 -shl 26)) -ne 0
-        $Features.AVX512_ER = ($Info[1] -band ([UInt16]1 -shl 27)) -ne 0
+        $Features.AVX512_F = ($Info[1] -band ([Int]1 -shl 16)) -ne 0
+        $Features.AVX512_CD = ($Info[1] -band ([Int]1 -shl 28)) -ne 0
+        $Features.AVX512_PF = ($Info[1] -band ([Int]1 -shl 26)) -ne 0
+        $Features.AVX512_ER = ($Info[1] -band ([Int]1 -shl 27)) -ne 0
 
-        $Features.AVX512_VL = ($Info[1] -band ([UInt16]1 -shl 31)) -ne 0
-        $Features.AVX512_BW = ($Info[1] -band ([UInt16]1 -shl 30)) -ne 0
-        $Features.AVX512_DQ = ($Info[1] -band ([UInt16]1 -shl 17)) -ne 0
+        $Features.AVX512_VL = ($Info[1] -band ([Int]1 -shl 31)) -ne 0
+        $Features.AVX512_BW = ($Info[1] -band ([Int]1 -shl 30)) -ne 0
+        $Features.AVX512_DQ = ($Info[1] -band ([Int]1 -shl 17)) -ne 0
 
-        $Features.AVX512_IFMA = ($Info[1] -band ([UInt16]1 -shl 21)) -ne 0
-        $Features.AVX512_VBMI = ($Info[2] -band ([UInt16]1 -shl 01)) -ne 0
+        $Features.AVX512_IFMA = ($Info[1] -band ([Int]1 -shl 21)) -ne 0
+        $Features.AVX512_VBMI = ($Info[2] -band ([Int]1 -shl 01)) -ne 0
 
-        $Features.AVX512_VPOPCNTDQ = ($Info[2] -band ([UInt16]1 -shl 14)) -ne 0
-        $Features.AVX512_4FMAPS = ($Info[3] -band ([UInt16]1 -shl 02)) -ne 0
-        $Features.AVX512_4VNNIW = ($Info[3] -band ([UInt16]1 -shl 03)) -ne 0
+        $Features.AVX512_VPOPCNTDQ = ($Info[2] -band ([Int]1 -shl 14)) -ne 0
+        $Features.AVX512_4FMAPS = ($Info[3] -band ([Int]1 -shl 02)) -ne 0
+        $Features.AVX512_4VNNIW = ($Info[3] -band ([Int]1 -shl 03)) -ne 0
 
-        $Features.AVX512_VNNI = ($Info[2] -band ([UInt16]1 -shl 11)) -ne 0
+        $Features.AVX512_VNNI = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
 
-        $Features.AVX512_VBMI2 = ($Info[2] -band ([UInt16]1 -shl 06)) -ne 0
-        $Features.GFNI = ($Info[2] -band ([UInt16]1 -shl 08)) -ne 0
-        $Features.VAES = ($Info[2] -band ([UInt16]1 -shl 09)) -ne 0
-        $Features.AVX512_VPCLMUL = ($Info[2] -band ([UInt16]1 -shl 10)) -ne 0
-        $Features.AVX512_BITALG = ($Info[2] -band ([UInt16]1 -shl 12)) -ne 0
+        $Features.AVX512_VBMI2 = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
+        $Features.GFNI = ($Info[2] -band ([Int]1 -shl 08)) -ne 0
+        $Features.VAES = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
+        $Features.AVX512_VPCLMUL = ($Info[2] -band ([Int]1 -shl 10)) -ne 0
+        $Features.AVX512_BITALG = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
     }
 
     if ($nExIds -ge 0x80000001) { 
@@ -2280,12 +2297,12 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.x64 = ($Info[3] -band ([UInt16]1 -shl 29)) -ne 0
-        $Features.ABM = ($Info[2] -band ([UInt16]1 -shl 05)) -ne 0
-        $Features.SSE4a = ($Info[2] -band ([UInt16]1 -shl 06)) -ne 0
-        $Features.FMA4 = ($Info[2] -band ([UInt16]1 -shl 16)) -ne 0
-        $Features.XOP = ($Info[2] -band ([UInt16]1 -shl 11)) -ne 0
-        $Features.PREFETCHW = ($Info[2] -band ([UInt16]1 -shl 08)) -ne 0
+        $Features.x64 = ($Info[3] -band ([Int]1 -shl 29)) -ne 0
+        $Features.ABM = ($Info[2] -band ([Int]1 -shl 05)) -ne 0
+        $Features.SSE4a = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
+        $Features.FMA4 = ($Info[2] -band ([Int]1 -shl 16)) -ne 0
+        $Features.XOP = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
+        $Features.PREFETCHW = ($Info[2] -band ([Int]1 -shl 08)) -ne 0
     }
 
     # Wrap data into PSObject
@@ -2457,7 +2474,7 @@ function Get-Device {
                 elseif ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
                 else { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
 
-                $Device.Model = (($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB" -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "^\s*" -replace "[^ A-Z0-9\.]" -replace " \s+" -replace "\s*$"
+                $Device.Model = (((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "^\s*" -replace "[^ A-Z0-9\.]" -replace " \s+") + " ($([UInt64]($Device.Memory/1GB))GB)") -replace "\s*$"
 
                 if (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
 
@@ -2528,7 +2545,7 @@ function Get-Device {
                         elseif ($Device.Type -eq "CPU") { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedCPUVendorID ++)" }
                         else { $Device.Name = "$($Device.Type)#$('{0:D2}' -f $UnsupportedGPUVendorID ++)" }
 
-                        $Device.Model = ((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") + "$([UInt64]($Device.Memory/1GB))GB") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "^\s*" -replace "[^ A-Z0-9\.]" -replace " \s+" -replace "\s*$"
+                        $Device.Model = (((($Device.Model -split " " -replace "Processor", "CPU" -replace "Graphics", "GPU") -notmatch $Device.Type -notmatch $Device.Vendor -notmatch "$([UInt64]($Device.Memory/1GB))GB") -join " " -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "^\s*" -replace "[^ A-Z0-9\.]" -replace " \s+") + " ($([UInt64]($Device.Memory/1GB))GB)") -replace "\s*$"
 
                         if (-not $Type_Vendor_Id.($Device.Type)) { $Type_Vendor_Id.($Device.Type) = @{ } }
 
@@ -2622,11 +2639,11 @@ filter ConvertTo-Hash {
     $Units = " kMGTPEZY" # k(ilo) in small letters, see https://en.wikipedia.org/wiki/Metric_prefix
 
     if ($null -eq $_ -or [Double]::IsNaN($_)) { return "n/a" }
-    elseif ($_ -eq 0) { return "0H/s " }
+    elseif ($_ -eq 0) { return "0h/s " }
     $Base1000 = [Math]::Max([Double]0, [Math]::Min([Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1))), $Units.Length - 1))
     $UnitValue = $_ / [Math]::Pow(1000, $Base1000)
     $Digits = if ($UnitValue -lt 10) { 3 } else { 2 }
-    "{0:n$($Digits)} $($Units[$Base1000])H/s" -f $UnitValue
+    "{0:n$($Digits)} $($Units[$Base1000])h/s" -f $UnitValue
 }
 
 function Get-DecimalsFromValue { 
@@ -2670,10 +2687,10 @@ function Get-Combination {
             [PSCustomObject]@{ 
                 Combination = $CombinationKeys.Where({ $_ -band $X }).ForEach({ $Combination.$_ })
             }
-            $Smallest = $X -band - $X
+            $Smallest = $X -band -$X
             $Ripple = $X + $Smallest
-            $NewSmallest = $Ripple -band - $Ripple
-            $Ones = (($NewSmallest / $Smallest) -shr 1) - 1
+            $NewSmallest = $Ripple -band -$Ripple
+            $Ones = ($NewSmallest / $Smallest -shr 1) - 1
             $X = $Ripple -bor $Ones
         }
     }
@@ -2752,7 +2769,7 @@ function Get-CurrencyFromAlgorithm {
         [String]$Algorithm
     )
 
-    return $Session.CurrencyAlgorithm.$Algorithm
+    return $Session.CurrencyAlgorithm.Keys.Where({ $Session.CurrencyAlgorithm.$_ -eq $Algorithm })
 }
 
 function Get-EquihashCoinPers { 
@@ -3420,39 +3437,6 @@ function Get-DAGepochLength {
     }
 }
 
-function Out-DataTable { 
-    # based on http://thepowershellguy.com/blogs/posh/archive/2007/01/21/powershell-gui-scripblock-monitor-script.aspx
-
-    [CmdletBinding()]
-    param (
-        [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
-        [PSObject[]]$InputObject
-    )
-
-    begin { 
-        $DataTable = [Data.DataTable]::new()
-        $First = $true
-    }
-    process { 
-        foreach ($Object in $InputObject) { 
-            $DataRow = $DataTable.NewRow()
-            foreach ($Property in $Object.PSObject.Properties) { 
-                if ($First) { 
-                    $Col = [Data.DataColumn]::new()
-                    $Col.ColumnName = $Property.Name.ToString()
-                    $DataTable.Columns.Add($Col)
-                }
-                $DataRow.Item($Property.Name) = $Property.Value
-            }
-            $DataTable.Rows.Add($DataRow)
-            $First = $false
-        }
-    }
-    end { 
-        return @(, $DataTable)
-    }
-}
-
 function Get-Median { 
 
     param (
@@ -3839,8 +3823,6 @@ function Stop-APIserver {
         $Global:APIrunspace.Dispose()
 
         Remove-Variable APIrunspace -Scope Global
-
-        [System.GC]::Collect()
     }
 }
 
@@ -3901,7 +3883,7 @@ function Set-MinerFailed {
     Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
     $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = $Miner.Earnings = $Miner.Earnings_Bias = [Double]::NaN
 
-    if (-not $Miner.Reasons.Contains("0 H/s stat file")) { $null = $Miner.Reasons.Add("0 H/s stat file") }
+    if (-not $Miner.Reasons.Contains("0 h/s stat file")) { $null = $Miner.Reasons.Add("0 h/s stat file") }
     $Miner.Available = $false
 }
 
@@ -3909,7 +3891,7 @@ function Set-MinerReBenchmark {
 
     param (
         [Parameter (Mandatory = $true)]
-        [Miner]$Miner
+        [Object]$Miner
     )
 
     $Miner.Activated = 0 # To allow 3 attempts
@@ -3977,11 +3959,11 @@ function Exit-UGminer {
     Stop-BalancesTracker
 
     Write-Message -Level Info "$($Session.Branding.ProductLabel) has shut down."
+    Start-Sleep -Seconds 2
     try {
         Stop-Process (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId -Force
     }
     catch {}
-    Start-Sleep -Seconds 2
     Stop-Process $PID -Force
 }
 

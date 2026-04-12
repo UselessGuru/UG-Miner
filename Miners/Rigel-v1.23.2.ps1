@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,19 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
-# (XEL) Major performance increase on 170HX, small improvements on other cards
-# Remove the following algorithms:
-#  - quai (use -a kawpow --coin quai instead)
-#  - xelishash
-#  -xelishashv2
+# (XEL) Minor performance improvements on 50xx cards
+# Remove ethashb3 algorithm
+# Bug fixes:
+# GPU memory temperatures are not displayed on 595+ drivers
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -gt "5.0" }))) { return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.23.1/rigel-1.23.1-win.zip"
+$URI = "https://github.com/rigelminer/rigel/releases/download/1.23.2/rigel-1.23.2-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -52,11 +51,6 @@ $Algorithms = @(
 #   @{ Algorithms = @("Ethash", "HeavyHashKarlsenV2");       Fee = @(0.007, 0.02);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+karlsenhashv2" } # Not supported yet
     @{ Algorithms = @("Ethash", "IronFish");                 Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+fishhash" }
     @{ Algorithms = @("Ethash", "SHA512256d");               Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(60, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+sha512256d" }
-    @{ Algorithms = @("EthashB3", "");                       Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm ethashb3" }
-    @{ Algorithms = @("EthashB3", "Blake3");                 Fee = @(0.01, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm ethashb3+alephium" }
-#   @{ Algorithms = @("EthashB3", "HeavyHashKarlsenV2");     Fee = @(0.01, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm ethashb3+karlsenhashv2" } # Not supported yet
-    @{ Algorithms = @("EthashB3", "IronFish");               Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm ethashb3+fishhash" }
-    @{ Algorithms = @("EthashB3", "SHA512256d");             Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm ethashb3+sha512256d" }
     @{ Algorithms = @("EthashSHA256", "");                   Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian" }
     @{ Algorithms = @("EthashSHA256", "Blake3");             Fee = @(0.01, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+alephium" }
 #   @{ Algorithms = @("EthashSHA256", "HeavyHashKarlsenV2"); Fee = @(0.01, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+karlsenhashv2" } # Not supported yet
@@ -129,7 +123,7 @@ if ($Algorithms) {
                                 }
                                 Remove-Variable Pool
 
-                                $Arguments = if ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { "$Arguments --no-strict-ssl" } # Parameter cannot be used multiple times
+                                if ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { $Arguments =  "$Arguments --no-strict-ssl" } # Parameter cannot be used multiple times
 
                                 # Allow more time to build larger DAGs, must use type cast to keep values in $_
                                 $WarmupTimes = [UInt16[]]$_.WarmupTimes

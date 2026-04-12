@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
 [NoRunspaceAffinity()]
@@ -40,12 +40,12 @@ class lolMiner : Miner {
             switch ($Data.Algorithms[0].Performance_Unit) { 
                 "kh/s" { $HashrateUnit = [Math]::Pow(10, 3); break }
                 "Mh/s" { $HashrateUnit = [Math]::Pow(10, 6); break }
-                "GH/s" { $HashrateUnit = [Math]::Pow(10, 9); break }
-                "TH/s" { $HashrateUnit = [Math]::Pow(10, 12); break }
-                "PH/s" { $HashrateUnit = [Math]::Pow(10, 15); break }
-                "EH/s" { $HashrateUnit = [Math]::Pow(10, 18); break }
-                "ZH/s" { $HashrateUnit = [Math]::Pow(10, 21); break }
-                "YH/s" { $HashrateUnit = [Math]::Pow(10, 24); break }
+                "Gh/s" { $HashrateUnit = [Math]::Pow(10, 9); break }
+                "Th/s" { $HashrateUnit = [Math]::Pow(10, 12); break }
+                "Ph/s" { $HashrateUnit = [Math]::Pow(10, 15); break }
+                "Eh/s" { $HashrateUnit = [Math]::Pow(10, 18); break }
+                "Zh/s" { $HashrateUnit = [Math]::Pow(10, 21); break }
+                "Yh/s" { $HashrateUnit = [Math]::Pow(10, 24); break }
                 default { $HashrateUnit = 1 }
             }
             $HashrateValue = [Double]($Data.Algorithms[0].Total_Performance * $HashrateUnit)
@@ -63,12 +63,12 @@ class lolMiner : Miner {
                 switch ($Data.Algorithms[1].Performance_Unit) { 
                     "kh/s" { $HashrateUnit = [Math]::Pow(10, 3); break }
                     "Mh/s" { $HashrateUnit = [Math]::Pow(10, 6); break }
-                    "GH/s" { $HashrateUnit = [Math]::Pow(10, 9); break }
-                    "TH/s" { $HashrateUnit = [Math]::Pow(10, 12); break }
-                    "PH/s" { $HashrateUnit = [Math]::Pow(10, 15); break }
-                    "EH/s" { $HashrateUnit = [Math]::Pow(10, 18); break }
-                    "ZH/s" { $HashrateUnit = [Math]::Pow(10, 21); break }
-                    "YH/s" { $HashrateUnit = [Math]::Pow(10, 24); break }
+                    "Gh/s" { $HashrateUnit = [Math]::Pow(10, 9); break }
+                    "Th/s" { $HashrateUnit = [Math]::Pow(10, 12); break }
+                    "Ph/s" { $HashrateUnit = [Math]::Pow(10, 15); break }
+                    "Eh/s" { $HashrateUnit = [Math]::Pow(10, 18); break }
+                    "Zh/s" { $HashrateUnit = [Math]::Pow(10, 21); break }
+                    "Yh/s" { $HashrateUnit = [Math]::Pow(10, 24); break }
                     default { $HashrateUnit = 1 }
                 }
                 $HashrateValue = [Double]($Data.Algorithms[1].Total_Performance * $HashrateUnit)

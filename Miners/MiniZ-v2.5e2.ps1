@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 UG-Miner is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -39,10 +39,10 @@ $Algorithms = @(
     @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 4.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ ";         ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
     @{ Algorithm = "EvrProgPow";   Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
 
-    @{ Algorithm = "ProgPowTelestai"; Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=progpow" }
-    @{ Algorithm = "Equihash1254";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
-    @{ Algorithm = "EvrProgPow";      Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
+    @{ Algorithm = "ProgPowTelestai"; Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^Turing$"; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=progpow" }
+    @{ Algorithm = "Equihash1254";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
+    @{ Algorithm = "EvrProgPow";      Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
 )
 
 $Algorithms = $Algorithms.Where({ $MinerPools[0].($_.Algorithm) })

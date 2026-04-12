@@ -1,5 +1,5 @@
 <#
-Copyright (c) 2018-2025 UselessGuru
+Copyright (c) 2018-2026 UselessGuru
 
 
 UG-Miner is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.7.36
-Version date:   2026/04/05
+Version:        6.8.0
+Version date:   2026/04/12
 #>
 
 using module ..\Includes\Include.psm1
@@ -63,7 +63,6 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                             Write-Message -Level Debug "Brain '$Name': Querying $URI"
                             $AlgoData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            $Session.Brains.$Name | Add-Member "APIresponseAlgoData" ($AlgoData | ConvertTo-Json -Compress) -Force
                             Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                             if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
                             elseif ($AlgoData.message -match "^Only \d request every ") { 
@@ -79,7 +78,6 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                             Write-Message -Level Debug "Brain '$Name': Querying $URI"
                             $TotalStats = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
                             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            $Session.Brains.$Name | Add-Member "APIresponseTotalStats" ($TotalStats | ConvertTo-Json -Compress) -Force
                             Write-Message -Level Debug "Brain '$Name': Response from $URI received"
                             if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
                             elseif ($TotalStats.message -match "^Only \d request every ") { 
@@ -120,6 +118,9 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 foreach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
                     $AlgorithmNorm = Get-Algorithm $Algorithm
                     $BasePrice = if ($AlgoData.$Algorithm.actual_last24h) { $AlgoData.$Algorithm.actual_last24h } else { $AlgoData.$Algorithm.estimate_last24h }
+                    $Currencies = Get-CurrencyFromAlgorithm $AlgorithmNorm
+                    $Currency = if ($AlgoData.$Algorithm.coins -eq 1 -and $Currencies.Count -eq 1) { [String]$Currencies } else { "" }
+                    $AlgoData.$Algorithm | Add-Member Currency $Currency -Force
 
                     # Temp fix, incorrect data in API
                     if ($AlgorithmNorm -eq "Neoscrypt" -and $AlgoData.$Algorithm.mbtc_mh_factor -eq 1) { $AlgoData.$Algorithm.mbtc_mh_factor = 1000 }
@@ -131,11 +132,11 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                         $AlgoData.$Algorithm | Add-Member workers_shared $AlgoStats.workers -Force
                         $AlgoData.$Algorithm | Add-Member workers_solo $AlgoStats.workers_solo -Force
                     }
-                    Remove-Variable AlgoStats -ErrorAction Ignore
+                    Remove-Variable AlgoStats, Currencies -ErrorAction Ignore
 
                     # Reset history when stat file got removed
                     if ($PoolVariant -like "*Plus") { 
-                        $StatName = "$($PoolVariant)_$($AlgorithmNorm)_Profit"
+                        $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
                         if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $Algorithm })) { 
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
@@ -144,6 +145,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
 
                     $PoolObjects += [PSCustomObject]@{ 
                         actual_last24h      = $BasePrice
+                        currency            = $Currency
                         Date                = $Timestamp
                         estimate_current    = $AlgoData.$Algorithm.estimate_current
                         estimate_last24h    = $AlgoData.$Algorithm.estimate_last24h
@@ -184,7 +186,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                     }
                     $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
                 }
-                Remove-Variable Algorithm, AlgorithmNorm, Baseprice, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolName, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
+                Remove-Variable Algorithm, AlgorithmNorm, Baseprice, Currency, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 
                 if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$Name.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
@@ -216,10 +218,11 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
         Write-Message -Level Debug "Brain '$Name': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$Name.PSObject.Properties.Name.Count) valid pools."
     }
 
-    while (-not $Session.MyIPaddress -or $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime)) { 
+    while (-not $Session.MyIPaddress -or ($Session.NewMiningStatus -eq "Paused" -and $Timestamp.AddSeconds($Session.Config.Interval) -gt [DateTime]::Now.ToUniversalTime()) -or ($Session.NewMiningStatus -eq "Running" -and ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime)))) { 
         Start-Sleep -Milliseconds 250
     }
 }
 
 $Mutex.Dispose()
-Stop-Brain $Name
+
+Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Headers, Mutex, Name, PoolConfig, PoolObjects, PoolVariant, RetryInterval, StartTime, UserAgent -ErrorAction -Ignore
