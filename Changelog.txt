@@ -1,3 +1,20 @@
+Changelog UG-Miner 6.8.1 2026/04/15
+===================================
+
+Changes:
+- Declutter '.\Utils' folder
+
+Enhancements:
+- Core: Extend prerun ganularity to 5 levels
+
+Fixes:
+- Balances tracker: Do not create a earnings object if balance has dropped to 0 after a full payout
+- Core: Include.psm1  / function 'Get-Rate' not setting mBTC rates (regression from 6.7.35)
+
+Miner updates:
+- TeamBlackMiner-v2.44
+
+
 Changelog UG-Miner 6.8.0 2026/04/12
 ===================================
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.0
-Version date:   2026/04/12
+Version:        6.8.1
+Version date:   2026/04/15
 #>
 
 # Added support for algorithms 'yescrypt', 'yescryptr16' and 'yescryptr32' on AMD Ellesmere and Vega GPUs*

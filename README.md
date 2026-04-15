@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.0 / Updated 2026/04/12
+Version 6.8.1 / Updated 2026/04/15
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -184,26 +184,38 @@ Some settings can be configured per [advanced pool configuration](<https://githu
 
 ## PreRun
 
-UG-Miner can run a batch script prior switching to a specific miner and/or algorithm.
+UG-Miner can execute a batch script prior switching to a specific miner and/or algorithm.
 
 The prerun scripts can be used to apply overclocking settings via any OC tool that can be parameterized via batch file commands (e.g. nvidiaInspector or OverdriveNTool).  
 
-Before starting a miner executable UG-Miner will try to launch one of the following 3 prerun scripts (in this order):
+Before starting a miner executable UG-Miner will try to execute ONE of the following 5 prerun scripts (in this order):
 
-1. \<MinerName\>\_\<AlgorithmName\>.bat / \<MinerName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
-   Create a file named \<MinerName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
+1. \<MinerBaseName-Version-Device\>\_\<AlgorithmName\>.bat / \<MinerBaseName-Version-Device\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
+   Create a file named \<MinerBaseName-Version-device\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
    'MiniZ-v2.5e-1xRX66008GB_EtcHash.bat'  
    'lolMiner-v1.9.7-1xRTX306012GB_Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
-2. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
+2. \<MinerBaseName-Version\>\_\<AlgorithmName\>.bat / \<MinerBaseName-Version\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
+   Create a file named \<MinerBaseName-Version\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
+   'MiniZ-v2.5e_EtcHash.bat'  
+   'lolMiner-v1.9.7_Ethash&SHA512256d.bat'  
+   (use the algorithm base name, not the algorithm variant name)  
+
+3. \<MinerBaseName\>\_\<AlgorithmName\>.bat / \<MinerBaseName\>\_\<AlgorithmName1&AlgorithmName2\>.bat  
+   Create a file named \<MinerBaseName\>\_\<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
+   'MiniZ_EtcHash.bat'  
+   'lolMiner_Ethash&SHA512256d.bat'  
+   (use the algorithm base name, not the algorithm variant name)  
+
+4. \<AlgorithmName\>.bat / \<AlgorithmName1&AlgorithmName2\>.bat  
    Create a file named \<AlgorithmName\>.bat in the '[UG-Miner directory]\Utils\prerun' folder, e.g.  
    'Ethash.bat'  
    'Ethash&SHA512256d.bat'  
    (use the algorithm base name, not the algorithm variant name)  
 
-3. default.bat  
-   If neither of the two files above exists UG-Miner will try to launch the generic '[UG-Miner directory]\Utils\prerun\default.bat'
+5. default.bat  
+   If neither of the four files above exists UG-Miner will try to launch the generic '[UG-Miner directory]\Utils\prerun\default.bat'
 
 **Use overclock with caution!**
 

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.8.0
-Version date:   2026/04/12
+Version:        6.8.1
+Version date:   2026/04/15
 #>
 
 using module ..\Includes\Include.psm1

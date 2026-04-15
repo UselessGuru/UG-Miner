@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle.ps1
-Version:        6.8.0
-Version date:   2026/04/12
+Version:        6.8.1
+Version date:   2026/04/15
 #>
 
 using module .\Include.psm1
@@ -1405,30 +1405,37 @@ try {
                 }
                 else { 
                     # Launch prerun if exists
-                    if (Test-Path -LiteralPath ".\Utils\Prerun\$($Miner.Type)Prerun.bat" -PathType Leaf) { 
-                        Write-Message -Level Info "Launching Prerun: .\Utils\Prerun\$($Miner.Type)Prerun.bat"
-                        Start-Process ".\Utils\Prerun\$($Miner.Type)Prerun.bat" -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                    $MinerBaseNameVersionDevice_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName_Version_Device)_$($Miner.Algorithms -join "&").bat"
+                    $MinerBaseNameVersion_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName_Version)_$($Miner.Algorithms -join "&").bat"
+                    $MinerBaseName_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName)_$($Miner.Algorithms -join "&").bat"
+                    $Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.Algorithms -join "&").bat"
+                    $Default_PrerunName = ".\Utils\Prerun\default.bat"
+                    if (Test-Path -LiteralPath $MinerBaseNameVersionDevice_Algorithm_PrerunName -PathType Leaf) { 
+                        Write-Message -Level Info "Launching Prerun: $MinerBaseNameVersionDevice_Algorithm_PrerunName"
+                        Start-Process $MinerBaseNameVersionDevice_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
                         Start-Sleep -Seconds 2
                     }
-                    $MinerAlgorithmPrerunName = ".\Utils\Prerun\$($Miner.BaseName_Version_Device)_$($Miner.Algorithms -join "&").bat"
-                    $AlgorithmPrerunName = ".\Utils\Prerun\$($Miner.Algorithms -join "&").bat"
-                    $DefaultPrerunName = ".\Utils\Prerun\default.bat"
-                    if (Test-Path -LiteralPath $MinerAlgorithmPrerunName -PathType Leaf) { 
-                        Write-Message -Level Info "Launching Prerun: $MinerAlgorithmPrerunName"
-                        Start-Process $MinerAlgorithmPrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                    elseif (Test-Path -LiteralPath $MinerBaseNameVersion_Algorithm_PrerunName -PathType Leaf) { 
+                        Write-Message -Level Info "Launching Prerun: $MinerBaseNameVersion_Algorithm_PrerunName"
+                        Start-Process $MinerBaseNameVersion_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
                         Start-Sleep -Seconds 2
                     }
-                    elseif (Test-Path -LiteralPath $AlgorithmPrerunName -PathType Leaf) { 
-                        Write-Message -Level Info "Launching Prerun: $AlgorithmPrerunName"
-                        Start-Process $AlgorithmPrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                    elseif (Test-Path -LiteralPath $MinerBaseName_Algorithm_PrerunName -PathType Leaf) { 
+                        Write-Message -Level Info "Launching Prerun: $MinerBaseName_Algorithm_PrerunName"
+                        Start-Process $MinerBaseName_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
                         Start-Sleep -Seconds 2
                     }
-                    elseif (Test-Path -LiteralPath $DefaultPrerunName -PathType Leaf) { 
-                        Write-Message -Level Info "Launching Prerun: $DefaultPrerunName"
-                        Start-Process $DefaultPrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                    elseif (Test-Path -LiteralPath $Algorithm_PrerunName -PathType Leaf) { 
+                        Write-Message -Level Info "Launching Prerun: $Algorithm_PrerunName"
+                        Start-Process $Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
                         Start-Sleep -Seconds 2
                     }
-                    Remove-Variable AlgorithmPrerunName, DefaultPrerunName, MinerAlgorithmPrerunName -ErrorAction Ignore
+                    elseif (Test-Path -LiteralPath $Default_PrerunName -PathType Leaf) { 
+                        Write-Message -Level Info "Launching Prerun: $Default_PrerunName"
+                        Start-Process $Default_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                        Start-Sleep -Seconds 2
+                    }
+                    Remove-Variable Algorithm_PrerunName, Default_PrerunName, MinerBaseNameVersionDevice_Algorithm_PrerunName, MinerBaseNameVersion_Algorithm_PrerunName, MinerBaseName_Algorithm_PrerunName -ErrorAction Ignore
 
                     if ($Miner.Workers.Pool.DAGsizeGiB) { 
                         # Add extra time when CPU mining and miner requires DAG creation

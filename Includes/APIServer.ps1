@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.0
-Version date:   2026/04/12
+Version:        6.8.1
+Version date:   2026/04/15
 #>
 
 using module .\Include.psm1
@@ -648,7 +648,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                 $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
                 foreach ($Miner in $Session.Miners) { 
                     $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $null = $Miner.Reasons.Remove($_) })
-                    if (-not $Miner.Reasons.Count) { $_.Available = $true }
+                    if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
                 }
                 Remove-Variable Miner
 

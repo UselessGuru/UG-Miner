@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.0
-Version date:   2026/04/12
+Version:        6.8.1
+Version date:   2026/04/15
 #>
 
 using module .\Include.psm1
@@ -265,41 +265,43 @@ do {
                 $BalanceDataObjects += $BalanceObject
                 $Session.BalancesData += $BalanceObject
 
-                try { 
-                    $EarningsObject = [PSCustomObject]@{ 
-                        Pool                    = $BalanceObject.Pool
-                        Wallet                  = $BalanceObject.Wallet
-                        Currency                = $BalanceObject.Currency
-                        Start                   = $BalanceDataObjects[0].DateTime
-                        LastUpdated             = $BalanceObject.DateTime
-                        Pending                 = [Double]$BalanceObject.Pending
-                        Balance                 = [Double]$BalanceObject.Balance
-                        Unpaid                  = [Double]$BalanceObject.Unpaid
-                        Earnings                = [Double]$BalanceObject.Earnings
-                        Delta                   = [Double]$BalanceObject.Delta
-                        Growth1                 = [Double]$Growth1
-                        Growth6                 = [Double]$Growth6
-                        Growth24                = [Double]$Growth24
-                        Growth168               = [Double]$Growth168
-                        Growth720               = [Double]$Growth720
-                        GrowthToday             = [Double]$GrowthToday
-                        AvgHourlyGrowth         = [Double]$AvgHourlyGrowth
-                        AvgDailyGrowth          = [Double]$AvgDailyGrowth
-                        AvgWeeklyGrowth         = [Double]$AvgWeeklyGrowth
-                        ProjectedEndDayGrowth   = if (($Now - $BalanceDataObjects[0].DateTime).TotalHours -ge 1) { [Double]($AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) } else { [Double]($Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) }
-                        ProjectedPayDate        = if ($PayoutThreshold -and $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ([Double]$BalanceObject.Balance -lt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-4) { [DateTime]$Now.AddDays(($PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency) - $BalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } else { "Unknown" } } else { if ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } else { "Next pool payout" } } } else { "Unknown" }
-                        TrustLevel              = [Double]((($Now - $BalanceDataObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum).Minimum
-                        TotalHours              = [Double]($Now - $BalanceDataObjects[0].DateTime).TotalHours
-                        PayoutThreshold         = [Double]$PayoutThreshold
-                        PayoutThresholdCurrency = $PayoutThresholdCurrency
-                        Payout                  = [Double]$BalanceObject.Payout
-                        Uri                     = $BalanceObject.Url
-                        LastEarnings            = if ($Growth24 -gt 0) { $BalanceObject.DateTime } else { $BalanceDataObjects[0].DateTime }
+                if ($BalanceObject.Balance -gt 0) { 
+                    try { 
+                        $EarningsObject = [PSCustomObject]@{ 
+                            Pool                    = $BalanceObject.Pool
+                            Wallet                  = $BalanceObject.Wallet
+                            Currency                = $BalanceObject.Currency
+                            Start                   = $BalanceDataObjects[0].DateTime
+                            LastUpdated             = $BalanceObject.DateTime
+                            Pending                 = [Double]$BalanceObject.Pending
+                            Balance                 = [Double]$BalanceObject.Balance
+                            Unpaid                  = [Double]$BalanceObject.Unpaid
+                            Earnings                = [Double]$BalanceObject.Earnings
+                            Delta                   = [Double]$BalanceObject.Delta
+                            Growth1                 = [Double]$Growth1
+                            Growth6                 = [Double]$Growth6
+                            Growth24                = [Double]$Growth24
+                            Growth168               = [Double]$Growth168
+                            Growth720               = [Double]$Growth720
+                            GrowthToday             = [Double]$GrowthToday
+                            AvgHourlyGrowth         = [Double]$AvgHourlyGrowth
+                            AvgDailyGrowth          = [Double]$AvgDailyGrowth
+                            AvgWeeklyGrowth         = [Double]$AvgWeeklyGrowth
+                            ProjectedEndDayGrowth   = if (($Now - $BalanceDataObjects[0].DateTime).TotalHours -ge 1) { [Double]($AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) } else { [Double]($Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours) }
+                            ProjectedPayDate        = if ($PayoutThreshold -and $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ([Double]$BalanceObject.Balance -lt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-4) { [DateTime]$Now.AddDays(($PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency) - $BalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } else { "Unknown" } } else { if ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } else { "Next pool payout" } } } else { "Unknown" }
+                            TrustLevel              = [Double]((($Now - $BalanceDataObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum).Minimum
+                            TotalHours              = [Double]($Now - $BalanceDataObjects[0].DateTime).TotalHours
+                            PayoutThreshold         = [Double]$PayoutThreshold
+                            PayoutThresholdCurrency = $PayoutThresholdCurrency
+                            Payout                  = [Double]$BalanceObject.Payout
+                            Uri                     = $BalanceObject.Url
+                            LastEarnings            = if ($Growth24 -gt 0) { $BalanceObject.DateTime } else { $BalanceDataObjects[0].DateTime }
+                        }
+                        $Balances."$($BalanceObject.Pool) ($($BalanceObject.Currency):$($BalanceObject.Wallet))" = $EarningsObject
                     }
-                    $Balances."$($BalanceObject.Pool) ($($BalanceObject.Currency):$($BalanceObject.Wallet))" = $EarningsObject
-                }
-                catch { 
-                    Start-Sleep -Seconds 0
+                    catch { 
+                        Start-Sleep -Seconds 0
+                    }
                 }
                 Remove-Variable AvgHourlyGrowth, AvgDailyGrowth, AvgWeeklyGrowth, Growth1, Growth6, Growth24, Growth168, Growth720, PayoutThreshold, PayoutThresholdCurrency -ErrorAction Ignore
 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.0
-Version date:   2026/04/12
+Version:        6.8.1
+Version date:   2026/04/15
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.0"
+    Version      = [System.Version]"6.8.1"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -376,7 +376,221 @@ $Session.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash tab
 # Must done before reading config (Get-Region)
 Write-Host ""
 Write-Message -Level Verbose "Preparing environment and loading data files..."
-Initialize-Environment
+# Create directories
+("Cache", "Config", "Logs", "Stats").ForEach(
+    { 
+        if (-not (Test-Path -LiteralPath ".\$_" -PathType Container)) { $null = (New-Item -Path . -Name "$_" -ItemType Directory) }
+    }
+)
+
+# Check if all required files are present
+("Balances", "Brains", "Data", "Miners", "Pools", "Web").ForEach(
+    { 
+        if (-not (Get-ChildItem -LiteralPath $PWD\$_)) { 
+            Write-Error "Terminating error - cannot continue! No files in folder '\$_'. Please restore the folder from your original download."
+            $null = (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\$_'.`nPlease restore the folder from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+            Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+            Start-Sleep -Seconds 5
+            exit
+        }
+    }
+)
+
+# Load donation as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\DonationData.json") { $Session.DonationData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.DonationData) { 
+    Write-Error "Terminating error - cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load donation log
+if (Test-Path -LiteralPath "$PWD\Logs\DonationLog.csv") { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) }
+if (-not $Session.DonationLog) { 
+    $Session.DonationLog = @()
+}
+else { 
+    Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+# Load algorithm list as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\Algorithms.json") { $Session.Algorithms = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.Algorithms.Keys) { 
+    Write-Error "Terminating error - cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load coin names as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\CoinNames.json") { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.CoinNames.Keys) { 
+    Write-Error "Terminating error - cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load currency algorithm data as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\CurrencyAlgorithm.json") { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.CurrencyAlgorithm.Keys) { 
+    Write-Error "Terminating error - cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load EquihashCoinPers data as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\EquihashCoinPers.json") { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.EquihashCoinPers) { 
+    Write-Error "Terminating error - cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
+    $null = $WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded equihash coins database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load regions as case insensitive hash table
+if (Test-Path -LiteralPath "$PWD\Data\Regions.json") { 
+    $Session.Regions = [Ordered]@{ }
+    ([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties.ForEach({ $Session.Regions[$_.Name] = @($_.Value) })
+}
+if (-not $Session.Regions.Keys) { 
+    Write-Error "Terminating error - cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load FIAT currencies list as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\FIATcurrencies.json") { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.FIATcurrencies) { 
+    Write-Error "Terminating error - cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded fiat currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load unprofitable algorithms as case insensitive sorted list, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
+$Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
+if (Test-Path -LiteralPath "$PWD\Data\UnprofitableAlgorithms.json") { 
+    $UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
+    $UnprofitableAlgorithms.Keys.ForEach({ $Session.UnprofitableAlgorithms.$_ = $UnprofitableAlgorithms.$_ })
+    Remove-Variable UnprofitableAlgorithms
+}
+if (-not $Session.UnprofitableAlgorithms.Count) { 
+    Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load DAG data, if not available it will get recreated
+if (Test-Path -LiteralPath "$PWD\Data\DAGdata.json") { $Session.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject }
+if (-not $Session.DAGdata) { 
+    Write-Error "Error loading DAG database. File '.\Data\DAGdata.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+
+# Load PoolsLastUsed data as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\PoolsLastUsed.json") { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.PoolsLastUsed.psBase.Keys) { 
+    $Session.PoolsLastUsed = @{ }
+}
+else { 
+    Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+# Load AlgorithmsLastUsed data as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\AlgorithmsLastUsed.json") { $Session.AlgorithmsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.AlgorithmsLastUsed.psBase.Keys) { 
+    $Session.AlgorithmsLastUsed = @{ }
+}
+else { 
+    Write-Host "Loaded algorithms last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+# Load MinersLastUsed data as case insensitive sorted list
+if (Test-Path -LiteralPath "$PWD\Data\MinersLastUsed.json") { $Session.MinersLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\MinersLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) }
+if (-not $Session.MinersLastUsed.psBase.Keys) { 
+    $Session.MinersLastUsed = @{ }
+}
+else { 
+    Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+# Load EarningsChart data to make it available early in GUI
+if (Test-Path -LiteralPath "$PWD\Cache\EarningsChartData.json" -PathType Leaf) { 
+    $Session.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Cache\EarningsChartData.json") | ConvertFrom-Json
+    $Session.BalancesUpdatedTimestamp = (Get-ItemProperty -LiteralPath "$PWD\Cache\EarningsChartData.json" -Name LastWriteTime).lastwritetime.ToString("G")
+}
+if (-not $Session.EarningsChartData.Earnings) { 
+    $Session.EarningsChartData = @{ }
+    $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
+}
+else { 
+    Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+# Load Balances data to make it available early in GUI
+if (Test-Path -LiteralPath "$PWD\Cache\Balances.json" -PathType Leaf) { $Session.Balances = [System.IO.File]::ReadAllLines("$PWD\Cache\Balances.json") | ConvertFrom-Json -AsHashtable }
+if (-not $Session.Balances.Keys) { 
+    $Session.Balances = [Ordered]@{ } # as case insensitive hash table
+}
+else { 
+    Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+# Load NVidia GPU architecture table
+if (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureNvidia.json") { $Session.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore }
+if (-not $Session.GPUArchitectureDbNvidia) { 
+    Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+else { 
+    $Session.GPUArchitectureDbNvidia.PSObject.Properties.ForEach({ $_.Value.Model = $_.Value.Model -join "|" })
+    Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+# Load AMD GPU architecture table
+if (Test-Path -LiteralPath "$PWD\Data\GPUArchitectureAMD.json") { $Session.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore }
+if (-not $Session.GPUArchitectureDbAMD) { 
+    Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+else { 
+    $Session.GPUArchitectureDbAMD.PSObject.Properties.ForEach({ $_.Value = $_.Value -join "|" })
+    Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+}
+
+$Session.BalancesCurrencies = @($Session.Balances.PSObject.Properties.Name.ForEach({ $Session.Balances.$_.Currency }) | Sort-Object -Unique)
+
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host " ✔" -ForegroundColor Green

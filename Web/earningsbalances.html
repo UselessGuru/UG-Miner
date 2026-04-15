@@ -114,7 +114,11 @@
                   <div class="card-body text-center">
                     <p title="Total pool balance" class="card-text currencies">
                       {{#each balances}}
-                        <b>{{@key}}: {{formatCurrency this}}</b>
+                        {{#if @index}}
+                          {{@key}}: {{formatCurrency this}}
+                        {{else}}
+                          <b>{{@key}}: {{formatCurrency this}}</b>
+                        {{/if}}
                         <br/>
                       {{/each}}
                     </p>

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.0
-Version date:   2026/04/12
+Version:        6.8.1
+Version date:   2026/04/15
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -330,7 +330,7 @@ function Update-TabControl {
                         @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Profit (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Power consumption (live)"; Expression = { if ($_.MeasurePowerConsumption) { if ($_.Status -eq "Running") { "Measuring..." } else { "Unmeasured" } } else { if ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
-                        @{ Name = "Algorithm (variant) [Currency]"; Expression = { $_.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(if ($_.Pool.Currency) { "[$($_.Pool.Currency)]" })" }) -join " & " } },
+                        @{ Name = "Algorithm(variant) [Currency]"; Expression = { $_.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(if ($_.Pool.Currency) { " [$($_.Pool.Currency)]" })" }) -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } }
                         @{ Name = "Hashrate (live)"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Workers.ForEach({ $_.Hashrates_Live | ConvertTo-Hash }) -join " & " } } }
                         @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
@@ -592,7 +592,7 @@ function Update-TabControl {
                         @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
                         @{ Name = "Profit (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.Profit_Bias) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
                         @{ Name = "Power consumption"; Expression = { if ($_.MeasurePowerConsumption) { if ($_.Status -eq "Running") { "Measuring..." } else { "Unmeasured" } } else { if ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } else { "$($_.PowerConsumption.ToString("N2")) W" } } } }
-                        @{ Name = "Algorithm (variant)"; Expression = { $_.Workers.Pool.AlgorithmVariant -join " & " } },
+                        @{ Name = "Algorithm(variant) [Currency]"; Expression = { $_.Workers.ForEach({ "$($_.Pool.AlgorithmVariant)$(if ($_.Pool.Currency) { " [$($_.Pool.Currency)]" })" }) -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } },
                         @{ Name = "Hashrate"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) -join " & " } } }
                         if ($LegacyGUIelements.RadioButtonMinersUnavailable.checked -or $LegacyGUIelements.RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
@@ -686,6 +686,7 @@ function Update-TabControl {
                         if ($LegacyGUIelements.RadioButtonPoolsUnavailable.checked -or $LegacyGUIelements.RadioButtonPools.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
                     Remove-Variable Factor, Unit
+
                     $LegacyGUIelements.PoolsDGV.Sort($LegacyGUIelements.PoolsDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIelements.PoolsDGV.ClearSelection()
                     $LegacyGUIelements.PoolsLabel.Text = "Pool information updated $($Session.PoolsUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.PoolsDGV.Rows.Count) pool$(if ($LegacyGUIelements.PoolsDGV.Rows.count -ne 1) { "s" }))"
@@ -1431,8 +1432,8 @@ $LegacyGUIelements.RadioButtonMinersOptimal.Add_Click(
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersOptimal, "Shows the list of all optimal miners per algorithm and device.")
 
 $LegacyGUIelements.RadioButtonMinersUnavailable = [System.Windows.Forms.RadioButton]::new()
-$LegacyGUIelements.RadioButtonMinersUnavailable.AutoSize = $false
-$LegacyGUIelements.RadioButtonMinersUnavailable.Font = [System.Drawing.Font]::new($Font2, 10)
+$LegacyGUIelements.RadioButtonMinersUnavailable.AutoSize = $LegacyGUIelements.RadioButtonMinersOptimal.AutoSize
+$LegacyGUIelements.RadioButtonMinersUnavailable.Font = $LegacyGUIelements.RadioButtonMinersOptimal.Font
 $LegacyGUIelements.RadioButtonMinersUnavailable.Height = $LegacyGUIelements.RadioButtonMinersOptimal.Height
 $LegacyGUIelements.RadioButtonMinersUnavailable.Location = [System.Drawing.Point]::new(150, 0)
 $LegacyGUIelements.RadioButtonMinersUnavailable.Text = "Unavailable miners"
@@ -1449,8 +1450,8 @@ $LegacyGUIelements.RadioButtonMinersUnavailable.Add_Click(
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonMinersUnavailable, "Shows the list of all unavailable miners.`rThe column 'Reason(s)' shows the filter criteria(s) that made the miner unavailable.")
 
 $LegacyGUIelements.RadioButtonMiners = [System.Windows.Forms.RadioButton]::new()
-$LegacyGUIelements.RadioButtonMiners.AutoSize = $false
-$LegacyGUIelements.RadioButtonMiners.Font = [System.Drawing.Font]::new($Font2, 10)
+$LegacyGUIelements.RadioButtonMiners.AutoSize = $LegacyGUIelements.RadioButtonMinersUnavailable.AutoSize
+$LegacyGUIelements.RadioButtonMiners.Font = $LegacyGUIelements.RadioButtonMinersUnavailable.Font
 $LegacyGUIelements.RadioButtonMiners.Height = $LegacyGUIelements.RadioButtonMinersUnavailable.Height
 $LegacyGUIelements.RadioButtonMiners.Location = [System.Drawing.Point]::new(320, 0)
 $LegacyGUIelements.RadioButtonMiners.Text = "All miners"
@@ -1536,8 +1537,8 @@ $LegacyGUIelements.RadioButtonPoolsBest.Add_Click(
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsBest, "Shows the list of the best paying pools for each algorithm.")
 
 $LegacyGUIelements.RadioButtonPoolsUnavailable = [System.Windows.Forms.RadioButton]::new()
-$LegacyGUIelements.RadioButtonPoolsUnavailable.AutoSize = $false
-$LegacyGUIelements.RadioButtonPoolsUnavailable.Font = [System.Drawing.Font]::new($Font2, 10)
+$LegacyGUIelements.RadioButtonPoolsUnavailable.AutoSize = $LegacyGUIelements.RadioButtonPoolsBest.AutoSize
+$LegacyGUIelements.RadioButtonPoolsUnavailable.Font = $LegacyGUIelements.RadioButtonPoolsBest.Font
 $LegacyGUIelements.RadioButtonPoolsUnavailable.Height = $LegacyGUIelements.RadioButtonPoolsBest.Height
 $LegacyGUIelements.RadioButtonPoolsUnavailable.Location = [System.Drawing.Point]::new(120, 0)
 $LegacyGUIelements.RadioButtonPoolsUnavailable.Tag = ""
@@ -1555,8 +1556,8 @@ $LegacyGUIelements.RadioButtonPoolsUnavailable.Add_Click(
 $LegacyGUIelements.Tooltip.SetToolTip($LegacyGUIelements.RadioButtonPoolsUnavailable, "Shows the list of all unavailable pools.`rThe column 'Reason(s)' shows the filter criteria(s) that made the pool unavailable.")
 
 $LegacyGUIelements.RadioButtonPools = [System.Windows.Forms.RadioButton]::new()
-$LegacyGUIelements.RadioButtonPools.AutoSize = $false
-$LegacyGUIelements.RadioButtonPools.Font = [System.Drawing.Font]::new($Font2, 10)
+$LegacyGUIelements.RadioButtonPools.AutoSize = $LegacyGUIelements.RadioButtonPoolsUnavailable.AutoSize
+$LegacyGUIelements.RadioButtonPools.Font = $LegacyGUIelements.RadioButtonPoolsUnavailable.Font
 $LegacyGUIelements.RadioButtonPools.Height = $LegacyGUIelements.RadioButtonPoolsUnavailable.Height
 $LegacyGUIelements.RadioButtonPools.Location = [System.Drawing.Point]::new((120 + 175), 0)
 $LegacyGUIelements.RadioButtonPools.Tag = ""
@@ -1649,7 +1650,6 @@ $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
 # $LegacyGUIelements.WorkersDGV.ReadOnly = $true
 # $LegacyGUIelements.WorkersDGV.RowHeadersVisible = $false
 # $LegacyGUIelements.WorkersDGV.SelectionMode = "FullRowSelect"
-# $LegacyGUIelements.WorkersDGV.Add_CellClick(
 # $LegacyGUIelements.WorkersDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
 # $LegacyGUIelements.WorkersDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 # $LegacyGUIelements.WorkersDGV.Add_Sorted({ Set-WorkerColor -DataGridView $this })
@@ -1720,10 +1720,10 @@ $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.CheckShowSwitc
 $LegacyGUIelements.CheckShowSwitchingLogCPU.ForEach({ $_.Add_Click({ CheckBoxSwitchingLog_Click($this) }) })
 
 $LegacyGUIelements.CheckShowSwitchingLogAMD = [System.Windows.Forms.CheckBox]::new()
-$LegacyGUIelements.CheckShowSwitchingLogAMD.AutoSize = $true
+$LegacyGUIelements.CheckShowSwitchingLogAMD.AutoSize = $LegacyGUIelements.CheckShowSwitchingLogCPU.AutoSize
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }))
-$LegacyGUIelements.CheckShowSwitchingLogAMD.Height = 20
-$LegacyGUIelements.CheckShowSwitchingLogAMD.Font = [System.Drawing.Font]::new($Font2, 10)
+$LegacyGUIelements.CheckShowSwitchingLogAMD.Height = $LegacyGUIelements.CheckShowSwitchingLogCPU.Height
+$LegacyGUIelements.CheckShowSwitchingLogAMD.Font = $LegacyGUIelements.CheckShowSwitchingLogCPU.Font
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + 30), $LegacyGUIelements.CheckShowSwitchingLogCPU.Top)
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Tag = "AMD"
 $LegacyGUIelements.CheckShowSwitchingLogAMD.Text = "AMD"
@@ -1732,10 +1732,10 @@ $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.CheckShowSwitc
 $LegacyGUIelements.CheckShowSwitchingLogAMD.ForEach({ $_.Add_Click({ CheckBoxSwitchingLog_Click($this) }) })
 
 $LegacyGUIelements.CheckShowSwitchingLogINTEL = [System.Windows.Forms.CheckBox]::new()
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.AutoSize = $true
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.AutoSize = $LegacyGUIelements.CheckShowSwitchingLogAMD.AutoSize
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }))
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.Font = [System.Drawing.Font]::new($Font2, 10)
-$LegacyGUIelements.CheckShowSwitchingLogINTEL.Height = 20
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.Font = $LegacyGUIelements.CheckShowSwitchingLogAMD.Font
+$LegacyGUIelements.CheckShowSwitchingLogINTEL.Height = $LegacyGUIelements.CheckShowSwitchingLogAMD.Height
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width + 30), $LegacyGUIelements.CheckShowSwitchingLogAMD.Top)
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Tag = "INTEL"
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.Text = "INTEL"
@@ -1744,10 +1744,10 @@ $LegacyGUIelements.SwitchingLogPageControls += $LegacyGUIelements.CheckShowSwitc
 $LegacyGUIelements.CheckShowSwitchingLogINTEL.ForEach({ $_.Add_Click({ CheckBoxSwitchingLog_Click($this) }) })
 
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA = [System.Windows.Forms.CheckBox]::new()
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.AutoSize = $true
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.AutoSize = $LegacyGUIelements.CheckShowSwitchingLogINTEL.AutoSize
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Enabled = [Boolean]($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Name -notin $Session.Config.ExcludeDeviceName -and $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }))
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Font = [System.Drawing.Font]::new($Font2, 10)
-$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Height = 20
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Font = $LegacyGUIelements.CheckShowSwitchingLogINTEL.Font
+$LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Height = $LegacyGUIelements.CheckShowSwitchingLogINTEL.Height
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Location = [System.Drawing.Point]::new(($LegacyGUIelements.SwitchingLogClearButton.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogCPU.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogAMD.Width + 30 + $LegacyGUIelements.CheckShowSwitchingLogINTEL.Width + 30), ($LegacyGUIelements.SwitchingLogLabel.Height + 10))
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Tag = "NVIDIA"
 $LegacyGUIelements.CheckShowSwitchingLogNVIDIA.Text = "NVIDIA"
@@ -1815,7 +1815,7 @@ $LegacyGUIelements.WatchdogTimersRemoveButton.Add_Click(
         $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
         foreach ($Miner in $Session.Miners) { 
             $Miner.Reasons.Where({ $_ -like "Miner suspended by watchdog *" }).ForEach({ $null = $Miner.Reasons.Remove($_) })
-            if (-not $Miner.Reasons.Count) { $_.Available = $true }
+            if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
         }
         Remove-Variable Miner
 
