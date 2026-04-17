@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 using module .\Include.psm1
@@ -116,7 +116,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
             if ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
-                $Config.Pools = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
+                $Config.PoolsConfig = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
@@ -135,7 +135,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
-                    $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
                     $Mutex.ReleaseMutex()
                 }
             }
@@ -150,7 +150,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             $PoolNames = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Name
             $Algorithms = @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore).Algorithm
             if ($Pools = @($Session.Pools.Where({ $PoolNames -contains $_.Name -and $Algorithms -contains $_.Algorithm }))) { 
-                $Config.Pools = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
+                $Config.PoolsConfig = [System.IO.File]::ReadAllLines($Session.PoolsConfigFile) | ConvertFrom-Json
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
@@ -172,7 +172,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
-                    $Config.Pools | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
                     $Mutex.ReleaseMutex()
                 }
             }
@@ -387,10 +387,10 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/functions/querypoolapi" { 
-            if (-not $Session.Config.Pools.$($Parameters.Pool).BrainConfig.$($Parameters.Type)) { 
+            if (-not $Session.Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type)) { 
                 $Data = "No pool configuration data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
             }
-            elseif (-not ($Data = (Invoke-RestMethod -Uri $Session.Config.Pools.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
+            elseif (-not ($Data = (Invoke-RestMethod -Uri $Session.Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
                 $Data = "No data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
             }
             break
@@ -870,7 +870,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/poolsconfig" { 
-            $Data = ConvertTo-Json -Depth 10 ($Session.Config.Pools | Select-Object)
+            $Data = ConvertTo-Json -Depth 10 ($Session.Config.PoolsConfig | Select-Object)
             break
         }
         "/poolsconfigfile" { 

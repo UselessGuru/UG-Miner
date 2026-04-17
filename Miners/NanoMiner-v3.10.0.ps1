@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { return }
@@ -102,7 +102,7 @@ if ($Algorithms) {
                                 if ($_.Type -ne "CPU") { $Arguments = "$Arguments -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
 
                                 if ($_.Type -eq "CPU") { $Arguments = "$Arguments -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.Config.CPUMiningReserveCPUcore))" }
-                                $Arguments = "$Arguments -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.Pools.($Pool.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
+                                $Arguments = "$Arguments -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.PoolsConfig.($Pool.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
 
                                 # Apply tuning parameters
                                 if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }

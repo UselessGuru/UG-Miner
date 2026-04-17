@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 using module .\Includes\Include.psm1
@@ -52,7 +52,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Boolean]$BalancesShowInFIATcurrency = $true, # If true pool balances will be shown in main currency
     [Parameter (Mandatory = $false)]
-    [String[]]$BalancesTrackerExcludePools = @("MiningDutch"), # Balances tracker will not track these pools
+    [String[]]$BalancesTrackerExcludePools = @(), # Balances tracker will not track these pools
     [Parameter (Mandatory = $false)]
     [Switch]$BalancesTrackerLog = $false, # If true UG-Miner will store all balance tracker data in .\Logs\EarningTrackerLog.csv
     [Parameter (Mandatory = $false)]
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.1"
+    Version      = [System.Version]"6.8.2"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

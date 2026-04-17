@@ -32,7 +32,7 @@ $ProgressPreference = "SilentlyContinue"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $HostSuffix = "mine.zpool.ca"
 
-$PoolConfig = $Session.Config.Pools.$Name
+$PoolConfig = $Session.Config.PoolsConfig.$Name
 $PriceField = $PoolConfig.Variant.$PoolVariant.PriceField
 $DivisorMultiplier = $PoolConfig.Variant.$PoolVariant.DivisorMultiplier
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"

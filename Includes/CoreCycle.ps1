@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 using module .\Include.psm1
@@ -242,12 +242,26 @@ try {
                 }
             }
 
+            # $Session.Donation.Start = [DateTime]::Now
             if ($Session.Donation.Start -and [DateTime]::Now -ge $Session.Donation.Start) { 
                 if (-not $Session.Donation.End) { 
                     $Session.Donation.Start = [DateTime]::Now
                     # Add pool config to config (in-memory only)
                     $Session.Donation.Username = $Session.DonationData.Keys | Get-Random
-                    $Session.Donation.PoolsConfig = Get-DonationConfig -DonateUsername $Session.Donation.Username
+                    $Session.Donation.PoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # Create new object, cannot use .Clone() with SortedLists
+                    $Session.Config.PoolsConfig.Keys.ForEach({ $Session.Donation.PoolsConfig[$_] = $Config.PoolsConfig[$_].Clone() })
+                    $Session.Donation.PoolName = $Session.DonationData.($Session.Donation.Username).Keys
+
+                    # Override regular pool config with donation pool config
+                    ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).Where({ $Session.Donation.PoolsConfig.$_ }).ForEach(
+                        { 
+                            $PoolName = $_
+                            $Session.Donation.PoolsConfig.$PoolName.EarningsAdjustmentFactor = 1.0
+                            $Session.DonationData.($Session.Donation.Username)[$PoolName].Keys.ForEach({ $Session.Donation.PoolsConfig[$PoolName].$_ = $Session.DonationData.($Session.Donation.Username)[$PoolName].$_ })
+                            $Session.Donation.PoolsConfig.$PoolName.WorkerName = "$($Session.Branding.ProductLabel)-$($Session.Branding.Version.ToString())-donate$($Session.Config.Donation)"
+                        }
+                    )
+
                     # Ensure full donation period
                     $Session.Donation.End = $Session.Donation.Start.AddMinutes($Session.Config.Donation)
                     $Session.EndCycleTime = ($Session.Donation.End).ToUniversalTime()
@@ -262,8 +276,8 @@ try {
         if ($Session.Donation.Running) { 
             if ($Session.Config.Donation -gt 0 -and [DateTime]::Now -lt $Session.Donation.End) { 
                 # Use donation pool config, use same pool variant to avoid extra benchmarking
-                $Session.Config.PoolName = $Session.Config.PoolName.Where({ (Get-PoolBaseName $_) -in $Session.Donation.PoolsConfig.Keys })
-                $Session.Config.Pools = $Session.Donation.PoolsConfig
+                $Session.Config.PoolName = $Session.Config.PoolName.Where({ (Get-PoolBaseName $_) -in $Session.Donation.PoolName })
+                $Session.Config.PoolsConfig = $Session.Donation.PoolsConfig
                 # Setting 0 -> miner keepalive will not be of relevance and miners will be restartet at end of donation run
                 $Session.Config.MinCycle = 0
             }
@@ -280,15 +294,21 @@ try {
                 $Session.Donation.Start = $null
                 $Session.Donation.End = $null
                 Write-Message -Level Info "Donation run complete - thank you! Mining for you again. :-)"
-                $Session.Miners.Where({ $_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running }).ForEach({ $_.KeepRunning = $false; $_.Restart = $true })
                 $Session.Donation.Running = $false
                 # Setting 0 -> miner keepalive will not be of relevance and miners will be restarted at end of donation run
                 $Session.Config.MinCycle = 0
-                $Session.Config.Pools = $Config.Pools
                 $Session.Config.PoolName = $Config.PoolName
+                $Session.Config.PoolsConfig = $Config.PoolsConfig
             }
         }
+        else { 
+            # Stop brain background jobs
+            Stop-Brain $Session.Brains.Keys.Where({ @(Get-PoolBaseName $Session.Config.PoolName) -notcontains $_ })
+        }
         #endregion
+
+        # Start brain background jobs
+        Start-Brain @(Get-PoolBaseName $Session.Config.PoolName)
 
         #region Skip some stuff when
         # - not donating and
@@ -299,12 +319,6 @@ try {
 
             # Check for new version
             if (-not $Session.Donation.Running -and $Session.Config.AutoUpdateCheckInterval -and $Session.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Session.Config.AutoUpdateCheckInterval)) { Get-Version }
-
-            # Stop / start brain background jobs
-            $PoolBaseNames = @(Get-PoolBaseName $Session.Config.PoolName)
-            $Session.Brains.Keys.Where({ $PoolBaseNames -notcontains $_ }).ForEach({ Stop-Brain $_ })
-            Start-Brain PoolBaseNames
-            Remove-Variable PoolBaseNames
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -329,7 +343,7 @@ try {
             # Collect pool data
             if ($Session.Config.PoolName) { 
                 $Session.PoolsCount = $Session.Pools.Count
-                $Session.PoolsTimeout = ($Session.Config.Pools.Keys.ForEach({ $Session.Config.Pools.$_.PoolAPItimeout }) | Measure-Object -Maximum).Maximum
+                $Session.PoolsTimeout = ($Session.Config.PoolsConfig.Keys.ForEach({ $Session.Config.PoolsConfig.$_.PoolAPItimeout }) | Measure-Object -Maximum).Maximum
 
                 # Wait for pool data message
                 if ($Session.Brains.Keys.Where({ $Session.Brains[$_].StartTime -gt $Session.Timer.AddSeconds(- $Session.Config.Interval) }) -or -not $Session.Miners) { 
@@ -482,7 +496,7 @@ try {
                     # Filter unavailable algorithms
                     if (-not $Session.Config.UseUnprofitableAlgorithms) { $Pools.Where({ $Session.UnprofitableAlgorithms[$_.Algorithm] -eq "*" }).ForEach({ $null = $_.Reasons.Add("Unprofitable algorithm") }) }
                     # Pool price 0
-                    $Pools.Where({ $_.Price -eq 0 -and -not ($Session.Config.Pools[$_.Name].PoolAllow0Price -or $Session.Config.PoolAllow0Price) }).ForEach({ $null = $_.Reasons.Add("Price -eq 0") })
+                    $Pools.Where({ $_.Price -eq 0 -and -not ($Session.Config.PoolsConfig[$_.Name].PoolAllow0Price -or $Session.Config.PoolAllow0Price) }).ForEach({ $null = $_.Reasons.Add("Price -eq 0") })
                     # No price data
                     $Pools.Where({ [Double]::IsNaN($_.Price) }).ForEach({ $null = $_.Reasons.Add("Price information not available") })
                     # Ignore pool if price is more than UnrealisticPoolPriceFactor higher than the medium price of all pools with same algorithm; NiceHash & MiningPoolHub are always right
@@ -497,8 +511,8 @@ try {
                         Remove-Variable PriceThreshold -ErrorAction Ignore
                     }
                     # Per pool config algorithm filter
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].Algorithm -like "+*" -and $Session.Config.Pools[$_.Name].Algorithm -split "," -notcontains "+$($_.AlgorithmVariant)" -and $Session.Config.Pools[$_.Name].Algorithm -split "," -notcontains "+$($_.Algorithm)" }).ForEach({ $null = $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].Algorithm -split "," -contains "-$($_.Algorithm)" -or $Session.Config.Pools[$_.Name].Algorithm -split "," -contains "-$($_.AlgorithmVariant)" }).ForEach({ $null = $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in $($_.Name) pool config)") })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].Algorithm -like "+*" -and $Session.Config.PoolsConfig[$_.Name].Algorithm -split "," -notcontains "+$($_.AlgorithmVariant)" -and $Session.Config.PoolsConfig[$_.Name].Algorithm -split "," -notcontains "+$($_.Algorithm)" }).ForEach({ $null = $_.Reasons.Add("Algorithm not enabled in $($_.Name) pool config") })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].Algorithm -split "," -contains "-$($_.Algorithm)" -or $Session.Config.PoolsConfig[$_.Name].Algorithm -split "," -contains "-$($_.AlgorithmVariant)" }).ForEach({ $null = $_.Reasons.Add("Algorithm disabled (``-$($_.Algorithm)`` in $($_.Name) pool config)") })
                     # Filter non-enabled algorithms
                     if ($Session.Config.Algorithm -like "+*") { 
                         $IncludeAlgorithmNames = @($Session.Config.Algorithm -replace "^\+" | Select-Object)
@@ -513,25 +527,25 @@ try {
                         Remove-Variable ExcludeAlgorithmNames
                     }
                     # Per pool config currency filter
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].Currency -like "+*" -and $Session.Config.Pools[$_.Name].Currency -split "," -notcontains "+$($_.Currency)" }).ForEach({ $null = $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].Currency -split "," -contains "-$($_.Currency)" }).ForEach({ $null = $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in $($_.Name) pool config)") })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].Currency -like "+*" -and $Session.Config.PoolsConfig[$_.Name].Currency -split "," -notcontains "+$($_.Currency)" }).ForEach({ $null = $_.Reasons.Add("Currency not enabled in $($_.Name) pool config") })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].Currency -split "," -contains "-$($_.Currency)" }).ForEach({ $null = $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in $($_.Name) pool config)") })
                     # Filter non-enabled currencies
                     if ($Session.Config.Currency -like "+*") { $Pools.Where({ $Session.Config.Currency -split "," -notcontains "+$($_.Currency)" }).ForEach({ $null = $_.Reasons.Add("Currency not enabled in generic config") }) }
                     # Filter disabled currencies
                     elseif ($Session.Config.Currency -like "-*") { $Pools.Where({ $Session.Config.Currency -split "," -contains "-$($_.Currency)" }).ForEach({ $null = $_.Reasons.Add("Currency disabled (``-$($_.Currency)`` in generic config)") }) }
                     # MinWorkers
-                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Session.Config.Pools[$_.Name].MinWorkers }).ForEach({ $null = $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Session.Config.Pools[$_.Name].MinWorker)`` in $($_.Name) pool config)") })
-                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Session.Config.MinWorker -and $Session.Config.Pools[$_.Name].MinWorkers -ne 0 -and $Session.Config.Pools[$_.Name].MinWorkers -lt $Session.Config.MinWorker }).ForEach({ $null = $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Session.Config.MinWorker)`` in generic config)") })
+                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Session.Config.PoolsConfig[$_.Name].MinWorkers }).ForEach({ $null = $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Session.Config.PoolsConfig[$_.Name].MinWorker)`` in $($_.Name) pool config)") })
+                    $Pools.Where({ $null -ne $_.Workers -and $_.Workers -lt $Session.Config.MinWorker -and $Session.Config.PoolsConfig[$_.Name].MinWorkers -ne 0 -and $Session.Config.PoolsConfig[$_.Name].MinWorkers -lt $Session.Config.MinWorker }).ForEach({ $null = $_.Reasons.Add("Not enough workers at pool (MinWorker ``$($Session.Config.MinWorker)`` in generic config)") })
                     # SSL
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].SSL -eq "Never" }).ForEach({ $_.PoolPorts[1] = $null })
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].SSL -eq "Always" }).ForEach({ $_.PoolPorts[0] = $null })
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].SSL -eq "Never" -and -not $_.PoolPorts[0] }).ForEach({ $null = $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in $($_.Name) pool config)") })
-                    $Pools.Where({ $Session.Config.Pools[$_.Name].SSL -eq "Always" -and -not $_.PoolPorts[1] }).ForEach({ $null = $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in $($_.Name) pool config)") })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].SSL -eq "Never" }).ForEach({ $_.PoolPorts[1] = $null })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].SSL -eq "Always" }).ForEach({ $_.PoolPorts[0] = $null })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].SSL -eq "Never" -and -not $_.PoolPorts[0] }).ForEach({ $null = $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in $($_.Name) pool config)") })
+                    $Pools.Where({ $Session.Config.PoolsConfig[$_.Name].SSL -eq "Always" -and -not $_.PoolPorts[1] }).ForEach({ $null = $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in $($_.Name) pool config)") })
                     if ($Session.Config.SSL -eq "Never") { $Pools.Where({ -not $_.PoolPorts[0] -and $_.Reasons -notmatch "Non-SSL port not available .+" }).ForEach({ $null = $_.Reasons.Add("Non-SSL port not available (SSL -eq 'Never' in generic config)") }) }
                     elseif ($Session.Config.SSL -eq "Always") { $Pools.Where({ -not $_.PoolPorts[1] -and $_.Reasons -notmatch "SSL port not available .+" }).ForEach({ $null = $_.Reasons.Add("SSL port not available (SSL -eq 'Always' in generic config)") }) }
                     # SSL Allow selfsigned certificate
-                    $Pools.Where({ $_.SSLselfSignedCertificate -and $null -ne $Session.Config.Pools[$_.Name].SSLallowSelfSignedCertificate -and $Session.Config.Pools[$_.Name].SSLallowSelfSignedCertificate -eq $false }).ForEach({ $null = $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in $($_.Name) pool config)") })
-                    if (-not $Session.Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $null -eq $Session.Config.Pools[$_.Name].SSLallowSelfSignedCertificate }).ForEach({ $null = $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") }) }
+                    $Pools.Where({ $_.SSLselfSignedCertificate -and $null -ne $Session.Config.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -and $Session.Config.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate -eq $false }).ForEach({ $null = $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in $($_.Name) pool config)") })
+                    if (-not $Session.Config.SSLallowSelfSignedCertificate) { $Pools.Where({ $_.SSLselfSignedCertificate -and $null -eq $Session.Config.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate }).ForEach({ $null = $_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") }) }
                     # At least one port (SSL or non-SSL) must be available
                     $Pools.Where({ -not ($_.PoolPorts | Select-Object) }).ForEach({ $null = $_.Reasons.Add("No ports available") })
                     # Second best pools per algorithm
@@ -563,7 +577,7 @@ try {
                     if ($Session.Config.BalancesKeepAlive -and $Global:BalancesTrackerRunspace -and $Session.PoolsLastEarnings.Count -gt 0 -and $Session.PoolsLastUsed) { 
                         $Session.Config.PoolNamesToKeepBalancesAlive = @()
                         foreach ($Pool in @($Pools.Where({ $_.Name -notin $Session.Config.BalancesTrackerExcludePool }) | Sort-Object -Property Name -Unique)) { 
-                            if ($Session.PoolsLastEarnings[$Pool.Name] -and $Session.Config.Pools[$Pool.Name].BalancesKeepAlive -gt 0 -and ([DateTime]::Now.ToUniversalTime() - $Session.PoolsLastEarnings[$Pool.Name]).Days -ge ($Session.Config.Pools[$Pool.Name].BalancesKeepAlive - 10)) { 
+                            if ($Session.PoolsLastEarnings[$Pool.Name] -and $Session.Config.PoolsConfig[$Pool.Name].BalancesKeepAlive -gt 0 -and ([DateTime]::Now.ToUniversalTime() - $Session.PoolsLastEarnings[$Pool.Name]).Days -ge ($Session.Config.PoolsConfig[$Pool.Name].BalancesKeepAlive - 10)) { 
                                 $Session.Config.PoolNamesToKeepBalancesAlive += $Pool.Name
                                 Write-Message -Level Warn "Pool '$($Pool.Name)' prioritized to avoid forfeiting balance (pool would clear balance in 10 days)."
                             }

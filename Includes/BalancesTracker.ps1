@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 using module .\Include.psm1
@@ -123,25 +123,25 @@ do {
                 $PayoutThreshold = $BalanceObject.PayoutThreshold
                 $PayoutThresholdCurrency = $BalanceObject.Currency
 
-                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+                if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
                 if (-not $PayoutThreshold) { 
-                    if ($PayoutThresholdCurrency = [String]($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys)) { 
-                        $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
+                    if ($PayoutThresholdCurrency = [String]($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".Keys)) { 
+                        $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                     }
                 }
 
                 if (-not $PayoutThreshold -and $BalanceObject.Currency -eq "BTC") { 
                     $PayoutThresholdCurrency = "mBTC"
-                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
-                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
-                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).Variant.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold.$PayoutThresholdCurrency) -as [Double] }
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double] }
+                    if (-not $PayoutThreshold) { $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*") -as [Double] }
                     if (-not $PayoutThreshold) { 
-                        if ($PayoutThresholdCurrency = $Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".Keys[0]) { 
-                            $PayoutThreshold = ($Session.Config.Pools.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
+                        if ($PayoutThresholdCurrency = $Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".Keys[0]) { 
+                            $PayoutThreshold = ($Session.Config.PoolsConfig.($BalanceObject.Pool).PayoutThreshold."*".$PayoutThresholdCurrency) -as [Double]
                         }
                     }
                 }

@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.1 / Updated 2026/04/15
+Version 6.8.2 / Updated 2026/04/17
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -40,7 +40,7 @@ UG-Miner code is partly based on
 - Miner switching log
 - Supported pools:
    - [HashCryptos](<https://hashcryptos.com/>)
-   - [Hiveon](<https://hiveon.net/>)<sup>(2)</sup>
+   - [HiveOn](<https://HiveOn.net/>)<sup>(2)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
    - [NiceHash](<https://www.nicehash.com/>)<sup>(3)</sup>
    - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
@@ -234,7 +234,7 @@ A separate section can be added to for each pool. If a pool is listed in this fi
   List of included or excluded algorithms per pool
 - Currency [CURRENCY]  
   List of included or excluded currencies per pool
-- EarningsAdjustmentFactor [Number]  
+- EarningsAdjustmentFactor [Decimal number]  
   This adds a multiplicator on estimations presented by the pool  
   (e.g. You feel that a pool is exaggerating its estimations by 10%: Set EarningsAdjustmentFactor to 0.9)
 - ExcludeRegion [REGION]  
@@ -248,16 +248,16 @@ A separate section can be added to for each pool. If a pool is listed in this fi
 - SSL [ALWAYS|NEVER|PREFER]  
   One of 'Always' (pools that do not allow SSL connection are marked as unavailable), 'Never' (pools that do only support SSL connection are marked as unavailable) or 'Prefer' (use SSL pool connection where available, otherwise use non-encrypted connection)
 - SSLallowSelfSignedCertificate [true|false]  
-  If true will allow SSL/TLS connection with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
+  If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
 - Wallet [CURRENCY: Wallet address]  
-  Your wallet address for [CURRENCY]; some pools, e.g. Hiveon, require wallets in each supported currency
+  Your wallet address for [CURRENCY]; some pools, e.g. HiveOn, require wallets in each supported currency
 
 **Usage**
 
 - Edit '[UG-Miner directory]\Config\PoolsConfig.json' (**be careful with json formatting!**)
-- Add an entry for the pool you want to customize
+- Add an entry for the pool you want to customize  
   The entry name must be the pool base name (omit *24hrs or *Plus), e.g "ZPool" (even if you have configured ZPoolPlus in the pool list)
-- Add the pool specific configuration items, see '' for the supported configuration items.
+- Add the pool specific configuration items, see '' for the supported configuration items
 
 Note: The configuration editor in the web GUI only updates the generic pool settings. Pool specific settings override the generic settings.
 
@@ -268,12 +268,10 @@ UG-Miner displays the available balances and calculates an estimation of when th
 Supported pools:
 
  - HashCryptos
- - Hiveon
- - MiningDutch <sup>(*)</sup>
+ - HiveOn
+ - MiningDutch
  - NiceHash
  - Zpool
-
-<sup>(*)</sup> Balances tracking is disabled by default. Collecting balances data is very time consuming.
 
 ## Miner switching log
 

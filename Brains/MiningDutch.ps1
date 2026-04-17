@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 using module ..\Includes\Include.psm1
@@ -42,11 +42,11 @@ $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # This lets us ensure only one thread is trying to query the pool API
 $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
 
-while ($PoolConfig = $Session.Config.Pools.$Name) { 
+while ($PoolConfig = $Session.Config.PoolsConfig.$Name) { 
 
     $APIcallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
-    $RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
+    $RetryInterval = $Session.Config.PoolsConfig.$Name.PoolAPIretryInterval
     $StartTime = [DateTime]::Now
 
     if ($Session.MyIPaddress) { 
@@ -188,7 +188,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 }
                 Remove-Variable Algorithm, AlgorithmNorm, Baseprice, Currency, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 
-                if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$Name.BrainDebug) { 
+                if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.PoolsConfig.$Name.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }

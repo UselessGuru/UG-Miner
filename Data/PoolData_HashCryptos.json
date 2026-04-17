@@ -1,6 +1,5 @@
 {
   "Algorithm": [
-    "-Yescrypt",
     "-YescryptR16"
   ],
   "AutoExchange": true,

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -71,7 +71,7 @@ if ($Algorithms) {
 
                                 $Arguments = "$($_.Arguments) --url=$(if ($Pool.PoolPorts[1]) { "ssl://" })$($Pool.User)@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
                                 if ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments = "$Arguments --worker=$($Pool.WorkerName)" }
-                                if ($_.AutoCoinPers) { $Arguments = "$Arguments $(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers)" }
+                                if ($_.AutoCoinPers) { $Arguments = "$Arguments$(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers)" }
                                 $Arguments = "$Arguments --pass=$($Pool.Pass)"
 
                                 # Apply tuning parameters

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 # Added support for algorithms 'yescrypt', 'yescryptr16' and 'yescryptr32' on AMD Ellesmere and Vega GPUs*
@@ -316,7 +316,7 @@ if ($Algorithms) {
 
                                     [PSCustomObject]@{ 
                                         API              = "SRBMiner"
-                                        Arguments        = "$Arguments --api-rig-name $($Session.Config.Pools.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
+                                        Arguments        = "$Arguments --api-rig-name $($Session.Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
                                         DeviceNames      = $AvailableMinerDevices.Name
                                         Fee              = $_.Fee # Dev fee
                                         MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/stats"

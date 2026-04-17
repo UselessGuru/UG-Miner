@@ -169,10 +169,10 @@
             <div style="padding-top: 0.6rem;" title="UG-Miner will use unprofitable algorithms (see file '\Data\UnprofitableAlgorithms.json')">
               <input type="checkbox" class="toggle-switch" id="UseUnprofitableAlgorithms" name="UseUnprofitableAlgorithms"> Use unprofitable algorithms (not recommended)
             </div>
-            <div style="padding-top: 0.6rem;" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
+            <div style="padding-top: 0.6rem;" title="Allow using the pool even if there is 0 hashrate reported in the pool API&#10;This may cause some miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Hashrate" class="toggle-switch" name="PoolAllow0Hashrate"> Use pool even if hashrate@pool is 0 (not recommended)
             </div>
-            <div style="padding-top: 0.6rem;" title="Allow using the pool even if the price reported in the pool API is 0&#10;This may cause a lot of miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
+            <div style="padding-top: 0.6rem;" title="Allow using the pool even if the price reported in the pool API is 0&#10;This may cause some miners to fail.&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">
               <input type="checkbox" id="PoolAllow0Price" class="toggle-switch" name="PoolAllow0Price"> Use pool even if price@pool is 0 (not recommended)
             </div>
             <div style="padding-top: 0.6rem;" title="Maxîmal allowed price increase compared with last price.&#10;If the price increase is higher then the pool will be marked as unavaliable.&#10;&#10;(min: 2, max: 99; default: 5)"> Maximal allowed price increase
@@ -282,7 +282,7 @@
           <div style="padding-top: 0.3rem;" title="UG-Miner will not switch miners&#10;unless another miner has n% higher earnings / profit&#10;&#10;Smaller numbers will cause more switching&#10;&#10;(min: 0%, max: 100%; default: 5%)" for="MinerSwitchingThreshold">Miner switching threshold
             <input type="number" min=0 max=100 value=5 step=0.1 size=3 id="MinerSwitchingThreshold" name="MinerSwitchingThreshold" style="width: 3.8em; text-align:right;"> %
           </div>
-          <div style="padding-top: 0.5rem;" title="Show shares information (Total / Rejected / Accepted) in log">
+          <div style="padding-top: 0.5rem;" title="Show shares information (total / rejected / accepted) in log">
             <input type="checkbox" class="toggle-switch" id="ShowShares" name="ShowShares"> Show shares information in log
           </div>
           <div style="padding-top: 0.3rem;" title="Acceptable bad shares threshold ((invalid + rejected + stale) / total) as reported by the miner&#10;If the threshold is exceeded then the miner will get stopped&#10;&#10;(min: 0%, max 100%; default=5%)&#10;Set to 0 to disable this check">Acceptable bad shares threshold
@@ -395,7 +395,7 @@
               <div style="padding-top: 0.5rem;" title="Pool balances will be shown in extra currencies &#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
                 <input type="checkbox" class="toggle-switch" id="BalancesShowInAllCurrencies" name="BalancesShowInAllCurrencies" style="margin-left:20px"> Show pool balances all currencies
               </div>
-              <div style="padding-top: 0.5rem;" title="Most pools clear pending balances after a longer period of inactivity&#10;To avoid forfeiting pool balances UG-Miner will enforce mining&#10;at the pool 10 days before it would clear the balance&#10;(one cycle only, even if it is not the most profitable pool)&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
+              <div style="padding-top: 0.5rem;" title="Most pools clear pending balances after a longer period of inactivity.&#10;To avoid forfeiting pool balances UG-Miner can enforce mining&#10;at the pool 10 days before it would forfeit the balance.&#10;(one cycle only, even if it is not the most profitable pool)&#10;(requires 'Poll pools for balances & earnings every n minutes' to be > 0)">
                 <input type="checkbox" class="toggle-switch" id="BalancesKeepAlive" name="BalancesKeepAlive" style="margin-left:20px"> Keep pool balances alive
               </div>
               <div style="padding-top: 0.5rem;" title="UG-Miner will store all balances tracker data in '.\Logs\BalancesTrackerLog.csv'">

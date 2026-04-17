@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 using module ..\Includes\Include.psm1
@@ -38,7 +38,7 @@ $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-while ($PoolConfig = $Session.Config.Pools.$Name) { 
+while ($PoolConfig = $Session.Config.PoolsConfig.$Name) { 
 
     $APIcallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
@@ -156,7 +156,7 @@ while ($PoolConfig = $Session.Config.Pools.$Name) {
                 }
                 Remove-Variable Algorithm, AlgorithmNorm, BasePrice, Currencies, Currency, CurrentPoolObject, CurrentPoolObjects, Divisor, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, SampleSizeHalfts, SampleSizets, Stat, StatName -ErrorAction Ignore
 
-                if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.Pools.$Name.BrainDebug) { 
+                if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.PoolsConfig.$Name.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }

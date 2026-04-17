@@ -18,15 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PoolAPItimeout = $Session.Config.Pools.$Name.PoolAPItimeout
-$RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
-$RetryInterval = $Session.Config.Pools.$Name.PoolAPIretryInterval
+$PoolAPItimeout = $Session.Config.PoolsConfig.$Name.PoolAPItimeout
+$RetryCount = $Session.Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+$RetryInterval = $Session.Config.PoolsConfig.$Name.PoolAPIretryInterval
 
 $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
@@ -60,7 +60,7 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Session.Config.MiningDutchU
                     $APIresponse = $null
                     $Currency = $_.tag
                     if ($Currency -eq "SKY") { $Currency = "SKYDOGE" }
-                    $RetryCount = $Session.Config.Pools.$Name.PoolAPIallowedFailureCount
+                    $RetryCount = $Session.Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 
                     while (-not $APIresponse -and $RetryCount -gt 0) { 
                         try { 

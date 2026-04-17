@@ -1,3 +1,17 @@
+Changelog UG-Miner 6.8.2 2026/04/17
+===================================
+
+Changes:
+- Default configuration: Enabled balances tracker for 'MiningDutch'
+
+Enhancements:
+- Core: Do not stop brain jobs when starting donation run
+
+Fixes:
+- Core / Include.psm1: Error in line 250 (donation data issue)
+- Core / Include.psm1: No data from some pools after donation run
+
+
 Changelog UG-Miner 6.8.1 2026/04/15
 ===================================
 
@@ -5,11 +19,11 @@ Changes:
 - Declutter '.\Utils' folder
 
 Enhancements:
-- Core: Extend prerun ganularity to 5 levels
+- Core: Extend prerun granularity to 5 levels
 
 Fixes:
 - Balances tracker: Do not create a earnings object if balance has dropped to 0 after a full payout
-- Core: Include.psm1  / function 'Get-Rate' not setting mBTC rates (regression from 6.7.35)
+- Core: Include.psm1  / function 'Get-Rate': Not setting mBTC rates (regression from 6.7.35)
 
 Miner updates:
 - TeamBlackMiner-v2.44

@@ -2,7 +2,7 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navminersunavailable">Unavailable miners</h2>
           </div>
-          <div name="add-updatedtimestamp" class="alert alert-info" role="alert">These are all unavailable miners. The column "Reasons" shows the filter criteria(s) that made the miner unavailable.</div>
+          <div name="add-updatedtimestamp" class="alert alert-info" role="alert">These are all unavailable miners. The column 'Reasons' shows the filter criteria(s) that made the miner unavailable.</div>
           <div id="toolbar">
             <button id="btn-re-benchmark" class="btn btn-primary" disabled title="The marked miners will re-benchmark&#10;Use this if the recorded hashrate is unrealistic or to re-enable disabled miners">Re-benchmark</button>
             <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power consumption is unreal">Re-measure power consumption</button>
@@ -137,7 +137,7 @@
               //   });
               // },
               onLoadSuccess: function() {
-                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = "These are all unavailable miners." + " (information updated " + refreshtimestamp + ")<br>Note: The column 'Reasons' shows the filter criteria(s) that made the miner unavailable."
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = "These are all unavailable miners" + " (information updated " + refreshtimestamp + ").<br>The column 'Reasons' shows the filter criteria(s) that made the miner unavailable."
                 $("body").css("cursor", "default");
               },
               onPostBody: function () {

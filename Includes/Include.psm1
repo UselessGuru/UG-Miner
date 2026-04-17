@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.1
-Version date:   2026/04/15
+Version:        6.8.2
+Version date:   2026/04/17
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -1095,7 +1095,7 @@ function Start-Brain {
 
         # Starts Brains if necessary
         $BrainsStarted = @()
-        $Name.Where({ $Session.Config.Pools.$_.BrainConfig -and -not $Session.Brains.$_ }).ForEach(
+        $Name.Where({ $Session.Config.PoolsConfig.$_.BrainConfig -and -not $Session.Brains.$_ }).ForEach(
             { 
                 $BrainScript = ".\Brains\$($_).ps1"
                 if (Test-Path -LiteralPath $BrainScript -PathType Leaf) { 
@@ -1226,10 +1226,12 @@ function Get-Rate {
 
     $Session.AllCurrencies = @(@("USD") + @($Session.Config.FIATcurrency) + @($Session.Config.Wallets.psBase.Keys) + @($Session.Config.ExtraCurrencies) + @($Session.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
 
+    # Read exchange rates from min-api.cryptocompare.com, use cached data as fallback
     try { 
         $TSymBatches = @()
         $TSyms = "BTC"
-        $Session.AllCurrencies.Where({ "BTC", "INVALID" -notcontains $_ }).ForEach(
+        # A maximum of 99 currencies per request is supported
+        $Session.AllCurrencies.Where({ "BTC", "INVALID", "mBTC" -notcontains $_ }).ForEach(
             { 
                 if (($TSyms.Length + $_.Length) -lt 99) { 
                     $TSyms = "$TSyms,$($_)"
@@ -1270,10 +1272,10 @@ function Get-Rate {
             $Currencies.Where({ $_ -ne "BTC" }).ForEach(
                 { 
                     $Currency = $_
-                    $Rates | Add-Member $Currency $Rates.BTC.PSObject.Copy() -Force
-                    $Rates.$Currency.PSObject.Properties.Name.ForEach(
+                    $Rates | Add-Member @{ $Currency = [PSCustomObject]@{ } }
+                    $Rates.BTC.PSObject.Properties.Name.ForEach(
                         { 
-                            $Rates.$Currency | Add-Member $_ ([Double]($Rates.BTC.$_ / $Rates.BTC.$Currency)) -Force
+                            $Rates.$Currency | Add-Member $_ ([Double]($Rates.BTC.$_ / $Rates.BTC.$Currency))
                         }
                     )
                 }
@@ -1294,7 +1296,6 @@ function Get-Rate {
         }
     }
     catch { 
-        # Read exchange rates from min-api.cryptocompare.com, use stored data as fallback
         $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -ErrorAction Ignore)
         if ($RatesCache.PSObject.Properties.Name) { 
             $Session.Rates = $RatesCache
@@ -1303,7 +1304,8 @@ function Get-Rate {
         else { 
             Write-Message -Level Warn "Could not load exchange rates from 'min-api.cryptocompare.com'."
         }
-        $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime().AddMinutes(-14) # Trigger next attempt 1 minute before 'normal' refresh
+        # Trigger next attempt 1 minute before 'normal' refresh
+        $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime().AddMinutes(-14)
     }
 }
 
@@ -1352,19 +1354,16 @@ function Write-Message {
             $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
 
             # Keep only 200 lines, more lines impact performance
-            if ($Session.TextBoxSystemLog.Lines.Count -gt 250) { 
+            if ($Session.TextBoxSystemLog.Lines.Count -gt 200) { 
                 $TextLength = $Session.TextBoxSystemLog.TextLength
                 $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200
                 $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
             }
 
+            $Session.TextBoxSystemLog.AppendText("`r`n$Message")
+
             if ($SelectionLength -and $SelectionStart -ge 0) { 
-                $Session.TextBoxSystemLog.Lines += $Message
                 $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
-                $Session.TextBoxSystemLog.ScrollToCaret()
-            }
-            else { 
-                $Session.TextBoxSystemLog.AppendText("`r`n$Message")
             }
         }
 
@@ -1507,11 +1506,9 @@ function Merge-Hashtable {
                         $HT1.$_ += $HT2.$_
                         if ($Unique) { $HT1.$_ = ($HT1.$_ | Sort-Object -Unique) -as [Array] }
                     }
-                    break
                 }
-                elseif ($HT1.$_.GetType().Name -match "OrderedHashtable" -or $HT1.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
+                if ($HT1.$_.GetType().Name -eq "OrderedHashtable" -or $HT1.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
                     $HT1[$_] = Merge-Hashtable -HT1 $HT1[$_] -HT2 $HT2.$_ -Unique $Unique
-                    break
                 }
             }
             else { 
@@ -1521,48 +1518,6 @@ function Merge-Hashtable {
     )
 
     return $HT1
-}
-
-function Get-DonationConfig { 
-    # Build pool config with available donation data, not all devs have the same set of wallets available
-
-    param (
-        [Parameter (Mandatory = $true)]
-        [String]$DonateUsername
-    )
-
-    $DonationPoolsData = $Session.DonationData.$DonateUserName
-    $DonationPoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive hash table
-    ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).Where({ $DonationPoolsData.PoolName -contains $_ }).ForEach(
-        { 
-            $DonationPoolConfig = $Session.Config.Pools[$_].Clone()
-            $DonationPoolConfig.EarningsAdjustmentFactor = 1
-            $DonationPoolConfig.Region = $Session.Config.Pools[$_].Region
-            $DonationPoolConfig.WorkerName = "$($Session.Branding.ProductLabel)-$($Session.Branding.Version.ToString())-donate$($Session.Config.Donation)"
-            switch -regex ($_) { 
-                "^MiningDutch$" { 
-                    if ($DonationPoolsData."$($_)UserName") { 
-                        # not all devs have a known MiningDutch aaccount
-                        $DonationPoolConfig.UserName = $DonationPoolsData."$($_)UserName"
-                        $DonationPoolConfig.Variant = if ($Session.Config.Pools[$_].Variant) { $Session.Config.Pools[$_].Variant } else { $Session.Config.PoolName -match $_ }
-                        $DonationPoolsConfig.$_ = $DonationPoolConfig
-                    }
-                    break
-                }
-                default { 
-                    # not all devs have a known ETC or ETH address
-                    if ($Wallets = (Compare-Object -PassThru @((@($Session.PoolData.$_.GuaranteedPayoutCurrencies) + @($Session.PoolData.$_.PayoutCurrencies)) | Select-Object -Unique) @($DonationPoolsData.Wallets.Keys | Select-Object) -IncludeEqual -ExcludeDifferent)) { 
-                        $DonationPoolConfig.Variant = if ($Session.Config.Pools[$_].Variant) { $Session.Config.Pools[$_].Variant } else { $Session.Config.PoolName -match $_ }
-                        $DonationPoolConfig.Wallets = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
-                        $Wallets.Where({ $DonationPoolsData.Wallets.$_ }).ForEach({ $DonationPoolConfig.Wallets.$_ = $DonationPoolsData.Wallets.$_ })
-                        $DonationPoolsConfig.$_ = $DonationPoolConfig
-                    }
-                }
-            }
-        }
-    )
-
-    return $DonationPoolsConfig
 }
 
 function Update-ConfigFile { 
@@ -1635,6 +1590,7 @@ function Update-ConfigFile {
                 "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
                 "LogToScreen"                 { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
                 "MainCurrency"                { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
+                "Pools"                       { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
                 "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracy"                { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
@@ -3771,7 +3727,8 @@ function Read-Config {
         }
 
         function Get-PoolsConfig { 
-            # Load pool data
+
+            # Load default pool data
             $Session.PoolData = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
             (Get-ChildItem -Path ".\Data\PoolData_*.json" | Sort-Object -Property BaseName).ForEach(
                 { 
@@ -3788,12 +3745,10 @@ function Read-Config {
 
             # Build in memory pool config
             $PoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
-            (((Get-ChildItem .\Pools\*.ps1 -File).BaseName.Where({ $_ -in (Get-PoolBaseName $Config.PoolName) })) | Sort-Object -Unique).ForEach(
+            ((Get-ChildItem .\Pools\*.ps1 -File).BaseName | Sort-Object -Unique).ForEach(
                 { 
                     $PoolName = $_
                     if ($PoolConfig = $Session.PoolData.$PoolName.Clone()) { 
-                        # Generic algorithm enabling/disabling is done in pool files
-                        $PoolConfig.Remove("Algorithm")
 
                         # Merge default config data with custom pool config
                         if ($Config.Pools.$PoolName) { $PoolConfig = Merge-Hashtable -HT1 $PoolConfig -HT2 $Config.Pools.$PoolName -Unique $true }
@@ -3839,10 +3794,13 @@ function Read-Config {
                                 if (-not $PoolConfig.Wallets) { $PoolConfig.Wallets = $ConfigFromFile.Wallets }
                             }
                         }
+                        $PoolsConfig.$PoolName = $PoolConfig
                     }
-                    $PoolsConfig.$PoolName = $PoolConfig
                 }
             )
+
+            Remove-Variable PoolConfig, PoolName -ErrorAction Ignore
+
             return $PoolsConfig
         }
 
@@ -3915,22 +3873,22 @@ function Read-Config {
             $ConfigFromFile = Get-DefaultConfig
         }
 
+        # Must update existing thread safe variable. Recreation breaks updates to instances in other threads
+        $ConfigFromFile.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
+
         # Build custom pools configuration, create case insensitive hashtable (https://stackoverflow.com/questions/24054147/powershell-hash-tables-double-key-error-a-and-a)
         if ($PoolsConfigFile -and (Test-Path -LiteralPath $PoolsConfigFile -PathType Leaf)) { 
             try { 
                 [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
-                $Config.Pools = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
+                $Config.PoolsConfig = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
             }
             catch { 
-                $Config.Pools = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive sorted hashtable
+                $Config.PoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive sorted hashtable
                 Write-Message -Level Warn "Pools configuration file '$($PoolsConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' is corrupt. Will use default values."
             }
         }
 
-        # Must update existing thread safe variable. Recreation breaks updates to instances in other threads
-        $ConfigFromFile.Keys.ForEach({ $Global:Config.$_ = $ConfigFromFile.$_ })
-
-        $Global:Config.Pools = Get-PoolsConfig
+        $Global:Config.PoolsConfig = Get-PoolsConfig
 
         $Session.ConfigTimestamp = [DateTime]::Now.ToUniversalTime()
 
