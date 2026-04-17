@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.2
+Version:        6.8.3
 Version date:   2026/04/17
 #>
 
@@ -421,7 +421,7 @@ do {
         if ($PoolsToTrack.Count -gt 1) { 
             $Session.RefreshBalancesNeeded = $true
             $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
-            Write-Message -Level Info "Balances tracker updated data for pool$(if ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")."
+            Write-Message -Level Info "Balances tracker updated data for pool$(if ($PoolsToTrack.Count -gt 1) { "s" }) $(($PoolsToTrack | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1")."
         }
         Remove-Variable PoolsToTrack -ErrorAction Ignore
     }

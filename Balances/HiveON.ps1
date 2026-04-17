@@ -18,27 +18,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.8.2
+Version:        6.8.3
 Version date:   2026/04/17
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PoolConfig = $Session.Config.PoolsConfig.$Name
-$PoolConfig.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
+$RetryCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+
+$Config.PoolsConfig.$Name.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ }).ForEach(
     { 
         $APIResponse = $null
         $Currency = $_.ToUpper()
-        $Wallet = ($PoolConfig.Wallets.$_ -replace "^0x").ToLower()
-        $RetryCount = $PoolConfig.PoolAPIallowedFailureCount
-        $RetryInterval = $PoolConfig.PoolAPIretryInterval
+        $Wallet = ($Config.PoolsConfig.$Name.Wallets.$_ -replace "^0x").ToLower()
 
         $Request = "https://HiveON.net/api/v1/stats/miner/$Wallet/$Currency/billing-acc"
 
         while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
             try { 
-                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $PoolConfig.PoolAPItimeout -ErrorAction Ignore
+                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -ErrorAction Ignore
 
                 if ($Session.Config.BalancesTrackerLogAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

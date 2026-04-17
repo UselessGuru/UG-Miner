@@ -18,27 +18,28 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.8.2
+Version:        6.8.3
 Version date:   2026/04/17
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-$RetryInterval = $Session.Config.PoolsConfig.$Name.PoolAPIretryInterval
 
-$Session.Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
+$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+
+$Config.PoolsConfig.$Name.Wallets.Keys.ForEach(
     { 
         $Currency = $_
-        $Wallet = $Session.Config.PoolsConfig.$Name.Wallets.$Currency
+        $Wallet = $Config.PoolsConfig.$Name.Wallets.$Currency
 
-        $RetryCount = $Session.Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+        $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
         $Request = "https://zpool.ca/api/wallet?address=$Wallet"
 
         while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
 
             try { 
-                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Session.Config.PoolAPItimeout -ErrorAction Ignore
+                $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolAPItimeout -ErrorAction Ignore
 
-                if ($Session.Config.BalancesTrackerLogAPIResponse) { 
+                if ($Config.BalancesTrackerLogAPIResponse) { 
                     "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     ($Request.Replace("$Wallet", "***Wallet***"))  | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                     $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore

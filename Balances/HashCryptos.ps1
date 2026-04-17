@@ -18,17 +18,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.8.2
+Version:        6.8.3
 Version date:   2026/04/17
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PayoutCurrency = $Session.Config.PoolsConfig.$Name.PayoutCurrency
-$PoolAPItimeout = $Session.Config.PoolsConfig.$Name.PoolAPItimeout
-$RetryCount = $Session.Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+$PayoutCurrency = $Config.PoolsConfig.$Name.PayoutCurrency
+$PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
+$RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 $RetryInterval = $Session.Config.PoolsConfig.$Name.PoolAPIretryInterval
-$Wallet = $Session.Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
+$Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
 
 $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 

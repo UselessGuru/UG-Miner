@@ -18,22 +18,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
-Version:        6.8.2
+Version:        6.8.3
 Version date:   2026/04/17
 #>
 
-if ($Session.Config.NiceHashWallet) { 
+if ($Config.NiceHashWallet) { 
 
     $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
-    $PoolConfig = $Session.Config.PoolsConfig.NiceHash
-    $PayoutCurrency = $PoolConfig.PayoutCurrency
-    $Wallet = $PoolConfig.Wallets.$PayoutCurrency
-    $RetryCount = $PoolConfig.PoolAPIallowedFailureCount
-    $RetryInterval = $PoolConfig.PoolAPIretryInterval
 
-    $Key = $Session.Config.NiceHashAPIKey
-    $OrganizationID = $Session.Config.NiceHashOrganizationId
-    $Secret = $Session.Config.NiceHashAPISecret
+    $PayoutCurrency = $Config.PoolsConfig.$Name.PayoutCurrency
+    $Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
+    $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+    $RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 
     function Get-NiceHashRequest { 
         param (
@@ -63,7 +59,7 @@ if ($Session.Config.NiceHashWallet) {
             "X-Auth"            = "$($Key):$(($Sign -replace "\-").ToLower())"
             "Cache-Control"     = "no-cache"
         }
-        return Invoke-RestMethod "https://api2.nicehash.com$($EndPoint)?extendedResponse=true" -TimeoutSec $Session.Config.PoolAPItimeout -ErrorAction Stop -Method $Method -Headers $Headers
+        return Invoke-RestMethod "https://api2.nicehash.com$($EndPoint)?extendedResponse=true" -TimeoutSec $Config.PoolAPItimeout -ErrorAction Stop -Method $Method -Headers $Headers
     }
 
     $Method = "GET"
@@ -71,12 +67,12 @@ if ($Session.Config.NiceHashWallet) {
 
     $Request = "https://api2.nicehash.com$($EndPoint)?extendedResponse=true"
 
-    while (-not $APIResponse -and $RetryCount -gt 0 -and $Session.Config.NiceHashAPIKey -and $Session.Config.NiceHashAPISecret -and $Session.Config.NiceHashOrganizationId) { 
+    while (-not $APIResponse -and $RetryCount -gt 0 -and $Config.NiceHashAPIKey -and $Config.NiceHashAPISecret -and $Config.NiceHashOrganizationId) { 
 
         try { 
-            $APIResponse = Get-NiceHashRequest -EndPoint $EndPoint -Method $Method -Key $Key -OrganizationID $OrganizationID -Secret $Secret
+            $APIResponse = Get-NiceHashRequest -EndPoint $EndPoint -Method $Method -Key $Config.NiceHashAPIKey -OrganizationID $Config.NiceHashOrganizationId -Secret $Config.NiceHashAPISecret
 
-            if ($Session.Config.BalancesTrackerLogAPIResponse) { 
+            if ($Config.BalancesTrackerLogAPIResponse) { 
                 "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 "Get-NiceHashRequest -EndPoint $EndPoint -Method $Method -Key $Key -OrganizationID $OrganizationID -Secret ***Secret***" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
                 $APIResponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
@@ -92,7 +88,7 @@ if ($Session.Config.NiceHashWallet) {
                 Unpaid     = [Double]$APIResponse.totalBalance
                 Withdrawal = [Double]$APIResponse.pendingDetails.withdrawal
                 # Total      = [Double]$APIResponse.pendingDetails.totalBalance
-                Url        = "https://www.nicehash.com/my/mining/rigs/$($PoolConfig.WorkerName)"
+                Url        = "https://www.nicehash.com/my/mining/rigs/$($Config.PoolsConfig.$Name.WorkerName)"
             }
         }
         catch { 
