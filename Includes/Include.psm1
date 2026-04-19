@@ -1173,6 +1173,7 @@ function Start-BalancesTracker {
             $Global:BalancesTrackerRunspace.ThreadOptions = "ReuseThread"
             $Global:BalancesTrackerRunspace.Open()
 
+            $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Config", $Config)
             $Global:BalancesTrackerRunspace.SessionStateProxy.SetVariable("Session", $Session)
             [Void]$Global:BalancesTrackerRunspace.SessionStateProxy.Path.SetLocation($Session.MainPath)
 
