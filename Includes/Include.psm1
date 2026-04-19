@@ -3664,10 +3664,7 @@ function Set-MinerMeasurePowerConsumption {
 
 function Exit-UGminer { 
 
-    if ($Session.Config.LegacyGUI) { 
-        $LegacyGUIelements.Timer.Stop()
-        $LegacyGUIelements.TabControl.SelectTab(0)
-    }
+if ($LegacyGUIelements.TabControl) { $LegacyGUIelements.TabControl.SelectTab(0) }
 
     Write-Message -Level Info "Shutting down $($Session.Branding.ProductLabel)..."
     $Session.NewMiningStatus = "Idle"
