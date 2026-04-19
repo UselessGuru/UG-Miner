@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle.ps1
-Version:        6.8.2
-Version date:   2026/04/17
+Version:        6.8.3
+Version date:   2026/04/19
 #>
 
 using module .\Include.psm1
@@ -51,7 +51,7 @@ try {
         $Session.Timer = [DateTime]::Now.ToUniversalTime()
 
         $Session.BeginCycleTime = $Session.Timer
-        $Session.EndCycleTime = if ($Session.EndCycleTime) { $Session.EndCycleTime.AddSeconds($Session.Config.Interval) } else { $Session.BeginCycleTime.AddSeconds($Session.Config.Interval) }
+        $Session.EndCycleTime = if (-not $Session.EndCycleTime -or $Session.EndCycleTime -lt $Session.BeginCycleTime.AddSeconds(- 1)) { $Session.BeginCycleTime.AddSeconds($Session.Config.Interval) } else { $Session.EndCycleTime.AddSeconds($Session.Config.Interval) }
 
         $Session.CycleStarts += $Session.Timer
         $Session.CycleStarts = @($Session.CycleStarts | Sort-Object -Bottom (3, ($Session.Config.SyncWindow + 1) | Measure-Object -Maximum).Maximum)

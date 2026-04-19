@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HiveON.ps1
-Version:        6.8.2
-Version date:   2026/04/17
+Version:        6.8.3
+Version date:   2026/04/19
 #>
 
 param(
@@ -61,8 +61,6 @@ foreach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
         if (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
         if ($Request.stats.($_.name).hashrate -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        if ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
-        elseif ($Session.PoolData.$Name.Algorithm -like "+*" -and ($Session.PoolData.$Name.Algorithm -split "," -notcontains "+$($AlgorithmNorm)")) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
         $Value = $Request.stats.($Pool.name).expectedReward24H * $Session.Rates.$Currency.BTC / $Divisor

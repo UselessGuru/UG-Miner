@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.2
-Version date:   2026/04/17
+Version:        6.8.3
+Version date:   2026/04/19
 #>
 
 using module .\Includes\Include.psm1
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.2"
+    Version      = [System.Version]"6.8.3"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -336,6 +336,7 @@ if ($PSVersiontable.PSVersion -lt [System.Version]"7.4.0") {
 Write-Host " ✔  (running PWSH version $($PSVersionTable.PSVersion)" -ForegroundColor Green -NoNewline
 if ($PSVersionTable.PSVersion -lt $RecommendedPWSHversion) { Write-Host " [recommended version is $($RecommendedPWSHversion)]" -ForegroundColor DarkYellow -NoNewline }
 Write-Host ")" -ForegroundColor Green
+Remove-Variable RecommendedPWSHversion
 
 # Another instance might already be running. Wait no more than 20 seconds (other instance might be from autoupdate)
 $Loops = 20
@@ -377,22 +378,16 @@ $Session.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash tab
 Write-Host ""
 Write-Message -Level Verbose "Preparing environment and loading data files..."
 # Create directories
-("Cache", "Config", "Logs", "Stats").ForEach(
-    { 
-        if (-not (Test-Path -LiteralPath ".\$_" -PathType Container)) { $null = (New-Item -Path . -Name "$_" -ItemType Directory) }
-    }
-)
+("Cache", "Config", "Logs", "Stats").Where({ -not (Test-Path -LiteralPath ".\$_" -PathType Container) }).ForEach({ $null = (New-Item -Path . -Name "$_" -ItemType Directory) })
 
 # Check if all required files are present
-("Balances", "Brains", "Data", "Miners", "Pools", "Web").ForEach(
+("Balances", "Brains", "Data", "Miners", "Pools", "Web").Where({ -not (Get-ChildItem -LiteralPath $PWD\$_) }).ForEach(
     { 
-        if (-not (Get-ChildItem -LiteralPath $PWD\$_)) { 
-            Write-Error "Terminating error - cannot continue! No files in folder '\$_'. Please restore the folder from your original download."
-            $null = (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\$_'.`nPlease restore the folder from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
-            Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
-            Start-Sleep -Seconds 5
-            exit
-        }
+        Write-Error "Terminating error - cannot continue! No files in folder '\$_'. Please restore the folder from your original download."
+        $null = (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\$_'.`nPlease restore the folder from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+        Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+        Start-Sleep -Seconds 5
+        exit
     }
 )
 
@@ -664,8 +659,8 @@ if ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath 
     (New-Object -ComObject Wscript.Shell).Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
-Remove-Variable Prerequisites, PrerequisitesMissing
 Write-Host " ✔ " -ForegroundColor Green -NoNewline
+Remove-Variable Prerequisites, PrerequisitesMissing
 
 Write-Host " Windows Management Framework 5.1" -NoNewline
 if (-not (Get-Command Get-PnpDevice)) { 
@@ -674,10 +669,7 @@ if (-not (Get-Command Get-PnpDevice)) {
     (New-Object -ComObject Wscript.Shell).Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Session.Branding.ProductLabel) will shut down.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
-Remove-Variable RecommendedPWSHversion
 Write-Host " ✔" -ForegroundColor Green
-
-$Session.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 # Exclude from AV scanner
 if ($Session.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
@@ -780,6 +772,7 @@ if ($ErrorLoadingModules) {
     Start-Sleep -Seconds 5
     exit
 }
+Remove-Variable ErrorLoadingModules -ErrorAction Ignore
 
 Write-Host ""
 Write-Message -Level Verbose "Setting variables..."
@@ -802,6 +795,7 @@ $Session.CoreLoopCounter = [Int64]0
 $Session.CPUfeatures = (Get-CpuId).Features
 $Session.CycleStarts = @()
 $Session.Donation = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
+$Session.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $Session.MiningEarnings = $Session.MiningProfit = $Session.MiningPowerCost = [Double]::NaN
 $Session.NewMiningStatus = if ($Session.Config.StartupMode -match "Paused|Running") { $Session.Config.StartupMode } else { "Idle" }
 $Session.RestartCycle = $true
@@ -875,6 +869,7 @@ else {
 }
 Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition -ErrorAction Ignore
 [Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
+Remove-Variable CursorPosition
 
 # Getting exchange rates
 Write-Host ""

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.2
-Version date:   2026/04/17
+Version:        6.8.3
+Version date:   2026/04/19
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -2097,7 +2097,6 @@ $LegacyGUIelements.Timer.Add_Tick(
                             $LegacyGUIelements.MiningSummaryLabel.Text = $Message
                             $LegacyGUIelements.ButtonPause.Enabled = $true
                             Write-Host $Message -ForegroundColor Cyan
-                            if ([DateTime]::Now.ToUniversalTime() -gt $Session.EndCycleTime) { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                         }
                         Remove-Variable Message
                     }
@@ -2655,7 +2654,6 @@ $LegacyGUIform.Add_KeyDown(
                     $LegacyGUIelements.MiningSummaryLabel.Text = $Message
                     $LegacyGUIelements.ButtonPause.Enabled = $true
                     Write-Host $Message -ForegroundColor Cyan
-                    if ([DateTime]::Now.ToUniversalTime() -gt $Session.EndCycleTime) { $Session.EndCycleTime = [DateTime]::Now.ToUniversalTime() }
                 }
                 Remove-Variable Message
             }

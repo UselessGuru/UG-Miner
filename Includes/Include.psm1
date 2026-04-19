@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.2
-Version date:   2026/04/17
+Version:        6.8.3
+Version date:   2026/04/19
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -1231,7 +1231,7 @@ function Get-Rate {
         $TSymBatches = @()
         $TSyms = "BTC"
         # A maximum of 99 currencies per request is supported
-        $Session.AllCurrencies.Where({ "BTC", "INVALID", "mBTC" -notcontains $_ }).ForEach(
+        $Session.AllCurrencies.Where({ "BTC", "INVALID" -notcontains $_ }).ForEach(
             { 
                 if (($TSyms.Length + $_.Length) -lt 99) { 
                     $TSyms = "$TSyms,$($_)"
@@ -1282,7 +1282,7 @@ function Get-Rate {
             )
             Remove-Variable Currency -ErrorAction Ignore
 
-            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
+            Write-Message -Level Verbose "Loaded currency exchange rates from 'min-api.cryptocompare.com'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies.Where({ $_ -ne "mBTC" }) | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
             if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
                 $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).where( { $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ } )[0]
                 Write-Message -Level Warn "API does not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
@@ -3437,12 +3437,6 @@ function Get-MemoryUsage {
     return ("Memory usage {0:n1} MB ({1:n0} Bytes {2})" -f $MemUsageMB, $MemUsageByte, $Difftext)
 }
 
-
-function Restart-APIserver { 
-    Stop-APIserver
-    Start-APIserver
-}
-
 function Start-APIserver { 
 
     if ($Session.APIport -and $Session.Config.APIport -ne $Session.APIport) { 
@@ -3768,11 +3762,7 @@ function Read-Config {
                             "HiveON" { 
                                 if (-not $PoolConfig.Wallets) { 
                                     $PoolConfig.Wallets = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase) # as ssorted case insensitive hash table
-                                    $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach(
-                                        { 
-                                            $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_
-                                        }
-                                    )
+                                    $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach({ $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_ })
                                 }
                                 break
                             }

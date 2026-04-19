@@ -1,3 +1,14 @@
+Changelog UG-Miner 6.8.3 2026/04/19
+===================================
+
+Improvements:
+- Core: Remove obsolete Code
+
+Fixes:
+- Balances tracker: In some scenarios balances could be queried for the donation account
+- Core: CoreCycle would quick-loop when script was intercepted with <Ctrl><Break>
+
+
 Changelog UG-Miner 6.8.2 2026/04/17
 ===================================
 

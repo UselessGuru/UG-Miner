@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.2
-Version date:   2026/04/17
+Version:        6.8.3
+Version date:   2026/04/19
 #>
 
 param(
@@ -68,10 +68,8 @@ if ($DivisorMultiplier -and $PriceField) {
         if (-not $PoolConfig.UserName) { $Reasons.Add("No username") | Out-Null }
         # Sometimes pool returns $null hashrate for all algorithms
         if (-not $Request.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        if ($Request.$Algorithm.coins -gt 1 -and [Double]$Request.$Algorithm.$PriceField -eq 0) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
-        elseif ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
-        elseif ($Session.PoolData.$Name.Algorithm -like "+*" -and ($Session.PoolData.$Name.Algorithm -split "," -notcontains "+$($AlgorithmNorm)")) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
-
+        # if ($Request.$Algorithm.coins -gt 1 -and [Double]$Request.$Algorithm.$PriceField -eq 0) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
+ 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
         $Value = $Request.$Algorithm.$PriceField / $Divisor
 

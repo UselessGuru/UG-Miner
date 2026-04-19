@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
 Version:        6.8.3
-Version date:   2026/04/17
+Version date:   2026/04/19
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName

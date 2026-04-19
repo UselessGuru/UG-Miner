@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.8.2
-Version date:   2026/04/17
+Version:        6.8.3
+Version date:   2026/04/19
 #>
 
 using module .\Includes\Include.psm1
@@ -84,7 +84,7 @@ $ProgressPreference = "SilentlyContinue"
 
         if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { 
             try { 
-                Write-Message -Level Info "Downloader:<br>Initiated download of $Type from '$URI'."
+                Write-Message -Level Info "Downloader: Initiated download of $Type from '$URI'."
 
                 if ($URI -and (Split-Path $URI -Leaf) -eq (Split-Path $Path -Leaf)) { 
                     New-Item (Split-Path $Path) -ItemType Directory | Out-Null
@@ -93,7 +93,7 @@ $ProgressPreference = "SilentlyContinue"
                 else { 
                     [Void](Expand-WebRequest $URI $Path -ErrorAction Stop)
                 }
-                Write-Message -Level Info "Downloader:<br>Installed $Type '$($Path.Replace("$($Session.MainPath)\", ''))'."
+                Write-Message -Level Info "Downloader: Installed $Type '$($Path.Replace("$($Session.MainPath)\", ''))'."
                 if (Get-Command "Unblock-File" -ErrorAction Ignore) { $Path | Unblock-File }
             }
             catch { 
@@ -101,13 +101,13 @@ $ProgressPreference = "SilentlyContinue"
 
                 if ($URI) { 
                     if (-not (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
-                        Write-Message -Level Warn "Downloader:<br>Cannot download '$URI'."
+                        Write-Message -Level Warn "Downloader: Cannot download '$URI'."
                     }
                 }
-                else { Write-Message -Level Warn "Downloader:<br>Cannot download '$(Split-Path $Path -Leaf)'." }
+                else { Write-Message -Level Warn "Downloader: Cannot download '$(Split-Path $Path -Leaf)'." }
 
                 if ($Searchable) { 
-                    Write-Message -Level Info "Downloader:<br>Searching for $Type $(Split-Path $Path -Leaf) on local computer..."
+                    Write-Message -Level Info "Downloader: Searching for $Type $(Split-Path $Path -Leaf) on local computer..."
 
                     ($Path_Old = Get-PSDrive -PSProvider FileSystem).ForEach({ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse }) | Sort-Object -Property LastWriteTimeUtc -Descending | Select-Object -First 1
                     $Path_New = $Path
@@ -116,19 +116,19 @@ $ProgressPreference = "SilentlyContinue"
                 if ($Path_Old) { 
                     if (Test-Path -LiteralPath (Split-Path $Path_New) -PathType Container) { (Split-Path $Path_New) | Remove-Item -Recurse -Force }
                     (Split-Path $Path_Old) | Copy-Item -Destination (Split-Path $Path_New) -Recurse -Force
-                    Write-Message -Level Info "Downloader:<br>Copied $Type '$($Path.Replace("$($Session.MainPath)\", ''))' from local repository '$PathOld'."
+                    Write-Message -Level Info "Downloader: Copied $Type '$($Path.Replace("$($Session.MainPath)\", ''))' from local repository '$PathOld'."
                 }
                 else { 
                     if ($URI) { 
                         if (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
-                            Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
+                            Write-Message -Level Warn "Downloader: Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
                         }
                     }
-                    else { Write-Message -Level Warn "Downloader:<br>Cannot find $Type '$($Path.Replace("$($Session.MainPath)\", ''))'." }
+                    else { Write-Message -Level Warn "Downloader: Cannot find $Type '$($Path.Replace("$($Session.MainPath)\", ''))'." }
                 }
             }
         }
     }
 )
 
-Write-Message -Level Info "Downloader:<br>All tasks complete."
+Write-Message -Level Info "Downloader: All tasks complete."
