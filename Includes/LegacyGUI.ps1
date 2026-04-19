@@ -2619,7 +2619,7 @@ $LegacyGUIform.Add_FormClosing(
         }
         $Session.Remove("PopupInput")
         $Session.Config.LegacyGUI = $false
-        $LegacyGUIform.WindowStateOriginal = $LegacyGUIform.WindowState
+        $Session.WindowStateOriginal = $LegacyGUIform.WindowState
         $LegacyGUIform.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
         $LegacyGUIform.ShowInTaskbar = $false
         $Script:FormClosing = $false
