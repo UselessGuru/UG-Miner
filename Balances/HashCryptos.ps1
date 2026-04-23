@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -30,12 +30,12 @@ $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 $RetryInterval = $Session.Config.PoolsConfig.$Name.PoolAPIretryInterval
 $Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
 
-$Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
-
 $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
 while ($Wallet -and -not $APIresponse -and $RetryCount -gt 0) { 
+
+    $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 
     try { 
         $APIresponse = Invoke-RestMethod $Request -TimeoutSec $PoolAPItimeout -ErrorAction Ignore -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck

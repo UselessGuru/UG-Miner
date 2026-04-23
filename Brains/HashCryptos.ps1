@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 using module ..\Includes\Include.psm1
@@ -60,7 +60,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                     if ($AlgoData.message -match "^Only \d request every ") { 
                         $WaitSeconds = [UInt16]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
                         Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
-                        Start-Sleep -Seconds $WaitSeconds
+                        Start-Sleep -Seconds ($WaitSeconds + 1)
                         Remove-Variable WaitSeconds
                         $AlgoData = $null
                     }

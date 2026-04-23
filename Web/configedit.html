@@ -322,7 +322,7 @@
               <input type="checkbox" class="toggle-switch" id="ShowPoolBalances" name="ShowPoolBalances" > Show pool balances
             </div>
             <div style="padding-top: 0.5rem;" title="When disabled only the best 5 miners per device are shown&#10;except while not benchmarking or measuring power consumption&#10;&#10;Can be toggled by pressing '2' in the console window while waiting for the next cycle">
-              <input type="checkbox" class="toggle-switch" id="ShowAllMiners" name="ShowAllMiners"> Show all optimal miners
+              <input type="checkbox" class="toggle-switch" id="ShowAllOptimalMiners" name="ShowAllOptimalMiners"> Show all optimal miners
             </div>
             <div style="padding-top: 0.2rem;" title="'light' will not show information about previously run & failed miners and watchdog timers&#10;except while benchmarking or measuring power consumption&#10;Can be toggled by pressing '3' in the console window while waiting for the next cycle">UI Style
               <select style="height: 1.6em;" name="UIstyle" id="UIstyle">
@@ -923,7 +923,7 @@
     // Console display settings
     $(document.getElementById('ShowConsole')).change(function (event) {
       document.getElementById('ShowPoolBalances').disabled = !(document.getElementById('ShowConsole').checked) || (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
-      document.getElementById('ShowAllMiners').disabled = !(document.getElementById('ShowConsole').checked);
+      document.getElementById('ShowAllOptimalMiners').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('UIstyle').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowColumnAccuracy').disabled = !(document.getElementById('ShowConsole').checked);
       document.getElementById('ShowColumnCoinName').disabled = !(document.getElementById('ShowConsole').checked);
@@ -946,7 +946,7 @@
     $(document.getElementById('ShowConsole')).trigger('change');
 
     if (config.ShowPoolBalances) document.getElementById('ShowPoolBalances').checked = true;
-    if (config.ShowAllMiners) document.getElementById('ShowAllMiners').checked = true;
+    if (config.ShowAllOptimalMiners) document.getElementById('ShowAllOptimalMiners').checked = true;
     if (config.UIstyle.trim().toLowerCase() == 'full') document.getElementById('UIstyle').value = 'full';
     else document.getElementById('UIstyle').value = 'light';
     if (config.ShowColumnAccuracy) document.getElementById('ShowColumnAccuracy').checked = true;
@@ -1302,7 +1302,7 @@
 
         // Console display settings
         config.ShowPoolBalances = document.getElementById('ShowPoolBalances').checked;
-        config.ShowAllMiners = document.getElementById('ShowAllMiners').checked;
+        config.ShowAllOptimalMiners = document.getElementById('ShowAllOptimalMiners').checked;
         config.UIstyle = document.getElementById('UIstyle').value;
         config.ShowColumnAccuracy = document.getElementById('ShowColumnAccuracy').checked;
         config.ShowColumnCoinName = document.getElementById('ShowColumnCoinName').checked;

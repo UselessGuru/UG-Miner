@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" }))) { return }

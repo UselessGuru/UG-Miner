@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.34"
+$APIversion = "6.0.36"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -708,13 +708,10 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/config" { 
-            $Data = ConvertTo-Json -Depth 10 ([System.IO.File]::ReadAllLines($Session.ConfigFile) | ConvertFrom-Json -Depth 10 -AsHashtable | Select-Object)
-            if (-not ($Data | ConvertFrom-Json).ConfigFileVersion) { 
-                $ConfigCopy = $Config.PsObject.Copy()
-                $ConfigCopy.Remove("PoolsConfig")
-                $Data = ConvertTo-Json -Depth 10 $ConfigCopy
-                Remove-Variable ConfigCopy
-            }
+            $ConfigCopy = $Config.PsObject.Copy()
+            $ConfigCopy.Remove("PoolsConfig")
+            $Data = ConvertTo-Json -Depth 10 $ConfigCopy
+            Remove-Variable ConfigCopy
             break
         }
         "/configfile" { 

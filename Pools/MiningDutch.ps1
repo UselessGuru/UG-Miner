@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 param(
@@ -61,7 +61,8 @@ if ($DivisorMultiplier -and $PriceField) {
 
         # Add coin name
         if ($Request.$Algorithm.CoinName -and $Currency) { 
-            Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Request.$Algorithm.CoinName
+            Add-CoinName -Currency $Currency -CoinName $Request.$Algorithm.CoinName
+            Add-CurrencyAlgorithm -Algorithm $AlgorithmNorm -Currency $Currency
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HiveON.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -33,9 +33,9 @@ $Config.PoolsConfig.$Name.Wallets.psBase.Keys.Where({ "ETC", "RVN" -contains $_ 
         $Currency = $_.ToUpper()
         $Wallet = ($Config.PoolsConfig.$Name.Wallets.$_ -replace "^0x").ToLower()
 
-        $Request = "https://HiveON.net/api/v1/stats/miner/$Wallet/$Currency/billing-acc"
-
         while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
+
+            $Request = "https://HiveON.net/api/v1/stats/miner/$Wallet/$Currency/billing-acc"
 
             try { 
                 $APIResponse = Invoke-RestMethod $Request -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -ErrorAction Ignore

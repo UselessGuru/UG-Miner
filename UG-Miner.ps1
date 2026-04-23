@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 using module .\Includes\Include.psm1
@@ -200,7 +200,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$ShowColumnAccuracy = $false, # Show pool data accuracy column in main text window miner overview
     [Parameter (Mandatory = $false)]
-    [Switch]$ShowAllMiners = $false, # Always show all miners in main text window miner overview (if false, only the best miners will be shown except when in benchmark / PowerConsumption measurement)
+    [Switch]$ShowAllOptimalMiners = $false, # Always show all miners in main text window miner overview (if false, only the best miners will be shown except when in benchmark / PowerConsumption measurement)
     [Parameter (Mandatory = $false)]
     [Switch]$ShowChangeLog = $true, # If true UG-Miner will show the changlog when an update is available
     [Parameter (Mandatory = $false)]
@@ -279,7 +279,7 @@ param(
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$RecommendedPWSHversion = [Version]"7.6.0"
+$RecommendedPWSHversion = [Version]"7.6.1"
 
 # Close useless empty cmd window that comes up when starting from bat file
 if ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.3"
+    Version      = [System.Version]"6.8.4"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -904,5 +904,5 @@ if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) {
 Write-Host ""
 
 . .\Includes\LegacyGUI.ps1
-$LegacyGUIform.ShowInTaskbar = $Session.Config.LegacyGUI
+$LegacyGUIform.ShowInTaskbar = $Config.LegacyGUI
 $LegacyGUIform.ShowDialog() | Out-Null

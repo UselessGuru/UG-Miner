@@ -1,3 +1,17 @@
+Changelog UG-Miner 6.8.4 2026/04/??
+===================================
+
+Changes:
+- Brains & Balances: remove mutex locking code
+- Core / Include.psm1: Added new function 'Add-CurrencyAlgorithm'
+- Core / Include.psm1: Ensure that all non-best miners are getting stopped
+- Renamed configuration item
+    ShowAllMiners -> ShowAllOptimalMiners
+
+Miner updates:
+- SRBMinerMulti-v3.2.6
+
+
 Changelog UG-Miner 6.8.3 2026/04/19
 ===================================
 

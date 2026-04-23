@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HiveON.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 param(
@@ -55,7 +55,8 @@ foreach ($Pool in $Request.cryptoCurrencies.Where({ $_.name -ne "ETH" })) {
 
         # Add coin name
         if ($Pool.title -and $Currency) { 
-            Add-CoinName -Algorithm $AlgorithmNorm -Currency $Currency -CoinName $Pool.title
+            Add-CoinName -Currency $Currency -CoinName $Pool.title
+            Add-CurrencyAlgorithm -Algorithm $AlgorithmNorm -Currency $Currency
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()

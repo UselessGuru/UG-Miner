@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -1595,6 +1595,7 @@ function Update-ConfigFile {
                 "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracy"                { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
+                "ShowAllOptimalMiners"               { $Config.ShowAllOptimalMiners = $Config.$_; $Config.Remove($_); break }
                 "ShowCoinName"                { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
                 "ShowCoinNameColumn"          { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
                 "ShowCurrency"                { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
@@ -2672,14 +2673,12 @@ function Add-CoinName {
 
     param (
         [Parameter (Mandatory = $true)]
-        [String]$Algorithm,
-        [Parameter (Mandatory = $true)]
         [String]$Currency,
         [Parameter (Mandatory = $true)]
         [String]$CoinName
     )
 
-    if (($Session.CoinNames[$Currency] -and $Session.CurrencyAlgorithm[$Currency])) { 
+    if (-not $Session.CoinNames[$Currency]) { 
 
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
@@ -2687,15 +2686,39 @@ function Add-CoinName {
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the file and release mutex
         if ($Mutex.WaitOne(1000)) { 
-            if (-not $Session.CurrencyAlgorithm[$Currency]) { 
-                $Session.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
-                $Session.CurrencyAlgorithm | ConvertTo-Json | Out-File -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Ignore -Force
-            }
             if (-not $Session.CoinNames[$Currency]) { 
                 if ($CoinName = ($CoinName.Trim() -replace "[^A-Z0-9 \$\.]" -replace "coin$", " Coin" -replace "bit coin$", "Bitcoin" -replace "ERC20$" , " ERC20" -replace "TRC20$" , " TRC20" -replace " \s+" )) { 
                     $Session.CoinNames[$Currency] = $CoinName
                     $Session.CoinNames | ConvertTo-Json | Out-File -Path ".\Data\CoinNames.json" -ErrorAction Ignore -Force
                 }
+            }
+            $Mutex.ReleaseMutex()
+        }
+        $Mutex.Dispose()
+        Remove-Variable Mutex
+    }
+}
+
+function Add-CurrencyAlgorithm { 
+
+    param (
+        [Parameter (Mandatory = $true)]
+        [String]$Algorithm,
+        [Parameter (Mandatory = $true)]
+        [String]$Currency
+    )
+
+    if (-not $Session.CurrencyAlgorithm[$Currency]) { 
+
+        # Get mutex. Mutexes are shared across all threads and processes.
+        # This lets us ensure only one thread is trying to write to the file at a time.
+        $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_Add-CurrencyAlgorithm")
+
+        # Attempt to aquire mutex, waiting up to 1 second if necessary. If aquired, update the file and release mutex
+        if ($Mutex.WaitOne(1000)) { 
+            if (-not $Session.CurrencyAlgorithm[$Currency]) { 
+                $Session.CurrencyAlgorithm[$Currency] = Get-Algorithm $Algorithm
+                $Session.CurrencyAlgorithm | ConvertTo-Json | Out-File -Path ".\Data\CurrencyAlgorithm.json" -ErrorAction Ignore -Force
             }
             $Mutex.ReleaseMutex()
         }
@@ -2939,10 +2962,10 @@ function Get-AllDAGdata {
                     { 
                         if ($AlgorithmNorm = Get-Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm) { 
                             $Currency = $CurrencyDAGdataResponse.coins.$_.tag
-                            Add-CoinName -Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm -Currency $Currency -CoinName $_
+                            Add-CoinName -Currency $Currency -CoinName $($_ -replace '-.+$')
                             if ($AlgorithmNorm -match $Session.RegexAlgoHasDAG) { 
                                 if ([UInt64]($CurrencyDAGdataResponse.coins.$_.last_block) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Currency $Currency -EpochReserve 2
+                                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2
                                     if ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                         $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                                         $CurrencyDAGdata | Add-Member Url $Url -Force
@@ -3013,7 +3036,6 @@ function Get-AllDAGdata {
         if ($Session.CurrencyAlgorithm[$Currency]) { 
             $Url = "https://telestai.cryptoscope.io/api/getblockcount"
             if (-not $DAGdata.Currency.$Currency.BlockHeight -or $DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-                # Get block data from StakeCube block explorer
                 try { 
                     Write-Message -Level Info "Loading DAG data from '$Url'..."
                     $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
@@ -3227,19 +3249,21 @@ function Get-DAGdata {
         [Parameter (Mandatory = $true)]
         [String]$Currency,
         [Parameter (Mandatory = $false)]
+        [String]$Algorithm = $Session.CurrencyAlgorithm[$Currency],
+        [Parameter (Mandatory = $false)]
         [Int16]$EpochReserve = 0
     )
 
     if ($Currency -eq "BLOCX") { 
         return [PSCustomObject]@{ 
-            Algorithm   = $Session.CurrencyAlgorithm[$Currency]
+            Algorithm   = $Algorithm
             BlockHeight = [UInt32]$BlockHeight
             CoinName    = [String]$Session.CoinNames[$Currency]
             DAGsize     = [UInt64]2GB
             Epoch       = [UInt32]0
         }
     }
-    elseif ($Algorithm = $Session.CurrencyAlgorithm[$Currency]) { 
+    elseif ($Algorithm) { 
         $Epoch = Get-DAGepoch -BlockHeight $BlockHeight -Algorithm $Algorithm -EpochReserve $EpochReserve
 
         return [PSCustomObject]@{ 

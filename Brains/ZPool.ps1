@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 using module ..\Includes\Include.psm1
@@ -86,20 +86,28 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
 
                 # Add currency and convert to array for easy sorting
                 $CurrenciesArray = [PSCustomObject[]]@()
-                $CurrenciesData.PSObject.Properties.Name.Where({ $CurrenciesData.$_.algo -and $CurrenciesData.$_.name -notcontains "Hashtap" }).ForEach(
+                $CurrenciesData.PSObject.Properties.Name.Where({ $_ -notmatch "Hashtap|SCC-firo" }).ForEach(
                     { 
-                        $CurrenciesData.$_ | Add-Member Currency $($_ -replace '-.+$') -Force
+                        $CoinName = $CurrenciesData.$_.Name
+                        $Currency = $($_ -replace '-.+$')
                         try { 
-                            # Add coin name
-                            Add-CoinName -Algorithm $CurrenciesData.$_.algo -Currency $CurrenciesData.$_.Currency -CoinName $CurrenciesData.$_.name
+                            Add-CoinName -Currency $Currency -CoinName $CoinName
+                            # Add algorithm only if there is no other coin with the same algorithm
+                            if ($CurrenciesData.PSObject.Properties.Name.Where({ $($_ -replace '-.+$') -eq $Currency }).Count -eq 1) { 
+                                Add-CurrencyAlgorithm -Algorithm $CurrenciesData.$_.algo -Currency $Currency
+                            }
                         }
                         catch { }
-                        $CurrenciesData.$_ | Add-Member CoinName ([String]$Session.CoinNames[$CurrenciesData.$_.Currency]) -Force
-                        $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($PoolConfig.Wallets.($CurrenciesData.$_.Currency) -or -not $CurrenciesData.$_.only_direct))
+
+                        $CurrenciesData.$_ | Add-Member Currency $Currency -Force
+                        $CurrenciesData.$_ | Add-Member CoinName ([String]$Session.CoinNames[$Currency]) -Force
+                        $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($PoolConfig.Wallets.$Currency -or -not $CurrenciesData.$_.only_direct))
 
                         $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
                         $CurrenciesData.$_.PSObject.Properties.Remove("name")
                         $CurrenciesArray += $CurrenciesData.$_
+
+                        Remove-Variable CoinName, Currency
                     }
                 )
 
@@ -123,11 +131,13 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                     if ($Currency = $AlgoData.$Algorithm.Currency -replace "\s.*") { 
                         if ($AlgorithmNorm -match $Session.RegexAlgoHasDAG -and $CurrenciesData.$Currency.height -gt $Session.DAGdata.Currency.$Currency.BlockHeight) { 
                             # Keep DAG data data up to date
-                            $DAGdata = (Get-DAGData -BlockHeight $CurrenciesData.$Currency.height -Currency $Currency -EpochReserve 2)
-                            $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
-                            $DAGdata | Add-Member Url "https://www.zpool.ca/api/currencies"
-                            $Session.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
-                            $Session.DAGdata.Updated | Add-Member "https://www.zpool.ca/api/currencies" ([DateTime]::Now.ToUniversalTime()) -Force
+                            $DAGdata = (Get-DAGData -BlockHeight $CurrenciesData.$Currency.height -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2)
+                            if ($CurrencyDAGdata.Epoch -ge 0) { 
+                                $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
+                                $DAGdata | Add-Member Url "https://www.zpool.ca/api/currencies"
+                                $Session.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
+                                $Session.DAGdata.Updated | Add-Member "https://www.zpool.ca/api/currencies" ([DateTime]::Now.ToUniversalTime()) -Force
+                            }
                         }
                         $AlgoData.$Algorithm | Add-Member conversion_supported $CurrenciesData.$Currency.conversion_supported -Force
                         if ($CurrenciesData.$Currency.error) { 

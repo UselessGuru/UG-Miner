@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 using module .\Include.psm1
@@ -1104,6 +1104,7 @@ try {
         $Session.MinersUpdatedTimestamp = [DateTime]::Now.ToUniversalTime()
         #endregion
 
+        $Miner.ForEach({ $_.Best = $false })
         $MinersAdded = $Miners.Where({ $_.SideIndicator -eq "=>" })
         $MinersToBeRemoved = $Miners.Where({ $_.SideIndicator -eq "!" })
         $Miners.Where({ $_.Available }).ForEach({ $_.Available = -not $_.Reasons.Count })
@@ -1297,7 +1298,7 @@ try {
                 }
 
                 # Stop running miners
-                if ($Miner.Disabled -or $Miner.Restart -or -not $Miner.Best -or $Session.NewMiningStatus -ne "Running") { 
+                if ($Miner.Disabled -or $Miner.Restart -or -not $Miner.Best) { 
                     foreach ($Worker in $Miner.WorkersRunning) { 
                         if ($WatchdogTimers = $Session.WatchdogTimers.Where({ $_.MinerName -eq $Miner.Name -and $_.PoolName -eq $Worker.Pool.Name -and $_.PoolRegion -eq $Worker.Pool.Region -and $_.AlgorithmVariant -eq $Worker.Pool.AlgorithmVariant -and $_.DeviceNames -eq $Miner.DeviceNames })) { 
                             # Remove Watchdog timers
@@ -1318,7 +1319,7 @@ try {
         while ($StuckMinerProcesses = (Get-CimInstance CIM_Process).Where({ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID }).ProcessId.ForEach({ (Get-Process -Id $_ -ErrorAction Ignore).Where({ $_.MainWindowTitle -match ".+ \{.+@.+\}" }) })) { 
             foreach ($StuckMinerProcess in $StuckMinerProcesses) { 
                 Stop-Process -Id $StuckMinerProcess.Id -Force -ErrorAction Ignore
-                # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
+                # Some miners, e.g. HellMiner, spawn child process(es) that may need separate killing
                 $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($StuckMinerProcess.Id)")
                 $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
                 if (-not (Get-Process -Id $StuckMinerProcess.Id -ErrorAction Ignore)) { 

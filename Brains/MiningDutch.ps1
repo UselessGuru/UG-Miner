@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.8.3
-Version date:   2026/04/19
+Version:        6.8.4
+Version date:   2026/04/23
 #>
 
 using module ..\Includes\Include.psm1
@@ -28,77 +28,67 @@ using module ..\Includes\Include.psm1
 # Set Process priority
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
+$DebugLevel = "Debug"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$PoolObjects = @()
 $Durations = [TimeSpan[]]@()
+$PoolObjects = @()
 
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
 $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-# Get mutex. Mutexes are shared across all threads and processes.
-# This lets us ensure only one thread is trying to query the pool API
-$Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_MiningDutchPoolAPI")
-
 while ($PoolConfig = $Session.Config.PoolsConfig.$Name) { 
+
+    Write-Message -Level $DebugLevel "Brain '$Name': In Loop"
 
     $APIcallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where({ $_ -like "$Name*" })
-    $RetryInterval = $Session.Config.PoolsConfig.$Name.PoolAPIretryInterval
     $StartTime = [DateTime]::Now
 
     if ($Session.MyIPaddress) { 
         try { 
 
-            Write-Message -Level Debug "Brain '$Name': Start loop$(if ($Duration) { " (Previous loop duration: $Duration sec.)" })"
+            Write-Message -Level $DebugLevel "Brain '$Name': Start loop$(if ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
             do { 
                 try { 
-                    # Attempt to aquire mutex
-                    if ($Mutex.WaitOne(1000)) { 
-                        if (-not $AlgoData) { 
-                            $URI = "https://www.mining-dutch.nl/api/status"
-                            Write-Message -Level Debug "Brain '$Name': Querying $URI"
-                            $AlgoData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            Write-Message -Level Debug "Brain '$Name': Response from $URI received"
-                            if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
-                            elseif ($AlgoData.message -match "^Only \d request every ") { 
-                                $WaitSeconds = [UInt16]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$")
-                                Write-Message -Level Debug "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
-                                Start-Sleep -Seconds $WaitSeconds
-                                Remove-Variable WaitSeconds
-                                $AlgoData = $null
-                            }
+                    if (-not $TotalStatsData) { 
+                        $URI = "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
+                        Write-Message -Level $DebugLevel "Brain '$Name': Querying $URI"
+                        $TotalStatsData = Invoke-RestMethod -Uri $URI -Headers $Headers -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                        $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                        Write-Message -Level $DebugLevel "Brain '$Name': Response from $URI received"
+                        if ($TotalStatsData -like "<!DOCTYPE html>*") { $TotalStatsData = $null }
+                        elseif ($TotalStatsData.message -match "^Only \d request every ") { 
+                            $WaitSecondsTotalStats = 11 # [UInt16]($TotalStatsData.message -replace "^Only \d request every " -replace " seconds allowed$") + 5
+                            Start-Sleep -Seconds $WaitSecondsTotalStats
+                            $TotalStatsData = $null
                         }
-                        if (-not $TotalStats) { 
-                            $URI = "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
-                            Write-Message -Level Debug "Brain '$Name': Querying $URI"
-                            $TotalStats = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            Write-Message -Level Debug "Brain '$Name': Response from $URI received"
-                            if ($TotalStats -like "<!DOCTYPE html>*") { $TotalStats = $null }
-                            elseif ($TotalStats.message -match "^Only \d request every ") { 
-                                $WaitSeconds = [UInt16]($TotalStats.message -replace "^Only \d request every " -replace " seconds allowed$")
-                                Write-Message -Level Debug "Brain '$Name': Response '$($TotalStats.message)' from $URI received -> waiting $WaitSeconds seconds"
-                                Start-Sleep -Seconds $WaitSeconds
-                                Remove-Variable WaitSeconds
-                                $TotalStats = $null
-                            }
-                        }
-                        $Mutex.ReleaseMutex()
                     }
-                    Remove-Variable URI -ErrorAction Ignore
+                    if (-not $AlgoData) { 
+                        $URI = "https://www.mining-dutch.nl/api/status"
+                        Write-Message -Level $DebugLevel "Brain '$Name': Querying $URI"
+                        $AlgoData = Invoke-RestMethod -Uri $URI -Headers $Headers -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
+                        $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                        Write-Message -Level $DebugLevel "Brain '$Name': Response from $URI received"
+                        if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
+                        elseif ($AlgoData.message -match "^Only \d request every ") { 
+                            $WaitSecondsAlgoData = [UInt16]($AlgoData.message -replace "^Only \d request every " -replace " seconds allowed$") + 5
+                            Start-Sleep -Seconds $WaitSecondsAlgoData
+                            $AlgoData = $null
+                        }
+                    }
                 }
                 catch { 
                     $APIcallFails ++
                     $APIerror = $_.Exception.Message
-                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed ($($APIerror | ConvertTo-Json -Compress))"
+                    Write-Message -Level $DebugLevel "Brain '$Name': Query to $URI failed ($($APIerror | ConvertTo-Json -Compress))"
                     if ($APIcallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
                 }
-            } while (-not ($AlgoData -and $TotalStats) -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
+
+            } while (-not ($AlgoData -and $TotalStatsData) -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
@@ -106,14 +96,14 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                 Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://www.mining-dutch.nl/api ($($APIerror | ConvertTo-Json -Compress))"
             }
             else {
-                ($AlgoData.PSObject.Properties.Name).Where({ $TotalStats.result.algorithm -notcontains $_ }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })
-            }
-
-            if ($AlgoData -and $TotalStats) { 
-
                 # Change numeric string to numbers, some values are null
                 $AlgoData = ($AlgoData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
-                $TotalStats = ($TotalStats | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
+                $TotalStatsResults = ($TotalStatsData.result | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
+
+                ($AlgoData.PSObject.Properties.Name).Where({ $TotalStatsResults.algorithm -notcontains $_ }).ForEach({ $AlgoData.PSObject.Properties.Remove($_) })
+            }
+
+            if ($AlgoData -and $TotalStatsResults) { 
 
                 foreach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
                     $AlgorithmNorm = Get-Algorithm $Algorithm
@@ -126,7 +116,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                     if ($AlgorithmNorm -eq "Neoscrypt" -and $AlgoData.$Algorithm.mbtc_mh_factor -eq 1) { $AlgoData.$Algorithm.mbtc_mh_factor = 1000 }
 
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
-                    if ($AlgoStats = $TotalStats.result.Where({ $_.Algorithm -eq $Algorithm })) { 
+                    if ($AlgoStats = $TotalStatsResults.Where({ $_.Algorithm -eq $Algorithm })) { 
                         $AlgoData.$Algorithm | Add-Member hashrate_shared $AlgoStats.hashrate -Force
                         $AlgoData.$Algorithm | Add-Member hashrate_solo $AlgoStats.hashrate_solo -Force
                         $AlgoData.$Algorithm | Add-Member workers_shared $AlgoStats.workers -Force
@@ -139,7 +129,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                         $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
                         if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where({ $_.Name -eq $Algorithm })) { 
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
-                            Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
+                            Write-Message -Level $DebugLevel "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
                         }
                     }
 
@@ -181,7 +171,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                             Remove-Stat -Name $StatName
                             $PoolObjects = $PoolObjects.Where({ $_.Name -ne $Algorithm })
                             $PlusPrice = $LastPrice
-                            Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
+                            Write-Message -Level $DebugLevel "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
                         }
                     }
                     $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
@@ -199,6 +189,8 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
             $Session.BrainData.$Name = $AlgoData
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
+            Remove-Variable AlgoData, TotalStatsData -ErrorAction Ignore
+
             # Limit to only sample size + 10 minutes history
             $PoolObjects = @($PoolObjects.Where({ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) }))
         }
@@ -208,21 +200,18 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
             $_.Exception | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
             $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
         }
-        Remove-Variable AlgoData, TotalStats -ErrorAction Ignore
 
         $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
         $Durations += ($Duration, $Session.Interval | Measure-Object -Minimum).Minimum
         $Durations = @($Durations | Select-Object -Last 20)
         $DurationsAvg = ($Durations | Measure-Object -Average).Average
 
-        Write-Message -Level Debug "Brain '$Name': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$Name.PSObject.Properties.Name.Count) valid pools."
+        Write-Message -Level $DebugLevel "Brain '$Name': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$Name.PSObject.Properties.Name.Count) valid pools."
     }
 
     while (-not $Session.MyIPaddress -or ($Session.NewMiningStatus -eq "Paused" -and $Timestamp.AddSeconds($Session.Config.Interval) -gt [DateTime]::Now.ToUniversalTime()) -or ($Session.NewMiningStatus -eq "Running" -and ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime)))) { 
         Start-Sleep -Milliseconds 250
     }
 }
-
-$Mutex.Dispose()
 
 Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Headers, Mutex, Name, PoolConfig, PoolObjects, PoolVariant, RetryInterval, StartTime, UserAgent -ErrorAction -Ignore
