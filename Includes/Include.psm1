@@ -442,7 +442,7 @@ class Miner : IDisposable {
         }
 
         # Start miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
-        $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -Name "$($this.NameAndDevice)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
+        $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -Name "$($this.BaseName_Version_Device)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
 
         Remove-Variable ScriptBlock -ErrorAction Ignore
     }
