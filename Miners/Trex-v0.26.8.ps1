@@ -99,7 +99,7 @@ if ($Algorithms) {
                                         "ethstratumnh" { $Arguments = "$Arguments --url2 stratum2"; break }
                                         default        { $Arguments = "$Arguments --url2 stratum" }
                                     }
-                                    $Arguments = if ($Pool1.PoolPorts[1]) { "+ssl" } else { "+tcp" }
+                                    $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments+ssl" } else { "$Arguments+tcp" }
                                     $Arguments = "$($Arguments)://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
                                     $Arguments = "$Arguments --user2 $($Pool1.User) --pass2 $($Pool1.Pass)"
                                     if ($Pool1.WorkerName) { $Arguments = "$Arguments --worker2 $($Pool1.WorkerName)" }
