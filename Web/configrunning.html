@@ -2,14 +2,14 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navconfigrunning">Running configuration</h2>
           </div>
-          <div id="configrunning" class="alert alert-info" role="alert">This is the configuration data UG-Miner is currently using.</div>
+          <div id="configfiles" class="alert alert-info" role="alert">This is the configuration data UG-Miner is currently using.</div>
           <div id="toolbar">
             <button type="button" class="btn btn-primary" id="btn-editconfig" name="btn-editconfig" title="Edit configuration file&#10;Changes will become active in next cycle.">Edit configuration file</button>
             <button type="button" class="btn btn-primary" id="btn-editpoolsconfig" name="btn-editpoolsconfig" title="Edit pools config file&#10;Changes will become active in next cycle.">Edit pools configuration file</button>
           </div>
           <br>
 
-          <pre id="config" style="height: calc(100vh - 380px); overflow:auto;"></pre>
+          <pre id="configrunning" style="height: calc(100vh - 380px); overflow:auto;"></pre>
           <br>
 <!-- Start of page scripts "configrunning.html" -->
           <script type="text/javascript">
@@ -59,7 +59,7 @@
                     url: "/poolsConfigFile",
                     success: function (result) {
                       poolsConfigFile = result;
-                      $("#configrunning").text("This is the configuration UG-Miner is currently using based on data taken from '" + ConfigFile + "' & '" + poolsConfigFile + "'.");
+                      $("#configfiles").text("This is the configuration UG-Miner is currently using based on data taken from '" + ConfigFile + "' & '" + poolsConfigFile + "'.");
                     }
                   });
                 }
@@ -71,13 +71,11 @@
                   dataType: "json",
                   url: "/configrunning",
                   success: function(result) {
-                    $("#config").empty();
-                    $("#config").append(JSON.stringify(result, undefined, 4));
+                    $("#configrunning").empty();
+                    $("#configrunning").append(JSON.stringify(result, undefined, 4));
                   }
                 });
               });
-              // updateSummary();
-              // updateButtonStatus();
             });
           </script>
 <!-- End of page scripts "configrunning.html" -->

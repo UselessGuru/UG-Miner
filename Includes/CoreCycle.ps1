@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle.ps1
-Version:        6.8.4
-Version date:   2026/04/23
+Version:        6.8.5
+Version date:   2026/05/01
 #>
 
 using module .\Include.psm1
@@ -1320,8 +1320,7 @@ try {
             foreach ($StuckMinerProcess in $StuckMinerProcesses) { 
                 Stop-Process -Id $StuckMinerProcess.Id -Force -ErrorAction Ignore
                 # Some miners, e.g. HellMiner, spawn child process(es) that may need separate killing
-                $ChildProcesses = (Get-CimInstance win32_process -Filter "ParentProcessId = $($StuckMinerProcess.Id)")
-                $ChildProcesses.ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                (Get-CimInstance win32_process -Filter "ParentProcessId = $($StuckMinerProcess.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
                 if (-not (Get-Process -Id $StuckMinerProcess.Id -ErrorAction Ignore)) { 
                     Write-Message -Level Warn "Successfully stopped stuck miner '$($StuckMinerProcess.MainWindowTitle -replace "\} .+", "}")'."
                 }
@@ -1343,7 +1342,7 @@ try {
                 }
             }
         }
-        Remove-Variable ChildProcesses, Loops, MinerPaths, StuckMinerProcess, StuckMinerProcesses -ErrorAction Ignore
+        Remove-Variable Loops, MinerPaths, StuckMinerProcess, StuckMinerProcesses -ErrorAction Ignore
         #endregion
 
         # Remove miners
@@ -1358,10 +1357,6 @@ try {
                 elseif (-not $_.Available) { 
                     $_.Status = [MinerStatus]::Unavailable
                     $_.SubStatus = "unavailable"
-                }
-                elseif ($_.Status -notin [MinerStatus]::DryRun, [MinerStatus]::Running) { 
-                    $_.Status = [MinerStatus]::Idle
-                    $_.StatusInfo = $_.SubStatus = "idle"
                 }
                 $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $(if ($_.Status -eq [MinerStatus]::DryRun) { "Dry running $($Miner.Info)" } elseif ($_.Status -eq [MinerStatus]::Running) { "Running $($Miner.Info)" } else { "Idle" }); $_.SubStatus = $Miner.SubStatus })
             }

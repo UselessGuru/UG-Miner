@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.4 / Updated 2026/04/23
+Version 6.8.5 / Updated 2026/05/01
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -52,6 +52,8 @@ UG-Miner code is partly based on
 
 <sup>(3)</sup> Registration with NiceHash is required. For some countries private usage is no longer possible.  
 
+<sup>(4)</sup> Pool does not support auto-exchange for some currencies (Conversion: Direct mining only).  
+    You need to configure a wallet address for these currencies.
 
 ## Easy configuration, easy start
 

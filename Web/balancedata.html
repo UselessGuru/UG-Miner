@@ -2,7 +2,7 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navbalancedata">Balance data</h2>
           </div>
-          <div class="alert alert-info" role="alert">Balance data collected by the balance tracker over the last 30 days (max. 10'000 entries).</div>
+          <div name="add-updatedtimestamp" class="alert alert-info" role="alert">Balance data collected by the balance tracker over the last 30 days.</div>
           <div id="toolbar">
             <button id="btn-remove-entry" class="btn btn-info" disabled>Remove entry</button>
           </div>
@@ -64,6 +64,7 @@
                 $("body").css("cursor", "wait");
               },
               onLoadSuccess: function() {
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = "Balance data collected by the balance tracker over the last 30 days (max. 10'000 entries, information updated " + refreshtimestamp + ")."
                 $("body").css("cursor", "default");
               },
               onRefresh: function() {

@@ -1,3 +1,16 @@
+<<<<<<< Updated upstream
+=======
+Changelog UG-Miner 6.8.5 2026/05/01
+===================================
+
+Improvements:
+- Core: Better error handling when data & log files are not available/corrupt
+
+Miner Updates:
+- BzMiner-v24.0.2
+
+
+>>>>>>> Stashed changes
 Changelog UG-Miner 6.8.4 2026/04/23
 ===================================
 

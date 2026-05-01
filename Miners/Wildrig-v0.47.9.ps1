@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.4
-Version date:   2026/04/23
+Version:        6.8.5
+Version date:   2026/05/01
 #>
 
 # removed progpow-ethercore(dead) and progpow-quai(this one moves to kawpow)
@@ -67,7 +67,7 @@ $Algorithms = @(
     @{ Algorithm = "SHA512256d";       Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha512256d" }
     @{ Algorithm = "Skein2";           Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skein2" }
 #   @{ Algorithm = "SkunkHash";        Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skunkhash" } # Algorithm is dead
-    @{ Algorithm = "SkyDoge";          Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skydoge" }
+    @{ Algorithm = "SkydogeHash";      Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skydoge" }
     @{ Algorithm = "Timetravel";       Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo timetravel" }
     @{ Algorithm = "Timetravel10";     Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo timetravel10" }
     @{ Algorithm = "Tribus";           Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo tribus" }
@@ -126,7 +126,7 @@ $Algorithms = @(
     @{ Algorithm = "SHA512256d";       Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo sha512256d --watchdog" }
     @{ Algorithm = "Skein2";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skein2 --watchdog" } # CcminerAlexis78-v1.5.2 is fastest
     @{ Algorithm = "SkunkHash";        Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skunkhash --watchdog" } # Algorithm is dead
-    @{ Algorithm = "SkyDoge";          Type = "INTEL"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skydoge --watchdog" }
+    @{ Algorithm = "SkydogeHash";      Type = "INTEL"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo skydoge --watchdog" }
     @{ Algorithm = "Timetravel";       Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo timetravel --watchdog" }
     @{ Algorithm = "Timetravel10";     Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo timetravel10 --watchdog" }
 #   @{ Algorithm = "Tribus";           Type = "INTEL"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @();           Arguments = " --algo tribus --watchdog" } # ASIC
@@ -185,7 +185,7 @@ $Algorithms = @(
     @{ Algorithm = "SHA512256d";       Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo sha512256d --watchdog" }
     @{ Algorithm = "Skein2";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skein2 --watchdog" } # CcminerAlexis78-v1.5.2 is fastest
     @{ Algorithm = "SkunkHash";        Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skunkhash --watchdog" } # Algorithm is dead
-    @{ Algorithm = "SkyDoge";          Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skydoge --watchdog" }
+    @{ Algorithm = "SkydogeHash";      Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo skydoge --watchdog" }
     @{ Algorithm = "Timetravel";       Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo timetravel --watchdog" }
     @{ Algorithm = "Timetravel10";     Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo timetravel10 --watchdog" }
 #   @{ Algorithm = "Tribus";           Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo tribus --watchdog" } # ASIC

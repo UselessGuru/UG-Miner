@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.4
+Version:        6.8.5
 Version date:   2024/01/29
 #>
 

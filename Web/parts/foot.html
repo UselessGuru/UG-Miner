@@ -71,15 +71,22 @@
         if (document.body.style.cursor != "wait") {
           updateTimestamp();
           // Refresh data only when refreshtimestamp is new
-          if (refreshedtimestamp != refreshtimestamp) { 
-            $("#activeminers").bootstrapTable("refresh");
-            $("#switchinglog").bootstrapTable("refresh");
-            $("#watchdogtimers").bootstrapTable("refresh");
+          if (refreshedtimestamp !== "" && refreshedtimestamp !== refreshtimestamp) { 
+            // an expanded or selected row prevents the refresh
+            if ($(".detail-view").length < 1 && window.$table && $table.bootstrapTable("getSelections").length < 1) { 
+              if (document.getElementById("miners")) $("#miners").bootstrapTable("refresh");
+              if (document.getElementById("pools")) $("#pools").bootstrapTable("refresh");
+              if (document.getElementById("switchinglog")) $("#switchinglog").bootstrapTable("refresh");
+              if (document.getElementById("watchdogtimers")) $("#watchdogtimers").bootstrapTable("refresh");
+              if (typeof updatePoolBalances === "function" && configrunning.BalancesTrackerPollInterval > 0) updatePoolBalances();
+            }
+            if (document.getElementById("configrunning")) location.reload();
+          }
+          if (refreshedtimestamp !== refreshtimestamp) { 
             updateButtonStatus();
             updateSummary();
             updateData();
-            if (typeof updatePoolBalances === "function" && configrunning.BalancesTrackerPollInterval > 0) updatePoolBalances();
-            if (refreshtimestamp !== null) refreshedtimestamp = refreshtimestamp;
+            refreshedtimestamp = refreshtimestamp;
             setTimeout(() => { }, 1000); // Wait 1 second after update
           }
         }

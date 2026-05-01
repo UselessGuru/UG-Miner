@@ -2,7 +2,7 @@
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h2 id="title" data-navbaractive="navswitchinglog">Switching log</h2>
           </div>
-          <div class="alert alert-info" role="alert">Lists the executed miners and the command lines used (last 1000 entries).</div>
+          <div name="add-updatedtimestamp" class="alert alert-info" role="alert">These are the executed miners and the command lines used.</div>
           <div id="toolbar">
             <button id="btn-clear-log" class="btn btn-info" disabled>Clear switching log</button>
           </div>
@@ -94,6 +94,7 @@
                 $("body").css("cursor", "wait");
               },
               onLoadSuccess: function() {
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = "These are the executed miners and the command lines used (last 1000 entries, information updated " + refreshtimestamp + ")."
                 $("body").css("cursor", "default");
               },
               onPostBody: function () {

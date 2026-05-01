@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.4
-Version date:   2026/04/23
+Version:        6.8.5
+Version date:   2026/05/01
 #>
 
 # Fixed a critical bug that affected maximum number of useable threads on GPU Yescrypts - delete your Autotune folder and re-run miner

@@ -16,15 +16,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 Product:        UG-Miner
 File:           API.psm1
-Version:        6.8.4
-Version date:   2026/04/23
+Version:        6.8.5
+Version date:   2026/05/01
 -->
 
 
 <html>
 
 <body style="font-size:20px; ">
-  <h1>UG-Miner API (version 6.0.36)</h1>
+  <h1>UG-Miner API (version 6.0.38)</h1>
 
   API data is available at http://localhost:[API port]/&lt;resource&gt.<br>
   The default API port is 3999.
@@ -32,10 +32,12 @@ Version date:   2026/04/23
   <h2>File and scripts</h2>
   <p>Anything other than the resources listed below will be looked for in the web directory and sent if it exists.</p>
 
-  <p>Any .ps1 files in the web/scripts directory will be run and their output sent. They get passed a $Parameters object with
-     keys and values from the URL string. Test it with this demo:<br>
-  <a href="http://localhost:3999/scripts/demo.ps1?message=Hello%20world!">/scripts/demo.ps1?message=Hello%20world!</a><br>
-     This feature can be used to gather data that the API doesn't expose directly.</p>
+  <p>Any .ps1 files in the web/scripts directory will be run and their output sent.<br>
+     They get passed a $Parameters object with keys and values from the URL string.<br>
+     This feature can be used to gather data that the API doesn't expose directly.<br><br>
+     Test it with this demo:<br>
+     <a href="http://localhost:3999/scripts/demo.ps1?message=Hello%20world!">/scripts/demo.ps1?message=Hello%20world!</a><br>
+   </p>
   <h2>Resources</h2>
   <b><a href="http://localhost:3999/algorithms">/algorithms</a></b>
   <p>Shows the algorithm mappings used in Get-Algorithm to build normalized algorithm names (defined in '\Data\Algorithms.json')</p>

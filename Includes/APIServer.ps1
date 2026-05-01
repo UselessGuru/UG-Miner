@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.4
-Version date:   2026/04/23
+Version:        6.8.5
+Version date:   2026/05/01
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.36"
+$APIversion = "6.0.38"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -692,7 +692,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/balancesupdatedtimestamp" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.BalancesUpdatedTimestamp)
+            $Data = $Session.BalancesUpdatedTimestamp
             break
         }
         "/btc" { 
@@ -755,7 +755,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/donationdata" { 
-            $Data = ConvertTo-Json $Session.DonationData
+            $Data = ConvertTo-Json -Depth 4 $Session.DonationData
             break
         }
         "/donationlog" { 
@@ -927,7 +927,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/refreshtimestamp" { 
-            $Data = $Session.RefreshTimestamp | ConvertTo-Json
+            $Data = $Session.RefreshTimestamp
             break
         }
         "/regions" { 
@@ -943,7 +943,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/summarytext" { 
-            $Data = ConvertTo-Json -Depth 10 @((($Session.Summary -replace " / ", "/" -replace "&ensp;", " " -replace "   ", "  ") -split "<br>").trim())
+            $Data = $Session.Summary
             break
         }
         "/summary" { 

@@ -79,7 +79,7 @@
             var $table = $("#pools");
 
             $table.bootstrapTable({
-              async: "true",
+              async: "false",
               autoRefreshInterval: parseInt(Math.max(configrunning.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 30,
               onColumnSwitch: function() {

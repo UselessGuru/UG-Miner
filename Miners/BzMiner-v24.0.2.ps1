@@ -17,22 +17,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.4
-Version date:   2026/04/23
+Version:        6.8.5
+Version date:   2026/05/01
 #>
 
-# New Coin: Xelis (Currently CPU Only)
-# Improved warthog hashrate (5-15% gains)
-# Improved verus hashrate
-# Added --disable_msr_tweaks flag
-# Added --warthog_gpu_tmp_buff_size flag
-# Fixed dev fee (previously was adding 0.1% to dev fee)
-# Warthog dev fee 2% and community fund 2% (total 4%)
-# Fixed logging sometimes freezing or skipping logs
+# Xelis support for Nvidia and AMD GPUs
+# Improved Ergo and Ergo+Wart dag generation
+# Fixed crashing on older cpus
+# Better hashrate averaging
+# warthog efficiency on gpus now use sha hr rather than janus
+# fixed Linux cpu fan monitoring
+# enabled cpu metrics by default
+# Fixed Xelis solo not passing worker name
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") }))) { return }
 
-$URI = "https://github.com/bzminer/bzminer/releases/download/v24.0.1/bzminer_v24.0.1_windows.zip"
+$URI = "https://bzminer.com/downloads/bzminer_v24.0.2_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"
@@ -56,6 +56,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA256dt", "");                    Type = "AMD"; Fee = @(0.01);       MinMemGiB = 1;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a novo") }
     @{ Algorithms = @("SHA3d", "");                       Type = "AMD"; Fee = @(0.01);       MinMemGiB = 1;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a kylacoin") }
     @{ Algorithms = @("Skein2", "");                      Type = "AMD"; Fee = @(0.01);       MinMemGiB = 2;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a woodcoin") }
+    @{ Algorithms = @("XelisHashV3", "");                 Type = "AMD"; Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a xelis") }
 
 #   @{ Algorithms = @("Blake3", "");                      Type = "INTEL"; Fee = @(0.005);      MinMemGiB = 2;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a alph") } # https://github.com/bzminer/bzminer/issues
     @{ Algorithms = @("DynexSolve", "");                  Type = "INTEL"; Fee = @(0.005);      MinMemGiB = 2;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a dynex") }
@@ -68,8 +69,8 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsenV2", "JanusHash"); Type = "INTEL"; Fee = @(0.01, 0.02); MinMemGiB = 1.08; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" -a karlsen", " --a2 warthog") }
     @{ Algorithms = @("JanusHash", "");                   Type = "INTEL"; Fee = @(0.01);       MinMemGiB = 2;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a warthog") }
     @{ Algorithms = @("KawPow", "");                      Type = "INTEL"; Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a rvn") }
-    @{ Algorithms = @("XelisHashV3", "");                 Type = "INTEL"; Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a xelis") }
     @{ Algorithms = @("SHA512256d", "");                  Type = "INTEL"; Fee = @(0.01);       MinMemGiB = 1;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a radiant") }
+    @{ Algorithms = @("XelisHashV3", "");                 Type = "INTEL"; Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = ""; ExcludePools = @(@(), @());           Arguments = @(" -a xelis") }
 
     @{ Algorithms = @("Autolykos2", "");                  Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";        ExcludeGPUmodel = "";            ExcludePools = @(@("NiceHash"), @());           Arguments = @(" -a ergo") }
     @{ Algorithms = @("Autolykos2", "HeavyHashKaspa");    Type = "NVIDIA"; Fee = @(0.01, 0.01); MinMemGiB = 1.24; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 60);  ExcludeGPUarchitectures = " ";        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@("NiceHash"), @("NiceHash")); Arguments = @(" -a ergo", " --a2 kaspa") } # ASIC
@@ -100,6 +101,7 @@ $Algorithms = @(
     @{ Algorithms = @("SHA256dt", "");                    Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 5);   ExcludeGPUarchitectures = " ";        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());                     Arguments = @(" -a novo") }
     @{ Algorithms = @("SHA3d", "");                       Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 5);   ExcludeGPUarchitectures = " ";        ExcludeGPUmodel = "^MX[1|2]\d+"; ExcludePools = @(@(), @());                     Arguments = @(" -a kylacoin") }
     @{ Algorithms = @("Skein2", "");                      Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 2;    Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 5);   ExcludeGPUarchitectures = " ";        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());                     Arguments = @(" -a woodcoin") }
+    @{ Algorithms = @("XelisHashV3", "");                 Type = "NVIDIA"; Fee = @(0.01);       MinMemGiB = 1.24; Tuning = " --oc_mem_tweak 2"; WarmupTimes = @(45, 5);   ExcludeGPUarchitectures = " ";        ExcludeGPUmodel = "";            ExcludePools = @(@(), @());                     Arguments = @(" -a xelis") }
 )
 
 $Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })

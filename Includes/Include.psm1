@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.4
-Version date:   2026/04/23
+Version:        6.8.5
+Version date:   2026/05/01
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -1595,7 +1595,7 @@ function Update-ConfigFile {
                 "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracy"                { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
                 "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
-                "ShowAllOptimalMiners"               { $Config.ShowAllOptimalMiners = $Config.$_; $Config.Remove($_); break }
+                "ShowAllOptimalMiners"        { $Config.ShowAllOptimalMiners = $Config.$_; $Config.Remove($_); break }
                 "ShowCoinName"                { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
                 "ShowCoinNameColumn"          { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
                 "ShowCurrency"                { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
