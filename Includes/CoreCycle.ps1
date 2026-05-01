@@ -234,7 +234,7 @@ try {
         }
 
         if ($Session.Config.Donation -gt 0) { 
-            if (-not $Session.Donation.Start) { 
+            if (-not $Session.Donation.Start -or $Session.Donation.Start.Date -ne [DateTime]::Now.Date) { 
                 # Re-Randomize donation start and data once per day
                 if ((Get-Item -Path "$PWD\Logs\DonationLog.csv" -ErrorAction Ignore).LastWriteTime -lt [DateTime]::Today) { 
                     # Do not donate if remaing time for today is less than donation duration
