@@ -92,6 +92,7 @@
   "ETHW": "Ethash",
   "EVR": "EvrProgPow",
   "EXP": "Ethash",
+  "FAC": "SHA256mem",
   "FB": "SHA256",
   "FBIT": "Ghostrider",
   "FBX": "Scrypt",

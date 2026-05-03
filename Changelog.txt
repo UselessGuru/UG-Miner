@@ -1,3 +1,14 @@
+Changelog UG-Miner 6.8.6 2026/05/??
+===================================
+
+Fixes:
+- Core / Include.psm1: Job name in method 'StartDataReader()' incomplete
+- Miner Trex-v0.26.8: Dual mining broken
+
+Miner updates:
+- SRBMinerMulti-v3.2.7
+
+
 Changelog UG-Miner 6.8.5 2026/05/01
 ===================================
 

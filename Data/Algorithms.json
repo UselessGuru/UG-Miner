@@ -279,6 +279,7 @@
   "sha256": "SHA256",
   "sha256csm": "SHA256csm",
   "sha256dt": "SHA256dt",
+  "sha256mem": "SHA256mem",
   "sha3d": "SHA3d",
   "sha3solidity": "SHA3Solidity",
   "sha3x": "SHA3x",
