@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.6
-Version date:   2026/05/03
+Version:        6.8.7
+Version date:   2026/05/10
 #>
 
 # removed progpow-ethercore(dead) and progpow-quai(this one moves to kawpow)
@@ -29,7 +29,7 @@ if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.
 $URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.47.9/wildrig-multi-windows-0.47.9.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
-$DeviceEnumerator = "Type_Slot"
+$DeviceEnumerator = "Bus_Type_Index"
 
 $Algorithms = @(
     @{ Algorithm = "Anime";            Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo anime" }

@@ -254,7 +254,6 @@
             };
 
             $(".table").bootstrapTable({
-              async: "true",
               onAll: function() {
                 document.getElementById("btn-disable-device").disabled = !Boolean($("#enableddevices").bootstrapTable("getSelections").length);
                 document.getElementById("btn-enable-device").disabled = !Boolean($("#disableddevices").bootstrapTable("getSelections").length);

@@ -13,6 +13,9 @@
           </div>
           <table id="miners" class="table"
             data-cache="false"
+            data-auto-refresh="true"
+            data-auto-refresh-status="false"
+            data-cache="true"
             data-click-to-select="true"
             data-cookie="true"
             data-cookie-id-table="minersall"
@@ -110,6 +113,7 @@
             var $table = $("#miners");
 
             $table.bootstrapTable({
+              async: 'false',
               autoRefreshInterval: parseInt(Math.max(configrunning.Interval, 30)), // refresh once per interval, at least 30 seconds
               height: $(window).height() - $table.offset().top + 40,
               onColumnSwitch: function() {

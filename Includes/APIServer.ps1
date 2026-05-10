@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.6
-Version date:   2026/05/03
+Version:        6.8.7
+Version date:   2026/05/10
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.0.38"
+$APIversion = "6.1.0"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -1052,28 +1052,48 @@ while ($Session.APIversion -and $Server.IsListening) {
             Remove-Variable File, Filename, IncludeData, IncludeFile, IncludeRegex, Key -ErrorAction Ignore
         }
     }
-
     # If $Data is null, the API will just return whatever data was in the previous request. Instead, show an error
     # This happens if the script just started and hasn't filled all the properties in yet.
     if ($null -eq $Data) { 
         $Data = @{ "Error" = "API data not available" } | ConvertTo-Json
     }
 
-    # Send the response
+    if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
+
     $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
+    $AcceptEncoding = $Context.Request.Headers["Accept-Encoding"]
+
+    if ($AcceptEncoding -and $AcceptEncoding.Contains("gzip")) {
+        # 2. Tell the client we are sending gzip
+        $Response.Headers.Add("Content-Encoding", "gzip")
+
+        # 3. Compress and write
+        $MemoryStream = [System.IO.MemoryStream]::new()
+        $GzipStream = [System.IO.Compression.GZipStream]::new($MemoryStream, [System.IO.Compression.CompressionMode]::Compress)
+
+        $GzipStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
+        $GzipStream.Close() # Must close to flush bits to the MemoryStream
+
+        $CompressedBuffer = $MemoryStream.ToArray()
+        $Response.ContentLength64 = $CompressedBuffer.Length
+        $Response.OutputStream.Write($CompressedBuffer, 0, $CompressedBuffer.Length)
+    } 
+    else {
+        # Fallback for clients that don't support gzip
+        $Response.ContentLength64 = $ResponseBuffer.Length
+        $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
+    }
+
     $Response.Headers.Add("Content-Type", $ContentType)
     $Response.StatusCode = $StatusCode
-    $Response.ContentLength64 = $ResponseBuffer.Length
-    if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
-    $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
     $Response.Close()
 
-    Remove-Variable ContentType, Context, Data, Parameters, Response, ResponseBuffer, StatusCode -ErrorAction Ignore
+    Remove-Variable CompressedBuffer, ContentType, Context, Data, GzipStream, MemoryStream, Parameters, Response, ResponseBuffer, StatusCode -ErrorAction Ignore
 
     if ($GCstopWatch.Elapsed.TotalMinutes -gt 10) { 
-        # [System.GC]::Collect()
-        # [System.GC]::WaitForPendingFinalizers()
-        # [System.GC]::Collect()
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
+        [System.GC]::Collect()
         $GCstopWatch.Restart()
     }
 }
