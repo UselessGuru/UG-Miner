@@ -1548,7 +1548,7 @@ function Update-ConfigFile {
     }
 
     # Removed pools
-    ("AHashPool", "BlockMasters", "NLPool", "MiningPoolHub", "ProHashing", "ZergPool").ForEach(
+    ("AHashPool", "BlockMasters", "HiveOn", "NLPool", "MiningPoolHub", "ProHashing", "ZergPool").ForEach(
         { 
             if ($Config.PoolName -like "$_*") { 
                 Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName -like "$_*" -join "; ") removed)."
