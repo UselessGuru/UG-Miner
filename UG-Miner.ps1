@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.7
-Version date:   2026/05/10
+Version:        6.8.8
+Version date:   2026/05/16
 #>
 
 using module .\Includes\Include.psm1
@@ -180,7 +180,7 @@ param(
     [Parameter (Mandatory = $false)]
     [UInt16]$PoolsMaxAge = 24, # Time (in hours) until a pool is seen as too old (e.g. is has not been updated) and will be removed from the pool list
     [Parameter (Mandatory = $false)]
-    [String[]]$PoolName = @("HashCryptosPlus", "HiveON", "MiningDutchPlus", "NiceHash", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "HiveON", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ZPool", "ZPool24hr", "ZPoolPlus"
+    [String[]]$PoolName = @("HashCryptosPlus", "MiningDutchPlus", "NiceHash", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ZPool", "ZPool24hr", "ZPoolPlus"
     [Parameter (Mandatory = $false)]
     [Hashtable]$PowerPricekWh = @{ "00:00" = 0.26; "12:00" = 0.3 }, # Price of power per kW⋅h (in $Currency, e.g. CHF), valid from HH:mm (24hr format)
     [Parameter (Mandatory = $false)]
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.7"
+    Version      = [System.Version]"6.8.8"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -607,11 +607,7 @@ else {
 Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
 
 # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
-if ($Session.Config.LogViewerConfig -and $Session.Config.LogViewerConfig) { 
-    $Session.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
-    $Session.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
-    if (-not (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" })) { & $($Session.LogViewerExe) $($Session.LogViewerConfig) }
-}
+Start-LogReader
 
 # Update config file to include all new config items
 if (-not $Session.Config.ConfigFileVersion -or [System.Version]::Parse($Session.Config.ConfigFileVersion) -lt $Session.Branding.Version) { Update-ConfigFile -ConfigFile $Session.ConfigFile }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.7
-Version date:   2026/05/10
+Version:        6.8.8
+Version date:   2026/05/16
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -790,7 +790,7 @@ class Miner : IDisposable {
         $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
         $this.LastUsed = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
         $this.Updated = ($this.Workers.Pool.Updated | Measure-Object -Minimum).Minimum
-        $this.WindowStyle = if ($Config.MinerWindowStyleNormalWhenBenchmarking -and $this.Benchmark) { "normal" } else { $Config.MinerWindowStyle }
+        $this.WindowStyle = if ($this.Benchmark -and $Config.MinerWindowStyleNormalWhenBenchmarking) { "normal" } else { $Config.MinerWindowStyle }
     }
 }
 
@@ -1480,7 +1480,7 @@ function Get-TimeSince {
     if ($TimeSpan.Hours -ge 1)   { $TimeSince = "$TimeSince {0:n0} hour$(if ($TimeSpan.Hours -ne 1) { "s" })" -f $TimeSpan.Hours }
     if ($TimeSpan.Minutes -ge 1) { $TimeSince = "$TimeSince {0:n0} minute$(if ($TimeSpan.Minutes -ne 1) { "s" })" -f $TimeSpan.Minutes }
     if ($TimeSpan.Seconds -ge 1) { $TimeSince = "$TimeSince {0:n0} second$(if ($TimeSpan.Seconds -ne 1) { "s" })" -f $TimeSpan.Seconds }
-    if ($TimeSince) { $TimeSince += " ago" } else { $TimeSince = "just now" }
+    $TimeSince = if ($TimeSince) { "$TimeSince ago" } else { "just now" }
 
     return $TimeSince
 }
@@ -1833,7 +1833,7 @@ function Enable-Stat {
             Duration              = [String]$Stat.Duration
             Updated               = [DateTime]$Stat.Updated
             Disabled              = [Boolean]$Stat.Disabled
-        } | ConvertTo-Json | Out-File -LiteralPath $Path -Force
+        } | ConvertTo-Json | Out-File -LiteralPath $Path -Force -ErrorAction Ignore
     }
 }
 
@@ -1866,7 +1866,7 @@ function Disable-Stat {
         Duration              = [String]$Stat.Duration
         Updated               = [DateTime]$Stat.Updated
         Disabled              = [Boolean]$Stat.Disabled
-    } | ConvertTo-Json | Out-File -LiteralPath $Path -Force
+    } | ConvertTo-Json | Out-File -LiteralPath $Path -Force -ErrorAction Ignore
 }
 
 function Set-Stat { 
@@ -2014,7 +2014,7 @@ function Set-Stat {
             Duration              = [String]$Stat.Duration
             Updated               = [DateTime]$Stat.Updated
             Disabled              = [Boolean]$Stat.Disabled
-        } | ConvertTo-Json | Out-File -LiteralPath $Path -Force
+        } | ConvertTo-Json | Out-File -LiteralPath $Path -Force -ErrorAction Ignore
         $Mutex.ReleaseMutex()
     }
     $Mutex.Dispose()
@@ -3415,11 +3415,11 @@ function Get-Median {
 
     if ($Count % 2 -eq 0) { 
         # Even number of elements, median is the average of the two middle elements
-        return ($Numbers[$Count / 2] + $Numbers[$Count / 2 - 1]) / 2
+        return ($Numbers[$Count / 2 - 1] + $Numbers[$Count / 2]) / 2
     }
     else { 
         # Odd number of elements, median is the middle element
-        return $Numbers[$Count / 2]
+        return $Numbers[($Count - 1) / 2]
     }
 }
 
@@ -3700,10 +3700,7 @@ if ($LegacyGUIelements.TabControl) { $LegacyGUIelements.TabControl.SelectTab(0) 
 
     Write-Message -Level Info "$($Session.Branding.ProductLabel) has shut down."
     Start-Sleep -Seconds 2
-    try {
-        Stop-Process (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.LogViewerExe)"" $($Session.LogViewerConfig)" }).ProcessId -Force
-    }
-    catch {}
+    Stop-LogReader
     Stop-Process $PID -Force
 }
 
@@ -3781,13 +3778,6 @@ function Read-Config {
                         $PoolConfig.Region = $PoolConfig.Region.Where({ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) })
 
                         switch ($PoolName) { 
-                            "HiveON" { 
-                                if (-not $PoolConfig.Wallets) { 
-                                    $PoolConfig.Wallets = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase) # as ssorted case insensitive hash table
-                                    $ConfigFromFile.Wallets.GetEnumerator().Name.Where({ $PoolConfig.PayoutCurrencies -contains $_ }).ForEach({ $PoolConfig.Wallets.$_ = $ConfigFromFile.Wallets.$_ })
-                                }
-                                break
-                            }
                             "MiningDutch" { 
                                 if ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
                                 if (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.MiningDutchUserName }
@@ -3932,6 +3922,7 @@ function Read-Config {
                     Write-Message -Level Verbose "Idle detection is disabled."
                 }
             }
+
             $Session.Config = $Config.Clone()
             $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
         }
@@ -3943,4 +3934,23 @@ function Get-ObsoleteMinerStats {
     $MinerNames = @(Get-ChildItem ".\Miners\*.ps1").BaseName
 
     return @($StatFiles.Where({ (($_ -split "-")[0, 1] -join "-") -notin $MinerNames }))
+}
+
+function Start-LogReader {
+    # Start log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net]
+    if ($Session.Config.LogViewerExe -and $Session.Config.LogViewerConfig) { 
+
+        $Session.Config.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
+        $Session.Config.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
+
+        if (-not (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" })) { & $($Session.Config.LogViewerExe) $($Session.Config.LogViewerConfig) }
+    }
+}
+
+function Stop-LogReader {
+    if ($Session.Config.LogViewerExe -and $Session.Config.LogViewerConfig -and (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" })) { 
+        try { 
+            (Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }).ProcessId | ForEach-Object { Stop-Process -Id $_ }
+        } catch { }
+    }
 }

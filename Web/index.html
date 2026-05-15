@@ -29,6 +29,7 @@
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
+            data-sort-reset="true"
             data-sort-select-options="true"
             data-toolbar="#toolbar"
             data-undefined-text=""
@@ -105,6 +106,7 @@
               $.ajax({
                 async: false,
                 dataType: "text",
+                timeout: 3,
                 url: "/functions/log/get?lines=500", 
                 success: function(result) {
                   document.getElementById("logtext").innerHTML = result.replaceAll("&", "&amp").replaceAll("<", "&lt").replaceAll(">", "&gt;").replaceAll("'", "&#39;").replaceAll('"', "&quot;");;

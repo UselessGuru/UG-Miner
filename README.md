@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.7 / Updated 2026/05/10
+Version 6.8.8 / Updated 2026/05/16
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -40,19 +40,15 @@ UG-Miner code is partly based on
 - Miner switching log
 - Supported pools:
    - [HashCryptos](<https://hashcryptos.com/>)
-   - [HiveOn](<https://HiveOn.net/>)<sup>(2)</sup>
    - [MiningDutch](<https://www.mining-dutch.nl/>)
-   - [NiceHash](<https://www.nicehash.com/>)<sup>(3)</sup>
-   - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
+   - [NiceHash](<https://www.nicehash.com/>)<sup>(2)</sup>
+   - [ZPool](<https://zpool.ca/>)<sup>(3)</sup>
 
 <sup>(1)</sup> Optional installation of HWiNFO required, see [ConfigHWinfo64.pdf](<https://github.com/UselessGuru/UG-Miner/blob/main/ConfigHWinfo64.pdf>)
 
-<sup>(2)</sup> Pool does not support auto-exchange to BTC or other currencies.  
-    You need to configure a wallet address for each currency you want to mine.
+<sup>(2)</sup> Registration with NiceHash is required. For some countries private usage is no longer possible.  
 
-<sup>(3)</sup> Registration with NiceHash is required. For some countries private usage is no longer possible.  
-
-<sup>(4)</sup> Pool does not support auto-exchange for some currencies (Conversion: Direct mining only).  
+<sup>(3)</sup> Pool does not support auto-exchange for some currencies (Conversion: Direct mining only).  
     You need to configure a wallet address for these currencies.
 
 ## Easy configuration, easy start
@@ -252,7 +248,7 @@ A separate section can be added to for each pool. If a pool is listed in this fi
 - SSLallowSelfSignedCertificate [true|false]  
   If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
 - Wallet [CURRENCY: Wallet address]  
-  Your wallet address for [CURRENCY]; some pools, e.g. HiveOn, require wallets in each supported currency
+  Your wallet address for [CURRENCY]; some pools, e.g. ZPool, require wallets for some or even all supported currencies
 
 **Usage**
 
@@ -270,7 +266,6 @@ UG-Miner displays the available balances and calculates an estimation of when th
 Supported pools:
 
  - HashCryptos
- - HiveOn
  - MiningDutch
  - NiceHash
  - Zpool
@@ -289,6 +284,7 @@ Hot key legend:                              Status:
 3: Toggle UI style [full or light]           [light]
 4: Toggle legacy GUI                         [enabled]
 5: Toggle API server and web GUI             [running on port 3999]
+6: Toggle log reader                         [on]
 
 a: Toggle 'Accuracy' column visibility       [on]
 b: Toggle 'Earnings bias' column visibility  [on]

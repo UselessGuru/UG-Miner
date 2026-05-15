@@ -368,7 +368,7 @@
               $.ajax({
                 async: false,
                 dataType: "json",
-                timeout: 10,
+                timeout: 3,
                 url: "/rates",
                 success: function(result) {
                   rates = result;
@@ -377,6 +377,7 @@
                   $.ajax({
                     async: false,
                     dataType: "json",
+                    timeout: 3,
                     url: "/balances",
                     success: function(result) {
                       if (result != null) { 
@@ -527,7 +528,7 @@
               $.ajax({
                 async: false,
                 dataType: 'json',
-                timeout: 1,
+                timeout: 3,
                 url: '/balancesupdatedtimestamp',
                 success: function(balancesupdatedtimestamp) {
                   document.getElementsByName("add-balancesupdatedtimestamp")[0].innerHTML = " Consolidated earnings of the last 30 active mining days. The data is taken from the pools APIs and may not yet include results from recent mining (data updated " + balancesupdatedtimestamp + ")."
@@ -537,6 +538,7 @@
               $.ajax({
                 async: false,
                 dataType: "json",
+                timeout: 3,
                 url: "/earningschartdata",
                 success: function (earningsdata) {
                   var datasets = [];

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.7
-Version date:   2026/05/10
+Version:        6.8.8
+Version date:   2026/05/16
 #>
 
 using module .\Include.psm1
@@ -79,7 +79,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                 if ($Key -and $Value) { $Parameters.$Key = $Value }
             }
         )
-        if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url)" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
+        if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url)" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
     }
     elseif ($Request.HttpMethod -eq "POST") { 
         $Length = $Request.contentlength64
@@ -88,7 +88,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         [Void]$Request.inputstream.read($Buffer, 0, $Length)
         $Body = [Text.Encoding]::ascii.getstring($Buffer)
 
-        if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
+        if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
 
         $Parameters = @{ }
         ($Body -split "&").ForEach(
@@ -135,7 +135,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
-                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force -ErrorAction Ignore
                     $Mutex.ReleaseMutex()
                 }
             }
@@ -172,7 +172,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
-                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force
+                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force -ErrorAction Ignore
                     $Mutex.ReleaseMutex()
                 }
             }
@@ -193,7 +193,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
-                    $Session.BalancesData | ConvertTo-Json | Out-File ".\Data\BalancesTrackerData.json"
+                    $Session.BalancesData | ConvertTo-Json | Out-File -LiteralPath ".\Data\BalancesTrackerData.json" -Force -ErrorAction Ignore
                     $Mutex.ReleaseMutex()
                 }
 
@@ -390,7 +390,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             if (-not $Session.Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type)) { 
                 $Data = "No pool configuration data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
             }
-            elseif (-not ($Data = (Invoke-RestMethod -Uri $Session.Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5) | ConvertTo-Json)) { 
+            elseif (-not ($Data = (Invoke-RestMethod -Uri $Session.Config.PoolsConfig.$($Parameters.Pool).BrainConfig.$($Parameters.Type) -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec 5 -ErrorAction Ignore) | ConvertTo-Json)) { 
                 $Data = "No data for '/functions/querypoolapi?Pool=$($Parameters.Pool)&Type=$($Parameters.Type)'."
             }
             break
@@ -1058,7 +1058,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         $Data = @{ "Error" = "API data not available" } | ConvertTo-Json
     }
 
-    if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File $Session.Config.APIlogfile -Append -ErrorAction Ignore }
+    if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
 
     $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
     $AcceptEncoding = $Context.Request.Headers["Accept-Encoding"]

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.7
-Version date:   2026/05/10
+Version:        6.8.8
+Version date:   2026/05/16
 #>
 
 using module .\Include.psm1
@@ -35,7 +35,7 @@ do {
     $Session.PoolsLastEarnings = if (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
     if (-not $Session.PoolsLastEarnings.PSObject.Properties.Name) { $Session.PoolsLastEarnings = @{ } }
 
-    # Read existing earnings data, use data from last file
+    # Read existing balance tracker data, use data from last file
     foreach ($Filename in (Get-ChildItem ".\Data\BalancesTrackerData*.json" | Sort-Object -Descending)) { 
         $Session.BalancesData = ([System.IO.File]::ReadAllLines($Filename) | ConvertFrom-Json)
         if ($Session.BalancesData.Count -gt ($Session.PoolData.Count / 2)) { break }
@@ -212,7 +212,7 @@ do {
                             break
                         }
                         default {
-                            # HashCryptos, HiveON, MiningDutch, ZPool
+                            # HashCryptos, MiningDutch, ZPool
                             $Delta = $BalanceObject.Unpaid - ($BalanceDataObjects[-1]).Unpaid
                             # Current 'Unpaid' is smaller
                             if ($Delta -lt 0) { 

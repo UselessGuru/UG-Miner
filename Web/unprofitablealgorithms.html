@@ -34,6 +34,7 @@
                 $.ajax({
                   async: false,
                   dataType: "text",
+                  timeout: 3,
                   url: "/functions/file/showcontent?FileName=" + encodeURIComponent(".\\Data\\UnprofitableAlgorithms.json"), 
                   success: function(result) {
                     $("#unprofitablealgorithms").text(result);

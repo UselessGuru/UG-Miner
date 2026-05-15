@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle.ps1
-Version:        6.8.7
-Version date:   2026/05/10
+Version:        6.8.8
+Version date:   2026/05/16
 #>
 
 using module .\Include.psm1
@@ -342,6 +342,7 @@ try {
 
             # Collect pool data
             if ($Session.Config.PoolName) { 
+                $PoolNames = $Session.Config.PoolName.Where({ (Get-PoolBaseName $_) -in (Get-ChildItem -File ".\Pools\*.ps1" -ErrorAction Ignore).BaseName })
                 $Session.PoolsCount = $Session.Pools.Count
                 $Session.PoolsTimeout = ($Session.Config.PoolsConfig.Keys.ForEach({ $Session.Config.PoolsConfig.$_.PoolAPItimeout }) | Measure-Object -Maximum).Maximum
 
@@ -349,7 +350,7 @@ try {
                 if ($Session.Brains.Keys.Where({ $Session.Brains[$_].StartTime -gt $Session.Timer.AddSeconds(- $Session.Config.Interval) }) -or -not $Session.Miners) { 
                     # Newly started brains, allow extra time for brains to get ready
                     $Session.PoolsTimeout = 2 * $Session.PoolsTimeout
-                    $Message = "Loading initial pool data from $((Get-PoolBaseName $Session.Config.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
+                    $Message = "Loading initial pool data from $((Get-PoolBaseName $PoolNames) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
                     if (-not $Session.Miners) { 
                         $Session.Summary = $Message
                         $Session.RefreshTimestamp = (Get-Date -Format "G")
@@ -359,7 +360,7 @@ try {
                     Remove-Variable Message
                 }
                 else { 
-                    Write-Message -Level Info "Loading pool data from $((Get-PoolBaseName $Session.Config.PoolName) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
+                    Write-Message -Level Info "Loading pool data from $((Get-PoolBaseName $PoolNames) -join ", " -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
                 }
 
                 # Wait for all brains
@@ -372,7 +373,7 @@ try {
                 $PoolsMaxAge = [DateTime]::Now.ToUniversalTime().AddHours(-24)
 
                 $Session.Remove("PoolsNew")
-                $Session.PoolsNew = $Session.Config.PoolName.ForEach(
+                $Session.PoolsNew = $PoolNames.ForEach(
                     { 
                         $PoolName = Get-PoolBaseName $_
                         if (Test-Path -LiteralPath ".\Pools\$PoolName.ps1") { 
@@ -417,10 +418,9 @@ try {
                         $Pool
                     }
                 )
-                Remove-Variable Factor, Pool, PoolName -ErrorAction Ignore
 
-                if ($PoolsWithoutData = Compare-Object -PassThru @($Session.Config.PoolName) @($Session.PoolsNew.Variant | Sort-Object -Unique)) { Write-Message -Level Warn "No data received from pool$(if ($PoolsWithoutData.Count -gt 1) { "s" }) $($PoolsWithoutData -join ", " -replace ",([^,]*)$", " &`$1")." }
-                Remove-Variable PoolsWithoutData
+                if ($PoolsWithoutData = Compare-Object -PassThru @($PoolNames) @($Session.PoolsNew.Variant | Sort-Object -Unique)) { Write-Message -Level Warn "No data received from pool$(if ($PoolsWithoutData.Count -gt 1) { "s" }) $($PoolsWithoutData -join ", " -replace ",([^,]*)$", " &`$1")." }
+                Remove-Variable Factor, Pool, PoolName, PoolNames, PoolsWithoutData -ErrorAction Ignore
                 $Session.PoolDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
 
                 # Remove and count deconfigured pools

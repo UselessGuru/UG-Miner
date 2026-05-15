@@ -67,7 +67,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 1,
+        timeout: 3,
         url: '/configrunning',
         success: function(result) {
           configrunning = result;
@@ -77,7 +77,7 @@
       $.ajax({
         async: false,
         dataType: 'text',
-        timeout: 1,
+        timeout: 3,
         url: '/btc',
         success: function(result) {
           btc = result;
@@ -88,7 +88,7 @@
         $.ajax({
           async: false,
           dataType: 'json',
-          timeout: 1,
+          timeout: 3,
           url: '/version',
           success: function(result) {
             version = result;
@@ -101,7 +101,7 @@
       $.ajax({
         async: false,
         dataType: 'text',
-        timeout: 1,
+        timeout: 3,
         url: '/refreshtimestamp',
         success: function(result) {
           refreshtimestamp = result;
@@ -114,7 +114,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 1,
+        timeout: 3,
         url: '/summary',
         success: function(result) {
           document.getElementById('summary').innerHTML = result.toString();
@@ -127,7 +127,7 @@
       $.ajax({
         async: false,
         dataType: 'json',
-        timeout: 1,
+        timeout: 3,
         url: '/functions/mining/getstatus',
         success: function(result) {
           switch (result) {

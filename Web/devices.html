@@ -27,6 +27,7 @@
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
+            data-sort-reset="true"
             data-sort-select-options="true"
             data-toolbar="#toolbarenableddevices"
             data-url="/devices/enabled"
@@ -100,6 +101,7 @@
             data-show-refresh="true"
             data-show-search-clear-button="true"
             data-show-toggle="true"
+            data-sort-reset="true"
             data-sort-select-options="true"
             data-toolbar="#toolbardisableddevices"
             data-url="/devices/disabled"
@@ -149,7 +151,7 @@
           <br>
           <br>
 
-          <div id="unsupporteddevices" style="visibility: hidden">
+          <div id="unsupporteddevicesid" style="visibility: hidden">
             <h3>Unsupported devices</h3>
             <table id="unsupporteddevices" class="table"
               data-cache="false"
@@ -171,6 +173,7 @@
               data-show-refresh="true"
               data-show-search-clear-button="true"
               data-show-toggle="true"
+              data-sort-reset="true"
               data-sort-select-options="true"
               data-url="/devices/unsupported"
               >
@@ -220,6 +223,7 @@
           </div>
 <!-- Start of page scripts "devices.html" -->
           <script type="text/javascript">
+            var $table = $("#unsupporteddevices");
 
             function formatDevices(data) {
               // This function can alter the returned data before building the table, formatting it in a way
@@ -266,6 +270,13 @@
                     }
                   });
                 };
+                if (this.url == "/devices/unsupported") { 
+                  if (this.data.length > 0) {
+                    document.getElementById("unsupporteddevicesid").style.visibility="visible";
+                  } else {
+                    document.getElementById("unsupporteddevicesid").style.visibility="hidden";
+                  };
+                };
               },
             });
 
@@ -294,21 +305,6 @@
                 });
                 $("#enableddevices").bootstrapTable("refresh");
                 $("#disableddevices").bootstrapTable("refresh");
-              });
-            });
-
-            $(function() {
-              $.ajax({
-                async: false,
-                dataType: "json",
-                url: "/devices/unsupported", 
-                success: function(result) {
-                  if (result == "") {
-                    document.getElementById("unsupporteddevices").style.visibility="hidden";
-                  } else {
-                    document.getElementById("unsupporteddevices").style.visibility="visible";
-                  }
-                }
               });
             });
 

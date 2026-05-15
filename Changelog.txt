@@ -1,3 +1,21 @@
+Changelog UG-Miner 6.8.8 2026/05/16
+===================================
+
+Enhancements:
+- Core / Console window: Add hot key '6' to toggle log reader
+- Core / Inclode.psm1: Add functions 'Start-LogReader' & 'Stop-LogReader'
+- Core / Include.psm1: Do not generate a warning message when a pool file got deleted but poolname is still configured
+
+Fixes:
+- Core / Include.psm1: Function 'Get-Median' returning wrong values for even set of numbers
+
+Improvements:
+- Web GUI / devices: Reduce number of API requests
+
+Pool changes:
+- Removed HiveOn pool (pool has shut down on May 15th 2026)
+
+
 Changelog UG-Miner 6.8.7 2026/05/10
 ===================================
 
@@ -414,7 +432,7 @@ Changelog UG-Miner 6.7.10 2025/12/16
 ====================================
 
 Fixes:
-- Core: Suppress redundant message output in text console
+- Core: Suppress redundant message output in console window
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
@@ -598,7 +616,7 @@ Changelog UG-Miner 6.6.3 2025/11/06
 ===================================
 
 Improvements:
-- Core: Disable close button in text console, use 'Q' key to stop UG-Miner; this ensures closing all running miners
+- Core: Disable close button in console window, use 'Q' key to stop UG-Miner; this ensures closing all running miners
 - Core: Remove obsolete code & minor code optimizations
 - Core / Include.psm1: Do not start a second instance of SnakeTail when running as admin / non-admin
 
@@ -1507,7 +1525,7 @@ Changelog UG-Miner 6.3.16 2024/11/20
 ====================================
 
 Fixes:
-- Include.psm1: Mitigate memory leak with runspace handling
+- Core / Include.psm1: Mitigate memory leak with runspace handling
 
 Miner updates:
 - SRBMinerMulti-v2.7.1
@@ -1624,7 +1642,7 @@ Improvements:
 - Core & Miner APIs: Remove obsolete code & minor code optimizations
 - Core: Include.psm1 / function 'Update-DAGdata': Sets CUDAversion property. No need for 'CUDAversion.json' anymore
 - Core: Rework failed miner reason texts in switching log file
-- Log viewer (SnakeTail): Change color for 'WARN' messages to magenta to match color in text console
+- Log viewer (SnakeTail): Change color for 'WARN' messages to magenta to match color in console window
 
 Miner changes:
 - NanoMiner-v3.9.3
@@ -2272,7 +2290,7 @@ Changelog UG-Miner 6.1.14 2024/03/06
 ====================================
 
 Fixes:
-- Include.psm1: Mitigate memory leak with runspace handling (regression from 6.1.13)
+- Core / Include.psm1: Mitigate memory leak with runspace handling (regression from 6.1.13)
 - Legacy GUI: ToolTips broken on some controls
 
 Improvements:
@@ -2349,7 +2367,7 @@ Changes:
 
 Fixes:
 - Core: Miners with secondary 0 hashrate not marked as unavailable
-- Main text window: Miner list not sorting optimal/best miners at the top
+- Core / Conssole window: Miner list not sorting optimal/best miners at the top
 
 Improvements:
 - Minor code optimizations
@@ -2466,7 +2484,7 @@ Changelog UG-Miner 6.1.0 2024/01/15
 
 Changes:
 - Core: Renamed algorithm 'kHeavyHash' to 'HeavyHashKaspa"
-- Include.psm1: Remove obsolete code
+- Core / Include.psm1: Remove obsolete code
 - README.MD: Fix typo
 
 Fixes:
@@ -2482,10 +2500,10 @@ Changelog UG-Miner 6.0.4 2024/01/10
 ===================================
 
 Fixes:
-- Include.psm1 / ConvertTo-Hash: Converted values 1000 to high
-- Legacy GUI: Fix errors in line 58: Exception setting "Backcolor": "Cannot convert null to type "System.Drawing.Color"."
-- Legacy GUI: Fix errors in line 141: The property 'Enable' cannot be found on this object.
-- Main text window: Invalid best miner listed when '$IgnorePowerCost -eq $true'
+- Core / Console window: Invalid best miner listed when '$IgnorePowerCost -eq $true'
+- Core / Include.psm1 / ConvertTo-Hash: Converted values 1000 to high
+- Core / Legacy GUI: Fix errors in line 58: Exception setting "Backcolor": "Cannot convert null to type "System.Drawing.Color"."
+- Core / Legacy GUI: Fix errors in line 141: The property 'Enable' cannot be found on this object.
 
 
 Changelog UG-Miner 6.0.3 2024/01/08

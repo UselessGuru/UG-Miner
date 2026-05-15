@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.7
-Version date:   2026/05/10
+Version:        6.8.8
+Version date:   2026/05/16
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -2145,6 +2145,22 @@ $LegacyGUIelements.Timer.Add_Tick(
                             $Session.Config.WebGUI = [Boolean]($Session.APIport)
                             break
                         }
+                        "6" { 
+                            if ((Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" })) { 
+                                Stop-LogReader
+                                Write-Host "`nKey '$_' pressed: Log reader is now " -NoNewline; Write-Host "disabled" -ForegroundColor DarkYellow
+                            }
+                            elseif ($Session.Config.LogViewerConfig -and $Session.Config.LogViewerConfig) { 
+                                Start-LogReader
+                                if ((Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" })) { 
+                                    Write-Host "`nKey '$_' pressed: Log reader is now " -NoNewline; Write-Host "enabled" -ForegroundColor Green
+                                }
+                            }
+                            else { 
+                                Write-Host "`nKey '$_' pressed: Log reader is now " -NoNewline; Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline; Write-Host "(LogViewer is not configured)"
+                            }
+                            break
+                        }
                         "a" { 
                             $Config.ShowColumnAccuracy = -not $Config.ShowColumnAccuracy
                             Write-Host "`nKey '$_' pressed: '" -NoNewline; Write-Host "A" -ForegroundColor Cyan -NoNewline; Write-Host "ccuracy' column visibility is now " -NoNewline; if ($Config.ShowColumnAccuracy) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
@@ -2173,6 +2189,9 @@ $LegacyGUIelements.Timer.Add_Tick(
                             Write-Host "3: Toggle UI style [full or light]           [" -NoNewline; Write-Host "$($Config.UIstyle)" -ForegroundColor Blue -NoNewline; Write-Host "]"
                             Write-Host "4: Toggle legacy GUI                         [" -NoNewline; if ($Config.LegacyGUI) { Write-Host "enabled" -ForegroundColor Green -NoNewline } else { Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "5: Toggle API server and web GUI             [" -NoNewline; if ($Session.APIport) { Write-Host "running on TCP port $($Session.APIport)" -ForegroundColor Green -NoNewline } elseif ($Session.Config.APIport -and $Session.Config.WebGUI -and -not $Session.APIport) { Write-Host "error" -ForegroundColor Red -NoNewline } else { Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
+                            if ($Session.Config.LogViewerConfig -and $Session.Config.LogViewerConfig) { 
+                                Write-Host "6: Toggle log reader                         [" -NoNewline; if ((Get-CimInstance CIM_Process).Where({ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" })) { Write-Host "enabled" -ForegroundColor Green -NoNewline } else { Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
+                            }
                             Write-Host
                             Write-Host "a: Toggle '" -NoNewline; Write-Host "A" -ForegroundColor Cyan -NoNewline; Write-Host "ccuracy' column visibility       [" -NoNewline; if ($Config.ShowColumnAccuracy) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "b: Toggle 'Earnings " -NoNewline; Write-Host "b" -ForegroundColor Cyan -NoNewline; Write-Host "ias' column visibility  [" -NoNewline; if ($Config.ShowColumnEarningsBias) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
@@ -2524,7 +2543,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                                 # Mining profit is below the configured threshold
                                 Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Session.Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Session.Config.DecimalsMax)}/day. Mining is suspended until threshold is reached." -f $Session.Config.FIATcurrency, ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.Config.ProfitabilityThreshold)
                             }
-                            $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(if ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } else { 'n/a (Mining is suspended)' })   |   Hot keys: $(if ($Session.CalculatePowerCost) { "[12345abcemnopqrstuw]" } else { "[12345abcemnpqsu]" })   |   Press 'h' for help"
+                            $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(if ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } else { 'n/a (Mining is suspended)' })   |   Hot keys: $(if ($Session.CalculatePowerCost) { "[123456abcemnopqrstuw]" } else { "[12345abcemnpqsu]" })   |   Press 'h' for help"
                             Write-Host ("-" * $StatusInfo.Length)
                             Write-Host -ForegroundColor Yellow $StatusInfo
                             Remove-Variable StatusInfo

@@ -159,7 +159,7 @@
               $.ajax({
                 async: false,
                 dataType: "text",
-                timeout: 10,
+                timeout: 3,
                 url: "/ConfigFile",
                 success: function(result) {
                   $("#ConfigFilename").text("Current configuration file: "" + result + """);

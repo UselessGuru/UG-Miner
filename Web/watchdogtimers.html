@@ -28,6 +28,7 @@
               data-show-toggle="true"
               data-sort-name="DeviceNames"
               data-sort-order="asc"
+              data-sort-reset="true"
               data-sort-select-options="true"
               data-toolbar="#toolbar"
               data-url="/watchdogtimers"
@@ -61,6 +62,7 @@
                   $.ajax({
                     async: false,
                     dataType: "text",
+                    timeout: 3,
                     url: "/watchdogexpiration",
                     success: function(minutes) {
                       document.getElementById("watchdogalert").innerHTML = ("Shows all watchdog timers (information updated " + refreshtimestamp + ").<br>Watchdog timers expire after " + formatTime(minutes) + ".");

@@ -36,7 +36,7 @@
     "SSL": "Always",
     // SSLallowSelfSignedCertificate [true|false]: If true will allow SSL/TLS connections with self signed certificates (this is a security issue and allows 'Man in the middle attacks')
     "SSLallowSelfSignedCertificate": true,
-    // Wallets: [Currency: Address]: Your wallet address for [Currency]; some pools, e.g. Hiveon require wallets in each supported currency
+    // Wallets: [Currency: Address]: Your wallet address for [Currency]; some pools, e.g. ZPool require wallets for some or even all supported currencies
     "Wallets": { 
       "BTC": "1GPSq8txFnyrYdXL8t6S94mYdF8cGqVQJF"
     }
