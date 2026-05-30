@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.8
-Version date:   2026/05/16
+Version:        6.8.9
+Version date:   2026/05/30
 #>
 
 using module .\Includes\Include.psm1
@@ -279,7 +279,7 @@ param(
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$RecommendedPWSHversion = [Version]"7.6.1"
+$RecommendedPWSHversion = [Version]"7.6.2"
 
 # Close useless empty cmd window that comes up when starting from bat file
 if ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -317,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.8"
+    Version      = [System.Version]"6.8.9"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -714,38 +714,40 @@ Write-Message -Level Verbose "Importing modules... "
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host "~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
-    Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
-    Write-Host " ✔ " -ForegroundColor Green -NoNewline
-}
-catch { 
-    if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
-    try { 
-        Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
-        Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll"
+    if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { 
+        Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Write-Host " ✔ " -ForegroundColor Green -NoNewline
     }
-    catch { 
-        Write-Host " ✖ " -ForegroundColor Red -NoNewline
-        $ErrorLoadingModules = $true
+    else {
+        if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
+        Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
+        Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
+        Write-Host " ✔ " -ForegroundColor Green -NoNewline
     }
 }
+catch { 
+    Write-Host " ✖ " -ForegroundColor Red -NoNewline
+    $ErrorLoadingModules = $true
+}
+
 Write-Host " ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
-    Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
-    Write-Host " ✔ " -ForegroundColor Green -NoNewline
-}
-catch { 
-    if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
-    try { 
-        Add-Type -Path ".\Includes\CPUID.cs" -OutputAssembly ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
-        Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll"
+    if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { 
+        Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Write-Host " ✔ " -ForegroundColor Green -NoNewline
     }
-    catch { 
-        Write-Host " ✖ " -ForegroundColor Red -NoNewline
-        $ErrorLoadingModules = $true
+    else { 
+        if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
+        Add-Type -Path ".\Includes\CPUID.cs" -OutputAssembly ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
+        Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
+        Write-Host " ✔ " -ForegroundColor Green -NoNewline
     }
 }
+catch { 
+    Write-Host " ✖ " -ForegroundColor Red -NoNewline
+    $ErrorLoadingModules = $true
+}
+
 Write-Host " NetSecurity" -NoNewline
 try { 
     Import-Module NetSecurity -ErrorAction Stop
@@ -755,6 +757,7 @@ catch {
     Write-Host " ✖ " -ForegroundColor Red -NoNewline
     $ErrorLoadingModules = $true
 }
+
 Write-Host " Defender" -NoNewline
 try {
     Import-Module Defender -ErrorAction Stop -SkipEditionCheck
@@ -827,19 +830,20 @@ if ($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenC
 $Session.Devices.Where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Session.SupportedCPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
 $Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Session.SupportedGPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
 $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
-
-$Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach({ $_.Status = $_.SubStatus = "Idle"; if ($Session.Config.ExcludeDeviceName -contains $_.Name) { $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" } else { $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach({ $_.Status = $_.SubStatus = "Idle"; if ($Session.Config.ExcludeDeviceName -contains $_.Name) { $_.State = [DeviceState]::Disabled; $_.Status = "Idle"; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" } else { $_.SubStatus = "Idle" } }) = "Idle" } })
+$Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach({ $_.Status = $_.SubStatus = "Idle"; if ($Session.Config.ExcludeDeviceName -contains $_.Name) { $_.State = [DeviceState]::Disabled; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" } })
 
 # Build driver version table
 $Session.DriverVersion = [PSCustomObject]@{ }
 if ($Session.Devices.CUDAversion) { $Session.DriverVersion | Add-Member "CUDA" ($Session.Devices.CUDAversion | Sort-Object -Top 1) }
 $Session.DriverVersion | Add-Member "CIM" ([PSCustomObject]@{ })
-$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Session.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "INTEL" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Session.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Session.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
-$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Session.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "INTEL" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Session.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)

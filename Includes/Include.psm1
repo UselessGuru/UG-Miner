@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.8
-Version date:   2026/05/16
+Version:        6.8.9
+Version date:   2026/05/30
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -1533,7 +1533,7 @@ function Update-ConfigFile {
     # NiceHash Internal is no longer available as of November 12, 2024
     if ($Config.PoolName -contains "NiceHash") { 
         if ($null -ne $Config.NiceHashWalletIsInternal -and -not $Config.NiceHashWalletIsInternal) { 
-            Write-Message -Level Warn "Pool configuration changed during update (NiceHash [External] removed - to mine with NiceHash you must register)."
+            Write-Message -Level Warn "Configuration changed during update (BalancesTrackerExcludePools 'NiceHash [External]' removed - to mine with NiceHash you must register)."
             $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'NiceHash' [External] removed"
             $Config.PoolName = $Config.PoolName -notmatch "NiceHash"
             $Config.Remove("NiceHashWallet")
@@ -1548,15 +1548,15 @@ function Update-ConfigFile {
     }
 
     # Removed pools
-    ("AHashPool", "BlockMasters", "HiveOn", "NLPool", "MiningPoolHub", "ProHashing", "ZergPool").ForEach(
+    ("AHashPool", "BlockMasters", "HiveOn", "MiningPoolHub", "NLPool", "ProHashing", "ZergPool").ForEach(
         { 
             if ($Config.PoolName -like "$_*") { 
-                Write-Message -Level Warn "Pool configuration changed during update ($($Config.PoolName -like "$_*" -join "; ") removed)."
+                Write-Message -Level Warn "Configuration changed during update (Pool '$($Config.PoolName -like "$_*" -join "'; '" -replace ",([^,]*)$", " &`$1")' removed)."
                 $Session.ConfigurationHasChangedDuringUpdate += "- Pool '$($Config.PoolName -like "$_*" -join "; ")' removed"
                 $Config.PoolName = $Config.PoolName -notlike "$_*"
             }
             if ($Config.BalancesTrackerExcludePools -like "$_*") { 
-                Write-Message -Level Warn "BalancesTrackerExcludePools changed during update ($($Config.BalancesTrackerExcludePools -like "$_*" -join "; ") removed)."
+                Write-Message -Level Warn "Configuration changed during update (BalancesTrackerExcludePools '$($Config.BalancesTrackerExcludePools -like "$_*" -join "'; '" -replace ",([^,]*)$", " &`$1")' removed)."
                 $Session.ConfigurationHasChangedDuringUpdate += "- BalancesTrackerExcludePools '$($Config.BalancesTrackerExcludePools -like "$_*" -join "; ")' removed"
                 $Config.BalancesTrackerExcludePools = $Config.BalancesTrackerExcludePools -notlike "$_*"
             }
