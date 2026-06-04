@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.9
-Version date:   2026/05/30
+Version:        6.8.10
+Version date:   2026/06/04
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -41,7 +41,7 @@ $Algorithms = @(
     @{ Algorithm = "EvrProPow";        Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -a EvrProgPow" }
     @{ Algorithm = "FiroPow";          Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -a FiroPow" }
     @{ Algorithm = "FishHash";         Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -a fishhash" }
-    @{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; WarmupTimes = @(75, 0);  ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -a KawPow" }
+#   @{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; WarmupTimes = @(75, 0);  ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -a KawPow" } # No hashrate
     @{ Algorithm = "MeowPow";          Type = "AMD"; Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(120, 0); ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -a meowpow" }
     @{ Algorithm = "ProgPowEpic";      Type = "AMD"; Fee = @(0.02); MinMemGiB = 1.24; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -c EPIC" }
     @{ Algorithm = "ProgPowSero";      Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.24; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = " ";      ExcludePools = @(); Arguments = " -c SERO" }

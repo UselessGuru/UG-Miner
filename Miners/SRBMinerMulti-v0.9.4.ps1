@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.9
-Version date:   2026/05/30
+Version:        6.8.10
+Version date:   2026/06/04
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions

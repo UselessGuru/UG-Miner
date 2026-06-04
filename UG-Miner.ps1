@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.9
-Version date:   2026/05/30
+Version:        6.8.10
+Version date:   2026/06/04
 #>
 
 using module .\Includes\Include.psm1
@@ -46,7 +46,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Boolean]$BalancesShowSums = $true, # Show 1hr / 6hrs / 24hr / 7day & 30day pool earnings sums
     [Parameter (Mandatory = $false)]
-    [Boolean]$BalancesShowAverages = $true, # Show 1hr / 24hr & 7day pool earnings averages
+    [Boolean]$BalancesShowAverages = $true, # Show 1fhr / 24hr & 7day pool earnings averages
     [Parameter (Mandatory = $false)]
     [Boolean]$BalancesShowInAllCurrencies = $true, # If true pool balances will be shown in all currencies
     [Parameter (Mandatory = $false)]
@@ -71,8 +71,6 @@ param(
     [String[]]$Currency = @(), # i.e. @("+ETC", +EVR", "+KIIRO") etc. If '+' is used, then only the explicitly enabled currencies are used. If '-' is used, then all currencies except the disabled ones are used. Do not combine '+' and '-' concurrently.
     [Parameter (Mandatory = $false)]
     [UInt16]$DecimalsMax = 6, # Display numbers with maximal n decimal digits (larger numbers are shown with less decimal digits)
-    [Parameter (Mandatory = $false)]
-    [UInt16]$Delay = 0, # Time (in seconds) between stop and start of miners, use only when getting blue screens on miner switches
     [Parameter (Mandatory = $false)]
     [Switch]$DisableCpuMiningOnBattery = $false, # If true UG-Miner will not use CPU miners while running on battery
     [Parameter (Mandatory = $false)]
@@ -182,13 +180,13 @@ param(
     [Parameter (Mandatory = $false)]
     [String[]]$PoolName = @("HashCryptosPlus", "MiningDutchPlus", "NiceHash", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ZPool", "ZPool24hr", "ZPoolPlus"
     [Parameter (Mandatory = $false)]
-    [Hashtable]$PowerPricekWh = @{ "00:00" = 0.26; "12:00" = 0.3 }, # Price of power per kW⋅h (in $Currency, e.g. CHF), valid from HH:mm (24hr format)
+    [Hashtable]$PowerPricekWh = @{ "00:00" = 0.26; "12:00" = 0.3 }, # Price of power per kW⋅h (in $FIATcurrency, e.g. CHF), valid from HH:mm (24hr format)
     [Parameter (Mandatory = $false)]
     [Hashtable]$PowerConsumption = @{ }, # Static power consumption per device in watt, e.g. @{ "GPU#03" = 25, "GPU#04 = 55" } (in case HWiNFO cannot read power consumption)
     [Parameter (Mandatory = $false)]
     [Double]$PowerConsumptionIdleSystem = 60, # Power consumption (in Watt) of idle system. Part of profit calculation.
     [Parameter (Mandatory = $false)]
-    [Double]$ProfitabilityThreshold = -99, # Minimum profit threshold, if profit is less than the configured value (in $Currency, e.g. CHF) mining will stop (except for benchmarking & power consumption measuring)
+    [Double]$ProfitabilityThreshold = -99, # Minimum profit threshold, if profit is less than the configured value (in $FIATcurrency, e.g. CHF) mining will stop (except for benchmarking & power consumption measuring)
     [Parameter (Mandatory = $false)]
     [String]$Proxy = "", # i.e http://192.0.0.1:8080
     [Parameter (Mandatory = $false)]
@@ -317,7 +315,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.9"
+    Version      = [System.Version]"6.8.10"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

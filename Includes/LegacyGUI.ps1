@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.9
-Version date:   2026/05/30
+Version:        6.8.10
+Version date:   2026/06/04
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -499,15 +499,15 @@ function Update-TabControl {
                     }
                     $LegacyGUIelements.BalancesDGV.Rows.ForEach(
                         { 
-                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) })" -f ([Double]$_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 1 hr" -f ([Double]$_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 6 hr" -f ([Double]$_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 24 hr" -f ([Double]$_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 7 days" -f ([Double]$_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 30 days" -f ([Double]$_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ([Double]$_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ([Double]$_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
-                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ([Double]$_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[2].ToolTipText = "Balance {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) })" -f ($_.Cells[2].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[3].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 1 hr" -f ($_.Cells[3].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[4].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 6 hr" -f ($_.Cells[4].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[5].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 24 hr" -f ($_.Cells[5].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[6].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 7 days" -f ($_.Cells[6].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[7].ToolTipText = "{0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) in past 30 days" -f ($_.Cells[7].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[8].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 1 hr" -f ($_.Cells[8].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[9].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 24 hrs" -f ($_.Cells[9].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
+                            $_.Cells[10].ToolTipText = "Avg. {0:n$($Session.Config.DecimalsMax)} $(if ($_.Cells[0].Value -eq "BTC" -and $Session.Config.UsemBTC) { $Factor = 1000; "mBTC" } else { $Factor = 1; $($_.Cells[0].Value) }) / 7 days" -f ($_.Cells[10].Value * $Session.Rates.($Session.Config.FIATcurrency).($_.Cells[0].Value) * $Factor)
                         }
                     )
                     $LegacyGUIelements.BalancesDGV.EndInit()
@@ -1958,6 +1958,7 @@ $LegacyGUIelements.Timer.Add_Tick(
 
                         $LegacyGUIelements.ButtonPause.Enabled = $true
                         $LegacyGUIelements.ButtonStart.Enabled = $true
+                        $Session.Remove("NetworkChecked")
 
                         if (-not $Session.ConfigurationHasChangedDuringUpdate) { 
                             Write-Host ""
@@ -2051,25 +2052,24 @@ $LegacyGUIelements.Timer.Add_Tick(
 
         if ($Session.NewMiningStatus -ne "Idle") { 
 
-            # Check internet connection every 10 minutes
-            if ($Session.NetworkChecked -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-10)) { 
+            # Check internet connection at least every 10 minutes
+            if ($Session.NewMiningStatus -ne "Running" -and $Session.NetworkChecked -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-10)) { 
                 $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
                 $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
+                $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime()
                 Remove-Variable NetworkInterface
-                if ($Session.MyIPaddress) { $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime() }
-            }
 
-            if ($Session.MyIPaddress) { 
-                # Read exchange rates at least once every hour
-                if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { Get-Rate }
-            }
-            else { 
-                Write-Message -Level Error "No internet connection - will retry in $($Session.Config.Interval) seconds..."
-                Start-Sleep -Seconds $Session.Config.Interval
-            }
+                if ($Session.MyIPaddress) { 
+                    # Read exchange rates at least once every hour
+                    if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { Get-Rate }
 
-            # Start balances tracker
-            if ($Session.MyIPaddress -and $Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
+                    # Start balances tracker
+                    if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
+                }
+                else { 
+                    Write-Message -Level Error "No internet connection - will retry in 10 minutes..."
+                }
+            }
         }
 
         if ($Session.Config.ShowConsole) { 
@@ -2425,15 +2425,15 @@ $LegacyGUIelements.Timer.Add_Tick(
                         # Miner list format
                         [System.Collections.ArrayList]$MinerTable = @(
                             @{ Label = "Miner"; Expression = { $_.Name } }
-                            if ($Config.ShowColumnMinerFee -and $Session.Miners.Workers.Fee) { @{ Label = "Miner fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Fee }) }; Align = "right" } }
+                            if ($Config.ShowColumnMinerFee -and $Session.Miners.Workers.Fee) { @{ Label = "Miner fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f $_.Fee }) }; Align = "right" } }
                             if ($Config.ShowColumnEarningsBias) { @{ Label = "Earnings bias"; Expression = { if ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Earnings_Bias * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } }; Align = "right" } }
                             if ($Config.ShowColumnEarnings) { @{ Label = "Earnings"; Expression = { if ([Double]::IsNaN($_.Earnings)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } }; Align = "right" } }
                             if ($Config.ShowColumnPowerCost -and $Session.Config.CalculatePowerCost -and $Session.MiningPowerCost) { @{ Label = "Power cost"; Expression = { if ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } else { "-{0:n$($Session.Config.DecimalsMax)}" -f ($_.PowerCost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } }; Align = "right" } }
                             if ($Config.ShowColumnProfitBias -and $Session.MiningPowerCost) { @{ Label = "Profit bias"; Expression = { if ([Double]::IsNaN($_.Profit_Bias)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit_Bias * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } }; Align = "right" } }
                             if ($Config.ShowColumnProfit -and $Session.MiningPowerCost) { @{ Label = "Profit"; Expression = { if ([Double]::IsNaN($_.Profit)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Profit * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } }; Align = "right" } }
                             if ($Config.ShowColumnPowerConsumption -and $Session.Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { if ($_.MeasurePowerConsumption) { if ($_.Status -eq "Running") { "Measuring..." } else { "Unmeasured" } } else { if ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } else { "$($_.PowerConsumption.ToString("N2"))" } } }; Align = "right" } }
-                            if ($Config.ShowColumnAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.ForEach({ "{0:P0}" -f [Double]$_.Pool.Accuracy }) }; Align = "right" } }
-                            if ($Config.ShowColumnPoolFee -and $Session.Miners.Workers.Pool.Fee) { @{ Label = "Pool fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f [Double]$_.Pool.Fee }) }; Align = "right" } }
+                            if ($Config.ShowColumnAccuracy) { @{ Label = "Accuracy"; Expression = { $_.Workers.ForEach({ "{0:P0}" -f $_.Pool.Accuracy }) }; Align = "right" } }
+                            if ($Config.ShowColumnPoolFee -and $Session.Miners.Workers.Pool.Fee) { @{ Label = "Pool fee"; Expression = { $_.Workers.ForEach({ "{0:P2}" -f $_.Pool.Fee }) }; Align = "right" } }
                             if ($Config.ShowColumnHashrate) { @{ Label = "Hashrate"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Workers.ForEach({ $_.Hashrate | ConvertTo-Hash }) } }; Align = "right" } }
                             if ($Config.ShowColumnUser) { @{ Label = "User"; Expression = { $_.Workers.Pool.User } } }
                             if ($Config.ShowColumnCurrency) { @{ Label = "Currency"; Expression = { if ($_.Workers.Pool.Currency -match "\w") { $_.Workers.Pool.Currency } } } }

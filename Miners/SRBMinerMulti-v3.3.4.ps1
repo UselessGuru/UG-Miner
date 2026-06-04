@@ -17,11 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.9
-Version date:   2026/05/30
+Version:        6.8.10
+Version date:   2026/06/04
 #>
 
-# Added algorithm 'argon2id_exfer' (Exfer coin) for CPU, NVIDIA and AMD GPUs, fee 3.00%*
+# Huge hashrate improvement on algorithm 'pearlhash' for 2000 series GPU's
+# Improved hashrate on algorithm 'pearlhash' for weaker 5000 series GPU's
+# Swapped the power hungry - high hashrate 4000 series code on 'pearlhash' to a power efficient one. For the max hashrate one use previous miner version [v3.3.3]
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 

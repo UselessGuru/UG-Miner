@@ -1,3 +1,21 @@
+Changelog UG-Miner 6.8.10 2026/06/04
+====================================
+
+Changes:
+- Removed configuration item 'Delay'
+
+Improvements:
+- Core / Include.psm1: Speed optimize functions 'Disable-Stat', 'Enable-Stat', 'Get-Stat', 'Invoke-TcpRequest', 'Set-Stat', 'Test-IsPrime' & 'Write-Message'
+- Core / Include.psm1: Speed optimize miner methods 'GetPowerConsumption()' & 'Refresh()'
+- Core / Include.psm1: Speed optimize filter 'ConvertTo-Hash'
+- Core: Optimize miner restarts when API port has changed
+- Core: Remove obsolete code
+- LegacyGUI: Remove obsolete code
+
+Miner updates:
+- SRBMinerMulti-v3.3.4
+
+
 Changelog UG-Miner 6.8.9 2026/05/30
 ===================================
 
@@ -84,7 +102,7 @@ Changelog UG-Miner 6.8.3 2026/04/19
 ===================================
 
 Improvements:
-- Core: Remove obsolete Code
+- Core: Remove obsolete code
 
 Fixes:
 - Balances tracker: In some scenarios balances could be queried for the donation account

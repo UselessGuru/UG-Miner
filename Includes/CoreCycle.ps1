@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle.ps1
-Version:        6.8.9
-Version date:   2026/05/30
+Version:        6.8.10
+Version date:   2026/06/04
 #>
 
 using module .\Include.psm1
@@ -57,20 +57,25 @@ try {
         $Session.CycleStarts = @($Session.CycleStarts | Sort-Object -Bottom (3, ($Session.Config.SyncWindow + 1) | Measure-Object -Maximum).Maximum)
 
         # Internet connection must be available
+        $NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+        $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
+        $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime()
+        Remove-Variable NetworkInterface
+
         if (-not $Session.MyIPaddress) { 
             $Message = "No internet connection - will retry in $($Session.Config.Interval) seconds..."
-            Write-Message -Level Error $Message
+            Write-Message -Level Error $Message -Console $false
             $Session.Summary = $Message
             Remove-Variable Message
 
             Clear-Pools
             Clear-Miners
 
+            Write-Message -Level Info "Ending cycle."
             $Session.RefreshNeeded = $true
 
             Start-Sleep -Seconds $Session.Config.Interval
 
-            Write-Message -Level Info "Ending cycle."
             continue
         }
 
@@ -202,8 +207,8 @@ try {
             # 00:00h power price is the same as the latest price of the previous day
             $Session.Config.PowerPricekWh."00:00" = $Session.Config.PowerPricekWh.($Session.Config.PowerPricekWh.psBase.Keys | Sort-Object -Bottom 1)
         }
-        $Session.PowerPricekWh = [Double]($Session.Config.PowerPricekWh.($Session.Config.PowerPricekWh.psBase.Keys.Where({ $_ -le (Get-Date -Format HH:mm).ToString() }) | Sort-Object -Bottom 1))
-        $Session.PowerCostBTCperW = [Double](1 / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
+        $Session.PowerPricekWh = $Session.Config.PowerPricekWh.($Session.Config.PowerPricekWh.psBase.Keys.Where({ $_ -le (Get-Date -Format HH:mm).ToString() }) | Sort-Object -Bottom 1)
+        $Session.PowerCostBTCperW = 1 / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency)
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -764,7 +769,7 @@ try {
                         elseif ($Stat.Week) { 
                             if ($MinerPowerConsumption -gt 0 -and $Miner.Status -eq [MinerStatus]::Running -and ($MinerPowerConsumption -gt $Stat.Week * 2 -or $MinerPowerConsumption -lt $Stat.Week / 2)) { 
                                 # Stop miner if new value is outside ±200% of current value
-                                Write-Message -Level Warn "Reported power consumption by '$($Miner.Name)' is unrealistic ($($MinerPowerConsumption.ToString("N2"))W is not within ±200% of stored value of $(([Double]$Stat.Week).ToString("N2"))W)"
+                                Write-Message -Level Warn "Reported power consumption by '$($Miner.Name)' is unrealistic ($($MinerPowerConsumption.ToString("N2"))W is not within ±200% of stored value of $($Stat.Week).ToString("N2"))W)"
                                 $Miner.SetStatus([MinerStatus]::Idle)
                                 if ($Stat.ToleranceExceeded -ge $Session.Config.WatchdogCount) { Remove-Stat $StatName }
                             }
@@ -858,6 +863,7 @@ try {
 
             # Make smaller groups for faster update
             $MinersNewGroups = $MinersNew | Group-Object -Property BaseName_Version_Device
+
             ($Miners.Where({ $_.SideIndicator -ne "<=" }) | Group-Object -Property BaseName_Version_Device).ForEach(
                 { 
                     $Name = $_.Name
@@ -958,7 +964,7 @@ try {
         if ($Session.Config.UnrealisticMinerEarningsFactor -gt 1) { 
             ($Miners.Where({ $_.Available -and -not $_.Reasons.Count -and -not $_.Benchmark -and -not $_.MeasurePowerConsumption }) | Group-Object { $_.BaseName_Version_Device -replace ".+-" }).ForEach(
                 { 
-                    if ($ReasonableEarnings = [Double]($_.Group | Sort-Object -Property Earnings_Bias -Descending | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earnings_Bias -Average).Average * $Session.Config.UnrealisticMinerEarningsFactor) { 
+                    if ($ReasonableEarnings = ($_.Group | Sort-Object -Property Earnings_Bias -Descending | Select-Object -Skip 1 -First (5, [Math]::Floor($_.Group.Count / 10) | Measure-Object -Maximum).Maximum | Measure-Object Earnings_Bias -Average).Average * $Session.Config.UnrealisticMinerEarningsFactor) { 
                         $_.Group.Where({ $_.Group.Count -ge 5 -and $_.Earnings -gt $ReasonableEarnings }).ForEach(
                             { 
                                 $null = $_.Reasons.Add("Unrealistic earnings (biased earnings more than $($Session.Config.UnrealisticMinerEarningsFactor)x higher than the next best $($Group.Count - 1) miners available miners)")
@@ -1188,15 +1194,15 @@ try {
             }
 
             $Session.PowerConsumptionIdleSystem = (($Session.Config.PowerConsumptionIdleSystem - ($MinersBest.Where({ $_.Type -eq "CPU" }) | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
-            $Session.BasePowerCost = [Double]($Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
-            $Session.MiningEarnings = [Double]($MinersBest | Measure-Object Earnings_Bias -Sum).Sum
-            $Session.MiningPowerCost = [Double]($MinersBest | Measure-Object PowerCost -Sum).Sum
-            $Session.MiningPowerConsumption = [Double]($MinersBest | Measure-Object PowerConsumption -Sum).Sum
-            $Session.MiningProfit = [Double](($MinersBest | Measure-Object Profit_Bias -Sum).Sum - $Session.BasePowerCost)
+            $Session.BasePowerCost = $Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency)
+            $Session.MiningEarnings = ($MinersBest | Measure-Object Earnings_Bias -Sum).Sum
+            $Session.MiningPowerCost = ($MinersBest | Measure-Object PowerCost -Sum).Sum
+            $Session.MiningPowerConsumption = ($MinersBest | Measure-Object PowerConsumption -Sum).Sum
+            $Session.MiningProfit = ($MinersBest | Measure-Object Profit_Bias -Sum).Sum - $Session.BasePowerCost
         }
         else { 
             $Session.PowerConsumptionIdleSystem = (($Session.Config.PowerConsumptionIdleSystem), 0 | Measure-Object -Maximum).Maximum
-            $Session.BasePowerCost = [Double]($Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
+            $Session.BasePowerCost = ($Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency))
             $Session.MinersBestPerDevice = $MinersBest = $MinersOptimal = [Miner[]]@()
             $Session.MiningEarnings = $Session.MiningProfit = $Session.MiningPowerCost = $Session.MiningPowerConsumption = [Double]0
         }
@@ -1386,23 +1392,6 @@ try {
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
-
-        # Optional delay to avoid blue screens
-        Start-Sleep -Seconds $Session.Config.Delay
-
-        if ($Session.APIport -and $Session.Config.APIport -ne $Session.APIport -or $Session.Miners.Port -contains $Session.Config.APIport) { 
-            # API port has changed; must stop all running miners
-            if ($Session.MinersRunning) { 
-                Write-Message -Level Info "API port has changed. Stopping all running miners..."
-                foreach ($Miner in $Session.MinersRunning.Where({ $_.ProcessJob -or $_.Status -eq [MinerStatus]::DryRun })) { 
-                    $Miner.SetStatus([MinerStatus]::Idle)
-                    $Session.Devices.Where({ $Miner.DeviceNames -contains $_.Name }).ForEach({ $_.Status = $Miner.Status; $_.StatusInfo = $Miner.StatusInfo; $_.SubStatus = $Miner.SubStatus })
-                }
-                Remove-Variable Miner -ErrorAction Ignore
-            }
-            $Session.RefreshNeeded = $true
-            while ($Session.Config.APIport -ne $Session.APIport) { Start-Sleep -Milliseconds 100 } # Wail until API has restarted
-        }
         #endregion
 
         #region Start miners
@@ -1553,7 +1542,7 @@ try {
 
                                 if (($Miner.ValidDataSampleTimestamp -ne [DateTime]0 -and ($Sample.Date - $Miner.ValidDataSampleTimestamp) -ge 0)) { 
                                     $Samples.Where({ $_.Date -ge $Miner.ValidDataSampleTimestamp }).ForEach({ $null = $Miner.Data.Add($_) })
-                                    Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(if ($Session.Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(if ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" }))"
+                                    Write-Message -Level Verbose "$($Miner.Name) data sample collected [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(if ($Session.Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(if ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })] ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" }))"
                                     if ($Miner.Activated -gt 0 -and ($Miner.Benchmark -or $Miner.MeasurePowerConsumption)) { 
                                         $Miner.StatusInfo = "$($Miner.Info) is $(if ($Miner.Benchmark) { "benchmarking" })$(if ($Miner.Benchmark -and $Miner.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($Miner.MeasurePowerConsumption) { "measuring power consumption" })"
                                         $Miner.SubStatus = "benchmarking"
@@ -1569,7 +1558,7 @@ try {
                                     }
                                 }
                                 elseif (-not $Session.Config.Ignore0HashrateSample -or $Miner.ValidDataSampleTimestamp -ne [DateTime]0) { 
-                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(([Double]$Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(if ($Session.Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(if ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(if ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])" })"
+                                    Write-Message -Level Verbose "$($Miner.Name) data sample discarded [$(($Sample.Hashrate.PSObject.Properties.Name.ForEach({ "$($_): $(($Sample.Hashrate.$_ | ConvertTo-Hash) -replace " ")$(if ($Session.Config.ShowShares) { " (Shares: A$($Sample.Shares.$_[0])+R$($Sample.Shares.$_[1])+I$($Sample.Shares.$_[2])=T$($Sample.Shares.$_[3]))" })" })) -join " & ")$(if ($Sample.PowerConsumption) { " | Power: $($Sample.PowerConsumption.ToString("N2"))W" })]$(if ($Miner.ValidDataSampleTimestamp -ne [DateTime]0) { " (Miner is warming up [$(([DateTime]::Now.ToUniversalTime() - $Miner.ValidDataSampleTimestamp).TotalSeconds.ToString("0") -replace "-0", "0") sec])" })"
                                     $Miner.StatusInfo = "$($Miner.Info) is warming up"
                                     $Miner.SubStatus = "warmingup"
                                 }
@@ -1585,7 +1574,7 @@ try {
                             $Session.EndCycleMessage = " prematurely (miner failed)"
                             break
                         }
-                        # Miner stuck - no sample received in last few data collect intervals
+                        # Miner stuck - no sample received in last 5 data collect intervals
                         else { 
                             $Seconds = (($Miner.DataCollectInterval * 5), 10 | Measure-Object -Maximum).Maximum * $Miner.Algorithms.Count
                             if ($Miner.ValidDataSampleTimestamp -gt [DateTime]0 -and [DateTime]::Now.ToUniversalTime() -gt $Miner.DataSampleTimestamp.AddSeconds($Seconds)) { 

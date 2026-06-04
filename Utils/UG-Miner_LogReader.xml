@@ -102,7 +102,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>Starting UG-Miner|API and web GUI is running|Stopped API and web GUI</Keyword>
+          <Keyword>Starting UG-Miner|API and web GUI is running|Stopped API and web GUI|API port has changed\. Stopping</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>

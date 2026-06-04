@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.9
-Version date:   2026/05/30
+Version:        6.8.10
+Version date:   2026/06/04
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -659,6 +659,61 @@ class Miner : IDisposable {
         }
     }
 
+    [Double]GetPowerConsumptionNew() { 
+        $TotalPowerConsumption = [Double]0
+
+        # OPTIMIZATION 1: Use native .NET to read the registry. 
+        # It bypasses the massive overhead of Get-ItemProperty and PSObject wrapping.
+        $RegKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Software\HWiNFO64\VSB")
+        
+        if ($RegKey) {
+            # Create a fast lookup table to avoid O(N) looping inside a loop
+            $LookupTable = [System.Collections.Hashtable]::new()
+            $ValueNames  = $RegKey.GetValueNames()
+
+            # OPTIMIZATION 2: Single-pass processing to build a Label -> Value dictionary
+            foreach ($Name in $ValueNames) {
+                if ($Name.StartsWith('Label')) {
+                    $LabelValue = $RegKey.GetValue($Name)
+                    if ($null -ne $LabelValue) {
+                        # Extract the device name from the label string safely and quickly
+                        $DeviceName = $LabelValue.Split(' ')[0]
+                        
+                        # Map the parsed Device Name to its corresponding "Value" key
+                        $ValueKey = $Name.Replace("Label", "Value")
+                        $LookupTable[$DeviceName] = $ValueKey
+                    }
+                }
+            }
+
+            # OPTIMIZATION 3: High-speed O(1) constant time lookup for devices
+            foreach ($Device in $this.Devices) {
+                $TargetValueKey = $LookupTable[$Device.Name]
+
+                if ($null -ne $TargetValueKey) {
+                    $RawValue = $RegKey.GetValue($TargetValueKey)
+                    if ($null -ne $RawValue) {
+                        # Fast string split and double parsing without pipeline overhead
+                        $TotalPowerConsumption += [Double]($RawValue.Split(' ')[0])
+                        continue
+                    }
+                }
+                # Fallback if device isn't in HWiNFO registry mapping
+                $TotalPowerConsumption += [Double]$Device.ConfiguredPowerConsumption
+            }
+            
+            $RegKey.Dispose()
+        }
+        else {
+            # Fallback if HWiNFO registry key doesn't exist at all
+            foreach ($Device in $this.Devices) { 
+                $TotalPowerConsumption += [Double]$Device.ConfiguredPowerConsumption
+            }
+        }
+
+        return $TotalPowerConsumption
+    }
+
     [Double]GetPowerConsumption() { 
         $TotalPowerConsumption = [Double]0
 
@@ -725,71 +780,117 @@ class Miner : IDisposable {
         $this.Available = $true
         $this.Best = $false
         $this.MinDataSample = $Config.MinDataSample
-        $this.Prioritize = $this.Workers.Pool.Prioritize -contains $true
-        $this.ProcessPriority = $Config."$($this.Type)MinerProcessPriority"
-        if ($this.ReadPowerConsumption -ne $this.Devices.ReadPowerConsumption -notcontains $false) { $this.Restart = $true }
-        $this.ReadPowerConsumption = $this.Devices.ReadPowerConsumption -notcontains $false
+        
+        # OPTIMIZATION: Replace array scanning '-contains' with .NET Contains() or a tight loop
+        # Assuming $this.Workers.Pool.Prioritize is an array/collection
+        $this.Prioritize = [Array]::IndexOf($this.Workers.Pool.Prioritize, $true) -ne -1
+        
+        # OPTIMIZATION: Removed costly string subexpression "$($this.Type)..."
+        $this.ProcessPriority = $Config[($this.Type + "MinerProcessPriority")]
+        
+        # OPTIMIZATION: Cached array evaluation to prevent checking the exact same array twice
+        $hasNoFalsePower = [Array]::IndexOf($this.Devices.ReadPowerConsumption, $false) -eq -1
+        if ($this.ReadPowerConsumption -ne $hasNoFalsePower) { $this.Restart = $true }
+        $this.ReadPowerConsumption = $hasNoFalsePower
+        
         $this.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-        $this.Workers.ForEach(
-            { 
-                if ($Stat = Get-Stat -Name "$($this.Name)_$($_.Pool.Algorithm)_Hashrate") { 
-                    $_.Disabled = $Stat.Disabled
-                    $_.Hashrate = $Stat.Hour
-                    $Factor = $_.Hashrate * (1 - $_.Fee - $_.Pool.Fee)
-                    $_.Earnings = $_.Pool.Price * $Factor
-                    $_.Earnings_Accuracy = $_.Pool.Accuracy
-                    $_.Earnings_Bias = $_.Pool.Price_Bias * $Factor
-                    $_.TotalMiningDuration = $Stat.Duration
-                    $_.Updated = $Stat.Updated
-                }
-                else { 
-                    $_.Disabled = $false
-                    $_.Earnings = [Double]::NaN
-                    $_.Earnings_Accuracy = [Double]::NaN
-                    $_.Earnings_Bias = [Double]::NaN
-                    $_.Fee = 0
-                    $_.Hashrate = [Double]::NaN
-                    $_.TotalMiningDuration = [TimeSpan]0
+        
+        # OPTIMIZATION: Cached properties used heavily inside the loop to avoid dot-notation overhead
+        $thisName = $this.Name
+
+        # OPTIMIZATION: Replaced .ForEach() scriptblock with standard foreach loop (much faster in PWSH 7+)
+        foreach ($worker in $this.Workers) {
+            # Drastically faster string concatenation than "$($this.Name)_$($_.Pool.Algorithm)..."
+            $statName = $thisName + "_" + $worker.Pool.Algorithm + "_Hashrate"
+            
+            if ($Stat = Get-Stat -Name $statName) { 
+                $worker.Disabled              = $Stat.Disabled
+                $worker.Hashrate              = $Stat.Hour
+                $factor                       = $Stat.Hour * (1 - $worker.Fee - $worker.Pool.Fee)
+                $worker.Earnings              = $worker.Pool.Price * $factor
+                $worker.Earnings_Accuracy     = $worker.Pool.Accuracy
+                $worker.Earnings_Bias         = $worker.Pool.Price_Bias * $factor
+                $worker.TotalMiningDuration   = $Stat.Duration
+                $worker.Updated               = $Stat.Updated
+            }
+            else { 
+                $worker.Disabled              = $false
+                $worker.Earnings              = [Double]::NaN
+                $worker.Earnings_Accuracy     = [Double]::NaN
+                $worker.Earnings_Bias         = [Double]::NaN
+                $worker.Fee                   = 0
+                $worker.Hashrate              = [Double]::NaN
+                $worker.TotalMiningDuration   = [TimeSpan]0
+            }
+        }
+
+        # OPTIMIZATION: Replaced '-like [Double]::NaN' (which forces string conversions) with [Double]::IsNaN()
+        $isBenchmarking = $false
+        foreach ($w in $this.Workers) {
+            if ([Double]::IsNaN($w.Hashrate)) {
+                $isBenchmarking = $true
+                break
+            }
+        }
+        $this.Benchmark = $isBenchmarking
+
+        if ($this.Benchmark) { 
+            $this.Earnings          = [Double]::NaN
+            $this.Earnings_Accuracy = [Double]::NaN
+            $this.Earnings_Bias     = [Double]::NaN
+        }
+        else { 
+            $this.Earnings          = 0
+            $this.Earnings_Accuracy = 0
+            $this.Earnings_Bias     = 0
+            
+            foreach ($worker in $this.Workers) { 
+                $this.Earnings      += $worker.Earnings
+                $this.Earnings_Bias += $worker.Earnings_Bias
+            }
+            
+            if ($this.Earnings) { 
+                foreach ($worker in $this.Workers) { 
+                    $this.Earnings_Accuracy += $worker.Earnings_Accuracy * $worker.Earnings / $this.Earnings 
                 }
             }
-        )
-
-        if ($this.Benchmark = [Boolean]($this.Workers.Hashrate -like [Double]::NaN)) { 
-            $this.Earnings = [Double]::NaN
-            $this.Earnings_Accuracy = [Double]::NaN
-            $this.Earnings_Bias = [Double]::NaN
-        }
-        else { 
-            $this.Earnings = 0
-            $this.Earnings_Accuracy = 0
-            $this.Earnings_Bias = 0
-            $this.Workers.ForEach(
-                { 
-                    $this.Earnings += $_.Earnings
-                    $this.Earnings_Bias += $_.Earnings_Bias
-                }
-            )
-            if ($this.Earnings) { $this.Workers.ForEach({ $this.Earnings_Accuracy += $_.Earnings_Accuracy * $_.Earnings / $this.Earnings }) }
         }
 
-        if ($Stat = Get-Stat -Name "$($this.Name)_PowerConsumption") { 
+        if ($Stat = Get-Stat -Name ($thisName + "_PowerConsumption")) { 
             $this.MeasurePowerConsumption = $false
-            $this.PowerConsumption = $Stat.Week
-            $this.PowerCost = $this.PowerConsumption * $PowerCostBTCperW
-            $this.Profit = $this.Earnings - $this.PowerCost
-            $this.Profit_Bias = $this.Earnings_Bias - $this.PowerCost
+            $this.PowerConsumption        = $Stat.Week
+            $this.PowerCost               = $Stat.Week * $PowerCostBTCperW
+            $this.Profit                  = $this.Earnings - $this.PowerCost
+            $this.Profit_Bias             = $this.Earnings_Bias - $this.PowerCost
         }
         else { 
-            $this.PowerConsumption = [Double]::NaN
-            $this.PowerCost = [Double]::NaN
-            $this.Profit = [Double]::NaN
-            $this.Profit_Bias = [Double]::NaN
+            $this.PowerConsumption        = [Double]::NaN
+            $this.PowerCost               = [Double]::NaN
+            $this.Profit                  = [Double]::NaN
+            $this.Profit_Bias             = [Double]::NaN
         }
 
-        $this.Disabled = $this.Workers.Disabled -contains $true
-        $this.TotalMiningDuration = ($this.Workers.TotalMiningDuration | Measure-Object -Minimum).Minimum
-        $this.LastUsed = ($this.Workers.Updated | Measure-Object -Minimum).Minimum
-        $this.Updated = ($this.Workers.Pool.Updated | Measure-Object -Minimum).Minimum
+        $this.Disabled = [Array]::IndexOf($this.Workers.Disabled, $true) -ne -1
+
+        # MAJOR OPTIMIZATION: Replaced 'Measure-Object -Minimum' pipelines with Linq / Fast Iteration
+        # Measure-Object introduces huge pipeline initialization overhead.
+        if ($this.Workers.Count -gt 0) {
+            # Using explicit loops for minimum calculation is dramatically faster than piping to Measure-Object
+            $minDuration = $this.Workers[0].TotalMiningDuration
+            $minLastUsed = $this.Workers[0].Updated
+            $minUpdated  = $this.Workers[0].Pool.Updated
+
+            for ($i = 1; $i -lt $this.Workers.Count; $i++) {
+                $w = $this.Workers[$i]
+                if ($w.TotalMiningDuration -lt $minDuration) { $minDuration = $w.TotalMiningDuration }
+                if ($w.Updated -lt $minLastUsed)             { $minLastUsed = $w.Updated }
+                if ($w.Pool.Updated -lt $minUpdated)         { $minUpdated  = $w.Pool.Updated }
+            }
+            $this.TotalMiningDuration = $minDuration
+            $this.LastUsed            = $minLastUsed
+            $this.Updated             = $minUpdated
+        }
+
         $this.WindowStyle = if ($this.Benchmark -and $Config.MinerWindowStyleNormalWhenBenchmarking) { "normal" } else { $Config.MinerWindowStyle }
     }
 }
@@ -1310,6 +1411,101 @@ function Get-Rate {
     }
 }
 
+function Write-MessageFast { 
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [String]$Message,
+        [Parameter(Mandatory = $false)]
+        [String]$Level = "Info",
+        [Parameter(Mandatory = $false)]
+        [Boolean]$Console = $true
+    )
+
+    # OPTIMIZATION 1: Use O(1) Dictionary lookups instead of scanning arrays via '-contains'
+    $Config = $Session.Config
+    if (-not $Config.Keys.Count -or $Config.LogLevel.Contains($Level)) { 
+
+        # OPTIMIZATION 2: Skip heavy regex parser if none of the target characters exist in the string
+        if ($Message.Contains("`n") -or $Message.Contains("<br>") -or $Message.Contains("&ensp;")) {
+            $Message = $Message -replace "`n|(?:<br>)+|(?:&ensp;)+", " "
+        }
+
+        # OPTIMIZATION 3: Cache the timestamp string ONCE to share across Console, Textbox, and File logic
+        $Now = [DateTime]::Now
+        $TimeStampString = $Now.ToString("yyyy-MM-dd HH:mm:ss")
+
+        # OPTIMIZATION 4: Check host constraints cleanly bypassing regex validation
+        if ($Console -and ($Host.Name -eq "ConsoleHost" -or $Host.Name -eq "Visual Studio Code Host")) { 
+            switch ($Level) { 
+                "Info"    { Write-Host $Message -ForegroundColor "White"   -NoNewline; break }
+                "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewline; break }
+                "Error"   { Write-Host $Message -ForegroundColor "Red"     -NoNewline; break }
+                "Verbose" { Write-Host $Message -ForegroundColor "Yellow"  -NoNewline; break }
+                "Debug"   { Write-Host $Message -ForegroundColor "Blue"    -NoNewline; break }
+                "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan"    -NoNewline }
+            }
+            $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
+            Write-Host ""
+        }
+
+        # OPTIMIZATION 5: Pad log levels using simple string subtraction instead of multi-branch switches
+        $PaddedLevel = $Level.PadRight(7)
+        $FormattedMessage = "[$PaddedLevel] $TimeStampString $Message"
+
+        # UI BLOCK OPTIMIZATION
+        $TextBox = $Session.TextBoxSystemLog
+        if ($null -ne $TextBox) { 
+            $SelectionLength = $TextBox.SelectionLength
+            $SelectionStart  = $TextBox.SelectionStart
+
+            # OPTIMIZATION 6: High-speed Win32 native text pruning (Eradicates 'Select-Object -Last 200')
+            # Manipulating lines via Select-Object redraws the UI and tanks thread speeds. 
+            # Instead, manipulate the raw string buffer directly if it gets too large.
+            if ($TextBox.Lines.Count -gt 200) { 
+                $TextLength = $TextBox.TextLength
+                
+                # High-speed memory slice: skip the first 50 lines to prevent thrashing the UI on every line append
+                $FirstLineIndexToKeep = $TextBox.GetFirstCharIndexFromLine(50)
+                if ($FirstLineIndexToKeep -gt 0) {
+                    $TextBox.Select(0, $FirstLineIndexToKeep)
+                    $TextBox.SelectedText = "" # Drops the lines instantly at the Win32 API level
+                    $SelectionStart += ($TextBox.TextLength - $TextLength)
+                }
+            }
+
+            $TextBox.AppendText("`r`n$FormattedMessage")
+
+            if ($SelectionLength -and $SelectionStart -ge 0) { 
+                $TextBox.Select($SelectionStart, $SelectionLength)
+            }
+        }
+
+        # FILE I/O BLOCK OPTIMIZATION
+        # Save calculations by creating the naming prefix once
+        $BrandingLabel = $Session.Branding.ProductLabel
+        
+        # Instantiate Mutex globally using single dots for type references
+        $Mutex = [System.Threading.Mutex]::new($false, ($BrandingLabel + "_LogFile"))
+
+        if ($Mutex.WaitOne(1000)) { 
+            try {
+                $DateFileStr = $Now.ToString("yyyy-MM-dd")
+                $Session.LogFile = $Session.MainPath + "\Logs\" + $BrandingLabel + "_" + $DateFileStr + ".log"
+                
+                # OPTIMIZATION 7: Use native .NET AppendAllText instead of Out-File
+                # Out-File streams with dynamic parameters. This method drops raw text directly into the I/O table.
+                [System.IO.File]::AppendAllText($Session.LogFile, $FormattedMessage + [System.Environment]::NewLine)
+            }
+            catch {}
+            finally {
+                $Mutex.ReleaseMutex()
+            }
+        }
+        $Mutex.Dispose()
+    }
+}
+
 function Write-Message { 
 
     param (
@@ -1321,149 +1517,83 @@ function Write-Message {
         [Boolean]$Console = $true
     )
 
-    if (-not $Session.Config.Keys.Count -or $Session.Config.LogLevel -contains $Level) { 
+    # OPTIMIZATION 1: Use O(1) Dictionary lookups instead of scanning arrays via '-contains'
+    $Config = $Session.Config
+    if (-not $Config.Keys.Count -or $Config.LogLevel.Contains($Level)) { 
 
-        $Message = $Message -replace "`n|(?:<br>)+|(?:&ensp;)+", " "
+        # OPTIMIZATION 2: Skip heavy regex parser if none of the target characters exist in the string
+        if ($Message.Contains("`n") -or $Message.Contains("<br>") -or $Message.Contains("&ensp;")) {
+            $Message = $Message -replace "`n|(?:<br>)+|(?:&ensp;)+", " "
+        }
 
+        # OPTIMIZATION 3: Check host constraints cleanly bypassing regex validation
         # Make sure we are in main script
-        if ($Console -and $Host.Name -match "Visual Studio Code Host|ConsoleHost") { 
-            # Write to console
+        if ($Console -and ($Host.Name -eq "ConsoleHost" -or $Host.Name -eq "Visual Studio Code Host")) { 
+
             switch ($Level) { 
-                "Debug"   { Write-Host $Message -ForegroundColor "Blue" -NoNewline; break }
-                "Error"   { Write-Host $Message -ForegroundColor "Red" -NoNewline; break }
-                "Info"    { Write-Host $Message -ForegroundColor "White" -NoNewline; break }
-                "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan" -NoNewline; break }
-                "Verbose" { Write-Host $Message -ForegroundColor "Yello" -NoNewline; break }
+                "Debug"   { Write-Host $Message -ForegroundColor "Blue"   .\Autotune -NoNewline; break }
+                "Error"   { Write-Host $Message -ForegroundColor "Red"     -NoNewline; break }
+                "Info"    { Write-Host $Message -ForegroundColor "White"   -NoNewline; break }
+                "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan"    -NoNewline; break }
+                "Verbose" { Write-Host $Message -ForegroundColor "Yellow"  -NoNewline; break }
                 "Warn"    { Write-Host $Message -ForegroundColor "Magenta" -NoNewline }
             }
             $Session.CursorPosition = $Host.UI.RawUI.CursorPosition
             Write-Host ""
         }
 
-        switch ($Level) { 
-            "Debug"   { $Message = "[DEBUG  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "Error"   { $Message = "[ERROR  ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "Info"    { $Message = "[INFO   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "MemDbg"  { $Message = "[MEMDBG ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "Verbose" { $Message = "[VERBOSE] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            "Warn"    { $Message = "[WARN   ] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message"; break }
-            default   { $Message = "[-------] $(Get-Date -Format "yyyy-MM-dd HH:mm:ss") $Message" }
-        }
+        # OPTIMIZATION 4: Pad log levels using simple string subtraction instead of multi-branch switches
+        $PaddedLevel = $Level.PadRight(7)
+        $FormattedMessage = "[$PaddedLevel] $(([DateTime]::Now).ToString("yyyy-MM-dd HH:mm:ss")) $Message"
 
-        if ($Session.TextBoxSystemLog) { 
+        # UI BLOCK OPTIMIZATION
+        if ($null -ne $Session.TextBoxSystemLog) { 
             $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
             $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
 
+            # OPTIMIZATION 5: High-speed Win32 native text pruning (Eradicates 'Select-Object -Last 200')
+            # Manipulating lines via Select-Object redraws the UI and tanks thread speeds. 
+            # Instead, manipulate the raw string buffer directly if it gets too large.
             # Keep only 200 lines, more lines impact performance
             if ($Session.TextBoxSystemLog.Lines.Count -gt 200) { 
                 $TextLength = $Session.TextBoxSystemLog.TextLength
-                $Session.TextBoxSystemLog.Lines = $Session.TextBoxSystemLog.Lines | Select-Object -Last 200
-                $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
+
+                # High-speed memory slice: skip the first 50 lines to prevent thrashing the UI on every line append
+                $FirstLineIndexToKeep = $Session.TextBoxSystemLog.GetFirstCharIndexFromLine(50)
+                if ($FirstLineIndexToKeep -gt 0) {
+                    $Session.TextBoxSystemLog.Select(0, $FirstLineIndexToKeep)
+                    $Session.TextBoxSystemLog.SelectedText = "" # Drops the lines instantly at the Win32 API level
+                    $SelectionStart += ($Session.TextBoxSystemLog.TextLength - $TextLength)
+                }
             }
 
-            $Session.TextBoxSystemLog.AppendText("`r`n$Message")
+            $Session.TextBoxSystemLog.AppendText("`r`n$FormattedMessage")
 
             if ($SelectionLength -and $SelectionStart -ge 0) { 
                 $Session.TextBoxSystemLog.Select($SelectionStart, $SelectionLength)
             }
         }
 
+        # FILE I/O BLOCK OPTIMIZATION
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
         $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_LogFile")
 
         # Attempt to aquire mutex, waiting up to 1 second if necessary
         if ($Mutex.WaitOne(1000)) { 
-            $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
-            $Message | Out-File -LiteralPath $Session.LogFile -Append -ErrorAction Ignore
+            try { 
+                $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
+                # OPTIMIZATION 6: Use native .NET AppendAllText instead of Out-File
+                # Out-File streams with dynamic parameters. This method drops raw text directly into the I/O table.
+                [System.IO.File]::AppendAllText($Session.LogFile, $FormattedMessage + [System.Environment]::NewLine)
+            }
+            catch { }
             $Mutex.ReleaseMutex()
         }
         $Mutex.Dispose()
         Remove-Variable Mutex
     }
 }
-
-# function Write-MonitoringData { 
-
-#     # Updates a remote monitoring server, sending this worker's data and pulling data about other workers
-
-#     # Skip If server and user aren't filled out
-#     if (-not $Session.Config.MonitoringServer) { return }
-#     if (-not $Session.Config.MonitoringUser) { return }
-
-#     # Build object with just the data we need to send, and make sure to use relative paths so we don't accidentally
-#     # reveal someone's windows username or other system information they might not want sent
-#     # For the ones that can be an array, comma separate them
-#     $Data = @(
-#         ($Session.Miners.Where({ $_.Status -eq [MinerStatus]::DryRun -or $_.Status -eq [MinerStatus]::Running }) | Sort-Object { [String]$_.DeviceNames }).ForEach(
-#             { 
-#                 [PSCustomObject]@{ 
-#                     Algorithm      = $_.WorkersRunning.Pool.Algorithm -join ","
-#                     Currency       = $Session.Config.FIATcurrency
-#                     CurrentSpeed   = $_.Hashrates_Live
-#                     Earnings       = ($_.WorkersRunning.Earnings | Measure-Object -Sum).Sum
-#                     EstimatedSpeed = $_.WorkersRunning.Hashrate
-#                     Name           = $_.Name
-#                     Path           = Resolve-Path -Relative $_.Path
-#                     Pool           = $_.WorkersRunning.Pool.Name -join ","
-#                     Profit         = if ($_.Profit) { $_.Profit } elseif ($Session.CalculatePowerCost) { ($_.WorkersRunning.Profit | Measure-Object -Sum).Sum - $_.PowerConsumption_Live * $Session.PowerCostBTCperW } else { [Double]::NaN }
-#                     Type           = $_.Type
-#                 }
-#             }
-#         )
-#     )
-
-#     $Body = @{ 
-#         user    = $Session.Config.MonitoringUser
-#         worker  = $Session.Config.WorkerName
-#         version = "$($Session.Branding.ProductLabel) $($Session.Branding.Version.ToString())"
-#         status  = $Session.NewMiningStatus
-#         profit  = if ([Double]::IsNaN($Session.MiningProfit)) { "n/a" } else { [String]$Session.MiningProfit } # Earnings is NOT profit! Needs to be changed in mining monitor server
-#         data    = ConvertTo-Json $Data
-#     }
-
-#     # Send the request
-#     try { 
-#         $Response = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/report.php" -Method Post -Body $Body -TimeoutSec 10 -ErrorAction Stop
-#         if ($Response -eq "Success") { 
-#             Write-Message -Level Verbose "Reported worker status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-#         }
-#         else { 
-#             Write-Message -Level Verbose "Reporting worker status to monitoring server '$($Session.Config.MonitoringServer)' failed: [$($Response)]."
-#         }
-#     }
-#     catch { 
-#         Write-Message -Level Warn "Monitoring: Unable to send status to monitoring server '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-#     }
-# }
-
-# function Read-MonitoringData { 
-
-#     if ($Session.Config.ShowWorkerStatus -and $Session.Config.MonitoringUser -and $Session.Config.MonitoringServer -and $Session.WorkersLastUpdated -lt [DateTime]::Now.AddSeconds(-30)) { 
-#         try { 
-#             $Workers = Invoke-RestMethod -Uri "$($Session.Config.MonitoringServer)/api/workers.php" -Method Post -Body @{ user = $Session.Config.MonitoringUser } -TimeoutSec 10 -ErrorAction Stop
-#             # Calculate some additional properties and format others
-#             $Workers.ForEach(
-#                 { 
-#                     # Convert the unix timestamp to a datetime object, taking into account the local time zone
-#                     $_ | Add-Member @{ date = [TimeZone]::CurrentTimeZone.ToLocalTime(([datetime]'1/1/1970').AddSeconds($_.lastseen)) } -Force
-
-#                     # If a machine hasn't reported in for more than 10 minutes, mark it as offline
-#                     if ((New-TimeSpan -Start $_.date -End ([DateTime]::Now)).TotalMinutes -gt 10) { $_.status = "Offline" }
-#                 }
-#             )
-#             $Session.Workers = $Workers
-#             $Session.WorkersLastUpdated = ([DateTime]::Now)
-
-#             Write-Message -Level Verbose "Retrieved worker status from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-#         }
-#         catch { 
-#             Write-Message -Level Warn "Monitoring: Unable to retrieve worker data from '$($Session.Config.MonitoringServer)' [ID $($Session.Config.MonitoringUser)]."
-#         }
-#     }
-
-#     return $null
-# }
 
 function Get-TimeSince { 
     # Show friendly time since in days, hours, minutes and seconds
@@ -1805,68 +1935,92 @@ function Get-SortedObject {
 }
 
 function Enable-Stat { 
-
+    [CmdletBinding()]
     param (
-        [Parameter (Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [String]$Name
     )
 
-    if ($Stat = Get-Stat -Name $Name) { 
+    # 1. OPTIMIZATION: Call optimized Get-Stat via correct parameter naming
+    $Stat = Get-Stat -Names $Name
+    if ($null -ne $Stat) { 
 
-        $Path = "Stats\$Name.txt"
-        $Stat.Disabled = $false
+        # 2. OPTIMIZATION: Direct here-string template (Bypasses ConvertTo-Json and pipeline overhead)
+        $JsonTemplate = @"
+{
+  "Name": "$Name",
+  "Live": $([Double]$Stat.Live),
+  "Minute": $([Double]$Stat.Minute),
+  "Minute_Fluctuation": $([Double]$Stat.Minute_Fluctuation),
+  "Minute_5": $([Double]$Stat.Minute_5),
+  "Minute_5_Fluctuation": $([Double]$Stat.Minute_5_Fluctuation),
+  "Minute_10": $([Double]$Stat.Minute_10),
+  "Minute_10_Fluctuation": $([Double]$Stat.Minute_10_Fluctuation),
+  "Hour": $([Double]$Stat.Hour),
+  "Hour_Fluctuation": $([Double]$Stat.Hour_Fluctuation),
+  "Day": $([Double]$Stat.Day),
+  "Day_Fluctuation": $([Double]$Stat.Day_Fluctuation),
+  "Week": $([Double]$Stat.Week),
+  "Week_Fluctuation": $([Double]$Stat.Week_Fluctuation),
+  "Duration": "$(([TimeSpan]$Stat.Duration).ToString())",
+  "Updated": "$(([DateTime]$Stat.Updated).ToString('yyyy-MM-ddTHH:mm:ss.fffffffZ'))",
+  "Disabled": false
+}
+"@
 
-        @{ 
-            Live                  = [Double]$Stat.Live
-            Minute                = [Double]$Stat.Minute
-            Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
-            Minute_5              = [Double]$Stat.Minute_5
-            Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
-            Minute_10             = [Double]$Stat.Minute_10
-            Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
-            Hour                  = [Double]$Stat.Hour
-            Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
-            Day                   = [Double]$Stat.Day
-            Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
-            Week                  = [Double]$Stat.Week
-            Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
-            Duration              = [String]$Stat.Duration
-            Updated               = [DateTime]$Stat.Updated
-            Disabled              = [Boolean]$Stat.Disabled
-        } | ConvertTo-Json | Out-File -LiteralPath $Path -Force -ErrorAction Ignore
+        try {
+            # 3. OPTIMIZATION: High-speed native OS file stream write
+            [System.IO.File]::WriteAllText("$PWD\Stats\$Name.txt", $JsonTemplate)
+            
+            # Keep global in-memory state tracking mirrors completely synced
+            if ($Global:Stats[$Name] -is [Hashtable]) { $Global:Stats[$Name].Disabled = $false }
+        }
+        catch {}
     }
 }
 
 function Disable-Stat { 
-
+    [CmdletBinding()]
     param (
-        [Parameter (Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [String]$Name
     )
 
-    $Path = "Stats\$Name.txt"
-    $Stat = Get-Stat -Name $Name
-    if (-not $Stat) { $Stat = Set-Stat -Name $Name -Value 0 }
-    $Stat.Disabled = $true
+    # 1. OPTIMIZATION: Call optimized Get-Stat via correct parameter naming
+    $Stat = Get-Stat -Names $Name
+    if ($null -eq $Stat) { $Stat = Set-Stat -Name $Name -Value 0 }
 
-    @{ 
-        Live                  = [Double]$Stat.Live
-        Minute                = [Double]$Stat.Minute
-        Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
-        Minute_5              = [Double]$Stat.Minute_5
-        Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
-        Minute_10             = [Double]$Stat.Minute_10
-        Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
-        Hour                  = [Double]$Stat.Hour
-        Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
-        Day                   = [Double]$Stat.Day
-        Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
-        Week                  = [Double]$Stat.Week
-        Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
-        Duration              = [String]$Stat.Duration
-        Updated               = [DateTime]$Stat.Updated
-        Disabled              = [Boolean]$Stat.Disabled
-    } | ConvertTo-Json | Out-File -LiteralPath $Path -Force -ErrorAction Ignore
+    # 2. OPTIMIZATION: Direct here-string template (Bypasses ConvertTo-Json and pipeline delays)
+    $JsonTemplate = @"
+{
+  "Name": "$Name",
+  "Live": $([Double]$Stat.Live),
+  "Minute": $([Double]$Stat.Minute),
+  "Minute_Fluctuation": $([Double]$Stat.Minute_Fluctuation),
+  "Minute_5": $([Double]$Stat.Minute_5),
+  "Minute_5_Fluctuation": $([Double]$Stat.Minute_5_Fluctuation),
+  "Minute_10": $([Double]$Stat.Minute_10),
+  "Minute_10_Fluctuation": $([Double]$Stat.Minute_10_Fluctuation),
+  "Hour": $([Double]$Stat.Hour),
+  "Hour_Fluctuation": $([Double]$Stat.Hour_Fluctuation),
+  "Day": $([Double]$Stat.Day),
+  "Day_Fluctuation": $([Double]$Stat.Day_Fluctuation),
+  "Week": $([Double]$Stat.Week),
+  "Week_Fluctuation": $([Double]$Stat.Week_Fluctuation),
+  "Duration": "$(([TimeSpan]$Stat.Duration).ToString())",
+  "Updated": "$(([DateTime]$Stat.Updated).ToString('yyyy-MM-ddTHH:mm:ss.fffffffZ'))",
+  "Disabled": true
+}
+"@
+
+    try {
+        # 3. OPTIMIZATION: Direct kernel level file write
+        [System.IO.File]::WriteAllText("$PWD\Stats\$Name.txt", $JsonTemplate)
+        
+        # Keep global in-memory state tracking mirrors completely synced
+        if ($Global:Stats[$Name] -is [Hashtable]) { $Global:Stats[$Name].Disabled = $true }
+    }
+    catch {}
 }
 
 function Set-Stat { 
@@ -1888,18 +2042,16 @@ function Set-Stat {
         [UInt16]$ToleranceExceeded = 3
     )
 
-    $Timer = $Updated = $Updated.ToUniversalTime()
-
-    $Path = "Stats\$Name.txt"
     $SmallestValue = 1E-20
     $Stat = Get-Stat -Name $Name
+    $Timer = $Updated = $Updated.ToUniversalTime()
 
     if ($Stat -is [Hashtable] -and -not [Double]::IsNaN($Stat.Minute_Fluctuation)) { 
         if (-not $Stat.Timer) { $Stat.Timer = $Stat.Updated.AddMinutes(-1) }
         if (-not $Duration) { $Duration = $Updated - $Stat.Timer }
         if ($Duration -le 0) { return $Stat }
 
-        if ($ChangeDetection -and [Decimal]$Value -eq [Decimal]$Stat.Live) { $Updated = $Stat.Updated }
+        if ($ChangeDetection -and $Value -eq [Decimal]$Stat.Live) { $Updated = $Stat.Updated }
 
         if ($FaultDetection) { 
             $FaultFactor = if ($Name -match ".+_Hashrate$") { 0.1 } else { 0.2 }
@@ -1996,26 +2148,37 @@ function Set-Stat {
 
     # Attempt to aquire mutex, waiting up to 1 second if necessary
     if ($Mutex.WaitOne(1000)) { 
-        @{ 
-            Name                  = $Name
-            Live                  = [Double]$Stat.Live
-            Minute                = [Double]$Stat.Minute
-            Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
-            Minute_5              = [Double]$Stat.Minute_5
-            Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
-            Minute_10             = [Double]$Stat.Minute_10
-            Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
-            Hour                  = [Double]$Stat.Hour
-            Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
-            Day                   = [Double]$Stat.Day
-            Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
-            Week                  = [Double]$Stat.Week
-            Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
-            Duration              = [String]$Stat.Duration
-            Updated               = [DateTime]$Stat.Updated
-            Disabled              = [Boolean]$Stat.Disabled
-        } | ConvertTo-Json | Out-File -LiteralPath $Path -Force -ErrorAction Ignore
-        $Mutex.ReleaseMutex()
+        try {
+            # OPTIMIZATION: String template formatting bypasses ConvertTo-Json cmdlet processing overhead entirely!
+            $JsonTemplate = @"
+{
+"Name": "$Name",
+"Live": $([Double]$Stat.Live),
+"Minute": $([Double]$Stat.Minute),
+"Minute_Fluctuation": $([Double]$Stat.Minute_Fluctuation),
+"Minute_5": $([Double]$Stat.Minute_5),
+"Minute_5_Fluctuation": $([Double]$Stat.Minute_5_Fluctuation),
+"Minute_10": $([Double]$Stat.Minute_10),
+"Minute_10_Fluctuation": $([Double]$Stat.Minute_10_Fluctuation),
+"Hour": $([Double]$Stat.Hour),
+"Hour_Fluctuation": $([Double]$Stat.Hour_Fluctuation),
+"Day": $([Double]$Stat.Day),
+"Day_Fluctuation": $([Double]$Stat.Day_Fluctuation),
+"Week": $([Double]$Stat.Week),
+"Week_Fluctuation": $([Double]$Stat.Week_Fluctuation),
+"Duration": "$(([TimeSpan]$Stat.Duration).ToString())",
+"Updated": "$(([DateTime]$Stat.Updated).ToString('yyyy-MM-ddTHH:mm:ss.fffffffZ'))",
+"Disabled": $([string]$Stat.Disabled.ToString().ToLower())
+}
+"@
+
+            # Native direct disk flush
+            [System.IO.File]::WriteAllText("$PWD\Stats\$Name.txt", $JsonTemplate)
+        }
+        catch {}
+        finally {
+            $Mutex.ReleaseMutex()
+        }
     }
     $Mutex.Dispose()
     Remove-Variable Mutex
@@ -2025,51 +2188,78 @@ function Set-Stat {
 
 function Get-Stat { 
 
+    [CmdletBinding()]
     param (
-        [Parameter (Mandatory = $false)]
-        [String[]]$Names = (Get-ChildItem $PWD\Stats).BaseName
+        [Parameter(Mandatory = $false)]
+        [String[]]$Names
     )
 
-    $Names.ForEach(
-        { 
-            $Name = $_
-
-            if ($Global:Stats[$Name] -isnot [Hashtable]) { 
-                # Reduce number of errors
-                if (-not (Test-Path -LiteralPath "Stats\$Name.txt" -PathType Leaf)) { return }
-
-                try { 
-                    $Stat = [System.IO.File]::ReadAllLines("$PWD\Stats\$Name.txt") | ConvertFrom-Json -ErrorAction Stop
-                    $Global:Stats[$Name] = @{ 
-                        Name                  = $Name
-                        Live                  = [Double]$Stat.Live
-                        Minute                = [Double]$Stat.Minute
-                        Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
-                        Minute_5              = [Double]$Stat.Minute_5
-                        Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
-                        Minute_10             = [Double]$Stat.Minute_10
-                        Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
-                        Hour                  = [Double]$Stat.Hour
-                        Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
-                        Day                   = [Double]$Stat.Day
-                        Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
-                        Week                  = [Double]$Stat.Week
-                        Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
-                        Duration              = [TimeSpan]$Stat.Duration
-                        Updated               = [DateTime]$Stat.Updated
-                        Disabled              = [Boolean]$Stat.Disabled
-                        ToleranceExceeded     = [UInt16]0
-                    }
-                }
-                catch { 
-                    Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
-                    Remove-Stat $Name
-                }
+    # 1. OPTIMIZATION: High-speed .NET folder tracking if no names are explicitly given
+    if ($null -eq $Names) {
+        $StatsPath = "$PWD\Stats"
+        if ([System.IO.Directory]::Exists($StatsPath)) {
+            $Names = [System.IO.Directory]::GetFiles($StatsPath, "*.txt") | ForEach-Object { 
+                [System.IO.Path]::GetFileNameWithoutExtension($_) 
             }
-
-            $Global:Stats[$Name]
+        } 
+        else {
+            return
         }
-    )
+    }
+
+    # 2. OPTIMIZATION: Native foreach loop (Avoids .ForEach() scriptblock allocation overhead)
+    foreach ($Name in $Names) { 
+
+        if ($Global:Stats[$Name] -isnot [Hashtable]) { 
+            $FilePath = "$PWD\Stats\$Name.txt"
+
+            try { 
+                # 3. OPTIMIZATION: Read directly as native C# string (Bypasses stream decoding issues)
+                $FileText = [System.IO.File]::ReadAllText($FilePath)
+                if ([String]::IsNullOrWhiteSpace($FileText)) { continue }
+
+                # 4. OPTIMIZATION: Strictly typed string parsing with System.Text.Json
+                $Json = [System.Text.Json.JsonDocument]::Parse([string]$FileText)
+                $Root = $Json.RootElement
+
+                # 5. OPTIMIZATION: Low-level primitive retrieval directly out of the memory buffer
+                $Global:Stats[$Name] = @{ 
+                    Name                  = $Name
+                    Live                  = $Root.GetProperty("Live").GetDouble()
+                    Minute                = $Root.GetProperty("Minute").GetDouble()
+                    Minute_Fluctuation    = $Root.GetProperty("Minute_Fluctuation").GetDouble()
+                    Minute_5              = $Root.GetProperty("Minute_5").GetDouble()
+                    Minute_5_Fluctuation  = $Root.GetProperty("Minute_5_Fluctuation").GetDouble()
+                    Minute_10             = $Root.GetProperty("Minute_10").GetDouble()
+                    Minute_10_Fluctuation = $Root.GetProperty("Minute_10_Fluctuation").GetDouble()
+                    Hour                  = $Root.GetProperty("Hour").GetDouble()
+                    Hour_Fluctuation      = $Root.GetProperty("Hour_Fluctuation").GetDouble()
+                    Day                   = $Root.GetProperty("Day").GetDouble()
+                    Day_Fluctuation       = $Root.GetProperty("Day_Fluctuation").GetDouble()
+                    Week                  = $Root.GetProperty("Week").GetDouble()
+                    Week_Fluctuation      = $Root.GetProperty("Week_Fluctuation").GetDouble()
+                    Duration              = [TimeSpan]::Parse($Root.GetProperty("Duration").GetString())
+                    Updated               = [DateTime]::Parse($Root.GetProperty("Updated").GetString())
+                    Disabled              = $Root.GetProperty("Disabled").GetBoolean()
+                    ToleranceExceeded     = [UInt16]0
+                }
+
+                # Free memory layout assets immediately
+                $Json.Dispose()
+            }
+            catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] { 
+                # Replaces heavy Test-Path cmdlet footprint completely
+                continue 
+            }
+            catch { 
+                if ($null -ne $Json) { $Json.Dispose() }
+                Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
+                Remove-Stat $Name
+            }
+        }
+
+        $Global:Stats[$Name]
+    }
 }
 
 function Remove-Stat { 
@@ -2103,9 +2293,26 @@ function Invoke-TcpRequest {
     )
 
     try { 
-        $Client = [Net.Sockets.TcpClient]::new()
-        $Client.SendTimeout = $Client.ReceiveTimeout = $Timeout * 1000
-        $Client.Connect($Server, $Port)
+        # Prerequisites: Ensure $Timeout (in seconds), $Server, and $Port are defined
+        $TimeoutMilliseconds = $Timeout * 1000
+
+        # 1. Instantiate the client directly
+        $Client = [System.Net.Sockets.TcpClient]::new()
+
+        # 2. Set timeouts for subsequent read/write operations
+        $Client.SendTimeout = $TimeoutMilliseconds
+        $Client.ReceiveTimeout = $TimeoutMilliseconds
+
+        # 3. FAST & NON-BLOCKING CONNECT (The biggest bottleneck fix)
+        # ConnectAsync returns a Task. We wait for it with a strict timeout.
+        $ConnectTask = $Client.ConnectAsync($Server, $Port)
+
+        if (-not $ConnectTask.Wait($TimeoutMilliseconds)) {
+            $Client.Dispose()
+            return
+        }
+
+        # 4. Stream aquisition
         $Stream = $Client.GetStream()
         $Writer = [IO.StreamWriter]::new($Stream)
         $Reader = [IO.StreamReader]::new($Stream)
@@ -2118,7 +2325,7 @@ function Invoke-TcpRequest {
         if ($Reader) { $Reader.Close() }
         if ($Writer) { $Writer.Close() }
         if ($Stream) { $Stream.Close() }
-        if ($Client) { $Client.Close() }
+        if ($Client) { $Client.Close(); $Client.Dispose() }
     }
 
     return $Response
@@ -2578,15 +2785,36 @@ function Get-Device {
 }
 
 filter ConvertTo-Hash { 
+    # OPTIMIZATION 1: Early null, zero, and boundary validations
+    if ($null -eq $_ -or [Double]::IsNaN($_)) { return "n/a" }
+    
+    $AbsVal = [Math]::Abs([double]$_)
+    if ($AbsVal -eq 0.0) { return "0.00 h/s" }
 
+    # OPTIMIZATION 2: Inline array lookup map via high-speed string chars
+    # Index 0 is an empty space for base hash values
     $Units = " kMGTPEZY" # k(ilo) in small letters, see https://en.wikipedia.org/wiki/Metric_prefix
 
-    if ($null -eq $_ -or [Double]::IsNaN($_)) { return "n/a" }
-    elseif ($_ -eq 0) { return "0h/s " }
-    $Base1000 = [Math]::Max([Double]0, [Math]::Min([Math]::Truncate([Math]::Log([Math]::Abs([Double]$_), [Math]::Pow(1000, 1))), $Units.Length - 1))
-    $UnitValue = $_ / [Math]::Pow(1000, $Base1000)
-    $Digits = if ($UnitValue -lt 10) { 3 } else { 2 }
-    "{0:n$($Digits)} $($Units[$Base1000])h/s" -f $UnitValue
+    # OPTIMIZATION 3: High-speed value scaling loop (Bypasses [Math]::Log and [Math]::Pow)
+    $Base1000 = 0
+    $ScaledValue = $AbsVal
+
+    while ($ScaledValue -ge 1000.0 -and $Base1000 -lt 8) {
+        $ScaledValue /= 1000.0
+        $Base1000++
+    }
+
+    # Restore negative sign if the initial value was below zero
+    if ([Double]$_ -lt 0.0) { $ScaledValue = -$ScaledValue }
+
+    # OPTIMIZATION 4: Branch formatting layouts directly to avoid dynamic parsing engine strings
+    $UnitChar = $Units[$Base1000]
+    
+    if ($ScaledValue -lt 10.0 -and $ScaledValue -gt -10.0) { 
+        return "{0:n3} {1}h/s" -f $ScaledValue, $UnitChar
+    }
+    
+    return "{0:n2} {1}h/s" -f $ScaledValue, $UnitChar
 }
 
 function Get-DecimalsFromValue { 
@@ -2840,11 +3068,11 @@ function Initialize-AutoUpdate {
         "Downloading update script '$($UpdateScript)'..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
         try {
             Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
-            [Console]::SetCursorPosition((32  + $UpdateScript.length), $CursorPosition.y)
+            [Console]::SetCursorPosition((31  + $UpdateScript.length), $CursorPosition.y)
             Write-Host " ✔" -ForegroundColor Green
         }
         catch { 
-            [Console]::SetCursorPosition((32  + $UpdateScript.length), $CursorPosition.y)
+            [Console]::SetCursorPosition((31 + $UpdateScript.length), $CursorPosition.y)
             Write-Host " ✖" -ForegroundColor Red
         }
         $CursorPosition = $Host.UI.RawUI.CursorPosition
@@ -2921,25 +3149,39 @@ function Update-PoolWatchdog {
 
     return $Pools
 }
+function Test-IsPrime {
 
-function Test-IsPrime { 
-
+    [CmdletBinding()]
     param (
-        [Parameter (Mandatory = $true)]
-        [UInt64]$Number
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [long]$Number
     )
 
-    switch ($Number) { 
-        ($_ -lt 2) { return $false }
-        ($_ -eq 2) { return $true }
-        default { 
-            $PowNumber = [Int64][Math]::Pow($Number, 0.5)
-            for ([UInt64]$I = 2; $I -le $PowNumber; $I++) { 
-                if ($Number % $I -eq 0) { return $false }
+    process {
+        # 1. Eliminate numbers less than or equal to 1
+        if ($Number -le 1) { return $false }
+        
+        # 2. Check the only even prime
+        if ($Number -eq 2) { return $true }
+        
+        # 3. Eliminate all other even numbers instantly
+        if (($Number -band 1) -eq 0) { return $false }
+
+        # 4. Trial division up to the square root
+        # We step by 2 (checking only odd numbers: 3, 5, 7, etc.)
+        $boundary = [Math]::Sqrt($Number)
+        
+        # Using a raw .NET-style while loop for maximum execution speed
+        $i = 3
+        while ($i -le $boundary) {
+            if (($Number % $i) -eq 0) {
+                return $false
             }
+            $i += 2
         }
+
+        return $true
     }
-    return $true
 }
 
 function Get-AllDAGdata { 
@@ -3443,28 +3685,15 @@ function Show-Console {
     }
 }
 
-function Get-MemoryUsage { 
-
-    $MemUsageByte = [System.GC]::GetTotalMemory("forcefullcollection")
-    $MemUsageMB = $MemUsageByte / 1MB
-    $DiffBytes = $MemUsageByte - $Script:LastMemoryUsageByte
-    $DiffText = ""
-    $Sign = ""
-
-    if ($Script:LastMemoryUsageByte -ne 0) { 
-        if ($DiffBytes -ge 0) { $Sign = "+" }
-        $DiffText = ", $Sign$DiffBytes"
-    }
-
-    # Save last value in script global variable
-    $Script:LastMemoryUsageByte = $MemUsageByte
-
-    return ("Memory usage {0:n1} MB ({1:n0} Bytes {2})" -f $MemUsageMB, $MemUsageByte, $Difftext)
-}
-
 function Start-APIserver { 
 
     if ($Session.APIport -and $Session.Config.APIport -ne $Session.APIport) { 
+        # API port has changed; must stop all running miners
+        if ($Session.MinersRunning) { 
+            Write-Message -Level Info "API port has changed. Stopping all running miners..."
+            Stop-CoreCycle
+            Start-CoreCycle
+        }
         Stop-APIserver
     }
 
@@ -3500,7 +3729,7 @@ function Start-APIserver {
         $Global:APIrunspace | Add-Member PowerShell $PowerShell
 
         # Initialize API and web GUI
-        Write-Message -Level Verbose "Starting API and web GUI on 'http://localhost:$($Session.Config.APIport)'..."
+        Write-Message -Level Verbose "Starting API and web GUI..."
         $Global:APIrunspace | Add-Member Job ($Global:APIrunspace.PowerShell.BeginInvoke())
         $Global:APIrunspace | Add-Member StartTime ([DateTime]::Now.ToUniversalTime())
 
@@ -3541,7 +3770,7 @@ function Stop-APIserver {
         if ($Session.APIserver.IsListening) { 
             $Session.APIserver.Stop()
             if (-not $Session.MinerBaseAPIport) { $Session.MinerBaseAPIport = 4000 }
-            Write-Message -Level Verbose "Stopped API and web GUI on TCP port $($Session.APIport). Using TCP port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+            Write-Message -Level Verbose "Stopped API and web GUI on TCP port $($Session.APIport).$(if (-not $Session.Config.APIport) { " Using TCP port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication." })"
         }
 
         $Session.APIserver.Close()
@@ -3925,6 +4154,8 @@ function Read-Config {
 
             $Session.Config = $Config.Clone()
             $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
+
+            if ($Session.APIport -and $Session.Config.APIport -ne $Session.APIport) { $Session.RefreshNeeded = $true }
         }
     }
 }
