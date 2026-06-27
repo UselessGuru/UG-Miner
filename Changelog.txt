@@ -1,9 +1,12 @@
-Changelog UG-Miner 6.8.11 2026/06/??
+Changelog UG-Miner 6.8.11 2026/06/27
 ====================================
 
 Changes:
 - Core / Include.psm1: Function 'Get-Rate' gets FIAT exchange rates from 'https://api.exchangerate.fun'
 - Core / Include.psm1: Function 'Get-Rate' gets crypto exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'
+
+Fixes:
+- Currency exchange rates not getting updated periodically (regression from 6.8.10)
 
 Miner updates:
 - SRBMinerMulti-v3.4.1
