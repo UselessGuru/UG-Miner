@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.8.10
-Version date:   2026/06/04
+Version:        6.8.11
+Version date:   2026/06/27
 #>
 
 [NoRunspaceAffinity()]

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.10
-Version date:   2026/06/04
+Version:        6.8.11
+Version date:   2026/06/27
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -2060,11 +2060,13 @@ $LegacyGUIelements.Timer.Add_Tick(
                 Remove-Variable NetworkInterface
 
                 if ($Session.MyIPaddress) { 
-                    # Read exchange rates at least once every hour
-                    if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { Get-Rate }
-
                     # Start balances tracker
                     if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
+
+                    # Read exchange rates at least once every hour
+                    if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { 
+                        Get-Rate
+                    }
                 }
                 else { 
                     Write-Message -Level Error "No internet connection - will retry in 10 minutes..."

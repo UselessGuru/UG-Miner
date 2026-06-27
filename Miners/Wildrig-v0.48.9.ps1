@@ -17,16 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.10
-Version date:   2026/06/04
+Version:        6.8.11
+Version date:   2026/06/27
 #>
 
-# removed progpow-ethercore(dead) and progpow-quai(this one moves to kawpow)
-# slightly improved qhash for NVIDIA Ampere+(~0.1%), AMD(~1%) and Intel(~5%) gpu's
+# slightly improved pearlhash for NVIDIA RTX 3000 series gpu's
+# reverted back default pearlhash kernel for NVIDIA 4060Ti and 4070Ti and fixed intensity(--pearlhash-kernel 2 now will use less efficient one)
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.47.9/wildrig-multi-windows-0.47.9.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.48.9/wildrig-multi-windows-0.48.9.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"
@@ -169,6 +169,7 @@ $Algorithms = @(
     @{ Algorithm = "Mike";             Type = "NVIDIA"; Fee = @(0.01);   MinMemGiB = 1;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo mike --watchdog" }
     @{ Algorithm = "NexaPow";          Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 3;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo nexapow --watchdog" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 3;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo nist5 --watchdog" } # ASIC
+    @{ Algorithm = "PearlHash";        Type = "NVIDIA"; Fee = @(0.0);    MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo pearlhash --watchdog" }
 #   @{ Algorithm = "Phi";              Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo phi --watchdog" } # ASIC
     @{ Algorithm = "ProgPowSero";      Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo progpow-sero --watchdog" }
     @{ Algorithm = "ProgPowTelestai";  Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 0.62; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = "^Other$|^Pascal$"; ExcludePools = @();           Arguments = " --algo progpow-telestai --watchdog" }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.10
-Version date:   2026/06/04
+Version:        6.8.11
+Version date:   2026/06/27
 #>
 
 using module .\Includes\Include.psm1
@@ -67,6 +67,8 @@ param(
     [UInt16]$CPUMiningReserveCPUcore = 1, # Number of CPU cores reserved for main script processing. Helps to get more stable hashrates and faster core loop processing.
     [Parameter (Mandatory = $false)]
     [Int16]$CPUMinerProcessPriority = "-2", # Process priority for CPU miners
+    [Parameter (Mandatory = $false)]
+    [String]$CryptoCompareAPIkey, # Use key from UselessGuru
     [Parameter (Mandatory = $false)]
     [String[]]$Currency = @(), # i.e. @("+ETC", +EVR", "+KIIRO") etc. If '+' is used, then only the explicitly enabled currencies are used. If '-' is used, then all currencies except the disabled ones are used. Do not combine '+' and '-' concurrently.
     [Parameter (Mandatory = $false)]
@@ -277,7 +279,7 @@ param(
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$RecommendedPWSHversion = [Version]"7.6.2"
+$RecommendedPWSHversion = [Version]"7.6.3"
 
 # Close useless empty cmd window that comes up when starting from bat file
 if ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -315,7 +317,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.10"
+    Version      = [System.Version]"6.8.11"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

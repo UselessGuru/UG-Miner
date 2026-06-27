@@ -142,7 +142,7 @@
           <BackColor>Black</BackColor>
         </Keyword>
         <Keyword>
-          <Keyword>Balances tracker|Loaded currency exchange rates</Keyword>
+          <Keyword>Balances tracker|Loaded .+ exchange rates from</Keyword>
           <MatchCaseSensitive>false</MatchCaseSensitive>
           <MatchRegularExpression>true</MatchRegularExpression>
           <LogHitCounter>false</LogHitCounter>

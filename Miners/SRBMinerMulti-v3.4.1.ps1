@@ -17,17 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.10
-Version date:   2026/06/04
+Version:        6.8.11
+Version date:   2026/06/27
 #>
 
-# Huge hashrate improvement on algorithm 'pearlhash' for 2000 series GPU's
-# Improved hashrate on algorithm 'pearlhash' for weaker 5000 series GPU's
-# Swapped the power hungry - high hashrate 4000 series code on 'pearlhash' to a power efficient one. For the max hashrate one use previous miner version [v3.3.3]
+# Added algorithm 'oggpow' (Ogg coin) for AMD/NVIDIA/INTEL GPUs, fee 0.85%* [3.3.6]
+# Added algorithm 'neuromorph' (Cereblix coin) for CPU mining, fee 3.0%* [3.3.9]
+# Fixed 'proof validation failed' error for algorithm 'pearlhash' introduced in previous version [3.4.0]
+# Pearlhash 3060TI and 3080 10GB hashrates improved
+# Bug fixes
 
 if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") }))) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.3.4/SRBMiner-Multi-3-3-4-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.4.1/SRBMiner-Multi-3-4-1-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -64,7 +66,9 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsenV2", "Decred");  Type = "AMD"; Fee = @(0.01, 0.02);     MinMemGiB = 1.24; WarmupTimes = @(60, 30); ExcludeGPUarchitectures = "^Other$|^GCN\d$"; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm karlsenhashv2", " --algorithm blake3_decred") }
     @{ Algorithms = @("KawPow", "");                    Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";               ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm kawpow") }
     @{ Algorithms = @("Lyra2v2Webchain", "");           Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm lyra2v2_webchain") }
-    @{ Algorithms = @("MeowPow", "");                   Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.38; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm meowpow") }
+    @{ Algorithms = @("MeowPow", "");                   Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm meowpow") }
+    @{ Algorithms = @("OggPoW", "");                    Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm oggpow") }
+    @{ Algorithms = @("PearlHash", "");                 Type = "AMD"; Fee = @(0.02);           MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm pearlhash") }
     @{ Algorithms = @("PhiHash", "");                   Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm phihash") }
     @{ Algorithms = @("ProgPowEpic", "");               Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_epic") }
     @{ Algorithms = @("ProgPowSero", "");               Type = "AMD"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-intel --disable-gpu-nvidia --algorithm progpow_sero") }
@@ -156,6 +160,8 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHashKarlsenV2", "Decred");  Type = "INTEL"; Fee = @(0.01, 0.02);     MinMemGiB = 1.24; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm karlsenhashv2", " --algorithm blake3_decred") }
     @{ Algorithms = @("KawPow", "");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm kawpow") }
     @{ Algorithms = @("MeowPow", "");                   Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.38; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm meowpow") }
+    @{ Algorithms = @("NeuroMorph", "");                Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.38; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm neuromorph") }
+    @{ Algorithms = @("OggPoW", "");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm oggpow") }
     @{ Algorithms = @("PhiHash", "")    ;               Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm phihash") }
     @{ Algorithms = @("ProgPowEpic", "");               Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_epic") }
     @{ Algorithms = @("ProgPowSero", "");               Type = "INTEL"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm progpow_sero") }
@@ -197,6 +203,8 @@ $Algorithms = @(
     @{ Algorithms = @("KawPow", "");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(60, 20); ExcludeGPUarchitectures = " ";        ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm kawpow") }
     @{ Algorithms = @("Lyra2v2Webchain", "");           Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm lyra2v2_webchain") }
     @{ Algorithms = @("MeowPow", "");                   Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.38; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm meowpow") }
+    @{ Algorithms = @("OggPoW", "");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm oggpow") }
+    @{ Algorithms = @("PearlHash", "");                 Type = "NVIDIA"; Fee = @(0.02);           MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm pearlhash") }
     @{ Algorithms = @("PhiHash", "");                   Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm phihash") }
     @{ Algorithms = @("ProgPowEpic", "");               Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_epic") }
     @{ Algorithms = @("ProgPowSero", "");               Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_sero") }
@@ -204,7 +212,7 @@ $Algorithms = @(
     @{ Algorithms = @("ProgPowZ", "");                  Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm progpow_zano") }
     @{ Algorithms = @("QHash", "");                     Type = "NVIDIA"; Fee = @(0.015);          MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm qhash") }
     @{ Algorithms = @("SCCpow", "");                    Type = "NVIDIA"; Fee = @(0.0085);         MinMemGiB = 1.24; WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm firopow") }
-    @{ Algorithms = @("SHA256mem", "");                 Type = "NVIDIA"; Fee = @(0.025);          MinMemGiB = 1;    WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel -algorithm sha256mem") }
+    @{ Algorithms = @("SHA256mem", "");                 Type = "NVIDIA"; Fee = @(0.025);          MinMemGiB = 1;    WarmupTimes = @(60, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm sha256mem") }
     @{ Algorithms = @("VertHash", "");                  Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^Pascal$"; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm verthash --verthash-dat-path ..\.$($Session.VertHashDatPath)") }
     @{ Algorithms = @("WalaHash", "");                  Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm walahash") }
     @{ Algorithms = @("XeChain", "");                   Type = "NVIDIA"; Fee = @(0.01);           MinMemGiB = 1;    WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " ";        ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-intel --algorithm xechain") }

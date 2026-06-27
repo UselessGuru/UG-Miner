@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.10
-Version date:   2026/06/04
+Version:        6.8.11
+Version date:   2026/06/27
 #>
 
 using module .\Include.psm1
@@ -75,6 +75,7 @@ do {
     Remove-Variable NetworkInterface
 
     if ($Session.MyIPaddress) { 
+
         # Fetch balances data from pools
         if ($PoolsToTrack) { 
             Write-Message -Level Info "Balances tracker is requesting data from pool$(if ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
@@ -94,6 +95,11 @@ do {
                 }
             )
 
+            # Always read exchange rates if a new currency was added to balances
+            if (($Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (Compare-Object ($BalanceObjects.Currency | Sort-Object -Unique) $Session.BalancesCurrencies).Where({ $_.SideIndicator -eq "<="}) -or ($Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { 
+                Get-Rate
+            }
+
             # Only keep non excluded balances
             $BalancesTrackerExcludePool = @(Get-PoolBaseName $Session.Config.BalancesTrackerExcludePool)
             $BalanceObjects = @(@($BalanceObjects) + @($Session.BalancesData))
@@ -109,12 +115,6 @@ do {
 
             # Keep empty balances for 7 days
             $BalanceObjects = $BalanceObjects.Where({ $_.Unpaid -gt 0 -or $_.Balance -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) })
-
-            # Read exchange rates if a new currency was added to balances
-            if ((Compare-Object ($BalanceObjects.Currency | Sort-Object -Unique) $Session.BalancesCurrencies).Where({ $_.SideIndicator -eq "<="})) { 
-                $Session.BalancesCurrencies = @((@($Session.BalancesCurrencies) + @($BalanceObjects.Currency)) | Sort-Object -Unique)
-                Get-Rate
-            }
 
             foreach ($BalanceObject in $BalanceObjects) { 
                 $BalanceDataObjects = @($Session.BalancesData.Where({ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }) | Sort-Object -Property DateTime)
