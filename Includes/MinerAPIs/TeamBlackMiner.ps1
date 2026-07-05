@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 [NoRunspaceAffinity()]
@@ -43,27 +43,25 @@ class TeamBlackMiner : Miner {
             $SharesInvalid = [Int64]0
 
             foreach ($Algorithm in $this.Algorithms) { 
-                $Data.pool.PSObject.Properties.Name.ForEach(
-                    { 
-                        if ($null -eq $Data.pool.$_.total_hashrate) { return $null }
-                        if ($Data.pool.$_.Algo -eq $Algorithm) { 
-                            $HashrateName = [String]$Algorithm
-                            $HashrateValue = [Double]($Data.pool.$_.total_hashrate)
-                            $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
+                $Data.pool.PSObject.Properties.Name.ForEach{ 
+                    if ($null -eq $Data.pool.$_.total_hashrate) { return $null }
+                    if ($Data.pool.$_.Algo -eq $Algorithm) { 
+                        $HashrateName = [String]$Algorithm
+                        $HashrateValue = [Double]($Data.pool.$_.total_hashrate)
+                        $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-                            $SharesAccepted = [Int64]($Data.pool.$_.total_accepted)
-                            $SharesRejected = [Int64]($Data.pool.$_.total_rejected)
-                            $SharesInvalid = [Int64]($Data.pool.$_.total_stale)
-                            $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
-                        }
+                        $SharesAccepted = [Int64]($Data.pool.$_.total_accepted)
+                        $SharesRejected = [Int64]($Data.pool.$_.total_rejected)
+                        $SharesInvalid = [Int64]($Data.pool.$_.total_stale)
+                        $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
                     }
-                )
+                }
             }
 
             $PowerConsumption = [Double]0
 
             if ($this.ReadPowerConsumption) { 
-                $Data.Devices.ForEach({ $PowerConsumption += [Double]$_.PSObject.Properties.Value.watt })
+                $Data.Devices.ForEach{ $PowerConsumption += [Double]$_.PSObject.Properties.Value.watt }
                 $PowerConsumption = [Double]($Data.result | Measure-Object gpu_power_usage -Sum).Sum
                 if (-not $PowerConsumption -or $PowerConsumption -gt 1000 -or $PowerConsumption -lt 0) { 
                     $PowerConsumption = $this.GetPowerConsumption()

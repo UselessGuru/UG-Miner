@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TT-Miner/ttminer503.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -41,60 +41,56 @@ $Algorithms = @(
     @{ Algorithm = "UbqHash";      MinMemGiB = 1.22; WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " -algo UBQHASH -intensity 15" }
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
-$Algorithms = $Algorithms.Where({ $_.Algorithm -ne "Ethash" -or $MinerPools[0][$_.Algorithm].Epoch -le 384 }) # Miner supports Ethash up to epoch 384
-$Algorithms = $Algorithms.Where({ $_.Algorithm -ne "EtcHash" -or $MinerPools[0][$_.Algorithm].Epoch -lt 383 }) # Miner supports EtcHash up to epoch 382
-$Algorithms = $Algorithms.Where({ $_.Algorithm -ne "KawPow" -or $MinerPools[0][$_.Algorithm].DAGsizeGiB -lt "4" }) # Miner supports Kawpow up to 4GB
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm].PoolPorts[0] }
+$Algorithms = $Algorithms.Where{ $_.Algorithm -ne "Ethash" -or $MinerPools[0][$_.Algorithm].Epoch -le 384 } # Miner supports Ethash up to epoch 384
+$Algorithms = $Algorithms.Where{ $_.Algorithm -ne "EtcHash" -or $MinerPools[0][$_.Algorithm].Epoch -lt 383 } # Miner supports EtcHash up to epoch 382
+$Algorithms = $Algorithms.Where{ $_.Algorithm -ne "KawPow" -or $MinerPools[0][$_.Algorithm].DAGsizeGiB -lt "4" } # Miner supports Kawpow up to 4GB
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $MinerDevices = $Devices.Where{ $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.ForEach(
-                { 
-                    # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name -and $_.Algorithm -notin @("Ethash", "KawPow") -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGsizeGiB -lt 4) })) { 
-                    foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and "Ethash", "KawPow" -notcontains $_.Algorithm -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGsizeGiB -lt 4) })) { 
+        $Algorithms.ForEach{ 
+            # $ExcludePools = $_.ExcludePools
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name -and $_.Algorithm -notin @("Ethash", "KawPow") -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGsizeGiB -lt 4) })){ 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and "Ethash", "KawPow" -notcontains $_.Algorithm -or (<# Miner supports Ethash up to epoch 384 #>$_.Algorithm -eq "Ethash" -and $_.Epoch -le 384) -or (<# Miner supports Kawpow up to 4GB #>$_.Algorithm -eq "KawPow" -and $_.DAGsizeGiB -lt 4) }) { 
 
-                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
+                if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
-                            $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
+                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                            if ("CLO", "ETC", "ETH", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool.Currency) { 
-                                $Arguments = " -coin $($Pool.Currency)$($_.Arguments -replace " -algo \w+")"
-                            }
-                            else { 
-                                $Arguments = $_.Arguments
-                            }
-                            if ($AvailableMinerDevices.Where({ $_.MemoryGiB -le 2 })) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
+                    if ("CLO", "ETC", "ETH", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool.Currency) { 
+                        $Arguments = " -coin $($Pool.Currency)$($_.Arguments -replace " -algo \w+")"
+                    }
+                    else { 
+                        $Arguments = $_.Arguments
+                    }
+                    if ($AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
 
-                            $Arguments = if ($Pool.Protocol -like "ethproxy*" -or $_.Algorithm -eq "ProgPowZ") { "$Arguments -pool stratum1+tcp://" } else { "$Arguments -pool stratum+tcp://" }
-                            $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts[0]) -user $($Pool.User) -pass $($Pool.Pass)"
-                            if ($Pool.WorkerName) { $Arguments = "$Arguments -worker $($Pool.WorkerName)" }
+                    $Arguments = if ($Pool.Protocol -like "ethproxy*" -or $_.Algorithm -eq "ProgPowZ") { "$Arguments -pool stratum1+tcp://" } else { "$Arguments -pool stratum+tcp://" }
+                    $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts[0]) -user $($Pool.User) -pass $($Pool.Pass)"
+                    if ($Pool.WorkerName) { $Arguments = "$Arguments -worker $($Pool.WorkerName)" }
 
-                            [PSCustomObject]@{ 
-                                API         = "EthMiner"
-                                Arguments   = "$Arguments -PRT 1 -PRS 0 -api-bind 127.0.0.1:$($MinerAPIPort) -device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ",")"
-                                DeviceNames = $AvailableMinerDevices.Name
-                                Fee         = @(0) # Dev fee
-                                Name        = $MinerName
-                                Path        = $Path
-                                Port        = $MinerAPIPort
-                                Type        = "NVIDIA"
-                                URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
-                            }
-                        }
+                    [PSCustomObject]@{ 
+                        API         = "EthMiner"
+                        Arguments   = "$Arguments -PRT 1 -PRS 0 -api-bind 127.0.0.1:$($MinerAPIPort) -device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ",")"
+                        DeviceNames = $AvailableMinerDevices.Name
+                        Fee         = @(0) # Dev fee
+                        Name        = $MinerName
+                        Path        = $Path
+                        Port        = $MinerAPIPort
+                        Type        = "NVIDIA"
+                        URI         = $URI
+                        WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                        Workers     = @(@{ Pool = $Pool })
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

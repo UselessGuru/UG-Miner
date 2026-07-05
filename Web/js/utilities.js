@@ -345,15 +345,17 @@ function detailFormatter(index, row) {
 
   var html = [];
   $.each(sortedObj, function (key, value) {
-    if (typeof value === 'string') {
-      if (key === 'PoolUri') { 
-        var target = JSON.stringify(value).replaceAll('\\\\', '\\').replaceAll('"', '');
-        html.push(`<p class="mb-0"><b>${key}:</b> <a href=${target} target="_blank">${target}</a></p>`);
-      } else { 
-        html.push(`<p class="mb-0"><b>${key}:</b> ${JSON.stringify(value).replaceAll('\\\\', '\\')}</p>`);
+    if (key !== 'CheckboxSelected' && key !== 'StatusColor') {
+      if (typeof value === 'string') {
+        if (key === 'PoolUri') { 
+          var target = JSON.stringify(value).replaceAll('\\\\', '\\').replaceAll('"', '');
+          html.push(`<p class="mb-0"><b>${key}:</b> <a href=${target} target="_blank">${target}</a></p>`);
+        } else { 
+          html.push(`<p class="mb-0"><b>${key}:</b> ${JSON.stringify(value).replaceAll('\\\\', '\\')}</p>`);
+        }
       }
+      else html.push(`<p class="mb-0"><b>${key}:</b> ${JSON.stringify(value)}</p>`);
     }
-    else html.push(`<p class="mb-0"><b>${key}:</b> ${JSON.stringify(value)}</p>`);
   });
   return html.join('');
 }

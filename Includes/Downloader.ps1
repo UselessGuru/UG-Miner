@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 using module .\Includes\Include.psm1
@@ -56,10 +56,10 @@ function Expand-WebRequest {
         if (Test-Path -LiteralPath $Path_New -PathType Container) { Remove-Item $Path_New -Recurse -Force }
 
         # Use first (topmost) directory, some miners, e.g. ClaymoreDual_v11.9, contain multiple miner binaries for different driver versions in various subdirs
-        $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).Where({ $_.Name -eq $(Split-Path $Path -Leaf) })).Directory | Select-Object -First 1
+        $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).Where{ $_.Name -eq $(Split-Path $Path -Leaf) }).Directory | Select-Object -First 1
 
         if ($Path_Old) { 
-            (Move-Item $Path_Old $Path_New -PassThru).ForEach({ $_.LastWriteTime = [DateTime]::Now })
+            (Move-Item $Path_Old $Path_New -PassThru).ForEach{ $_.LastWriteTime = [DateTime]::Now }
             $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
             if (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item -Path $Path_Old -Recurse -Force }
         }
@@ -75,60 +75,58 @@ $Session = $args.Session
 
 $ProgressPreference = "SilentlyContinue"
 
-($DownloadList | Select-Object).ForEach(
-    { 
-        $URI = $_.URI
-        $Path = $_.Path
-        $Searchable = $_.Searchable
-        $Type = $_.Type
+($DownloadList | Select-Object).ForEach{ 
+    $URI = $_.URI
+    $Path = $_.Path
+    $Searchable = $_.Searchable
+    $Type = $_.Type
 
-        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { 
-            try { 
-                Write-Message -Level Info "Downloader: Initiated download of $Type from '$URI'."
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { 
+        try { 
+            Write-Message -Level Info "Downloader: Initiated download of $Type from '$URI'."
 
-                if ($URI -and (Split-Path $URI -Leaf) -eq (Split-Path $Path -Leaf)) { 
-                    New-Item (Split-Path $Path) -ItemType Directory | Out-Null
-                    Invoke-WebRequest $URI -OutFile $Path -ErrorAction Stop
-                }
-                else { 
-                    [Void](Expand-WebRequest $URI $Path -ErrorAction Stop)
-                }
-                Write-Message -Level Info "Downloader: Installed $Type '$($Path.Replace("$($Session.MainPath)\", ''))'."
-                if (Get-Command "Unblock-File" -ErrorAction Ignore) { $Path | Unblock-File }
+            if ($URI -and (Split-Path $URI -Leaf) -eq (Split-Path $Path -Leaf)) { 
+                New-Item (Split-Path $Path) -ItemType Directory | Out-Null
+                Invoke-WebRequest $URI -OutFile $Path -ErrorAction Stop
             }
-            catch { 
-                $Path_Old = $null
+            else { 
+                [Void](Expand-WebRequest $URI $Path -ErrorAction Stop)
+            }
+            Write-Message -Level Info "Downloader: Installed $Type '$($Path.Replace("$($Session.MainPath)\", ''))'."
+            if (Get-Command "Unblock-File" -ErrorAction Ignore) { $Path | Unblock-File }
+        }
+        catch { 
+            $Path_Old = $null
 
+            if ($URI) { 
+                if (-not (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
+                    Write-Message -Level Warn "Downloader: Cannot download '$URI'."
+                }
+            }
+            else { Write-Message -Level Warn "Downloader: Cannot download '$(Split-Path $Path -Leaf)'." }
+
+            if ($Searchable) { 
+                Write-Message -Level Info "Downloader: Searching for $Type $(Split-Path $Path -Leaf) on local computer..."
+
+                ($Path_Old = Get-PSDrive -PSProvider FileSystem).ForEach{ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse } | Sort-Object -Property LastWriteTimeUtc -Descending | Select-Object -First 1
+                $Path_New = $Path
+            }
+
+            if ($Path_Old) { 
+                if (Test-Path -LiteralPath (Split-Path $Path_New) -PathType Container) { (Split-Path $Path_New) | Remove-Item -Recurse -Force }
+                (Split-Path $Path_Old) | Copy-Item -Destination (Split-Path $Path_New) -Recurse -Force
+                Write-Message -Level Info "Downloader: Copied $Type '$($Path.Replace("$($Session.MainPath)\", ''))' from local repository '$PathOld'."
+            }
+            else { 
                 if ($URI) { 
-                    if (-not (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
-                        Write-Message -Level Warn "Downloader: Cannot download '$URI'."
+                    if (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
+                        Write-Message -Level Warn "Downloader: Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
                     }
                 }
-                else { Write-Message -Level Warn "Downloader: Cannot download '$(Split-Path $Path -Leaf)'." }
-
-                if ($Searchable) { 
-                    Write-Message -Level Info "Downloader: Searching for $Type $(Split-Path $Path -Leaf) on local computer..."
-
-                    ($Path_Old = Get-PSDrive -PSProvider FileSystem).ForEach({ Get-ChildItem -Path $_.Root -Include (Split-Path $Path -Leaf) -Recurse }) | Sort-Object -Property LastWriteTimeUtc -Descending | Select-Object -First 1
-                    $Path_New = $Path
-                }
-
-                if ($Path_Old) { 
-                    if (Test-Path -LiteralPath (Split-Path $Path_New) -PathType Container) { (Split-Path $Path_New) | Remove-Item -Recurse -Force }
-                    (Split-Path $Path_Old) | Copy-Item -Destination (Split-Path $Path_New) -Recurse -Force
-                    Write-Message -Level Info "Downloader: Copied $Type '$($Path.Replace("$($Session.MainPath)\", ''))' from local repository '$PathOld'."
-                }
-                else { 
-                    if ($URI) { 
-                        if (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
-                            Write-Message -Level Warn "Downloader: Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
-                        }
-                    }
-                    else { Write-Message -Level Warn "Downloader: Cannot find $Type '$($Path.Replace("$($Session.MainPath)\", ''))'." }
-                }
+                else { Write-Message -Level Warn "Downloader: Cannot find $Type '$($Path.Replace("$($Session.MainPath)\", ''))'." }
             }
         }
     }
-)
+}
 
 Write-Message -Level Info "Downloader: All tasks complete."

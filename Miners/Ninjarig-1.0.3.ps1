@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
 $URI = "https://github.com/UselessGuru/miner-binaries/releases/download/v1.0.3/ninjarig_v1.0.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -32,44 +32,40 @@ $Algorithms = @(
     @{ Algorithm = "Chukwa"; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " -a argon2/chukwa" }
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $AvailableMinerDevices = $Devices.Where({ $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $AvailableMinerDevices = $Devices.Where{ $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.ForEach(
-                { 
-                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
+        $Algorithms.ForEach{ 
+            $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                    # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-                    foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+            # $ExcludePools = $_.ExcludePools
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                        if ("MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments = "$Arguments --nicehash" }
-                        if ($Pool.PoolPorts[1]) { $Arguments = "$Arguments --tls" }
+                if ("MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments = "$Arguments --nicehash" }
+                if ($Pool.PoolPorts[1]) { $Arguments = "$Arguments --tls" }
 
-                        [PSCustomObject]@{ 
-                            API         = "XmRig"
-                            Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port=$MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                            DeviceNames = $AvailableMinerDevices.Name
-                            Fee         = @(0) # Dev fee
-                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                            Name        = $MinerName
-                            Path        = $Path
-                            Port        = $MinerAPIPort
-                            Type        = "NVIDIA"
-                            URI         = $URI
-                            WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                            Workers     = @(@{ Pool = $Pool })
-                        }
-                    }
+                [PSCustomObject]@{ 
+                    API         = "XmRig"
+                    Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port=$MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                    DeviceNames = $AvailableMinerDevices.Name
+                    Fee         = @(0) # Dev fee
+                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                    Name        = $MinerName
+                    Path        = $Path
+                    Port        = $MinerAPIPort
+                    Type        = "NVIDIA"
+                    URI         = $URI
+                    WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                    Workers     = @(@{ Pool = $Pool })
                 }
-            )
+            }
         }
-    )
+    }
 }

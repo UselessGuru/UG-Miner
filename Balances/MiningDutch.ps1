@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -47,59 +47,57 @@ while (-not $Currencies -and $RetryCount -gt 0 -and $Config.MiningDutchUserName 
             $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
         }
 
-        if ($Currencies = ($APIresponse.result.Where({ $_.tag -and $_.tag -notlike "*_*" -and $_.status -ne "merged" }) | Sort-Object -Property tag)) { 
-            $Currencies.ForEach(
-                { 
-                    $APIresponse = $null
-                    $Currency = $_.tag
-                    if ($Currency -eq "SKY") { $Currency = "SKYDOGE" }
-                    $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
+        if ($Currencies = ($APIresponse.result.Where{ $_.tag -and $_.tag -notlike "*_*" -and $_.status -ne "merged" } | Sort-Object -Property tag)) { 
+            $Currencies.ForEach{ 
+                $APIresponse = $null
+                $Currency = $_.tag
+                if ($Currency -eq "SKY") { $Currency = "SKYDOGE" }
+                $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
 
-                    while (-not $APIresponse -and $RetryCount -gt 0) { 
-                        try { 
-                            $Request = "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)"
-                            Write-Message -Level $DebugLevel "BalancesTracker '$Name': Querying $($Request.Replace("$($Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***"))"
-                            $APIresponse = Invoke-RestMethod $Request -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
-                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            Write-Message -Level $DebugLevel "BalancesTracker '$Name': Response from $($Request.Replace("$($Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) received"
-                            if ($APIresponse.message -match "^Only \d request every ") { 
-                                $WaitSeconds = [UInt16]($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$")
-                                Write-Message -Level $DebugLevel "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
-                                Start-Sleep -Seconds ($WaitSeconds + 1)
-                                Remove-Variable WaitSeconds
-                                $APIresponse = $null
-                            }
+                while (-not $APIresponse -and $RetryCount -gt 0) { 
+                    try { 
+                        $Request = "https://www.mining-dutch.nl/pools/$($_.Currency.ToLower()).php?page=api&action=getuserbalance&api_key=$($Config.MiningDutchAPIKey)"
+                        Write-Message -Level $DebugLevel "BalancesTracker '$Name': Querying $($Request.Replace("$($Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***"))"
+                        $APIresponse = Invoke-RestMethod $Request -UserAgent $UserAgent -Headers $Headers -TimeoutSec $PoolAPItimeout -ErrorAction Ignore
+                        $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                        Write-Message -Level $DebugLevel "BalancesTracker '$Name': Response from $($Request.Replace("$($Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) received"
+                        if ($APIresponse.message -match "^Only \d request every ") { 
+                            $WaitSeconds = [UInt16]($APIresponse.message -replace "^Only \d request every " -replace " seconds allowed$")
+                            Write-Message -Level $DebugLevel "Brain '$Name': Response '$($AlgoData.message)' from $URI received -> waiting $WaitSeconds seconds"
+                            Start-Sleep -Seconds ($WaitSeconds + 1)
+                            Remove-Variable WaitSeconds
+                            $APIresponse = $null
+                        }
 
-                            if ($Config.BalancesTrackerLogAPIResponse) { 
-                                "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-                                ($Request.replace("$($Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-                                $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-                            }
+                        if ($Config.BalancesTrackerLogAPIResponse) { 
+                            "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                            ($Request.replace("$($Config.MiningDutchAPIKey)", "***MiningDutchAPIKey***")) | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                            $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                        }
 
-                            elseif ($APIresponse.getuserbalance.data) { 
-                                $Unpaid = [Double]$APIresponse.getuserbalance.data.confirmed + [Double]$APIresponse.getuserbalance.data.unconfirmed
-                                if ($Unpaid -gt 0) { 
-                                    [PSCustomObject]@{ 
-                                        DateTime = [DateTime]::Now.ToUniversalTime()
-                                        Pool     = $Name
-                                        Currency = $Currency
-                                        Wallet   = $Config.MiningDutchUserName
-                                        Pending  = [Double]$APIresponse.getuserbalance.data.unconfirmed
-                                        Balance  = [Double]$APIresponse.getuserbalance.data.confirmed
-                                        Unpaid   = $Unpaid
-                                        Url      = "https://www.mining-dutch.nl/index.php?page=earnings"
-                                    }
+                        elseif ($APIresponse.getuserbalance.data) { 
+                            $Unpaid = [Double]$APIresponse.getuserbalance.data.confirmed + [Double]$APIresponse.getuserbalance.data.unconfirmed
+                            if ($Unpaid -gt 0) { 
+                                [PSCustomObject]@{ 
+                                    DateTime = [DateTime]::Now.ToUniversalTime()
+                                    Pool     = $Name
+                                    Currency = $Currency
+                                    Wallet   = $Config.MiningDutchUserName
+                                    Pending  = [Double]$APIresponse.getuserbalance.data.unconfirmed
+                                    Balance  = [Double]$APIresponse.getuserbalance.data.confirmed
+                                    Unpaid   = $Unpaid
+                                    Url      = "https://www.mining-dutch.nl/index.php?page=earnings"
                                 }
-                                Remove-Variable Unpaid
                             }
+                            Remove-Variable Unpaid
                         }
-                        catch { 
-                            Start-Sleep 0
-                        }
-                        $RetryCount--
                     }
+                    catch { 
+                        Start-Sleep 0
+                    }
+                    $RetryCount--
                 }
-            )
+            }
         }
     }
     catch { 

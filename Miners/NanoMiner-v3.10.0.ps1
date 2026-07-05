@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") })) { return }
 
 $URI = "https://github.com/nanopool/nanominer/releases/download/v3.10.0/nanominer-windows-3.10.0.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -62,72 +62,68 @@ $Algorithms = @(
     @{ Algorithm = "UbqHash";            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; Tuning = " -coreClocks +20 -memClocks +100"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " -algo Ubqhash" } # PhoenixMiner-v6.2c is fastest
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.Where({ -not $_.Algorithm -or $MinerPools[1][$_.Algorithm] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
+$Algorithms = $Algorithms.Where{ -not $_.Algorithm -or $MinerPools[1][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $Type = $_.Type
+        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
-                { 
-                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Type -eq "CPU" -or $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+        $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
+            $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+            if ($SupportedMinerDevices = $MinerDevices.Where{ $_.Type -eq "CPU" -or $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
 
-                        if ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                            $PrerequisitePath = $Session.VertHashDatPath
-                            $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
-                        }
-                        else { 
-                            $PrerequisitePath = ""
-                            $PrerequisiteURI  = ""
-                        }
+                if ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                    $PrerequisitePath = $Session.VertHashDatPath
+                    $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+                }
+                else { 
+                    $PrerequisitePath = ""
+                    $PrerequisiteURI  = ""
+                }
 
-                        $ExcludePools = $_.ExcludePools
-                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                $ExcludePools = $_.ExcludePools
+                foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB + $Pool1.DAGsizeGiB
-                            if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                    $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB + $Pool1.DAGsizeGiB
+                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
-                                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
+                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                                $Arguments = $_.Arguments
-                                $Arguments = if ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
-                                $Arguments = "$Arguments -wallet $($Pool.User)"
-                                if ($_.Type -ne "CPU") { $Arguments = "$Arguments -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach({ '{0:x}' -f $_.$DeviceEnumerator }) -join ',')" }
+                        $Arguments = $_.Arguments
+                        $Arguments = if ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
+                        $Arguments = "$Arguments -wallet $($Pool.User)"
+                        if ($_.Type -ne "CPU") { $Arguments = "$Arguments -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach{ '{0:x}' -f $_.$DeviceEnumerator } -join ',')" }
 
-                                if ($_.Type -eq "CPU") { $Arguments = "$Arguments -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.Config.CPUMiningReserveCPUcore))" }
-                                $Arguments = "$Arguments -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.PoolsConfig.($Pool.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
+                        if ($_.Type -eq "CPU") { $Arguments = "$Arguments -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.Config.CPUMiningReserveCPUcore))" }
+                        $Arguments = "$Arguments -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.PoolsConfig.($Pool.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
 
-                                # Apply tuning parameters
-                                if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
+                        # Apply tuning parameters
+                        if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
-                                [PSCustomObject]@{ 
-                                    API              = "NanoMiner"
-                                    Arguments        = $Arguments
-                                    DeviceNames      = $AvailableMinerDevices.Name
-                                    Fee              = $_.Fee # Dev fee
-                                    MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/#/"
-                                    Name             = $MinerName
-                                    Path             = $Path
-                                    Port             = $MinerAPIPort
-                                    PrerequisitePath = $PrerequisitePath
-                                    PrerequisiteURI  = $PrerequisiteURI
-                                    Type             = $Type
-                                    URI              = $URI
-                                    WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers          = @(@{ Pool = $Pool })
-                                }
-                            }
+                        [PSCustomObject]@{ 
+                            API              = "NanoMiner"
+                            Arguments        = $Arguments
+                            DeviceNames      = $AvailableMinerDevices.Name
+                            Fee              = $_.Fee # Dev fee
+                            MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/#/"
+                            Name             = $MinerName
+                            Path             = $Path
+                            Port             = $MinerAPIPort
+                            PrerequisitePath = $PrerequisitePath
+                            PrerequisiteURI  = $PrerequisiteURI
+                            Type             = $Type
+                            URI              = $URI
+                            WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                            Workers          = @(@{ Pool = $Pool })
                         }
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

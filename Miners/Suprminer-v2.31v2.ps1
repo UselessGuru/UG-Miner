@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.OpenCL.ComputeCapability -ge "5.0" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
 $URI = switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/SuprMiner/suprminer-winx86_64_cuda11_1_v2.zip" }
@@ -35,48 +35,44 @@ $Algorithms = @(
     @{ Algorithm = "HeavyHash"; MinMemGiB = 1; WarmupTimes = @(75, 0); ExcludePools = @(); Arguments = " --algo obtc" } # FPGA
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm].PoolPorts[0] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $MinerDevices = $Devices.Where{ $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.ForEach(
-                { 
-                    $MinMemGiB = $_.MinMemGiB
-                    if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+        $Algorithms.ForEach{ 
+            $MinMemGiB = $_.MinMemGiB
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
-                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
+                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                        # $ExcludePools = $_.ExcludePools
-                        # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
-                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
+                # $ExcludePools = $_.ExcludePools
+                # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name }) { 
+                foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] }) { 
 
-                            $Arguments = $_.Arguments
-                            if ($AvailableMinerDevices.Count -gt 1) { $Arguments = "$Arguments --intensity 15" } # Default intensities too high if more than one GPU
+                    $Arguments = $_.Arguments
+                    if ($AvailableMinerDevices.Count -gt 1) { $Arguments = "$Arguments --intensity 15" } # Default intensities too high if more than one GPU
 
-                            [PSCustomObject]@{ 
-                                API         = "CcMiner"
-                                Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --retry-pause 1 --api-bind $MinerAPIPort --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                DeviceNames = $AvailableMinerDevices.Name
-                                Fee         = @(0.01) # Dev fee
-                                Name        = $MinerName
-                                Path        = $Path
-                                Port        = $MinerAPIPort
-                                Type        = "NVIDIA"
-                                URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
-                            }
-                        }
+                    [PSCustomObject]@{ 
+                        API         = "CcMiner"
+                        Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --retry-pause 1 --api-bind $MinerAPIPort --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                        DeviceNames = $AvailableMinerDevices.Name
+                        Fee         = @(0.01) # Dev fee
+                        Name        = $MinerName
+                        Path        = $Path
+                        Port        = $MinerAPIPort
+                        Type        = "NVIDIA"
+                        URI         = $URI
+                        WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                        Workers     = @(@{ Pool = $Pool })
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

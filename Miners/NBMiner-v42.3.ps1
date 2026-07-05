@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
+Version:        6.8.12
 Version date:   2024/01/29
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "6.0" -and $_.CUDAVersion -ge [Version]"10.0") })) { return }
 
 $URI = "https://github.com/NebuTech/NBMiner/releases/download/v42.3/NBMiner_42.3_Win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -43,76 +43,72 @@ $Algorithms = @(
     @{ Algorithm = "Octopus";    Type = "NVIDIA"; Fee = @(0.03); MinMemGiB = 1.20; AdditionalWin10MemGB = 1; MinComputeCapability = 6.1; Tuning = " -mt 1"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = "^Ampere$"; ExcludePools = @();           Arguments = " --algo octopus --platform 1" } # Trex-v0.26.8 is fastest
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $Type = $_.Type
+        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
-                { 
-                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    $MinComputeCapability = $_.MinComputeCapability
-                    if ($SupportedMinerDevices = $MinerDevices.Where({ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability -and $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+        $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
+            $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+            $MinComputeCapability = $_.MinComputeCapability
+            if ($SupportedMinerDevices = $MinerDevices.Where{ [Double]$_.OpenCL.ComputeCapability -ge $MinComputeCapability -and $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
 
-                        $ExcludePools = $_.ExcludePools
-                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                $ExcludePools = $_.ExcludePools
+                foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                            # Windows 10 requires more memory on some algos
-                            if ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
+                    $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
+                    # Windows 10 requires more memory on some algos
+                    if ([System.Environment]::OSVersion.Version -ge [Version]"10.0.0.0") { $MinMemGiB += $_.AdditionalWin10MemGB }
 
-                            if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
-                                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
+                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                                $Arguments = $_.Arguments
-                                switch ($Pool.Protocol) { 
-                                    "ethstratum1"  { $Arguments = "$Arguments --url stratum"; break }
-                                    "ethstratum2"  { $Arguments = "$Arguments --url nicehash"; break }
-                                    "ethstratumnh" { $Arguments = "$Arguments --url nicehash"; break }
-                                    default        { $Arguments = "$Arguments --url stratum" }
-                                }
-                                $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
-                                $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --password $($Pool.Pass)"
+                        $Arguments = $_.Arguments
+                        switch ($Pool.Protocol) { 
+                            "ethstratum1"  { $Arguments = "$Arguments --url stratum"; break }
+                            "ethstratum2"  { $Arguments = "$Arguments --url nicehash"; break }
+                            "ethstratumnh" { $Arguments = "$Arguments --url nicehash"; break }
+                            default        { $Arguments = "$Arguments --url stratum" }
+                        }
+                        $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
+                        $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --password $($Pool.Pass)"
 
-                                # Optionally disable dev fee mining
-                                if ($Session.Config.DisableMinerFee) { 
-                                    $_.Fee = 0
-                                    $Arguments = "$Arguments --fee 0"
-                                }
+                        # Optionally disable dev fee mining
+                        if ($Session.Config.DisableMinerFee) { 
+                            $_.Fee = 0
+                            $Arguments = "$Arguments --fee 0"
+                        }
 
-                                # Allow more time to build larger DAGs, must use type cast to keep values in $_
-                                $WarmupTimes = [UInt16[]]$_.WarmupTimes
-                                $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 2)
+                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                        $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 2)
 
-                                # Apply tuning parameters
-                                if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
+                        # Apply tuning parameters
+                        if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
-                                [PSCustomObject]@{ 
-                                    API         = "NBMiner"
-                                    Arguments   = "$Arguments --no-watchdog --api 127.0.0.1:$($MinerAPIPort) --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                    DeviceNames = $AvailableMinerDevices.Name
-                                    Fee         = $_.Fee # Dev fee
-                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                    Name        = $MinerName
-                                    Path        = $Path
-                                    Port        = $MinerAPIPort
-                                    Type        = $Type
-                                    URI         = $URI
-                                    WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
-                                }
-                            }
+                        [PSCustomObject]@{ 
+                            API         = "NBMiner"
+                            Arguments   = "$Arguments --no-watchdog --api 127.0.0.1:$($MinerAPIPort) --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                            DeviceNames = $AvailableMinerDevices.Name
+                            Fee         = $_.Fee # Dev fee
+                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                            Name        = $MinerName
+                            Path        = $Path
+                            Port        = $MinerAPIPort
+                            Type        = $Type
+                            URI         = $URI
+                            WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                            Workers     = @(@{ Pool = $Pool })
                         }
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

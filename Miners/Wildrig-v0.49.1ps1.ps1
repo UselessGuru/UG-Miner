@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
-# slightly improved pearlhash for NVIDIA RTX 3000 series gpu's
-# reverted back default pearlhash kernel for NVIDIA 4060Ti and 4070Ti and fixed intensity(--pearlhash-kernel 2 now will use less efficient one)
+# improved pearlhash for NVIDIA RTX 3000, 4000 and 5000 series
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.48.9/wildrig-multi-windows-0.48.9.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.49.1/wildrig-multi-windows-0.49.1.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"
@@ -212,49 +211,45 @@ $Algorithms = @(
 #   @{ Algorithm = "X7";               Type = "NVIDIA"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo x7 --watchdog" } # ASIC
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $Type = $_.Type
+        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
-                { 
-                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+        $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
+            $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+            if ($SupportedMinerDevices = $MinerDevices.Where{ $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
 
-                        $ExcludePools = $_.ExcludePools
-                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
+                $ExcludePools = $_.ExcludePools
+                foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
 
-                            $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                            if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                    $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
+                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
-                                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
+                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                                [PSCustomObject]@{ 
-                                    API         = "XmRig"
-                                    Arguments   = "$($_.Arguments) --api-port $MinerAPIPort --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps" } else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --multiple-instance --opencl-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')"
-                                    DeviceNames = $AvailableMinerDevices.Name
-                                    Fee         = $_.Fee # Dev fee
-                                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
-                                    Name        = $MinerName
-                                    Path        = $Path
-                                    Port        = $MinerAPIPort
-                                    Type        = $Type
-                                    URI         = $URI
-                                    WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(@{ Pool = $Pool })
-                                }
-                            }
+                        [PSCustomObject]@{ 
+                            API         = "XmRig"
+                            Arguments   = "$($_.Arguments) --api-port $MinerAPIPort --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps" } else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --multiple-instance --opencl-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                            DeviceNames = $AvailableMinerDevices.Name
+                            Fee         = $_.Fee # Dev fee
+                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                            Name        = $MinerName
+                            Path        = $Path
+                            Port        = $MinerAPIPort
+                            Type        = $Type
+                            URI         = $URI
+                            WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                            Workers     = @(@{ Pool = $Pool })
                         }
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

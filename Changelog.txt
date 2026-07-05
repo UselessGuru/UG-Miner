@@ -1,9 +1,32 @@
+Changelog UG-Miner 6.8.12 2026/07/05
+====================================
+
+Fixes:
+- Brain 'ZPool': Not updating DAG data (regression from v6.8.4)
+- Brain 'HashCryptos' & 'MiningDutch': 'An error occurred while enumerating through a collection: Collection was modified after the enumerator was instantiated.'
+- Core / Include.psm1: Miner property 'Activated' always 0
+- Core: Do not enforce $ContinousCycle on benchmarking / power usage measuring miners
+- Core: Main loop not ending when benchmarking and miner not running
+- Core: Switching log list incorrect miner command line when miner gets stopped
+- Legacy GUI / Earnings and Balances: Tooltip in balances not showing amounts (regression from 6.8.10)
+
+Improvements:
+- Balances tracker: Minor performance improvements
+- Balances tracker: Remove obsolete code
+- Core: Minor performance improvements
+- Core: Remove obsolete code
+
+Miner updates:
+- SRBMinerMulti-v3.4.3
+- Wildrig-v0.49.1
+
+
 Changelog UG-Miner 6.8.11 2026/06/27
 ====================================
 
 Changes:
-- Core / Include.psm1: Function 'Get-Rate' gets FIAT exchange rates from 'https://api.exchangerate.fun'
-- Core / Include.psm1: Function 'Get-Rate' gets crypto exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'
+- Core / Include.psm1: Function 'Get-Rate' gets FIAT currency exchange rates from 'https://api.exchangerate.fun'
+- Core / Include.psm1: Function 'Get-Rate' gets crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'
 
 Fixes:
 - Currency exchange rates not getting updated periodically (regression from 6.8.10)

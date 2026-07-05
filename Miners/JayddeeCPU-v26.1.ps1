@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 # Fixed segfault in scrypt algo on some older CPUs.
 
-if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where({ $_.Type -eq "CPU" }))) { return }
+if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" })) { return }
 
 $URI = "https://github.com/JayDDee/cpuminer-opt/releases/download/v26.1/cpuminer-opt-26.1-windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -80,45 +80,43 @@ $Algorithms = @(
     @{ Algorithm = "ZR5";                  WarmupTimes = @(45, 60); ExcludePools = @(); Arguments = " --algo zr5" }
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
     $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
-    $Algorithms.ForEach(
-        { 
-            $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
+    $Algorithms.ForEach{ 
+        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
 
-            if ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                $PrerequisitePath = $Session.VertHashDatPath
-                $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
-            }
-            else { 
-                $PrerequisitePath = ""
-                $PrerequisiteURI  = ""
-            }
+        if ($_.Algorithm -eq "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+            $PrerequisitePath = $Session.VertHashDatPath
+            $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+        }
+        else { 
+            $PrerequisitePath = ""
+            $PrerequisiteURI  = ""
+        }
 
-            # $ExcludePools = $_.ExcludePools
-            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-            foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+        # $ExcludePools = $_.ExcludePools
+        # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
+        foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                [PSCustomObject]@{ 
-                    API              = "CcMiner"
-                    Arguments        = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --hash-meter --stratum-keepalive --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --api-bind $($MinerAPIPort)"
-                    DeviceNames      = $AvailableMinerDevices.Name
-                    Fee              = @(0) # Dev fee0
-                    Name             = $MinerName
-                    Path             = $Path
-                    Port             = $MinerAPIPort
-                    PrerequisitePath = $PrerequisitePath
-                    PrerequisiteURI  = $PrerequisiteURI
-                    Type             = "CPU"
-                    URI              = $URI
-                    WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                    Workers          = @(@{ Pool = $Pool })
-                }
+            [PSCustomObject]@{ 
+                API              = "CcMiner"
+                Arguments        = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --hash-meter --stratum-keepalive --quiet --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --api-bind $($MinerAPIPort)"
+                DeviceNames      = $AvailableMinerDevices.Name
+                Fee              = @(0) # Dev fee0
+                Name             = $MinerName
+                Path             = $Path
+                Port             = $MinerAPIPort
+                PrerequisitePath = $PrerequisitePath
+                PrerequisiteURI  = $PrerequisiteURI
+                Type             = "CPU"
+                URI              = $URI
+                WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                Workers          = @(@{ Pool = $Pool })
             }
         }
-    )
+    }
 }

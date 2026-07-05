@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") })) { return }
 
 # - Added support for RandomX v2.
 # - RISC-V: vectorized RandomX main loop.
@@ -190,59 +190,55 @@ $Algorithms = @(
 #   @{ Algorithm = "Uplexa";               Type = "NVIDIA"; MinMemGiB = 0.5;  WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $Type = $_.Type
+        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            # Optionally disable dev fee mining, requires change in source code
-            # $Fee = If ($Session.Config.DisableMinerFee) { 0 } else { 1 }
-            $Fee = 0
+        # Optionally disable dev fee mining, requires change in source code
+        # $Fee = If ($Session.Config.DisableMinerFee) { 0 } else { 1 }
+        $Fee = 0
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
-                { 
-                    # $ExcludePools = $_.ExcludePools
-                    # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $ExcludePools -notcontains $_.Name })) { 
-                    foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+        $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
+            # $ExcludePools = $_.ExcludePools
+            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
+            foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                        $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                        if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -gt $MinMemGiB })) { 
+                $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
+                if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -gt $MinMemGiB }) { 
 
-                            $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
+                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                            $Arguments = $_.Arguments
-                            if ($_.Type -eq "CPU") { $Arguments = "$Arguments --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" }
-                            elseif ("AMD", "INTEL" -contains $_.Type) { $Arguments = "$Arguments --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
-                            else { $Arguments = "$Arguments --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:x}' -f $_ }) -join ',')" }
-                            if (-not $Session.IsLocalAdmin) { $Arguments = "$Arguments --randomx-wrmsr=-1" } #  disable MSR mod
+                    $Arguments = $_.Arguments
+                    if ($_.Type -eq "CPU") { $Arguments = "$Arguments --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" }
+                    elseif ("AMD", "INTEL" -contains $_.Type) { $Arguments = "$Arguments --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')" }
+                    else { $Arguments = "$Arguments --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')" }
+                    if (-not $Session.IsLocalAdmin) { $Arguments = "$Arguments --randomx-wrmsr=-1" } #  disable MSR mod
 
-                            $MinerPath = if ($_.Algorithm -in "Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva") { $Path -replace "\\xmrig.exe$", "\xmrig-mo.exe" } else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
-                            $RigID = if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } else { $Session.Config.WorkerName }
+                    $MinerPath = if ($_.Algorithm -in "Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva") { $Path -replace "\\xmrig.exe$", "\xmrig-mo.exe" } else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
+                    $RigID = if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } else { $Session.Config.WorkerName }
 
-                            [PSCustomObject]@{ 
-                                API         = "XmRig"
-                                Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where({ $null -ne $_ })[-1]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --retries=90 --retry-pause=1"
-                                DeviceNames = $AvailableMinerDevices.Name
-                                Fee         = @($Fee) # Dev fee
-                                MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/api.json"
-                                Name        = $MinerName
-                                Path        = $MinerPath
-                                Port        = $MinerAPIPort
-                                Type        = $Type
-                                URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
-                            }
-                        }
+                    [PSCustomObject]@{ 
+                        API         = "XmRig"
+                        Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where{ $null -ne $_ }[-1]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --retries=90 --retry-pause=1"
+                        DeviceNames = $AvailableMinerDevices.Name
+                        Fee         = @($Fee) # Dev fee
+                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/api.json"
+                        Name        = $MinerName
+                        Path        = $MinerPath
+                        Port        = $MinerAPIPort
+                        Type        = $Type
+                        URI         = $URI
+                        WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                        Workers     = @(@{ Pool = $Pool })
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 [NoRunspaceAffinity()]
@@ -33,7 +33,7 @@ class BzMiner : Miner {
             $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
             if (-not $Data) { return $null }
 
-            $Devices = $Data.devices.Where({ $_.message[0] })
+            $Devices = $Data.devices.Where{ $_.message[0] }
 
             if ($Devices.Hashrate.Count -ne $this.Algorithms.Count) { return $null }
 
@@ -43,23 +43,23 @@ class BzMiner : Miner {
 
             $Shares = [PSCustomObject]@{ }
 
-            $HashrateValue = [Double](($Devices.ForEach({ $_.hashrate[0] }) | Measure-Object -Sum).Sum)
+            $HashrateValue = [Double](($Devices.ForEach{ $_.hashrate[0] } | Measure-Object -Sum).Sum)
             if (-not $HashrateValue -and $Devices.hashrate -contains $null) { return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-            $SharesAccepted = [Int64](($Devices.ForEach({ $_.valid_solutions[0] }) | Measure-Object -Sum).Sum)
-            $SharesRejected = [Int64](($Devices.ForEach({ $_.rejected_solutions[0] }) | Measure-Object -Sum).Sum)
-            $SharesInvalid = [Int64](($Devices.ForEach({ $_.stale_solutions[0] }) | Measure-Object -Sum).Sum)
+            $SharesAccepted = [Int64](($Devices.ForEach{ $_.valid_solutions[0] } | Measure-Object -Sum).Sum)
+            $SharesRejected = [Int64](($Devices.ForEach{ $_.rejected_solutions[0] } | Measure-Object -Sum).Sum)
+            $SharesInvalid = [Int64](($Devices.ForEach{ $_.stale_solutions[0] } | Measure-Object -Sum).Sum)
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
             if ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-                $HashrateValue = [Double](($Devices.ForEach({ $_.hashrate[1] }) | Measure-Object -Sum).Sum)
+                $HashrateValue = [Double](($Devices.ForEach{ $_.hashrate[1] } | Measure-Object -Sum).Sum)
                 if (-not $HashrateValue -and $Devices.hashrate -contains $null) { return $null }
                 $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-                $SharesAccepted = [Int64](($Devices.ForEach({ $_.valid_solutions[1] }) | Measure-Object -Sum).Sum)
-                $SharesRejected = [Int64](($Devices.ForEach({ $_.rejected_solutions[1] }) | Measure-Object -Sum).Sum)
-                $SharesInvalid = [Int64](($Devices.ForEach({ $_.stale_solutions[1] }) | Measure-Object -Sum).Sum)
+                $SharesAccepted = [Int64](($Devices.ForEach{ $_.valid_solutions[1] } | Measure-Object -Sum).Sum)
+                $SharesRejected = [Int64](($Devices.ForEach{ $_.rejected_solutions[1] } | Measure-Object -Sum).Sum)
+                $SharesInvalid = [Int64](($Devices.ForEach{ $_.stale_solutions[1] } | Measure-Object -Sum).Sum)
                 $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
             }
 

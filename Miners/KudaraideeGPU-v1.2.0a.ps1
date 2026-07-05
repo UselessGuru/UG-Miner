@@ -18,10 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.4.27
-Version date:   2026/06/27
+Version date:   2026/07/05
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") })) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Kudaraidee/kudaraidee-v1.2.0a-win64.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -43,55 +43,51 @@ $Algorithms = @(
     @{ Algorithm = "Argon2d16000"; Type = "NVIDIA"; MinMemGiB = 2; Blocksize = 16000; WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d16000 --use-gpu CUDA" }
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm] })
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithm].PoolPorts[0] })
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm].PoolPorts[0] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $Type = $_.Type
-            $MinerDevices = $Devices.Where({ $_.Type -eq $Type -and $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $Type = $_.Type
+        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.Where({ $_.Type -eq $Type }).ForEach(
-                { 
-                    $MinMemGiB = $_.MinMemGiB
-                    if ($AvailableMinerDevices = $MinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+        $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
+            $MinMemGiB = $_.MinMemGiB
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
-                        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
+                $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                        # $ExcludePools = $_.ExcludePools
-                        # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name })) { 
-                        foreach ($Pool in $MinerPools[0][$_.Algorithm].Where({ $_.PoolPorts[0] })) { 
+                # $ExcludePools = $_.ExcludePools
+                # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name }) { 
+                foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] }) { 
 
-                            $BlockSize = $_.BlockSize
-                            # 1 GB memory reserve, then 1 thread per 4GB
-                            $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach({ ($_.MemoryGiB - 1) / 4 }) | Measure-Object -Minimum).Minimum)
+                    $BlockSize = $_.BlockSize
+                    # 1 GB memory reserve, then 1 thread per 4GB
+                    $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach{ ($_.MemoryGiB - 1) / 4 } | Measure-Object -Minimum).Minimum)
 
-                            # Reserve 250KB for AMD driver
-                            $GPUmemory = ($AvailableMinerDevices.ForEach({ $_.MemoryGiB }) | Measure-Object -Minimum).Minimum
-                            if ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
-                            $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
+                    # Reserve 250KB for AMD driver
+                    $GPUmemory = ($AvailableMinerDevices.ForEach{ $_.MemoryGiB } | Measure-Object -Minimum).Minimum
+                    if ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
+                    $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
 
-                            [PSCustomObject]@{ 
-                                API         = "CcMiner"
-                                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach({ '{0:x}' -f ($_ + 1) })) -join ',')"
-                                DeviceNames = $AvailableMinerDevices.Name
-                                Fee         = @(0) # Dev fee
-                                Name        = $MinerName
-                                Path        = $Path
-                                Port        = $MinerAPIPort
-                                Type        = $Type
-                                URI         = $URI
-                                WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                Workers     = @(@{ Pool = $Pool })
-                            }
-                        }
+                    [PSCustomObject]@{ 
+                        API         = "CcMiner"
+                        Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach{ '{0:x}' -f ($_ + 1) }) -join ',')"
+                        DeviceNames = $AvailableMinerDevices.Name
+                        Fee         = @(0) # Dev fee
+                        Name        = $MinerName
+                        Path        = $Path
+                        Port        = $MinerAPIPort
+                        Type        = $Type
+                        URI         = $URI
+                        WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                        Workers     = @(@{ Pool = $Pool })
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

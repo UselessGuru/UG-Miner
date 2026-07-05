@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\XmRig.ps1
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 [NoRunspaceAffinity()]
@@ -83,7 +83,7 @@ class XmRig : Miner {
                             $Parameters.ConfigFile.Content | Add-Member threads ([Array]($ThreadsConfig * $Parameters.Threads)) -Force
                         }
                         else { 
-                            $Parameters.ConfigFile.Content | Add-Member threads ([Array](($ThreadsConfig.Where({ $Parameters.Devices -contains $_.index }))) * $Parameters.Threads) -Force
+                            $Parameters.ConfigFile.Content | Add-Member threads ([Array](($ThreadsConfig.Where{ $Parameters.Devices -contains $_.index })) * $Parameters.Threads) -Force
                         }
                         $Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore
                     }
@@ -103,7 +103,7 @@ class XmRig : Miner {
                     if ($this.Process.ParentId) { Stop-Process -Id $this.Process.ParentId -Force -ErrorAction Ignore | Out-Null }
                     Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
                     # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                    (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach({ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore })
+                    (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
                 }
             }
             else { 
@@ -137,7 +137,7 @@ class XmRig : Miner {
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
-            $HashrateValue = [Double]($Data.hashrate.total.Where({ $_ }) | Measure-Object -Average).Average
+            $HashrateValue = [Double]($Data.hashrate.total.Where{ $_ } | Measure-Object -Average).Average
             if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[0] } # fix
             if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[1] } # fix
             if (-not $HashrateValue) { $HashrateValue = [Double]$Data.hashrate.total[2] } # fix

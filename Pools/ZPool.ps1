@@ -53,14 +53,14 @@ if ($PriceField) {
 
     if (-not $Request.PSObject.Properties.Name) { return }
 
-    foreach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp })) { 
+    foreach ($Algorithm in $Request.PSObject.Properties.Name.Where{ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
         $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = [String]$Request.$Algorithm.currency
         $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
         $PayoutCurrency = if ($Currency -and $PoolConfig.Wallets.$Currency) { $Currency } else { $PoolConfig.PayoutCurrency }
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
 
-        if (-not $Request.$Algorithm.conversion_supported) {
+        if (-not $Request.$Algorithm.conversion_supported) { 
             if (-not $Currency) { 
                 $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
             elseif (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
@@ -83,7 +83,7 @@ if ($PriceField) {
         }
 
         foreach ($RegionNorm in $Session.Regions[$Session.Config.Region]) { 
-            if ($Region = $PoolConfig.Region.Where({ (Get-Region $_) -eq $RegionNorm })) { 
+            if ($Region = $PoolConfig.Region.Where{ (Get-Region $_) -eq $RegionNorm }) { 
 
                 [PSCustomObject]@{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)

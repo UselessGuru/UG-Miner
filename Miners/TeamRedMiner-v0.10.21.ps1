@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
-if (-not ($Devices = $Session.EnabledDevices.Where({ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" }))) { return }
+if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" })) { return }
 
 $URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TeamRedMiner/teamredminer-v0.10.21-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -87,77 +87,73 @@ $Algorithms = @(
     @{ Algorithms = @("X16rt", "");                        SecondaryAlgorithmPrefix = "";        Fee = @(0.025);      MinMemGiB = 2.0;  WarmupTimes = @(60, 15); ExcludeGPUarchitectures = "^GCN1$|^RDNA\d$"; ExcludePools = @(@(), @());           Arguments = " --algo=x16rt" } # FPGA
 )
 
-$Algorithms = $Algorithms.Where({ $MinerPools[0][$_.Algorithms[0]] })
-$Algorithms = $Algorithms.Where({ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] })
-$Algorithms = $Algorithms.Where({ $_.Algorithms[0] -ne "EtcHash" -or $MinerPools[0][$_.Algorithms[0]].Epoch -lt 383 }) # Miner supports EtcHash up to epoch 382
+$Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithms[0]] }
+$Algorithms = $Algorithms.Where{ -not $_.Algorithms[1] -or $MinerPools[1][$_.Algorithms[1]] }
+$Algorithms = $Algorithms.Where{ $_.Algorithms[0] -ne "EtcHash" -or $MinerPools[0][$_.Algorithms[0]].Epoch -lt 383 } # Miner supports EtcHash up to epoch 382
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach(
-        { 
-            $Model = $_.Model
-            $MinerDevices = $Devices.Where({ $_.Model -eq $Model })
-            $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+    ($Devices | Sort-Object -Property Model -Unique).ForEach{ 
+        $Model = $_.Model
+        $MinerDevices = $Devices.Where{ $_.Model -eq $Model }
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
-            $Algorithms.ForEach(
-                { 
-                    $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-                    if ($SupportedMinerDevices = $MinerDevices.Where({ $_.Architecture -notmatch $ExcludeGPUarchitectures })) { 
+        $Algorithms.ForEach{ 
+            $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
+            if ($SupportedMinerDevices = $MinerDevices.Where{ $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
 
-                        if ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
-                            $PrerequisitePath = $Session.VertHashDatPath
-                            $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
-                        }
-                        else { 
-                            $PrerequisitePath = ""
-                            $PrerequisiteURI  = ""
-                        }
+                if ($_.Algorithms -contains "VertHash" -and (Get-Item -Path $Session.VertHashDatPath -ErrorAction Ignore).length -ne 1283457024) { 
+                    $PrerequisitePath = $Session.VertHashDatPath
+                    $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
+                }
+                else { 
+                    $PrerequisitePath = ""
+                    $PrerequisiteURI  = ""
+                }
 
-                        $ExcludePools = $_.ExcludePools
-                        foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where({ $ExcludePools[0] -notcontains $_.Name })) { 
-                            foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where({ $ExcludePools[1] -notcontains $_.Name })) { 
+                $ExcludePools = $_.ExcludePools
+                foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where{ $ExcludePools[0] -notcontains $_.Name }) { 
+                    foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]].Where{ $ExcludePools[1] -notcontains $_.Name }) { 
 
-                                $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                                if ($AvailableMinerDevices = $SupportedMinerDevices.Where({ $_.MemoryGiB -ge $MinMemGiB })) { 
+                        $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
+                        if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
-                                    $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
+                            $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                                    $Arguments = "$($_.Arguments) --pool_force_ensub --url=$(if ($Pool0.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                    switch ($Pool0.Protocol) { 
-                                        "ethstratumnh" { $Arguments = "$Arguments --eth_stratum_mode=nicehash"; break }
-                                    }
-                                    $Arguments = "$Arguments --user=$($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass=$($Pool0.Pass)"
+                            $Arguments = "$($_.Arguments) --pool_force_ensub --url=$(if ($Pool0.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
+                            switch ($Pool0.Protocol) { 
+                                "ethstratumnh" { $Arguments = "$Arguments --eth_stratum_mode=nicehash"; break }
+                            }
+                            $Arguments = "$Arguments --user=$($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass=$($Pool0.Pass)"
 
-                                    if ($_.SecondaryAlgorithmPrefix) { 
-                                        $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_start"
-                                        $Arguments = "$Arguments --url=$(if ($Pool1.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                        $Arguments = "$Arguments --user=$($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
-                                        $Arguments = "$Arguments --pass=$($Pool1.Pass)"
-                                        $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_end"
-                                    }
-                                    if ($_.Algorithms[0] -match '^Et(c)hash.+' -and $AvailableMinerDevices.Model -notmatch "^Radeon RX [0-9]{3} .+") { $_.Fee = @(0.0075) } # Polaris cards 0.75%
+                            if ($_.SecondaryAlgorithmPrefix) { 
+                                $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_start"
+                                $Arguments = "$Arguments --url=$(if ($Pool1.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                $Arguments = "$Arguments --user=$($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
+                                $Arguments = "$Arguments --pass=$($Pool1.Pass)"
+                                $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_end"
+                            }
+                            if ($_.Algorithms[0] -match '^Et(c)hash.+' -and $AvailableMinerDevices.Model -notmatch "^Radeon RX [0-9]{3} .+") { $_.Fee = @(0.0075) } # Polaris cards 0.75%
 
-                                    [PSCustomObject]@{ 
-                                        API              = "Xgminer"
-                                        Arguments        = "$Arguments --no_gpu_monitor --init_style=3 --hardware=gpu --api_listen=127.0.0.1:$MinerAPIPort --devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach({ '{0:d}' -f $_ }) -join ',')"
-                                        DeviceNames      = $AvailableMinerDevices.Name
-                                        Fee              = $_.Fee # Dev fee
-                                        Name             = $MinerName
-                                        Path             = $Path
-                                        Port             = $MinerAPIPort
-                                        PrerequisitePath = $PrerequisitePath
-                                        PrerequisiteURI  = $PrerequisiteURI
-                                        Type             = "AMD"
-                                        URI              = $URI
-                                        WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                        Workers          = @(($Pool0, $Pool1).Where({ $_ }).ForEach({ @{ Pool = $_ } }))
-                                    }
-                                }
+                            [PSCustomObject]@{ 
+                                API              = "Xgminer"
+                                Arguments        = "$Arguments --no_gpu_monitor --init_style=3 --hardware=gpu --api_listen=127.0.0.1:$MinerAPIPort --devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:d}' -f $_ } -join ',')"
+                                DeviceNames      = $AvailableMinerDevices.Name
+                                Fee              = $_.Fee # Dev fee
+                                Name             = $MinerName
+                                Path             = $Path
+                                Port             = $MinerAPIPort
+                                PrerequisitePath = $PrerequisitePath
+                                PrerequisiteURI  = $PrerequisiteURI
+                                Type             = "AMD"
+                                URI              = $URI
+                                WarmupTimes      = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                                Workers          = @(($Pool0, $Pool1).Where{ $_ }.ForEach{ @{ Pool = $_ } })
                             }
                         }
                     }
                 }
-            )
+            }
         }
-    )
+    }
 }

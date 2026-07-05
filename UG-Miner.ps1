@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 using module .\Includes\Include.psm1
@@ -46,7 +46,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Boolean]$BalancesShowSums = $true, # Show 1hr / 6hrs / 24hr / 7day & 30day pool earnings sums
     [Parameter (Mandatory = $false)]
-    [Boolean]$BalancesShowAverages = $true, # Show 1fhr / 24hr & 7day pool earnings averages
+    [Boolean]$BalancesShowAverages = $true, # Show 1hr / 24hr & 7day pool earnings averages
     [Parameter (Mandatory = $false)]
     [Boolean]$BalancesShowInAllCurrencies = $true, # If true pool balances will be shown in all currencies
     [Parameter (Mandatory = $false)]
@@ -67,8 +67,6 @@ param(
     [UInt16]$CPUMiningReserveCPUcore = 1, # Number of CPU cores reserved for main script processing. Helps to get more stable hashrates and faster core loop processing.
     [Parameter (Mandatory = $false)]
     [Int16]$CPUMinerProcessPriority = "-2", # Process priority for CPU miners
-    [Parameter (Mandatory = $false)]
-    [String]$CryptoCompareAPIkey, # Use key from UselessGuru
     [Parameter (Mandatory = $false)]
     [String[]]$Currency = @(), # i.e. @("+ETC", +EVR", "+KIIRO") etc. If '+' is used, then only the explicitly enabled currencies are used. If '-' is used, then all currencies except the disabled ones are used. Do not combine '+' and '-' concurrently.
     [Parameter (Mandatory = $false)]
@@ -260,7 +258,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Double]$UnrealisticPoolPriceFactor = 10, # Mark pool unavailable if current price data in pool API is more than $UnrealisticPoolPriceFactor higher than previous price
     [Parameter (Mandatory = $false)]
-    [Switch]$UseAnycast = $true, # If true pools will use anycast for best network performance and ping times (currently no available pool supports this feature) 
+    [Switch]$UseAnycast = $true, # If true pools will use anycast for best network performance and ping times (currently no available pool supports this feature)
     [Parameter (Mandatory = $false)]
     [Switch]$UseUnprofitableAlgorithms = $false, # If true UG-Miner will also use unprofitable algorithms
     [Parameter (Mandatory = $false)]
@@ -317,7 +315,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.11"
+    Version      = [System.Version]"6.8.12"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -341,7 +339,7 @@ Remove-Variable RecommendedPWSHversion
 # Another instance might already be running. Wait no more than 20 seconds (other instance might be from autoupdate)
 $Loops = 20
 $CursorPosition = $Host.UI.RawUI.CursorPosition
-while (((Get-CimInstance CIM_Process).Where({ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }).CommandLine).Count -gt 1) { 
+while (((Get-CimInstance CIM_Process).Where{ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }.CommandLine).Count -gt 1) { 
     $Loops --
     [Console]::SetCursorPosition(0, $CursorPosition.y)
     Write-Host "`nWaiting for another instance of $($Session.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
@@ -362,34 +360,30 @@ Remove-Variable Loops
 
 # Convert command line parameters syntax
 $Session.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash table
-($MyInvocation.MyCommand.Parameters.psBase.Keys.Where({ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) }) | Sort-Object).ForEach(
-    { 
-        if ($MyInvocation.MyCommandLineParameters.$_ -is [Switch]) { 
-            $Session.AllCommandLineParameters.$_ = [Boolean]$Session.AllCommandLineParameters.$_
-        }
-        else { 
-            $Session.AllCommandLineParameters.$_ = Get-Variable $_ -ValueOnly
-        }
-        Remove-Variable $_
+($MyInvocation.MyCommand.Parameters.psBase.Keys.Where{ $_ -ne "ConfigFile" -and (Get-Variable $_ -ErrorAction Ignore) } | Sort-Object).ForEach{ 
+    if ($MyInvocation.MyCommandLineParameters.$_ -is [Switch]) { 
+        $Session.AllCommandLineParameters.$_ = [Boolean]$Session.AllCommandLineParameters.$_
     }
-)
+    else { 
+        $Session.AllCommandLineParameters.$_ = Get-Variable $_ -ValueOnly
+    }
+    Remove-Variable $_
+}
 
 # Must done before reading config (Get-Region)
 Write-Host ""
 Write-Message -Level Verbose "Preparing environment and loading data files..."
 # Create directories
-("Cache", "Config", "Logs", "Stats").Where({ -not (Test-Path -LiteralPath ".\$_" -PathType Container) }).ForEach({ $null = (New-Item -Path . -Name "$_" -ItemType Directory) })
+("Cache", "Config", "Logs", "Stats").Where{ -not (Test-Path -LiteralPath ".\$_" -PathType Container) }.ForEach{ $null = (New-Item -Path . -Name "$_" -ItemType Directory) }
 
 # Check if all required files are present
-("Balances", "Brains", "Data", "Miners", "Pools", "Web").Where({ -not (Get-ChildItem -LiteralPath $PWD\$_) }).ForEach(
-    { 
-        Write-Error "Terminating error - cannot continue! No files in folder '\$_'. Please restore the folder from your original download."
-        $null = (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\$_'.`nPlease restore the folder from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
-        Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
-        Start-Sleep -Seconds 5
-        exit
-    }
-)
+("Balances", "Brains", "Data", "Miners", "Pools", "Web").Where{ -not (Get-ChildItem -LiteralPath $PWD\$_) }.ForEach{ 
+    Write-Error "Terminating error - cannot continue! No files in folder '\$_'. Please restore the folder from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\$_'.`nPlease restore the folder from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
 
 # Load donation as case insensitive sorted list
 try { $Session.DonationData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -400,7 +394,7 @@ if (-not $Session.DonationData) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load donation log
 try { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) } catch { }
@@ -408,7 +402,7 @@ if (-not $Session.DonationLog) {
     $Session.DonationLog = @()
 }
 else { 
-    Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load algorithm list as case insensitive sorted list
@@ -420,7 +414,7 @@ if (-not $Session.Algorithms.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load coin names as case insensitive sorted list
 try { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -431,7 +425,7 @@ if (-not $Session.CoinNames.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load currency algorithm data as case insensitive sorted list
 try { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -442,7 +436,7 @@ if (-not $Session.CurrencyAlgorithm.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load EquihashCoinPers data as case insensitive sorted list
 try { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -453,12 +447,12 @@ if (-not $Session.EquihashCoinPers) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded equihash coins database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded equihash coins database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load regions as case insensitive hash table
 try { 
     $Session.Regions = [Ordered]@{ }
-    ([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties.ForEach({ $Session.Regions[$_.Name] = @($_.Value) })
+    ([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties.ForEach{ $Session.Regions[$_.Name] = @($_.Value) }
 }
 catch { }
 if (-not $Session.Regions.Keys) { 
@@ -468,7 +462,7 @@ if (-not $Session.Regions.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load FIAT currencies list as case insensitive sorted list
 try { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -479,13 +473,13 @@ if (-not $Session.FIATcurrencies) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded fiat currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded FIAT currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load unprofitable algorithms as case insensitive sorted list, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
 $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
 try { 
     $UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject
-    $UnprofitableAlgorithms.Keys.ForEach({ $Session.UnprofitableAlgorithms.$_ = $UnprofitableAlgorithms.$_ })
+    $UnprofitableAlgorithms.Keys.ForEach{ $Session.UnprofitableAlgorithms.$_ = $UnprofitableAlgorithms.$_ }
     Remove-Variable UnprofitableAlgorithms
 }
 catch { }
@@ -496,18 +490,18 @@ if (-not $Session.UnprofitableAlgorithms.Count) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load DAG data, if not available it will get recreated
 try { $Session.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject } catch { }
-if (-not $Session.DAGdata) { 
+if (-not $Session.DAGdata.Currency) { 
     Write-Error "Error loading DAG database. File '.\Data\DAGdata.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
     $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load PoolsLastUsed data as case insensitive sorted list
 try { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -515,7 +509,7 @@ if (-not $Session.PoolsLastUsed.psBase.Keys) {
     $Session.PoolsLastUsed = @{ }
 }
 else { 
-    Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load AlgorithmsLastUsed data as case insensitive sorted list
@@ -524,7 +518,7 @@ if (-not $Session.AlgorithmsLastUsed.psBase.Keys) {
     $Session.AlgorithmsLastUsed = @{ }
 }
 else { 
-    Write-Host "Loaded algorithms last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded algorithms last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load MinersLastUsed data as case insensitive sorted list
@@ -533,7 +527,7 @@ if (-not $Session.MinersLastUsed.psBase.Keys) {
     $Session.MinersLastUsed = @{ }
 }
 else { 
-    Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load EarningsChart data to make it available early in GUI
@@ -547,7 +541,7 @@ if (-not $Session.EarningsChartData.Earnings) {
     $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
 }
 else { 
-    Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load Balances data to make it available early in GUI
@@ -556,21 +550,7 @@ if (-not $Session.Balances.Keys) {
     $Session.Balances = [Ordered]@{ } # as case insensitive hash table
 }
 else { 
-    Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
-}
-
-# Load NVidia GPU architecture table
-try { $Session.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore } catch { }
-if (-not $Session.GPUArchitectureDbNvidia) { 
-    Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
-    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
-    Start-Sleep -Seconds 5
-    exit
-}
-else { 
-    $Session.GPUArchitectureDbNvidia.PSObject.Properties.ForEach({ $_.Value.Model = $_.Value.Model -join "|" })
-    Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load AMD GPU architecture table
@@ -583,11 +563,25 @@ if (-not $Session.GPUArchitectureDbAMD) {
     exit
 }
 else { 
-    $Session.GPUArchitectureDbAMD.PSObject.Properties.ForEach({ $_.Value = $_.Value -join "|" })
-    Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" } ))" -ForegroundColor Green
+    $Session.GPUArchitectureDbAMD.PSObject.Properties.ForEach{ $_.Value = $_.Value -join "|" }
+    Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
-$Session.BalancesCurrencies = @($Session.Balances.PSObject.Properties.Name.ForEach({ $Session.Balances.$_.Currency }) | Sort-Object -Unique)
+# Load NVidia GPU architecture table
+try { $Session.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore } catch { }
+if (-not $Session.GPUArchitectureDbNvidia) { 
+    Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
+    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
+    Start-Sleep -Seconds 5
+    exit
+}
+else { 
+    $Session.GPUArchitectureDbNvidia.PSObject.Properties.ForEach{ $_.Value.Model = $_.Value.Model -join "|" }
+    Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+}
+
+$Session.BalancesCurrencies = @($Session.Balances.PSObject.Properties.Name.ForEach{ $Session.Balances.$_.Currency } | Sort-Object -Unique)
 
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
@@ -615,7 +609,7 @@ if (-not $Session.Config.ConfigFileVersion -or [System.Version]::Parse($Session.
 # Internet connection must be available
 Write-Host ""
 Write-Host "Checking internet connection..." -ForegroundColor Yellow -NoNewline
-$NetworkInterface = (Get-NetConnectionProfile).Where({ $_.IPv4Connectivity -eq "Internet" }).InterfaceIndex
+$NetworkInterface = (Get-NetConnectionProfile).Where{ $_.IPv4Connectivity -eq "Internet" }.InterfaceIndex
 $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
 Remove-Variable NetworkInterface
 if (-not $Session.MyIPaddress) { 
@@ -625,10 +619,6 @@ if (-not $Session.MyIPaddress) {
     exit
 }
 Write-Host " ✔  (IP address: $($Session.MyIPaddress))" -ForegroundColor Green
-
-# Check if a new version is available and run update if so configured
-Write-Host ""
-Get-Version
 
 # Prerequisites check
 Write-Message -Level Verbose "Verifying pre-requisites..."
@@ -648,9 +638,9 @@ $Prerequisites = @(
     "$env:SystemRoot\System32\VCRUNTIME140.dll",
     "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
 )
-if ($PrerequisitesMissing = $Prerequisites.Where({ -not (Test-Path -LiteralPath $_ -PathType Leaf) })) { 
+if ($PrerequisitesMissing = $Prerequisites.Where{ -not (Test-Path -LiteralPath $_ -PathType Leaf) }) { 
     Write-Host " ✖ " -ForegroundColor Red
-    $PrerequisitesMissing.ForEach({ Write-Message -Level Warn "'$_' is missing." })
+    $PrerequisitesMissing.ForEach{ Write-Message -Level Warn "'$_' is missing." }
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
     Write-Message -Level Error "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip"
     Write-Message -Level Error "and run 'install_all.bat' (Administrative privileges are required)."
@@ -669,6 +659,10 @@ if (-not (Get-Command Get-PnpDevice)) {
     exit
 }
 Write-Host " ✔" -ForegroundColor Green
+
+# Check if a new version is available and run update if so configured
+Write-Host ""
+Get-Version
 
 # Exclude from AV scanner
 if ($Session.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpComputerStatus)) { 
@@ -718,7 +712,7 @@ try {
         Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Write-Host " ✔ " -ForegroundColor Green -NoNewline
     }
-    else {
+    else { 
         if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
         Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
@@ -759,7 +753,7 @@ catch {
 }
 
 Write-Host " Defender" -NoNewline
-try {
+try { 
     Import-Module Defender -ErrorAction Stop -SkipEditionCheck
     Write-Host " ✔ " -ForegroundColor Green -NoNewline
 }
@@ -779,8 +773,6 @@ Remove-Variable ErrorLoadingModules -ErrorAction Ignore
 Write-Host ""
 Write-Message -Level Verbose "Setting variables..."
 
-$nl = "`n" # Must use variable, cannot join with "`n" with Write-Host
-
 # Align CUDA id with nvidia-smi order
 $env:CUDA_DEVICE_ORDER = "PCI_BUS_ID"
 # For AMD
@@ -798,8 +790,11 @@ $Session.CPUfeatures = (Get-CpuId).Features
 $Session.CycleStarts = @()
 $Session.Donation = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
 $Session.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$Session.Miners = [Miner[]]@()
 $Session.MiningEarnings = $Session.MiningProfit = $Session.MiningPowerCost = [Double]::NaN
 $Session.NewMiningStatus = if ($Session.Config.StartupMode -match "Paused|Running") { $Session.Config.StartupMode } else { "Idle" }
+$Session.PID = $PID
+$Session.Pools = [Pool[]]@()
 $Session.RestartCycle = $true
 $Session.SuspendCycle = $false
 $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -820,35 +815,35 @@ $Session.SupportedGPUDeviceVendors = @("AMD", "INTEL", "NVIDIA")
 
 $Session.Devices = Get-Device
 
-if ($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion -and (Get-Item -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors).Property -notlike "*\amdocl64.dll") { 
+if ($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }.OpenCL.DriverVersion -and (Get-Item -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors).Property -notlike "*\amdocl64.dll") { 
     Write-Message -Level Error "OpenCL driver installation for AMD GPU devices is incomplete"
     Write-Message -Level Error "Please create the missing registry key as described in https://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143. $($Session.Branding.ProductLabel) will shut down."
     (New-Object -ComObject Wscript.Shell).Popup("The OpenCL driver installation for AMD GPU devices is incomplete.`nPlease create the missing registry key as described here:`n`nhttps://github.com/ethereum-mining/ethminer/issues/2001#issuecomment-662288143`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
 
-$Session.Devices.Where({ $_.Type -eq "CPU" -and $_.Vendor -notin $Session.SupportedCPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" })
-$Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -notin $Session.SupportedGPUDeviceVendors }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" })
-$Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }).ForEach({ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" })
-$Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).ForEach({ $_.Status = $_.SubStatus = "Idle"; if ($Session.Config.ExcludeDeviceName -contains $_.Name) { $_.State = [DeviceState]::Disabled; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" } })
+$Session.Devices.Where{ $_.Type -eq "CPU" -and $_.Vendor -notin $Session.SupportedCPUDeviceVendors }.ForEach{ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported CPU vendor: '$($_.Vendor)'" }
+$Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -notin $Session.SupportedGPUDeviceVendors }.ForEach{ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU vendor: '$($_.Vendor)'" }
+$Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported -and $_.Type -eq "GPU" -and -not ($_.CUDAversion -or $_.OpenCL.DriverVersion) }.ForEach{ $_.State = [DeviceState]::Unsupported; $_.Status = "Unavailable"; $_.StatusInfo = "Unsupported GPU model: '$($_.Model)'" }
+$Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.ForEach{ $_.Status = $_.SubStatus = "Idle"; if ($Session.Config.ExcludeDeviceName -contains $_.Name) { $_.State = [DeviceState]::Disabled; $_.StatusInfo = "Disabled (ExcludeDeviceName: '$($_.Name)')" } }
 
 # Build driver version table
 $Session.DriverVersion = [PSCustomObject]@{ }
 if ($Session.Devices.CUDAversion) { $Session.DriverVersion | Add-Member "CUDA" ($Session.Devices.CUDAversion | Sort-Object -Top 1) }
 $Session.DriverVersion | Add-Member "CIM" ([PSCustomObject]@{ })
-$Session.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "INTEL" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.Where{ $_.Type -eq "CPU" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "INTEL" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 $Session.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
-$Session.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.Where({ $_.Type -eq "CPU" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "INTEL" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where({ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }).OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.Where{ $_.Type -eq "CPU" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "INTEL" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
 
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host " ✔  ($($Session.Devices.count) device$(if ($Session.Devices.count -ne 1) { "s" }) found" -ForegroundColor Green -NoNewline
-if ($Session.Devices.Where({ $_.State -eq [DeviceState]::Unsupported })) { Write-Host " [$($Session.Devices.Where({ $_.State -eq [DeviceState]::Unsupported }).Count) unsupported device$(if ($Session.Devices.Where({ $_.State -eq [DeviceState]::Unsupported }).Count -ne 1){ "s" })]" -ForegroundColor DarkYellow -NoNewline } 
+if ($Session.Devices.Where{ $_.State -eq [DeviceState]::Unsupported }) { Write-Host " [$($Session.Devices.Where{ $_.State -eq [DeviceState]::Unsupported }.Count) unsupported device$(if ($Session.Devices.Where{ $_.State -eq [DeviceState]::Unsupported }.Count -ne 1){ "s" })]" -ForegroundColor DarkYellow -NoNewline }
 Write-Host ")" -ForegroundColor Green
 
 # Driver version changed
@@ -878,13 +873,16 @@ Remove-Variable CursorPosition
 Write-Host ""
 Get-Rate
 
+# Read latest DAG data from web
+$Session.DAGdata = Get-AllDAGdata $Session.DAGdata
+
 if ($Session.Config.APIport) { 
     Start-APIserver
 }
 else { 
-    # Use port 4000 for miner communication
+    # Use port 4000 for miner API communication
     $Session.MinerBaseAPIport = 4000
-    Write-Message -Level Warn "No valid TCP port for API; Using port $(if ($Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where({ $_.State -ne [DeviceState]::Unsupported }).Count - 1)" }) for miner communication."
+    Write-Message -Level Warn "No valid TCP port for API; Using port $(if ($Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $(4000 + $Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.Count - 1)" }) for miner API communication."
 }
 
 if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) { 
@@ -896,11 +894,12 @@ if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) {
         $Session.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
         (New-Object -ComObject Wscript.Shell).Popup("No configuration file found.`n`nEdit and save your configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 48)) | Out-Null
     }
-    elseif ($Session.Config.StartupMode -ne "Running") {
+    elseif ($Session.Config.StartupMode -ne "Running") { 
         # Always accept changed config when StartupMode is 'running'
         Write-Message -Level Warn "Configuration has changed during update. Verify and save your configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html)"
         $Session.Summary = "Verify your settings and save the configuration.<br>Then click the 'Start mining' button."
-        (New-Object -ComObject Wscript.Shell).Popup("The configuration has changed during update:`n`n$($Session.ConfigurationHasChangedDuringUpdate -join $nl)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version) - configuration has changed", (4096 + 64)) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("The configuration has changed during update:`n`n$($Session.ConfigurationHasChangedDuringUpdate -join [System.Environment]::NewLine)`n`nVerify and save the configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version) - configuration has changed", (4096 + 64)) | Out-Null
+        $Session.ConfigurationHasChangedDuringUpdate = @()
     }
 }
 

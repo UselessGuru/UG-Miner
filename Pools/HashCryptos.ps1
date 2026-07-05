@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.8.11
-Version date:   2026/06/27
+Version:        6.8.12
+Version date:   2026/07/05
 #>
 
 param(
@@ -55,7 +55,7 @@ if ($DivisorMultiplier -and $PriceField) {
 
     if (-not $Request.PSObject.Properties.Name) { return }
 
-    foreach ($Algorithm in $Request.PSObject.Properties.Name.Where({ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp })) { 
+    foreach ($Algorithm in $Request.PSObject.Properties.Name.Where{ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
         $AlgorithmNorm = Get-Algorithm $Algorithm
         $Currency = "$($Request.$Algorithm.currency)" -replace "\s+"
         $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
