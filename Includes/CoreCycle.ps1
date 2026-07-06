@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
 Version:        6.8.12
-Version date:   2026/07/05
+Version date:   2026/07/06
 #>
 
 using module .\Include.psm1
@@ -1242,6 +1242,9 @@ try {
                     $Miner.Restart = $true
                 }
                 elseif ($Session.Config.DryRun -and $Miner.Status -ne [MinerStatus]::DryRun) { 
+                    $Miner.Restart = $true
+                }
+                elseif (-not $Session.Config.DryRun -and $Miner.Status -ne [MinerStatus]::Running) { 
                     $Miner.Restart = $true
                 }
 

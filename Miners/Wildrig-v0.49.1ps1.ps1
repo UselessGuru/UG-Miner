@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.8.12
-Version date:   2026/07/05
+Version date:   2026/07/06
 #>
 
 # improved pearlhash for NVIDIA RTX 3000, 4000 and 5000 series

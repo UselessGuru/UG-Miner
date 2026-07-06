@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.8.12
-Version date:   2026/07/05
+Version date:   2026/07/06
 #>
 
 # Fixed segfault in scrypt algo on some older CPUs.

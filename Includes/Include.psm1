@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\include.ps1
 Version:        6.8.12
-Version date:   2026/07/05
+Version date:   2026/07/06
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -528,8 +528,8 @@ class Miner : IDisposable {
         if ($this.Status -ne [MinerStatus]::DryRun) { 
             $this.ProcessJob = Invoke-CreateProcess -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile -Status $this.StatusInfo
 
-            # Sometimes the process cannot be found instantly, wait may 1 second
-            $EndLoop = [DateTime]::Now.AddSeconds(1)
+            # Sometimes the process cannot be found instantly, wait max 3 seconds
+            $EndLoop = [DateTime]::Now.AddSeconds(3)
             do { 
                 if ($this.ProcessId = ($this.ProcessJob | Receive-Job -ErrorAction Ignore).MinerProcessId) { 
                     $this.DataSampleTimestamp = [DateTime]0
