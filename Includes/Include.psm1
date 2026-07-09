@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.12
-Version date:   2026/07/06
+Version:        6.8.13
+Version date:   2026/07/09
 #>
 
 # $Global:DebugPreference = "SilentlyContinue"
@@ -285,6 +285,7 @@ class Pool : IDisposable {
     [System.Collections.Generic.SortedSet[String]]$Reasons # Why is the pool not available?
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
+    [String]$SideIndicator
     [Boolean]$SSLselfSignedCertificate
     [Double]$StablePrice
     [DateTime]$Updated
@@ -339,6 +340,7 @@ class Miner : IDisposable {
     [Boolean]$Benchmark = $false # derived from stats
     [Boolean]$Best = $false
     [String]$CommandLine
+    [String]$CommandLineLauched
     [UInt]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
     [Double]$DataCollectInterval = 5 # Seconds, allow fractions of seconds
     [DateTime]$DataSampleTimestamp = 0 # Newest sample
@@ -353,6 +355,7 @@ class Miner : IDisposable {
     [Double[]]$Fee = @() # miner fee
     [Double[]]$Hashrates_Live = @()
     [String]$Info
+    [Boolean]$IsBenchmarkingOrMeasuring # Set to true when starting miner
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
     [DateTime]$LastUsed # derived from stats
     [String]$LogFile # path to miner log file
@@ -376,6 +379,7 @@ class Miner : IDisposable {
     [Boolean]$ReadPowerConsumption
     [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the miner not available?
     [Boolean]$Restart = $false # if true miner will restart at end of cycle
+    [String]$SideIndicator
     [MinerStatus]$Status = [MinerStatus]::Idle
     [String]$StatusInfo = ""
     [String]$SubStatus = [MinerStatus]::Idle
@@ -468,12 +472,12 @@ class Miner : IDisposable {
         $this.StartDataReader()
     }
 
-    hidden [Void]StartMining() { 
+    hidden [Void]StartMining()  { 
         if ($this.Arguments -and (Test-Json $this.Arguments -ErrorAction Ignore)) { $this.CreateConfigFiles() }
 
         if ($this.Benchmark -or $this.MeasurePowerConsumption) { 
-            $this.Activated = 0
             $this.Data = [System.Collections.Generic.List[PSCustomObject]]@()
+            $this.IsBenchmarkingOrMeasuring = $true
         }
 
         $this.ContinousCycle = 0
@@ -498,6 +502,7 @@ class Miner : IDisposable {
         $this.Activated ++
 
         Write-Message -Level Verbose $this.CommandLine
+        $this.CommandLineLauched = $this.CommandLine
 
         # Log switching information to .\Logs\SwitchingLog.csv
         [PSCustomObject]@{ 
@@ -583,7 +588,7 @@ class Miner : IDisposable {
             Accounts                = ""
             Algorithms              = ""
             Benchmark               = $this.Benchmark
-            CommandLine             = ""
+            CommandLine             = $this.CommandLineLauched
             Cycles                  = $this.ContinousCycle
             DeviceNames             = $this.BaseName_Version_Device -replace ".+-"
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
@@ -620,6 +625,8 @@ class Miner : IDisposable {
             $this.StatusInfo = "Idle"
             $this.SubStatus = $this.Status
         }
+        $this.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
+        $this.IsBenchmarkingOrMeasuring = $false
     }
 
     [MinerStatus]GetStatus() { 
@@ -819,7 +826,6 @@ class Miner : IDisposable {
 
             if ([Double]::IsNaN($Worker.Hashrate)) { $this.Benchmark = $true }
         }
-        if ($this.Benchmark) { $this.Restart = $true}
 
         if ($this.Benchmark) { 
             $this.Earnings          = [Double]::NaN
@@ -3675,7 +3681,9 @@ function Set-MinerReBenchmark {
         [Miner]$Miner
     )
 
-    if (-not $Miner.Benchmark) { $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new() }
+    if ($Miner.IsBenchmarkingOrMeasuring) { Return }
+
+    $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
 
     foreach ($Worker in $Miner.Workers) { 
         Remove-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
@@ -3693,10 +3701,11 @@ function Set-MinerReBenchmark {
     $Miner.Earnings = $Miner.Earnings_Accuracy = $Miner.Earnings_Bias = $Miner.PowerCost = $Miner.PowerConsumption = $Miner.PowerConsumption_Live = $Miner.Profit = $Miner.Profit_Bias = [Double]::NaN
     $Miner.Hashrates_Live = @($this.Workers.ForEach{ [Double]::NaN })
 
+    $Miner.Available = $true
+    $Miner.Activated = 0 # To allow $Session.WatchdogCount + 1 attempts
     $Miner.Benchmark = $true
     $Miner.MeasurePowerConsumption = $true
     $Miner.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-    $Miner.Available = $true
 
     # Remove watchdog
     $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.MinerName -ne $Miner.Name }
@@ -3709,15 +3718,18 @@ function Set-MinerMeasurePowerConsumption {
         [Miner]$Miner
     )
 
+    if ($Miner.IsBenchmarkingOrMeasuring) { Return }
+
     $Miner.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
 
     # Clear power consumption
     Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
     $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = [Double]::NaN
 
+    $Miner.Available = $true
+    $Miner.Activated = 0 # To allow $Session.WatchdogCount + 1 attempts
     $Miner.MeasurePowerConsumption = $true
     $Miner.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-    $Miner.Available = $true
 
     # Remove watchdog
     $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.MinerName -ne $Miner.Name }

@@ -1,3 +1,19 @@
+Changelog UG-Miner 6.8.13 2026/07/09
+====================================
+
+Fixes:
+- Core: Endless benchmarking if miner fails (regression from v6.8.12)
+- Core: No price degradation on existing miners on which pools were not updated
+- Core: Launching more than one miner per device
+
+Improvements:
+- Core: Minor performance improvements
+
+Miner updates:
+- SRBMinerMulti-v3.4.4
+- Wildrig-v0.49.3
+
+
 Changelog UG-Miner 6.8.12 2026/07/06
 ====================================
 

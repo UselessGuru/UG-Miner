@@ -17,16 +17,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.12
-Version date:   2026/07/06
+Version:        6.8.13
+Version date:   2026/07/09
 #>
 
-# Added algorithm 'btx' (BTX coin) for AMD/NVIDIA GPUs, fee 1.0%*
-# Pearlhash related fixes
+# Improved algorithm 'btx' for AMD/NVIDIA GPUs*
+# Improved algorithm 'pearlhash' for NVIDIA 5000 series GPUs
+# Improved algorithm 'pearlhash' for AMD RDNA2 GPUs
+# Minor improvement for 4090 GPU on algorithm 'pearlhash'
+# Added optional 'pearlhash' code for 3070, 3070ti which can achieve higher hashrate (use --pearl-k2)
+# For 'pearlhash' on 3060 12gb the default code is now the one from v3.4.2 (more power efficient) , but setting --pearl-k2 uses code from prev. v.3.4.3
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.4.3/SRBMiner-Multi-3-4-3-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.4.4/SRBMiner-Multi-3-4-4-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
