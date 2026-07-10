@@ -1281,7 +1281,7 @@ try {
         #endregion
 
         #region Start miners
-        $Session.MinersBenchmarkingOrMeasuring = $Session.Miners.Where{ $_.Available -and ($_.Benchmark -and $_.MeasurePowerConsumption) }
+        $Session.MinersBenchmarkingOrMeasuring = $Session.Miners.Where{ $_.Available -and ($_.Benchmark -or $_.MeasurePowerConsumption) }
         $Session.MinersNeedingBenchmark = $Session.MinersBenchmarkingOrMeasuring.Where{ $_.Benchmark }
         $Session.MinersNeedingPowerConsumptionMeasurement = $Session.MinersBenchmarkingOrMeasuring.Where{ $_.MeasurePowerConsumption }
 
