@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.8.13
-Version date:   2026/07/09
+Version date:   2026/07/10
 #>
 
 # fixed high RAM usage for algorithm pearlhash
@@ -81,7 +81,7 @@ $Algorithms = @(
 #   @{ Algorithm = "X14";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x14" } # ASIC
 #   @{ Algorithm = "X15";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x15" } # ASIC
 #   @{ Algorithm = "X16r";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 60);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16r" } # ASIC
-    @{ Algorithm = "X16rt";            Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16rt" } # FPGA
+    @{ Algorithm = "X16rt";            Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16rt" } # FPGA
     @{ Algorithm = "X16rv2";           Type = "AMD"; Fee = @(0);      MinMemGiB = 3;    WarmupTimes = @(150, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16rv2" }
     @{ Algorithm = "X16s";             Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x16s" } # FPGA
     @{ Algorithm = "X17";              Type = "AMD"; Fee = @(0);      MinMemGiB = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo x17" }

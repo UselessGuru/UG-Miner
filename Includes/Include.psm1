@@ -19,15 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\include.ps1
 Version:        6.8.13
-Version date:   2026/07/09
+Version date:   2026/07/10
 #>
 
-# $Global:DebugPreference = "SilentlyContinue"
-# $Global:ErrorActionPreference = "SilentlyContinue"
-# $Global:InformationPreference = "SilentlyContinue"
-# $Global:ProgressPreference = "SilentlyContinue"
-# $Global:WarningPreference = "SilentlyContinue"
-# $Global:VerbosePreference = "SilentlyContinue"
+$Global:DebugPreference       = "SilentlyContinue"
+$Global:ErrorActionPreference = "SilentlyContinue"
+$Global:InformationPreference = "SilentlyContinue"
+$Global:ProgressPreference    = "SilentlyContinue"
+$Global:WarningPreference     = "SilentlyContinue"
+$Global:VerbosePreference     = "SilentlyContinue"
 
 # Fix TLS Version erroring
 if ([Net.ServicePointManager]::SecurityProtocol -notmatch [Net.SecurityProtocolType]::Tls10) { [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls10 }
@@ -428,6 +428,7 @@ class Miner : IDisposable {
     }
 
     hidden [Void]StartDataReader() { 
+
         $ScriptBlock = { 
             $ScriptBody = "using module .\Includes\Include.psm1"; $Script = [ScriptBlock]::Create($ScriptBody); . $Script
 
@@ -451,16 +452,38 @@ class Miner : IDisposable {
         }
 
         # Start miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
-        $this.DataReaderJob = Start-ThreadJob -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -Name "$($this.BaseName_Version_Device)_DataReader" -StreamingHost $null -InitializationScript ([ScriptBlock]::Create("Set-Location('$(Get-Location)')")) -ScriptBlock $ScriptBlock -ArgumentList ($this.API), ($this | Select-Object -Property Algorithms, DataCollectInterval, Devices, Name, Path, Port, ReadPowerConsumption | ConvertTo-Json -Depth 5 -WarningAction Ignore)
+        # 1. Bypass Select-Object by using a direct Hashtable (much faster)
+        $ConfigData = @{
+            Algorithms             = $this.Algorithms
+            DataCollectInterval    = $this.DataCollectInterval
+            Devices                = $this.Devices
+            Name                   = $this.Name
+            Path                   = $this.Path
+            Port                   = $this.Port
+            ReadPowerConsumption   = $this.ReadPowerConsumption
+        } | ConvertTo-Json -Depth 5 -Compress
 
-        Remove-Variable ScriptBlock -ErrorAction Ignore
+        # 2. Escape the path to handle spaces safely
+        $CurrentPath = (Get-Location).Path -replace "'", "''"
+        $InitScript  = [ScriptBlock]::Create("Set-Location '$CurrentPath'")
+
+        # 3. Spin up the ThreadJob without the common parameter bloat
+        $this.DataReaderJob = Start-ThreadJob `
+            -Name "$($this.BaseName_Version_Device)_DataReader" `
+            -InitializationScript $InitScript `
+            -ScriptBlock $ScriptBlock `
+            -ArgumentList $this.API, $ConfigData
     }
 
     hidden [Void]StopDataReader() { 
+
+        $JobData = [PSCustomObject]@{ }
+
         if ($this.DataReaderJob) { 
             $null = ($this.DataReaderJob | Stop-Job)
-            # Get data before removing read data
-            if ($this.Status -eq [MinerStatus]::Running -and $this.DataReaderJob.HasMoreData) { ($this.DataReaderJob | Receive-Job).Where{ $_.Date }.ForEach{ $null = $this.Data.Add($_) } }
+            # Get data before removing job
+            $JobData = Receive-Job -Job $this.DataReaderJob
+            if ($JobData -and $this.Status -eq [MinerStatus]::Running) { $JobData.Where{ $_.Date }.ForEach{ $null = $this.Data.Add($_) } }
             $null = ($this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore)
             $this.DataReaderJob.Dispose()
             $this.DataReaderJob = $null
@@ -481,8 +504,8 @@ class Miner : IDisposable {
         }
 
         $this.ContinousCycle = 0
-        $this.DataSampleTimestamp = [DateTime]0
-        $this.ValidDataSampleTimestamp = [DateTime]0
+        $this.DataSampleTimestamp = [DateTime]::MinValue
+        $this.ValidDataSampleTimestamp = [DateTime]::MinValue
 
         $this.Hashrates_Live = @($this.Workers.ForEach{ [Double]::NaN })
         $this.PowerConsumption_Live = [Double]::NaN
@@ -506,23 +529,23 @@ class Miner : IDisposable {
 
         # Log switching information to .\Logs\SwitchingLog.csv
         [PSCustomObject]@{ 
-            DateTime                = (Get-Date -Format o)
+            DateTime                = (Get-Date).ToString("o")
             Action                  = if ($this.Status -eq [MinerStatus]::DryRun) { "DryRun" } else { "Launched" }
             Name                    = $this.Name
-            Accounts                = $this.Workers.Pool.User -join ";"
+            Accounts                = [String]::Join(';', $this.Workers.Pool.User)
             Activated               = $this.Activated
-            Algorithms              = $this.Workers.Pool.AlgorithmVariant -join ";"
+            Algorithms              = [String]::Join(';', $this.Workers.Pool.AlgorithmVariant)
             Benchmark               = $this.Benchmark
-            CommandLine             = $this.CommandLine
+            CommandLine             = $this.CommandLineLauched
             Cycles                  = $null
-            DeviceNames             = $this.BaseName_Version_Device -replace ".+-"
+            DeviceNames             = $this.BaseName_Version_Device.Split('-')[-1]
             Duration                = $null
             Earnings                = $this.Earnings
             Earnings_Bias           = $this.Earnings_Bias
             Hashrates               = $null
             LastDataSample          = $null
             MeasurePowerConsumption = $this.MeasurePowerConsumption
-            Pools                   = $this.Workers.Pool.Name -join ";"
+            Pools                   = [String]::Join(';', $this.Workers.Pool.Name)
             Profit                  = $this.Profit
             Profit_Bias             = $this.Profit_Bias
             PowerConsumption        = $null
@@ -535,23 +558,29 @@ class Miner : IDisposable {
 
             # Sometimes the process cannot be found instantly, wait max 3 seconds
             $EndLoop = [DateTime]::Now.AddSeconds(3)
-            do { 
-                if ($this.ProcessId = ($this.ProcessJob | Receive-Job -ErrorAction Ignore).MinerProcessId) { 
-                    $this.DataSampleTimestamp = [DateTime]0
-                    $this.Status = [MinerStatus]::Running
-                    $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
-                    $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
-                    $this.StartDataReader()
-                    break
+            do {
+                if ($this.ProcessJob.HasMoreData) { 
+                    $JobResult = $this.ProcessJob | Receive-Job -ErrorAction Ignore
+                    
+                    if ($JobResult -and $JobResult.MinerProcessId) { 
+                        $this.ProcessId           = $jobResult.MinerProcessId
+                        $this.DataSampleTimestamp = [DateTime]::MinValue
+                        $this.Status              = [MinerStatus]::Running
+                        $this.StatStart           = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
+                        $this.Process             = try { [System.Diagnostics.Process]::GetProcessById($this.ProcessId) } catch { }
+
+                        $this.StartDataReader()
+                        break
+                    }
                 }
+
                 Start-Sleep -Milliseconds 50
             } while ([DateTime]::Now -lt $EndLoop)
-            Remove-Variable EndLoop
         }
     }
 
     hidden [Void]StopMining() { 
-        if ([MinerStatus]::Running, [MinerStatus]::Disabled, [MinerStatus]::DryRun -contains $this.Status) { 
+        if ($this.Process.Id) { 
             Write-Message -Level Info "Stopping miner '$($this.Info)'..."
             $this.StatusInfo = "$($this.Info) is stopping..."
         }
@@ -568,7 +597,6 @@ class Miner : IDisposable {
 
         $this.EndTime = $this.StatEnd = [DateTime]::Now.ToUniversalTime()
 
-
         if ($this.Process.Id) { 
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
             (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach{ $null = (Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
@@ -581,7 +609,7 @@ class Miner : IDisposable {
 
         # Log switching information to .\Logs\SwitchingLog
         [PSCustomObject]@{ 
-            DateTime                = (Get-Date -Format o)
+            DateTime                = (Get-Date).ToString("o")
             Action                  = if ($this.Status -eq [MinerStatus]::Failed) { "Failed" } else { "Stopped" }
             Name                    = $this.Name
             Activated               = $this.Activated
@@ -590,12 +618,12 @@ class Miner : IDisposable {
             Benchmark               = $this.Benchmark
             CommandLine             = $this.CommandLineLauched
             Cycles                  = $this.ContinousCycle
-            DeviceNames             = $this.BaseName_Version_Device -replace ".+-"
+            DeviceNames             = $this.BaseName_Version_Device.Split('-')[-1]
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
             Earnings                = $this.Earnings
             Earnings_Bias           = $this.Earnings_Bias
-            Hashrates               = $this.Workers.Hashrate.ForEach{ $_ | ConvertTo-Hash } -join " & "
-            LastDataSample          = if ($this.Data.Count -ge 1) { $this.Data[-1] | ConvertTo-Json -Compress } else { "" }
+            Hashrates               = [String]::Join('&', $this.Workers.Hashrate.ForEach{ $_ | ConvertTo-Hash })
+            LastDataSample          = if ($this.Data) { $this.Data[-1] | ConvertTo-Json -Compress } else { "" }
             MeasurePowerConsumption = $this.MeasurePowerConsumption
             Pools                   = ""
             PowerConsumption        = "$($this.PowerConsumption.ToString("N2"))W"
@@ -630,11 +658,15 @@ class Miner : IDisposable {
     }
 
     [MinerStatus]GetStatus() { 
-        if ($this.ProcessJob.State -eq "Running" -and $this.ProcessId -and (Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue)) { 
-            # Use ProcessName, some crashed miners are dead, but may still be found by their processId
-            return [MinerStatus]::Running
-        }
-        elseif ($this.Status -eq [MinerStatus]::Running) { 
+
+        if ($this.Status -eq [MinerStatus]::Running) { 
+            if ($this.ProcessJob.State -eq "Running" -and $this.ProcessId) { 
+                try { 
+                    $null = [System.Diagnostics.Process]::GetProcessById($this.ProcessId)
+                    return [MinerStatus]::Running
+                }
+                catch { } 
+            }
             return [MinerStatus]::Failed
         }
         else { 
@@ -919,8 +951,13 @@ function Invoke-CreateProcess {
     Start-Job -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -Name $JobName -ArgumentList $BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $PID, $JobName, $StatusInfo { 
         param ($BinaryPath, $ArgumentList, $WorkingDirectory, $EnvBlock, $CreationFlags, $WindowStyle, $StartF, $ControllerProcessID, $JobName, $StatusInfo)
 
-        $ControllerProcess = Get-Process -Id $ControllerProcessID -ErrorAction Ignore
-        if ($null -eq $ControllerProcess) { return }
+        # Optimized .NET approach
+        try { 
+            $ControllerProcess = [System.Diagnostics.Process]::GetProcessById($ControllerProcessID)
+        }
+        catch { 
+            return
+        }
 
         # Define all the structures for CreateProcess
         Add-Type -TypeDefinition @"
@@ -968,7 +1005,12 @@ public static class Kernel32
         }
 
         # Set local environment
-        ($EnvBlock | Select-Object).ForEach{ $null = (New-Item -Path "Env:$(($_ -split "=")[0])" -Value "$(($_ -split "=")[1])" -Force) }
+        foreach ($line in $EnvBlock) { 
+            if ($line -like '*=*') { 
+                $name, $value = $line -split '=', 2
+                [System.Environment]::SetEnvironmentVariable($name, $value, 'Process')
+            }
+        }
 
         # StartupInfo struct
         $StartupInfo = [STARTUPINFO]::new()
@@ -994,17 +1036,23 @@ public static class Kernel32
         [Void][Kernel32]::CreateProcess($ConHost, "$ConHost $BinaryPath$ArgumentList", [ref]$SecAttr, [ref]$SecAttr, $false, $CreationFlags, [IntPtr]::Zero, $WorkingDirectory, [ref]$StartupInfo, [ref]$ProcessInfo)
 
         # Timing issue, some processes are not immediately available on fast computers
-        $Loops = 100
+        $EndLoop = [DateTime]::Now.AddSeconds(3)
         do { 
-            if ($ConhostProcess = Get-Process -Id $ProcessInfo.dwProcessId -ErrorAction Ignore) { break }
-            Start-Sleep -Milliseconds 50
-            $Loops --
-        } while ($Loops -gt 0)
+            try { 
+                # Optimized .NET approach
+                if ($ConhostProcess = [System.Diagnostics.Process]::GetProcessById($ProcessInfo.dwProcessId)) { break }
+            }
+            catch { 
+                Start-Sleep -Milliseconds 50
+            }
+        } while ([DateTime]::Now -lt $EndLoop)
+
+        $EndLoop = [DateTime]::Now.AddSeconds(3)
         do { 
             if ($MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")[0]) { break }
             Start-Sleep -Milliseconds 50
-            $Loops --
-        } while ($Loops -gt 0)
+        } while ([DateTime]::Now -lt $EndLoop)
+        Remove-Variable EndLoop
 
         if ($null -eq $MinerProcess.Count) { 
             [PSCustomObject]@{ 
@@ -1025,7 +1073,7 @@ public static class Kernel32
         $null = $MinerProcess.Handle
 
         do { 
-            if ($ControllerProcess.WaitForExit(250)) { 
+            if ($ControllerProcess.WaitForExit(100)) { 
                 # Kill process in bottom up order
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
                 $null = (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           UG-Miner.ps1
 Version:        6.8.13
-Version date:   2026/07/09
+Version date:   2026/07/10
 #>
 
 using module .\Includes\Include.psm1
@@ -272,6 +272,13 @@ param(
     [Parameter (Mandatory = $false)]
     [String]$WorkerName = [System.Net.Dns]::GetHostName() # Do not allow '.'
 )
+
+$Global:DebugPreference       = "SilentlyContinue"
+$Global:ErrorActionPreference = "SilentlyContinue"
+$Global:InformationPreference = "SilentlyContinue"
+$Global:ProgressPreference    = "SilentlyContinue"
+$Global:WarningPreference     = "SilentlyContinue"
+$Global:VerbosePreference     = "SilentlyContinue"
 
 [ConsoleModeSettings]::DisableQuickEditMode()
 

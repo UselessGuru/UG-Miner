@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
 Version:        6.8.13
-Version date:   2026/07/09
+Version date:   2026/07/10
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -324,7 +324,7 @@ function Update-TabControl {
                     $LegacyGUIelements.ActiveMinersDGV.DataSource = $Session.MinersBest.PsObject.Copy() | Select-Object @(
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
-                        @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
+                        @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }
                         @{ Name = "Status Info"; Expression = { $_.StatusInfo } }
                         @{ Name = "Earnings (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.Earnings)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
                         @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost) -or -not $Session.CalculatePowerCost) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } }
@@ -543,17 +543,17 @@ function Update-TabControl {
             if ($LegacyGUIelements.RadioButtonMinersOptimal.checked) { 
                 if ($Session.MinersOptimal) { 
                     $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                    $DataSource = $Session.MinersOptimal.PsObject.Copy() | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                    $DataSource = $Session.MinersOptimal.PsObject.Copy() | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
                     Remove-Variable Bias
                 }
             }
             elseif ($LegacyGUIelements.RadioButtonMinersUnavailable.checked) { 
-                $DataSource = $Session.Miners.Where{ $_.Available -ne $true }.ForEach{ $_.Clone() } | Sort-Object { $_.BaseName_Version_Device -replace ".+-" }, Info, Algorithm
+                $DataSource = $Session.Miners.Where{ $_.Available -ne $true }.ForEach{ $_.Clone() } | Sort-Object { $_.BaseName_Version_Device.Split('-')[-1] }, Info, Algorithm
             }
             else { 
                 if ($Session.Miners) {
                     $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                    $DataSource = $Session.Miners.PsObject.ForEach{ $_.Clone() } | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device -replace ".+-" }, @{ Expression = $Bias; Descending = $true }
+                    $DataSource = $Session.Miners.PsObject.ForEach{ $_.Clone() } | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
                     Remove-Variable Bias
                 }
             }
@@ -580,7 +580,7 @@ function Update-TabControl {
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } },
                         @{ Name = "Miner"; Expression = { $_.Name } },
-                        @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } },
+                        @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } },
                         @{ Name = "Status"; Expression = { $_.Status } },
                         @{ Name = "Earnings (biased) $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.Earnings_Bias)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Earnings * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
                         @{ Name = "Power cost $($Session.Config.FIATcurrency)/day"; Expression = { if ([Double]::IsNaN($_.PowerCost)) { "n/a" } else { "{0:n$($Session.Config.DecimalsMax)}" -f ($_.Powercost * $Session.Rates.BTC.($Session.Config.FIATcurrency)) } } },
@@ -2413,7 +2413,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                         )
                         # Display top 5 optimal miners and all benchmarking of power consumption measuring miners
                         $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                        ($Session.Miners.Where{ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption } | Group-Object { $_.BaseName_Version_Device -replace ".+-" } | Sort-Object -Property Name).ForEach{ 
+                        ($Session.Miners.Where{ $_.Optimal -or $_.Benchmark -or $_.MeasurePowerConsumption } | Group-Object { $_.BaseName_Version_Device.Split('-')[-1] } | Sort-Object -Property Name).ForEach{ 
                             $MinersDeviceGroup = $_.Group | Sort-Object { $_.Name, [String]$_.Algorithms } -Unique
                             $MinersDeviceGroupNeedingBenchmark = $MinersDeviceGroup.Where{ $_.Available -and $_.Benchmark }
                             $MinersDeviceGroupNeedingPowerConsumptionMeasurement = $MinersDeviceGroup.Where{ $_.Available -and $_.MeasurePowerConsumption }
@@ -2424,7 +2424,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                                 $_.$Bias -ge ($MinersDeviceGroup.$Bias | Sort-Object -Bottom 5 | Select-Object -Index 0) <# Always list at least the top 5 miners per device group #>
                             }
                             | Sort-Object -Property @{ Expression = { $_.Benchmark }; Descending = $true }, @{ Expression = { $_.MeasurePowerConsumption }; Descending = $true }, @{ Expression = { $_.Best }; Descending = $true }, @{ Expression = { $_.KeepRunning }; Descending = $true }, @{ Expression = { $_.Prioritize }; Descending = $true }, @{ Expression = { $_.$Bias }; Descending = $true }, @{ Expression = { $_.Name }; Descending = $false }, @{ Expression = { $_.Algorithms[0] }; Descending = $false }, @{ Expression = { $_.Algorithms[1] }; Descending = $false }
-                            | Format-Table $MinerTable -GroupBy @{ Name = "Device(s)"; Expression = { "$($MinersDeviceGroup[0].BaseName_Version_Device -replace ".+-")" } } -AutoSize | Out-Host
+                            | Format-Table $MinerTable -GroupBy @{ Name = "Device(s)"; Expression = { "$($MinersDeviceGroup[0].BaseName_Version_Device.Split('-')[-1])" } } -AutoSize | Out-Host
                         }
                     }
                     Remove-Variable Bias, MinerTable, MinersDeviceGroup, MinersDeviceGroupNeedingBenchmark, MinersDeviceGroupNeedingPowerConsumptionMeasurement -ErrorAction Ignore
@@ -2438,10 +2438,10 @@ $LegacyGUIelements.Timer.Add_Tick(
                             @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                             @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
                             @{ Label = "Cnt"; Expression = { switch ($_.Activated) { 0 { "Never"; break } 1 { "Once"; break } default { $_ } } } }
-                            @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
+                            @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }
                             @{ Label = "Command"; Expression = { $_.CommandLine } }
                         )
-                        $Session.MinersRunning | Sort-Object -Property { $_.BaseName_Version_Device -replace ".+-" } | Format-Table $MinerTable -Wrap | Out-Host
+                        $Session.MinersRunning | Sort-Object -Property { $_.BaseName_Version_Device.Split('-')[-1] } | Format-Table $MinerTable -Wrap | Out-Host
                         Remove-Variable MinerTable
                     }
 
@@ -2458,7 +2458,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                                 @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                                 @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
                                 @{ Label = "Cnt"; Expression = { switch ($_.Activated) { 0 { "Never"; break } 1 { "Once"; break } default { $_ } } } }
-                                @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
+                                @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }
                                 @{ Label = "Command"; Expression = { $_.CommandLine } }
                             )
                             $ProcessesIdle | Sort-Object -Property EndTime -Descending | Format-Table $MinerTable -Wrap | Out-Host
@@ -2475,10 +2475,10 @@ $LegacyGUIelements.Timer.Add_Tick(
                                 @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
                                 @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
                                 @{ Label = "Cnt"; Expression = { switch ($_.Activated) { 0 { "Never"; break } 1 { "Once"; break } default { $_ } } } }
-                                @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device -replace ".+-" } }
+                                @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }
                                 @{ Label = "Command"; Expression = { $_.CommandLine } }
                             )
-                            $ProcessesFailed | Sort-Object { if ($_.EndTime) { $_.EndTime } else { [DateTime]0 } } | Format-Table $MinerTable -Wrap | Out-Host
+                            $ProcessesFailed | Sort-Object { if ($_.EndTime) { $_.EndTime } else { [DateTime]::MinValue } } | Format-Table $MinerTable -Wrap | Out-Host
                             Remove-Variable MinerTable
                         }
                         Remove-Variable MinersActivatedLast24Hrs, ProcessesFailed
