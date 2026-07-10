@@ -543,17 +543,17 @@ function Update-TabControl {
             if ($LegacyGUIelements.RadioButtonMinersOptimal.checked) { 
                 if ($Session.MinersOptimal) { 
                     $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                    $DataSource = $Session.MinersOptimal.PsObject.Copy() | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
+                    $DataSource = $Session.MinersOptimal | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
                     Remove-Variable Bias
                 }
             }
             elseif ($LegacyGUIelements.RadioButtonMinersUnavailable.checked) { 
-                $DataSource = $Session.Miners.Where{ $_.Available -ne $true }.ForEach{ $_.Clone() } | Sort-Object { $_.BaseName_Version_Device.Split('-')[-1] }, Info, Algorithm
+                $DataSource = $Session.Miners.Where{ $_.Available -ne $true } | Sort-Object { $_.BaseName_Version_Device.Split('-')[-1] }, Info, Algorithm
             }
             else { 
                 if ($Session.Miners) {
                     $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-                    $DataSource = $Session.Miners.PsObject.ForEach{ $_.Clone() } | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
+                    $DataSource = $Session.Miners | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
                     Remove-Variable Bias
                 }
             }
