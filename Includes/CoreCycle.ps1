@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.8.13
-Version date:   2026/07/10
+Version:        6.8.14
+Version date:   2026/07/12
 #>
 
 using module .\Include.psm1
@@ -879,7 +879,7 @@ try {
                         $_.Devices = [System.Collections.Generic.SortedSet[Object]]::new($MinerDevices.Where{ $Miner.DeviceNames -contains $_.Name })
                     }
                     elseif ($MinerNew = $MinersNewGroup.Where{ $Miner.Info -eq $_.Info }) { 
-                        if ($_.KeepRunning = $_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running -and $_.ContinousCycle -lt $Session.Config.MinCycle -and -not $_.IsBenchmarkingOrMeasuring) { 
+                        if ($_.KeepRunning = $_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running -and $_.ContinousCycle -lt $Session.Config.MinCycle) { 
                             # Minimum numbers of cycles not yet reached
                             $_.Restart = $false
                         }
@@ -1127,7 +1127,7 @@ try {
             # Get the optimal miners per algorithm and device
             $MinersOptimal = ($MinersAvailable.Where{ -not $_.Benchmark -and -not $_.MeasurePowerConsumption } | Group-Object { $_.BaseName_Version_Device.Split('-')[-1] }, { $_.Algorithms -join " " }).ForEach{ ($_.Group | Sort-Object -Descending -Property KeepRunning, Prioritize, $Bias, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $true }, @{ Expression = { $_.Activated }; Descending = $false }, @{ Expression = { $_.Algorithms -join " " }; Descending = $false } -Top 1).ForEach{ $_.Optimal = $true; $_ } }
             # Get the best miners per device
-            $MinersBestPerDevice = ($MinersAvailable | Group-Object { $_.BaseName_Version_Device.Split('-')[-1] }).ForEach{ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, IsBenchmarkingOrMeasuring,KeepRunning, Prioritize, $Bias, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $false }, @{ Expression = { $_.Activated }; Descending = $false } -Top 1 }
+            $MinersBestPerDevice = ($MinersAvailable | Group-Object { $_.BaseName_Version_Device.Split('-')[-1] }).ForEach{ $_.Group | Sort-Object -Descending -Property Benchmark, MeasurePowerConsumption, IsBenchmarkingOrMeasuring, KeepRunning, Prioritize, $Bias, @{ Expression = { $_.WarmupTimes[1] + $_.MinDataSample }; Descending = $false }, @{ Expression = { $_.Activated }; Descending = $false } -Top 1 }
 
             # Hack: Temporarily make all bias -ge 0 by adding smallest bias, MinersBest produces wrong sort order when some profits are negative
             # Get smallest $Bias
@@ -1387,7 +1387,7 @@ try {
         while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
 
         #region Write summary
-        $Session.MinersBest.Where{ $_.IsBenchmarkingOrMeasuring }.ForEach{ 
+        $Session.MinersBest.Where{ $_.Benchmark -or $_.MeasurePowerConsumption }.ForEach{ 
             $Message = "$(if ($_.Benchmark) { "Benchmarking" })$(if ($_.Benchmark -and $_.MeasurePowerConsumption) { " and measuring power consumption" } elseif ($_.MeasurePowerConsumption) { "Measuring power consumption" })"
             Write-Message -Level Verbose "$Message for miner '$($_.Info)' in progress [attempt $($_.Activated) of $($Session.WatchdogCount + 1); min. $($_.MinDataSample) sample$(if ($Min_er.MinDataSample -ne 1) { "s" })]..."
         }

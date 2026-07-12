@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.13
-Version date:   2026/07/10
+Version:        6.8.14
+Version date:   2026/07/12
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -321,7 +321,7 @@ function Update-TabControl {
             elseif ($Session.MinersBest) { 
                 if (-not $LegacyGUIelements.ActiveMinersDGV.SelectedRows) { 
                     $LegacyGUIelements.ActiveMinersDGV.BeginInit()
-                    $LegacyGUIelements.ActiveMinersDGV.DataSource = $Session.MinersBest.PsObject.Copy() | Select-Object @(
+                    $LegacyGUIelements.ActiveMinersDGV.DataSource = $Session.MinersBest | Select-Object @(
                         @{ Name = "Info"; Expression = { $_.Info } }
                         @{ Name = "SubStatus"; Expression = { $_.SubStatus } }
                         @{ Name = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }

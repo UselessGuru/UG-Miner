@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.13
-Version date:   2026/07/10
+Version:        6.8.14
+Version date:   2026/07/12
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -340,7 +340,7 @@ class Miner : IDisposable {
     [Boolean]$Benchmark = $false # derived from stats
     [Boolean]$Best = $false
     [String]$CommandLine
-    [String]$CommandLineLauched
+    [String]$CommandLineLaunched
     [UInt]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
     [Double]$DataCollectInterval = 5 # Seconds, allow fractions of seconds
     [DateTime]$DataSampleTimestamp = 0 # Newest sample
@@ -399,12 +399,6 @@ class Miner : IDisposable {
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [DateTime]$StatEnd # UniversalTime
     hidden [DateTime]$StatStart # UniversalTime
-
-    [Miner]Clone() { 
-        $Miner = $this | Select-Object -ExcludeProperty Workers
-        $Miner | Add-Member Workers $this.Workers
-        return $Miner -as $this.API
-    }
 
     Dispose() { 
         $this = $null
@@ -525,7 +519,7 @@ class Miner : IDisposable {
         $this.Activated ++
 
         Write-Message -Level Verbose $this.CommandLine
-        $this.CommandLineLauched = $this.CommandLine
+        $this.CommandLineLaunched = $this.CommandLine
 
         # Log switching information to .\Logs\SwitchingLog.csv
         [PSCustomObject]@{ 
@@ -536,7 +530,7 @@ class Miner : IDisposable {
             Activated               = $this.Activated
             Algorithms              = [String]::Join(';', $this.Workers.Pool.AlgorithmVariant)
             Benchmark               = $this.Benchmark
-            CommandLine             = $this.CommandLineLauched
+            CommandLine             = $this.CommandLineLaunched
             Cycles                  = $null
             DeviceNames             = $this.BaseName_Version_Device.Split('-')[-1]
             Duration                = $null
@@ -556,12 +550,12 @@ class Miner : IDisposable {
         if ($this.Status -ne [MinerStatus]::DryRun) { 
             $this.ProcessJob = Invoke-CreateProcess -ErrorVariable $null -InformationVariable $null -OutVariable $null -WarningVariable $null -BinaryPath "$PWD\$($this.Path)" -ArgumentList $this.GetCommandLineParameters() -WorkingDirectory (Split-Path "$PWD\$($this.Path)") -WindowStyle $this.WindowStyle -EnvBlock $this.EnvVars -JobName $this.Name -LogFile $this.LogFile -Status $this.StatusInfo
 
-            # Sometimes the process cannot be found instantly, wait max 3 seconds
-            $EndLoop = [DateTime]::Now.AddSeconds(3)
+            # Sometimes the process cannot be found instantly, wait max 6 seconds
+            $EndLoop = [DateTime]::Now.AddSeconds(6)
             do {
                 if ($this.ProcessJob.HasMoreData) { 
                     $JobResult = $this.ProcessJob | Receive-Job -ErrorAction Ignore
-                    
+
                     if ($JobResult -and $JobResult.MinerProcessId) { 
                         $this.ProcessId           = $jobResult.MinerProcessId
                         $this.DataSampleTimestamp = [DateTime]::MinValue
@@ -580,10 +574,11 @@ class Miner : IDisposable {
     }
 
     hidden [Void]StopMining() { 
-        if ($this.Process.Id) { 
-            Write-Message -Level Info "Stopping miner '$($this.Info)'..."
-            $this.StatusInfo = "$($this.Info) is stopping..."
-        }
+
+        [Int64]$Local:ProcessId = $null
+
+        Write-Message -Level Info "Stopping miner '$($this.Info)'..."
+        $this.StatusInfo = "$($this.Info) is stopping..."
 
         $this.StopDataReader()
 
@@ -598,11 +593,16 @@ class Miner : IDisposable {
         $this.EndTime = $this.StatEnd = [DateTime]::Now.ToUniversalTime()
 
         if ($this.Process.Id) { 
+            $Local:ProcessId = $this.Process.Id
+        }
+        else { 
+            $Local:ProcessId = ((Get-CimInstance CIM_Process).Where{ $_.ExecutablePath -and $_.CommandLine -eq "$PWD\$($this.CommandLineLaunched)" })[0].ProcessId
+        }
+        if ($Local:ProcessId) { 
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-            (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach{ $null = (Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
-            $null = (Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore)
+            (Get-CimInstance win32_process -Filter "ParentProcessId = $($Local:ProcessId)").ForEach{ $null = (Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
+            $null = (Stop-Process -Id $Local:ProcessId -Force -ErrorAction Ignore)
             $this.Process = $null
-            $this.ProcessID = 0
         }
 
         $this.StatusInfo = if ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo.Replace("'$($this.Name)' ", "") -replace ".+stopped. " -replace ".+sample.*\) " } else { "" }
@@ -616,7 +616,7 @@ class Miner : IDisposable {
             Accounts                = ""
             Algorithms              = ""
             Benchmark               = $this.Benchmark
-            CommandLine             = $this.CommandLineLauched
+            CommandLine             = $this.CommandLineLaunched
             Cycles                  = $this.ContinousCycle
             DeviceNames             = $this.BaseName_Version_Device.Split('-')[-1]
             Duration                = "{0:hh\:mm\:ss}" -f ($this.EndTime - $this.BeginTime)
@@ -876,6 +876,8 @@ class Miner : IDisposable {
             foreach ($Worker in $this.Workers) { 
                 $this.Earnings_Accuracy += $Worker.Earnings_Accuracy * $Worker.Earnings / $this.Earnings
             }
+
+            $this.IsBenchmarkingOrMeasuring = $false
         }
 
         if ($Stat = Get-Stat -Name ($this.Name + "_PowerConsumption")) { 

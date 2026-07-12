@@ -1,4 +1,15 @@
-Changelog UG-Miner 6.8.13 2026/07/10
+Changelog UG-Miner 6.8.14 2026/07/??
+====================================
+
+Fixes:
+- Core / Include.psm1: No 'Stopping miner[...]' message for dry running miners (method 'StopMining')
+
+Miner changes:
+- CcminerZeroDynamics-v2.4.1 (remove unsupported algorithms 'Argon2d250', 'Argon2d500' & 'Argon2d4096')
+- SRBMinerMulti-v3.4.6 (update)
+
+
+Changelog UG-Miner 6.8.13 2026/07/09
 ====================================
 
 Fixes:
@@ -9,9 +20,9 @@ Fixes:
 Improvements:
 - Core: Minor performance improvements
 
-Miner updates:
-- SRBMinerMulti-v3.4.5
-- Wildrig-v0.49.3
+Miner Changes:
+- SRBMinerMulti-v3.4.5 (update)
+- Wildrig-v0.49.3 (update)
 
 
 Changelog UG-Miner 6.8.12 2026/07/06
@@ -32,9 +43,9 @@ Improvements:
 - Core: Minor performance improvements
 - Core: Remove obsolete code
 
-Miner updates:
-- SRBMinerMulti-v3.4.3
-- Wildrig-v0.49.1
+Miner changes:
+- SRBMinerMulti-v3.4.3 (update)
+- Wildrig-v0.49.1 (update)
 
 
 Changelog UG-Miner 6.8.11 2026/06/27
@@ -47,9 +58,9 @@ Changes:
 Fixes:
 - Currency exchange rates not getting updated periodically (regression from 6.8.10)
 
-Miner updates:
-- SRBMinerMulti-v3.4.1
-- Wildrig-v0.48.9
+Miner changes:
+- SRBMinerMulti-v3.4.1 (update)
+- Wildrig-v0.48.9 (update)
 
 
 Changelog UG-Miner 6.8.10 2026/06/04
@@ -66,8 +77,8 @@ Improvements:
 - Core: Remove obsolete code
 - LegacyGUI: Remove obsolete code
 
-Miner updates:
-- SRBMinerMulti-v3.3.4
+Miner changes:
+- SRBMinerMulti-v3.3.4 (update)
 
 
 Changelog UG-Miner 6.8.9 2026/05/30
@@ -82,8 +93,8 @@ Fixes:
 Improvements:
 - Core: Remove obsolete Code
 
-Miner updates:
-- SRBMinerMulti-v3.3.0
+Miner changes:
+- SRBMinerMulti-v3.3.0 (update)
 
 
 Changelog UG-Miner 6.8.8 2026/05/16
@@ -110,8 +121,8 @@ Changelog UG-Miner 6.8.7 2026/05/10
 Enhancements:
 - Web Server / API: Support gzip compression
 
-Miner updates:
-- SRBMinerMulti-v3.2.8
+Miner changes:
+- SRBMinerMulti-v3.2.8 (update)
 
 
 Changelog UG-Miner 6.8.6 2026/05/03
@@ -121,8 +132,8 @@ Fixes:
 - Core / Include.psm1: Job name in method 'StartDataReader()' incomplete
 - Miner Trex-v0.26.8: Dual mining broken
 
-Miner updates:
-- SRBMinerMulti-v3.2.7
+Miner changes:
+- SRBMinerMulti-v3.2.7 (update)
 
 
 Changelog UG-Miner 6.8.5 2026/05/01
@@ -134,8 +145,8 @@ Enhancements:
 Improvements:
 - Core: Better error handling when data & log files are not available/corrupt
 
-Miner Updates:
-- BzMiner-v24.0.2
+Miner changes:
+- BzMiner-v24.0.2 (update)
 
 
 Changelog UG-Miner 6.8.4 2026/04/23
@@ -148,8 +159,8 @@ Changes:
 - Renamed configuration item
     ShowAllMiners -> ShowAllOptimalMiners
 
-Miner updates:
-- SRBMinerMulti-v3.2.6
+Miner changes:
+- SRBMinerMulti-v3.2.6 (update)
 
 
 Changelog UG-Miner 6.8.3 2026/04/19
@@ -190,8 +201,8 @@ Fixes:
 - Balances tracker: Do not create a earnings object if balance has dropped to 0 after a full payout
 - Core: Include.psm1  / function 'Get-Rate': Not setting mBTC rates (regression from 6.7.35)
 
-Miner updates:
-- TeamBlackMiner-v2.44
+Miner changes:
+- TeamBlackMiner-v2.44 (update)
 
 
 Changelog UG-Miner 6.8.0 2026/04/12
@@ -216,8 +227,8 @@ Improvements:
 - Brains: Do not immediately query pool data when UG-Miner gets paused
 - Brains: When UG-Miner is paused then query pool data every $Interval seconds
 
-Miner updates:
--Rigel-v1.23.2
+Miner changes:
+-Rigel-v1.23.2 (update)
 
 Pool changes:
 - ZPool: Support 'zap=$Currency' parameter
@@ -240,8 +251,8 @@ Changelog UG-Miner 6.7.35 2026/04/02
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- SRBMinerMulti-v3.2.5
+Miner changes:
+- SRBMinerMulti-v3.2.5 (update)
 
 
 Changelog UG-Miner 6.7.34 2026/03/29
@@ -250,9 +261,9 @@ Changelog UG-Miner 6.7.34 2026/03/29
 Fixes:
 - Core: Typo in benchmarking output (regression from 6.7.33)
 
-Miner updates:
-- SRBMinerMulti-v3.2.3
-- XmRig-v6.25.0
+Miner changes:
+- SRBMinerMulti-v3.2.3 (update)
+- XmRig-v6.25.0 (update)
 
 
 Changelog UG-Miner 6.7.33 2026/03/13
@@ -267,8 +278,8 @@ Fixes:
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- SRBMinerMulti-v3.2.0
+Miner changes:
+- SRBMinerMulti-v3.2.0 (update)
 
 
 Changelog UG-Miner 6.7.32 2026/03/08
@@ -282,8 +293,8 @@ Improvements:
 - Core: Remove obsolete code & minor code optimizations
 - Miners: No more array additions
 
-Miner updates:
-- SRBMinerMulti-v3.1.9
+Miner changes:
+- SRBMinerMulti-v3.1.9 (update)
 
 
 Changelog UG-Miner 6.7.31 2026/03/01
@@ -292,8 +303,8 @@ Changelog UG-Miner 6.7.31 2026/03/01
 Fixes:
 - NiceHash Pool: Fee (2%) was not applied
 
-Miner updates:
-- SRBMinerMulti-v3.1.8
+Miner changes:
+- SRBMinerMulti-v3.1.8 (update)
 
 
 Changelog UG-Miner 6.7.30 2026/02/26
@@ -302,16 +313,16 @@ Changelog UG-Miner 6.7.30 2026/02/26
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- SRBMinerMulti-v3.1.7
+Miner changes:
+- SRBMinerMulti-v3.1.7 (update)
 
 
 Changelog UG-Miner 6.7.29 2026/02/19
 ====================================
 
-Miner updates:
-- BzMiner-v24.0.1
-- SRBMinerMulti-v3.1.5
+Miner changes:
+- BzMiner-v24.0.1 (update)
+- SRBMinerMulti-v3.1.5 (update)
 
 
 Changelog UG-Miner 6.7.28 2026/02/16
@@ -323,8 +334,8 @@ Fixes:
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- SRBMinerMulti-v3.1.4
+Miner changes:
+- SRBMinerMulti-v3.1.4 (update)
 
 
 Changelog UG-Miner 6.7.27 2026/02/10
@@ -333,8 +344,8 @@ Changelog UG-Miner 6.7.27 2026/02/10
 Improvements:
 - Core: Less array additions
 
-Miner updates:
-- SRBMinerMulti-v3.1.3
+Miner changes:
+- SRBMinerMulti-v3.1.3 (update)
 
 
 Changelog UG-Miner 6.7.26 2026/02/01
@@ -346,8 +357,8 @@ Enhancements:
 Fixes:
 - Core: In dryrun switching log was not updated completely when miner stopped
 
-Miner updates:
-- TeamBlackMiner-v2.43
+Miner changes:
+- TeamBlackMiner-v2.43 (update)
 
 
 Changelog UG-Miner 6.7.25 2026/01/29
@@ -368,8 +379,8 @@ Enhancements:
 Fixes:
 - Core: Pool reasons not clearing
 
-Miner updates:
-- TeamBlackMiner-v2.42
+Miner changes:
+- TeamBlackMiner-v2.42 (update)
 
 
 Changelog UG-Miner 6.7.23 2026/01/19
@@ -382,8 +393,8 @@ Improvements:
 - Core: Remove obsolete code & minor code optimizations
 - Web GUI: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- TeamBlackMiner-v2.41
+Miner changes:
+- TeamBlackMiner-v2.41 (update)
 
 
 Changelog UG-Miner 6.7.22 2026/01/15
@@ -395,9 +406,9 @@ Changes:
 Improvements:
 - Brains: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- JayddeeCPU-v26.1
-- TeamBlackMiner-v2.38
+Miner changes:
+- JayddeeCPU-v26.1 (update)
+- TeamBlackMiner-v2.38 (update)
 
 
 Changelog UG-Miner 6.7.21 2026/01/13
@@ -445,8 +456,8 @@ Enhancements:
 - Core: Read exchange rate when FIAT currency was changed
 - Core: Use first extra currency (if configured) or USD as fallback for main FIAT currency if cryptocompare API does not have exchange rate information for configured main currency
 
-Miner updates:
-- SRBMinerMulti-v3.1.1
+Miner changes:
+- SRBMinerMulti-v3.1.1 (update)
 
 
 Changelog UG-Miner 6.7.17 2026/01/04
@@ -462,8 +473,8 @@ Improvements:
 - Core: Avoid extra rates queries to 'min-api.cryptocompare.com'
 - Legacy GUI: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- TeamBlackMiner-v2.36
+Miner changes:
+- TeamBlackMiner-v2.36 (update)
 
 
 Changelog UG-Miner 6.7.16 2025/12/31
@@ -479,30 +490,30 @@ Changelog UG-Miner 6.7.15 2025/12/29
 Improvements:
 - Legacy GUI: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- XmRig-v6.25.0
+Miner changes:
+- XmRig-v6.25.0 (update)
 
 
 Changelog UG-Miner 6.7.14 2025/12/25
 ====================================
 
-Miner updates:
-- OneZeroMiner-v1.7.4
-- Rigel-v1.23.1
+Miner changes:
+- OneZeroMiner-v1.7.4 (update)
+- Rigel-v1.23.1 (update)
 
 
 Changelog UG-Miner 6.7.13 2025/12/22
 ====================================
 
-Miner updates:
-- SRBMinerMulti-v3.0.10
+Miner changes:
+- SRBMinerMulti-v3.0.10 (update)
 
 
 Changelog UG-Miner 6.7.12 2025/12/20
 ====================================
 
-Miner updates:
-- BzMiner-v23.0.4
+Miner changes:
+- BzMiner-v23.0.4 (update)
 
 
 Changelog UG-Miner 6.7.11 2025/12/18
@@ -511,8 +522,8 @@ Changelog UG-Miner 6.7.11 2025/12/18
 Fixes:
 - Core: Not measuring power usage (regression from 6.7.10)
 
-Miner updates:
-- SRBMinerMulti-v3.0.8
+Miner changes:
+- SRBMinerMulti-v3.0.8 (update)
 - TeamBlackMiner-v2.29 (for AMD & CUDA -ge 13.1, keep v2.28 for older NVIDIA drivers/cards)
 
 
@@ -526,7 +537,7 @@ Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
 Miner changes:
-- Wildrig-v0.47.9
+- Wildrig-v0.47.9 (update)
 
 
 Changelog UG-Miner 6.7.9 2025/12/15
@@ -547,8 +558,8 @@ Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
 Miner updates
-- OneZeroMiner-v1.7.3
-- Rigel-v1.23.0
+- OneZeroMiner-v1.7.3 (update)
+- Rigel-v1.23.0 (update)
 
 
 Changelog UG-Miner 6.7.7 2025/12/12
@@ -560,9 +571,9 @@ Fixes:
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- JayddeeCPU-v25.7
-- MiniZ-v2.5e3: Algorithm EvrProgPOW broken, use MiniZ-v2.5e2 instead
+Miner changes:
+- JayddeeCPU-v25.7 (update)
+- MiniZ-v2.5e3 (algorithm EvrProgPOW broken, use MiniZ-v2.5e2 instead)
 
 
 Changelog UG-Miner 6.7.6 2025/12/09
@@ -597,9 +608,9 @@ Fixes:
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- SRBMinerMulti-v3.0.6
-- Wildrig-v0.47.8
+Miner changes:
+- SRBMinerMulti-v3.0.6 (update)
+- Wildrig-v0.47.8 (update)
 
 Pool changes:
 - ZPool: Add region 'Japan'
@@ -618,9 +629,9 @@ Enhancements:
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- OneZeroMiner-v1.7.2
-- Wildrig-v0.47.7
+Miner changes:
+- OneZeroMiner-v1.7.2 (update)
+- Wildrig-v0.47.7 (update)
 
 
 Changelog UG-Miner 6.7.2 2025/11/29
@@ -637,8 +648,8 @@ Fixes:
 - Web GUI / Configuration editor: Could not disable 'track balances' for NiceHash when no API key, API secret or organisation id were set
 - Web GUI / Configuration editor: Incorrect error message when no pool was selected
 
-Miner updates:
-- OneZeroMiner-v1.7.1
+Miner changes:
+- OneZeroMiner-v1.7.1 (update)
 
 
 Changelog UG-Miner 6.7.1 2025/11/25
@@ -647,8 +658,8 @@ Changelog UG-Miner 6.7.1 2025/11/25
 Enhancements:
 - Core: Added configuration item 'RatesUpdateInterval' (default value: 10); interval between exchange rates updates from min-api.cryptocompare.com
 
-Miner updates:
-- OneZeroMiner-v1.6.9
+Miner changes:
+- OneZeroMiner-v1.6.9 (update)
 
 
 Changelog UG-Miner 6.7.0 2025/11/21
@@ -663,9 +674,9 @@ Improvements:
 - Core: Idle detection can be disabled while being idle (no need to resume mining first)
 - Core: Avoid extra rates queries to 'min-api.cryptocompare.com'
 
-Miner updates:
-- SRBMinerMulti-v3.0.5
-- Wildrig-v0.47.6
+Miner changes:
+- SRBMinerMulti-v3.0.5 (update)
+- Wildrig-v0.47.6 (update)
 
 Pool changes:
 - Removed ProHashing (pool is closing down end of November 2025) 
@@ -687,17 +698,17 @@ Changes:
 Enhancements:
 - Core: Include.psm1 / function 'Get-DAGepoch': Supports FiroPow hardfork
 
-Miner updates:
-- Wildrig-v0.47.5
+Miner changes:
+- Wildrig-v0.47.5 (update)
 
 
 Changelog UG-Miner 6.6.4 2025/11/17
 ===================================
 
-Miner updates:
-- OneZeroMiner-v1.6.8
-- SRBMinerMulti-v3.0.4
-- Wildrig-v0.47.4
+Miner changes:
+- OneZeroMiner-v1.6.8 (update)
+- SRBMinerMulti-v3.0.4 (update)
+- Wildrig-v0.47.4 (update)
 
 
 Changelog UG-Miner 6.6.3 2025/11/06
@@ -709,9 +720,9 @@ Improvements:
 - Core / Include.psm1: Do not start a second instance of SnakeTail when running as admin / non-admin
 
 Miner changes:
-- OneZeroMiner-v1.6.5
-- SRBMinerMulti-v3.0.1
-- Wildrig-v0.46.7
+- OneZeroMiner-v1.6.5 (update)
+- SRBMinerMulti-v3.0.1 (update)
+- Wildrig-v0.46.7 (update)
 
 
 Changelog UG-Miner 6.6.2 2025/11/04
@@ -722,7 +733,7 @@ Fixes:
 - Core: Include.psm1 / function 'Get-AllDAGdata': Querying block explorers more often than needed
 
 Miner changes:
-- SRBMinerMulti-v3.0.0
+- SRBMinerMulti-v3.0.0 (update)
 
 
 Changelog UG-Miner 6.6.1 2025/11/02
@@ -744,9 +755,9 @@ Improvements:
 - LegacyGUI: Minor code optimizations
 
 Miner changes:
-- MiniZ-v2.5e3
-- SRBMinerMulti-v2.9.9
-- Wildrig-v0.46.4
+- MiniZ-v2.5e3 (update)
+- SRBMinerMulti-v2.9.9 (update)
+- Wildrig-v0.46.4 (update)
 
 
 Changelog UG-Miner 6.5.17 2025/10/25
@@ -761,8 +772,8 @@ Improvements:
 - LegacyGUI: Minor code optimizations
 
 Miner changes:
-- OneZeroMiner-v1.6.4
-- Wildrig-v0.46.2
+- OneZeroMiner-v1.6.4 (update)
+- Wildrig-v0.46.2 (update)
 
 
 Changelog UG-Miner 6.5.16 2025/10/19
@@ -773,8 +784,8 @@ Fixes:
 - Legacy GUI: Do not ask for confirmation when unloading GUI from console window ('4' key)
 
 Miner changes:
-- OneZeroMiner-v1.6.3
-- Wildrig-v0.45.9
+- OneZeroMiner-v1.6.3 (update)
+- Wildrig-v0.45.9 (update)
 
 
 Changelog UG-Miner 6.5.15 2025/10/12
@@ -787,9 +798,9 @@ Improvements:
 - APIserver: Minor code optimizations
 - Core: Minor code optimizations
 
-Miner updates:
-- OneZeroMiner-v1.6.2
-- Wildrig-v0.45.8
+Miner changes:
+- OneZeroMiner-v1.6.2 (update)
+- Wildrig-v0.45.8 (update)
 
 
 Changelog UG-Miner 6.5.14 2025/10/07
@@ -813,10 +824,10 @@ Enhancements:
 Improvements:
 - Pools 'HashCryptos' & 'MiningDutch': Mark unminable algorithms as 'Algorithm not supported by pool'
 
-Miner updates:
-- lolMiner-v1.98a
-- OneZeroMiner-v1.6.0
-- Wildrig-v0.45.6
+Miner changes:
+- lolMiner-v1.98a (update)
+- OneZeroMiner-v1.6.0 (update)
+- Wildrig-v0.45.6 (update)
 
 Pool changes:
 - Removed ZergPool (pool has closed down beginning of October 2025)
@@ -832,17 +843,17 @@ Improvements:
 - Core: faster benchmarking in dry mode
 
 Miner changes:
-- OneZeroMiner-v1.5.9
-- Wildrig-v0.45.1
+- OneZeroMiner-v1.5.9 (update)
+- Wildrig-v0.45.1 (update)
 
 
 Changelog UG-Miner 6.5.11 2025/09/07
 ====================================
 
-Miner updates:
-- OneZeroMiner-v1.5.8
-- SRBMinerMulti-v2.9.7
-- Wildrig-v0.44.6
+Miner changes:
+- OneZeroMiner-v1.5.8 (update)
+- SRBMinerMulti-v2.9.7 (update)
+- Wildrig-v0.44.6 (update)
 
 
 Changelog UG-Miner 6.5.10 2025/09/03
@@ -862,7 +873,7 @@ Improvements
 - Core: Remove obsolete code & minor code optimizations
 
 Miner changes:
-- OneZeroMiner-v1.5.7
+- OneZeroMiner-v1.5.7 (update)
 
 
 Changelog UG-Miner 6.5.9 2025/08/30
@@ -876,10 +887,10 @@ Improvements:
 - Core: Include.psm1 / function 'Get-AllDGdata': Uses configured PoolAPItimeout when requesting DAG data from https://prohashing.com/api/v1/currencies
 
 Miner changes:
-- MiniZ-v2.5e2
-- OneZeroMiner-v1.5.5
-- Rigel-v1.22.3
-- Wildrig-v0.44.5
+- MiniZ-v2.5e2 (update)
+- OneZeroMiner-v1.5.5 (update)
+- Rigel-v1.22.3 (update)
+- Wildrig-v0.44.5 (update)
 
 
 Changelog UG-Miner 6.5.8 2025/08/23
@@ -894,9 +905,9 @@ Changelog UG-Miner 6.5.7 2025/08/23
 ===================================
 
 Miner changes:
-- OneZeroMiner-v1.5.4
-- SRBMinerMulti-v2.9.5
-- Wildrig-v0.44.4
+- OneZeroMiner-v1.5.4 (update)
+- SRBMinerMulti-v2.9.5 (update)
+- Wildrig-v0.44.4 (update)
 
 
 Changelog UG-Miner 6.5.6 2025/08/17
@@ -905,9 +916,9 @@ Changelog UG-Miner 6.5.6 2025/08/17
 Fixes:
 - Core: Not ending cycle when running miner was triggered to get re-benchmarked
 
-Miner updates:
-- OneZeroMiner-v1.5.3
-- Wildrig-v0.44.1
+Miner changes:
+- OneZeroMiner-v1.5.3 (update)
+- Wildrig-v0.44.1 (update)
 
 
 Changelog UG-Miner 6.5.5 2025/08/15
@@ -916,9 +927,9 @@ Changelog UG-Miner 6.5.5 2025/08/15
 Changes:
 - Removed balances tracker for MiningDutch; data provided in pool API is incorrect
 
-Miner updates:
-- OneZeroMiner-v1.5.1
-- Wildrig-v0.44.0
+Miner changes:
+- OneZeroMiner-v1.5.1 (update)
+- Wildrig-v0.44.0 (update)
 
 Improvements
 - Core: Remove obsolete code & minor code optimizations
@@ -932,8 +943,8 @@ Fixes:
 - Core: Configuration parameter 'Algorithm' not working when using '+' in filter (regression from v6.5.3)
 
 Miner changes:
-- OneZeroMiner-v1.4.9
-- Wildrig-v0.43.5
+- OneZeroMiner-v1.4.9 (update)
+- Wildrig-v0.43.5 (update)
 
 
 Changelog UG-Miner 6.5.3 2025/08/03
@@ -954,9 +965,9 @@ Improvements:
 - Core / Console window: Disable QuickEdit mode
 - Core: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- OneZeroMiner-v1.4.5
-- Wildrig-v0.43.3
+Miner changes:
+- OneZeroMiner-v1.4.5 (update)
+- Wildrig-v0.43.3 (update)
 
 
 Changelog UG-Miner 6.5.2 2025/07/27
@@ -975,8 +986,8 @@ Improvements:
 - Web GUI: Auto-refresh tables whenever data has changed in core
 
 Miner changes:
-- JayddeeCPU-v25.6
-- SRBMinerMulti-v2.9.5
+- JayddeeCPU-v25.6 (update)
+- SRBMinerMulti-v2.9.5 (update)
 
 
 Changelog UG-Miner 6.5.1 2025/07/19
@@ -1006,9 +1017,9 @@ Improvements:
 - Core: Use same pool variant when benchmarking to avoid extra benchmarking
 - Web & legacy GUI: Use shared functions, less code redundancy
 
-Miner updates:
-- JayddeeCPU-v25.5
-- OneZeroMiner-v1.4.5
+Miner changes:
+- JayddeeCPU-v25.5 (update)
+- OneZeroMiner-v1.4.5 (update)
 
 
 Changelog UG-Miner 6.4.36 2025/07/06
@@ -1018,7 +1029,7 @@ Improvements:
 - Core: Minor code optimizations
 
 Miner changes:
-- Rigel-v1.22.2
+- Rigel-v1.22.2 (update)
 
 
 Changelog UG-Miner 6.4.35 2025/07/03
@@ -1042,8 +1053,8 @@ Fixes:
 Improvements:
 - Core: Minor code optimizations
 
-Miner updates:
-- lolMiner-v1.97
+Miner changes:
+- lolMiner-v1.97 (update)
 - SRBMinerMulti-v2.9.4 (keep v2.9.2 for EvoHash & HooHash)
 
 
@@ -1057,10 +1068,10 @@ Improvements:
 - Core: Minor code optimizations
 
 Miner changes
-- JayddeeCPU-v25.4
-- KudaraideeCPU-v1.2.4
+- JayddeeCPU-v25.4 (update)
+- KudaraideeCPU-v1.2.4 (update)
 - SRBMinerMulti-v2.9.3 (dual mining is broken in v2.9.3; keep v2.9.2 for dual mining)
-- XmRig-v6.24.0
+- XmRig-v6.24.0 (update)
 
 
 Changelog UG-Miner 6.4.32 2025/06/14
@@ -1072,10 +1083,11 @@ Improvements:
 - Downloader: Make messages more descriptive
 
 Miner changes:
-- lolMiner-v1.96a
-- SRBMinerMulti-v2.9.2
-- Wildrig-v0.43.2
-- XmRig-v6.22.3
+- lolMiner-v1.96a (update)
+- SRBMinerMulti-v2.9.2 (update)
+- Wildrig-v0.43.2 (update)
+- XmRig-v6.22.3 (update)
+
 
 Changelog UG-Miner 6.4.31 2025/06/11
 ====================================
@@ -1101,9 +1113,9 @@ Improvements:
 - Core: Minor code optimizations
 
 Miner changes:
-- SRBMinerMulti-v2.9.0
-- TeamBlackMiner-v2.28
-- Wildrig-v0.43.1
+- SRBMinerMulti-v2.9.0 (update)
+- TeamBlackMiner-v2.28 (update)
+- Wildrig-v0.43.1 (update)
 
 
 Changelog UG-Miner 6.4.29 2025/06/04
@@ -1118,7 +1130,7 @@ Enhancements:
 Miner changes:
 - CpuMinerAurum-v3.23.1 (removed, no available pool since July 2024)
 - FrkHashMiner-v1.3.14 (removed, no available pool since July 2024)
-- Rigel-v1.21.3
+- Rigel-v1.21.3 (update)
 
 
 Changelog UG-Miner 6.4.28 2025/05/30
@@ -1128,11 +1140,11 @@ Improvements:
 - Core: Minor code optimizations
 - Downloader: Make error messages more descriptive
 
-Miner updates:
+Miner changes:
 - AMultiMinerCPU-v1.0.1.ps1 (new)
 - CcminerZeroDynamics-v2.4.1 (new)
 - KudaraideeCPU-v1.2.3 (new)
-- KudaraideeGPU-v1.2.0a (renamed from Kudaraidee-v1.2.0a)
+- KudaraideeGPU-v1.2.0a (Renamed from Kudaraidee-v1.2.0a)
 
 
 Changelog UG-Miner 6.4.27 2025/05/25
@@ -1172,8 +1184,8 @@ Fixes:
 - HashCryptos pool: Verify validity of payout currency (Add reason 'Payout currency [...] not supported by by pool')
 - Web GUI / Configuration editor: Incorrect error message when invalid main (FIAT) currency was configured (thanks to Szentigrade)
 
-Miner updates:
-- SRBMinerMulti-v2.8.8
+Miner changes:
+- SRBMinerMulti-v2.8.8 (update)
 
 
 Changelog UG-Miner 6.4.24 2025/05/11
@@ -1183,12 +1195,12 @@ Fixes:
 - Web GUI / Manage stats: 'Reset all pool price data' deleting ALL stats (and not just pool data)
 
 Miner changes:
-- lolMiner-v1.94a
-- MiniZ-v2.5e
-- Rigel-v1.21.3
-- RplantCpu-v5.0.42c
-- SRBMinerMulti-v2.8.6
-- Wildrig-v0.43.0
+- lolMiner-v1.94a (update)
+- MiniZ-v2.5e (update)
+- Rigel-v1.21.3 (update)
+- RplantCpu-v5.0.42c (update)
+- SRBMinerMulti-v2.8.6 (update)
+- Wildrig-v0.43.0 (update)
 
 Changelog UG-Miner 6.4.23 2025/04/10
 ====================================
@@ -1202,8 +1214,8 @@ Fixes:
 - TeamBlackMiner-v2.25 & v2.27: Incorrect OpenCL miner devices selection
 - TTMiner-v2024.3.3b6: Incorrect OpenCL miner devices selection
 
-Miner updates:
-- Wildrig-v0.42.7
+Miner changes:
+- Wildrig-v0.42.7 (update)
 
 Changelog UG-Miner 6.4.22 2025/04/05
 ====================================
@@ -1221,8 +1233,8 @@ Changelog UG-Miner 6.4.21 2025/03/31
 Fixes:
 - Core: 'Had [...] miners [...] available miners remain.' message counting incorrect
 
-Miner updates:
-- Wildrig-v0.42.6
+Miner changes:
+- Wildrig-v0.42.6 (update)
 
 
 Changelog UG-Miner 6.4.20 2025/03/28
@@ -1245,8 +1257,8 @@ Fixes:
 - Core: Crash in main cycle when no miner devices are selected
 
 Miner changes:
-- SRBMinerMulti-v2.8.1
-- Wildrig-v0.42.5
+- SRBMinerMulti-v2.8.1 (update)
+- Wildrig-v0.42.5 (update)
 
 
 Changelog UG-Miner 6.4.18 2025/03/23
@@ -1284,15 +1296,15 @@ Fixes:
 - Core: Read changed config on each loop, even when there is no pools config file
 - Miners SRBMinerMulti-v2.6.8 & SRBMinerMulti-v2.8.0: Fix error creating double miner objects crashing core
 
-Miner updates:
+Miner changes:
 - PhoenixMiner-v6.2c (fix download link)
 
 
 Changelog UG-Miner 6.4.17 2025/03/19
 ====================================
 
-Miner updates:
-- NanoMiner-v3.10.0
+Miner changes:
+- NanoMiner-v3.10.0 (update)
 
 
 Changelog UG-Miner 6.4.16 2025/03/12
@@ -1301,9 +1313,9 @@ Changelog UG-Miner 6.4.16 2025/03/12
 Enhancements:
 - Optimize miner code
 
-Miner updates:
-- Rigel-v1.21.2
-- Wildrig-v0.42.2
+Miner changes:
+- Rigel-v1.21.2 (update)
+- Wildrig-v0.42.2 (update)
 
 
 Changelog UG-Miner 6.4.15 2025/03/09
@@ -1315,8 +1327,8 @@ Enhancements:
 Fixes:
 - Core: Include.psm1 / function 'Get-AllDAGdata': Querying 'telestai.cryptoscope.io' twice for TLS block data
 
-Miner updates:
-- SRBMinerMulti-v2.8.0
+Miner changes:
+- SRBMinerMulti-v2.8.0 (update)
 
 
 Changelog UG-Miner 6.4.14 2025/03/05
@@ -1326,10 +1338,10 @@ Fixes:
 - Core: Memory leak (regression from 6.4.13)
 - Error in algorithm mapping: Phi and PhiHash are separate algorithms
 
-Miner updates:
+Miner changes:
 - BzMiner-v23.0.2 (keep v22.0.2 for Etc & Ethash)
-- OneZeroMiner-v1.4.4
-- Wildrig-v0.42.3
+- OneZeroMiner-v1.4.4 (update)
+- Wildrig-v0.42.3 (update)
 
 
 Changelog UG-Miner 6.4.13 2025/02/23
@@ -1342,7 +1354,7 @@ Improvements:
 - Core: Minor performance improvements and optimize memory footprint
 
 Miner updates
-- Rigel-v1.21.0
+- Rigel-v1.21.0 (update)
 
 
 Changelog UG-Miner 6.4.12 2025/02/18
@@ -1365,8 +1377,8 @@ Enhancements:
 Fixes:
 - Legacy GUI: Window size & location not getting saved when only closing form but UG-Miner is left running
 
-Miner updates:
-- SRBMinerMulti-v2.7.9
+Miner changes:
+- SRBMinerMulti-v2.7.9 (update)
 
 
 Changelog UG-Miner 6.4.10 2025/02/13
@@ -1377,8 +1389,8 @@ Fixes:
 - Core: Fix DAG size information for EthashB3
 - Web GUI: Clearing pool watchdog timers counting too many removed watchdog timers
 
-Miner updates:
-- SRBMinerMulti-v2.7.8
+Miner changes:
+- SRBMinerMulti-v2.7.8 (update)
 
 
 Changelog UG-Miner 6.4.9 2025/02/09
@@ -1388,8 +1400,8 @@ Fixes:
 - Pools 'HashCryptos' & 'MiningDutch' : Temp. fix for incorrect price information for Neoscrypt in pool API data
 - Web GUI: Miner and Pool list not shown when price data was far too high (error in 'utilities.js/getDecimalsFromValue()')
 
-Miner updates:
-- SRBMinerMulti-v2.7.7
+Miner changes:
+- SRBMinerMulti-v2.7.7 (update)
 
 
 Changelog UG-Miner 6.4.8 2025/02/06
@@ -1401,11 +1413,11 @@ Changes:
 Fixes:
 - Web GUI: 'Remove watchdog' for miners not working
 
-Miner updates:
-- lolMiner-v1.94a
-- Rigel-v1.20.1
-- SRBMinerMulti-v2.7.6
-- Wildrig-v0.42.2
+Miner changes:
+- lolMiner-v1.94a (update)
+- Rigel-v1.20.1 (update)
+- SRBMinerMulti-v2.7.6 (update)
+- Wildrig-v0.42.2 (update)
 
 
 Changelog UG-Miner 6.4.7 2025/02/01
@@ -1439,9 +1451,9 @@ Changelog UG-Miner 6.4.5 2025/01/26
 Fixes:
 - Core: TotalMiningDuration is always 0 (Regression from v6.2.6)
 
-Miner updates:
-- lolMiner-v1.94
-- Wildrig-v0.42.0
+Miner changes:
+- lolMiner-v1.94 (update)
+- Wildrig-v0.42.0 (update)
 
 
 Changelog UG-Miner 6.4.4 2025/01/23
@@ -1460,8 +1472,8 @@ Fixes:
 - TeamBlackMiner: Out of memory error for Nvidia dual algorithm combos
 - Web GUI: Button text 'Toggle' changed to 'Show card view'
 
-Miner updates:
-- JayddeeCpu-v25.3
+Miner changes:
+- JayddeeCpu-v25.3 (update)
 
 
 Changelog UG-Miner 6.4.2 2025/01/15
@@ -1470,8 +1482,8 @@ Changelog UG-Miner 6.4.2 2025/01/15
 Enhancements:
 - Added region 'Autralia', 'Brazil', 'Canada' & 'Kazakhstan' (used by MiningDutch)
 
-Miner updates:
-- JayddeeCpu-v25.2
+Miner changes:
+- JayddeeCpu-v25.2 (update)
 
 
 Changelog UG-Miner 6.4.1 2025/01/13
@@ -1481,7 +1493,7 @@ Fixes:
 - Core: Dual miners broken (Regression from 6.4.0 / Do not allow NULL valued hashrate values as valid samples)
 
 Miner changes:
-- SRBMinerMulti-v2.7.5
+- SRBMinerMulti-v2.7.5 (update)
 
 
 Changelog UG-Miner 6.4.0 2025/01/11
@@ -1509,15 +1521,15 @@ Fixes:
 - Core: Do not allow NULL valued hashrate values as valid samples
 - Resolved issues with new Windows Terminal when the default terminal application is set to 'Let windows decide' or 'Windows Terminal'.
 
-Miner updates:
-- TTMiner-v2024.3.3b6
+Miner changes:
+- TTMiner-v2024.3.3b6 (update)
 
 
 Changelog UG-Miner 6.3.24 2025/01/05
 ====================================
 
-Miner updates:
-- Rigel-v1.19.4
+Miner changes:
+- Rigel-v1.19.4 (update)
 
 
 Changelog UG-Miner 6.3.23 2025/01/01
@@ -1530,12 +1542,12 @@ Fixes:
 Improvements:
 - Remove obsolete code & minor code optimizations
 
-Miner updates:
-- BzMiner-v22.0.0
-- JayddeeCpu-v24.8
-- lolMiner-v1.93
-- MiniZ-v2.4e
-- SRBMinerMulti-v2.7.4
+Miner changes:
+- BzMiner-v22.0.0 (update)
+- JayddeeCpu-v24.8 (update)
+- lolMiner-v1.93 (update)
+- MiniZ-v2.4e (update)
+- SRBMinerMulti-v2.7.4 (update)
 - Wildrig-v0.41.9 (keep Wildrig-v0.41.7 for old algorithms)
 
 
@@ -1546,10 +1558,10 @@ Improvements:
 - Core: Optimize miner window title display
 - Remove obsolete code & minor code optimizations (summary & footer)
 
-Miner updates:
-- JayddeeCpu-v24.7
-- OneZeroMiner-v1.4.3
-- Wildrig-v0.41.7
+Miner changes:
+- JayddeeCpu-v24.7 (update)
+- OneZeroMiner-v1.4.3 (update)
+- Wildrig-v0.41.7 (update)
 
 
 Changelog UG-Miner 6.3.21 2024/12/16
@@ -1565,8 +1577,8 @@ Enhancements:
 Changelog UG-Miner 6.3.20 2024/12/11
 ====================================
 
-Miner updates:
-- JayddeeCpu-v24.6
+Miner changes:
+- JayddeeCpu-v24.6 (update)
 
 
 Changelog UG-Miner 6.3.19 2024/12/04
@@ -1584,15 +1596,15 @@ Improvements:
 - Update 7-Zip to version 24.09
 
 Miner changes:
-- Wildrig-v0.41.5
+- Wildrig-v0.41.5 (update)
 
 
 Changelog UG-Miner 6.3.18 2024/11/30
 ====================================
 
-Miner updates:
-- SRBMinerMulti-v2.7.2
-- Wildrig-v0.41.4
+Miner changes:
+- SRBMinerMulti-v2.7.2 (update)
+- Wildrig-v0.41.4 (update)
 
 
 Changelog UG-Miner 6.3.17 2024/11/26
@@ -1604,9 +1616,9 @@ Fixes:
 Improvements:
 - Remove obsolete code & minor code optimizations 
 
-Miner updates:
-- lolMiner-v1.92
-- Wildrig-v0.41.2
+Miner changes:
+- lolMiner-v1.92 (update)
+- Wildrig-v0.41.2 (update)
 
 
 Changelog UG-Miner 6.3.16 2024/11/20
@@ -1615,8 +1627,8 @@ Changelog UG-Miner 6.3.16 2024/11/20
 Fixes:
 - Core / Include.psm1: Mitigate memory leak with runspace handling
 
-Miner updates:
-- SRBMinerMulti-v2.7.1
+Miner changes:
+- SRBMinerMulti-v2.7.1 (update)
 
 
 Changelog UG-Miner 6.3.15 2024/11/17
@@ -1636,9 +1648,9 @@ Fixes:
 Improvements:
 - Core: Minor code optimizations
 
-Miner updates:
-- BzMiner-v21.5.3
-- OneZeroMiner-v1.4.2
+Miner changes:
+- BzMiner-v21.5.3 (update)
+- OneZeroMiner-v1.4.2 (update)
 
 
 Changelog UG-Miner 6.3.13 2024/11/10
@@ -1665,7 +1677,7 @@ Improvements:
 - APIserver.psm1: Minor code optimizations
 
 Miner changes:
-- Wildrig-v0.40.9
+- Wildrig-v0.40.9 (update)
 
 
 Changelog UG-Miner 6.3.11 2024/10/26
@@ -1695,8 +1707,8 @@ Changes:
 Fixes:
 - Core: BalancesTracker not getting stopped when '$BalancesTrackerPollInterval' -eq 0
 
-Miner updates:
-- SRBMinerMulti-v2.6.9 (Keep SRBMinerMulti-v2.6.8 for old algorithms)
+Miner changes:
+- SRBMinerMulti-v2.6.9 (keep SRBMinerMulti-v2.6.8 for old algorithms)
 
 
 Changelog UG-Miner 6.3.8 2024/10/13
@@ -1718,9 +1730,9 @@ Improvements:
 - Core & Miner APIs: Remove obsolete code & minor code optimizations
 - LegacyGUI.ps1: Remove obsolete code & minor code optimizations
 
-Miner updates:
-- BzMiner-v21.5.1
-- SRBMinerMulti-v2.6.8
+Miner changes:
+- BzMiner-v21.5.1 (update)
+- SRBMinerMulti-v2.6.8 (update)
 
 
 Changelog UG-Miner 6.3.7 2024/10/05
@@ -1733,9 +1745,9 @@ Improvements:
 - Log viewer (SnakeTail): Change color for 'WARN' messages to magenta to match color in console window
 
 Miner changes:
-- NanoMiner-v3.9.3
-- SRBMinerMulti-v2.6.7
-- TeamBlackMiner-v2.27
+- NanoMiner-v3.9.3 (update)
+- SRBMinerMulti-v2.6.7 (update)
+- TeamBlackMiner-v2.27 (update)
 
 
 Changelog UG-Miner 6.3.6 2024/10/01
@@ -1746,11 +1758,11 @@ Enhancements:
 - Web GUI: Change some icons
 
 Miner changes:
-- JayddeeCpu-v24.5
-- lolMiner-v1.91
-- Rigel-v1.19.1
-- SRBMinerMulti-v2.6.6
-- TeamBlackMiner-v2.26
+- JayddeeCpu-v24.5 (update)
+- lolMiner-v1.91 (update)
+- Rigel-v1.19.1 (update)
+- SRBMinerMulti-v2.6.6 (update)
+- TeamBlackMiner-v2.26 (update)
 
 
 Changelog UG-Miner 6.3.5 2024/09/14
@@ -1771,7 +1783,7 @@ Improvements:
 - Core: Use 'Close-CoreRunspace' instead of 'Stop-Core' on error in 'Core.ps1'
 
 Miner changes:
-- lolMiner-v1.89
+- lolMiner-v1.89 (update)
 
 
 Changelog UG-Miner 6.3.3 2024/09/11
@@ -1788,9 +1800,9 @@ Fixes:
 Improvements:
 - Minor code optimizations
 
-Miner updates:
-- Rigel-v1.19.0
-- SRBMinerMulti-v2.6.4
+Miner changes:
+- Rigel-v1.19.0 (update)
+- SRBMinerMulti-v2.6.4 (update)
 
 
 Changelog UG-Miner 6.3.2 2024/09/09
@@ -1810,7 +1822,7 @@ Improvements:
 - Minor code optimizations
 
 Miner changes:
-- TeleMerakiMiner-v1.5.0.ps1
+- TeleMerakiMiner-v1.5.0 (update)
 
 
 Changelog UG-Miner 6.3.1 2024/09/06
@@ -1821,14 +1833,16 @@ Enhancements
 - Legacy GUI / Miners: Do not update tables when data is selected
 - Legacy GUI / Switching log: Do not reset check boxes on each data update
 
+Fixes:
+- BzMiner API: Fix incomplete samples
+
 Improvements:
 - Minor code optimizations
 
-Miner fixes + updates:
-- BzMiner API: Fix incomplete samples
-- Rigel-v1.18.2
-- SRBMinerMulti-v2.6.3
-- XmRig-v6.22.0.3: Faster benchmarking for some CPU algorithms (no more benchmarking all algorithms before mining)
+Miner changes:
+- Rigel-v1.18.2 (update)
+- SRBMinerMulti-v2.6.3 (update)
+- XmRig-v6.22.0.3 (faster benchmarking for some CPU algorithms (no more benchmarking all algorithms before mining))
 
 
 Changelog UG-Miner 6.3.0 2024/09/01
@@ -1876,9 +1890,9 @@ Fixes:
 - Core: Configuration item 'SSL' not working some scenarios when set in pool configuration (Regression from 6.2.19)
 - Web GUI / Unavailable miners: 'Remove watchdog' not working
 
-Miner updates:
-- SRBMinerMulti-v2.6.2
-- XmRig-v6.22.0.3
+Miner changes:
+- SRBMinerMulti-v2.6.2 (update)
+- XmRig-v6.22.0.3 (update)
 
 
 Changelog UG-Miner 6.2.27 2024/08/18
@@ -1932,8 +1946,8 @@ Improvements:
 - Core: Remove obsolete code & minor code optimizations
 
 Miner changes:
-- SRBMinerMulti-v2.6.1
-- Wildrig-v0.40.8
+- SRBMinerMulti-v2.6.1 (update)
+- Wildrig-v0.40.8 (update)
 
 
 Changelog UG-Miner 6.2.23 2024/08/04
@@ -1951,7 +1965,7 @@ Improvements:
 - Miners: Minor code optimizations when reading miner objects
 
 Miner changes:
-- SRBMinerMulti-v2.6.0
+- SRBMinerMulti-v2.6.0 (update)
 
 
 Changelog UG-Miner 6.2.22 2024/08/01
@@ -1962,7 +1976,7 @@ Improvements:
 
 Miner changes:
 - XmrStak-v2.10.8 (reactivated)
-- XLArig-v5.2.4: Set miner fee to 5% (can be set to 0 when configuration item 'DisableMinerFee' -eq $true)
+- XLArig-v5.2.4 (Set miner fee to 5% (can be set to 0 when configuration item 'DisableMinerFee' -eq $true))
 
 
 Changelog UG-Miner 6.2.21 2024/07/30
@@ -1983,8 +1997,8 @@ Improvements:
 Miner changes:
 - ClaymoreNeoscrypt-v1.2 (fix download link)
 - Kudaraidee-v1.2.0a (fix download link)
-- RplantCpu-v5.0.41
-- Wildrig-v0.40.6
+- RplantCpu-v5.0.41 (update)
+- Wildrig-v0.40.6 (update)
 
 
 Changelog UG-Miner 6.2.20 2024/07/28
@@ -2000,7 +2014,7 @@ Enhancements:
 Improvements:
 - Core: Minor code optimizations
 
-Miner updates:
+Miner changes:
 - SCCminer-v1.1.0 (new)
 - XLArig-v5.2.4 (new)
 
@@ -2020,8 +2034,8 @@ Enhancements:
 Fixes:
 - Legacy GUI / Switching log: Incorrect background color for stopped miners
 
-Miner updates:
-- Rigel-v1.18.1
+Miner changes:
+- Rigel-v1.18.1 (update)
 
 
 Changelog UG-Miner 6.2.18 2024/07/19
@@ -2059,10 +2073,10 @@ Improvements:
 
 Miner changes:
 - ClaymoreDualME-v2.7.ps1 (removed - would only work with Nvidia drivers older than 20.12.1)
-- OneZeroMiner-v1.3.6
+- OneZeroMiner-v1.3.6 (update)
 - RrkzCpu-v4.2 (Invalid miner binary name)
-- SRBMinerMulti-v2.5.9
-- TTMiner-v2024.3.2
+- SRBMinerMulti-v2.5.9 (update)
+- TTMiner-v2024.3.2 (update)
 
 
 Changelog UG-Miner 6.2.16 2024/07/09
@@ -2094,7 +2108,7 @@ Improvements:
 - Core: Minor code optimizations
 
 Miner updatwes:
-- OneZeroMiner-v1.3.7
+- OneZeroMiner-v1.3.7 (update)
 
 
 Changelog UG-Miner 6.2.14 2024/07/04
@@ -2105,7 +2119,7 @@ Fixes:
 - Core: Include.psm1 / function 'Get-Rate': Could not read cache file
 
 Miner changes:
-- JayddeeCpu-v24.4
+- JayddeeCpu-v24.4 (update)
 
 
 Changelog UG-Miner 6.2.13 2024/06/30
@@ -2119,8 +2133,8 @@ Fixes
 Improvements:
 - Core: Minor code optimizations
 
-Miner updates:
-- BzMiner-v21.3.0
+Miner changes:
+- BzMiner-v21.3.0 (update)
 - ZealotEnemy-v2.6.2 (removed - would only work with Nvidia drivers older than 445.*)
 
 
@@ -2149,8 +2163,8 @@ Improvements:
 - Core: Minor code optimizations
 - Core: Faster watchdog processing, only one watchdog reason per pool or miner
 
-Miner updates:
-- RplantCpu-v5.0.40
+Miner changes:
+- RplantCpu-v5.0.40 (update)
 
 
 Changelog UG-Miner 6.2.10 2024/06/20
@@ -2165,9 +2179,9 @@ Fixes:
 - RrkzCpu-v4.2: Disable mining using an SSL pool connection (not supported by miner)
 - Wildrig-v0.40.5: Invalid device selection in mixed GPU scenarios
 
-Miner updates:
-- MiniZ-v2.4d
-- SRBMinerMulti-v2.5.7
+Miner changes:
+- MiniZ-v2.4d (update)
+- SRBMinerMulti-v2.5.7 (update)
 
 
 Changelog UG-Miner 6.2.9 2024/06/13
@@ -2186,9 +2200,9 @@ Improvements:
 - Core: Minor code optimizations when reading miner objects
 
 Miner changes:
-- lolMiner-v1.88
-- MeowPowMiner-v2.0.0
-- XmRig-v6.21.3.15
+- lolMiner-v1.88 (update)
+- MeowPowMiner-v2.0.0 (update)
+- XmRig-v6.21.3.15 (update)
 
 
 Changelog UG-Miner 6.2.8 2024/06/08
@@ -2202,14 +2216,14 @@ Improvements:
 - Core: Suspend balances tracker und brains when internet connection is lost
 
 Miner changes:
-- BzMiner-v21.2.0
-- JayddeeCpu-v24.3
-- OneZeroMiner-v1.3.4
-- Rigel-v1.17.4
-- SRBMinerMulti-v2.5.6
-- TeamBlackMiner-v2.25
-- TeamRedMiner-v0.10.21
-- TTMiner-v2024.2.0
+- BzMiner-v21.2.0 (update)
+- JayddeeCpu-v24.3 (update)
+- OneZeroMiner-v1.3.4 (update)
+- Rigel-v1.17.4 (update)
+- SRBMinerMulti-v2.5.6 (update)
+- TeamBlackMiner-v2.25 (update)
+- TeamRedMiner-v0.10.21 (update)
+- TTMiner-v2024.2.0 (update)
 
 
 Changelog UG-Miner 6.2.7 2024/04/18
@@ -2222,9 +2236,9 @@ Improvements:
 - Core: Minor code optimizations
 
 Miner changes:
-- lolMiner-v1.87
-- TeamBlackMiner-v2.23
-- TeamRedMiner-v0.10.20
+- lolMiner-v1.87 (update)
+- TeamBlackMiner-v2.23 (update)
+- TeamRedMiner-v0.10.20 (update)
 
 
 Changelog UG-Miner 6.2.6 2024/04/14
@@ -2241,8 +2255,8 @@ Fixes:
 - Core: Include.psm1 / function 'Get-Rate': Did not retrieve exchange rates for all guaranteed payout currencies
 - Legacy GUI: 'All miners' table not listing all miners
 
-Miner updates:
-- BzMiner-v21.1.1
+Miner changes:
+- BzMiner-v21.1.1 (update)
 
 
 Changelog UG-Miner 6.2.5 2024/04/07
@@ -2254,11 +2268,11 @@ Fixes:
 Improvements:
 - Core: Improve watchdog filter for miners & pools
 
-Miner updates:
-- BzMiner-v21.0.3
-- NanoMiner-v3.9.1
-- SRBMinerMulti-v2.5.2
-- TeamRedMiner-v0.10.19
+Miner changes:
+- BzMiner-v21.0.3 (update)
+- NanoMiner-v3.9.1 (update)
+- SRBMinerMulti-v2.5.2 (update)
+- TeamRedMiner-v0.10.19 (update)
 
 
 Changelog UG-Miner 6.2.4 2024/04/03
@@ -2272,8 +2286,8 @@ Fixes:
 - ZergPool brain: Invalid plus price calculation
 
 Miner changes:
-- SRBMinerMulti-v2.5.1
-- TeamBlackMiner-v2.22
+- SRBMinerMulti-v2.5.1 (update)
+- TeamBlackMiner-v2.22 (update)
 
 
 Changelog UG-Miner 6.2.3 2024/04/02
@@ -2292,9 +2306,9 @@ Improvements:
 - Core: Faster check if miner binaries exist on disk
 
 Miner changes:
-- lolMiner-v1.86
-- NanoMiner-v3.9.0
-- SRBMinerMulti-v2.5.0
+- lolMiner-v1.86 (update)
+- NanoMiner-v3.9.0 (update)
+- SRBMinerMulti-v2.5.0 (update)
 
 
 Changelog UG-Miner 6.2.2 2024/03/28
@@ -2304,9 +2318,9 @@ Fixes:
 - APIServer: '/functions/stat/disable' removed stat file
 - ZergPoolCoins: Calculated earnings 1000x too high
 
-Miner Updates:
-- Rigel-v1.15.1
-- TTMiner-v2024.1.8
+Miner changes:
+- Rigel-v1.15.1 (update)
+- TTMiner-v2024.1.8 (update)
 
 
 Changelog UG-Miner 6.2.1 2024/03/24
@@ -2323,10 +2337,10 @@ Fixes:
 Improvements:
 - Core: Make stopping miners faster (clean jobs later)
 
-Miner updates:
-- lolMiner-v1.85beta
-- Rigel-v1.15.1
-- TTMiner-v2024.1.7
+Miner changes:
+- lolMiner-v1.85beta (update)
+- Rigel-v1.15.1 (update)
+- TTMiner-v2024.1.7 (update)
 
 
 Changelog UG-Miner 6.2.0 2024/03/19
@@ -2350,9 +2364,9 @@ Improvements:
 - Miners: Optimize core for faster processing
 
 Miner updates
-- SRBMinerMulti-v2.4.9
-- TeamBlackMiner-v2.21
-- TTMiner-v2024.1.6
+- SRBMinerMulti-v2.4.9 (update)
+- TeamBlackMiner-v2.21 (update)
+- TTMiner-v2024.1.6 (update)
 
 
 Changelog UG-Miner 6.1.15 2024/03/16
@@ -2366,12 +2380,12 @@ Fixes:
 Improvements:
 - Minor code optimizations (Core & Miners)
 
-Miner updates:
+Miner changes:
 - CpuMinerAurum-v3.23.1 (new)
-- GMiner-v3.44
-- MiniZ-v2.3c
-- Rigel-v1.15.0
-- SRBMinerMulti-v2.4.8
+- GMiner-v3.44 (update)
+- MiniZ-v2.3c (update)
+- Rigel-v1.15.0 (update)
+- SRBMinerMulti-v2.4.8 (update)
 
 
 Changelog UG-Miner 6.1.14 2024/03/06
@@ -2392,7 +2406,7 @@ Changes:
 - Rework idle detection & start / pause / stop mechanism for faster response
 
 Miner changes:
-- TeamBlackMiner-v2.20
+- TeamBlackMiner-v2.20 (update)
 
 
 Changelog UG-Miner 6.1.12 2024/02/25
@@ -2402,16 +2416,16 @@ Improvements:
 - Minor code optimizations
 - Legacy- & web GUI: Improve button handling and status updates
 
-Miner updates:
-- TeamBlackMiner-v2.19
+Miner changes:
+- TeamBlackMiner-v2.19 (update)
 
 
 Changelog UG-Miner 6.1.11 2024/02/20
 ====================================
 
-Miner updates:
-- BzMiner-v20.0.0
-- TTMiner-v2024.1.3
+Miner changes:
+- BzMiner-v20.0.0 (update)
+- TTMiner-v2024.1.3 (update)
 
 
 Changelog UG-Miner 6.1.10 2024/02/15
@@ -2426,9 +2440,9 @@ Fixes:
 - Core: Do not set reason '0 H/s Stat file' until benchmarked
 
 Miner changes:
-- lolMiner-v1.84
-- TeamBlackMiner-v2.18
-- TeamRedMiner-v0.10.18
+- lolMiner-v1.84 (update)
+- TeamBlackMiner-v2.18 (update)
+- TeamRedMiner-v0.10.18 (update)
 
 Pool changes:
 - HiveOn, MiningPoolHub & NiceHash: Reduce pool timeout wait time
@@ -2442,8 +2456,8 @@ Fixes:
 - 'Data/CurrencyAlgorithm.json' incomplete (regression from 6.1.8)
 
 Miner changes:
-- OneZeroMer-v1.3.0: Error mining SSL 
-- TeamRedMiner-v2.4.7: Creating duplicate miner objects
+- OneZeroMer-v1.3.0 (error mining SSL)
+- TeamRedMiner-v2.4.7 (creating duplicate miner objects)
 
 
 Changelog UG-Miner 6.1.8 2024/02/10
@@ -2460,10 +2474,10 @@ Fixes:
 Improvements:
 - Minor code optimizations
 
-Miner updates:
-- BzMiner-v19.3.1
-- OneZeroMiner-v1.3.0
-- SRBMinerMulti-v2.4.7
+Miner changes:
+- BzMiner-v19.3.1 (update)
+- OneZeroMiner-v1.3.0 (update)
+- SRBMinerMulti-v2.4.7 (update)
 
 
 Changelog UG-Miner 6.1.7 2024/02/08
@@ -2487,19 +2501,19 @@ Fixes:
 Improvements:
 - Minor code optimizations
 
-Miner updates:
-- GMiner-3.43: Support more dual algorithm combinations
-- OneZeroMiner-v1.2.9
+Miner changes:
+- GMiner-3.43 (support more dual algorithm combinations)
+- OneZeroMiner-v1.2.9 (update)
 
 
 Changelog UG-Miner 6.1.5 2024/02/01
 ===================================
 
 Miner changes:
-- NanoMiner-v3.8.12
-- Rigel-v1.14.1
-- TeamBlackMiner-v2.17
-- TeamRedMiner-v0.10.17
+- NanoMiner-v3.8.12 (update)
+- Rigel-v1.14.1 (update)
+- TeamBlackMiner-v2.17 (update)
+- TeamRedMiner-v0.10.17 (update)
 
 
 Changelog UG-Miner 6.1.4 2024/01/28
@@ -2515,7 +2529,7 @@ Fixes:
 - UG-Miner.ps1: Not reverting UIstyle to 'normal' when benchmarking / measuring power usage is complete and $Config.UIstyle -eq $true
 
 Miner changes:
-- Rigel-v1.14.1
+- Rigel-v1.14.1 (update)
 
 
 Changelog UG-Miner 6.1.3 2024/01/26
@@ -2529,10 +2543,10 @@ Fixes:
 Improvements:
 - Minor code optimizations
 
-Miner updates:
-- BzMiner-v19.3.0
-- NanoMiner-v3.8.11
-- SRBMinerMulti-v2.4.6
+Miner changes:
+- BzMiner-v19.3.0 (update)
+- NanoMiner-v3.8.11 (update)
+- SRBMinerMulti-v2.4.6 (update)
 
 Pool & Brain changes:
 - Reset price history if PlusPrice is not within +/- 1000% of LastPrice
@@ -2549,11 +2563,11 @@ Fixes:
 Improvements:
 - Brains: Reset history when stat gets reset
 
-Miner updates:
-- BzMiner-v19.2.3
+Miner changes:
+- BzMiner-v19.2.3 (update)
 - FrkHashMiner-v1.3.14 (new)
-- NanoMiner-v3.8.10
-- Rigel-v1.13.2
+- NanoMiner-v3.8.10 (update)
+- Rigel-v1.13.2 (update)
 
 
 Changelog UG-Miner 6.1.1 2024/01/17
@@ -2564,7 +2578,7 @@ Changes:
 - Core: Remove obsolete code
 
 Miner changes:
-- Rigel-v1.13.1
+- Rigel-v1.13.1 (update)
 
 
 Changelog UG-Miner 6.1.0 2024/01/15
@@ -2580,8 +2594,8 @@ Fixes:
 - Miners: Algorithm 'KarlsenHash' not working in some combinations or devices
 
 Miner changes:
-- NanoMiner-v3.8.9
-- Rigel-v1.13.0
+- NanoMiner-v3.8.9 (update)
+- Rigel-v1.13.0 (update)
 
 
 Changelog UG-Miner 6.0.4 2024/01/10
@@ -2605,7 +2619,7 @@ Improvements:
 - Web GUI: Miner speed improvements for pool & miner tables
 
 Miner changes:
-- MiniZ-v2.2c: Disable 'Equihash1927' for RX 7900
+- MiniZ-v2.2c (disable 'Equihash1927' for RX 7900)
 
 
 Changelog UG-Miner 6.0.2 2024/01/07
@@ -2616,7 +2630,7 @@ Fixes:
 - Error 'Version checker could not contact update server.'
 
 Miner changes:
-- SRBMinerMulti-v2.4.5
+- SRBMinerMulti-v2.4.5 (update)
 
 
 Changelog UG-Miner 6.0.1 2024/01/05
@@ -2640,7 +2654,7 @@ Improvements:
 - Minor code optimizations
 
 Miner changes:
-- BzMiner-v19.2.1
+- BzMiner-v19.2.1 (update)
 
 
 Changelog UG-Miner 6.0.0 2024/01/01

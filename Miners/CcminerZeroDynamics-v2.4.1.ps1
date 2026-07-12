@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.13
-Version date:   2026/07/10
+Version:        6.8.14
+Version date:   2026/07/12
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.CUDAversion -ge "12.8" -and $_.Architecture -ne "Other" })) { return }
@@ -30,9 +30,6 @@ $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
     @{ Algorithm = "Argon2d1000"; MinMemGiB = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d1000" }
-    @{ Algorithm = "Argon2d250";  MinMemGiB = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d250" }
-    @{ Algorithm = "Argon2d500";  MinMemGiB = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d500" }
-    @{ Algorithm = "Argon2d4096"; MinMemGiB = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d4096" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
