@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.14
+Version:        6.8.15
 Version date:   2026/07/12
 #>
 
@@ -339,8 +339,8 @@ class Miner : IDisposable {
     [DateTime]$BeginTime # UniversalTime
     [Boolean]$Benchmark = $false # derived from stats
     [Boolean]$Best = $false
-    [String]$CommandLine
-    [String]$CommandLineLaunched
+    [String]$CommandLine = ""
+    [String]$CommandLineLaunched = ""
     [UInt]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
     [Double]$DataCollectInterval = 5 # Seconds, allow fractions of seconds
     [DateTime]$DataSampleTimestamp = 0 # Newest sample
@@ -379,7 +379,7 @@ class Miner : IDisposable {
     [Boolean]$ReadPowerConsumption
     [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the miner not available?
     [Boolean]$Restart = $false # if true miner will restart at end of cycle
-    [String]$SideIndicator
+    [String]$SideIndicator = ""
     [MinerStatus]$Status = [MinerStatus]::Idle
     [String]$StatusInfo = ""
     [String]$SubStatus = [MinerStatus]::Idle
@@ -388,7 +388,7 @@ class Miner : IDisposable {
     [DateTime]$Updated # derived from pool update value
     [String]$URI # miner binary download address
     [DateTime]$ValidDataSampleTimestamp = 0
-    [String]$Version # Miner version
+    [String]$Version # miner version
     [UInt16[]]$WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
     [String]$WindowStyle # "minimized": miner window is minimized (default), but accessible; "normal": miner windows are shown normally; "hidden": miners will run as a hidden background task and are not accessible
     [Worker[]]$Workers = @() # derived from pools
