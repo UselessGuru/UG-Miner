@@ -21,14 +21,12 @@ Version:        6.8.15
 Version date:   2026/07/18
 #>
 
-# fixed high RAM usage for algorithm pearlhash
-# fixed broken qhash algorithm for NVIDIA RTX 4000 series gpu's
-# fixed pearlhash for AMD 6000 series gpu's
-# fixed broken AMD support for all algorithms except pearlhash
+# improved pearlhash up to 10% for AMD 9000 series
+# fixed a not working algorithms except pearlhash(introduced in 0.48.4)
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.49.3/wildrig-multi-windows-0.49.3.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.49.5/wildrig-multi-windows-0.49.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"

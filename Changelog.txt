@@ -17,6 +17,9 @@ Improvements:
 - Core: Minor performance improvements
 - Core: Remove obsolete code
 
+Miner updates:
+- Wildrig-v0.49.5
+
 
 Changelog UG-Miner 6.8.14 2026/07/12
 ====================================
