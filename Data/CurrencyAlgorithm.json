@@ -72,6 +72,7 @@
   "CY": "Scrypt",
   "DASH": "X11",
   "DCR": "Blake3dcr",
+  "DEM": "SHA256",
   "DEV": "Scrypt",
   "DGB": "Qubit",
   "DGC": "X11",

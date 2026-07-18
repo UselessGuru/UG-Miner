@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.14
-Version date:   2026/07/12
+Version:        6.8.15
+Version date:   2026/07/18
 #>
 
 using module .\Includes\Include.psm1
@@ -322,7 +322,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.14"
+    Version      = [System.Version]"6.8.15"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -881,7 +881,7 @@ Write-Host ""
 Get-Rate
 
 # Read latest DAG data from web
-$Session.DAGdata = Get-AllDAGdata $Session.DAGdata
+$Session.DAGdata = Update-AllDAGdata $Session.DAGdata
 
 Write-Host ""
 if ($Session.Config.APIport) { 

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\include.ps1
 Version:        6.8.15
-Version date:   2026/07/12
+Version date:   2026/07/18
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -150,13 +150,13 @@ function Get-RegTime {
 
     $Reg = Get-Item $RegistryPath -Force
     if ($Reg.handle) { 
-        $Time = [System.Runtime.InteropServices.ComTypes.FILETIME]::new()
-        $Result = $RegData::RegQueryInfoKey($Reg.Handle, $null, 0, 0, 0, 0, 0, 0, 0, 0, 0, [ref]$Time)
+        $LastWrite = [System.Runtime.InteropServices.ComTypes.FILETIME]::new()
+        $Result = $RegData::RegQueryInfoKey($Reg.Handle, $null, 0, 0, 0, 0, 0, 0, 0, 0, 0, [ref]$LastWrite)
         if ($Result -eq 0) { 
-            $Low = [UInt32]0 -bor $Time.dwLowDateTime
-            $High = [UInt32]0 -bor $Time.dwHighDateTime
-            $TimeValue = ([Int64]$High -shl 32) -bor $Low
-            return [DateTime]::FromFileTime($TimeValue)
+            $UnsignedLow = [UInt32]0 -bor $LastWrite.dwLowDateTime
+            $UnsignedHigh = [UInt32]0 -bor $LastWrite.dwHighDateTime
+            $FileTimeInt64 = ([Int64]$UnsignedHigh -shl 32) -bor $UnsignedLow
+            return [DateTime]::FromFileTime($FileTimeInt64)
         }
     }
 }
@@ -285,7 +285,7 @@ class Pool : IDisposable {
     [System.Collections.Generic.SortedSet[String]]$Reasons # Why is the pool not available?
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
-    [String]$SideIndicator
+    [String]$SideIndicator = ""
     [Boolean]$SSLselfSignedCertificate
     [Double]$StablePrice
     [DateTime]$Updated
@@ -358,7 +358,7 @@ class Miner : IDisposable {
     [Boolean]$IsBenchmarkingOrMeasuring # Set to true when starting miner
     [Boolean]$KeepRunning = $false # do not stop miner even if not best (MinInterval)
     [DateTime]$LastUsed # derived from stats
-    [String]$LogFile # path to miner log file
+    [String]$LogFile = "" # path to miner log file
     [Boolean]$MeasurePowerConsumption = $false # derived from stats
     [UInt16]$MinDataSample # for safe hashrate values
     [String]$MinerUri # access to miner API / web interface
@@ -376,7 +376,7 @@ class Miner : IDisposable {
     [Int16]$ProcessPriority = -1
     [Double]$Profit = [Double]::NaN
     [Double]$Profit_Bias = [Double]::NaN
-    [Boolean]$ReadPowerConsumption
+    [Boolean]$ReadPowerConsumption = $true
     [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the miner not available?
     [Boolean]$Restart = $false # if true miner will restart at end of cycle
     [String]$SideIndicator = ""
@@ -446,7 +446,6 @@ class Miner : IDisposable {
         }
 
         # Start miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
-        # 1. Bypass Select-Object by using a direct Hashtable (much faster)
         $ConfigData = @{
             Algorithms             = $this.Algorithms
             DataCollectInterval    = $this.DataCollectInterval
@@ -506,9 +505,9 @@ class Miner : IDisposable {
 
         if ($this.Status -eq [MinerStatus]::DryRun) { 
             Write-Message -Level Info "Dry run for miner '$($this.Info)'..."
+            $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
             $this.StatusInfo = "$($this.Info) (Dry run)"
             $this.SubStatus = "dryrun"
-            $this.StatStart = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
         }
         else { 
             Write-Message -Level Info "Starting miner '$($this.Info)'..."
@@ -637,12 +636,12 @@ class Miner : IDisposable {
             $this.StatusInfo = "Failed: Miner $($this.StatusInfo)"
             $this.SubStatus = "Failed"
             $this.Workers.ForEach{ 
-                $_.Disabled = $false
-                $_.Earnings = [Double]::NaN
-                $_.Earnings_Accuracy = [Double]::NaN
-                $_.Earnings_Bias = [Double]::NaN
-                $_.Fee = 0
-                $_.Hashrate = [Double]::NaN
+                $_.Disabled            = $false
+                $_.Earnings            = [Double]::NaN
+                $_.Earnings_Accuracy   = [Double]::NaN
+                $_.Earnings_Bias       = [Double]::NaN
+                $_.Fee                 = 0
+                $_.Hashrate            = [Double]::NaN
                 $_.TotalMiningDuration = [TimeSpan]0
             }
             $this.Earnings = $this.Earnings_Accuracy = $this.Earnings_Bias = $this.PowerCost = $this.PowerConsumption = $this.PowerConsumption_Live = $this.Profit = $this.Profit_Bias = [Double]::NaN
@@ -696,66 +695,11 @@ class Miner : IDisposable {
         }
     }
 
-    [Double]GetPowerConsumptionNew() { 
-        $TotalPowerConsumption = [Double]0
-
-        # OPTIMIZATION 1: Use native .NET to read the registry. 
-        # It bypasses the massive overhead of Get-ItemProperty and PSObject wrapping.
-        $RegKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Software\HWiNFO64\VSB")
-
-        if ($RegKey) { 
-            # Create a fast lookup table to avoid O(N) looping inside a loop
-            $LookupTable = [System.Collections.Hashtable]::new()
-            $ValueNames  = $RegKey.GetValueNames()
-
-            # OPTIMIZATION 2: Single-pass processing to build a Label -> Value dictionary
-            foreach ($Name in $ValueNames) { 
-                if ($Name.StartsWith('Label')) { 
-                    $LabelValue = $RegKey.GetValue($Name)
-                    if ($null -ne $LabelValue) { 
-                        # Extract the device name from the label string safely and quickly
-                        $DeviceName = $LabelValue.Split(' ')[0]
-
-                        # Map the parsed Device Name to its corresponding "Value" key
-                        $ValueKey = $Name.Replace("Label", "Value")
-                        $LookupTable[$DeviceName] = $ValueKey
-                    }
-                }
-            }
-
-            # OPTIMIZATION 3: High-speed O(1) constant time lookup for devices
-            foreach ($Device in $this.Devices) { 
-                $TargetValueKey = $LookupTable[$Device.Name]
-
-                if ($null -ne $TargetValueKey) { 
-                    $RawValue = $RegKey.GetValue($TargetValueKey)
-                    if ($null -ne $RawValue) { 
-                        # Fast string split and double parsing without pipeline overhead
-                        $TotalPowerConsumption += [Double]($RawValue.Split(' ')[0])
-                        continue
-                    }
-                }
-                # Fallback if device isn't in HWiNFO registry mapping
-                $TotalPowerConsumption += [Double]$Device.ConfiguredPowerConsumption
-            }
-
-            $RegKey.Dispose()
-        }
-        else { 
-            # Fallback if HWiNFO registry key doesn't exist at all
-            foreach ($Device in $this.Devices) { 
-                $TotalPowerConsumption += [Double]$Device.ConfiguredPowerConsumption
-            }
-        }
-
-        return $TotalPowerConsumption
-    }
-
     [Double]GetPowerConsumption() { 
         $TotalPowerConsumption = [Double]0
 
         # Read power consumption from HwINFO64 reg key, otherwise use hardconfigured value
-        $RegistryData = Get-ItemProperty "HKCU:\Software\HWiNFO64\VSB"
+        $RegistryData = Get-ItemProperty "HKCU:\Software\HWiNFO64\VSB" -ErrorAction Ignore
         foreach ($Device in $this.Devices) { 
             if ($RegistryEntry = $RegistryData.PSObject.Properties.Where{ $_.Name -like "Label*" -and $_.Value -split " " -contains $Device.Name }) { 
                 $TotalPowerConsumption += [Double](($RegistryData.($RegistryEntry.Name -replace "Label", "Value") -split " ")[0])
@@ -818,17 +762,12 @@ class Miner : IDisposable {
         $this.Best = $false
         $this.MinDataSample = $Config.MinDataSample
 
-        # OPTIMIZATION: Replace array scanning '-contains' with .NET Contains() or a tight loop
-        # Assuming $this.Workers.Pool.Prioritize is an array/collection
         $this.Prioritize = [Array]::IndexOf($this.Workers.Pool.Prioritize, $true) -ne -1
-
-        # OPTIMIZATION: Removed costly string subexpression "$($this.Type)..."
         $this.ProcessPriority = $Config[($this.Type + "MinerProcessPriority")]
 
-        # OPTIMIZATION: Cached array evaluation to prevent checking the exact same array twice
-        $HasNoFalsePower = [Array]::IndexOf($this.Devices.ReadPowerConsumption, $false) -eq -1
-        if ($this.ReadPowerConsumption -ne $HasNoFalsePower) { $this.Restart = $true }
-        $this.ReadPowerConsumption = $HasNoFalsePower
+        $Local:ReadPowerConsumption = [Array]::IndexOf($this.Devices.ReadPowerConsumption, $false) -eq -1
+        if ($this.ReadPowerConsumption -ne $Local:ReadPowerConsumption) { $this.Restart = $true }
+        $this.ReadPowerConsumption = $Local:ReadPowerConsumption
 
         $this.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
 
@@ -837,23 +776,23 @@ class Miner : IDisposable {
             $StatName = $this.Name + "_" + $Worker.Pool.Algorithm + "_Hashrate"
 
             if ($Stat = Get-Stat -Name $StatName) { 
-                $Worker.Disabled              = $Stat.Disabled
-                $Worker.Hashrate              = $Stat.Hour
-                $Factor                       = $Stat.Hour * (1 - $Worker.Fee - $Worker.Pool.Fee)
-                $Worker.Earnings              = $worker.Pool.Price * $Factor
-                $Worker.Earnings_Accuracy     = $Worker.Pool.Accuracy
-                $Worker.Earnings_Bias         = $Worker.Pool.Price_Bias * $Factor
-                $Worker.TotalMiningDuration   = $Stat.Duration
-                $Worker.Updated               = $Stat.Updated
+                $Worker.Disabled            = $Stat.Disabled
+                $Worker.Hashrate            = $Stat.Hour
+                $Factor                     = $Stat.Hour * (1 - $Worker.Fee - $Worker.Pool.Fee)
+                $Worker.Earnings            = $worker.Pool.Price * $Factor
+                $Worker.Earnings_Accuracy   = $Worker.Pool.Accuracy
+                $Worker.Earnings_Bias       = $Worker.Pool.Price_Bias * $Factor
+                $Worker.TotalMiningDuration = $Stat.Duration
+                $Worker.Updated             = $Stat.Updated
             }
             else { 
-                $Worker.Disabled              = $false
-                $Worker.Earnings              = [Double]::NaN
-                $Worker.Earnings_Accuracy     = [Double]::NaN
-                $Worker.Earnings_Bias         = [Double]::NaN
-                $Worker.Fee                   = 0
-                $Worker.Hashrate              = [Double]::NaN
-                $Worker.TotalMiningDuration   = [TimeSpan]0
+                $Worker.Disabled            = $false
+                $Worker.Earnings            = [Double]::NaN
+                $Worker.Earnings_Accuracy   = [Double]::NaN
+                $Worker.Earnings_Bias       = [Double]::NaN
+                $Worker.Fee                 = 0
+                $Worker.Hashrate            = [Double]::NaN
+                $Worker.TotalMiningDuration = [TimeSpan]0
             }
 
             if ([Double]::IsNaN($Worker.Hashrate)) { $this.Benchmark = $true }
@@ -888,6 +827,7 @@ class Miner : IDisposable {
             $this.Profit_Bias             = $this.Earnings_Bias - $this.PowerCost
         }
         else { 
+            $this.MeasurePowerConsumption = $this.ReadPowerConsumption
             $this.PowerConsumption        = [Double]::NaN
             $this.PowerCost               = [Double]::NaN
             $this.Profit                  = [Double]::NaN
@@ -896,8 +836,6 @@ class Miner : IDisposable {
 
         $this.Disabled = [Array]::IndexOf($this.Workers.Disabled, $true) -ne -1
 
-        # Measure-Object introduces huge pipeline initialization overhead.
-        # Using explicit loops for minimum calculation is dramatically faster than piping to Measure-Object
         $MinDuration = $this.Workers[0].TotalMiningDuration
         $MinLastUsed = $this.Workers[0].Updated
         $MinUpdated  = $this.Workers[0].Pool.Updated
@@ -1146,31 +1084,32 @@ function Clear-Miners {
     $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
 
     if (-not $KeepMiners) { $Session.Miners = [Miner[]]@() }
-    $Session.MinersBenchmarkingOrMeasuring = [Miner[]]@()
-    $Session.MinersBest = [Miner[]]@()
-    $Session.MinersBestPerDevice = [Miner[]]@()
-    $Session.MinersFailed = [Miner[]]@()
-    $Session.MinersMissingBinary = [Miner[]]@()
-    $Session.MinersMissingFirewallRule = [Miner[]]@()
-    $Session.MinersMissingPrerequisite = [Miner[]]@()
-    $Session.MinersNeedingBenchmark = [Miner[]]@()
+    $Session.MinersBenchmarkingOrMeasuring            = [Miner[]]@()
+    $Session.MinersBest                               = [Miner[]]@()
+    $Session.MinersBestPerDevice                      = [Miner[]]@()
+    $Session.MinersFailed                             = [Miner[]]@()
+    $Session.MinersMissingBinary                      = [Miner[]]@()
+    $Session.MinersMissingFirewallRule                = [Miner[]]@()
+    $Session.MinersMissingPrerequisite                = [Miner[]]@()
+    $Session.MinersNeedingBenchmark                   = [Miner[]]@()
     $Session.MinersNeedingPowerConsumptionMeasurement = [Miner[]]@()
-    $Session.MinersOptimal = [Miner[]]@()
-    $Session.MinersRunning = [Miner[]]@()
-    $Session.Remove("MinersUpdatedTimestamp")
+    $Session.MinersOptimal                            = [Miner[]]@()
+    $Session.MinersRunning                            = [Miner[]]@()
 
-    $Session.MiningEarnings = [Double]0
+    $Session.MiningEarnings         = [Double]0
     $Session.MiningPowerConsumption = [Double]0
-    $Session.MiningPowerCost = [Double]0
-    $Session.MiningProfit = [Double]0
+    $Session.MiningPowerCost        = [Double]0
+    $Session.MiningProfit           = [Double]0
+
+    $Session.Remove("MinersUpdatedTimestamp")
 }
 
 function Clear-Pools { 
 
-    $Session.Pools = [Pool[]]@()
-    $Session.PoolsAdded = [Pool[]]@()
+    $Session.Pools        = [Pool[]]@()
+    $Session.PoolsAdded   = [Pool[]]@()
     $Session.PoolsExpired = [Pool[]]@()
-    $Session.PoolsNew = [Pool[]]@()
+    $Session.PoolsNew     = [Pool[]]@()
     $Session.PoolsUpdated = [Pool[]]@()
     $Session.Remove("PoolsUpdatedTimestamp")
 }
@@ -1457,7 +1396,7 @@ function Write-Message {
         if ($Console -and ($Host.Name -eq "ConsoleHost" -or $Host.Name -eq "Visual Studio Code Host")) { 
 
             switch ($Level) { 
-                "Debug"   { Write-Host $Message -ForegroundColor "Blue"   .\Autotune -NoNewline; break }
+                "Debug"   { Write-Host $Message -ForegroundColor "Blue"    -NoNewline; break }
                 "Error"   { Write-Host $Message -ForegroundColor "Red"     -NoNewline; break }
                 "Info"    { Write-Host $Message -ForegroundColor "White"   -NoNewline; break }
                 "MemDbg"  { Write-Host $Message -ForegroundColor "Cyan"    -NoNewline; break }
@@ -1637,44 +1576,44 @@ function Update-ConfigFile {
         switch ($_) { 
             # To replace a configuration item: 
             # "OldConfigItemName" { $Config.NewConfigItemName = $Config.$_; $Config.Remove($_) }
-            "BalancesShowInMainCurrency"  { $Config.BalancesShowInFIATcurrency = $Config.$_; $Config.Remove($_); break }
-            "ExcludeMinerName"            { $Config.$_ = $Config.$_ -replace '^-'; break }
-            "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse = $Config.$_; $Config.Remove($_); break }
-            "LogToScreen"                 { $Config.LogLevel = $Config.$_; $Config.Remove($_); break }
-            "MainCurrency"                { $Config.FIATcurrency = $Config.$_; $Config.Remove($_); break }
-            "Pools"                       { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
-            "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem = $Config.$_; $Config.Remove($_); break }
-            "ShowAccuracy"                { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
-            "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy = $Config.$_; $Config.Remove($_); break }
-            "ShowAllOptimalMiners"        { $Config.ShowAllOptimalMiners = $Config.$_; $Config.Remove($_); break }
-            "ShowCoinName"                { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
-            "ShowCoinNameColumn"          { $Config.ShowColumnCoinName = $Config.$_; $Config.Remove($_); break }
-            "ShowCurrency"                { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
-            "ShowCurrencyColumn"          { $Config.ShowColumnCurrency = $Config.$_; $Config.Remove($_); break }
-            "ShowEarning"                 { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
-            "ShowEarningColumn"           { $Config.ShowColumnEarnings = $Config.$_; $Config.Remove($_); break }
-            "ShowEarningBias"             { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
-            "ShowEarningBiasColumn"       { $Config.ShowColumnEarningsBias = $Config.$_; $Config.Remove($_); break }
-            "ShowHashrate"                { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
-            "ShowHashrateColumn"          { $Config.ShowColumnHashrate = $Config.$_; $Config.Remove($_); break }
-            "ShowMinerFee"                { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
-            "ShowMinerFeeColumn"          { $Config.ShowColumnMinerFee = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolFee"                 { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolFeeColumn"           { $Config.ShowColumnPoolFee = $Config.$_; $Config.Remove($_); break }
-            "ShowProfit"                  { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
-            "ShowProfitColumn"            { $Config.ShowColumnProfit = $Config.$_; $Config.Remove($_); break }
-            "ShowProfitBias"              { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
-            "ShowProfitBiasColumn"        { $Config.ShowColumnProfitBias = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerConsumption"        { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerConsumptionColumn"  { $Config.ShowColumnPowerConsumption = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerCost"               { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerCostColumn"         { $Config.ShowColumnPowerCost = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolBalances"            { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolBalancesColumn"      { $Config.ShowColumnPoolBalances = $Config.$_; $Config.Remove($_); break }
-            "ShowUser"                    { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
-            "ShowUserColumn"              { $Config.ShowColumnUser = $Config.$_; $Config.Remove($_); break }
+            "BalancesShowInMainCurrency"  { $Config.BalancesShowInFIATcurrency     = $Config.$_; $Config.Remove($_); break }
+            "ExcludeMinerName"            { $Config.$_                             = $Config.$_ -replace '^-'; break }
+            "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse  = $Config.$_; $Config.Remove($_); break }
+            "LogToScreen"                 { $Config.LogLevel                       = $Config.$_; $Config.Remove($_); break }
+            "MainCurrency"                { $Config.FIATcurrency                   = $Config.$_; $Config.Remove($_); break }
+            "Pools"                       { $Config.PowerConsumptionIdleSystem     = $Config.$_; $Config.Remove($_); break }
+            "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem     = $Config.$_; $Config.Remove($_); break }
+            "ShowAccuracy"                { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
+            "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
+            "ShowAllOptimalMiners"        { $Config.ShowAllOptimalMiners           = $Config.$_; $Config.Remove($_); break }
+            "ShowCoinName"                { $Config.ShowColumnCoinName             = $Config.$_; $Config.Remove($_); break }
+            "ShowCoinNameColumn"          { $Config.ShowColumnCoinName             = $Config.$_; $Config.Remove($_); break }
+            "ShowCurrency"                { $Config.ShowColumnCurrency             = $Config.$_; $Config.Remove($_); break }
+            "ShowCurrencyColumn"          { $Config.ShowColumnCurrency             = $Config.$_; $Config.Remove($_); break }
+            "ShowEarning"                 { $Config.ShowColumnEarnings             = $Config.$_; $Config.Remove($_); break }
+            "ShowEarningColumn"           { $Config.ShowColumnEarnings             = $Config.$_; $Config.Remove($_); break }
+            "ShowEarningBias"             { $Config.ShowColumnEarningsBias         = $Config.$_; $Config.Remove($_); break }
+            "ShowEarningBiasColumn"       { $Config.ShowColumnEarningsBias         = $Config.$_; $Config.Remove($_); break }
+            "ShowHashrate"                { $Config.ShowColumnHashrate             = $Config.$_; $Config.Remove($_); break }
+            "ShowHashrateColumn"          { $Config.ShowColumnHashrate             = $Config.$_; $Config.Remove($_); break }
+            "ShowMinerFee"                { $Config.ShowColumnMinerFee             = $Config.$_; $Config.Remove($_); break }
+            "ShowMinerFeeColumn"          { $Config.ShowColumnMinerFee             = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolFee"                 { $Config.ShowColumnPoolFee              = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolFeeColumn"           { $Config.ShowColumnPoolFee              = $Config.$_; $Config.Remove($_); break }
+            "ShowProfit"                  { $Config.ShowColumnProfit               = $Config.$_; $Config.Remove($_); break }
+            "ShowProfitColumn"            { $Config.ShowColumnProfit               = $Config.$_; $Config.Remove($_); break }
+            "ShowProfitBias"              { $Config.ShowColumnProfitBias           = $Config.$_; $Config.Remove($_); break }
+            "ShowProfitBiasColumn"        { $Config.ShowColumnProfitBias           = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerConsumption"        { $Config.ShowColumnPowerConsumption     = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerConsumptionColumn"  { $Config.ShowColumnPowerConsumption     = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerCost"               { $Config.ShowColumnPowerCost            = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerCostColumn"         { $Config.ShowColumnPowerCost            = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolBalances"            { $Config.ShowColumnPoolBalances         = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolBalancesColumn"      { $Config.ShowColumnPoolBalances         = $Config.$_; $Config.Remove($_); break }
+            "ShowUser"                    { $Config.ShowColumnUser                 = $Config.$_; $Config.Remove($_); break }
+            "ShowUserColumn"              { $Config.ShowColumnUser                 = $Config.$_; $Config.Remove($_); break }
             "UnrealMinerEarningFactor"    { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); break }
-            "UnrealPoolPriceFactor"       { $Config.UnrealisticPoolPriceFactor = $Config.$_; $Config.Remove($_); break }
+            "UnrealPoolPriceFactor"       { $Config.UnrealisticPoolPriceFactor     = $Config.$_; $Config.Remove($_); break }
 
             # Remove unsupported config items
             default { if ($_ -notin @(@($Session.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } }
@@ -1806,7 +1745,7 @@ function Get-SortedObject {
         "PSCustomObject" { 
             $SortedObject = [PSCustomObject]@{ }
             ($Object.PSObject.Properties.Name | Sort-Object).ForEach{ 
-                if ($Object.$_.GetType().Name -eq "Array" -or $Object.$_.GetType().BaseType -match "array|System\.Array") { 
+                if ($Object.$_ -and ($Object.$_.GetType().Name -eq "Array" -or $Object.$_.GetType().BaseType -match "array|System\.Array")) { 
                     if ($Object[$_].Count -lt 2) { 
                         $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_]))
                     }
@@ -1814,7 +1753,7 @@ function Get-SortedObject {
                         $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]($Object[$_]))
                     }
                 }
-                elseif ($Object.$_.GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
+                elseif ($Object.$_ -and ($Object.$_.GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
                     $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_)
                 }
                 else { 
@@ -1826,7 +1765,7 @@ function Get-SortedObject {
         "Hashtable|OrderedDictionary|OrderedHashTable|SyncHashtable" { 
             $SortedObject = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
             ($Object.GetEnumerator().Name | Sort-Object).ForEach{ 
-                if ($Object[$_].GetType().Name -eq "Array" -or $Object[$_].GetType().BaseType -match "array|System\.Array") { 
+                if ($Object.$_ -and ($Object[$_].GetType().Name -eq "Array" -or $Object[$_].GetType().BaseType -match "array|System\.Array")) { 
                     if ($Object[$_].Count -lt 2) { 
                         $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_])
                     }
@@ -1834,7 +1773,7 @@ function Get-SortedObject {
                         $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]($Object[$_])
                     }
                 }
-                elseif ($Object[$_].GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object[$_].GetType().BaseType -match "hashtable|System\.Collections\.Hashtable") { 
+                elseif ($Object.$_ -and ($Object[$_].GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object[$_].GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
                     $SortedObject[$_] = Get-SortedObject $Object[$_]
                 }
                 else { 
@@ -2287,20 +2226,17 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.MMX = ($Info[3] -band ([Int]1 -shl 23)) -ne 0
-        $Features.SSE = ($Info[3] -band ([Int]1 -shl 25)) -ne 0
-        $Features.SSE2 = ($Info[3] -band ([Int]1 -shl 26)) -ne 0
-        $Features.SSE3 = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
-
-        $Features.SSSE3 = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
-        $Features.SSE41 = ($Info[2] -band ([Int]1 -shl 19)) -ne 0
-        $Features.SSE42 = ($Info[2] -band ([Int]1 -shl 20)) -ne 0
-        $Features.AES = ($Info[2] -band ([Int]1 -shl 25)) -ne 0
-
-        $Features.AVX = ($Info[2] -band ([Int]1 -shl 28)) -ne 0
-        $Features.FMA3 = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
-
+        $Features.AES    = ($Info[2] -band ([Int]1 -shl 25)) -ne 0
+        $Features.AVX    = ($Info[2] -band ([Int]1 -shl 28)) -ne 0
+        $Features.FMA3   = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
+        $Features.MMX    = ($Info[3] -band ([Int]1 -shl 23)) -ne 0
         $Features.RDRAND = ($Info[2] -band ([Int]1 -shl 30)) -ne 0
+        $Features.SSE    = ($Info[3] -band ([Int]1 -shl 25)) -ne 0
+        $Features.SSE2   = ($Info[3] -band ([Int]1 -shl 26)) -ne 0
+        $Features.SSE3   = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
+        $Features.SSSE3  = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
+        $Features.SSE41  = ($Info[2] -band ([Int]1 -shl 19)) -ne 0
+        $Features.SSE42  = ($Info[2] -band ([Int]1 -shl 20)) -ne 0
     }
 
     if ($nIds -ge 0x00000007) { 
@@ -2314,40 +2250,33 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.AVX2 = ($Info[1] -band ([Int]1 -shl 05)) -ne 0
-
-        $Features.BMI1 = ($Info[1] -band ([Int]1 -shl 03)) -ne 0
-        $Features.BMI2 = ($Info[1] -band ([Int]1 -shl 08)) -ne 0
-        $Features.ADX = ($Info[1] -band ([Int]1 -shl 19)) -ne 0
-        $Features.MPX = ($Info[1] -band ([Int]1 -shl 14)) -ne 0
-        $Features.SHA = ($Info[1] -band ([Int]1 -shl 29)) -ne 0
-        $Features.RDSEED = ($Info[1] -band ([Int]1 -shl 18)) -ne 0
-        $Features.PREFETCHWT1 = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
-        $Features.RDPID = ($Info[2] -band ([Int]1 -shl 22)) -ne 0
-
-        $Features.AVX512_F = ($Info[1] -band ([Int]1 -shl 16)) -ne 0
-        $Features.AVX512_CD = ($Info[1] -band ([Int]1 -shl 28)) -ne 0
-        $Features.AVX512_PF = ($Info[1] -band ([Int]1 -shl 26)) -ne 0
-        $Features.AVX512_ER = ($Info[1] -band ([Int]1 -shl 27)) -ne 0
-
-        $Features.AVX512_VL = ($Info[1] -band ([Int]1 -shl 31)) -ne 0
-        $Features.AVX512_BW = ($Info[1] -band ([Int]1 -shl 30)) -ne 0
-        $Features.AVX512_DQ = ($Info[1] -band ([Int]1 -shl 17)) -ne 0
-
-        $Features.AVX512_IFMA = ($Info[1] -band ([Int]1 -shl 21)) -ne 0
-        $Features.AVX512_VBMI = ($Info[2] -band ([Int]1 -shl 01)) -ne 0
-
+        $Features.ADX              = ($Info[1] -band ([Int]1 -shl 19)) -ne 0
+        $Features.AVX2             = ($Info[1] -band ([Int]1 -shl 05)) -ne 0
+        $Features.AVX512_BITALG    = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
+        $Features.AVX512_F         = ($Info[1] -band ([Int]1 -shl 16)) -ne 0
+        $Features.AVX512_CD        = ($Info[1] -band ([Int]1 -shl 28)) -ne 0
+        $Features.AVX512_PF        = ($Info[1] -band ([Int]1 -shl 26)) -ne 0
+        $Features.AVX512_ER        = ($Info[1] -band ([Int]1 -shl 27)) -ne 0
+        $Features.AVX512_VL        = ($Info[1] -band ([Int]1 -shl 31)) -ne 0
+        $Features.AVX512_BW        = ($Info[1] -band ([Int]1 -shl 30)) -ne 0
+        $Features.AVX512_DQ        = ($Info[1] -band ([Int]1 -shl 17)) -ne 0
+        $Features.AVX512_IFMA      = ($Info[1] -band ([Int]1 -shl 21)) -ne 0
+        $Features.AVX512_VBMI      = ($Info[2] -band ([Int]1 -shl 01)) -ne 0
         $Features.AVX512_VPOPCNTDQ = ($Info[2] -band ([Int]1 -shl 14)) -ne 0
-        $Features.AVX512_4FMAPS = ($Info[3] -band ([Int]1 -shl 02)) -ne 0
-        $Features.AVX512_4VNNIW = ($Info[3] -band ([Int]1 -shl 03)) -ne 0
-
-        $Features.AVX512_VNNI = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
-
-        $Features.AVX512_VBMI2 = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
-        $Features.GFNI = ($Info[2] -band ([Int]1 -shl 08)) -ne 0
-        $Features.VAES = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
-        $Features.AVX512_VPCLMUL = ($Info[2] -band ([Int]1 -shl 10)) -ne 0
-        $Features.AVX512_BITALG = ($Info[2] -band ([Int]1 -shl 12)) -ne 0
+        $Features.AVX512_4FMAPS    = ($Info[3] -band ([Int]1 -shl 02)) -ne 0
+        $Features.AVX512_4VNNIW    = ($Info[3] -band ([Int]1 -shl 03)) -ne 0
+        $Features.AVX512_VNNI      = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
+        $Features.AVX512_VBMI2     = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
+        $Features.AVX512_VPCLMUL   = ($Info[2] -band ([Int]1 -shl 10)) -ne 0
+        $Features.BMI1             = ($Info[1] -band ([Int]1 -shl 03)) -ne 0
+        $Features.BMI2             = ($Info[1] -band ([Int]1 -shl 08)) -ne 0
+        $Features.GFNI             = ($Info[2] -band ([Int]1 -shl 08)) -ne 0
+        $Features.MPX              = ($Info[1] -band ([Int]1 -shl 14)) -ne 0
+        $Features.RDSEED           = ($Info[1] -band ([Int]1 -shl 18)) -ne 0
+        $Features.RDPID            = ($Info[2] -band ([Int]1 -shl 22)) -ne 0
+        $Features.PREFETCHWT1      = ($Info[2] -band ([Int]1 -shl 00)) -ne 0
+        $Features.SHA              = ($Info[1] -band ([Int]1 -shl 29)) -ne 0
+        $Features.VAES             = ($Info[2] -band ([Int]1 -shl 09)) -ne 0
     }
 
     if ($nExIds -ge 0x80000001) { 
@@ -2361,12 +2290,12 @@ function Get-CpuId {
             [BitConverter]::ToInt32($Info, 3 * 4)
         )
 
-        $Features.x64 = ($Info[3] -band ([Int]1 -shl 29)) -ne 0
-        $Features.ABM = ($Info[2] -band ([Int]1 -shl 05)) -ne 0
-        $Features.SSE4a = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
-        $Features.FMA4 = ($Info[2] -band ([Int]1 -shl 16)) -ne 0
-        $Features.XOP = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
+        $Features.x64       = ($Info[3] -band ([Int]1 -shl 29)) -ne 0
+        $Features.ABM       = ($Info[2] -band ([Int]1 -shl 05)) -ne 0
+        $Features.FMA4      = ($Info[2] -band ([Int]1 -shl 16)) -ne 0
         $Features.PREFETCHW = ($Info[2] -band ([Int]1 -shl 08)) -ne 0
+        $Features.SSE4a     = ($Info[2] -band ([Int]1 -shl 06)) -ne 0
+        $Features.XOP       = ($Info[2] -band ([Int]1 -shl 11)) -ne 0
     }
 
     # Wrap data into PSObject
@@ -2423,23 +2352,23 @@ function Get-Device {
 
     $Devices = @()
 
-    $Id = 0
-    $Type_Id = @{ }
-    $Vendor_Id = @{ }
+    $Id             = 0
+    $Type_Id        = @{ }
+    $Vendor_Id      = @{ }
     $Type_Vendor_Id = @{ }
 
-    $Slot = 0
-    $Type_Slot = @{ }
-    $Vendor_Slot = @{ }
+    $Slot             = 0
+    $Type_Slot        = @{ }
+    $Vendor_Slot      = @{ }
     $Type_Vendor_Slot = @{ }
 
-    $Index = 0
-    $Type_Index = @{ }
-    $Vendor_Index = @{ }
+    $Index             = 0
+    $Type_Index        = @{ }
+    $Vendor_Index      = @{ }
     $Type_Vendor_Index = @{ }
 
-    $PlatformId = 0
-    $PlatformId_Index = @{ }
+    $PlatformId            = 0
+    $PlatformId_Index      = @{ }
     $Type_PlatformId_Index = @{ }
 
     $UnsupportedCPUVendorID = 100
@@ -2620,12 +2549,12 @@ function Get-Device {
                 }
 
                 # Add OpenCL specific data
-                $Device.Index = [UInt16]$Index
-                $Device.Type_Index = [UInt16]$Type_Index.($Device.Type)
-                $Device.Vendor_Index = [UInt16]$Vendor_Index.($Device.Vendor)
-                $Device.Type_Vendor_Index = [UInt16]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
-                $Device.PlatformId = [UInt16]$PlatformId
-                $Device.PlatformId_Index = [UInt16]$PlatformId_Index.($PlatformId)
+                $Device.Index                 = [UInt16]$Index
+                $Device.Type_Index            = [UInt16]$Type_Index.($Device.Type)
+                $Device.Vendor_Index          = [UInt16]$Vendor_Index.($Device.Vendor)
+                $Device.Type_Vendor_Index     = [UInt16]$Type_Vendor_Index.($Device.Type).($Device.Vendor)
+                $Device.PlatformId            = [UInt16]$PlatformId
+                $Device.PlatformId_Index      = [UInt16]$PlatformId_Index.($PlatformId)
                 $Device.Type_PlatformId_Index = [UInt16]$Type_PlatformId_Index.($Device.Type).($PlatformId)
 
                 # Add raw data
@@ -2661,9 +2590,9 @@ function Get-Device {
             else { $_.Architecture = "Other" }
         }
 
-        $_.Slot = [UInt16]$Slot
-        $_.Type_Slot = [UInt16]$Type_Slot.($_.Type)
-        $_.Vendor_Slot = [UInt16]$Vendor_Slot.($_.Vendor)
+        $_.Slot             = [UInt16]$Slot
+        $_.Type_Slot        = [UInt16]$Type_Slot.($_.Type)
+        $_.Vendor_Slot      = [UInt16]$Vendor_Slot.($_.Vendor)
         $_.Type_Vendor_Slot = [UInt16]$Type_Vendor_Slot.($_.Type).($_.Vendor)
 
         if (-not $Type_Vendor_Slot.($_.Type)) { $Type_Vendor_Slot.($_.Type) = @{ } }
@@ -2677,9 +2606,9 @@ function Get-Device {
     $Devices.ForEach{ 
         $Device = $_
 
-        $Device.Bus_Index = @($Devices.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
-        $Device.Bus_Type_Index = @($Devices.Where{ $_.Type -eq $Device.Type }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
-        $Device.Bus_Vendor_Index = @($Devices.Where{ $_.Vendor -eq $Device.Vendor }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+        $Device.Bus_Index          = @($Devices.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+        $Device.Bus_Type_Index     = @($Devices.Where{ $_.Type -eq $Device.Type }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+        $Device.Bus_Vendor_Index   = @($Devices.Where{ $_.Vendor -eq $Device.Vendor }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
         $Device.Bus_Platform_Index = @($Devices.Where{ $_.Platform -eq $Device.Platform }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
 
         $Device
@@ -3082,7 +3011,7 @@ function Test-IsPrime {
     }
 }
 
-function Get-AllDAGdata { 
+function Update-AllDAGdata { 
 
     param (
         [Parameter (Mandatory = $true)]
@@ -3705,13 +3634,13 @@ function Set-MinerFailed {
 
     foreach ($Worker in $Miner.Workers) { 
         Set-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate" -Value 0 -FaultDetection $false
-        $Worker.Hashrate = [Double]::NaN
-        $Worker.Disabled = $false
-        $Worker.Earnings = [Double]::NaN
-        $Worker.Earnings_Accuracy = [Double]::NaN
-        $Worker.Earnings_Bias = [Double]::NaN
-        $Worker.Fee = 0
-        $Worker.Hashrate = [Double]::NaN
+        $Worker.Hashrate            = [Double]::NaN
+        $Worker.Disabled            = $false
+        $Worker.Earnings            = [Double]::NaN
+        $Worker.Earnings_Accuracy   = [Double]::NaN
+        $Worker.Earnings_Bias       = [Double]::NaN
+        $Worker.Fee                 = 0
+        $Worker.Hashrate            = [Double]::NaN
         $Worker.TotalMiningDuration = [TimeSpan]0
     }
     Remove-Variable Worker
@@ -3737,25 +3666,31 @@ function Set-MinerReBenchmark {
 
     foreach ($Worker in $Miner.Workers) { 
         Remove-Stat -Name "$($Miner.Name)_$($Worker.Pool.Algorithm)_Hashrate"
-        $Worker.Disabled = $false
-        $Worker.Earnings = [Double]::NaN
-        $Worker.Earnings_Accuracy = [Double]::NaN
-        $Worker.Earnings_Bias = [Double]::NaN
-        $Worker.Fee = 0
-        $Worker.Hashrate = [Double]::NaN
+        $Worker.Disabled            = $false
+        $Worker.Earnings            = [Double]::NaN
+        $Worker.Earnings_Accuracy   = [Double]::NaN
+        $Worker.Earnings_Bias       = [Double]::NaN
+        $Worker.Fee                 = 0
+        $Worker.Hashrate            = [Double]::NaN
         $Worker.TotalMiningDuration = [TimeSpan]0
     }
     Remove-Variable Worker
 
     Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
-    $Miner.Earnings = $Miner.Earnings_Accuracy = $Miner.Earnings_Bias = $Miner.PowerCost = $Miner.PowerConsumption = $Miner.PowerConsumption_Live = $Miner.Profit = $Miner.Profit_Bias = [Double]::NaN
-    $Miner.Hashrates_Live = @($this.Workers.ForEach{ [Double]::NaN })
-
-    $Miner.Available = $true
-    $Miner.Activated = 0 # To allow $Session.WatchdogCount + 1 attempts
-    $Miner.Benchmark = $true
+    $Miner.Activated               = 0 # To allow $Session.WatchdogCount + 1 attempts
+    $Miner.Available               = $true
+    $Miner.Benchmark               = $true
+    $Miner.Earnings                = [Double]::NaN
+    $Miner.Earnings_Accuracy       = [Double]::NaN
+    $Miner.Earnings_Bias           = [Double]::NaN
+    $Miner.PowerCost               = [Double]::NaN
+    $Miner.PowerConsumption        = [Double]::NaN
+    $Miner.PowerConsumption_Live   = [Double]::NaN
+    $Miner.Profit                  = [Double]::NaN
+    $Miner.Profit_Bias             = [Double]::NaN
+    $Miner.Hashrates_Live          = @($this.Workers.ForEach{ [Double]::NaN })
     $Miner.MeasurePowerConsumption = $true
-    $Miner.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
+    $Miner.Reasons                 = [System.Collections.Generic.SortedSet[String]]::new()
 
     # Remove watchdog
     $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.MinerName -ne $Miner.Name }
@@ -3776,10 +3711,10 @@ function Set-MinerMeasurePowerConsumption {
     Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
     $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = [Double]::NaN
 
-    $Miner.Available = $true
-    $Miner.Activated = 0 # To allow $Session.WatchdogCount + 1 attempts
+    $Miner.Available               = $true
+    $Miner.Activated               = 0 # To allow $Session.WatchdogCount + 1 attempts
     $Miner.MeasurePowerConsumption = $true
-    $Miner.Reasons = [System.Collections.Generic.SortedSet[String]]::new()
+    $Miner.Reasons                 = [System.Collections.Generic.SortedSet[String]]::new()
 
     # Remove watchdog
     $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.MinerName -ne $Miner.Name }

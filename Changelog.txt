@@ -1,3 +1,23 @@
+Changelog UG-Miner 6.8.15 2026/07/18
+====================================
+
+Changes:
+- Core / Include.psm: Rename function 'Get-AllDAGdata' to 'Update-AllDAGdata'
+- Utils: Update 7-Zip to version 26.02
+
+Enhancements:
+- Legacy GUI: Double click in miner, pool and switching log tables to show detailled info on selected row
+
+Fixes:
+- Core / Include.psm1: Error 'No available miners - will retry in 30 seconds...' on first loop after restarting UG-Miner
+- Core: Do not restart all running miners once after restarting core process
+- Legacy GUI / Active miners: No 'Hashrate (live)' values
+
+Improvements:
+- Core: Minor performance improvements
+- Core: Remove obsolete code
+
+
 Changelog UG-Miner 6.8.14 2026/07/12
 ====================================
 

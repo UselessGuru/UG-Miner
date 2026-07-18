@@ -18,13 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.14
-Version date:   2026/07/12
+Version:        6.8.15
+Version date:   2026/07/18
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms.DataVisualization")
 [Void][System.Reflection.Assembly]::Load("System.Drawing")
+
+Add-Type -AssemblyName Microsoft.VisualBasic
 
 $Font = "Segoe UI"
 $Font2 = "Microsoft Sans Serif"
@@ -168,7 +170,7 @@ function CheckBoxSwitchingLog_Click {
     $SwitchingLogDisplayTypes = $LegacyGUIelements.SwitchingLogPageControls.Where{ $_.Checked }.Tag
     if (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
         $LegacyGUIelements.SwitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
-        $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where{ $SwitchingLogDisplayTypes -contains $_.Type } | Select-Object -Last 1000).ForEach{ $_.Datetime = (Get-Date $_.DateTime); $_ } | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycle", "Duration", "DeviceNames", "Type", "CommandLine" | Out-DataTable
+        $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where{ $SwitchingLogDisplayTypes -contains $_.Type } | Select-Object -Last 1000).ForEach{ $_.Datetime = (Get-Date $_.DateTime); $_ } | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycles", "Duration", "Devicenames", "Type", "CommandLine" | Out-DataTable
         if (-not $LegacyGUIelements.ColumnWidthChanged -and $LegacyGUIelements.SwitchingLogDGV.Columns) { 
             $LegacyGUIelements.SwitchingLogDGV.Columns[0].FillWeight = 50; $LegacyGUIelements.SwitchingLogDGV.Sort($LegacyGUIelements.SwitchingLogDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Descending)
             $LegacyGUIelements.SwitchingLogDGV.Columns[1].FillWeight = 50
@@ -332,7 +334,7 @@ function Update-TabControl {
                         @{ Name = "Power consumption (live)"; Expression = { if ($_.MeasurePowerConsumption) { if ($_.Status -eq "Running") { "Measuring..." } else { "Unmeasured" } } else { if ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } else { "$($_.PowerConsumption_Live.ToString("N2")) W" } } } }
                         @{ Name = "Algorithm(variant) [Currency]"; Expression = { $_.Workers.ForEach{ "$($_.Pool.AlgorithmVariant)$(if ($_.Pool.Currency) { " [$($_.Pool.Currency)]" })" } -join " & " } },
                         @{ Name = "Pool"; Expression = { $_.Workers.Pool.Name -join " & " } }
-                        @{ Name = "Hashrate (live)"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Workers.ForEach{ $_.Hashrates_Live | ConvertTo-Hash } -join " & " } } }
+                        @{ Name = "Hashrate (live)"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Hashrates_Live.ForEach{ $_ | ConvertTo-Hash } -join " & " } } }
                         @{ Name = "Running time (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor(([DateTime]::Now.ToUniversalTime() - $_.BeginTime).TotalDays * 24), ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
                         # @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     ) | Out-DataTable
@@ -551,7 +553,7 @@ function Update-TabControl {
                 $DataSource = $Session.Miners.Where{ $_.Available -ne $true } | Sort-Object { $_.BaseName_Version_Device.Split('-')[-1] }, Info, Algorithm
             }
             else { 
-                if ($Session.Miners) {
+                if ($Session.Miners) { 
                     $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
                     $DataSource = $Session.Miners | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
                     Remove-Variable Bias
@@ -666,6 +668,7 @@ function Update-TabControl {
                         $Unit = "BTC"
                     }
                     $LegacyGUIelements.PoolsDGV.DataSource = $DataSource | Sort-Object -Property AlgorithmVariant, Currency, Name | Select-Object @(
+                        @{ Name = "Key"; Expression = { $_.Key } }
                         @{ Name = "Algorithm (variant)"; Expression = { $_.AlgorithmVariant } }
                         @{ Name = "Currency"; Expression = { $_.Currency } }
                         @{ Name = "Coin name"; Expression = { $_.CoinName } }
@@ -686,18 +689,19 @@ function Update-TabControl {
                     $LegacyGUIelements.PoolsLabel.Text = "Pool information updated $($Session.PoolsUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.PoolsDGV.Rows.Count) pool$(if ($LegacyGUIelements.PoolsDGV.Rows.count -ne 1) { "s" }))"
 
                     if ($LegacyGUIelements.PoolsDGV.Columns -and -not $LegacyGUIelements.PoolsDGV.ColumnWidthChanged) { 
-                        $LegacyGUIelements.PoolsDGV.Columns[0].FillWeight = 80
-                        $LegacyGUIelements.PoolsDGV.Columns[1].FillWeight = 40
-                        $LegacyGUIelements.PoolsDGV.Columns[2].FillWeight = 70
-                        $LegacyGUIelements.PoolsDGV.Columns[3].FillWeight = 55; $LegacyGUIelements.PoolsDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[4].FillWeight = 45; $LegacyGUIelements.PoolsDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[5].FillWeight = 55
-                        $LegacyGUIelements.PoolsDGV.Columns[6].FillWeight = 120
-                        $LegacyGUIelements.PoolsDGV.Columns[7].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[8].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[9].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[10].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                        if ($LegacyGUIelements.PoolsDGV.Columns[11]) { $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 140 }
+                        $LegacyGUIelements.PoolsDGV.Columns[0].Visible = $false
+                        $LegacyGUIelements.PoolsDGV.Columns[1].FillWeight = 80
+                        $LegacyGUIelements.PoolsDGV.Columns[2].FillWeight = 40
+                        $LegacyGUIelements.PoolsDGV.Columns[3].FillWeight = 70
+                        $LegacyGUIelements.PoolsDGV.Columns[4].FillWeight = 55; $LegacyGUIelements.PoolsDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[5].FillWeight = 45; $LegacyGUIelements.PoolsDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[6].FillWeight = 55
+                        $LegacyGUIelements.PoolsDGV.Columns[7].FillWeight = 120
+                        $LegacyGUIelements.PoolsDGV.Columns[8].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[9].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[10].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                        if ($LegacyGUIelements.PoolsDGV.Columns[12]) { $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 140 }
                         $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     $LegacyGUIelements.PoolsDGV.EndInit()
@@ -1203,7 +1207,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 "Copy miner command line to clipboard" { 
                     $this.SourceControl.SelectedRows.ForEach{ 
                         Set-Clipboard $_.Cells[10].Value
-                        $null = (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 64))
+                        $null = (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (64 + 4096))
                     }
                 }
             }
@@ -1313,6 +1317,15 @@ $LegacyGUIelements.ActiveMinersDGV.ScrollBars = "None"
 $LegacyGUIelements.ActiveMinersDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIelements.ActiveMinersDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
 $LegacyGUIelements.ActiveMinersDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
+$LegacyGUIelements.ActiveMinersDGV.Add_CellDoubleClick(
+    { 
+        if ($this.SelectedRows.Count -eq 1) { 
+            $RowIndex = $_.RowIndex
+            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[0].Value)")
+            Remove-Variable RowIndex
+        }
+    }
+)
 $LegacyGUIelements.ActiveMinersDGV.Add_DataSourceChanged({ if ($LegacyGUIelements.TabControl.SelectedTab.Text -eq "System status") { Resize-Form } }) # To fully show grid
 $LegacyGUIelements.ActiveMinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 $LegacyGUIelements.ActiveMinersDGV.Add_SelectionChanged({ $LegacyGUIelements.ContextMenuStripItem7.Enabled = [Boolean]($LegacyGUIelements.ActiveMinersDGV.SelectedRows.Count -eq 1) })
@@ -1480,6 +1493,15 @@ $LegacyGUIelements.MinersDGV.ReadOnly = $true
 $LegacyGUIelements.MinersDGV.RowHeadersVisible = $false
 $LegacyGUIelements.MinersDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIelements.MinersDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
+$LegacyGUIelements.MinersDGV.Add_CellDoubleClick(
+    { 
+        if ($this.SelectedRows.Count -eq 1) { 
+            $RowIndex = $_.RowIndex
+            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[2].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[2].Value)")
+            Remove-Variable RowIndex
+        }
+    }
+)
 $LegacyGUIelements.MinersDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.MinersDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 $LegacyGUIelements.MinersDGV.Add_SelectionChanged({ $LegacyGUIelements.ContextMenuStripItem7.Enabled = [Boolean]($LegacyGUIelements.ActiveMinersDGV.SelectedRows.Count -eq 1) })
@@ -1588,6 +1610,15 @@ $LegacyGUIelements.PoolsDGV.RowHeadersVisible = $false
 $LegacyGUIelements.PoolsDGV.SelectionMode = "FullRowSelect"
 $LegacyGUIelements.PoolsDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
 $LegacyGUIelements.PoolsDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
+$LegacyGUIelements.PoolsDGV.Add_CellDoubleClick(
+    { 
+        if ($this.SelectedRows.Count -eq 1) { 
+            $RowIndex = $_.RowIndex
+            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Pools.Where{ $_.Key -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Pool: $($this.Rows[$_.RowIndex].Cells[0].Value)")
+            Remove-Variable RowIndex
+        }
+    }
+)
 $LegacyGUIelements.PoolsDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
 Set-DataGridViewDoubleBuffer -Grid $LegacyGUIelements.PoolsDGV -Enabled $true
 $LegacyGUIelements.PoolsPageControls += $LegacyGUIelements.PoolsDGV
@@ -1751,6 +1782,7 @@ $LegacyGUIelements.SwitchingLogDGV.Name = "SwitchingLogDGV"
 $LegacyGUIelements.SwitchingLogDGV.ReadOnly = $true
 $LegacyGUIelements.SwitchingLogDGV.RowHeadersVisible = $false
 $LegacyGUIelements.SwitchingLogDGV.SelectionMode = "FullRowSelect"
+$LegacyGUIelements.SwitchingLogDGV.Add_CellDoubleClick({ $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($LegacyGUIelements.SwitchingLogDGV.DataSource.Rows[$_.RowIndex] | Select-Object * -ExcludeProperty ItemArray, Table, RowError, RowState, HasErrors | Get-SortedObject | ConvertTo-Json)", (64 + 4096), "Entry: $($this.Rows[$_.RowIndex].Cells[0].Value)") })
 $LegacyGUIelements.SwitchingLogDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
 $LegacyGUIelements.SwitchingLogDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.SwitchingLogDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
@@ -2573,13 +2605,13 @@ $LegacyGUIform.Add_Load(
 
 $LegacyGUIform.Add_FormClosing(
     { 
-        if ($FormClosing) {
+        if ($FormClosing) { 
             return # Exit if already closing
         }
         $Script:FormClosing = $true
 
         if ($Config.LegacyGUI -and $KeyPressed.Key -ne "q") { 
-            if (-not $Session.Config.ShowConsole) {
+            if (-not $Session.Config.ShowConsole) { 
                 # If console is not visible there is no user friendly way to end script
                 $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (4 + 32 + 4096))
                 if ($Session.PopupInput -eq 7 <#No#>) { 
