@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.15
-Version date:   2026/07/18
+Version:        6.8.16
+Version date:   2026/07/20
 #>
 
 using module .\Include.psm1
@@ -311,11 +311,11 @@ do {
 
                 if ([String]$PoolTodaysEarnings.Date -eq $Now.ToString("yyyy-MM-dd")) { 
                     $PoolTodaysEarnings.DailyEarnings = [Double]$GrowthToday
-                    $PoolTodaysEarnings.EndTime = $Now.ToString("T")
-                    $PoolTodaysEarnings.EndValue = $BalanceObject.Earnings
-                    $PoolTodaysEarnings.Balance = $BalanceObject.Balance
-                    $PoolTodaysEarnings.Unpaid = $BalanceObject.Unpaid
-                    $PoolTodaysEarnings.Payout = $PoolTodaysEarnings.Payout + $BalanceObject.Payout
+                    $PoolTodaysEarnings.EndTime       = $Now.ToString("T")
+                    $PoolTodaysEarnings.EndValue      = $BalanceObject.Earnings
+                    $PoolTodaysEarnings.Balance       = $BalanceObject.Balance
+                    $PoolTodaysEarnings.Unpaid        = $BalanceObject.Unpaid
+                    $PoolTodaysEarnings.Payout        = $PoolTodaysEarnings.Payout + $BalanceObject.Payout
                 }
                 else { 
                     $Earnings += [PSCustomObject]@{ 

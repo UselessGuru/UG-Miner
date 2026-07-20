@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.15
-Version date:   2026/07/18
+Version:        6.8.16
+Version date:   2026/07/20
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1321,7 +1321,7 @@ $LegacyGUIelements.ActiveMinersDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[0].Value)")
+            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[0].Value)                            ")
             Remove-Variable RowIndex
         }
     }
@@ -1497,7 +1497,7 @@ $LegacyGUIelements.MinersDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[2].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[2].Value)")
+            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[2].Value)")
             Remove-Variable RowIndex
         }
     }

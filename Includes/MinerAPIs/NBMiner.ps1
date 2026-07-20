@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NBMiner.ps1
-Version:        6.8.15
-Version date:   2026/07/18
+Version:        6.8.16
+Version date:   2026/07/20
 #>
 
 [NoRunspaceAffinity()]

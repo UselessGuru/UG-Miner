@@ -1,3 +1,15 @@
+Changelog UG-Miner 6.8.16 2026/07/??
+====================================
+
+Fixes:
+- Core: Running miner constantly getting restarted when pool is no longer available
+- Legacy GUI: Error 'null' on miner table double click (regression from 6.8.15)
+
+Improvements:
+- Core: Minor performance improvements
+- Core: Remove obsolete code
+
+
 Changelog UG-Miner 6.8.15 2026/07/18
 ====================================
 
@@ -6,7 +18,7 @@ Changes:
 - Utils: Update 7-Zip to version 26.02
 
 Enhancements:
-- Legacy GUI: Double click in miner, pool and switching log tables to show detailled info on selected row
+- Legacy GUI: Double click in 'active miners', 'miner', 'pool' and 'switching log' tables to show detailled info on selected row
 
 Fixes:
 - Core / Include.psm1: Error 'No available miners - will retry in 30 seconds...' on first loop after restarting UG-Miner

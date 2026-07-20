@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.8.15
-Version date:   2026/07/18
+Version:        6.8.16
+Version date:   2026/07/20
 #>
 
 using module .\Include.psm1
@@ -896,6 +896,7 @@ try {
             $_.Group.ForEach{ 
                 try { 
                     $Miner = $_
+                    $_.Restart = $false
                     if ($_.SideIndicator -eq "=>") { 
                         # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
                         $_.Algorithms           = $_.Workers.Pool.Algorithm
@@ -906,14 +907,14 @@ try {
                     elseif ($MinerNew = $MinersNewGroup.Where{ $Miner.Info -eq $_.Info }) { 
                         if ($_.KeepRunning = $_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running -and $_.ContinousCycle -lt $Session.Config.MinCycle) { 
                             # Minimum numbers of cycles not yet reached
-                            $_.Restart = $false
                         }
                         else { 
                             # Update existing miners
-                            if ($_.Restart = $_.Arguments -ne $MinerNew.Arguments) { 
+                            if ($_.Arguments -ne $MinerNew.Arguments) { 
                                 $_.Arguments   = $MinerNew.Arguments
                                 $_.CommandLine = $MinerNew.GetCommandLine()
                                 $_.Port = $MinerNew.Port
+                                $_.Restart = $true
                             }
                             $_.PrerequisitePath = $MinerNew.PrerequisitePath
                             $_.PrerequisiteURI  = $Miner.PrerequisiteURI

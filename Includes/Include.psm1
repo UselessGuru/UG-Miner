@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.15
-Version date:   2026/07/18
+Version:        6.8.16
+Version date:   2026/07/20
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -1745,16 +1745,21 @@ function Get-SortedObject {
         "PSCustomObject" { 
             $SortedObject = [PSCustomObject]@{ }
             ($Object.PSObject.Properties.Name | Sort-Object).ForEach{ 
-                if ($Object.$_ -and ($Object.$_.GetType().Name -eq "Array" -or $Object.$_.GetType().BaseType -match "array|System\.Array")) { 
-                    if ($Object[$_].Count -lt 2) { 
-                        $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_]))
+                if ($Object.$_) { 
+                    if ($Object.$_.GetType().Name -eq "Array" -or $Object.$_.GetType().BaseType -match "array|System\.Array") { 
+                        if ($Object[$_].Count -lt 2) { 
+                            $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_]))
+                        }
+                        else { 
+                            $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]($Object[$_]))
+                        }
+                    }
+                    elseif ($Object.$_ -and ($Object.$_.GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
+                        $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_)
                     }
                     else { 
-                        $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]($Object[$_]))
+                        $SortedObject | Add-Member $_ $Object.$_
                     }
-                }
-                elseif ($Object.$_ -and ($Object.$_.GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
-                    $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_)
                 }
                 else { 
                     $SortedObject | Add-Member $_ $Object.$_
@@ -1764,17 +1769,22 @@ function Get-SortedObject {
         }
         "Hashtable|OrderedDictionary|OrderedHashTable|SyncHashtable" { 
             $SortedObject = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
-            ($Object.GetEnumerator().Name | Sort-Object).ForEach{ 
-                if ($Object.$_ -and ($Object[$_].GetType().Name -eq "Array" -or $Object[$_].GetType().BaseType -match "array|System\.Array")) { 
-                    if ($Object[$_].Count -lt 2) { 
-                        $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_])
+            ($Object.GetEnumerator().Name).ForEach{ 
+                if ($Object.$_) { 
+                    if ($Object[$_].GetType().Name -eq "Array" -or $Object[$_].GetType().BaseType -match "array|System\.Array") { 
+                        if ($Object[$_].Count -lt 2) { 
+                            $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_])
+                        }
+                        else { 
+                            $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]($Object[$_])
+                        }
+                    }
+                    elseif ($Object.$_ -and ($Object[$_].GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object[$_].GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
+                        $SortedObject[$_] = Get-SortedObject $Object[$_]
                     }
                     else { 
-                        $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]($Object[$_])
+                        $SortedObject[$_] = $Object[$_]
                     }
-                }
-                elseif ($Object.$_ -and ($Object[$_].GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object[$_].GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
-                    $SortedObject[$_] = Get-SortedObject $Object[$_]
                 }
                 else { 
                     $SortedObject[$_] = $Object[$_]
@@ -3775,7 +3785,7 @@ function Read-Config {
             # Load default pool data
             $Session.PoolData = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
             (Get-ChildItem -Path ".\Data\PoolData_*.json" | Sort-Object -Property BaseName).ForEach{ 
-                $Session.PoolData.$($_.BaseName -replace "PoolData_") = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($_.ResolvedTarget) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
+                $Session.PoolData.$($_.BaseName -replace "PoolData_") = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($_.ResolvedTarget) | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase)
             }
             $Session.PoolBaseNames = @($Session.PoolData.Keys)
             $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach{ $Session.PoolData.$_.Variant.Keys }.Where{ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" }) | Sort-Object -Unique)
@@ -3906,7 +3916,7 @@ function Read-Config {
         if ($PoolsConfigFile -and (Test-Path -LiteralPath $PoolsConfigFile -PathType Leaf)) { 
             try { 
                 [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
-                $Config.PoolsConfig = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
+                $Config.PoolsConfig = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase)
             }
             catch { 
                 $Config.PoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive sorted hashtable
