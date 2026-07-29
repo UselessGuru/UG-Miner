@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.16
-Version date:   2026/07/20
+Version:        6.8.17
+Version date:   2026/07/29
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -139,11 +139,11 @@ function Resize-Form {
     }
     else { 
         $Session.TextBoxSystemLog.Height = $LegacyGUIelements.StatusPage.Bottom - $LegacyGUIelements.SystemLogLabel.Bottom - 58
-        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.MinersPage.Bottom - $LegacyGUIelements.MinersPanel.Bottom - 64
-        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.PoolsPage.Bottom - $LegacyGUIelements.PoolsPanel.Bottom - 64
-        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.WorkersPage.Bottom - $LegacyGUIelements.WorkersLabel.Bottom - 64
-        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.SwitchingLogPage.Bottom - $LegacyGUIelements.SwitchingLogClearButton.Bottom - 64
-        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.WatchdogTimersPage.Bottom - $LegacyGUIelements.WatchdogTimersRemoveButton.Bottom - 64
+        $LegacyGUIelements.MinersDGV.Height = $LegacyGUIelements.MinersPage.Bottom - $LegacyGUIelements.MinersPanel.Bottom - 66
+        $LegacyGUIelements.PoolsDGV.Height = $LegacyGUIelements.PoolsPage.Bottom - $LegacyGUIelements.PoolsPanel.Bottom - 66
+        # $LegacyGUIelements.WorkersDGV.Height = $LegacyGUIelements.WorkersPage.Bottom - $LegacyGUIelements.WorkersLabel.Bottom - 66
+        $LegacyGUIelements.SwitchingLogDGV.Height = $LegacyGUIelements.SwitchingLogPage.Bottom - $LegacyGUIelements.SwitchingLogClearButton.Bottom - 66
+        $LegacyGUIelements.WatchdogTimersDGV.Height = $LegacyGUIelements.WatchdogTimersPage.Bottom - $LegacyGUIelements.WatchdogTimersRemoveButton.Bottom - 66
     }
 }
 
@@ -884,7 +884,7 @@ function Update-GUIstatus {
             }
         }
     }
-    $LegacyGUIelements.MiningSummaryLabel.Text = (($Session.Summary.Replace("$($LegacyGUIelements.MiningStatusLabel.Text). ", "") -replace "&ensp;", " " -replace "   ", "  " -replace "&", "&&") -split "<br>") -join "`r`n"
+    $LegacyGUIelements.MiningSummaryLabel.Text = (($Session.Summary.Replace("$($LegacyGUIelements.MiningStatusLabel.Text). ", "") -replace "&ensp;", " " -replace "   ", "  " -replace "&", "&&" -replace "Profit / day: n/a", "`r`nProfit / day: n/a") -split "<br>") -join "`r`n"
     Update-TabControl
 }
 
@@ -2532,7 +2532,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                         if ($Config.UIstyle -ne "full" -and $Session.MinersBenchmarkingOrMeasuring) { Write-Host -ForegroundColor DarkYellow "$(if ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(if ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(if ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
 
                         $Colour = if ($Session.MinersRunning -and ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement)) { "DarkYello" } else { "White" }
-                        Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", "=")
+                        Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", " = " -replace "Profit/day: n/a", "`nProfit/day: n/a")
                         Remove-Variable Colour
 
                         if ($Session.Miners.Where{ $_.Available -and -not ($_.Benchmark -or $_.MeasurePowerConsumption) }) { 

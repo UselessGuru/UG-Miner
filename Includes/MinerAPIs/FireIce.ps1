@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.8.16
-Version date:   2026/07/20
+Version:        6.8.17
+Version date:   2026/07/29
 #>
 
 [NoRunspaceAffinity()]

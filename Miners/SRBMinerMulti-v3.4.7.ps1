@@ -17,15 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.16
-Version date:   2026/07/20
+Version:        6.8.17
+Version date:   2026/07/29
 #>
 
-# Improved algorithm 'BTX' for Turing and Ampere based NVIDIA CMP GPU's
+# Improved algorithm 'pearlhash' for NVIDIA 2000, 3000, 4000 and 5000 series GPUs
+# Added optimised code for unlocked CMP170HX on algorithm 'pearlhash'
+# Cmp100-200 now works again on algorithm 'BTX'
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.4.6/SRBMiner-Multi-3-4-6-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.4.7/SRBMiner-Multi-3-4-7-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"

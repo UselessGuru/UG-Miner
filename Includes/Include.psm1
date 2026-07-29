@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.16
-Version date:   2026/07/20
+Version:        6.8.17
+Version date:   2026/07/29
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -2593,7 +2593,7 @@ function Get-Device {
     }
     Remove-Variable Device, OpenCLplatform -ErrorAction Ignore
 
-    ($Devices.Where{ $_.Model -ne "Remote Display Adapter 0GB" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64] } | Sort-Object -Property Bus).ForEach{ 
+    ($Devices.Where{ $_.Model -notlike "Remote Display Adapter*" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64] } | Sort-Object -Property Bus).ForEach{ 
         if ($_.Type -eq "GPU") { 
             if ($_.Vendor -eq "NVIDIA") { $_.Architecture = (Get-GPUArchitectureNvidia -Model $_.Model -ComputeCapability $_.OpenCL.DeviceCapability) }
             elseif ($_.Vendor -eq "AMD") { $_.Architecture = (Get-GPUArchitectureAMD -Model $_.Model -Architecture $_.OpenCL.Architecture) }
@@ -2613,16 +2613,16 @@ function Get-Device {
         $Type_Vendor_Slot.($_.Type).($_.Vendor) ++
     }
 
-    $Devices.ForEach{ 
+    $Devices.Where{ $_.Model -notlike "Remote Display Adapter*" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64] }.ForEach{ 
         $Device = $_
 
-        $Device.Bus_Index          = @($Devices.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
-        $Device.Bus_Type_Index     = @($Devices.Where{ $_.Type -eq $Device.Type }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
-        $Device.Bus_Vendor_Index   = @($Devices.Where{ $_.Vendor -eq $Device.Vendor }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
-        $Device.Bus_Platform_Index = @($Devices.Where{ $_.Platform -eq $Device.Platform }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
-
-        $Device
+        $Device.Bus_Index          = @($Devices.Where{ $_.Model -notlike "Remote Display Adapter*" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64] }.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+        $Device.Bus_Type_Index     = @($Devices.Where{ $_.Type -eq $Device.Type -and $_.Model -notlike "Remote Display Adapter*" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64]}.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+        $Device.Bus_Vendor_Index   = @($Devices.Where{ $_.Vendor -eq $Device.Vendor -and $_.Model -notlike "Remote Display Adapter*" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64]}.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
+        $Device.Bus_Platform_Index = @($Devices.Where{ $_.Platform -eq $Device.Platform -and $_.Model -notlike "Remote Display Adapter*" -and $_.Vendor -ne "CitrixSystemsInc" -and $_.Bus -is [Int64]}.Bus | Sort-Object).IndexOf([UInt16]$Device.Bus)
     }
+
+    $Devices
 }
 
 filter ConvertTo-Hash { 

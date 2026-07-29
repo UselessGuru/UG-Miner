@@ -1,3 +1,10 @@
+Changelog UG-Miner 6.8.17 2026/07/??
+====================================
+
+Miner updates:
+- SRBMinerMulti-v3.4.7
+
+
 Changelog UG-Miner 6.8.16 2026/07/20
 ====================================
 
@@ -8,6 +15,9 @@ Fixes:
 Improvements:
 - Core: Minor performance improvements
 - Core: Remove obsolete code
+
+Miner updates:
+- Wildrig-v0.49.6
 
 
 Changelog UG-Miner 6.8.15 2026/07/18
@@ -37,7 +47,7 @@ Changelog UG-Miner 6.8.14 2026/07/12
 ====================================
 
 Fixes:
-- Core / Include.psm1: No 'Stopping miner[...]' message for dry running miners (method 'StopMining')
+- Core / Include.psm1: No 'Stopping miner [...]' message for dry running miners (method 'StopMining')
 
 Miner changes:
 - CcminerZeroDynamics-v2.4.1 (remove unsupported algorithms 'Argon2d250', 'Argon2d500' & 'Argon2d4096')
