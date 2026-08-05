@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.8.17
-Version date:   2026/07/29
+Version:        6.8.18
+Version date:   2026/08/05
 #>
 
 using module .\Include.psm1
@@ -71,11 +71,11 @@ try {
             Clear-Pools
             Clear-Miners
 
-            Write-Message -Level Info "Ending cycle."
             $Session.RefreshNeeded = $true
 
             Start-Sleep -Seconds $Session.Config.Interval
 
+            Write-Message -Level Info "Ending cycle."
             continue
         }
 
@@ -810,9 +810,10 @@ try {
         }
         else { 
             # Only add pools with profitable algorithms
-            ($PoolsAvailable.Where({ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|1" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[0][$_.Name] = $_.Group })
-            ($PoolsAvailable.Where({ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|2" }) | Group-Object -Property Algorithm).ForEach({ $MinerPools[1][$_.Name] = $_.Group })
+            ($PoolsAvailable.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|1" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[0][$_.Name] = $_.Group }
+            ($PoolsAvailable.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|2" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[1][$_.Name] = $_.Group }
         }
+        Remove-Variable PoolsAvailable
 
         $Message = "Loading miners.$(if (-not $Session.Miners) { "<br>This may take a while." }).."
         if (-not $Session.Miners) { 
@@ -826,9 +827,9 @@ try {
             (Get-ChildItem -Path ".\Miners\*.ps1").ForEach{ 
                 try { 
                     Write-Message -Level Debug "Miner definition file '$($_.Name)': Start building miner objects"
-                    $M = (& $_.ResolvedTarget)
-                    $M
-                    Write-Message -Level Debug "Miner definition file '$($_.Name)': End building miner objects ($($M.Count))"
+                    $Miners = (& $_.ResolvedTarget)
+                    $Miners
+                    Write-Message -Level Debug "Miner definition file '$($_.Name)': End building miner objects ($($Miners.Count))"
                 }
                 catch { 
                     Write-Message -Level Error "Miner file 'Miners\$($_.Name)': $_."
@@ -842,23 +843,21 @@ try {
                     $IsIgnoreFee = $Session.Config.IgnoreMinerFee
 
                     $Workers = $Miner.Workers
-                    $WorkerStrings = [System.Collections.Generic.List[string]]::new()
+                    $WorkerStrings = [System.Collections.Generic.List[String]]::new()
 
                     for ($i = 0; $i -lt $Workers.Count; $i++) { 
                         $Workers[$i].Fee = if ($IsIgnoreFee) { 0 } else { $Miner.Fee[$i] }
-                        $Pool = $workers[$i].Pool
+                        $Pool = $Workers[$i].Pool
                         $WorkerStrings.Add("$($Pool.AlgorithmVariant)@$($Pool.Name)")
                     }
-                    $Parts = $Miner.Name.Split('-')
-                    $BaseName = "$($parts[0])-$($parts[1])-$($parts[2])"
 
-                    $JoinedWorkers = $WorkerStrings -join " & "
-                    $Suffix = if ($Parts.Count -gt 4) { " ($($Parts[4]))" } else { "" }
+                    $Parts = $Miner.Name.Split('-')
+                    $BaseName = $Parts[0] + "-" + $Parts[1] + "-" + $Parts[2]
 
                     $MinerProperties = $Miner.PSObject.Properties
                     $MinerProperties.Remove("Fee")
                     $MinerProperties.Add([System.Management.Automation.PSNoteProperty]::new("BaseName_Version_Device", $BaseName))
-                    $MinerProperties.Add([System.Management.Automation.PSNoteProperty]::new("Info", "$BaseName {$JoinedWorkers}$Suffix"))
+                    $MinerProperties.Add([System.Management.Automation.PSNoteProperty]::new("Info", "$BaseName {$($WorkerStrings -join " & ")}$(if ($Parts.Count -gt 4) { " ($($Parts[4]))" })"))
                     $Miner -as $Miner.API
                 }
                 catch { 
@@ -869,7 +868,7 @@ try {
                 }
             } | Sort-Object -Property Info
         )
-        Remove-Variable Algorithm, BaseName, i, IsIgnoreFee, JoinedWorkers, M, Miner, MinerPools, MinerProperties, Parts, PoolsAvailable, Suffix, Worker, Workers, WorkerStrings -ErrorAction Ignore
+        Remove-Variable Algorithm, BaseName, i, IsIgnoreFee, Miner, Miners, MinerPools, MinerProperties, Parts, Pool, Worker, Workers, WorkerStrings -ErrorAction Ignore
 
         $DeviceMap = [System.Collections.Generic.Dictionary[String, Object]]::new([System.StringComparer]::OrdinalIgnoreCase)
         foreach ($Device in $Session.EnabledDevices) {
@@ -901,7 +900,7 @@ try {
                         # Newly added miners, these properties need to be set only once because they are not dependent on any config or pool information
                         $_.Algorithms           = $_.Workers.Pool.Algorithm
                         $_.BaseName, $_.Version = ($_.Name -split "-")[0, 1]
-                        $_.BaseName_Version     = "$($_.BaseName)-$($_.Version)"
+                        $_.BaseName_Version     = $_.BaseName + "-" + $_.Version
                         $_.CommandLine          = $_.GetCommandLine()
                     }
                     elseif ($MinerNew = $MinersNewGroup.Where{ $Miner.Info -eq $_.Info }) { 
@@ -913,8 +912,8 @@ try {
                             if ($_.Arguments -ne $MinerNew.Arguments) { 
                                 $_.Arguments   = $MinerNew.Arguments
                                 $_.CommandLine = $MinerNew.GetCommandLine()
-                                $_.Port = $MinerNew.Port
-                                $_.Restart = $true
+                                $_.Port        = $MinerNew.Port
+                                $_.Restart     = $true
                             }
                             $_.PrerequisitePath = $MinerNew.PrerequisitePath
                             $_.PrerequisiteURI  = $Miner.PrerequisiteURI
@@ -942,7 +941,7 @@ try {
 
         #region Mark miners that will be gone, they will be marked as not available
         # Pre-calculate lookup sets outside the loop to avoid repeating work
-        $AllowedPoolNames = [System.Collections.Generic.HashSet[string]]::new([String[]]$Session.Config.PoolName, [System.StringComparer]::OrdinalIgnoreCase)
+        $AllowedPoolNames = [System.Collections.Generic.HashSet[String]]::new([String[]]$Session.Config.PoolName, [System.StringComparer]::OrdinalIgnoreCase)
 
         # Threshold date for age check
         $AgeThreshold = $Session.BeginCycleTime.AddDays(-1)
@@ -984,7 +983,7 @@ try {
                 $Miner.SideIndicator = "!"
             }
         }
-        Remove-Variable AgeThreshold, AllowedPoolNames, DeviceName, DeviceMap, MustFlagAsUnavailable, Variant -ErrorAction Ignore
+        Remove-Variable AgeThreshold, AllowedPoolNames, DeviceMap, DeviceName, MustFlagAsUnavailable, Variant -ErrorAction Ignore
         #endregion
 
         #region Filter miners
@@ -1320,7 +1319,6 @@ try {
         $Session.MinersBest                 = $MinersBest
         $Session.MinersBestPerDevice        = $MinersBestPerDevice
         $Session.MinersOptimal              = $MinersOptimal | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
-
 
         $Session.BasePowerCost              = $Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency)
         $Session.PowerConsumptionIdleSystem = (($Session.Config.PowerConsumptionIdleSystem - ($MinersBest.Where{ $_.Type -eq "CPU" } | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum

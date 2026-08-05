@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.17
-Version date:   2026/07/29
+Version:        6.8.18
+Version date:   2026/08/05
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.1.2"
+$APIversion = "6.1.4"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -118,14 +118,14 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
                         $null = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
                     }
-                    else { 
+                    elseif ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where{ $_ -ne "+$($Pool.Algorithm)" } | Sort-Object -Unique)
                         $null = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")
                     }
                     $Pool.Available = $false
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                 }
-                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } else { "pools" }) disabled."
+                $Message = "$($Pools.Count) pool$(if ($Pools.Count -ne 1) { "s" } ) disabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
@@ -152,7 +152,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
                         $null = $Pool.Reasons.Remove("Algorithm not enabled in $($Pool.Name) pool config")
                     }
-                    else { 
+                    elseif($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where{ $_ -ne "-$($Pool.Algorithm)" } | Sort-Object -Unique)
                         $null = $Pool.Reasons.Remove("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
                     }
@@ -162,7 +162,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     }
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
                 }
-                $Message = "$($Pools.Count) $(if ($Pools.Count -eq 1) { "pool" } else { "pools" }) enabled."
+                $Message = "$($Pools.Count) pool$(if ($Pools.Count -ne 1) { "s" } ) enabled."
                 Write-Message -Level Verbose "Web GUI: $Message"
                 $Data = "$(($Data | Sort-Object) -join "`n")`n`n$Message"
 
@@ -195,7 +195,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 $RemovedEntriesCount = $BalanceDataEntries.Count - $Session.BalancesData.Count
                 if ($RemovedEntriesCount -gt 0) { 
-                    $Message = "$RemovedEntriesCount balance data $(if ($RemovedEntriesCount -eq 1) { "entry" } else { "entries" }) removed."
+                    $Message = "Removed $RemovedEntriesCount balance data $(if ($RemovedEntriesCount -eq 1) { "entry" } else { "entries" })."
                     Write-Message -Level Verbose "Web GUI: $Message"
                     $Data = $Message
                 }
@@ -219,7 +219,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $Data += "`nExcludeDeviceName: '[$($Config.ExcludeDeviceName -join ", ")]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
                         $Session.Devices.Where{ $_.Name -in $Values }.ForEach{ 
-                            if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running ) { 
+                            if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { 
                                 $_.StatusInfo = "$($_.StatusInfo); will get disabled in the next cycle"
                             }
                             else { 
@@ -255,7 +255,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $Data += "`nExcludeDeviceName: '[$($Config.ExcludeDeviceName -join ", " )]'"
                         $Data += "`n`nConfiguration saved to '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'.`nIt will become active in the next cycle."
                         $Session.Devices.Where{ $_.Name -in $Values }.ForEach{ 
-                            if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running ) { 
+                            if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { 
                                 $_.StatusInfo = $_.StatusInfo -replace "; will get disabled in the next cycle" }
                             else { 
                                 $_.State = [DeviceState]::Enabled
@@ -283,7 +283,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 $Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.ForEach{ 
                     if ($Config.ExcludeDeviceName -contains $_.Name) { 
-                        if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running ) { 
+                        if ($_.Status -in [MinerStatus]::DryRun, [MinerStatus]::Running) { 
                             $_.StatusInfo = "$($_.StatusInfo); will get disabled in the next cycle"
                         }
                         else { 
@@ -294,7 +294,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     }
                     else { 
                         $_.State = [DeviceState]::Enabled
-                        if ($_.Status -notin [MinerStatus]::DryRun, [MinerStatus]::Running ) { $_.Status = [MinerStatus]::Idle }
+                        if ($_.Status -notin [MinerStatus]::DryRun, [MinerStatus]::Running) { $_.Status = [MinerStatus]::Idle }
                         $_.StatusInfo = $_.StatusInfo -replace "; will get disabled in the next cycle"
                     }
                 }
@@ -786,10 +786,6 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/miners/failed" { 
             $Data = ConvertTo-Json -Depth 5 @($Session.Miners.Where{ $_.Status -eq [MinerStatus]::Failed } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object { $_.BaseName_Version_Device.Split('-')[-1] }, EndTime)
-            break
-        }
-        "/miners/launched" { 
-            $Data = ConvertTo-Json -Depth 5 @($Session.MinersBest | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-Object -Property Info)
             break
         }
         "/miners/lastused" { 

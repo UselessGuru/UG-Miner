@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.17
-Version date:   2026/07/29
+Version:        6.8.18
+Version date:   2026/08/05
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -488,7 +488,7 @@ class Miner : IDisposable {
         $this.StartDataReader()
     }
 
-    hidden [Void]StartMining()  { 
+    hidden [Void]StartMining() { 
         if ($this.Arguments -and (Test-Json $this.Arguments -ErrorAction Ignore)) { $this.CreateConfigFiles() }
 
         if ($this.Benchmark -or $this.MeasurePowerConsumption) { 
@@ -664,7 +664,7 @@ class Miner : IDisposable {
                     $null = [System.Diagnostics.Process]::GetProcessById($this.ProcessId)
                     return [MinerStatus]::Running
                 }
-                catch { } 
+                catch { }
             }
             return [MinerStatus]::Failed
         }
@@ -804,17 +804,16 @@ class Miner : IDisposable {
             $this.Earnings_Bias     = [Double]::NaN
         }
         else { 
-            $this.Earnings          = 0
-            $this.Earnings_Accuracy = 0
-            $this.Earnings_Bias     = 0
+            $this.Earnings      = $this.Workers[0].Earnings
+            $this.Earnings_Bias = $this.Workers[0].Earnings_Bias
 
-            foreach ($Worker in $this.Workers) { 
-                $this.Earnings      += $Worker.Earnings
-                $this.Earnings_Bias += $Worker.Earnings_Bias
+            if ($this.Workers[1]) { 
+                $this.Earnings      += $this.Workers[1].Earnings
+                $this.Earnings_Bias += $this.Workers[1].Earnings_Bias
             }
-            foreach ($Worker in $this.Workers) { 
-                $this.Earnings_Accuracy += $Worker.Earnings_Accuracy * $Worker.Earnings / $this.Earnings
-            }
+
+            $this.Earnings_Accuracy = $this.Workers[0].Earnings_Accuracy * $this.Workers[0].Earnings / $this.Earnings
+            if ($this.Workers[1]) { $this.Earnings_Accuracy += $this.Workers[1].Earnings_Accuracy * $this.Workers[1].Earnings / $this.Earnings }
 
             $this.IsBenchmarkingOrMeasuring = $false
         }
@@ -844,13 +843,6 @@ class Miner : IDisposable {
             if ($this.Workers[1].TotalMiningDuration -lt $MinDuration) { $MinDuration = $this.Workers[1].TotalMiningDuration }
             if ($this.Workers[1].Updated -lt $MinLastUsed)             { $MinLastUsed = $this.Workers[1].Updated }
             if ($this.Workers[1].Pool.Updated -lt $MinUpdated)         { $MinUpdated  = $this.Workers[1].Pool.Updated }
-        }
-
-        for ($i = 1; $i -lt $this.Workers.Count; $i++) {
-            $Worker = $this.Workers[$i]
-            if ($Worker.TotalMiningDuration -lt $MinDuration) { $MinDuration = $Worker.TotalMiningDuration }
-            if ($Worker.Updated -lt $MinLastUsed)             { $MinLastUsed = $Worker.Updated }
-            if ($Worker.Pool.Updated -lt $MinUpdated)         { $MinUpdated  = $Worker.Pool.Updated }
         }
 
         $this.TotalMiningDuration = $MinDuration
@@ -945,12 +937,13 @@ public static class Kernel32
         }
 
         # Set local environment
-        foreach ($line in $EnvBlock) { 
-            if ($line -like '*=*') { 
-                $name, $value = $line -split '=', 2
-                [System.Environment]::SetEnvironmentVariable($name, $value, 'Process')
+        foreach ($Line in $EnvBlock) { 
+            if ($Line -like '*=*') { 
+                $Name, $Value = $Line -split '=', 2
+                [System.Environment]::SetEnvironmentVariable($Name, $Value, 'Process')
             }
         }
+        Remove-Variable Name, value -ErrorAction Ignore
 
         # StartupInfo struct
         $StartupInfo = [STARTUPINFO]::new()
@@ -1581,7 +1574,6 @@ function Update-ConfigFile {
             "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse  = $Config.$_; $Config.Remove($_); break }
             "LogToScreen"                 { $Config.LogLevel                       = $Config.$_; $Config.Remove($_); break }
             "MainCurrency"                { $Config.FIATcurrency                   = $Config.$_; $Config.Remove($_); break }
-            "Pools"                       { $Config.PowerConsumptionIdleSystem     = $Config.$_; $Config.Remove($_); break }
             "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem     = $Config.$_; $Config.Remove($_); break }
             "ShowAccuracy"                { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
             "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
@@ -2033,7 +2025,7 @@ function Set-Stat {
 "Week_Fluctuation": $([Double]$Stat.Week_Fluctuation),
 "Duration": "$(([TimeSpan]$Stat.Duration).ToString())",
 "Updated": "$(([DateTime]$Stat.Updated).ToString('yyyy-MM-ddTHH:mm:ss.fffffffZ'))",
-"Disabled": $([string]$Stat.Disabled.ToString().ToLower())
+"Disabled": $([String]$Stat.Disabled.ToString().ToLower())
 }
 "@
 
@@ -2084,7 +2076,7 @@ function Get-Stat {
                 if ([String]::IsNullOrWhiteSpace($FileText)) { continue }
 
                 # 4. OPTIMIZATION: Strictly typed string parsing with System.Text.Json
-                $Json = [System.Text.Json.JsonDocument]::Parse([string]$FileText)
+                $Json = [System.Text.Json.JsonDocument]::Parse([String]$FileText)
                 $Root = $Json.RootElement
 
                 # 5. OPTIMIZATION: Low-level primitive retrieval directly out of the memory buffer

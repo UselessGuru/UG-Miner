@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.17 / Updated 2026/07/29
+Version 6.8.18 / Updated 2026/08/05
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -139,7 +139,7 @@ If '-' is used, then all currencies except the disabled ones are used
 
 Do not combine '+' and '-' concurrently.
 
-This parameter is not case sensitive. 
+This parameter is not case sensitive.
 
 #### Examples:
 Currency list '-EVR':  

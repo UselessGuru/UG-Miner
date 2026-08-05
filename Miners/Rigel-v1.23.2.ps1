@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.17
-Version date:   2026/07/29
+Version:        6.8.18
+Version date:   2026/08/05
 #>
 
 # (XEL) Minor performance improvements on 50xx cards
@@ -121,7 +121,7 @@ if ($Algorithms) {
                         }
                         Remove-Variable Pool
 
-                        if ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { $Arguments = "$Arguments --no-strict-ssl" } # Parameter cannot be used multiple times
+                        if ($Pool0.PoolPorts[1] -or ($_.Algorithms[1] -and $Pool1.PoolPorts[1])) { $Arguments = "$Arguments --no-strict-ssl" }
 
                         # Allow more time to build larger DAGs, must use type cast to keep values in $_
                         $WarmupTimes = [UInt16[]]$_.WarmupTimes
