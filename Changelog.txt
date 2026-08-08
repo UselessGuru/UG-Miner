@@ -1,3 +1,11 @@
+Changelog UG-Miner 6.8.19 2026/08/??
+====================================
+
+Miner updates:
+- SRBMinerMulti-v3.5.1
+- Wildrig-v0.49.9
+
+
 Changelog UG-Miner 6.8.18 2026/08/05
 ====================================
 

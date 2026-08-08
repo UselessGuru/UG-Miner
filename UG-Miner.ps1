@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.18
-Version date:   2026/08/05
+Version:        6.8.19
+Version date:   2026/08/08
 #>
 
 using module .\Includes\Include.psm1
@@ -322,7 +322,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.18"
+    Version      = [System.Version]"6.8.19"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -401,7 +401,7 @@ if (-not $Session.DonationData) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded donation database." -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded donation database" -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load donation log
 try { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) } catch { }
@@ -409,7 +409,7 @@ if (-not $Session.DonationLog) {
     $Session.DonationLog = @()
 }
 else { 
-    Write-Host "Loaded donation log." -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded donation log" -NoNewline; Write-Host " ✔  ($($Session.DonationLog.Count) $(if ($Session.DonationLog.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load algorithm list as case insensitive sorted list
@@ -421,7 +421,7 @@ if (-not $Session.Algorithms.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded algorithm database." -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded algorithm database" -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load coin names as case insensitive sorted list
 try { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -432,7 +432,7 @@ if (-not $Session.CoinNames.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded coin names database." -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded coin names database" -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load currency algorithm data as case insensitive sorted list
 try { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -443,7 +443,7 @@ if (-not $Session.CurrencyAlgorithm.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded currency database." -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded currency database" -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load EquihashCoinPers data as case insensitive sorted list
 try { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -454,7 +454,7 @@ if (-not $Session.EquihashCoinPers) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded equihash coins database." -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded equihash coins database" -NoNewline; Write-Host " ✔  ($($Session.EquihashCoinPers.Count) $(if ($Session.EquihashCoinPers.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load regions as case insensitive hash table
 try { 
@@ -469,7 +469,7 @@ if (-not $Session.Regions.Keys) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded regions database." -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded regions database" -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load FIAT currencies list as case insensitive sorted list
 try { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -480,7 +480,7 @@ if (-not $Session.FIATcurrencies) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded FIAT currencies database." -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded FIAT currencies database" -NoNewline; Write-Host " ✔  ($($Session.FIATcurrencies.Count) $(if ($Session.FIATcurrencies.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load unprofitable algorithms as case insensitive sorted list, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
 $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
@@ -497,7 +497,7 @@ if (-not $Session.UnprofitableAlgorithms.Count) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded unprofitable algorithms database." -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded unprofitable algorithms database" -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load DAG data, if not available it will get recreated
 try { $Session.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject } catch { }
@@ -508,7 +508,7 @@ if (-not $Session.DAGdata.Currency) {
     Start-Sleep -Seconds 5
     exit
 }
-Write-Host "Loaded DAG database." -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+Write-Host "Loaded DAG database" -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load PoolsLastUsed data as case insensitive sorted list
 try { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
@@ -516,7 +516,7 @@ if (-not $Session.PoolsLastUsed.psBase.Keys) {
     $Session.PoolsLastUsed = @{ }
 }
 else { 
-    Write-Host "Loaded pools last used database." -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded pools last used database" -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load AlgorithmsLastUsed data as case insensitive sorted list
@@ -525,7 +525,7 @@ if (-not $Session.AlgorithmsLastUsed.psBase.Keys) {
     $Session.AlgorithmsLastUsed = @{ }
 }
 else { 
-    Write-Host "Loaded algorithms last used database." -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded algorithms last used database" -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load MinersLastUsed data as case insensitive sorted list
@@ -534,7 +534,7 @@ if (-not $Session.MinersLastUsed.psBase.Keys) {
     $Session.MinersLastUsed = @{ }
 }
 else { 
-    Write-Host "Loaded miners last used database." -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded miners last used database" -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load EarningsChart data to make it available early in GUI
@@ -548,7 +548,7 @@ if (-not $Session.EarningsChartData.Earnings) {
     $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
 }
 else { 
-    Write-Host "Loaded earnings chart database." -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded earnings chart database" -NoNewline; Write-Host " ✔  ($($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count) $(if ($Session.EarningsChartData.Earnings.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load Balances data to make it available early in GUI
@@ -557,7 +557,7 @@ if (-not $Session.Balances.Keys) {
     $Session.Balances = [Ordered]@{ } # as case insensitive hash table
 }
 else { 
-    Write-Host "Loaded balances database." -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded balances database" -NoNewline; Write-Host " ✔  ($($Session.Balances.PSObject.Properties.Name.Count) $(if ($Session.Balances.PSObject.Properties.Name.Count-eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load AMD GPU architecture table
@@ -571,7 +571,7 @@ if (-not $Session.GPUArchitectureDbAMD) {
 }
 else { 
     $Session.GPUArchitectureDbAMD.PSObject.Properties.ForEach{ $_.Value = $_.Value -join "|" }
-    Write-Host "Loaded AMD GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded AMD GPU architecture database" -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbAMD.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load NVidia GPU architecture table
@@ -585,7 +585,7 @@ if (-not $Session.GPUArchitectureDbNvidia) {
 }
 else { 
     $Session.GPUArchitectureDbNvidia.PSObject.Properties.ForEach{ $_.Value.Model = $_.Value.Model -join "|" }
-    Write-Host "Loaded NVidia GPU architecture database." -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded NVidia GPU architecture database" -NoNewline; Write-Host " ✔  ($($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count) $(if ($Session.GPUArchitectureDbNvidia.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 $Session.BalancesCurrencies = @($Session.Balances.PSObject.Properties.Name.ForEach{ $Session.Balances.$_.Currency } | Sort-Object -Unique)
@@ -637,7 +637,7 @@ if ([System.Environment]::OSVersion.Version -lt [System.Version]"10.0.0.0") {
     (New-Object -ComObject Wscript.Shell).Popup("$($Session.Branding.ProductLabel) requires at least Windows 10.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
-Write-Host " ✔ " -ForegroundColor Green -NoNewline
+Write-Host " ✔  " -ForegroundColor Green -NoNewline
 
 Write-Host " Runtime modules" -NoNewline
 $Prerequisites = @(
@@ -655,7 +655,7 @@ if ($PrerequisitesMissing = $Prerequisites.Where{ -not (Test-Path -LiteralPath $
     (New-Object -ComObject Wscript.Shell).Popup("Prerequisites missing.`nPlease install the required runtime modules.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
-Write-Host " ✔ " -ForegroundColor Green -NoNewline
+Write-Host " ✔  " -ForegroundColor Green -NoNewline
 Remove-Variable Prerequisites, PrerequisitesMissing
 
 Write-Host " Windows Management Framework 5.1" -NoNewline
@@ -665,7 +665,7 @@ if (-not (Get-Command Get-PnpDevice)) {
     (New-Object -ComObject Wscript.Shell).Popup("Windows Management Framework 5.1 is missing.`nPlease install the required runtime modules.`n`n$($Session.Branding.ProductLabel) will shut down.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
-Write-Host " ✔" -ForegroundColor Green
+Write-Host " ✔  " -ForegroundColor Green
 
 # Check if a new version is available and run update if so configured
 Write-Host ""
@@ -717,17 +717,17 @@ Write-Host "~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
     if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { 
         Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
-        Write-Host " ✔ " -ForegroundColor Green -NoNewline
+        Write-Host " ✔  " -ForegroundColor Green -NoNewline
     }
     else { 
         if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
         Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
-        Write-Host " ✔ " -ForegroundColor Green -NoNewline
+        Write-Host " ✔  " -ForegroundColor Green -NoNewline
     }
 }
 catch { 
-    Write-Host " ✖ " -ForegroundColor Red -NoNewline
+    Write-Host " ✖  " -ForegroundColor Red -NoNewline
     $ErrorLoadingModules = $true
 }
 
@@ -735,37 +735,37 @@ Write-Host " ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
     if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { 
         Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
-        Write-Host " ✔ " -ForegroundColor Green -NoNewline
+        Write-Host " ✔  " -ForegroundColor Green -NoNewline
     }
     else { 
         if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
         Add-Type -Path ".\Includes\CPUID.cs" -OutputAssembly ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
-        Write-Host " ✔ " -ForegroundColor Green -NoNewline
+        Write-Host " ✔  " -ForegroundColor Green -NoNewline
     }
 }
 catch { 
-    Write-Host " ✖ " -ForegroundColor Red -NoNewline
+    Write-Host " ✖  " -ForegroundColor Red -NoNewline
     $ErrorLoadingModules = $true
 }
 
 Write-Host " NetSecurity" -NoNewline
 try { 
     Import-Module NetSecurity -ErrorAction Stop
-    Write-Host " ✔ " -ForegroundColor Green -NoNewline
+    Write-Host " ✔  " -ForegroundColor Green -NoNewline
 }
 catch { 
-    Write-Host " ✖ " -ForegroundColor Red -NoNewline
+    Write-Host " ✖  " -ForegroundColor Red -NoNewline
     $ErrorLoadingModules = $true
 }
 
 Write-Host " Defender" -NoNewline
 try { 
     Import-Module Defender -ErrorAction Stop -SkipEditionCheck
-    Write-Host " ✔ " -ForegroundColor Green -NoNewline
+    Write-Host " ✔" -ForegroundColor Green -NoNewline
 }
 catch { 
-    Write-Host " ✖ " -ForegroundColor Red -NoNewline
+    Write-Host " ✖" -ForegroundColor Red -NoNewline
     $ErrorLoadingModules = $true
 }
 if ($ErrorLoadingModules) { 
@@ -869,7 +869,7 @@ else {
     if (Test-Path -LiteralPath $Session.VertHashDatPath -PathType Leaf -ErrorAction Ignore) { 
         Remove-Item -Path $Session.VertHashDatPath -Force
         [Console]::SetCursorPosition($VertHashDatCursorPosition.X, $VertHashDatCursorPosition.Y)
-        Write-Host " ✖  (VertHash data file '$($Session.VertHashDatPath)' is corrupt -> file deleted. It will be re-downloaded if needed)" -ForegroundColor Red
+        Write-Host " ✖ (VertHash data file '$($Session.VertHashDatPath)' is corrupt -> file deleted. It will be re-downloaded if needed)" -ForegroundColor Red
     }
 }
 Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition -ErrorAction Ignore

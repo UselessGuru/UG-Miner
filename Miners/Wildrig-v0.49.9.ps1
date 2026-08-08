@@ -17,15 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.18
-Version date:   2026/08/05
+Version:        6.8.19
+Version date:   2026/08/08
 #>
 
-# improved pearlhash for NVIDIA RTX 3000, 4000 series and A100/CMP170HX(unlocked)
+# slight power efficiency bump for pearlhash on NVIDIA RTX 3000, 4000 and 5000 series
+# support of older NVIDIA drivers should be fixed
+# fixed previously supported AMD gpu's for pearlhash(hashrate drop is expected)
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.49.6/wildrig-multi-windows-0.49.6.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.49.9/wildrig-multi-windows-0.49.9.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"

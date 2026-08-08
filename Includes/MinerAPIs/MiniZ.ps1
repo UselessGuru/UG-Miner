@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.8.18
-Version date:   2026/08/05
+Version:        6.8.19
+Version date:   2026/08/08
 #>
 
 [NoRunspaceAffinity()]
