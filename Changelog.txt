@@ -1,4 +1,4 @@
-Changelog UG-Miner 6.8.19 2026/08/??
+Changelog UG-Miner 6.8.19 2026/08/08
 ====================================
 
 Miner updates:
