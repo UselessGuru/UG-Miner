@@ -321,7 +321,7 @@ UG-Miner works best with the latest PWSH version 7.6.4.
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
-then run install_all.bat file.
+then run install_all.bat file (local computer administrator privileges required).
 
 Virtual memory settings  
 When running multiple cards its recommended to increase Virtual Memory. 16GB is optimal.
