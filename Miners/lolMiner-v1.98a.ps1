@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
@@ -148,10 +148,10 @@ if ($Algorithms) {
         Remove-Variable MaxDualImpactValue, MaxDualImpactValues -ErrorAction Ignore
     }
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
-        $Model = $_.Model
-        $Type = $_.Type
-        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+    ($Devices | Group-Object -Property Type, Model).ForEach{ 
+        $MinerDevices = $_.Group
+        $Model = $MinerDevices[0].Model
+        $Type = $MinerDevices[0].Type
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
@@ -175,11 +175,11 @@ if ($Algorithms) {
 
                             if ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
                                 if ($CoinPers) { $Arguments = "$Arguments $CoinPers" }
-                                $Arguments = "$Arguments --pool $($Pool0.Host):$(($Pool0.PoolPorts | Select-Object -Last 1))"
+                                $Arguments = "$Arguments --pool $($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
                                 $Arguments = "$Arguments --user $($Pool0.User)$(if ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass $($Pool0.Pass)"
                                 $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments --tls on" } else { "$Arguments --tls off" }
                                 switch ($Pool0.Protocol) { 
-                                    "ethproxy"     { $Arguments = "$Arguments --worker $($Pool0.WorkerName)$ --ethstratum ETHPROXY"; break }
+                                    "ethproxy"     { $Arguments = "$Arguments --worker $($Pool0.WorkerName) --ethstratum ETHPROXY"; break }
                                     "ethstratum1"  { $Arguments = "$Arguments --ethstratum ETHV1"; break }
                                     "ethstratum2"  { $Arguments = "$Arguments --ethstratum ETHV1"; break }
                                     "ethstratumnh" { $Arguments = "$Arguments --ethstratum ETHV1" }
@@ -204,7 +204,7 @@ if ($Algorithms) {
                                     Type        = $Type
                                     URI         = $URI
                                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                                    Workers     = @(($Pool0, $Pool1).Where{ $_ }.ForEach{ @{ Pool = $_ } })
+                                    Workers     = @(($Pool0, $Pool1).ForEach{ if ($_) { @{ Pool = $_ } } })
                                 }
                             }
                         }

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 # (XEL) Minor performance improvements on 50xx cards
@@ -83,9 +83,9 @@ $Algorithms = $Algorithms.Where{ -not $_.Algorithms[1] -or $MinerPools[1][$_.Alg
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach{ 
-        $Model = $_.Model
-        $MinerDevices = $Devices.Where{ $_.Model -eq $Model }
+    ($Devices | Group-Object -Property Model).ForEach{ 
+        $MinerDevices = $_.Group
+        $Model = $MinerDevices[0].Model
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
         $Algorithms.ForEach{ 

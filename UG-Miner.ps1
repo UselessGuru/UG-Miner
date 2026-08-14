@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 using module .\Includes\Include.psm1
@@ -40,7 +40,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$BackupOnAutoUpdate = $true, # If true a backup copy will be saved as '[UG-Miner directory]\AutoUpdate\Backup_v[version]_[date_time].zip' when updateing
     [Parameter (Mandatory = $false)]
-    [Double]$BadShareRatioThreshold = 0.05, # Allowed ratio of bad shares (total / bad) as reported by the miner. If the ratio exceeds the configured threshold then the miner will get marked as failed. Allowed values: 0.00 - 1.00. 0 disables this check
+    [Double]$BadShareRatioThreshold = 0.05, # Allowed ratio of bad shares (total / bad) as reported by the miner. If the ratio exceeds the configured threshold then the miner will get marked as failed. Supported values: 0.00 - 1.00. 0 disables this check
     [Parameter (Mandatory = $false)]
     [Boolean]$BalancesKeepAlive = $true, # If true UG-Miner will force mining at a pool to protect your earnings (some pools auto-purge the wallet after longer periods of inactivity, see '\Data\PoolData.Json' BalancesKeepAlive properties)
     [Parameter (Mandatory = $false)]
@@ -86,13 +86,13 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$DryRun = $false, # If true UG-Miner will do all the benchmarks, but will not mine
     [Parameter (Mandatory = $false)]
-    [Double]$EarningsAdjustmentFactor = 1, # Default adjustment factor for prices reported by ALL pools (unless there is a per pool value configuration definined). Prices will be multiplied with this. Allowed values: 0.0 - 10.0
+    [Double]$EarningsAdjustmentFactor = 1, # Default adjustment factor for prices reported by ALL pools (unless there is a per pool value configuration definined). Prices will be multiplied with this. Supported values: 0.0 - 10.0
     [Parameter (Mandatory = $false)]
     [String[]]$ExcludeDeviceName = @(), # List of disabled devices, e.g. @("CPU#00", "GPU#02"); by default all devices are enabled
     [Parameter (Mandatory = $false)]
     [String[]]$ExcludeMinerName = @(), # List of miners to be excluded; Either specify miner short name, e.g. "PhoenixMiner" (without '-v...') to exclude any version of the miner, or use the full miner name incl. version information
     [Parameter (Mandatory = $false)]
-    [String[]]$ExtraCurrencies = @("ETC", "ETH", "mBTC"), # Extra currencies used in balances summary, enter 'real-world' or crypto currencies, mBTC (milli BTC) is also allowed
+    [String[]]$ExtraCurrencies = @("ETC", "ETH", "mBTC"), # Extra currencies used in balances summary, enter 'real-world' or crypto currencies, mBTC (milli BTC) is also supported
     [Parameter (Mandatory = $false)]
     [String]$FIATcurrency = (Get-Culture).NumberFormat.CurrencySymbol, # Default main 'real-money' currency, i.e. GBP, USD, AUD, NZD etc. Do not use crypto currencies
     [Parameter (Mandatory = $false)]
@@ -101,8 +101,6 @@ param(
     [Switch]$IdleDetection = $false, # If true UG-Miner will start mining only if system is idle for $IdleSec seconds
     [Parameter (Mandatory = $false)]
     [UInt16]$IdleSec = 120, # Time (in seconds) the system must be idle before mining starts
-    [Parameter (Mandatory = $false)]
-    [Switch]$Ignore0HashrateSample = $false, # If true UG-Miner will ignore 0 hashrate samples when setting miner status to 'warming up'
     [Parameter (Mandatory = $false)]
     [Switch]$IgnoreMinerFee = $false, # If true UG-Miner will ignore miner fee for earnings & profit calculation
     [Parameter (Mandatory = $false)]
@@ -124,7 +122,7 @@ param(
     [Parameter (Mandatory = $false)]
     [String]$LogViewerExe = ".\Utils\SnakeTail.exe", # Path to optional external log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net], leave empty to disable
     [Parameter (Mandatory = $false)]
-    [Double]$MinAccuracy = 0.5, # Use only pools with price accuracy greater than the configured value. Allowed values: 0.0 - 1.0 (0% - 100%)
+    [Double]$MinAccuracy = 0.5, # Use only pools with price accuracy greater than the configured value. Supported values: 0.0 - 1.0 (0% - 100%)
     [Parameter (Mandatory = $false)]
     [UInt16]$MinCycle = 1, # Minimum number of cycles a miner must mine the same available algorithm@pool continously before switching is allowed (e.g. 3 would force a miner to stick mining algorithm@pool for min. 3 cycles before switching to another algorithm or pool)
     [Parameter (Mandatory = $false)]
@@ -322,7 +320,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.19"
+    Version      = [System.Version]"6.8.20"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -838,15 +836,15 @@ $Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.ForEach{ $_.St
 $Session.DriverVersion = [PSCustomObject]@{ }
 if ($Session.Devices.CUDAversion) { $Session.DriverVersion | Add-Member "CUDA" ($Session.Devices.CUDAversion | Sort-Object -Top 1) }
 $Session.DriverVersion | Add-Member "CIM" ([PSCustomObject]@{ })
-$Session.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.Where{ $_.Type -eq "CPU" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "INTEL" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }.CIM.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.CIM | Add-Member "AMD" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }.CIM.DriverVersion | Select-Object -First 1) -split " ")[0])
+$Session.DriverVersion.CIM | Add-Member "CPU" ([System.Version](($Session.Devices.Where{ $_.Type -eq "CPU" }.CIM.DriverVersion | Select-Object -First 1) -split " ")[0])
+$Session.DriverVersion.CIM | Add-Member "INTEL" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }.CIM.DriverVersion | Select-Object -First 1) -split " ")[0])
+$Session.DriverVersion.CIM | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }.CIM.DriverVersion | Select-Object -First 1) -split " ")[0])
 $Session.DriverVersion | Add-Member "OpenCL" ([PSCustomObject]@{ })
-$Session.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.Where{ $_.Type -eq "CPU" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "INTEL" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
-$Session.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }.OpenCL.DriverVersion | Select-Object -First 1) -split " " | Select-Object -First 1))
+$Session.DriverVersion.OpenCL | Add-Member "AMD" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "AMD" }.OpenCL.DriverVersion | Select-Object -First 1) -split " ")[0])
+$Session.DriverVersion.OpenCL | Add-Member "CPU" ([System.Version](($Session.Devices.Where{ $_.Type -eq "CPU" }.OpenCL.DriverVersion | Select-Object -First 1) -split " ")[0])
+$Session.DriverVersion.OpenCL | Add-Member "INTEL" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "INTEL" }.OpenCL.DriverVersion | Select-Object -First 1) -split " ")[0])
+$Session.DriverVersion.OpenCL | Add-Member "NVIDIA" ([System.Version](($Session.Devices.Where{ $_.Type -eq "GPU" -and $_.Vendor -eq "NVIDIA" }.OpenCL.DriverVersion | Select-Object -First 1) -split " ")[0])
 
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host " ✔  ($($Session.Devices.count) device$(if ($Session.Devices.count -ne 1) { "s" }) found" -ForegroundColor Green -NoNewline

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 [NoRunspaceAffinity()]
@@ -88,7 +88,7 @@ class Fireice : Miner {
                     }
                 }
                 else { 
-                    Write-Message -Level Error "Error running temporary miner - cannot create threads config file '$($this.Info)' ['$($Error | Select-Object -First 1)']."
+                    Write-Message -Level Error "Error running temporary miner - cannot create threads config file '$($this.Info)' ['$($Error[0])']."
                     $Error.Remove($Error[$Error.Count - 1])
                     return
                 }
@@ -107,7 +107,7 @@ class Fireice : Miner {
             }
         }
         catch { 
-            Write-Message -Level Error "Error creating miner config files for '$($this.Info)' failed ['$($Error | Select-Object -First 1)']."
+            Write-Message -Level Error "Error creating miner config files for '$($this.Info)' failed ['$($Error[0])']."
             $Error.Remove($Error[$Error.Count - 1])
             return
         }

@@ -17,17 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
-# slight power efficiency bump for pearlhash on NVIDIA RTX 3000, 4000 and 5000 series
-# support of older NVIDIA drivers should be fixed
-# fixed previously supported AMD gpu's for pearlhash(hashrate drop is expected)
+# implemented support hardfork for Pearl on pearlhash.xyz pool
+# tuned pearlhash kernels for NVIDIA RTX 3000/4000 to be efficient instead of max hashrate
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.49.9/wildrig-multi-windows-0.49.9.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.50.1/wildrig-multi-windows-0.50.1.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"
@@ -217,10 +216,10 @@ $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
-        $Model = $_.Model
-        $Type = $_.Type
-        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+    ($Devices | Group-Object -Property Type, Model).ForEach{ 
+        $MinerDevices = $_.Group
+        $Model = $MinerDevices[0].Model
+        $Type = $MinerDevices[0].Type
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 

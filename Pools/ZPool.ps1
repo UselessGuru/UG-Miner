@@ -42,12 +42,7 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 if ($PriceField) { 
 
     try { 
-        if ($Session.Brains.$Name) { 
-            $Request = $Session.BrainData.$Name
-        }
-        else { 
-            $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
-        }
+        $Request = if ($Session.Brains.$Name) { $Session.BrainData.$Name } else { [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json }
     }
     catch { return }
 
@@ -61,8 +56,7 @@ if ($PriceField) {
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
 
         if (-not $Request.$Algorithm.conversion_supported) { 
-            if (-not $Currency) { 
-                $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
+            if (-not $Currency) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
             elseif (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
         }
         elseif (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }

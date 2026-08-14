@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
@@ -40,7 +40,7 @@ if ($Algorithms) {
     $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
 
     $Algorithms.ForEach{ 
-        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices.Model | Select-Object -Unique)-$($_.Algorithm)"
+        $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices[0].Model)-$($_.Algorithm)"
 
         $Fee = if ($Session.Config.DisableMinerFee) { 0 } else { 5 }
 

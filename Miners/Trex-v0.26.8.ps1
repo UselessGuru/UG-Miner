@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -57,9 +57,9 @@ $Algorithms = $Algorithms.Where{ -not $_.Algorithms[1] -or $MinerPools[1][$_.Alg
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Model -Unique).ForEach{ 
-        $Model = $_.Model
-        $MinerDevices = $Devices.Where{ $_.Model -eq $Model }
+    ($Devices | Group-Object -Property Model).ForEach{ 
+        $MinerDevices = $_.Group
+        $Model = $MinerDevices[0].Model
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
         $Algorithms.ForEach{ 
@@ -120,7 +120,7 @@ if ($Algorithms) {
                             Type        = "NVIDIA"
                             URI         = $URI
                             WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
-                            Workers     = @(($Pool0, $Pool1).Where{ $_ }.ForEach{ @{ Pool = $_ } })
+                            Workers     = @(($Pool0, $Pool1).ForEach{ if ($_) { @{ Pool = $_ } } })
                         }
                     }
                 }

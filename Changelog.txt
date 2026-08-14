@@ -1,3 +1,19 @@
+Changelog UG-Miner 6.8.20 2026/08/14
+====================================
+
+Changes:
+- Removed configuration item 'Ignore0HashrateSample'
+
+Improvements:
+- Core: Minor performance improvements
+- Core: Remove obsolete code
+- Miners: Minor performance improvements
+
+Miner updates:
+- SRBMinerMulti-v3.5.3
+- Wildrig-v0.50.1
+
+
 Changelog UG-Miner 6.8.19 2026/08/08
 ====================================
 

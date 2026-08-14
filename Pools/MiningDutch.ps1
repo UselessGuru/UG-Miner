@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 param(
@@ -43,12 +43,7 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 if ($DivisorMultiplier -and $PriceField) { 
 
     try { 
-        if ($Session.Brains.$Name) { 
-            $Request = $Session.BrainData.$Name
-        }
-        else { 
-            $Request = [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json
-        }
+        $Request = if ($Session.Brains.$Name) { $Session.BrainData.$Name } else { [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json }
     }
     catch { return }
 

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.19
-Version date:   2026/08/08
+Version:        6.8.20
+Version date:   2026/08/14
 #>
 
 return # Bad shares
@@ -43,10 +43,10 @@ $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    ($Devices | Sort-Object -Property Type, Model -Unique).ForEach{ 
-        $Model = $_.Model
-        $Type = $_.Type
-        $MinerDevices = $Devices.Where{ $_.Type -eq $Type -and $_.Model -eq $Model }
+    ($Devices | Group-Object -Property Type, Model).ForEach{ 
+        $MinerDevices = $_.Group
+        $Model = $MinerDevices[0].Model
+        $Type = $MinerDevices[0].Type
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
