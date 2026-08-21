@@ -317,7 +317,7 @@ UI style automatically switches to full during benchmarking or when measuring po
 Windows 10.x and PowerShell Version 7.4.x or higher is required.
 
 UG-Miner works best with the latest PWSH version 7.6.5.  
-[Download ihe installer for version 7.6.5](https://github.com/PowerShell/PowerShell/releases/download/v7.6.5/PowerShell-7.6.5-win-x64.msi)  
+[Download the installer for version 7.6.5](https://github.com/PowerShell/PowerShell/releases/download/v7.6.5/PowerShell-7.6.5-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
