@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.21 / Updated 2026/08/21
+Version 6.8.22 / Updated 2026/08/21
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -107,7 +107,7 @@ If more than one algorithm is given, then the algorithms must be separated with 
 If '+' is used, then only the explicitly enabled algorithms are used  
 If '-' is used, then all algorithms except the disabled ones are used
 
-Do not combine '+' and '-' concurrently.
+You must not combine '+' and '-' concurrently.
 
 This parameter is not case sensitive. 
 
@@ -137,7 +137,7 @@ If more than one currency is given, then the currencies must be separated with c
 If '+' is used, then only the explicitly enabled currencies are used  
 If '-' is used, then all currencies except the disabled ones are used
 
-Do not combine '+' and '-' concurrently.
+You must not combine '+' and '-' concurrently.
 
 This parameter is not case sensitive.
 
@@ -316,8 +316,8 @@ UI style automatically switches to full during benchmarking or when measuring po
 
 Windows 10.x and PowerShell Version 7.4.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.6.4.  
-[Download Installer for version 7.6.4](https://github.com/PowerShell/PowerShell/releases/download/v7.6.4/PowerShell-7.6.4-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.6.5.  
+[Download Installer for version 7.6.5](https://github.com/PowerShell/PowerShell/releases/download/v7.6.5/PowerShell-7.6.5-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
