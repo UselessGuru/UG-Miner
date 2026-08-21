@@ -1,4 +1,4 @@
-Changelog UG-Miner 6.8.21 2026/08/??
+Changelog UG-Miner 6.8.21 2026/08/21
 ====================================
 
 Improvements:
