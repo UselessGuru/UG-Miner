@@ -6,6 +6,7 @@
   "PoolName": { 
     // Algorithm: '+[Algorithm]' to enable algorithm; '-[Algorithm]' to disable algorithm.
     // If '+' is used, then only the explicitly enabled algorithms are used; if '-' is used, then all algorithms are used except the disabled ones
+    // You must not combine '+' and '-' concurrently.
     "Algorithm": [
       "-Equihash1445",
       "-Ethash(7GiB)",
@@ -13,9 +14,10 @@
     ],
     // Currency: '+[Currency]' to enable currency; '-[Currency]' to disable currency.
     // If '+' is used, then only the explicitly enabled currencies are used; if '-' is used, then all currencies are used except the disabled ones
+    // You must not combine '+' and '-' concurrently.
     "Currency": [
-      "-GRLC",
-      "-DYN"
+      "+GRLC",
+      "+DYN"
     ],
     // EarningsAdjustmentFactor: Default factor with which UG-Miner multiplies the prices reported by the pool. Value between 0.01 & 10.00
     "EarningsAdjustmentFactor": 0.9,
