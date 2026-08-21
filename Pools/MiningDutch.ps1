@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 param(
@@ -61,17 +61,17 @@ if ($DivisorMultiplier -and $PriceField) {
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
-        if (-not $PoolConfig.UserName) { $Reasons.Add("No username") | Out-Null }
+        if (-not $PoolConfig.UserName) { [Void]$Reasons.Add("No username") }
         # Sometimes pool returns $null hashrate for all algorithms
-        if (-not $Request.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        # if ($Request.$Algorithm.coins -gt 1 -and [Double]$Request.$Algorithm.$PriceField -eq 0) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
+        if (-not $Request.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+        # if ($Request.$Algorithm.coins -gt 1 -and [Double]$Request.$Algorithm.$PriceField -eq 0) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
  
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
         $Value = $Request.$Algorithm.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
         if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+            [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
         }
         else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false

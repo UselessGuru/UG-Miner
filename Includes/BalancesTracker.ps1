@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 using module .\Include.psm1
@@ -32,7 +32,7 @@ do {
     $Earnings = @()
 
     # Get pools last earnings
-    $Session.PoolsLastEarnings = if (Test-Path -LiteralPath ".\Data\PoolsLastEarnings.json" -PathType Leaf) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
+    $Session.PoolsLastEarnings = if ([System.IO.File]::Exists(".\Data\PoolsLastEarnings.json")) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
     if (-not $Session.PoolsLastEarnings.PSObject.Properties.Name) { $Session.PoolsLastEarnings = @{ } }
 
     # Read existing balance tracker data, use data from last file
@@ -57,8 +57,8 @@ do {
 
     if ($Now.Date -ne [DateTime]::Today) { 
         # Keep a copy on start & at date change
-        if (Test-Path -LiteralPath ".\Data\BalancesTrackerData.json" -PathType Leaf) { Copy-Item -Path ".\Data\BalancesTrackerData.json" -Destination ".\Data\BalancesTrackerData_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").json" -ErrorAction Ignore }
-        if (Test-Path -LiteralPath ".\Data\DailyEarnings.csv" -PathType Leaf) { Copy-Item -Path ".\Data\DailyEarnings.csv" -Destination ".\Data\DailyEarnings_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").csv" -ErrorAction Ignore }
+        if ([System.IO.File]::Exists(".\Data\BalancesTrackerData.json")) { Copy-Item -Path ".\Data\BalancesTrackerData.json" -Destination ".\Data\BalancesTrackerData_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").json" -ErrorAction Ignore }
+        if ([System.IO.File]::Exists(".\Data\DailyEarnings.csv")) { Copy-Item -Path ".\Data\DailyEarnings.csv" -Destination ".\Data\DailyEarnings_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").csv" -ErrorAction Ignore }
         # Keep only the last 3 logs
         Get-ChildItem ".\Data\BalancesTrackerData_*.json" | Sort-Object | Select-Object -SkipLast 3 | Remove-Item -Force -Recurse -ErrorAction Ignore
         Get-ChildItem ".\Data\DailyEarnings_*.csv" | Sort-Object | Select-Object -SkipLast 3 | Remove-Item -Force -Recurse -ErrorAction Ignore

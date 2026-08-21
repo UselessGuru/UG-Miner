@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 using module .\Includes\Include.psm1
@@ -282,7 +282,7 @@ $Global:VerbosePreference     = "SilentlyContinue"
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$RecommendedPWSHversion = [Version]"7.6.4"
+$RecommendedPWSHversion = [Version]"7.6.5"
 
 # Close useless empty cmd window that comes up when starting from bat file
 if ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -320,7 +320,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.20"
+    Version      = [System.Version]"6.8.21"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -379,12 +379,12 @@ $Session.AllCommandLineParameters = [Ordered]@{ } # as case insensitive hash tab
 Write-Host ""
 Write-Message -Level Verbose "Preparing environment and loading data files..."
 # Create directories
-("Cache", "Config", "Logs", "Stats").Where{ -not (Test-Path -LiteralPath ".\$_" -PathType Container) }.ForEach{ $null = (New-Item -Path . -Name "$_" -ItemType Directory) }
+("Cache", "Config", "Logs", "Stats").ForEach{ [Void][System.IO.Directory]::CreateDirectory([System.IO.Path]::Combine($PWD.Path, $_)) }
 
 # Check if all required files are present
 ("Balances", "Brains", "Data", "Miners", "Pools", "Web").Where{ -not (Get-ChildItem -LiteralPath $PWD\$_) }.ForEach{ 
     Write-Error "Terminating error - cannot continue! No files in folder '\$_'. Please restore the folder from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("No files in folder '\$_'.`nPlease restore the folder from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("No files in folder '\$_'.`nPlease restore the folder from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -394,7 +394,7 @@ Write-Message -Level Verbose "Preparing environment and loading data files..."
 try { $Session.DonationData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.DonationData) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -414,7 +414,7 @@ else {
 try { $Session.Algorithms = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.Algorithms.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -425,7 +425,7 @@ Write-Host "Loaded algorithm database" -NoNewline; Write-Host " ✔  ($($Session
 try { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.CoinNames.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -436,7 +436,7 @@ Write-Host "Loaded coin names database" -NoNewline; Write-Host " ✔  ($($Sessio
 try { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.CurrencyAlgorithm.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -447,7 +447,7 @@ Write-Host "Loaded currency database" -NoNewline; Write-Host " ✔  ($($Session.
 try { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.EquihashCoinPers) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
-    $null = $WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void]$WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -462,7 +462,7 @@ try {
 catch { }
 if (-not $Session.Regions.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -473,7 +473,7 @@ Write-Host "Loaded regions database" -NoNewline; Write-Host " ✔  ($($Session.R
 try { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.FIATcurrencies) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -490,7 +490,7 @@ try {
 catch { }
 if (-not $Session.UnprofitableAlgorithms.Count) { 
     Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -501,7 +501,7 @@ Write-Host "Loaded unprofitable algorithms database" -NoNewline; Write-Host " �
 try { $Session.DAGdata = [System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -ErrorAction Ignore | Get-SortedObject } catch { }
 if (-not $Session.DAGdata.Currency) { 
     Write-Error "Error loading DAG database. File '.\Data\DAGdata.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -562,7 +562,7 @@ else {
 try { $Session.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore } catch { }
 if (-not $Session.GPUArchitectureDbAMD) { 
     Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -576,7 +576,7 @@ else {
 try { $Session.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore } catch { }
 if (-not $Session.GPUArchitectureDbNvidia) { 
     Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
-    $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+    [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
     Write-Message -Level Error "$($Session.Branding.ProductLabel) will shut down."
     Start-Sleep -Seconds 5
     exit
@@ -594,7 +594,7 @@ Write-Host " ✔" -ForegroundColor Green
 [Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
 
 Write-Host ""
-if (Test-Path -LiteralPath $Session.ConfigFile) { 
+if ([System.IO.File]::Exists($Session.ConfigFile)) { 
     Write-Message -Level Info "Using configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))'."
 }
 else { 
@@ -643,7 +643,7 @@ $Prerequisites = @(
     "$env:SystemRoot\System32\VCRUNTIME140.dll",
     "$env:SystemRoot\System32\VCRUNTIME140_1.dll"
 )
-if ($PrerequisitesMissing = $Prerequisites.Where{ -not (Test-Path -LiteralPath $_ -PathType Leaf) }) { 
+if ($PrerequisitesMissing = $Prerequisites.Where{ -not [System.IO.File]::Exists($_) }) { 
     Write-Host " ✖ " -ForegroundColor Red
     $PrerequisitesMissing.ForEach{ Write-Message -Level Warn "'$_' is missing." }
     Write-Message -Level Error "Please install the required runtime modules. Download and extract"
@@ -702,23 +702,23 @@ if ($Session.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpCompu
 }
 
 $Session.VertHashDatPath = ".\Cache\VertHash.dat"
-if (Test-Path -LiteralPath $Session.VertHashDatPath -PathType Leaf) { 
+if ([System.IO.File]::Exists($Session.VertHashDatPath)) { 
     Write-Message -Level Verbose "Verifying integrity of VertHash data file '$($Session.VertHashDatPath)'..."
     $VertHashDatCursorPosition = $Session.CursorPosition
 }
 # Start-ThreadJob needs to be run in any case to set number of threads (# of devices + downloader)
-$VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Session.MainPath)'")) -ScriptBlock { if (Test-Path -LiteralPath ".\Cache\VertHash.dat" -PathType Leaf) { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
+$VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Create("Set-Location '$($Session.MainPath)'")) -ScriptBlock { if ([System.IO.File]::Exists(".\Cache\VertHash.dat")) { (Get-FileHash -Path ".\Cache\VertHash.dat").Hash -eq "A55531E843CD56B010114AAF6325B0D529ECF88F8AD47639B6EDEDAFD721AA48" } } -StreamingHost $null -ThrottleLimit ((Get-CimInstance CIM_VideoController).Count + 1)
 
 Write-Message -Level Verbose "Importing modules... "
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host "~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
-    if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { 
+    if ([System.IO.File]::Exists(".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll")) { 
         Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Write-Host " ✔  " -ForegroundColor Green -NoNewline
     }
     else { 
-        if (Test-Path -LiteralPath ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
+        if ([System.IO.File]::Exists(".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll")) { Remove-Item ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
         Add-Type -Path ".\Includes\OpenCL\*.cs" -OutputAssembly ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Write-Host " ✔  " -ForegroundColor Green -NoNewline
@@ -731,12 +731,12 @@ catch {
 
 Write-Host " ~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
 try { 
-    if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { 
+    if ([System.IO.File]::Exists(".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll")) { 
         Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Write-Host " ✔  " -ForegroundColor Green -NoNewline
     }
     else { 
-        if (Test-Path -LiteralPath ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore) { Remove-Item ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
+        if ([System.IO.File]::Exists(".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll")) { Remove-Item ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -Force }
         Add-Type -Path ".\Includes\CPUID.cs" -OutputAssembly ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Add-Type -Path ".\Cache\~CPUID_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore
         Write-Host " ✔  " -ForegroundColor Green -NoNewline
@@ -852,11 +852,11 @@ if ($Session.Devices.Where{ $_.State -eq [DeviceState]::Unsupported }) { Write-H
 Write-Host ")" -ForegroundColor Green
 
 # Driver version changed
-if ((Test-Path -LiteralPath ".\Cache\DriverVersion.json" -PathType Leaf) -and ([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Session.DriverVersion | ConvertTo-Json -Compress)) { Write-Message -Level Warn "Graphics card driver version data has changed. It is recommended to re-benchmark all miners." }
+if (([System.IO.File]::Exists(".\Cache\DriverVersion.json")) -and ([System.IO.File]::ReadAllLines("$PWD\Cache\DriverVersion.json") | ConvertFrom-Json | ConvertTo-Json -Compress) -ne ($Session.DriverVersion | ConvertTo-Json -Compress)) { Write-Message -Level Warn "Graphics card driver version data has changed. It is recommended to re-benchmark all miners." }
 $Session.DriverVersion | ConvertTo-Json | Out-File -LiteralPath ".\Cache\DriverVersion.json" -Force
 
 # Rename existing switching log
-if (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Rename-Item -NewName { "SwitchingLog_$($_.LastWriteTime.toString("yyyy-MM-dd_HH-mm-ss")).csv" } }
+if ([System.IO.File]::Exists(".\Logs\SwitchingLog.csv")) { Get-ChildItem -Path ".\Logs\SwitchingLog.csv" -File | Rename-Item -NewName { "SwitchingLog_$($_.LastWriteTime.toString("yyyy-MM-dd_HH-mm-ss")).csv" } }
 
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 if ($VertHashDatCheckJob | Wait-Job -Timeout 60 | Receive-Job -Wait -AutoRemoveJob) { 
@@ -864,8 +864,8 @@ if ($VertHashDatCheckJob | Wait-Job -Timeout 60 | Receive-Job -Wait -AutoRemoveJ
     Write-Host " ✔  (checksum ok)" -ForegroundColor Green
 }
 else { 
-    if (Test-Path -LiteralPath $Session.VertHashDatPath -PathType Leaf -ErrorAction Ignore) { 
-        Remove-Item -Path $Session.VertHashDatPath -Force
+    if ([System.IO.File]::Exists($Session.VertHashDatPath)) { 
+        [System.IO.File]::Delete($Session.VertHashDatPath)
         [Console]::SetCursorPosition($VertHashDatCursorPosition.X, $VertHashDatCursorPosition.Y)
         Write-Host " ✖ (VertHash data file '$($Session.VertHashDatPath)' is corrupt -> file deleted. It will be re-downloaded if needed)" -ForegroundColor Red
     }

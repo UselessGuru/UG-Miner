@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 [NoRunspaceAffinity()]
@@ -30,7 +30,7 @@ class NanoMiner : Miner {
         try { 
             $ConfigFile = "$(Split-Path $this.Path)\$($Parameters.ConfigFile.FileName)"
             # Write config files. Do not overwrite existing files to preserve optional manual customization
-            if (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { 
+            if (-not [System.IO.File]::Exists($ConfigFile)) { 
                 $Parameters.ConfigFile.Content | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore
             }
         }

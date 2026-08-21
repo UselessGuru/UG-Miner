@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 [NoRunspaceAffinity()]

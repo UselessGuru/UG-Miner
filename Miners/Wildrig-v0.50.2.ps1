@@ -17,12 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
-# implemented support hardfork for Pearl on pearlhash.xyz pool
-# tuned pearlhash kernels for NVIDIA RTX 3000/4000 to be efficient instead of max hashrate
+# improved pearlhash for NVIDIA RTX 2000, 3000, 4000 and 5000 series
+# AMD support for pearlhash should be fixed
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 

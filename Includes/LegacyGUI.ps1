@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -55,7 +55,7 @@ function Disable-X {
     $hMenu = [Win32.NativeMethods]::GetSystemMenu($hwnd, 0)
 
     # Disable X Button
-    $null = [Win32.NativeMethods]::EnableMenuItem($hMenu, $SC_CLOSE, $MF_DISABLED)
+    [Void][Win32.NativeMethods]::EnableMenuItem($hMenu, $SC_CLOSE, $MF_DISABLED)
 }
 
 # For High DPI, Call SetProcessDPIAware(need P/Invoke) and EnableVisualStyles
@@ -168,7 +168,7 @@ function CheckBoxSwitchingLog_Click {
     $LegacyGUIelements.ContextMenuStripItem7.Visible = $true
 
     $SwitchingLogDisplayTypes = $LegacyGUIelements.SwitchingLogPageControls.Where{ $_.Checked }.Tag
-    if (Test-Path -LiteralPath ".\Logs\SwitchingLog.csv" -PathType Leaf) { 
+    if ([System.IO.File]::Exists(".\Logs\SwitchingLog.csv")) { 
         $LegacyGUIelements.SwitchingLogLabel.Text = "Switching log updated $((Get-ChildItem -Path ".\Logs\SwitchingLog.csv").LastWriteTime.ToString())"
         $LegacyGUIelements.SwitchingLogDGV.DataSource = (([System.IO.File]::ReadAllLines(".\Logs\SwitchingLog.csv") | ConvertFrom-Csv).Where{ $SwitchingLogDisplayTypes -contains $_.Type } | Select-Object -Last 1000).ForEach{ $_.Datetime = (Get-Date $_.DateTime); $_ } | Sort-Object -Property DateTime -Descending | Select-Object -Property "DateTime", "Action", "Name", "Pools", "Algorithms", "Accounts", "Cycles", "Duration", "Devicenames", "Type", "CommandLine" | Out-DataTable
         if (-not $LegacyGUIelements.ColumnWidthChanged -and $LegacyGUIelements.SwitchingLogDGV.Columns) { 
@@ -432,7 +432,7 @@ function Update-TabControl {
                             $I = 0
                             $Datasource.Earnings.$Pool.ForEach{ 
                                 $_ *= $Session.Rates.BTC.($Session.Config.FIATcurrency)
-                                $null = $LegacyGUIelements.EarningsChart.Series[$Pool].Points.addxy(0, $_)
+                                [Void]$LegacyGUIelements.EarningsChart.Series[$Pool].Points.addxy(0, $_)
                                 $Daysum[$I] += $_
                                 if ($_) { $LegacyGUIelements.TooltipText[$I] = "$($LegacyGUIelements.TooltipText[$I])`r$($Pool): {0:N$($Session.Config.DecimalsMax)} $($Session.Config.FIATcurrency)" -f $_ }
                                 $I ++
@@ -1185,7 +1185,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         # Update miner
                         foreach ($Miner in $Session.Miners.Where{ $_.Name -eq $MinerName -and $Session.WatchdogTimers.Where{ $_.MinerName -eq $MinerName } }) { 
                             $Data += $Miner.Name
-                            $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ $null = $Miner.Reasons.Remove($_) }
+                            $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Miner.Reasons.Remove($_) }
                             if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
                         }
 
@@ -1207,7 +1207,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                 "Copy miner command line to clipboard" { 
                     $this.SourceControl.SelectedRows.ForEach{ 
                         Set-Clipboard $_.Cells[10].Value
-                        $null = (New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (64 + 4096))
+                        [Void](New-Object -ComObject Wscript.Shell).Popup("Miner command line copied to clipboard.", 0, "$($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (64 + 4096))
                     }
                 }
             }
@@ -1247,7 +1247,7 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
                         # Update pool
                         foreach ($Pool in ($Session.Pools.Where{ $_.Name -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm -and $Session.WatchdogTimers.Where{ $_.PoolName -eq $PoolName -and $_.Algorithm -eq $PoolAlgorithm } })) { 
                             $Data += "$($Pool.Key) ($($Pool.Region))"
-                            $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ $null = $Pool.Reasons.Remove($_) }
+                            $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ [Void]$Pool.Reasons.Remove($_) }
                             if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
                         }
 
@@ -1321,7 +1321,7 @@ $LegacyGUIelements.ActiveMinersDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[0].Value)                            ")
+            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[0].Value)                            ")
             Remove-Variable RowIndex
         }
     }
@@ -1497,7 +1497,7 @@ $LegacyGUIelements.MinersDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[2].Value)")
+            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[2].Value)")
             Remove-Variable RowIndex
         }
     }
@@ -1614,7 +1614,7 @@ $LegacyGUIelements.PoolsDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Pools.Where{ $_.Key -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, PoolPorts, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Pool: $($this.Rows[$_.RowIndex].Cells[0].Value)")
+            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Pools.Where{ $_.Key -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, PoolPorts, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Pool: $($this.Rows[$_.RowIndex].Cells[0].Value)")
             Remove-Variable RowIndex
         }
     }
@@ -1782,7 +1782,7 @@ $LegacyGUIelements.SwitchingLogDGV.Name = "SwitchingLogDGV"
 $LegacyGUIelements.SwitchingLogDGV.ReadOnly = $true
 $LegacyGUIelements.SwitchingLogDGV.RowHeadersVisible = $false
 $LegacyGUIelements.SwitchingLogDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.SwitchingLogDGV.Add_CellDoubleClick({ $null = [Microsoft.VisualBasic.Interaction]::MsgBox("$($LegacyGUIelements.SwitchingLogDGV.DataSource.Rows[$_.RowIndex] | Select-Object * -ExcludeProperty ItemArray, Table, RowError, RowState, HasErrors | Get-SortedObject | ConvertTo-Json)", (64 + 4096), "Entry: $($this.Rows[$_.RowIndex].Cells[0].Value)") })
+$LegacyGUIelements.SwitchingLogDGV.Add_CellDoubleClick({ [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($LegacyGUIelements.SwitchingLogDGV.DataSource.Rows[$_.RowIndex] | Select-Object * -ExcludeProperty ItemArray, Table, RowError, RowState, HasErrors | Get-SortedObject | ConvertTo-Json)", (64 + 4096), "Entry: $($this.Rows[$_.RowIndex].Cells[0].Value)") })
 $LegacyGUIelements.SwitchingLogDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
 $LegacyGUIelements.SwitchingLogDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.SwitchingLogDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })
@@ -1820,13 +1820,13 @@ $LegacyGUIelements.WatchdogTimersRemoveButton.Add_Click(
         $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
         $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
         foreach ($Miner in $Session.Miners) { 
-            $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ $null = $Miner.Reasons.Remove($_) }
+            $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Miner.Reasons.Remove($_) }
             if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
         }
         Remove-Variable Miner
 
         foreach ($Pool in $Session.Pools) { 
-            $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ $null = $Pool.Reasons.Remove($_) }
+            $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ [Void]$Pool.Reasons.Remove($_) }
             if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
         }
         Remove-Variable Pool
@@ -2566,7 +2566,7 @@ $LegacyGUIform.KeyPreview = $true
 $LegacyGUIform.Add_Load(
     { 
         # Restore window size
-        if ((Test-Path -LiteralPath ".\Config\WindowSettings.json" -PathType Leaf) -and ($WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable)) { 
+        if (([System.IO.File]::Exists(".\Config\WindowSettings.json")) -and ($WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable)) { 
             # Ensure form is displayed inside the available screen space
             if ($WindowSettings.Top -gt 0 -and $WindowSettings.Top -lt [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Height * 0.95) { $LegacyGUIform.Top = $WindowSettings.Top }
             if ($WindowSettings.Left -gt 0 -and $WindowSettings.Left -lt [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Width * 0.95) { $LegacyGUIform.Left = $WindowSettings.Left }

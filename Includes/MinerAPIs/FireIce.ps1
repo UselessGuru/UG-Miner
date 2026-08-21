@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 [NoRunspaceAffinity()]
@@ -36,14 +36,14 @@ class Fireice : Miner {
             # Write pool config file, overwrite every time
             ($Parameters.PoolFile.Content | ConvertTo-Json -Depth 10) -replace "^{" -replace "}$", "," | Out-File -LiteralPath $PoolFile -Force -ErrorAction Ignore
             # Write config file, keep existing file to preserve user custom config
-            if (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) { ($Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10) -replace "^{" -replace "}$" | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore }
+            if (-not [System.IO.File]::Exists($ConfigFile)) { ($Parameters.ConfigFile.Content | ConvertTo-Json -Depth 10) -replace "^{" -replace "}$" | Out-File -LiteralPath $ConfigFile -Force -ErrorAction Ignore }
 
             # Check if we have a valid hw file for all installed hardware. If hardware / device order has changed we need to re-create the config files. 
-            if (-not (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf)) { 
-                if (Test-Path -LiteralPath "$(Split-Path $this.Path)\$MinerThreadsConfigFile" -PathType Leaf) { 
+            if (-not [System.IO.File]::Exists($PlatformThreadsConfigFile)) { 
+                if ([System.IO.File]::Exists("$(Split-Path $this.Path)\$MinerThreadsConfigFile")) { 
                     # Remove old config files, thread info is no longer valid
                     Write-Message -Level Warn "Hardware change detected. Deleting existing configuration files for miner $($this.Info)'."
-                    Remove-Item -Path "$(Split-Path $this.Path)\$MinerThreadsConfigFile" -Force -ErrorAction Ignore
+                    [System.IO.File]::Delete("$(Split-Path $this.Path)\$MinerThreadsConfigFile")
                 }
 
                 # Temporarily start miner with empty thread conf file. The miner will then create a hw config file with default threads info for all platform hardware
@@ -53,7 +53,7 @@ class Fireice : Miner {
                 $Loops = 100
                 do { 
                     if ($this.ProcessId = ($this.ProcessJob | Receive-Job -Keep -ErrorAction Ignore).MinerProcessId) { 
-                        if (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
+                        if ([System.IO.File]::Exists($PlatformThreadsConfigFile)) { 
                             $this.Process = Get-Process -Id $this.ProcessId -ErrorAction SilentlyContinue
                             # Read hw config created by miner
                             $ThreadsConfig = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) -replace "^\s*//.*" | Out-String
@@ -73,7 +73,7 @@ class Fireice : Miner {
                 } while ($Loops -gt 0)
                 Remove-Variable Loops
 
-                if (Test-Path -LiteralPath $PlatformThreadsConfigFile -PathType Leaf) { 
+                if ([System.IO.File]::Exists($PlatformThreadsConfigFile)) { 
                     if ($this.ProcessJob) { 
                         if ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
                         # Jobs are getting removed in core loop (removing immediately after stopping process here may take several seconds)
@@ -95,7 +95,7 @@ class Fireice : Miner {
                 $this.Process = $null
                 $this.ProcessId = $null
             }
-            if (-not (Test-Path $MinerThreadsConfigFile -PathType Leaf)) { 
+            if (-not [System.IO.File]::Exists($MinerThreadsConfigFile)) { 
                 # Retrieve hw config from platform config file
                 $ThreadsConfigJson = [System.IO.File]::ReadAllLines($PlatformThreadsConfigFile) | ConvertFrom-Json -ErrorAction Ignore
                 # Filter index for current cards and apply threads

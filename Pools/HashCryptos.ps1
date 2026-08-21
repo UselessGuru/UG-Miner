@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 param(
@@ -62,16 +62,16 @@ if ($DivisorMultiplier -and $PriceField) {
         }
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
-        if (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
-        if ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
-        if ($PoolConfig.PayoutCurrencies -notcontains $PoolConfig.PayoutCurrency) { $Reasons.Add("Payout currency [$($PoolConfig.PayoutCurrency)] not supported by by pool") | Out-Null }
+        if (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
+        if ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+        if ($PoolConfig.PayoutCurrencies -notcontains $PoolConfig.PayoutCurrency) { [Void]$Reasons.Add("Payout currency [$($PoolConfig.PayoutCurrency)] not supported by by pool") }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
         $Value = $Request.$Algorithm.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
         if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+            [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
         }
         else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false

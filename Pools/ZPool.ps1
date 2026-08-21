@@ -56,21 +56,21 @@ if ($PriceField) {
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
 
         if (-not $Request.$Algorithm.conversion_supported) { 
-            if (-not $Currency) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
-            elseif (-not $PoolConfig.Wallets.$Currency) { $Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") | Out-Null }
+            if (-not $Currency) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
+            elseif (-not $PoolConfig.Wallets.$Currency) { [Void]$Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") }
         }
-        elseif (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
-        elseif ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
-        elseif ($Session.PoolData.$Name.Algorithm -like "+*" -and ($Session.PoolData.$Name.Algorithm -split "," -notcontains "+$($AlgorithmNorm)")) { $Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") | Out-Null }
+        elseif (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
+        elseif ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
+        elseif ($Session.PoolData.$Name.Algorithm -like "+*" -and ($Session.PoolData.$Name.Algorithm -split "," -notcontains "+$($AlgorithmNorm)")) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
 
-        if ($Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        if ($Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
         $Value = $Request.$Algorithm.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
         if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+            [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
         }
         else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false

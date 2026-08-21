@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 # Xelis support for Nvidia and AMD GPUs
@@ -32,7 +32,7 @@ Version date:   2026/08/14
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") })) { return }
 
-$URI = "https://bzminer.com/downloads/bzminer_v24.0.2_windows.zip"
+$URI = "https://github.com/bzminer/bzminer/releases/download/v24.0.2/bzminer_v24.0.2_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"

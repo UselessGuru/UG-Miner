@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 using module .\Include.psm1
@@ -116,11 +116,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "-$($Pool.Algorithm)") | Sort-Object -Unique
-                        $null = $Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
+                        [Void]$Pool.Reasons.Add("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
                     }
                     elseif ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where{ $_ -ne "+$($Pool.Algorithm)" } | Sort-Object -Unique)
-                        $null = $Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")
+                        [Void]$Pool.Reasons.Add("Algorithm not enabled in $($Pool.Name) pool config")
                     }
                     $Pool.Available = $false
                     $Data += "$($Pool.Algorithm)@$($Pool.Name)"
@@ -150,11 +150,11 @@ while ($Session.APIversion -and $Server.IsListening) {
                 foreach ($Pool in $Pools) { 
                     if ($PoolsConfig.($Pool.Name).Algorithm -like "+*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm += "+$($Pool.Algorithm)" | Sort-Object -Unique)
-                        $null = $Pool.Reasons.Remove("Algorithm not enabled in $($Pool.Name) pool config")
+                        [Void]$Pool.Reasons.Remove("Algorithm not enabled in $($Pool.Name) pool config")
                     }
                     elseif($PoolsConfig.($Pool.Name).Algorithm -like "-*") { 
                         $PoolsConfig.($Pool.Name).Algorithm = @($PoolsConfig.($Pool.Name).Algorithm.Where{ $_ -ne "-$($Pool.Algorithm)" } | Sort-Object -Unique)
-                        $null = $Pool.Reasons.Remove("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
+                        [Void]$Pool.Reasons.Remove("Algorithm disabled (`-$($Pool.Algorithm)` in $($Pool.Name) pool config)")
                     }
                     if (-not $Pool.Reasons.Count) { 
                         $Pool.Available = $true
@@ -313,7 +313,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/file/edit" { 
             $Data = Edit-File $Parameters.FileName
-            if (Test-Path -LiteralPath $Parameters.FileName) { 
+            if ([System.IO.File]::Exists($Parameters.FileName)) { 
                 if ($Parameters.FileName -eq $Session.ConfigFile -or $Parameters.FileName -eq $Session.PoolsConfigFile) { Read-ConfigFiles }
             }
             break
@@ -589,7 +589,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     if ($Session.WatchdogTimers.Where{ $_.MinerName -eq $Miner.Name }) { 
                         # Update miner
                         $Data += $Miner.Name
-                        $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ $null = $Miner.Reasons.Remove($_) }
+                        $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Miner.Reasons.Remove($_) }
                         if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
 
                         # Remove Watchdog timers
@@ -602,7 +602,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                     # Update pool
                     if ($Session.Pools.Where{ $_.Key -eq $Pool.Key }) { 
                         $Data += "$($Pool.Key) [$($Pool.Region)]"
-                        $Pool.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ $null = $Pool.Reasons.Remove($_) }
+                        $Pool.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Pool.Reasons.Remove($_) }
                         if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
 
                         # Remove Watchdog timers
@@ -623,13 +623,13 @@ while ($Session.APIversion -and $Server.IsListening) {
             else { 
                 $Session.WatchdogTimers = [System.Collections.Generic.List[PSCustomObject]]::new()
                 foreach ($Miner in $Session.Miners) { 
-                    $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ $null = $Miner.Reasons.Remove($_) }
+                    $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Miner.Reasons.Remove($_) }
                     if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
                 }
                 Remove-Variable Miner
 
                 foreach ($Pool in $Session.Pools.ForEach) { 
-                    $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ $null = $Pool.Reasons.Remove($_) }
+                    $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ [Void]$Pool.Reasons.Remove($_) }
                     if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
                 }
                 Remove-Variable Pool
@@ -980,7 +980,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
             # Check if there is a file with the requested path
             $Filename = "$BasePath$Path"
-            if (Test-Path -LiteralPath $Filename -PathType Leaf) { 
+            if ([System.IO.File]::Exists($Filename)) { 
                 # If the file is a PowerShell script, execute it and return the output. A $Parameters parameter is sent built from the query string
                 # Otherwise, just return the contents of the file
                 $File = Get-ChildItem $Filename -File
@@ -997,7 +997,7 @@ while ($Session.APIversion -and $Server.IsListening) {
                         $IncludeRegex = [regex]'<!-- *#include *file="(.*)" *-->'
                         $IncludeRegex.Matches($Data).ForEach{ 
                             $IncludeFile = $BasePath + "/" + $_.Groups[1].Value
-                            if (Test-Path -LiteralPath $IncludeFile -PathType Leaf) { 
+                            if ([System.IO.File]::Exists($IncludeFile)) { 
                                 $IncludeData = Get-Content $IncludeFile -Raw
                                 $Data = $Data -replace $_.Value, $IncludeData
                             }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 param(
@@ -68,16 +68,16 @@ elseif ($Request.miningAlgorithms) {
         $Divisor = 100000000
 
         $Reasons = [System.Collections.Generic.Hashset[String]]::new()
-        if (-not $PoolConfig.Wallets.$PayoutCurrency) { $Reasons.Add("No wallet address for [$PayoutCurrency]") | Out-Null }
-        if ($RequestAlgodetails.miningAlgorithms.Where{ $_.Algorithm -eq $Algorithm }.order -eq 0) { $Reasons.Add("No orders at pool") | Out-Null }
-        if ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { $Reasons.Add("No hashrate at pool") | Out-Null }
+        if (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
+        if ($RequestAlgodetails.miningAlgorithms.Where{ $_.Algorithm -eq $Algorithm }.order -eq 0) { [Void]$Reasons.Add("No orders at pool") }
+        if ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
 
         $Key = "$($Name)_$($AlgorithmNorm)"
         $Value = [Double]$_.paying / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
         if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-            $Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)") | Out-Null
+            [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
         }
         else { 
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false

@@ -1,3 +1,15 @@
+Changelog UG-Miner 6.8.21 2026/08/??
+====================================
+
+Improvements:
+- Core: Minor performance improvements
+- Miners: Minor performance improvements
+
+Miner updates:
+- SRBMinerMulti-v3.5.8
+- Wildrig-v0.50.2
+
+
 Changelog UG-Miner 6.8.20 2026/08/14
 ====================================
 

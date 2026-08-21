@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 using module .\Includes\Include.psm1
@@ -37,10 +37,10 @@ function Expand-WebRequest {
     [Environment]::CurrentDirectory = $ExecutionContext.SessionState.Path.CurrentFileSystemLocation
 
     if (-not $Path) { $Path = Join-Path ".\Downloads" ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName }
-    if (-not (Test-Path -LiteralPath ".\Downloads" -PathType Container)) { New-Item "Downloads" -ItemType "directory" | Out-Null }
+    if (-not [System.IO.Directory]::Exists(".\Downloads")) { New-Item "Downloads" -ItemType "directory" | Out-Null }
     $FileName = Join-Path ".\Downloads" (Split-Path $Uri -Leaf)
 
-    if (Test-Path -LiteralPath $FileName -PathType Leaf) { Remove-Item $FileName }
+    if ([System.IO.File]::Exists($FileName)) { Remove-Item $FileName }
     Invoke-WebRequest -Uri $Uri -OutFile $FileName -TimeoutSec 5
 
     if (".msi", ".exe" -contains ([IO.FileInfo](Split-Path $Uri -Leaf)).Extension) { 
@@ -50,10 +50,10 @@ function Expand-WebRequest {
         $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
         $Path_New = Split-Path $Path
 
-        if (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item $Path_Old -Recurse -Force }
+        if ([System.IO.Directory]::Exists($Path_Old)) { Remove-Item $Path_Old -Recurse -Force }
         Start-Process ".\Utils\7z" "x `"$([IO.Path]::GetFullPath($FileName))`" -o`"$([IO.Path]::GetFullPath($Path_Old))`" -y -spe" -Wait -WindowStyle Hidden | Out-Null
 
-        if (Test-Path -LiteralPath $Path_New -PathType Container) { Remove-Item $Path_New -Recurse -Force }
+        if ([System.IO.Directory]::Exists($Path_New)) { Remove-Item $Path_New -Recurse -Force }
 
         # Use first (topmost) directory, some miners, e.g. ClaymoreDual_v11.9, contain multiple miner binaries for different driver versions in various subdirs
         $Path_Old = ((Get-ChildItem -Path $Path_Old -File -Recurse).Where{ $_.Name -eq $(Split-Path $Path -Leaf) }).Directory | Select-Object -First 1
@@ -61,7 +61,7 @@ function Expand-WebRequest {
         if ($Path_Old) { 
             (Move-Item $Path_Old $Path_New -PassThru).ForEach{ $_.LastWriteTime = [DateTime]::Now }
             $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
-            if (Test-Path -LiteralPath $Path_Old -PathType Container) { Remove-Item -Path $Path_Old -Recurse -Force }
+            if ([System.IO.File]::Exists($Path_Old)) {[System.IO.Directory]::Delete($Path_Old, $true) }
         }
         else { 
             throw "Error: Cannot find '$Path'."
@@ -81,7 +81,7 @@ $ProgressPreference = "SilentlyContinue"
     $Searchable = $_.Searchable
     $Type = $_.Type
 
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { 
+    if (-not [System.IO.File]::Exists($Path)) { 
         try { 
             Write-Message -Level Info "Downloader: Initiated download of $Type from '$URI'."
 
@@ -99,7 +99,7 @@ $ProgressPreference = "SilentlyContinue"
             $Path_Old = $null
 
             if ($URI) { 
-                if (-not (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
+                if (-not [System.IO.File]::Exists([System.IO.Path]::Combine($Session.MainPath, 'Downloads', [System.IO.Path]::GetFileName($URI)))) { 
                     Write-Message -Level Warn "Downloader: Cannot download '$URI'."
                 }
             }
@@ -113,13 +113,13 @@ $ProgressPreference = "SilentlyContinue"
             }
 
             if ($Path_Old) { 
-                if (Test-Path -LiteralPath (Split-Path $Path_New) -PathType Container) { (Split-Path $Path_New) | Remove-Item -Recurse -Force }
+                if ([System.IO.Directory]::Exists($(Split-Path $Path_New))) { (Split-Path $Path_New) | Remove-Item -Recurse -Force }
                 (Split-Path $Path_Old) | Copy-Item -Destination (Split-Path $Path_New) -Recurse -Force
                 Write-Message -Level Info "Downloader: Copied $Type '$($Path.Replace("$($Session.MainPath)\", ''))' from local repository '$PathOld'."
             }
             else { 
                 if ($URI) { 
-                    if (Test-Path -LiteralPath "$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)") { 
+                    if ([System.IO.File]::Exists("$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
                         Write-Message -Level Warn "Downloader: Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
                     }
                 }

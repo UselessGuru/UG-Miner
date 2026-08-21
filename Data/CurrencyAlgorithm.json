@@ -41,6 +41,7 @@
   "BSTY": "Yescrypt",
   "BSV": "SHA256",
   "BTC": "SHA256",
+  "BTC3": "SHA3t",
   "BTCS": "SHA256",
   "BTCZ": "Equihash1445",
   "BTE": "YescryptR16",
@@ -69,6 +70,7 @@
   "CRB": "NeuroMorph",
   "CRC": "Scrypt",
   "CRNC": "YespowerLtncg",
+  "CSD": "SHA256dst",
   "CTXC": "Cuckaroo30CTX",
   "CY": "Scrypt",
   "DASH": "X11",
@@ -85,6 +87,7 @@
   "DOGE": "Scrypt",
   "DOGM": "Scrypt",
   "DOGPU": "KawPow",
+  "DRAGONX": "RandomDRGX",
   "DUTA": "DutaHashV4",
   "DVT": "SHA256",
   "DYN": "Argon2d500",
@@ -219,6 +222,7 @@
   "OXC": "SHA256",
   "OXG": "Scrypt",
   "PAPRY": "KawPow",
+  "PCOIN": "RandomPCN",
   "PEP": "Scrypt",
   "PEPEW": "HooHashPepew",
   "PGN": "X21s",
@@ -319,5 +323,6 @@
   "ZENYX": "X11",
   "ZEPH": "RandomX",
   "ZER": "Equihash1927",
-  "ZOC": "Neoscrypt"
+  "ZOC": "Neoscrypt",
+  "ZQV": "RandomZQVX"
 }

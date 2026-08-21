@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.20
-Version date:   2026/08/14
+Version:        6.8.21
+Version date:   2026/08/21
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -472,11 +472,11 @@ class Miner : IDisposable {
         $JobData = [PSCustomObject]@{ }
 
         if ($this.DataReaderJob) { 
-            $null = ($this.DataReaderJob | Stop-Job)
+            [Void]($this.DataReaderJob | Stop-Job)
             # Get data before removing job
             $JobData = Receive-Job -Job $this.DataReaderJob
-            if ($JobData -and $this.Status -eq [MinerStatus]::Running) { $JobData.Where{ $_.Date }.ForEach{ $null = $this.Data.Add($_) } }
-            $null = ($this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore)
+            if ($JobData -and $this.Status -eq [MinerStatus]::Running) { $JobData.Where{ $_.Date }.ForEach{ [Void]$this.Data.Add($_) } }
+            [Void]($this.DataReaderJob | Remove-Job -Force -ErrorAction Ignore)
             $this.DataReaderJob.Dispose()
             $this.DataReaderJob = $null
         }
@@ -598,8 +598,8 @@ class Miner : IDisposable {
         }
         if ($Local:ProcessId) { 
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-            (Get-CimInstance win32_process -Filter "ParentProcessId = $($Local:ProcessId)").ForEach{ $null = (Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
-            $null = (Stop-Process -Id $Local:ProcessId -Force -ErrorAction Ignore)
+            (Get-CimInstance win32_process -Filter "ParentProcessId = $($Local:ProcessId)").ForEach{ [Void](Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
+            [Void](Stop-Process -Id $Local:ProcessId -Force -ErrorAction Ignore)
             $this.Process = $null
         }
 
@@ -660,7 +660,7 @@ class Miner : IDisposable {
         if ($this.Status -eq [MinerStatus]::Running) { 
             if ($this.ProcessJob.State -eq "Running" -and $this.ProcessId) { 
                 try { 
-                    $null = [System.Diagnostics.Process]::GetProcessById($this.ProcessId)
+                    [Void][System.Diagnostics.Process]::GetProcessById($this.ProcessId)
                     return [MinerStatus]::Running
                 }
                 catch { }
@@ -1000,17 +1000,17 @@ public static class Kernel32
             MinerProcessId   = $MinerProcessId
         }
 
-        $null = $ConhostProcess.Handle
-        $null = $ControllerProcess.Handle
-        $null = $MinerProcess.Handle
+        [Void]$ConhostProcess.Handle
+        [Void]$ControllerProcess.Handle
+        [Void]$MinerProcess.Handle
 
         do { 
             if ($ControllerProcess.WaitForExit(100)) { 
                 # Kill process in bottom up order
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                $null = (Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
-                $null = (Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore)
-                $null = (Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore)
+                [Void](Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
+                [Void](Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore)
+                [Void](Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore)
                 $MinerProcess = $null
                 $ControllerProcess = $null
             }
@@ -1146,13 +1146,13 @@ function Start-Brain {
         [String[]]$Name
     )
 
-    if (Test-Path -LiteralPath ".\Brains" -PathType Container) { 
+    if ([System.IO.Directory]::Exists(".\Brains")) { 
 
         # Starts Brains if necessary
         $BrainsStarted = @()
         $Name.Where{ $Session.Config.PoolsConfig.$_.BrainConfig -and -not $Session.Brains.$_ }.ForEach{ 
             $BrainScript = ".\Brains\$($_).ps1"
-            if (Test-Path -LiteralPath $BrainScript -PathType Leaf) { 
+            if ([System.IO.File]::Exists($BrainScript)) { 
                 $Session.Brains.$_ = [RunspaceFactory]::CreateRunspace()
                 $Session.Brains.$_.ApartmentState = "STA"
                 $Session.Brains.$_.Name = "Brain_$($_)"
@@ -1216,7 +1216,7 @@ function Stop-Brain {
 
 function Start-BalancesTracker { 
 
-    if (Test-Path -LiteralPath ".\Balances" -PathType Container) { 
+    if ([System.IO.Directory]::Exists(".\Balances")) { 
         if (-not $Global:BalancesTrackerRunspace) { 
             $Global:BalancesTrackerRunspace = [RunspaceFactory]::CreateRunspace()
             $Global:BalancesTrackerRunspace.ApartmentState = "STA"
@@ -1634,9 +1634,9 @@ function Write-Configuration {
         [PSCustomObject]$Config
     )
 
-    if (-not (Test-Path -LiteralPath ".\Config" -PathType Container)) { $null = (New-Item -Path . -Name "Config" -ItemType Directory) }
+    [Void][System.IO.Directory]::CreateDirectory([System.IO.Path]::Combine($PWD.Path, "Config"))
 
-    if (Test-Path -LiteralPath $Session.ConfigFile -PathType Leaf) { 
+    if ([System.IO.File]::Exists($Session.ConfigFile)) { 
         Copy-Item -Path $Session.ConfigFile -Destination "$($Session.ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").backup"
         Get-ChildItem -Path "$($Session.ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
     }
@@ -1671,7 +1671,7 @@ function Edit-File {
     $FileWriteTime = (Get-Item -LiteralPath $FileName).LastWriteTime
 
     if ($FileName -eq $Session.PoolsConfigFile.Replace($PWD, ".")) { 
-        if (Test-Path -LiteralPath $Session.PoolsConfigFile -PathType Leaf) { 
+        if ([System.IO.File]::Exists($Session.PoolsConfigFile)) { 
             Copy-Item -Path $Session.PoolsConfigFile -Destination "$($Session.PoolsConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").backup"
             Get-ChildItem -Path "$($Session.PoolsConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
         }
@@ -1681,7 +1681,7 @@ function Edit-File {
     }
 
     if ($FileName -eq $Session.ConfigFile.Replace($PWD, ".")) { 
-        if (Test-Path -LiteralPath $Session.ConfigFile -PathType Leaf) { 
+        if ([System.IO.File]::Exists($Session.ConfigFile)) { 
             Copy-Item -Path $Session.ConfigFile -Destination "$($Session.ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").backup"
             Get-ChildItem -Path "$($Session.ConfigFile)_*.backup" -File | Sort-Object -Property LastWriteTime | Select-Object -SkipLast 10 | Remove-Item -Force -Recurse # Keep 10 backup copies
         }
@@ -1698,11 +1698,11 @@ function Edit-File {
             if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process -Id $NotepadProcessId -ErrorAction Ignore).MainWindowHandle }
             if ($MainWindowHandle -le 0) { $MainWindowHandle = (Get-Process).Where{ $_.Parent.Id -eq $NotepadProcessId }.MainWindowHandle }
 
-            $null = [Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid)
+            [Void][Win32]::GetWindowThreadProcessId([Win32]::GetForegroundWindow(), [ref]$FGWindowPid)
             if ($NotepadProcessId -ne $FGWindowPid) { 
                 if ([Win32]::GetForegroundWindow() -ne $MainWindowHandle) { 
-                    $null = [Win32]::ShowWindowAsync($MainWindowHandle, 6) # SW_MINIMIZE
-                    $null = [Win32]::ShowWindowAsync($MainWindowHandle, 9) # SW_RESTORE
+                    [Void][Win32]::ShowWindowAsync($MainWindowHandle, 6) # SW_MINIMIZE
+                    [Void][Win32]::ShowWindowAsync($MainWindowHandle, 9) # SW_RESTORE
                 }
             }
             Start-Sleep -Milliseconds 100
@@ -2046,7 +2046,6 @@ function Get-Stat {
         [String[]]$Names
     )
 
-    # 1. OPTIMIZATION: High-speed .NET folder tracking if no names are explicitly given
     if ($null -eq $Names) { 
         $StatsPath = "$PWD\Stats"
         if ([System.IO.Directory]::Exists($StatsPath)) { 
@@ -2059,22 +2058,18 @@ function Get-Stat {
         }
     }
 
-    # 2. OPTIMIZATION: Native foreach loop (Avoids .ForEach() scriptblock allocation overhead)
     foreach ($Name in $Names) { 
 
         if ($Global:Stats[$Name] -isnot [Hashtable]) { 
             $FilePath = "$PWD\Stats\$Name.txt"
 
             try { 
-                # 3. OPTIMIZATION: Read directly as native C# string (Bypasses stream decoding issues)
                 $FileText = [System.IO.File]::ReadAllText($FilePath)
                 if ([String]::IsNullOrWhiteSpace($FileText)) { continue }
 
-                # 4. OPTIMIZATION: Strictly typed string parsing with System.Text.Json
                 $Json = [System.Text.Json.JsonDocument]::Parse([String]$FileText)
                 $Root = $Json.RootElement
 
-                # 5. OPTIMIZATION: Low-level primitive retrieval directly out of the memory buffer
                 $Global:Stats[$Name] = @{ 
                     Name                  = $Name
                     Live                  = $Root.GetProperty("Live").GetDouble()
@@ -2096,11 +2091,9 @@ function Get-Stat {
                     ToleranceExceeded     = [UInt16]0
                 }
 
-                # Free memory layout assets immediately
                 $Json.Dispose()
             }
             catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] { 
-                # Replaces heavy Test-Path cmdlet footprint completely
                 continue 
             }
             catch { 
@@ -2881,8 +2874,8 @@ function Initialize-AutoUpdate {
     )
 
     Set-Location $Session.MainPath
-    if (-not (Test-Path -LiteralPath ".\AutoUpdate" -PathType Container)) { $null = (New-Item -Path . -Name "AutoUpdate" -ItemType Directory) }
-    if (-not (Test-Path -LiteralPath ".\Logs" -PathType Container)) { $null = (New-Item -Path . -Name "Logs" -ItemType Directory) }
+    if (-not [System.IO.File]::Exists(".\AutoUpdate")) { [Void](New-Item -Path . -Name "AutoUpdate" -ItemType Directory) }
+    if (-not [System.IO.File]::Exists(".\Logs")) { [Void](New-Item -Path . -Name "Logs" -ItemType Directory) }
 
     $UpdateLog = ".\Logs\AutoUpdateLog_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").txt"
     $UpdateScript = ".\AutoUpdate\$($UpdateVersion.UpdateScript -replace ".+/")"
@@ -2943,7 +2936,7 @@ function Update-PoolWatchdog {
                     if ($Session.Config.PoolName.Count -gt 1 -and $_.Count -ge (2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
                         $Group = $_.Group
                         if ($PoolsToSuspend = $RelevantPools.Where{ $_.Name -eq $Group[0].PoolName }) { 
-                            $PoolsToSuspend.ForEach{ $null = $null = $_.Reasons.Add("Pool suspended by watchdog [all algorithms]") }
+                            $PoolsToSuspend.ForEach{ [Void]$_.Reasons.Add("Pool suspended by watchdog [all algorithms]") }
                             Write-Message -Level Warn "Pool '$($Group[0].PoolName) [all algorithms]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Session.WatchdogReset).ToLocalTime().ToString("T"))."
                         }
                     }
@@ -2956,7 +2949,7 @@ function Update-PoolWatchdog {
                         if ($_.Count -ge 2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count - 1) { 
                             $Group = $_.Group
                             if ($PoolsToSuspend = $RelevantPools.Where{ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm }) { 
-                                $PoolsToSuspend.ForEach{ $null = $null = $_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") }
+                                $PoolsToSuspend.ForEach{ [Void]$_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") }
                                 Write-Message -Level Warn "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Session.WatchdogReset).ToLocalTime().ToString("T"))."
                             }
                         }
@@ -3460,7 +3453,7 @@ function Hide-Console {
     if ($host.Name -eq "ConsoleHost") { 
         if ($ConsoleWindowHandle = [Console.Window]::GetConsoleWindow()) { 
             # 0 = SW_HIDE
-            $null = [Console.Window]::ShowWindow($ConsoleWindowHandle, 0)
+            [Void][Console.Window]::ShowWindow($ConsoleWindowHandle, 0)
         }
     }
 }
@@ -3470,7 +3463,7 @@ function Show-Console {
     if ($host.Name -eq "ConsoleHost") { 
         if ($ConsoleWindowHandle = [Console.Window]::GetConsoleWindow()) { 
             # 5 = SW_SHOW
-            $null = [Console.Window]::ShowWindow($ConsoleWindowHandle, 5)
+            [Void][Console.Window]::ShowWindow($ConsoleWindowHandle, 5)
         }
     }
 }
@@ -3600,7 +3593,7 @@ function Set-MinerEnabled {
     }
 
     $Miner.Disabled = $false
-    $Miner.Reasons.Where{ $_ -notlike "Unrealistic *" }.ForEach{ $null = $Miner.Reasons.Remove({ $_ }) }
+    $Miner.Reasons.Where{ $_ -notlike "Unrealistic *" }.ForEach{ [Void]$Miner.Reasons.Remove({ $_ }) }
     if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
 }
 
@@ -3618,7 +3611,7 @@ function Set-MinerDisabled {
 
     $Miner.Available = $false
     $Miner.Disabled = $true
-    if (-not $Miner.Reasons.Contains("Disabled by user")) { $null = $Miner.Reasons.Add("Disabled by user") }
+    if (-not $Miner.Reasons.Contains("Disabled by user")) { [Void]$Miner.Reasons.Add("Disabled by user") }
 }
 
 function Set-MinerFailed { 
@@ -3645,7 +3638,7 @@ function Set-MinerFailed {
     Remove-Stat -Name "$($Miner.Name)_PowerConsumption"
     $Miner.PowerConsumption = $Miner.PowerCost = $Miner.Profit = $Miner.Profit_Bias = $Miner.Earnings = $Miner.Earnings_Bias = [Double]::NaN
 
-    if (-not $Miner.Reasons.Contains("0 h/s stat file")) { $null = $Miner.Reasons.Add("0 h/s stat file") }
+    if (-not $Miner.Reasons.Contains("0 h/s stat file")) { [Void]$Miner.Reasons.Add("0 h/s stat file") }
     $Miner.Available = $false
 }
 
@@ -3774,10 +3767,10 @@ function Read-Config {
                 $Session.PoolData.$($_.BaseName -replace "PoolData_") = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($_.ResolvedTarget) | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase)
             }
             $Session.PoolBaseNames = @($Session.PoolData.Keys)
-            $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach{ $Session.PoolData.$_.Variant.Keys }.Where{ Test-Path -LiteralPath "$PWD\Pools\$(Get-PoolBaseName $_).ps1" }) | Sort-Object -Unique)
+            $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach{ $Session.PoolData.$_.Variant.Keys }.Where{ [System.IO.File]::Exists("$PWD\Pools\$(Get-PoolBaseName $_).ps1") }) | Sort-Object -Unique)
             if (-not $Session.PoolVariants) { 
                 Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
-                $null = (New-Object -ComObject Wscript.Shell).Popup("File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
+                [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\PoolData.json' is not a valid $($Session.Branding.ProductLabel) JSON data file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
                 exit
             }
 
@@ -3830,7 +3823,7 @@ function Read-Config {
 
         # Load the configuration
         $ConfigFromFile = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
-        if (Test-Path -LiteralPath $ConfigFile -PathType Leaf) { 
+        if ([System.IO.File]::Exists($ConfigFile)) { 
             try { 
                 $ConfigFromFile = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
             }
@@ -3899,7 +3892,7 @@ function Read-Config {
         $ConfigFromFile.Keys.ForEach{ $Global:Config.$_ = $ConfigFromFile.$_ }
 
         # Build custom pools configuration, create case insensitive hashtable (https://stackoverflow.com/questions/24054147/powershell-hash-tables-double-key-error-a-and-a)
-        if ($PoolsConfigFile -and (Test-Path -LiteralPath $PoolsConfigFile -PathType Leaf)) { 
+        if ($PoolsConfigFile -and [System.IO.File]::Exists($PoolsConfigFile)) { 
             try { 
                 [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
                 $Config.PoolsConfig = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase)
@@ -3916,14 +3909,14 @@ function Read-Config {
 
         # Write config file in case they do not exist already
         if (-not $Session.FreshConfig) { 
-            if (-not (Test-Path -LiteralPath $Session.ConfigFile -PathType Leaf)) { 
+            if (-not [System.IO.File]::Exists($Session.ConfigFile)) { 
                 $Session.ConfigTimestamp = (Get-Item -Path $Session.ConfigFile).LastWriteTime.ToUniversalTime()
             }
         }
     }
 
     # Read-Config will read and apply configuration if configuration files have changed
-    if (Test-Path -Path $Session.ConfigFile -PathType Leaf) { 
+    if ([System.IO.File]::Exists($Session.ConfigFile)) { 
         if ((Get-Item -Path $ConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp -or (Get-Item -Path $PoolsConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp) { 
             Read-ConfigFiles -ConfigFile $ConfigFile -PoolsConfigFile $PoolsConfigFile
 
