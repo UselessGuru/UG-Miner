@@ -317,7 +317,7 @@ UI style automatically switches to full during benchmarking or when measuring po
 Windows 10.x and PowerShell Version 7.4.x or higher is required.
 
 UG-Miner works best with the latest PWSH version 7.6.5.  
-[Download Installer for version 7.6.5](https://github.com/PowerShell/PowerShell/releases/download/v7.6.5/PowerShell-7.6.5-win-x64.msi)  
+[Download ihe installer for version 7.6.5](https://github.com/PowerShell/PowerShell/releases/download/v7.6.5/PowerShell-7.6.5-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
@@ -327,7 +327,7 @@ Virtual memory settings
 When running multiple cards its recommended to increase Virtual Memory. 16GB is optimal.
 
 Recommended/optimal Windows Nvidia driver  
-[Windows Nvidia driver 576.52](https://us.download.nvidia.com/Windows/581.80/581.80-desktop-win10-win11-64bit-international-dch-whql.exe)  
+[Windows Nvidia driver 581.80](https://us.download.nvidia.com/Windows/581.80/581.80-desktop-win10-win11-64bit-international-dch-whql.exe)  
 If you use older drivers some miners will not be available.
 
 Recommended/optimal Windows AMD driver  
