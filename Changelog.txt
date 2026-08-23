@@ -1,6 +1,9 @@
 Changelog UG-Miner 6.8.22 2026/08/23
 ====================================
 
+Improvements:
+- Verthash miners: Remove obsolete code
+
 Miner changes:
 - SRBMinerMulti-v3.5.9 (update)
 - Wildrig-v0.50.3 (update)
