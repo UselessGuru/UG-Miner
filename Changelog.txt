@@ -1,3 +1,11 @@
+Changelog UG-Miner 6.8.22 2026/08/23
+====================================
+
+Miner changes:
+- SRBMinerMulti-v3.5.9 (update)
+- Wildrig-v0.50.3 (update)
+
+
 Changelog UG-Miner 6.8.21 2026/08/21
 ====================================
 
@@ -5,9 +13,9 @@ Improvements:
 - Core: Minor performance improvements
 - Miners: Minor performance improvements
 
-Miner updates:
-- SRBMinerMulti-v3.5.8
-- Wildrig-v0.50.2
+Miner changes:
+- SRBMinerMulti-v3.5.8 (update)
+- Wildrig-v0.50.2 (update)
 
 
 Changelog UG-Miner 6.8.20 2026/08/14
@@ -21,17 +29,17 @@ Improvements:
 - Core: Remove obsolete code
 - Miners: Minor performance improvements
 
-Miner updates:
-- SRBMinerMulti-v3.5.3
-- Wildrig-v0.50.1
+Miner changes:
+- SRBMinerMulti-v3.5.3 (update)
+- Wildrig-v0.50.1 (update)
 
 
 Changelog UG-Miner 6.8.19 2026/08/08
 ====================================
 
-Miner updates:
-- SRBMinerMulti-v3.5.1
-- Wildrig-v0.49.9
+Miner changes:
+- SRBMinerMulti-v3.5.1 (update)
+- Wildrig-v0.49.9 (update)
 
 
 Changelog UG-Miner 6.8.18 2026/08/05
@@ -41,15 +49,15 @@ Improvements:
 - Core: Minor performance improvements
 - Core: Remove obsolete code
 
-Miner updates:
-- SRBMinerMulti-v3.4.8
+Miner changes:
+- SRBMinerMulti-v3.4.8 (update)
 
 
 Changelog UG-Miner 6.8.17 2026/07/29
 ====================================
 
-Miner updates:
-- SRBMinerMulti-v3.4.7
+Miner changes:
+- SRBMinerMulti-v3.4.7 (update)
 
 
 Changelog UG-Miner 6.8.16 2026/07/20
@@ -63,8 +71,8 @@ Improvements:
 - Core: Minor performance improvements
 - Core: Remove obsolete code
 
-Miner updates:
-- Wildrig-v0.49.6
+Miner changes:
+- Wildrig-v0.49.6 (update)
 
 
 Changelog UG-Miner 6.8.15 2026/07/18
@@ -86,8 +94,8 @@ Improvements:
 - Core: Minor performance improvements
 - Core: Remove obsolete code
 
-Miner updates:
-- Wildrig-v0.49.5
+Miner changes:
+- Wildrig-v0.49.5 (update)
 
 
 Changelog UG-Miner 6.8.14 2026/07/12

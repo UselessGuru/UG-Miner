@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.21
-Version date:   2026/08/21
+Version:        6.8.22
+Version date:   2026/08/23
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -632,6 +632,9 @@ class Miner : IDisposable {
         } | Export-Csv -Path ".\Logs\SwitchingLog.csv" -Append -NoTypeInformation
 
         if ($this.Status -eq [MinerStatus]::Failed) { 
+            $this.CommandLineLaunched = ""
+            $this.Earnings = $this.Earnings_Accuracy = $this.Earnings_Bias = $this.PowerCost = $this.PowerConsumption = $this.PowerConsumption_Live = $this.Profit = $this.Profit_Bias = [Double]::NaN
+            $this.Hashrates_Live = @($this.Workers.ForEach{ [Double]::NaN })
             $this.StatusInfo = "Failed: Miner $($this.StatusInfo)"
             $this.SubStatus = "Failed"
             $this.Workers.ForEach{ 
@@ -643,8 +646,6 @@ class Miner : IDisposable {
                 $_.Hashrate            = [Double]::NaN
                 $_.TotalMiningDuration = [TimeSpan]0
             }
-            $this.Earnings = $this.Earnings_Accuracy = $this.Earnings_Bias = $this.PowerCost = $this.PowerConsumption = $this.PowerConsumption_Live = $this.Profit = $this.Profit_Bias = [Double]::NaN
-            $this.Hashrates_Live = @($this.Workers.ForEach{ [Double]::NaN })
         }
         else { 
             $this.Status = [MinerStatus]::Idle
@@ -2904,6 +2905,7 @@ function Initialize-AutoUpdate {
         catch { 
             [Console]::SetCursorPosition((29 + $UpdateScript.length), $CursorPosition.y)
             Write-Host " ✖" -ForegroundColor Red
+            "Error executing update script '$($UpdateScript)'. Please update manually." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
         }
     }
     catch { 

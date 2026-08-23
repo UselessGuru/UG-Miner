@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.21
-Version date:   2026/08/21
+Version:        6.8.22
+Version date:   2026/08/23
 #>
 
 # Fixed segfault in scrypt algo on some older CPUs.
@@ -89,7 +89,7 @@ if ($Algorithms) {
     $Algorithms.ForEach{ 
         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices[0].Model)-$($_.Algorithm)"
 
-        if ($_.Algorithm -eq "VertHash" -and -not [System.IO.File]::Exists($Session.VertHashDatPath) -or ([System.IO.FileInfo]$Session.VertHashDatPath).Length -ne 1283457024) { 
+        if ($_.Algorithm -eq "VertHash" -and ([System.IO.FileInfo]$Session.VertHashDatPath).Length -ne 1283457024) { 
             $PrerequisitePath = $Session.VertHashDatPath
             $PrerequisiteURI  = "https://github.com/UselessGuru/UG-Miner-Extras/releases/download/VertHashDataFile/VertHash.dat"
         }

@@ -17,16 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.21
-Version date:   2026/08/21
+Version:        6.8.22
+Version date:   2026/08/23
 #>
 
-# improved pearlhash for NVIDIA RTX 2000, 3000, 4000 and 5000 series
-# AMD support for pearlhash should be fixed
+# one more fix for AMD to support pearlhash
+# fixed support NVIDIA GTX 1660 series for pearlhash
+# up to 20% pearlhash boost for unlocked NVIDIA CMP90HX(probably same thing for CMP70HX)
+# added parameter --gpu-delay-oc to delay OC applied to gpu
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.50.1/wildrig-multi-windows-0.50.1.zip"
+$URI = "https://github.com/andru-kun/wildrig-multi/releases/download/0.50.3/wildrig-multi-windows-0.50.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"

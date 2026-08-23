@@ -169,6 +169,7 @@
   "KMD": "Equihash2009",
   "KMDCL": "Equihash2009",
   "KUS": "Ghostrider",
+  "KV5": "SHA256",
   "KYP": "Scrypt",
   "LAX": "XHash",
   "LBC": "Lbry",
