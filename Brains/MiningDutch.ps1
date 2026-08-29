@@ -215,7 +215,7 @@ while ($Config.PoolsConfig.$Name) {
             $Session.BrainData.$Name = $AlgoData
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
-            Remove-Variable AlgoData, TotalStatsData -ErrorAction Ignore
+            Remove-Variable AlgoData, TotalStatsResult -ErrorAction Ignore
 
             # Limit to only sample size + 10 minutes history
             $PoolObjects = @($PoolObjects.Where{ $_.Date -ge $Timestamp.AddMinutes( - ($Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes + 10)) })
