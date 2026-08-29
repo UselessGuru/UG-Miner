@@ -53,7 +53,7 @@ if ($PriceField) {
         $Currency = [String]$Request.$Algorithm.currency
         $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
         $PayoutCurrency = if ($Currency -and $PoolConfig.Wallets.$Currency) { $Currency } else { $PoolConfig.PayoutCurrency }
-        $Reasons = [System.Collections.Generic.Hashset[String]]::new()
+        $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
 
         if (-not $Request.$Algorithm.conversion_supported) { 
             if (-not $Currency) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }

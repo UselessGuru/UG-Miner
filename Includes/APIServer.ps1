@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 using module .\Include.psm1
@@ -879,7 +879,7 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/pools/unavailable" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.Where{ -not $_.Available } | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsUnavailable | Sort-Object -Property Algorithm, Name, Region)
             break
         }
         "/pools/updated" { 

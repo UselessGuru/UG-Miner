@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Balances\NiceHash.ps1
 Version:        6.8.22
-Version date:   2026/08/23
+Version date:   2026/08/29
 #>
 
 if ($Config.NiceHashWallet) { 
@@ -51,7 +51,7 @@ if ($Config.NiceHashWallet) {
         $Str = "$Key`0$Timestamp`0$Uuid`0`0$Organizationid`0`0$($Method.ToUpper())`0$Endpoint`0extendedResponse=true"
         $Sha = [System.Security.Cryptography.KeyedHashAlgorithm]::Create("HMACSHA256")
         $Sha.Key = [System.Text.Encoding]::UTF8.Getbytes($Secret)
-        $Sign = [System.BitConverter]::ToString($Sha.ComputeHash([System.Text.Encoding]::UTF8.Getbytes($str)))
+        $Sign = [System.BitConverter]::ToString($Sha.ComputeHash([System.Text.Encoding]::UTF8.Getbytes($Str)))
         $Headers = [Hashtable]@{ 
             "X-Time"            = $Timestamp
             "X-Nonce"           = $Uuid

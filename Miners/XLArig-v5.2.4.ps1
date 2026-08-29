@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
@@ -37,12 +37,12 @@ $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
+    $Fee = if ($Session.Config.DisableMinerFee) { 0 } else { 5 }
+    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Bottom 1)
 
     $Algorithms.ForEach{ 
         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices[0].Model)-$($_.Algorithm)"
-
-        $Fee = if ($Session.Config.DisableMinerFee) { 0 } else { 5 }
+        $Threads = $AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore
 
         # $ExcludePools = $_.ExcludePools
         # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name }) { 
@@ -52,7 +52,7 @@ if ($Algorithms) {
 
             [PSCustomObject]@{ 
                 API         = "XmRig"
-                Arguments   = "$($_.Arguments)$(if ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level=$Fee --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --http-port=$MinerAPIPort --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --retry-pause 1 --keepalive"
+                Arguments   = "$($_.Arguments)$(if ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id=$RigID --donate-level=$Fee --http-enabled --http-host=127.0.0.1 --api-worker-id=$RigID --api-id=$MinerName --http-port=$MinerAPIPort --threads=$Threads --retry-pause 1 --keepalive"
                 DeviceNames = $AvailableMinerDevices.Name
                 Fee         = @($Fee) # Dev fee
                 MinerUri    = "http://workers.xmrig.info/worker?url=$([System.Web.HTTPUtility]::UrlEncode("http://127.0.0.1:$($MinerAPIPort)"))?Authorization=Bearer $([System.Web.HTTPUtility]::UrlEncode($MinerName))"

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 using module ..\Includes\Include.psm1
@@ -32,10 +32,16 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolObjects = @()
 $Durations = [TimeSpan[]]@()
+$APICallFails = 0
+
+$Handler = [System.Net.Http.HttpClientHandler]::new()
+$Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator
+$HttpClient = [System.Net.Http.HttpClient]::new($Handler)
+$HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
 
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
-while ($PoolConfig = $Session.Config.PoolsConfig.$Name) { 
+while ($Config.PoolsConfig.$Name) { 
 
     $APIcallFails = 0
     $PoolVariant = [String]$Session.Config.PoolName.Where{ $_ -like "$Name*" }
@@ -49,40 +55,48 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
             do { 
                 try { 
                     if (-not $AlgoData) { 
-                            $URI = "https://www.zpool.ca/api/status"
-                            Write-Message -Level Debug "Brain '$Name': Querying $URI"
-                            $AlgoData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                            Write-Message -Level Debug "Brain '$Name': Response from $URI received"
-                        if ($AlgoData -like "<!DOCTYPE html>*") { $AlgoData = $null }
+                        $Request = "https://www.zpool.ca/api/status"
+                        Write-Message -Level Debug "Brain '$Name': Querying '$Request'"
+                        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($Config.PoolsConfig.$Name.PoolAPItimeout))
+                        $Response = $HttpClient.GetAsync($Request, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                        # Read response as raw string
+                        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                        Write-Message -Level Debug "Brain '$Name': Response from '$Request' received"
+                        if ($JSONstring -and (Test-Json $JSONstring -ErrorAction Ignore)) { 
+                            # Change numeric string to numbers, some values are null
+                            $AlgoData = ($JSONstring -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
+                        }
                     }
                     if (-not $CurrenciesData) { 
-                        $URI = "https://www.zpool.ca/api/currencies"
-                        Write-Message -Level Debug "Brain '$Name': Querying $URI"
-                        $CurrenciesData = Invoke-RestMethod -Uri $URI -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-                        $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                        Write-Message -Level Debug "Brain '$Name': Response from $URI received"
-                        if ($CurrenciesData -like "<!DOCTYPE html>*") { $CurrenciesData = $null }
+                        $Request = "https://www.zpool.ca/api/currencies"
+                        Write-Message -Level Debug "Brain '$Name': Querying '$Request'"
+                        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($Config.PoolsConfig.$Name.PoolAPItimeout))
+                        $Response = $HttpClient.GetAsync($Request, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                        # Read response as raw string
+                        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                        Write-Message -Level Debug "Brain '$Name': Response from '$Request' received"
+                        if ($JSONstring -and (Test-Json $JSONstring -ErrorAction Ignore)) { 
+                            # Change numeric string to numbers, some values are null
+                            $CurrenciesData = ($JSONstring -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
+                        } 
                     }
                 }
                 catch { 
                     $APIcallFails ++
-                    $APIerror = $_.Exception.Message
-                    Write-Message -Level Debug "Brain '$Name': Query to $URI failed ($($APIerror | ConvertTo-Json -Compress))"
-                    if ($APIcallFails -lt $PoolConfig.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $PoolConfig.PoolAPIretryInterval)) }
+                    $APIerror = $_.Exception #.Message
+                    Write-Message -Level Debug "Brain '$Name': Query to '$Request' failed ($($APIerror | ConvertTo-Json -Compress))"
+                    if ($APIcallFails -lt $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $Config.PoolsConfig.$Name.PoolAPIretryInterval)) }
                 }
-                Remove-Variable URI -ErrorAction Ignore
+                $CancellationTokenSource.Dispose()
+                Remove-Variable CancellationTokenSource, JSONstring, RequestMessage, Response -ErrorAction Ignore
             } while (-not ($AlgoData -and $CurrenciesData) -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
 
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
             if ($APIcallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://www.zpool.ca/api ($($APIerror | ConvertTo-Json -Compress))"
+                Write-Message -Level Warn "Brain $($Name): Problem when trying to access 'https://www.zpool.ca/api/*' ($($APIerror | ConvertTo-Json -Compress))"
             }
             elseif ($AlgoData -and $CurrenciesData) { 
-                # Change numeric string to numbers, some values are null
-                $AlgoData = ($AlgoData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
-                $CurrenciesData = ($CurrenciesData | ConvertTo-Json) -replace ": `"(\d+\.?\d*)`"", ": `$1" -replace "`": null", "`": 0" | ConvertFrom-Json
 
                 # Add currency and convert to array for easy sorting
                 $CurrenciesArray = [PSCustomObject[]]@()
@@ -100,7 +114,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
 
                     $CurrenciesData.$_ | Add-Member Currency $Currency -Force
                     $CurrenciesData.$_ | Add-Member CoinName ([String]$Session.CoinNames[$Currency]) -Force
-                    $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($PoolConfig.Wallets.$Currency -or -not $CurrenciesData.$_.only_direct))
+                    $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($Config.PoolsConfig.$Name.Wallets.$Currency -or -not $CurrenciesData.$_.only_direct))
 
                     $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
                     $CurrenciesData.$_.PSObject.Properties.Remove("name")
@@ -172,8 +186,8 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                 }
 
                 # Created here for performance optimization, minimize # of lookups
-                $SampleSizets = New-TimeSpan -Minutes $PoolConfig.BrainConfig.SampleSizeMinutes
-                $SampleSizeHalfts = New-TimeSpan -Minutes ($PoolConfig.BrainConfig.SampleSizeMinutes / 2)
+                $SampleSizets = New-TimeSpan -Minutes $Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes
+                $SampleSizeHalfts = New-TimeSpan -Minutes ($Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes / 2)
                 $PoolObjectsSampleSizets = $PoolObjects.Where{ $_.Date -ge ($Timestamp - $SampleSizets) }
                 $PoolObjectsSampleSizeHalfts = $PoolObjects.Where{ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }
                 $GroupAvgSampleSize = $PoolObjectsSampleSizets | Group-Object -Property Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
@@ -187,7 +201,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                     foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where{ $AlgoData.PSObject.Properties.Name -contains $_ }) { 
                     $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }).Median)
                     $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSize.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where{ $_.Name -eq $Algorithm }).Median)
-                    $Penalty = ($PenaltySampleSizeHalf * $PoolConfig.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($PoolConfig.BrainConfig.SampleHalfPower + 1)
+                    $Penalty = ($PenaltySampleSizeHalf * $Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + 1)
                     $CurrentPoolObject = $CurrentPoolObjects.Where{ $_.Name -eq $Algorithm }
                     $Currency = $CurrentPoolObject.currency
                     $LastPrice = [Double]$CurrentPoolObject.estimate_current
@@ -196,7 +210,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                     $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
                     # Reset history if current estimate is not within +/- 1000% of 24hr stat price
                     if ($Stat = Get-Stat -Name $StatName) { 
-                        $Divisor = $PoolConfig.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
+                        $Divisor = $Config.PoolsConfig.$Name.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
                         if ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
                             Remove-Stat -Name $StatName
                             $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
@@ -208,7 +222,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
                 }
                 Remove-Variable Algorithm, AlgorithmNorm, BasePrice, BestCurrency, CurrenciesArray, Currency, CurrentPoolObject, CurrentPoolObjects, DAGdata, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName -ErrorAction Ignore
 
-                if ($PoolConfig.BrainConfig.UseTransferFile -or $Session.Config.PoolsConfig.$Name.BrainDebug) { 
+                if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainDebug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }
@@ -220,7 +234,7 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
             # Limit to only sample size + 10 minutes history
-            $PoolObjects = @($PoolObjects.Where{ $_.Date -ge $Timestamp.AddMinutes( - ($PoolConfig.BrainConfig.SampleSizeMinutes + 10)) })
+            $PoolObjects = @($PoolObjects.Where{ $_.Date -ge $Timestamp.AddMinutes( - ($Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes + 10)) })
         }
         catch { 
             Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
@@ -238,9 +252,9 @@ while ($PoolConfig = $Session.Config.PoolsConfig.$Name) {
         Write-Message -Level Debug "Brain '$Name': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$Name.PSObject.Properties.Name.Count) valid pools."
     }
 
-    while (-not $Session.MyIPaddress -or ($Session.NewMiningStatus -eq "Paused" -and $Timestamp.AddSeconds($Session.Config.Interval) -gt [DateTime]::Now.ToUniversalTime()) -or ($Session.NewMiningStatus -eq "Running" -and ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 3) -le $Session.EndCycleTime)))) { 
+    while (-not $Session.MyIPaddress -or ($Session.NewMiningStatus -eq "Paused" -and $Timestamp.AddSeconds($Session.Config.Interval) -gt [DateTime]::Now.ToUniversalTime()) -or ($Session.NewMiningStatus -eq "Running" -and ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 2) -le $Session.EndCycleTime)))) { 
         Start-Sleep -Milliseconds 250
     }
 }
 
-Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, UserAgent -ErrorAction Ignore
+Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Handler, HttpClient, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, UserAgent -ErrorAction Ignore

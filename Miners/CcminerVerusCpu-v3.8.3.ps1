@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" })) { return }
@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.5.9 is fastest, but has 0.85% miner fee
+    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.6.0 is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -36,7 +36,8 @@ $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm].PoolPorts[0] }
 
 if ($Algorithms) { 
 
-    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
+    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Bottom 1)
+    $Threads = $AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore
 
     $Algorithms.ForEach{ 
         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices[0].Model)-$($_.Algorithm)"
@@ -46,7 +47,7 @@ if ($Algorithms) {
 
             [PSCustomObject]@{ 
                 API         = "CcMiner"
-                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --statsavg 5 --retry-pause 1 --api-bind $MinerAPIPort"
+                Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --threads $Threads --statsavg 5 --retry-pause 1 --api-bind $MinerAPIPort"
                 DeviceNames = $AvailableMinerDevices.Name
                 Fee         = @(0) # Dev fee
                 Name        = $MinerName

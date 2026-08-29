@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -59,7 +59,8 @@ if ($Algorithms) {
     ($Devices | Group-Object -Property Model).ForEach{ 
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
             # $ExcludePools = $_.ExcludePools
@@ -77,7 +78,7 @@ if ($Algorithms) {
 
                     [PSCustomObject]@{ 
                         API         = "Trex"
-                        Arguments   = "$Arguments $(if ($Pool.PoolPorts[1]) { "$(if ($Session.Config.SSLallowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl" } else { "--url stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                        Arguments   = "$Arguments $(if ($Pool.PoolPorts[1]) { "$(if ($Session.Config.SSLallowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "--url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                         DeviceNames = $AvailableMinerDevices.Name
                         Fee         = @(0.01) # Dev fee
                         MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"

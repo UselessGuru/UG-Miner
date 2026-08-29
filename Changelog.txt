@@ -1,3 +1,18 @@
+Changelog UG-Miner 6.8.23 2026/08/29
+====================================
+
+Fixes:
+- Core: Keep pool reasons unique
+
+Improvements:
+- Core: Minor performance improvements
+- Miners: Remove obsolete code & minor performance improvements
+
+Miner changes:
+- SRBMinerMulti-v3.6.0 (update)
+- Wildrig-v0.50.7 (update)
+
+
 Changelog UG-Miner 6.8.22 2026/08/23
 ====================================
 

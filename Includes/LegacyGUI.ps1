@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -2611,10 +2611,9 @@ $LegacyGUIform.Add_FormClosing(
         $Script:FormClosing = $true
 
         if ($Config.LegacyGUI -and $KeyPressed.Key -ne "q") { 
-            if (-not $Session.Config.ShowConsole) { 
-                # If console is not visible there is no user friendly way to end script
-                $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (4 + 32 + 4096))
-                if ($Session.PopupInput -eq 7 <#No#>) { 
+            if ($Session.Config.ShowConsole) { 
+                $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you also want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (3 + 32 + 4096))
+                if ($Session.PopupInput -eq 2 <#Cancel#>) { 
                     $Session.Remove("PopupInput")
                     $Script:FormClosing = $false
                     $_.Cancel = $true
@@ -2622,8 +2621,9 @@ $LegacyGUIform.Add_FormClosing(
                 }
             }
             else { 
-                $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you also want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (3 + 32 + 4096))
-                if ($Session.PopupInput -eq 2 <#Cancel#>) { 
+                # If console is not visible there is no user friendly way to end script
+                $Session.PopupInput = (New-Object -ComObject Wscript.Shell).Popup("Do you want to shut down $($Session.Branding.ProductLabel)?", 0, "$($Session.Branding.ProductLabel)", (4 + 32 + 4096))
+                if ($Session.PopupInput -eq 7 <#No#>) { 
                     $Session.Remove("PopupInput")
                     $Script:FormClosing = $false
                     $_.Cancel = $true

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" })) { return }
@@ -116,7 +116,8 @@ $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
 
 if ($Algorithms) { 
 
-    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
+    $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Bottom 1)
+    $Threads = $AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore
 
     $Algorithms.ForEach{ 
         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$($AvailableMinerDevices[0].Model)-$($_.Algorithm)"
@@ -126,7 +127,7 @@ if ($Algorithms) {
 
             [PSCustomObject]@{ 
                 API         = "CcMiner"
-                Arguments   = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps" } else { "stratum+tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass)$(if ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --hash-meter --threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore) --api-bind $($MinerAPIPort)"
+                Arguments   = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass)$(if ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --hash-meter --threads $Threads --api-bind $MinerAPIPort"
                 DeviceNames = $AvailableMinerDevices.Name
                 Fee         = @(0) # Dev fee
                 Name        = $MinerName

@@ -18,17 +18,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.8.22
-Version date:   2026/08/23
+Version date:   2026/08/29
 #>
 
-# Improved algorithm 'pearlhash' for unlocked CMP 90HX (a lot)
-# Improved algorithm 'pearlhash' for 2000 series GPUs (both efficiency and hashrate)
-# Minor improvements on 'pearlhash' for 4000, 5000 series GPUs
-# Added optional 'pearlhash' kernel for 4070ti, 5070ti (use --pearl-k2)
+# Added AMD RDNA GPUs support for algorithm 'pearlhash'
+# Improved algorithm 'pearlhash' for 2000 series GPUs (also for unlocked CMP 40HX, 50HX)
+# Added optional 'pearlhash' kernel for 2080ti/50HX (use --pearl-k2)
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.5.9/SRBMiner-Multi-3-5-9-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.6.0/SRBMiner-Multi-3-6-0-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -241,7 +240,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
@@ -277,7 +277,7 @@ if ($Algorithms) {
                                         "ethstratumnh" { $Arguments = "$Arguments --esm 2" }
                                     }
                                 }
-                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl" } else { "tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
+                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --wallet $($Pool.User) --password $($Pool.Pass)"
                                 if ($Pool.Name -eq "NiceHash") { $Arguments = "$Arguments --nicehash true" }
                                 if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
                                 if ($_.GpuDualMaxLoss) { $Arguments = "$Arguments --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
@@ -285,7 +285,7 @@ if ($Algorithms) {
                             Remove-Variable Pool
 
                             if ($_.Type -eq "CPU") { 
-                                $Arguments = "$Arguments --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)"
+                                $Arguments = "$Arguments --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore))"
                             }
                             else { 
                                 $Arguments = "$Arguments --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.1" })) { return }
@@ -46,7 +46,8 @@ if ($Algorithms) {
     ($Devices | Group-Object -Property Model).ForEach{ 
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
             $MinMemGiB = $_.MinMemGiB

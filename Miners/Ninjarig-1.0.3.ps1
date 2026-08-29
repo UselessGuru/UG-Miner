@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -39,7 +39,8 @@ if ($Algorithms) {
     ($Devices | Group-Object -Property Model).ForEach{ 
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -49,11 +50,10 @@ if ($Algorithms) {
             foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
                 if ("MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments = "$Arguments --nicehash" }
-                if ($Pool.PoolPorts[1]) { $Arguments = "$Arguments --tls" }
 
                 [PSCustomObject]@{ 
                     API         = "XmRig"
-                    Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port=$MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                    Arguments   = "$($_.Arguments) --url stratum+tcp://$(if ($Pool.PoolPorts[1]) { "$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { "$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port $MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @(0) # Dev fee
                     MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"

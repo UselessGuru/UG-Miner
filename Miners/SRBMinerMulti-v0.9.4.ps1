@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -74,7 +74,8 @@ if ($Algorithms) {
     ($Devices | Group-Object -Property Model).ForEach{ 
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
             if ($_.Algorithm -eq "VertHash" -and ([System.IO.FileInfo]$Session.VertHashDatPath).Length -ne 1283457024) { 
@@ -103,9 +104,10 @@ if ($Algorithms) {
                         "ethstratumnh" { $Arguments = "$Arguments --esm 2"; break }
                         "minerproxy"   { $Arguments = "$Arguments --esm 1" }
                     }
-                    $Arguments = "$Arguments --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
+
+                    $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments --tls true --pool $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments --tls false --pool $($Pool.Host):$($Pool.PoolPorts[0])" }
+                    $Arguments = "$Arguments --wallet $($Pool.User) --password $($Pool.Pass)"
                     if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
-                    if ($Pool.PoolPorts[1]) { $Arguments = "$Arguments --tls true" }
 
                     [PSCustomObject]@{ 
                         API              = "SRBMiner"

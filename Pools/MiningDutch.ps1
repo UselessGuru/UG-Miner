@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 param(
@@ -60,7 +60,7 @@ if ($DivisorMultiplier -and $PriceField) {
             Add-CurrencyAlgorithm -Algorithm $AlgorithmNorm -Currency $Currency
         }
 
-        $Reasons = [System.Collections.Generic.Hashset[String]]::new()
+        $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
         if (-not $PoolConfig.UserName) { [Void]$Reasons.Add("No username") }
         # Sometimes pool returns $null hashrate for all algorithms
         if (-not $Request.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }

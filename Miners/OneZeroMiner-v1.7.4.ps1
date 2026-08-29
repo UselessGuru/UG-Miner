@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 # Performance improvement for CMP 170hx and AMD cards(mostly Vega and Radeon VII)
@@ -53,7 +53,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $MinMemGiB = $_.MinMemGiB
@@ -66,9 +67,9 @@ if ($Algorithms) {
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                        $Arguments = "$($_.Arguments[0]) -o stratum+$(if ($Pool0.PoolPorts[1]) { "ssl" })://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) -w $($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) -p $($Pool0.Pass)"
+                        $Arguments = "$($_.Arguments[0]) -o $(if ($Pool0.PoolPorts[1]) { "+ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "://$($Pool0.Host):$($Pool0.PoolPorts[0])" }) -w $($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) -p $($Pool0.Pass)"
 
-                        if (($_.Algorithms[1])) { $Arguments = "$Arguments$($_.Arguments[1]) --o2 stratum$(if ($Pool1.PoolPorts[1]) { "+ssl" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1) --w2 $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --p2 $($Pool1.Pass)" }
+                        if (($_.Algorithms[1])) { $Arguments = "$Arguments$($_.Arguments[1]) --o2 stratum$(if ($Pool1.PoolPorts[1]) { "+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "://$($Pool1.Host):$($Pool1.PoolPorts[0])" }) --w2 $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --p2 $($Pool1.Pass)" }
 
                         [PSCustomObject]@{ 
                             API         = "OneZero"

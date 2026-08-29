@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" })) { return }
@@ -69,9 +69,9 @@ $Algorithms = @(
     @{ Algorithms = @("EthashSHA256", "HeavyHashKarlsen"); SecondaryAlgorithmPrefix = "karlsen"; Fee = @(0.01, 0.01); MinMemGiB = 0.77; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=abel" }
 #   @{ Algorithms = @("EthashSHA256", "HeavyHashKaspa");   SecondaryAlgorithmPrefix = "kas";     Fee = @(0.01, 0.01); MinMemGiB = 0.77; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=abel" } # ASIC
     @{ Algorithms = @("EthashSHA256", "HeavyHashPyrin");   SecondaryAlgorithmPrefix = "pyrin";   Fee = @(0.01, 0.01); MinMemGiB = 0.77; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=abel" }
-    @{ Algorithms = @("FiroPow", "");                      SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 0.77; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = "^RDNA3$";         ExcludePools = @(@(), @());           Arguments = " --algo=firopow" } # Wildrig-v0.50.3 is fastest on Polaris
+    @{ Algorithms = @("FiroPow", "");                      SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 0.77; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = "^RDNA3$";         ExcludePools = @(@(), @());           Arguments = " --algo=firopow" } # Wildrig-v0.50.7 is fastest on Polaris
     @{ Algorithms = @("FishHash", "");                     SecondaryAlgorithmPrefix = "";        Fee = @(0.01);       MinMemGiB = 0.77; WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";               ExcludePools = @(@("NiceHash"), @()); Arguments = " --algo=ironfish" } # Pools with support at this time are Herominers, Flexpool and Kryptex
-    @{ Algorithms = @("KawPow", "");                       SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 0.77; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=kawpow" } # Wildrig-v0.50.3 is fastest on Polaris
+    @{ Algorithms = @("KawPow", "");                       SecondaryAlgorithmPrefix = "";        Fee = @(0.02);       MinMemGiB = 0.77; WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=kawpow" } # Wildrig-v0.50.7 is fastest on Polaris
     @{ Algorithms = @("HeavyHashKarlsen", "");             SecondaryAlgorithmPrefix = "";        Fee = @(0.01);       MinMemGiB = 2.0;  WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=karlsen" }
 #   @{ Algorithms = @("HeavyHashKaspa", "");               SecondaryAlgorithmPrefix = "";        Fee = @(0.01);       MinMemGiB = 2.0;  WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=kas" } # ASIC
     @{ Algorithms = @("HeavyHashPyrin", "");               SecondaryAlgorithmPrefix = "";        Fee = @(0.01);       MinMemGiB = 2.0;  WarmupTimes = @(60, 15); ExcludeGPUarchitectures = " ";               ExcludePools = @(@(), @());           Arguments = " --algo=pyrin" }
@@ -96,7 +96,8 @@ if ($Algorithms) {
     ($Devices | Group-Object -Property Model).ForEach{ 
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
@@ -120,7 +121,7 @@ if ($Algorithms) {
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                            $Arguments = "$($_.Arguments) --pool_force_ensub --url=$(if ($Pool0.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
+                            $Arguments = "$($_.Arguments) --pool_force_ensub --url=$(if ($Pool0.PoolPorts[1]) { "stratum+ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "stratum+tcp://$($Pool0.Host):$($Pool0.PoolPorts[0])" })"
                             switch ($Pool0.Protocol) { 
                                 "ethstratumnh" { $Arguments = "$Arguments --eth_stratum_mode=nicehash"; break }
                             }
@@ -128,7 +129,7 @@ if ($Algorithms) {
 
                             if ($_.SecondaryAlgorithmPrefix) { 
                                 $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_start"
-                                $Arguments = "$Arguments --url=$(if ($Pool1.PoolPorts[1]) { "stratum+ssl" } else { "stratum+tcp" })://$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                $Arguments = "$Arguments --url=$(if ($Pool1.PoolPorts[1]) { "stratum+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "stratum+tcp://$($Pool1.Host):$($Pool1.PoolPorts[0])" })"
                                 $Arguments = "$Arguments --user=$($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
                                 $Arguments = "$Arguments --pass=$($Pool1.Pass)"
                                 $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_end"

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]|RDNA4" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
@@ -132,7 +132,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
@@ -156,6 +157,7 @@ if ($Algorithms) {
                         if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiB -gt $MinMemGiB }) { 
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.GpuDualMaxLoss) { "-DualMaxLoss $($_.GpuDualMaxLoss)" })"})"
+                            $Threads = $AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore
 
                             $Arguments = ""
                             foreach ($Pool in $Pools) { 
@@ -168,15 +170,15 @@ if ($Algorithms) {
                                         "ethstratumnh" { $Arguments = "$Arguments --esm 2" }
                                     }
                                 }
-                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
+                                $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments --tls true --pool $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments --tls false --pool $($Pool.Host):$($Pool.PoolPorts[0])" }
+                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --wallet $($Pool.User) --password $($Pool.Pass)"
                                 if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
-                                $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments --tls true" } else { "$Arguments --tls false" }
                                 if ($_.GpuDualMaxLoss) { $Arguments = "$Arguments --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
                             }
                             Remove-Variable Pool
 
                             if ($_.Type -eq "CPU") { 
-                                $Arguments = "$Arguments --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)"
+                                $Arguments = "$Arguments --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore))"
                             }
                             else { 
                                 $Arguments = "$Arguments --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"

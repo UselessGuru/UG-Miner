@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") })) { return }
@@ -198,7 +198,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         # Optionally disable dev fee mining, requires change in source code
         # $Fee = If ($Session.Config.DisableMinerFee) { 0 } else { 1 }
@@ -215,7 +216,7 @@ if ($Algorithms) {
                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                     $Arguments = $_.Arguments
-                    if ($_.Type -eq "CPU") { $Arguments = "$Arguments --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" }
+                    if ($_.Type -eq "CPU") { $Arguments = "$Arguments --threads=$Threads" }
                     elseif ("AMD", "INTEL" -contains $_.Type) { $Arguments = "$Arguments --no-cpu --opencl --opencl-platform $($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')" }
                     else { $Arguments = "$Arguments --no-cpu --cuda --cuda-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')" }
                     if (-not $Session.IsLocalAdmin) { $Arguments = "$Arguments --randomx-wrmsr=-1" } #  disable MSR mod
@@ -225,7 +226,7 @@ if ($Algorithms) {
 
                     [PSCustomObject]@{ 
                         API         = "XmRig"
-                        Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --tls" }) --url=$($Pool.Host):$($Pool.PoolPorts.Where{ $null -ne $_ }[-1]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id $RigID --donate-level $Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$($MinerAPIPort) --api-worker-id=$RigID --api-id=$($MinerName) --retries=90 --retry-pause=1"
+                        Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --url=$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { " --url=$($Pool.Host):$($Pool.PoolPorts[0])" }) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id=$RigID --donate-level=$Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$MinerAPIPort --api-worker-id=$RigID --api-id=$MinerName --retries=90 --retry-pause=1"
                         DeviceNames = $AvailableMinerDevices.Name
                         Fee         = @($Fee) # Dev fee
                         MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/api.json"

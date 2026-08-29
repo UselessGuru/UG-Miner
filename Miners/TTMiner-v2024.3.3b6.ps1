@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -94,7 +94,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             # $ExcludePools = $_.ExcludePools
@@ -105,6 +106,7 @@ if ($Algorithms) {
                 if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
 
                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
+                    $Threads = $AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore
 
                     if ("AKA", "ALPH", "ALT", "ARL", "AVS", "BBC", "BCH", "BLACK", "BNBTC", "BTC", "BTRM", "BUT", "CLO", "CLORE", "EGAZ", "EGEM", "ELH", "EPIC", "ETC", "ETHF", "ETHO", "ETHW", "ETI", "ETP", "EVOX", "EVR", "EXP", "FiroPowFIRO", "FITA", "FRENS", "GRAMS", "GSPC", "HVQ", "IRON", "JGC", "KAW", "KCN", "KIIRO", "LAB", "LTR", "MEOW", "MEWC", "NAPI", "NEOX", "NOVO", "OCTA", "PAPRY", "PRCO", "REDE", "RTH", "RTM", "RVN", "RXD", "SATO", "SATOX", "SCC", "SERO", "THOON", "TTM", "UBQ", "VBK", "VEIL", "VKAX", "VTE", "XNA", "YERB", "ZANO", "ZELS", "ZIL", "ZKBTC" -contains $Pool.Currency) { 
                         $Arguments = "$($_.Arguments -replace " -[a|c] \w+") -c $($Pool.Currency)"
@@ -120,9 +122,10 @@ if ($Algorithms) {
                         "ethstratumnh" { $Arguments = "$($Arguments)stratum+"; break }
                         # Default      { $Arguments = "$($Arguments)stratum+" }
                     }
-                    $Arguments = if ($Pool.PoolPorts[1]) { "$($Arguments)ssl://" } else { "$($Arguments)tcp://" }
-                    $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) -u $($Pool.User) -p $($Pool.Pass)"
+                    $Arguments = if ($Pool.PoolPorts[1]) { "$($Arguments)ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$($Arguments)tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }
+                    $Arguments = "$Arguments -u $($Pool.User) -p $($Pool.Pass)"
                     if ($Pool.WorkerName) { $Arguments = "$Arguments -w $($Pool.WorkerName)" }
+                    if ($_.Algorithm -match $Session.RegexAlgoHasDAG) { $Arguments = "$Arguments -daginfo" }
 
                     # Allow more time to build larger DAGs, must use type cast to keep values in $_
                     $WarmupTimes = [UInt16[]]$_.WarmupTimes
@@ -130,7 +133,7 @@ if ($Algorithms) {
 
                     [PSCustomObject]@{ 
                         API         = "EthMiner"
-                        Arguments   = "$Arguments -report-average 5 -report-interval 5$(if ($_.Algorithm -match $Session.RegexAlgoHasDAG) { " -daginfo" }) -b 127.0.0.1:$($MinerAPIPort)$(if ($_.Type -eq "CPU") { " -cpu $AvailableMinerDevices.$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)" } else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x2}:00' -f $_ } -join ',') -cuda-order" })"
+                        Arguments   = "$Arguments -report-average 1 -report-interval 5 -api-bind 127.0.0.1:$($MinerAPIPort)$(if ($_.Type -eq "CPU") { " -cpu $Threads" } else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x2}:00' -f $_ } -join ',') -cuda-order" })"
                         DeviceNames = $AvailableMinerDevices.Name
                         Fee         = $_.Fee # Dev fee
                         MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"

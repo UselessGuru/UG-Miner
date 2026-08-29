@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 param(
@@ -38,16 +38,31 @@ $PayoutCurrency = $PoolConfig.PayoutCurrency
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
 
 $APICallFails = 0
+$Handler = [System.Net.Http.HttpClientHandler]::new()
+$Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator # Equivalent to -SkipCertificateCheck
+$HttpClient = [System.Net.Http.HttpClient]::new($Handler)
 
 do { 
     try { 
         if (-not $Request) { 
-            $Request = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-            if ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($PoolConfig.PoolAPItimeout))
+            $RequestMessage = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/")
+            $RequestMessage.Headers.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
+            $Response = $HttpClient.SendAsync($RequestMessage, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            # Read response as raw string
+            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            $Request = $JSONstring | ConvertFrom-Json
+            if (-not $Request.miningAlgorithms) { $Request = $null }
         }
         if (-not $RequestAlgodetails) { 
-            $RequestAlgodetails = Invoke-RestMethod -Uri "https://api2.nicehash.com/main/api/v2/mining/algorithms/" -Headers @{ "Cache-Control" = "no-cache" } -SkipCertificateCheck -TimeoutSec $PoolConfig.PoolAPItimeout
-            if ($RequestAlgodetails -like "<!DOCTYPE html>*") { $Request = $null }
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($PoolConfig.PoolAPItimeout))
+            $RequestMessage = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, "https://api2.nicehash.com/main/api/v2/mining/algorithms/")
+            $RequestMessage.Headers.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
+            $Response = $HttpClient.SendAsync($RequestMessage, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            # Read response as raw string
+            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            $RequestAlgodetails = $JSONstring | ConvertFrom-Json
+            if (-not $RequestAlgodetails.miningAlgorithms) { $RequestAlgodetails = $null }
         }
     }
     catch { 
@@ -55,6 +70,8 @@ do {
         Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
     }
 } while (-not ($Request -and $RequestAlgodetails) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
+$CancellationTokenSource.Dispose()
+Remove-Variable CancellationTokenSource, Handler, HttpClient, JSONstring, RequestMessage, Response
 
 if ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
     Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://api2.nicehash.com/main/api/v2."
@@ -67,7 +84,7 @@ elseif ($Request.miningAlgorithms) {
         $Currency = if ($Currencies.Count -eq 1) { [String]$Currencies } else { "" }
         $Divisor = 100000000
 
-        $Reasons = [System.Collections.Generic.Hashset[String]]::new()
+        $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
         if (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
         if ($RequestAlgodetails.miningAlgorithms.Where{ $_.Algorithm -eq $Algorithm }.order -eq 0) { [Void]$Reasons.Add("No orders at pool") }
         if ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }

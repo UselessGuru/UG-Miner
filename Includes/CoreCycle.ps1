@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
 Version:        6.8.22
-Version date:   2026/08/23
+Version date:   2026/08/29
 #>
 
 using module .\Include.psm1
@@ -431,50 +431,48 @@ try {
 
                 Remove-Variable PoolsMaxAge
 
-                if ($Pools = Compare-Object -PassThru @([Management.Automation.PSSerializer]::DeSerialize([Management.Automation.PSSerializer]::Serialize($Session.Pools))) @($Session.PoolsNew | Select-Object) -Property Key -IncludeEqual) { 
+                if ($Pools = Compare-Object -PassThru @($Session.Pools | Select-Object) @($Session.PoolsNew | Select-Object) -Property Key -IncludeEqual) { 
                     # Find added & updated pools
                     $Session.PoolsAdded = $Pools.Where{ $_.SideIndicator -eq "=>" }
                     $Session.PoolsUpdated = $Pools.Where{ $_.SideIndicator -eq "==" }
-                    $Session.PoolsUpdated.ForEach{ $_.Reasons = [System.Collections.Generic.SortedSet[String]]::New() }
 
                     # Update existing pools, must not replace pool object. Doing so would break the reference to the miner worker pool
                     $Session.PoolsUpdated.ForEach{ 
                         $Key = $_.Key
                         # Get data from new pool and update existing one
-                        if ($Pool = $Session.PoolsNew.Where{ $_.Key -eq $Key }[0]) { 
-                            $_.Accuracy = $Pool.Accuracy
-                            $_.AlgorithmVariant         = $Pool.AlgorithmVariant
-                            $_.BlockHeight              = $Pool.BlockHeight
-                            $_.CoinName                 = $Pool.CoinName
-                            $_.Currency                 = $Pool.Currency
-                            $_.DAGsizeGiB               = $Pool.DAGsizeGiB
-                            $_.Disabled                 = $Pool.Disabled
-                            $_.EarningsAdjustmentFactor = $Pool.EarningsAdjustmentFactor
-                            $_.Epoch                    = $Pool.Epoch
-                            $_.Fee                      = $Pool.Fee
-                            $_.Host                     = $Pool.Host
-                            $_.Pass                     = $Pool.Pass
-                            $_.Port                     = $Pool.Port
-                            $_.PortSSL                  = $Pool.PortSSL
-                            $_.Price                    = $Pool.Price
-                            $_.Price_Bias               = $Pool.Price_Bias
-                            $_.Reasons                  = $Pool.Reasons
-                            $_.Region                   = $Pool.Region
-                            $_.StablePrice              = $Pool.StablePrice
-                            $_.Updated                  = $Pool.Updated
-                            $_.User                     = $Pool.User
-                            $_.WorkerName               = $Pool.WorkerName
-                            $_.Workers                  = $Pool.Workers
+                        if ($PoolNew = $Session.PoolsNew.Where{ $_.Key -eq $Key }[0]) { 
+                            $_.Accuracy                 = $PoolNew.Accuracy
+                            $_.AlgorithmVariant         = $PoolNew.AlgorithmVariant
+                            $_.BlockHeight              = $PoolNew.BlockHeight
+                            $_.CoinName                 = $PoolNew.CoinName
+                            $_.Currency                 = $PoolNew.Currency
+                            $_.DAGsizeGiB               = $PoolNew.DAGsizeGiB
+                            $_.Disabled                 = $PoolNew.Disabled
+                            $_.EarningsAdjustmentFactor = $PoolNew.EarningsAdjustmentFactor
+                            $_.Epoch                    = $PoolNew.Epoch
+                            $_.Fee                      = $PoolNew.Fee
+                            $_.Host                     = $PoolNew.Host
+                            $_.Pass                     = $PoolNew.Pass
+                            $_.Port                     = $PoolNew.Port
+                            $_.PortSSL                  = $PoolNew.PortSSL
+                            $_.Price                    = $PoolNew.Price
+                            $_.Price_Bias               = $PoolNew.Price_Bias
+                            $_.Reasons                  = $PoolNew.Reasons
+                            $_.Region                   = $PoolNew.Region
+                            $_.StablePrice              = $PoolNew.StablePrice
+                            $_.Updated                  = $PoolNew.Updated
+                            $_.User                     = $PoolNew.User
+                            $_.WorkerName               = $PoolNew.WorkerName
+                            $_.Workers                  = $PoolNew.Workers
                         }
                     }
-                    Remove-Variable Key, Pool -ErrorAction Ignore
+                    Remove-Variable Key, PoolNew -ErrorAction Ignore
 
                     $Pools.ForEach{ 
                         $_.Best = $false
-                        $_.Prioritize = $false
-
                         # PoolPorts[0] = non-SSL, PoolPorts[1] = SSL
                         $_.PoolPorts = $(if ($Session.Config.SSL -ne "Always" -and $_.Port) { [UInt16]$_.Port } else { $null }), $(if ($Session.Config.SSL -ne "Never" -and $_.PortSSL) { [UInt16]$_.PortSSL } else { $null })
+                        $_.Prioritize = $false
                     }
 
                     # Reduce price on older pool data
@@ -546,7 +544,7 @@ try {
                     # Make pools unavailable
                     $Pools.ForEach{ $_.Available = -not $_.Reasons.Count }
                     $PoolsAvailable = $Pools.Where{ $_.Available }
-                    $PoolsNotAvailableCount = $Pools.Where{ -not $_.Available }.Count
+                    $Session.PoolsUnavailable = $Pools.Where{ -not $_.Available }
 
                     # Filter pools on miner set
                     if (-not $Session.Config.UseUnprofitableAlgorithms) { 
@@ -559,7 +557,7 @@ try {
                     if ($PoolsDeconfiguredCount -gt 0) { $Message = "$Message, removed $PoolsDeconfiguredCount deconfigured pool$(if ($PoolsDeconfiguredCount -gt 1) { "s" })" }
                     if ($Session.PoolsAdded.Count -gt 0) { $Message = "$Message, found $($Session.PoolsAdded.Count) new pool$(if ($Session.PoolsAdded.Count -ne 1) { "s" })" }
                     if ($Session.PoolsUpdated.Count -gt 0) { $Message = "$Message, updated $($Session.PoolsUpdated.Count) existing pool$(if ($Session.PoolsUpdated.Count -ne 1) { "s" })" }
-                    if ($PoolsNotAvailableCount -gt 0) { $Message = "$Message, filtered out $PoolsNotAvailableCount pool$(if ($PoolsNotAvailableCount -ne 1) { "s" })" }
+                    if ($PoolsUnavailable.Count -gt 0) { $Message = "$Message, filtered out $PoolsUnavailableCount pool$(if ($PoolsUnavailableCount -ne 1) { "s" })" }
                     $Message = "$($Message). $($PoolsAvailable.Count) available pool$(if ($PoolsAvailable.Count -ne 1) { "s" }) remain$(if ($PoolsAvailable.Count -eq 1) { "s" })."
                     Write-Message -Level Info $Message
                     Remove-Variable Message, PoolsCount
@@ -567,7 +565,7 @@ try {
                     # Keep pool balances alive; force mining at pool even if it is not the best for the algo
                     if ($Session.Config.BalancesKeepAlive -and $Global:BalancesTrackerRunspace -and $Session.PoolsLastEarnings.Count -gt 0 -and $Session.PoolsLastUsed) { 
                         $Session.Config.PoolNamesToKeepBalancesAlive = @()
-                        foreach ($Pool in @($Pools.Where{ $_.Name -notin $Session.Config.BalancesTrackerExcludePool } | Sort-Object -Property Name -Unique)) { 
+                        foreach ($Pool in @($PoolsAvailable.Where{ $_.Name -notin $Session.Config.BalancesTrackerExcludePool } | Sort-Object -Property Name -Unique)) { 
                             if ($Session.PoolsLastEarnings[$Pool.Name] -and $Session.Config.PoolsConfig[$Pool.Name].BalancesKeepAlive -gt 0 -and ([DateTime]::Now.ToUniversalTime() - $Session.PoolsLastEarnings[$Pool.Name]).Days -ge ($Session.Config.PoolsConfig[$Pool.Name].BalancesKeepAlive - 10)) { 
                                 $Session.Config.PoolNamesToKeepBalancesAlive += $Pool.Name
                                 Write-Message -Level Warn "Pool '$($Pool.Name)' prioritized to avoid forfeiting balance (pool would clear balance in 10 days)."
@@ -592,7 +590,7 @@ try {
                 $Session.Pools = $Pools
                 $Session.PoolsBest = $Session.Pools.Where{ $_.Best } | Sort-Object -Property Algorithm
 
-                Remove-Variable Pools, PoolsDeconfiguredCount, PoolsNotAvailableCount -ErrorAction Ignore
+                Remove-Variable Pools, PoolsDeconfiguredCount, PoolsUnavailableCount -ErrorAction Ignore
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -937,20 +935,17 @@ try {
 
         #region Mark miners that will be gone, they will be marked as not available
         # Pre-calculate lookup sets outside the loop to avoid repeating work
-        $AllowedPoolNames = [System.Collections.Generic.HashSet[String]]::new([String[]]$Session.Config.PoolName, [System.StringComparer]::OrdinalIgnoreCase)
+        $AllowedPoolNames = [System.Collections.Generic.SortedSet[String]]::new([String[]]$Session.Config.PoolName, [System.StringComparer]::OrdinalIgnoreCase)
 
         # Threshold date for age check
         $AgeThreshold = $Session.BeginCycleTime.AddDays(-1)
+
         foreach ($Miner in $Miners) { 
             # Default state
             $MustFlagAsUnavailable = $false
 
-            # Any worker pool is unavailable ($false)
-            if ($Miner.Workers.Pool.Available -contains $false) { 
-                $MustFlagAsUnavailable = $true
-            }
             # Updated older than the threshold
-            elseif ($Miner.Updated -lt $AgeThreshold) { 
+            if ($Miner.Updated -lt $AgeThreshold) { 
                 $MustFlagAsUnavailable = $true
             }
             # Check if any worker pools have a variant NOT in the allowed pool names
@@ -963,8 +958,18 @@ try {
                 }
             }
 
-            # Miner has device names that are NOT present in MinerDevices.
             if (-not $MustFlagAsUnavailable) { 
+                # Miner has an unavailable pool
+                foreach ($PoolKey in $Miner.Workers.Pool.Key) { 
+                    if ($PoolKey -in $Session.PoolsUnavailable.Key) { 
+                        $MustFlagAsUnavailable = $true
+                        break
+                    }
+                }
+            }
+
+            if (-not $MustFlagAsUnavailable) { 
+                # Miner has device names that are NOT present in MinerDevices.
                 foreach ($DeviceName in $Miner.DeviceNames) { 
                     if (-not $DeviceMap[$DeviceName]) { 
                         $MustFlagAsUnavailable = $true
@@ -1380,34 +1385,42 @@ try {
                 else { 
                     # Launch prerun if exists
                     $MinerBaseNameVersionDevice_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName_Version_Device)_$($Miner.Algorithms -join "&").bat"
-                    $MinerBaseNameVersion_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName_Version)_$($Miner.Algorithms -join "&").bat"
-                    $MinerBaseName_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName)_$($Miner.Algorithms -join "&").bat"
-                    $Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.Algorithms -join "&").bat"
-                    $Default_PrerunName = ".\Utils\Prerun\default.bat"
                     if ([System.IO.File]::Exists($MinerBaseNameVersionDevice_Algorithm_PrerunName)) { 
                         Write-Message -Level Info "Launching Prerun: $MinerBaseNameVersionDevice_Algorithm_PrerunName"
                         Start-Process $MinerBaseNameVersionDevice_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
                         Start-Sleep -Seconds 2
                     }
-                    elseif ([System.IO.File]::Exists($MinerBaseNameVersion_Algorithm_PrerunName)) { 
-                        Write-Message -Level Info "Launching Prerun: $MinerBaseNameVersion_Algorithm_PrerunName"
-                        Start-Process $MinerBaseNameVersion_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
-                        Start-Sleep -Seconds 2
-                    }
-                    elseif ([System.IO.File]::Exists($MinerBaseName_Algorithm_PrerunName)) { 
-                        Write-Message -Level Info "Launching Prerun: $MinerBaseName_Algorithm_PrerunName"
-                        Start-Process $MinerBaseName_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
-                        Start-Sleep -Seconds 2
-                    }
-                    elseif ([System.IO.File]::Exists($Algorithm_PrerunName)) { 
-                        Write-Message -Level Info "Launching Prerun: $Algorithm_PrerunName"
-                        Start-Process $Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
-                        Start-Sleep -Seconds 2
-                    }
-                    elseif ([System.IO.File]::Exists($Default_PrerunName)) { 
-                        Write-Message -Level Info "Launching Prerun: $Default_PrerunName"
-                        Start-Process $Default_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
-                        Start-Sleep -Seconds 2
+                    else {
+                        $MinerBaseNameVersion_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName_Version)_$($Miner.Algorithms -join "&").bat"
+                        if ([System.IO.File]::Exists($MinerBaseNameVersion_Algorithm_PrerunName)) { 
+                            Write-Message -Level Info "Launching Prerun: $MinerBaseNameVersion_Algorithm_PrerunName"
+                            Start-Process $MinerBaseNameVersion_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                            Start-Sleep -Seconds 2
+                        }
+                        else { 
+                            $MinerBaseName_Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.BaseName)_$($Miner.Algorithms -join "&").bat"
+                            if ([System.IO.File]::Exists($MinerBaseName_Algorithm_PrerunName)) { 
+                                Write-Message -Level Info "Launching Prerun: $MinerBaseName_Algorithm_PrerunName"
+                                Start-Process $MinerBaseName_Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                                Start-Sleep -Seconds 2
+                            }
+                            else { 
+                                $Algorithm_PrerunName = ".\Utils\Prerun\$($Miner.Algorithms -join "&").bat"
+                                if ([System.IO.File]::Exists($Algorithm_PrerunName)) { 
+                                    Write-Message -Level Info "Launching Prerun: $Algorithm_PrerunName"
+                                    Start-Process $Algorithm_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                                    Start-Sleep -Seconds 2
+                                }
+                                else { 
+                                    $Default_PrerunName = ".\Utils\Prerun\default.bat"
+                                    if ([System.IO.File]::Exists($Default_PrerunName)) { 
+                                        Write-Message -Level Info "Launching Prerun: $Default_PrerunName"
+                                        Start-Process $Default_PrerunName -WorkingDirectory ".\Utils\Prerun" -WindowStyle hidden
+                                        Start-Sleep -Seconds 2
+                                    }
+                                }
+                            }
+                        }
                     }
                     Remove-Variable Algorithm_PrerunName, Default_PrerunName, MinerBaseNameVersionDevice_Algorithm_PrerunName, MinerBaseNameVersion_Algorithm_PrerunName, MinerBaseName_Algorithm_PrerunName -ErrorAction Ignore
 

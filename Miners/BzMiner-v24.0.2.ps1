@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 # Xelis support for Nvidia and AMD GPUs
@@ -115,7 +115,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
@@ -139,8 +140,7 @@ if ($Algorithms) {
                                 "ethstratumnh" { "$Arguments -p ethstratum"; break }
                                 default        { "$Arguments -p stratum" }
                             }
-                            $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
-                            $Arguments = "$Arguments$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
+                            $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments+ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool0.Host):$($Pool0.PoolPorts[0])" }
                             $Arguments = "$Arguments -w $($Pool0.User -replace "\..*") --pool_password $($Pool0.Pass) -r $(if ($Pool0.WorkerName) { $Pool0.WorkerName } elseif ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } else { $Session.Config.WorkerName })"
 
                             if ($_.Algorithms[1]) { 
@@ -152,8 +152,7 @@ if ($Algorithms) {
                                     "ethstratumnh" { "$Arguments --p2 ethstratum"; break }
                                     default        { "$Arguments --p2 stratum" }
                                 }
-                                $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
-                                $Arguments = "$Arguments$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
+                                $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool1.Host):$($Pool1.PoolPorts[0])" }
                                 $Arguments = "$Arguments --w2 $($Pool1.User -replace "\..*") --pool_password2 $($Pool1.Pass) --r2 $(if ($Pool1.WorkerName) { $Pool1.WorkerName } elseif ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } else { $Session.Config.WorkerName })"
                             }
 

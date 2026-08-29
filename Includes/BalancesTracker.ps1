@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 using module .\Include.psm1
@@ -115,7 +115,7 @@ do {
             $BalanceObjects = $BalanceObjects.Where{ $_.Unpaid -gt 0 -or $_.Balance -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) }
 
             foreach ($BalanceObject in $BalanceObjects) { 
-                $BalanceDataObjects = @($Session.BalancesData.Where{ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }) | Sort-Object -Property DateTimez
+                $BalanceDataObjects = @($Session.BalancesData.Where{ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }) | Sort-Object -Property DateTime
 
                 # Get threshold currency and value
                 $PayoutThreshold = $BalanceObject.PayoutThreshold

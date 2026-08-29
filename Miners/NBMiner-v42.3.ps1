@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
+Version:        6.8.23
 Version date:   2024/01/29
 #>
 
@@ -51,7 +51,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
@@ -76,8 +77,8 @@ if ($Algorithms) {
                             "ethstratumnh" { $Arguments = "$Arguments --url nicehash"; break }
                             default        { $Arguments = "$Arguments --url stratum" }
                         }
-                        $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
-                        $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --user $($Pool.User) --password $($Pool.Pass)"
+                        $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments+ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }
+                        $Arguments = "$Arguments --user $($Pool.User) --password $($Pool.Pass)"
 
                         # Optionally disable dev fee mining
                         if ($Session.Config.DisableMinerFee) { 

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 param(
@@ -61,7 +61,7 @@ if ($DivisorMultiplier -and $PriceField) {
             Add-CurrencyAlgorithm -Algorithm $AlgorithmNorm -Currency $Currency
         }
 
-        $Reasons = [System.Collections.Generic.Hashset[String]]::new()
+        $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
         if (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
         if ($Request.$Algorithm.hashrate -eq 0 -or $Request.$Algorithm.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
         if ($PoolConfig.PayoutCurrencies -notcontains $PoolConfig.PayoutCurrency) { [Void]$Reasons.Add("Payout currency [$($PoolConfig.PayoutCurrency)] not supported by by pool") }

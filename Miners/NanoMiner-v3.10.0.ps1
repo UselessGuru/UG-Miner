@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or @("AMD", "INTEL") -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"455.23") })) { return }
@@ -71,7 +71,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
@@ -97,9 +98,13 @@ if ($Algorithms) {
                         $Arguments = $_.Arguments
                         $Arguments = if ($Pool.PoolPorts[1] -and $Pool.SSLselfSignedCertificate -ne $true) { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments -pool1 $($Pool.Host):$($Pool.PoolPorts[0]) -useSSL false" }
                         $Arguments = "$Arguments -wallet $($Pool.User)"
-                        if ($_.Type -ne "CPU") { $Arguments = "$Arguments -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach{ '{0:x}' -f $_.$DeviceEnumerator } -join ',')" }
 
-                        if ($_.Type -eq "CPU") { $Arguments = "$Arguments -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $($Session.Config.CPUMiningReserveCPUcore))" }
+                        if ($_.Type -eq "CPU") { 
+                            $Arguments = "$Arguments -cpuThreads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)"
+                        }
+                        else { 
+                            $Arguments = "$Arguments -devices $(($AvailableMinerDevices | Sort-Object -Property Name -Unique).ForEach{ '{0:x}' -f $_.$DeviceEnumerator } -join ',')"
+                        }
                         $Arguments = "$Arguments -mport 0 -webPort $MinerAPIPort -rigName $($Session.Config.PoolsConfig.($Pool.Name).WorkerName) -rigPassword x -checkForUpdates false -noLog true -watchdog false"
 
                         # Apply tuning parameters

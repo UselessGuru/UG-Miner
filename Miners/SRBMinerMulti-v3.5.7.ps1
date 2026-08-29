@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 # Keep algorithms 'progpow_sero', 'progpow_telestai', 'walahash', 'karlsenhashv2' and related dual implementations (these were removed in v3.5.7)
@@ -83,7 +83,8 @@ if ($Algorithms) {
         $MinerDevices = $_.Group
         $Model = $MinerDevices[0].Model
         $Type = $MinerDevices[0].Type
-        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Top 1)
+
+        $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
@@ -119,7 +120,7 @@ if ($Algorithms) {
                                         "ethstratumnh" { $Arguments = "$Arguments --esm 2" }
                                     }
                                 }
-                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl" } else { "tcp" })://$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --wallet $($Pool.User) --password $($Pool.Pass)"
+                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --wallet $($Pool.User) --password $($Pool.Pass)"
                                 if ($Pool.Name -eq "NiceHash") { $Arguments = "$Arguments --nicehash true" }
                                 if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
                                 if ($_.GpuDualMaxLoss) { $Arguments = "$Arguments --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
@@ -127,7 +128,7 @@ if ($Algorithms) {
                             Remove-Variable Pool
 
                             if ($_.Type -eq "CPU") { 
-                                $Arguments = "$Arguments --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore)"
+                                $Arguments = "$Arguments --cpu-threads $($AvailableMinerDevices.CIM.NumberOfLogicalProcessors - $Session.Config.CPUMiningReserveCPUcore))"
                             }
                             else { 
                                 $Arguments = "$Arguments --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 using module .\Includes\Include.psm1
@@ -202,7 +202,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$ShowColumnCoinName = $true, # Show CoinName column in main text window miner overview
     [Parameter (Mandatory = $false)]
-    [Switch]$ShowConsole = $true, # If true UG-Miner will console window will be shown
+    [Switch]$ShowConsole = $true, # If true the UG-Miner console window will be shown
     [Parameter (Mandatory = $false)]
     [Switch]$ShowColumnCurrency = $true, # Show Currency column in main text window miner overview
     [Parameter (Mandatory = $false)]
@@ -320,7 +320,7 @@ $Session.Branding = [PSCustomObject]@{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.22"
+    Version      = [System.Version]"6.8.23"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -712,6 +712,7 @@ $VertHashDatCheckJob = Start-ThreadJob -InitializationScript ([ScriptBlock]::Cre
 Write-Message -Level Verbose "Importing modules... "
 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
 Write-Host "~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -NoNewline
+$ErrorLoadingModules = $false
 try { 
     if ([System.IO.File]::Exists(".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll")) { 
         Add-Type -Path ".\Cache\~OpenCL_$($PSVersionTable.PSVersion.ToString()).dll" -ErrorAction Ignore

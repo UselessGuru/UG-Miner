@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.22
-Version date:   2026/08/23
+Version:        6.8.23
+Version date:   2026/08/29
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -1099,11 +1099,13 @@ function Clear-Miners {
 
 function Clear-Pools { 
 
-    $Session.Pools        = [Pool[]]@()
-    $Session.PoolsAdded   = [Pool[]]@()
-    $Session.PoolsExpired = [Pool[]]@()
-    $Session.PoolsNew     = [Pool[]]@()
-    $Session.PoolsUpdated = [Pool[]]@()
+    $Session.Pools            = [Pool[]]@()
+    $Session.PoolsAdded       = [Pool[]]@()
+    $Session.PoolsBest        = [Pool[]]@()
+    $Session.PoolsExpired     = [Pool[]]@()
+    $Session.PoolsNew         = [Pool[]]@()
+    $Session.PoolsUnavailable = [Pool[]]@()
+    $Session.PoolsUpdated     = [Pool[]]@()
     $Session.Remove("PoolsUpdatedTimestamp")
 }
 
@@ -1280,11 +1282,21 @@ function Get-Rate {
     $Session.AllCurrencies = @(@($Session.Config.FIATcurrency) + @($Session.Config.Wallets.psBase.Keys) + @($Session.Config.ExtraCurrencies) + @($Session.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
 
     try { 
+        $Handler = [System.Net.Http.HttpClientHandler]::new()
+        $Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator
+        $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
+        $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
+
         $Rates = [PSCustomObject]@{ USD = [PSCustomObject]@{ "USD" = 1 } }
 
         # Get FIAT currency exchange rates (Base = USD)
         # The API returns rates as 1 USD = X FIAT. So Price_in_USD = 1 / Rate
-        $FIATexchangeRates = Invoke-RestMethod -Uri "https://api.exchangerate.fun/latest?base=USD" -Method Get
+        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+        $Response = $HttpClient.GetAsync("https://api.exchangerate.fun/latest?base=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
+        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        $FIATexchangeRates = $JSONstring | ConvertFrom-Json
+
+        # $FIATexchangeRates = Invoke-RestMethod -Uri "https://api.exchangerate.fun/latest?base=USD" -Method Get
         foreach ($Currency in $Session.AllCurrencies) { 
             if ($FIATexchangeRates.rates.$Currency -and $Currency -ne "USD") { 
                 $Rates.USD | Add-Member @{ $Currency = 1.0 / [Double]$FIATexchangeRates.rates.$Currency }
@@ -1297,8 +1309,15 @@ function Get-Rate {
         Write-Message -Level Info "Loaded FIAT currency exchange rates from 'https://api.exchangerate.fun'."
         Remove-Variable Currency, FIATexchangeRates -ErrorAction Ignore
 
-        $CoinMarketCapSymbolMap = Invoke-RestMethod -Uri "https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/map" -TimeoutSec 5 -ErrorAction Ignore
-        $CoinMarketCapRatesUSD = Invoke-RestMethod -Uri "https://pro-api.coinmarketcap.com/public-api/v1/simple/price?ids=$(($CoinMarketCapSymbolMap.data.Where{ $_.symbol -in $Session.AllCurrencies}.id | Sort-Object -Unique) -join ',')&convert=USD" -TimeoutSec 5 -ErrorAction Ignore
+        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+        $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/map", $CancellationTokenSource.Token).GetAwaiter().GetResult()
+        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        $CoinMarketCapSymbolMap = $JSONstring | ConvertFrom-Json
+
+        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+        $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/simple/price?ids=$(($CoinMarketCapSymbolMap.data.Where{ $_.symbol -in $Session.AllCurrencies}.id | Sort-Object -Unique) -join ',')&convert=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
+        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        $FIATexchangeRates = $JSONstring | ConvertFrom-Json
 
         $IDmap = @{ }
         $CoinMarketCapSymbolMap.data.ForEach{ $IDmap[[String]($_.id)] = $_.symbol }
@@ -1362,6 +1381,7 @@ function Get-Rate {
         # Trigger next attempt 1 minute before 'normal' refresh
         $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime().AddMinutes($Session.Config.RatesUpdateInterval - 1)
     }
+    Remove-Variable CurrencyDAGdataResponse, Handler, HttpClient, JSONstring, Response -ErrorAction Ignore
 }
 
 function Write-Message { 
@@ -2127,13 +2147,13 @@ function Invoke-TcpRequest {
         [Parameter (Mandatory = $true)]
         [String]$Server,
         [Parameter (Mandatory = $true)]
-        [String]$Port,
+        [Int]$Port,
         [Parameter (Mandatory = $true)]
         [String]$Request,
         [Parameter (Mandatory = $true)]
         [UInt16]$Timeout, # seconds
         [Parameter (Mandatory = $false)]
-        [Boolean]$ReadToEnd = $false
+        [Switch]$ReadToEnd
     )
 
     try { 
@@ -2158,21 +2178,19 @@ function Invoke-TcpRequest {
 
         # 4. Stream aquisition
         $Stream = $Client.GetStream()
-        $Writer = [IO.StreamWriter]::new($Stream)
         $Reader = [IO.StreamReader]::new($Stream)
-        $Writer.AutoFlush = $true
+        $Writer = [IO.StreamWriter]::new($Stream)
         $Writer.WriteLine($Request)
-        $Response = if ($ReadToEnd) { $Reader.ReadToEnd() } else { $Reader.ReadLine() }
+        $Writer.Flush()
+        if ($ReadToEnd) { return $Reader.ReadToEnd() } else { return $Reader.ReadLine() }
     }
-    catch { $Error.Remove($Error[$Error.Count - 1]) }
+    catch { }
     finally { 
-        if ($Reader) { $Reader.Close() }
-        if ($Writer) { $Writer.Close() }
-        if ($Stream) { $Stream.Close() }
-        if ($Client) { $Client.Close(); $Client.Dispose() }
+        if ($null -eq $Reader) { $Reader.Dispose() }
+        if ($null -eq $Writer) { $Writer.Dispose() }
+        if ($null -eq $Stream) { $Stream.Dispose() }
+        if ($null -eq $Client) { $Client.Dispose() }
     }
-
-    return $Response
 }
 
 function Get-CpuId { 
@@ -3008,12 +3026,22 @@ function Update-AllDAGdata {
         [Parameter (Mandatory = $true)]
         [PSCustomObject]$DAGdata
     )
+
+    $Handler = [System.Net.Http.HttpClientHandler]::new()
+    $Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator
+    $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
+    $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
+
     # Update on script start, once every 24hrs or if unable to get data from source on last attempt
     $Url = "https://whattomine.com/coins.json"
     if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
         try { 
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+            $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+
+            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            $CurrencyDAGdataResponse = $JSONstring | ConvertFrom-Json
 
             if ($CurrencyDAGdataResponse.coins.PSObject.Properties.Name) { 
                 $CurrencyDAGdataResponse.coins.PSObject.Properties.Name.Where{ $CurrencyDAGdataResponse.coins.$_.tag -ne "NICEHASH" }.ForEach{ 
@@ -3052,7 +3080,10 @@ function Update-AllDAGdata {
     if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
         try { 
-            $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 5
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+            $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            $CurrencyDAGdataResponse = $JSONstring | ConvertFrom-Json
 
             if ($CurrencyDAGdataResponse) { 
                 $CurrencyDAGdataResponse.PSObject.Properties.Name.ForEach{ 
@@ -3091,13 +3122,16 @@ function Update-AllDAGdata {
     if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from Minerstat
         try { 
-            $CurrencyDAGdataResponse = Invoke-WebRequest -Uri $Url -TimeoutSec 5 # PWSH 6+ no longer supports basic parsing -> parse text
-            if ($CurrencyDAGdataResponse.statuscode -eq 200) { 
-                (($CurrencyDAGdataResponse.Content -split "\n" -replace "`"", "'").Where{ $_ -like "<div class='block' title='Current block height of *" }).ForEach{ 
-                    $Currency = $_ -replace "^<div class='block' title='Current block height of " -replace "'>.*$"
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+            $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+
+            if ($Response.StatusCode -eq 200) { 
+                $CurrencyDAGdataResponse = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                (($CurrencyDAGdataResponse -split "\n" -replace "`"", "'").Where{ $_ -like "*<div class='block' title='Current block height of *" }).ForEach{ 
+                    $Currency = $_ -replace ".+<div class='block' title='Current block height of " -replace "'>.*$"
                     if ($Currency -notin @("ETF")) { 
                         # ETF has invalid DAG data of 444GiB
-                        $BlockHeight = [Math]::Floor(($_ -replace "^<div class='block' title='Current block height of $Currency'>" -replace "</div>"))
+                        $BlockHeight = [Math]::Floor(($_ -replace ".+<div class='block' title='Current block height of $Currency'>" -replace "</div>"))
                         if ($Session.CurrencyAlgorithm[$Currency] -and $BlockHeight -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                             $CurrencyDAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2
                             if ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
@@ -3115,7 +3149,7 @@ function Update-AllDAGdata {
                 Write-Message -Level Info "Loaded DAG data from '$Url'..."
             }
             else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $([Int]$Response.StatusCode) $($Response.StatusCode)."
             }
         }
         catch { 
@@ -3132,8 +3166,11 @@ function Update-AllDAGdata {
             if ($DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from StakeCube block explorer
                 try { 
-                    Write-Message -Level Info "Loading DAG data from '$Url'..."
-                    $CurrencyDAGdataResponse = [UInt64]((Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck).result.height)
+                    $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+                    $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                    $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                    $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).result.height)
+
                     if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch) { 
@@ -3141,6 +3178,7 @@ function Update-AllDAGdata {
                             $CurrencyDAGdata | Add-Member Url $Url -Force
                             $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
                             $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                            Write-Message -Level Info "Loaded DAG data from '$Url'..."
                         }
                         else { 
                             Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
@@ -3163,7 +3201,11 @@ function Update-AllDAGdata {
             if ($DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from PHI block explorer
                 try { 
-                    $CurrencyDAGdataResponse = [Int64](Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck)
+                    $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+                    $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                    $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                    $CurrencyDAGdataResponse = [UInt64]($JSONstring | ConvertFrom-Json)
+
                     if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
                         if ($CurrencyDAGdata.Epoch -ge 0) { 
@@ -3194,9 +3236,13 @@ function Update-AllDAGdata {
             if ($DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from MeowCoin block explorer
                 try { 
-                    $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                    if ([UInt64]($CurrencyDAGdataResponse.block_height) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                        $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.block_height -Currency $Currency -EpochReserve 2
+                    $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+                    $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                    $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                    $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).block_height)
+
+                    if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                        $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                             $CurrencyDAGdata | Add-Member Url $Url -Force
@@ -3223,9 +3269,13 @@ function Update-AllDAGdata {
         if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from Parallax block explorer
             try { 
-                $CurrencyDAGdataResponse = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -SkipCertificateCheck
-                if ([UInt64]($CurrencyDAGdataResponse.total_blocks) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.total_blocks -Currency $Currency -EpochReserve 2
+                $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+                $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).total_blocks)
+
+                if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                     if ($CurrencyDAGdata.Epoch -ge 0) { 
                         $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
                         $CurrencyDAGdata | Add-Member Url $Url -Force
@@ -3273,6 +3323,8 @@ function Update-AllDAGdata {
         $DAGdata = $DAGdata | Get-SortedObject
         $DAGdata | ConvertTo-Json -Depth 5 | Out-File -LiteralPath ".\Data\DAGdata.json" -Force
     }
+
+    Remove-Variable CurrencyDAGdataResponse, Handler, HttpClient, JSONstring, Response -ErrorAction Ignore
 
     return $DAGdata
 }
