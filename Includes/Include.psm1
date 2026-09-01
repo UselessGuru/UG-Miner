@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.23
-Version date:   2026/08/29
+Version:        6.8.24
+Version date:   2026/09/01
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -1296,7 +1296,6 @@ function Get-Rate {
         $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
         $FIATexchangeRates = $JSONstring | ConvertFrom-Json
 
-        # $FIATexchangeRates = Invoke-RestMethod -Uri "https://api.exchangerate.fun/latest?base=USD" -Method Get
         foreach ($Currency in $Session.AllCurrencies) { 
             if ($FIATexchangeRates.rates.$Currency -and $Currency -ne "USD") { 
                 $Rates.USD | Add-Member @{ $Currency = 1.0 / [Double]$FIATexchangeRates.rates.$Currency }
@@ -1317,7 +1316,7 @@ function Get-Rate {
         $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
         $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/simple/price?ids=$(($CoinMarketCapSymbolMap.data.Where{ $_.symbol -in $Session.AllCurrencies}.id | Sort-Object -Unique) -join ',')&convert=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
         $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $FIATexchangeRates = $JSONstring | ConvertFrom-Json
+        $CoinMarketCapRatesUSD = $JSONstring | ConvertFrom-Json
 
         $IDmap = @{ }
         $CoinMarketCapSymbolMap.data.ForEach{ $IDmap[[String]($_.id)] = $_.symbol }
@@ -1635,7 +1634,7 @@ function Update-ConfigFile {
     if (-not $Session.FreshConfig) { 
         $Config.ConfigFileVersion = $Session.Branding.Version.ToString()
         Write-Configuration -Config $Config
-        $Message = "Updated configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' to version $($Session.Branding.Version.ToString())"
+        $Message = "Updated configuration file '$($Session.ConfigFile.Replace("$(Convert-Path ".\")\", ".\"))' to version $($Session.Branding.Version.ToString())."
         if ($Host.Name -match "ConsoleHost|Visual Studio Code Host") { $CursorPosition = $Host.UI.RawUI.CursorPosition }
         Write-Message -Level Verbose $Message
         if ($Host.Name -match "ConsoleHost|Visual Studio Code Host") { 
@@ -2798,7 +2797,7 @@ function Get-CurrencyFromAlgorithm {
         [String]$Algorithm
     )
 
-    # Woraround for 'An error occurred while enumerating through a collection: Collection was modified after the enumerator was instantiated.'
+    # Workaround for 'An error occurred while enumerating through a collection: Collection was modified after the enumerator was instantiated.'
     # [array]... evaluates the keys at that exact millisecond and puts them in a separate, unmodifiable list
     return ([Array]$Session.CurrencyAlgorithm.Keys).Where{ $Session.CurrencyAlgorithm.$_ -eq $Algorithm }
 }
@@ -3024,7 +3023,7 @@ function Update-AllDAGdata {
 
     param (
         [Parameter (Mandatory = $true)]
-        [PSCustomObject]$DAGdata
+        [System.Management.Automation.OrderedHashtable]$DAGdata
     )
 
     $Handler = [System.Net.Http.HttpClientHandler]::new()
@@ -3052,9 +3051,10 @@ function Update-AllDAGdata {
                             if ([UInt64]($CurrencyDAGdataResponse.coins.$_.last_block) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2
                                 if ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
-                                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                                    $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                                    $CurrencyDAGdata.Url     = $Url
+
+                                    $DAGdata.Currency.$Currency = $CurrencyDAGdata
                                 }
                                 else { 
                                     Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
@@ -3063,7 +3063,7 @@ function Update-AllDAGdata {
                         }
                     }
                 }
-                $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
                 Write-Message -Level Info "Loaded DAG data from '$Url'..."
             }
             else { 
@@ -3094,9 +3094,10 @@ function Update-AllDAGdata {
                             if ([UInt64]($CurrencyDAGdataResponse.$Currency.height) -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.$Currency.height -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2
                                 if ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
-                                    $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                                    $CurrencyDAGdata | Add-Member Url $Url -Force
-                                    $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                                    $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                                    $CurrencyDAGdata.Url     = $Url
+
+                                    $DAGdata.Currency.$Currency = $CurrencyDAGdata
                                 }
                                 else { 
                                     Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
@@ -3105,7 +3106,7 @@ function Update-AllDAGdata {
                         }
                     }
                 }
-                $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
                 Write-Message -Level Info "Loaded DAG data from '$Url'..."
             }
             else { 
@@ -3135,9 +3136,10 @@ function Update-AllDAGdata {
                         if ($Session.CurrencyAlgorithm[$Currency] -and $BlockHeight -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                             $CurrencyDAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2
                             if ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
-                                $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                                $CurrencyDAGdata | Add-Member Url $Url -Force
-                                $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
+                                    $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                                    $CurrencyDAGdata.Url     = $Url
+
+                                    $DAGdata.Currency.$Currency = $CurrencyDAGdata
                             }
                             else { 
                                 Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
@@ -3145,7 +3147,7 @@ function Update-AllDAGdata {
                         }
                     }
                 }
-                $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
                 Write-Message -Level Info "Loaded DAG data from '$Url'..."
             }
             else { 
@@ -3174,10 +3176,11 @@ function Update-AllDAGdata {
                     if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch) { 
-                            $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                            $CurrencyDAGdata | Add-Member Url $Url -Force
-                            $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                            $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                            $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                            $CurrencyDAGdata.Url     = $Url
+
+                            $DAGdata.Currency.$Currency = $CurrencyDAGdata
+                            $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
                             Write-Message -Level Info "Loaded DAG data from '$Url'..."
                         }
                         else { 
@@ -3209,10 +3212,11 @@ function Update-AllDAGdata {
                     if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
                         if ($CurrencyDAGdata.Epoch -ge 0) { 
-                            $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                            $CurrencyDAGdata | Add-Member Url $Url -Force
-                            $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                            $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                            $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                            $CurrencyDAGdata.Url     = $Url
+
+                            $DAGdata.Currency.$Currency = $CurrencyDAGdata
+                            $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
                             Write-Message -Level Info "Loaded DAG data from '$Url'..."
                         }
                         else { 
@@ -3244,10 +3248,11 @@ function Update-AllDAGdata {
                     if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch -ge 0) { 
-                            $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                            $CurrencyDAGdata | Add-Member Url $Url -Force
-                            $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                            $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                            $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                            $CurrencyDAGdata.Url     = $Url
+
+                            $DAGdata.Currency.$Currency = $CurrencyDAGdata
+                            $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
                             Write-Message -Level Info "Loaded DAG data from '$Url'..."
                         }
                         else { 
@@ -3277,10 +3282,11 @@ function Update-AllDAGdata {
                 if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                     if ($CurrencyDAGdata.Epoch -ge 0) { 
-                        $CurrencyDAGdata | Add-Member Date ([DateTime]::Now.ToUniversalTime()) -Force
-                        $CurrencyDAGdata | Add-Member Url $Url -Force
-                        $DAGdata.Currency | Add-Member $Currency $CurrencyDAGdata -Force
-                        $DAGdata.Updated | Add-Member $Url ([DateTime]::Now.ToUniversalTime()) -Force
+                        $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                        $CurrencyDAGdata.Url     = $Url
+
+                        $DAGdata.Currency.$Currency = $CurrencyDAGdata
+                        $DAGdata.Updated.$Url       = ([DateTime]::Now.ToUniversalTime())
                         Write-Message -Level Info "Loaded DAG data from '$Url'..."
                     }
                     else { 
@@ -3295,32 +3301,30 @@ function Update-AllDAGdata {
     }
     # }
 
-    if ($DAGdata.Updated.PSObject.Properties.Name.Where{ $DAGdata.Updated.$_ -gt $Session.Timer }) { 
+    if ($DAGdata.Updated.Keys.Where{ $DAGdata.Updated.$_ -gt $Session.Timer }) { 
         # At least one DAG was updated, get maximum DAG size per algorithm
-        $CurrencyDAGdataKeys = @($DAGdata.Currency.PSObject.Properties.Name) # Store as array to avoid error 'An error occurred while enumerating through a collection: Collection was modified; enumeration operation may not execute.'
+        $CurrencyDAGdataKeys = @($DAGdata.Currency.Keys) # Store as array to avoid error 'An error occurred while enumerating through a collection: Collection was modified; enumeration operation may not execute.'
 
         foreach ($Algorithm in @($CurrencyDAGdataKeys.ForEach{ $DAGdata.Currency.$_.Algorithm }) | Select-Object -Unique) { 
-            $DAGdata.Algorithm | Add-Member $Algorithm (
-                [PSCustomObject]@{ 
-                    BlockHeight = [UInt32]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }.ForEach{ $DAGdata.Currency.$_.BlockHeight } | Measure-Object -Maximum).Maximum
-                    DAGsize     = [UInt64]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }.ForEach{ $DAGdata.Currency.$_.DAGsize } | Measure-Object -Maximum).Maximum
-                    Epoch       = [UInt16]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }.ForEach{ $DAGdata.Currency.$_.Epoch } | Measure-Object -Maximum).Maximum
-                }
-            ) -Force
-            $DAGdata.Algorithm.$Algorithm | Add-Member Currency ([String]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm })) -Force
-            $DAGdata.Algorithm.$Algorithm | Add-Member CoinName ([String]($Session.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency])) -Force
+            $DAGdata.Algorithm.$Algorithm = [System.Collections.SortedList]@{ 
+                BlockHeight = [UInt32]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }.ForEach{ $DAGdata.Currency.$_.BlockHeight } | Measure-Object -Maximum).Maximum
+                DAGsize     = [UInt64]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }.ForEach{ $DAGdata.Currency.$_.DAGsize } | Measure-Object -Maximum).Maximum
+                Epoch       = [UInt16]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.Algorithm -eq $Algorithm }.ForEach{ $DAGdata.Currency.$_.Epoch } | Measure-Object -Maximum).Maximum
+            }
+            $DAGdata.Algorithm.$Algorithm.Algorithm = $Algorithm
+            $DAGdata.Algorithm.$Algorithm.Currency = [String]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm })
+            $DAGdata.Algorithm.$Algorithm.CoinName = [String]$Session.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency]
+            $DAGdata.Algorithm.$Algorithm.Updated  = [DateTime]$DAGData.Currency[$DAGdata.Algorithm.$Algorithm.Currency].Updated
+            $DAGdata.Algorithm.$Algorithm.Url      = [String]$DAGData.Currency[$DAGdata.Algorithm.$Algorithm.Currency].Url
         }
 
         # Add default '*' (equal to highest)
-        $DAGdata.Currency | Add-Member "*" (
-            [PSCustomObject]@{ 
-                BlockHeight = [UInt32]($CurrencyDAGdataKeys.ForEach{ $DAGdata.Currency.$_.BlockHeight } | Measure-Object -Maximum).Maximum
-                Currency    = "*"
-                DAGsize     = [UInt64]($CurrencyDAGdataKeys.ForEach{ $DAGdata.Currency.$_.DAGsize } | Measure-Object -Maximum).Maximum
-                Epoch       = [UInt16]($CurrencyDAGdataKeys.ForEach{ $DAGdata.Currency.$_.Epoch } | Measure-Object -Maximum).Maximum
-            }
-        ) -Force
-        $DAGdata = $DAGdata | Get-SortedObject
+        $DAGdata.Currency."*" = [System.Collections.SortedList]@{ 
+            BlockHeight = [UInt32]($CurrencyDAGdataKeys.ForEach{ $DAGdata.Currency.$_.BlockHeight } | Measure-Object -Maximum).Maximum
+            Currency    = "*"
+            DAGsize     = [UInt64]($CurrencyDAGdataKeys.ForEach{ $DAGdata.Currency.$_.DAGsize } | Measure-Object -Maximum).Maximum
+            Epoch       = [UInt16]($CurrencyDAGdataKeys.ForEach{ $DAGdata.Currency.$_.Epoch } | Measure-Object -Maximum).Maximum
+        }
         $DAGdata | ConvertTo-Json -Depth 5 | Out-File -LiteralPath ".\Data\DAGdata.json" -Force
     }
 
@@ -3345,16 +3349,17 @@ function Get-DAGdata {
     if ($Algorithm) { 
         $Epoch = Get-DAGepoch -BlockHeight $BlockHeight -Algorithm $Algorithm -EpochReserve $EpochReserve
 
-        return [PSCustomObject]@{ 
+        return [System.Collections.SortedList]@{ 
             Algorithm   = $Algorithm
             BlockHeight = [UInt32]$BlockHeight
             CoinName    = [String]$Session.CoinNames[$Currency]
+            Currency    = $Currency
             DAGsize     = [UInt64](Get-DAGSize -Epoch $Epoch -Currency $Currency)
             Epoch       = [UInt32]$Epoch
         }
     }
 
-    return [PSCustomObject]@{ }
+    return [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
 }
 
 function Get-DAGsize { 
@@ -3607,7 +3612,7 @@ function Stop-APIserver {
         if ($Session.APIserver.IsListening) { 
             $Session.APIserver.Stop()
             if (-not $Session.MinerBaseAPIport) { $Session.MinerBaseAPIport = 4000 }
-            Write-Message -Level Verbose "Stopped API and web GUI on TCP port $($Session.APIport).$(if (-not $Session.Config.APIport) { " Using TCP port $(if ($Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.Count - 1)" }) for miner API communication." })"
+            Write-Message -Level Verbose "Stopped API and web GUI on TCP port $($Session.APIport). Using TCP port $(if ($Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.Count -eq 1) { $Session.MinerBaseAPIport } else { "range $($Session.MinerBaseAPIport) - $($Session.MinerBaseAPIport + $Session.Devices.Where{ $_.State -ne [DeviceState]::Unsupported }.Count - 1)" }) for miner API communication."
         }
 
         $Session.APIserver.Close()
@@ -3818,7 +3823,7 @@ function Read-Config {
             # Load default pool data
             $Session.PoolData = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
             (Get-ChildItem -Path ".\Data\PoolData_*.json" | Sort-Object -Property BaseName).ForEach{ 
-                $Session.PoolData.$($_.BaseName -replace "PoolData_") = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($_.ResolvedTarget) | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase)
+                $Session.PoolData.$($_.BaseName -replace "PoolData_") = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($_.ResolvedTarget) | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase)
             }
             $Session.PoolBaseNames = @($Session.PoolData.Keys)
             $Session.PoolVariants = @(($Session.PoolBaseNames.ForEach{ $Session.PoolData.$_.Variant.Keys }.Where{ [System.IO.File]::Exists("$PWD\Pools\$(Get-PoolBaseName $_).ps1") }) | Sort-Object -Unique)
@@ -3879,7 +3884,7 @@ function Read-Config {
         $ConfigFromFile = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
         if ([System.IO.File]::Exists($ConfigFile)) { 
             try { 
-                $ConfigFromFile = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Get-SortedObject), [StringComparer]::OrdinalIgnoreCase)
+                $ConfigFromFile = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase)
             }
             catch { }
             if ($ConfigFromFile.Keys.Count -eq 0) { 
@@ -3949,7 +3954,7 @@ function Read-Config {
         if ($PoolsConfigFile -and [System.IO.File]::Exists($PoolsConfigFile)) { 
             try { 
                 [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
-                $Config.PoolsConfig = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable), [StringComparer]::OrdinalIgnoreCase)
+                $Config.PoolsConfig = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($PoolsConfigFile) | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase)
             }
             catch { 
                 $Config.PoolsConfig = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitive sorted hashtable
@@ -3971,15 +3976,16 @@ function Read-Config {
 
     # Read-Config will read and apply configuration if configuration files have changed
     if ([System.IO.File]::Exists($Session.ConfigFile)) { 
-        if ((Get-Item -Path $ConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp -or (Get-Item -Path $PoolsConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp) { 
+        if ((Get-Item -Path $ConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp -or ([System.IO.File]::Exists($Session.PoolsConfigFile) -and (Get-Item -Path $PoolsConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp)) { 
+
+            if ($Session.Config) { Write-Message -Level Verbose "Activating changed configuration..." }
+
             Read-ConfigFiles -ConfigFile $ConfigFile -PoolsConfigFile $PoolsConfigFile
 
             if ($Config.APIport -lt 1024) { 
                 $Config.APIPort = 3990
                 Write-Message -Level Warn "API port in stored configuration is invalid. Will use default TCP port $($Config.APIPort)."
             }
-
-            if ($Session.Config) { Write-Message -Level Verbose "Activated changed configuration." }
 
             if ($Config.IdleDetection -ne $Session.Config.IdleDetection) { 
                 if ($Config.IdleDetection) { 

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.23
-Version date:   2026/08/29
+Version:        6.8.24
+Version date:   2026/09/01
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -2566,7 +2566,7 @@ $LegacyGUIform.KeyPreview = $true
 $LegacyGUIform.Add_Load(
     { 
         # Restore window size
-        if (([System.IO.File]::Exists(".\Config\WindowSettings.json")) -and ($WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable)) { 
+        if (([System.IO.File]::Exists(".\Config\WindowSettings.json")) -and ($WindowSettings = [System.IO.File]::ReadAllLines("$PWD\Config\WindowSettings.json") | ConvertFrom-Json -AsHashtable | Select-Object)) { 
             # Ensure form is displayed inside the available screen space
             if ($WindowSettings.Top -gt 0 -and $WindowSettings.Top -lt [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Height * 0.95) { $LegacyGUIform.Top = $WindowSettings.Top }
             if ($WindowSettings.Left -gt 0 -and $WindowSettings.Left -lt [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Width * 0.95) { $LegacyGUIform.Left = $WindowSettings.Left }

@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.23
-Version date:   2026/08/29
+Version:        6.8.24
+Version date:   2026/09/01
 #>
 
 using module .\Include.psm1
@@ -32,8 +32,8 @@ do {
     $Earnings = @()
 
     # Get pools last earnings
-    $Session.PoolsLastEarnings = if ([System.IO.File]::Exists(".\Data\PoolsLastEarnings.json")) { [System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json | Get-SortedObject }
-    if (-not $Session.PoolsLastEarnings.PSObject.Properties.Name) { $Session.PoolsLastEarnings = @{ } }
+    $Session.PoolsLastEarnings = if ([System.IO.File]::Exists(".\Data\PoolsLastEarnings.json")) { [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastEarnings.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) }
+    if (-not $Session.PoolsLastEarnings.PSObject.Properties.Name) { $Session.PoolsLastEarnings = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) }
 
     # Read existing balance tracker data, use data from last file
     foreach ($Filename in (Get-ChildItem ".\Data\BalancesTrackerData*.json" | Sort-Object -Descending)) { 
@@ -349,7 +349,6 @@ do {
         }
         $Session.BalancesCurrencies = @($Session.Balances.psBase.Keys.ForEach{ $Session.Balances.$_.Currency } | Sort-Object -Unique)
 
-        $Session.PoolsLastEarnings = $Session.PoolsLastEarnings | Get-SortedObject
         $Session.PoolsLastEarnings | ConvertTo-Json | Out-File -LiteralPath ".\Data\PoolsLastEarnings.json" -Force -ErrorAction Ignore
 
         # Build chart data (used in GUI) for last 30 days

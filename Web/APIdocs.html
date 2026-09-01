@@ -16,15 +16,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 Product:        UG-Miner
 File:           API.psm1
-Version:        6.8.23
-Version date:   2026/08/29
+Version:        6.8.24
+Version date:   2026/09/01
 -->
 
 
 <html>
 
 <body style="font-size:20px; ">
-  <h1>UG-Miner API (version 6.1.4)</h1>
+  <h1>UG-Miner API (version 6.1.8)</h1>
 
   API data adn web GUI is available at http://localhost:[API port]/&lt;resource&gt.<br>
   The default API port is 3999. It can be changed by the configuration item 'APIport'.
@@ -93,6 +93,12 @@ Version date:   2026/08/29
   <b><a href="http://localhost:3999/dagdata">/dagdata</a></b>
   <p>Returns the DAG data (algorithms & currencies)</p>
   <br>
+  <b><a href="http://localhost:3999/dagdata/algorithm">/dagadata/algorithm</a></b>
+  <p>Returns the algorithm DAG data</p>
+  <br>
+  <b><a href="http://localhost:3999/dagdata/currency">/dagdata/currency</a></b>
+  <p>Returns the currency DAG data</p>
+  <br>
   <b><a href="http://localhost:3999/devices">/devices</a></b>
   <p>Shows information about all mining devices</p>
   <br>
@@ -104,6 +110,12 @@ Version date:   2026/08/29
   <br>
   <b><a href="http://localhost:3999/devices/unsupported">/devices/unsupported</a></b>
   <p>Shows information about all unsupported mining devices</p>
+  <br>
+  <b><a href="http://localhost:3999/donation/end">/donation/end</a></b>
+  <p>Returns the donation data end time</p>
+  <br>
+  <b><a href="http://localhost:3999/donation/start">/donation/start</a></b>
+  <p>Returns the donation start time</p>
   <br>
   <b><a href="http://localhost:3999/donationdata">/donationdata</a></b>
   <p>Returns the donation data stored in 'Data\DonationData.json'</p>

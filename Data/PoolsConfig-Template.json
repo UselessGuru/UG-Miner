@@ -1,6 +1,7 @@
 // PoolsConfig template
 // For each pool the listed parameters can be set
 
+
 {
   // PoolName must be without pool variant extension, e.g. "ZPool"
   "PoolName": { 
@@ -12,6 +13,13 @@
       "-Ethash(7GiB)",
       "-Neoscrypt"
     ],
+    // For poolsthat use brain (HashCryptos, MiningDutch & ZPool) the listed parameters can be set
+    "BrainConfig": {
+      "Debug": false,
+      "SampleHalfPower": 0,
+      "SampleSizeMinutes": 45,
+      "UseTransferFile": false
+    },
     // Currency: '+[Currency]' to enable currency; '-[Currency]' to disable currency.
     // If '+' is used, then only the explicitly enabled currencies are used; if '-' is used, then all currencies are used except the disabled ones
     // You must not combine '+' and '-' concurrently.

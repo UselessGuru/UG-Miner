@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.23
-Version date:   2026/08/29
+Version:        6.8.24
+Version date:   2026/09/01
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.1.4"
+$APIversion = "6.1.8"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -131,7 +131,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
-                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force -ErrorAction Ignore
+                    $Config.PoolsConfig | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force -ErrorAction Ignore
                     $Mutex.ReleaseMutex()
                 }
             }
@@ -168,7 +168,7 @@ while ($Session.APIversion -and $Server.IsListening) {
 
                 # Attempt to aquire mutex, waiting up to 1 second if necessary
                 if ($Mutex.WaitOne(1000)) { 
-                    $Config.PoolsConfig | Get-SortedObject | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force -ErrorAction Ignore
+                    $Config.PoolsConfig | ConvertTo-Json -Depth 10 | Out-File -LiteralPath $Session.PoolsConfigFile -Force -ErrorAction Ignore
                     $Mutex.ReleaseMutex()
                 }
             }
@@ -277,7 +277,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/functions/config/set" { 
             try { 
-                $TempConfig = ($Key | ConvertFrom-Json -AsHashtable)
+                $TempConfig = ($Key | ConvertFrom-Json -AsHashtable | Select-Object)
                 Write-Configuration -Config $TempConfig
                 $TempConfig.Keys.ForEach{ $Config.$_ = $TempConfig.$_ }
 
@@ -714,6 +714,14 @@ while ($Session.APIversion -and $Server.IsListening) {
             $Data = ConvertTo-Json -Depth 10 $Session.DAGdata
             break
         }
+        "/dagdata/algorithm" { 
+            $Data = ConvertTo-Json -Depth 10 @($Session.DAGdata.Algorithm.Keys.ForEach{ $Session.DAGdata.Algorithm.$_})
+            break
+        }
+        "/dagdata/currency" { 
+            $Data = ConvertTo-Json -Depth 10 @($Session.DAGdata.Currency.Keys.ForEach{ $Session.DAGdata.Currency.$_})
+            break
+        }
         "/devices" { 
             $Data = ConvertTo-Json -Depth 10 @($Session.Devices | Sort-Object -Property Name)
             break
@@ -728,6 +736,14 @@ while ($Session.APIversion -and $Server.IsListening) {
         }
         "/devices/unsupported" { 
             $Data = ConvertTo-Json -Depth 10 @($Session.Devices.Where{ $_.State -eq [DeviceState]::Unsupported } | Sort-Object -Property Name)
+            break
+        }
+        "/donation/end" { 
+            $Data = ConvertTo-Json -Depth 4 $Session.Donation.End
+            break
+        }
+        "/donation/start" { 
+            $Data = ConvertTo-Json -Depth 4 $Session.Donation.Start
             break
         }
         "/donationdata" { 

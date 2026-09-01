@@ -1,3 +1,24 @@
+Changelog UG-Miner 6.8.24 2026/09/01
+====================================
+
+Enhancements:
+- Web GUI: Add 'DAGdata' page
+- Web GUI: Updated font-awesome to version 7.3.1
+
+Fixes:
+- Brain 'MiningDutch': Mitigate 'No data received from pool MiningDutchPlus.' warning messages
+- Core: Run donation only once per day (regression from 6.8.12)
+- Core / Includes.psm1: Function 'Get-Rate' not retrieving all data (regression from v6.8.23)
+
+Improvements:
+- Core: Change $Session.DAGdata to sorted hashtabel for better performance
+- Core / Includes.psm1: Remove obsolete code & minor performance improvements
+
+Miner changes:
+- SRBMinerMulti-v3.6.1 (update)
+- Wildrig-v0.50.7 (update)
+
+
 Changelog UG-Miner 6.8.23 2026/08/29
 ====================================
 

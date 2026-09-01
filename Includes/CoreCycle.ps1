@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
 Version:        6.8.22
-Version date:   2026/08/29
+Version date:   2026/09/01
 #>
 
 using module .\Include.psm1
@@ -235,8 +235,8 @@ try {
         }
 
         if ($Session.Config.Donation -gt 0) { 
-            # Re-randomize donation start and data once per day
-            if (-not $Session.Donation.Start -or (Get-Item -Path "$PWD\Logs\DonationLog.csv" -ErrorAction Ignore).LastWriteTime -lt [DateTime]::Today) { 
+            # Start donation once per day
+            if ($Session.Donation.Start.Date -lt [DateTime]::Today -and ((Get-Item -Path "$PWD\Logs\DonationLog.csv" -ErrorAction Ignore).LastWriteTime).Date -lt [DateTime]::Today) { 
                 # To ensure a full donation period do not donate if remaing time for today is less than donation duration
                 $MinutesRemaining = 1439 - [Math]::Floor([DateTime]::Now.TimeOfDay.TotalMinutes)
                 if ($Session.Config.Donation -lt $MinutesRemaining) { 
@@ -393,6 +393,7 @@ try {
                     }
                 }.Where{ $_.Updated -ge $PoolsMaxAge }.ForEach{ 
                     $Pool = [Pool]$_
+                    $Pool.AlgorithmVariant = $Pool.Algorithm
                     $Pool.CoinName = $Session.CoinNames[$Pool.Currency]
                     $Pool.Fee = if ($Session.Config.IgnorePoolFee -or $Pool.Fee -lt 0 -or $Pool.Fee -gt 1) { 0 } else { $Pool.Fee }
                     $Factor = $Pool.EarningsAdjustmentFactor * (1 - $Pool.Fee)
@@ -411,8 +412,8 @@ try {
                             $Pool.DAGsizeGiB  = $Session.DAGdata.Algorithm.($Pool.Algorithm).DAGsize / 1GB
                             $Pool.Epoch       = $Session.DAGdata.Algorithm.($Pool.Algorithm).Epoch
                         }
+                        if ($Pool.DAGsizeGiB -and $Pool.Algorithm -match $Session.RegexAlgoHasDynamicDAG) { $Pool.AlgorithmVariant = "$($Pool.Algorithm)($([Math]::Ceiling($Pool.DAGsizeGiB))GiB)" }
                     }
-                    $Pool.AlgorithmVariant = if ($Pool.DAGsizeGiB -and $Pool.Algorithm -match $Session.RegexAlgoHasDynamicDAG) { "$($Pool.Algorithm)($([Math]::Ceiling($Pool.DAGsizeGiB))GiB)" } else { $Pool.Algorithm }
                     $Pool
                 }
 

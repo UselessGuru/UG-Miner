@@ -18,16 +18,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.8.22
-Version date:   2026/08/29
+Version date:   2026/09/01
 #>
 
-# Added AMD RDNA GPUs support for algorithm 'pearlhash'
-# Improved algorithm 'pearlhash' for 2000 series GPUs (also for unlocked CMP 40HX, 50HX)
-# Added optional 'pearlhash' kernel for 2080ti/50HX (use --pearl-k2)
+# + Added support for NVIDIA B300 on algorithm 'pearlhash'*
+# + Improved algorithm 'pearlhash' for NVIDIA B200
+# + Improved algorithm 'pearlhash' for unlocked CMP 70HX
+# + Minor improvements on 'pearlhash' for 5000 series GPUs
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.6.0/SRBMiner-Multi-3-6-0-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.6.1/SRBMiner-Multi-3-6-1-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"

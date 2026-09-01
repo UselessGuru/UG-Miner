@@ -1,0 +1,147 @@
+<!-- #include file="/parts/head.html" -->
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h2 id="title" data-navbaractive="navdagdata">DAG data</h2>
+          </div>
+          <div name="add-updatedtimestamp" class="alert alert-info" role="alert">This is the DAG data.</div>
+          <h3>Algorithm DAG data</h3>
+          <table id="dagdataalgorithm" class="table"
+            data-cache="false"
+            data-click-to-select="true"
+            data-cookie="true"
+            data-cookie-id-table="pools"
+            data-cookies-enabled="['bs.table.hiddenColumns', 'bs.table.columns']"
+            data-detail-formatter="detailFormatter"
+            data-detail-view="true"
+            data-disable-control-when-search="true"
+            data-filter-control="true"
+            data-header-style="headerStyleAlignTop"
+            data-icons="icons"
+            data-maintain-meta-data="true"
+            data-reorderable-columns="true"
+            data-response-handler="formatDAGdata"
+            data-show-button-text="true"
+            data-show-columns="true"
+            data-show-columns-toggle-all="true"
+            data-show-refresh="true"
+            data-show-search-clear-button="true"
+            data-show-toggle="true"
+            data-sort-reset="true"
+            data-sort-select-options="true"
+            data-toolbar="#toolbar"
+            data-undefined-text=""
+            data-url="/dagdata/algorithm"
+            >
+            <thead>
+              <tr>
+                <th data-field="Currency" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Currency</th>
+                <th data-field="Algorithm" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Algorithm</th>
+                <th data-field="CoinName" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">CoinName</th>
+                <th data-field="DAGsize" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">DAG size (GiB)</th>
+                <th data-field="Epoch" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Epoch</th>
+                <th data-field="BlockHeight" data-sortable="true" data-filter-strict-search="false">BlockHeight</th>
+                <th data-field="Updated" data-sortable="true" data-filter-strict-search="false">Updated</th>
+                <th data-field="Url" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Url</th>
+              </tr>
+            </thead>
+          </table>
+          <br>
+          <br>
+          <h3>Currency DAG data</h3>
+          <table id="dagdatacurrency" class="table"
+            data-cache="false"
+            data-click-to-select="true"
+            data-cookie="true"
+            data-cookie-id-table="pools"
+            data-cookies-enabled="['bs.table.hiddenColumns', 'bs.table.columns']"
+            data-detail-formatter="detailFormatter"
+            data-detail-view="true"
+            data-disable-control-when-search="true"
+            data-filter-control="true"
+            data-header-style="headerStyleAlignTop"
+            data-icons="icons"
+            data-maintain-meta-data="true"
+            data-reorderable-columns="true"
+            data-response-handler="formatDAGdata"
+            data-show-button-text="true"
+            data-show-columns="true"
+            data-show-columns-toggle-all="true"
+            data-show-refresh="true"
+            data-show-search-clear-button="true"
+            data-show-toggle="true"
+            data-sort-reset="true"
+            data-sort-select-options="true"
+            data-toolbar="#toolbar"
+            data-undefined-text=""
+            data-url="/dagdata/currency"
+            >
+            <thead>
+              <tr>
+                <th data-field="Currency" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Currency</th>
+                <th data-field="Algorithm" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Algorithm</th>
+                <th data-field="CoinName" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">CoinName</th>
+                <th data-field="DAGsize" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">DAG size (GiB)</th>
+                <th data-field="Epoch" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Epoch</th>
+                <th data-field="BlockHeight" data-sortable="true" data-filter-strict-search="false">BlockHeight</th>
+                <th data-field="Updated" data-sortable="true" data-filter-strict-search="false">Updated</th>
+                <th data-field="Url" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Url</th>
+              </tr>
+            </thead>
+          </table>
+<!-- Start of page scripts "dagdata.html" -->
+          <script type="text/javascript">
+
+          function formatDAGdata(data) {
+              // This function can alter the returned data before building the table, formatting it in a way
+              // that is easier to display and manipulate in a table
+
+              $.each(data, function(index, item) {
+                // Format DAG siez to GiB
+                item.DAGsize = formatBytes(item.DAGsize);
+                if (item.Url) item.Url = '<a href="' + item.Url + '" target="_blank">' + item.Url + '</a>';
+                if (item.Updated) item.Updated = formatTimeSince(item.Updated);
+              });
+              return data;
+            };
+
+            $(".table").bootstrapTable({
+              async: "false",
+              autoRefreshInterval: parseInt(Math.max(configrunning.Interval, 30)), // refresh once per interval, at least 30 seconds
+              onColumnSwitch: function() {
+                $("body").css("cursor", "default");
+              },
+              onColumnSwitchAll: function() {
+                $("body").css("cursor", "default");
+              },
+              onCreatedControls: function() {
+                $("body").css("cursor", "wait");
+              },
+              onLoadSuccess: function() {
+                document.getElementsByName("add-updatedtimestamp")[0].innerHTML = document.getElementsByName("add-updatedtimestamp")[0].innerHTML.replace(/\.$| \(information updated.+/, "") + " (information updated " + refreshtimestamp + ").";
+                $("body").css("cursor", "default");
+              },
+              onRefresh: function() {
+                $("body").css("cursor", "wait");
+              },
+              onReorderColumn: function() {
+                $("body").css("cursor", "default");
+              },
+              onToggle: function() {
+                $("body").css("cursor", "default");
+              }
+            });
+
+            $(window).resize(function () {
+              if (window.RT) clearTimeout(window.RT);
+              window.RT = setTimeout(function() {
+                this.location.reload(false); /* false to get page from cache */
+              }, 200);
+            });
+
+            $(document).ready(function () {
+              // Fix, button text is wrong
+              document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
+            });
+
+          </script>
+<!-- End of page scripts "dagdata.html" -->
+<!-- #include file="/parts/foot.html" -->

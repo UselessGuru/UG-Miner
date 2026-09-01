@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.8.23
-Version date:   2026/08/29
+Version:        6.8.24
+Version date:   2026/09/01
 #>
 
 using module ..\Includes\Include.psm1
@@ -29,17 +29,15 @@ using module ..\Includes\Include.psm1
 (Get-Process -Id $PID).PriorityClass = "BelowNormal"
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
+$BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
 $PoolObjects = @()
 $Durations = [TimeSpan[]]@()
-$APICallFails = 0
 
 $Handler = [System.Net.Http.HttpClientHandler]::new()
 $Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator
 $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
 $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
-
-$BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
 while ($Config.PoolsConfig.$Name) { 
 
@@ -143,10 +141,11 @@ while ($Config.PoolsConfig.$Name) {
                             # Keep DAG data data up to date
                             $DAGdata = (Get-DAGData -BlockHeight $CurrenciesData.$Currency.height -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2)
                             if ($DAGdata.Epoch -ge 0) { 
-                                $DAGdata | Add-Member Date ([DateTime]::Now).ToUniversalTime() -Force
-                                $DAGdata | Add-Member Url "https://www.zpool.ca/api/currencies"
-                                $Session.DAGdata.Currency | Add-Member $Currency $DAGdata -Force
-                                $Session.DAGdata.Updated | Add-Member "https://www.zpool.ca/api/currencies" ([DateTime]::Now.ToUniversalTime()) -Force
+                                $DAGdata.Updated = ([DateTime]::Now).ToUniversalTime()
+                                $DAGdata.Url     = "https://www.zpool.ca/api/currencies"
+
+                                $Session.DAGdata.Currency.$Currency = $DAGdata
+                                $Session.DAGdata.Updated."https://www.zpool.ca/api/currencies" = [DateTime]::Now.ToUniversalTime()
                             }
                         }
                         $AlgoData.$Algorithm | Add-Member conversion_supported $CurrenciesData.$Currency.conversion_supported -Force
@@ -222,7 +221,7 @@ while ($Config.PoolsConfig.$Name) {
                 }
                 Remove-Variable Algorithm, AlgorithmNorm, BasePrice, BestCurrency, CurrenciesArray, Currency, CurrentPoolObject, CurrentPoolObjects, DAGdata, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName -ErrorAction Ignore
 
-                if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainDebug) { 
+                if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
                 }
             }
