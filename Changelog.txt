@@ -1,3 +1,7 @@
+Changelog UG-Miner 6.8.25 2026/09/??
+====================================
+
+
 Changelog UG-Miner 6.8.24 2026/09/01
 ====================================
 
@@ -11,7 +15,7 @@ Fixes:
 - Core / Includes.psm1: Function 'Get-Rate' not retrieving all data (regression from v6.8.23)
 
 Improvements:
-- Core: Change $Session.DAGdata to sorted hashtabel for better performance
+- Core: Change $Session.DAGdata to sorted hashtable for better performance
 - Core / Includes.psm1: Remove obsolete code & minor performance improvements
 
 Miner changes:
