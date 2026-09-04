@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
 Version:        6.8.22
-Version date:   2026/09/01
+Version date:   2026/09/04
 #>
 
 using module .\Include.psm1
@@ -204,7 +204,8 @@ try {
             $Session.Config.PowerPricekWh."00:00" = $Session.Config.PowerPricekWh.($Session.Config.PowerPricekWh.psBase.Keys | Sort-Object -Bottom 1)
         }
         $Session.PowerPricekWh = $Session.Config.PowerPricekWh.($Session.Config.PowerPricekWh.psBase.Keys.Where{ $_ -le (Get-Date -Format HH:mm).ToString() } | Sort-Object -Bottom 1)
-        $Session.PowerCostBTCperW = 1 / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency)
+        $Session.PowerPricekWhBTC = $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency)
+        $Session.PowerCostBTCperW = 24 * $Session.PowerPricekWhBTC / 1000
 
         # Core suspended with <Ctrl><Alt>P in MainLoop
         while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -414,6 +415,7 @@ try {
                         }
                         if ($Pool.DAGsizeGiB -and $Pool.Algorithm -match $Session.RegexAlgoHasDynamicDAG) { $Pool.AlgorithmVariant = "$($Pool.Algorithm)($([Math]::Ceiling($Pool.DAGsizeGiB))GiB)" }
                     }
+                    $Session.AlgorithmsLastFound.($Pool.AlgorithmVariant) = [Ordered]@{ PoolName = $Pool.Name; PoolVariant = $Pool.Variant; Updated = $Pool.Updated }
                     $Pool
                 }
 
@@ -721,7 +723,7 @@ try {
                         if ($Stat.Updated -gt $Miner.StatStart) { 
                             Write-Message -Level Info "Saved hashrate for '$($Miner.Name)'$(if ($Miner.Workers.Count -gt 1) { " [$($Worker.Pool.Algorithm)]" }): $(($MinerHashrates.$Algorithm | ConvertTo-Hash) -replace " ")$(if ($Factor -lt 1) { " (adjusted by factor $($Factor.ToString("N3")) [Shares: A$($Sample.$Algorithm[0])|R$($Sample.$Algorithm[1])|I$($Sample.$Algorithm[2])|T$($Sample.$Algorithm[3])])" }) ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" }))$(if ($Miner.Benchmark) { " [Benchmark done]" })."
                             $BenchmarkComplete = $true
-                            $Session.AlgorithmsLastUsed.($Worker.Pool.Algorithm) = @{ Updated = $Stat.Updated; Benchmark = $Miner.Benchmark; MinerName = $Miner.Name }
+                            $Session.AlgorithmsLastMined.($Worker.Pool.Algorithm) = [Ordered]@{ MinerName = $Miner.Name; Benchmark = $Miner.Benchmark; Updated = $Stat.Updated }
                             $Session.PoolsLastUsed.($Worker.Pool.Name) = $Stat.Updated # most likely this will count at the pool to keep balances alive
                         }
                         elseif ($Stat.Week) { 
@@ -762,7 +764,8 @@ try {
             }
         }
         Remove-Variable Miner -ErrorAction Ignore
-        if ($Session.AlgorithmsLastUsed.Values.Updated -gt $Session.BeginCycleTime) { $Session.AlgorithmsLastUsed | ConvertTo-Json | Out-File -LiteralPath ".\Data\AlgorithmsLastUsed.json" -Force }
+        if ($Session.AlgorithmsLastFound.Values.Updated -gt $Session.BeginCycleTime) { $Session.AlgorithmsLastFound | ConvertTo-Json | Out-File -LiteralPath ".\Data\AlgorithmsLastFound.json" -Force }
+        if ($Session.AlgorithmsLastMined.Values.Updated -gt $Session.BeginCycleTime) { $Session.AlgorithmsLastMined | ConvertTo-Json | Out-File -LiteralPath ".\Data\AlgorithmsLastMined.json" -Force }
         if ($Session.MinersLastUsed.Values.Updated -gt $Session.BeginCycleTime) { $Session.MinersLastUsed | ConvertTo-Json | Out-File -LiteralPath ".\Data\MinersLastUsed.json" -Force }
         # Update pools last used data, required for BalancesKeepAlive
         if ($Session.PoolsLastUsed.Values -gt $Session.BeginCycleTime) { $Session.PoolsLastUsed | ConvertTo-Json | Out-File -LiteralPath ".\Data\PoolsLastUsed.json" -Force }
@@ -808,7 +811,6 @@ try {
             ($PoolsAvailable.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|1" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[0][$_.Name] = $_.Group }
             ($PoolsAvailable.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|2" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[1][$_.Name] = $_.Group }
         }
-        Remove-Variable PoolsAvailable -ErrorAction Ignore
 
         $Message = "Loading miners.$(if (-not $Session.Miners) { "<br>This may take a while." }).."
         if (-not $Session.Miners) { 
@@ -846,14 +848,13 @@ try {
                         $Pool = $Workers[$i].Pool
                         [Void]$WorkerStrings.Add("$($Pool.AlgorithmVariant)@$($Pool.Name)")
                     }
+                    $Miner.Remove("Fee")
 
                     $Parts = $Miner.Name.Split('-')
                     $BaseName = $Parts[0] + "-" + $Parts[1] + "-" + $Parts[2]
 
-                    $MinerProperties = $Miner.PSObject.Properties
-                    $MinerProperties.Remove("Fee")
-                    [Void]$MinerProperties.Add([System.Management.Automation.PSNoteProperty]::new("BaseName_Version_Device", $BaseName))
-                    [Void]$MinerProperties.Add([System.Management.Automation.PSNoteProperty]::new("Info", "$BaseName {$($WorkerStrings -join " & ")}$(if ($Parts.Count -gt 4) { " ($($Parts[4]))" })"))
+                    $Miner.BaseName_Version_Device = $BaseName
+                    $Miner.Info = "$BaseName {$($WorkerStrings -join " & ")}$(if ($Parts.Count -gt 4) { " ($($Parts[4]))" })"
                     $Miner -as $Miner.API
                 }
                 catch { 
@@ -864,7 +865,7 @@ try {
                 }
             } | Sort-Object -Property Info
         )
-        Remove-Variable Algorithm, BaseName, i, IsIgnoreFee, Miner, MinerFile, Miners, MinerPools, MinerProperties, Parts, Pool, Worker, Workers, WorkerStrings -ErrorAction Ignore
+        Remove-Variable Algorithm, BaseName, i, IsIgnoreFee, Miner, MinerFile, Miners, MinerPools, Parts, Pool, Worker, Workers, WorkerStrings -ErrorAction Ignore
 
         $DeviceMap = [System.Collections.Generic.Dictionary[String, Object]]::new([System.StringComparer]::OrdinalIgnoreCase)
         foreach ($Device in $Session.EnabledDevices) {
@@ -1337,14 +1338,20 @@ try {
         $Session.MinersBestPerDevice        = $MinersBestPerDevice
         $Session.MinersOptimal              = $MinersOptimal | Sort-Object @{ Expression = { $_.Best }; Descending = $true }, { $_.BaseName_Version_Device.Split('-')[-1] }, @{ Expression = $Bias; Descending = $true }
 
-        $Session.BasePowerCost              = $Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWh / $Session.Rates.BTC.($Session.Config.FIATcurrency)
+        if ($PoolsAvailable) { 
+            if ($Session.AlgorithmsWithoutMiner = @(Compare-Object @($PoolsAvailable.Algorithm | Sort-Object -Unique) @($Miners.Workers.Pool.Algorithm | Sort-Object -Unique) -PassThru).Where{ $_.SideIndicator -eq "=>" }) { 
+                Write-Message -Level Verbose "No miner found for $(if ($Session.AlgorithmsWithoutMiner.Count -ne 1) { "these algorithms" } else { "this algorithm" }): $($Session.AlgorithmsWithoutMiner -join ", " -replace ",([^,]*)$", " &`$1")"
+            }
+        }
+
+        $Session.BasePowerCost              = $Session.PowerConsumptionIdleSystem / 1000 * 24 * $Session.PowerPricekWhBTC
         $Session.PowerConsumptionIdleSystem = (($Session.Config.PowerConsumptionIdleSystem - ($MinersBest.Where{ $_.Type -eq "CPU" } | Measure-Object PowerConsumption -Sum).Sum), 0 | Measure-Object -Maximum).Maximum
 
         $Session.MiningEarnings             = ($MinersBest | Measure-Object Earnings_Bias -Sum).Sum
         $Session.MiningPowerConsumption     = ($MinersBest | Measure-Object PowerConsumption -Sum).Sum
         $Session.MiningPowerCost            = ($MinersBest | Measure-Object PowerCost -Sum).Sum
         $Session.MiningProfit               = ($MinersBest | Measure-Object Profit_Bias -Sum).Sum - $Session.BasePowerCost
-        Remove-Variable Bias, Miners, MinerAvailable, MinersAvailableCount, MinersBest, MinersBestPerDevice, MinersOptimal -ErrorAction Ignore
+        Remove-Variable Bias, Miners, MinerAvailable, MinersAvailableCount, MinersBest, MinersBestPerDevice, MinersOptimal, PoolsAvailable -ErrorAction Ignore
 
         if (-not $Session.MinersBest) { 
             $Message = "No profitable miners - will retry in $($Session.Config.Interval) seconds..."

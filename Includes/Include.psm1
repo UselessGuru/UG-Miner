@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -1271,13 +1271,12 @@ function Stop-BalancesTracker {
         Remove-Variable BalancesTrackerRunspace -Scope Global
     }
 }
-
 function Get-Rate { 
 
     $RatesCacheFileName = "$($Session.MainPath)\Cache\Rates.json"
 
     # Use stored currencies from last run
-    if (-not $Session.BalancesCurrencies -and $Session.Config.BalancesTrackerPollInterval) { $Session.BalancesCurrencies = @($Session.Rates.PSObject.Properties.Name -creplace "^m") }
+    if (-not $Session.BalancesCurrencies -and $Session.Config.BalancesTrackerPollInterval) { $Session.BalancesCurrencies = @($Session.Rates.Keys -creplace "^m") }
 
     $Session.AllCurrencies = @(@($Session.Config.FIATcurrency) + @($Session.Config.Wallets.psBase.Keys) + @($Session.Config.ExtraCurrencies) + @($Session.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
 
@@ -1287,72 +1286,76 @@ function Get-Rate {
         $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
         $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
 
-        $Rates = [PSCustomObject]@{ USD = [PSCustomObject]@{ "USD" = 1 } }
+        $Rates = [System.Collections.SortedList]@{ USD = [System.Collections.SortedList]@{ "USD" = 1 } }
 
         # Get FIAT currency exchange rates (Base = USD)
         # The API returns rates as 1 USD = X FIAT. So Price_in_USD = 1 / Rate
         $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
         $Response = $HttpClient.GetAsync("https://api.exchangerate.fun/latest?base=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
         $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $FIATexchangeRates = $JSONstring | ConvertFrom-Json
+        $FIATexchangeRates = ($JSONstring | ConvertFrom-Json).rates
 
-        foreach ($Currency in $Session.AllCurrencies) { 
-            if ($FIATexchangeRates.rates.$Currency -and $Currency -ne "USD") { 
-                $Rates.USD | Add-Member @{ $Currency = 1.0 / [Double]$FIATexchangeRates.rates.$Currency }
-            }
-        }
-        if (-not $FIATexchangeRates.rates) { 
-            Write-Message -Level Warn "Could not load FIAT currency exchange rates from 'https://api.exchangerate.fun'."
-            return
-        }
-        Write-Message -Level Info "Loaded FIAT currency exchange rates from 'https://api.exchangerate.fun'."
-        Remove-Variable Currency, FIATexchangeRates -ErrorAction Ignore
-
-        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-        $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/map", $CancellationTokenSource.Token).GetAwaiter().GetResult()
-        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $CoinMarketCapSymbolMap = $JSONstring | ConvertFrom-Json
-
-        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-        $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/simple/price?ids=$(($CoinMarketCapSymbolMap.data.Where{ $_.symbol -in $Session.AllCurrencies}.id | Sort-Object -Unique) -join ',')&convert=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
-        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $CoinMarketCapRatesUSD = $JSONstring | ConvertFrom-Json
-
-        $IDmap = @{ }
-        $CoinMarketCapSymbolMap.data.ForEach{ $IDmap[[String]($_.id)] = $_.symbol }
-        $CoinMarketCapRatesUSD.data.ForEach{ 
-            $Rates.USD | Add-Member @{ $IDmap[[String]($_.id)] = [Double]$_.price } -ErrorAction Ignore
-        }
-        Remove-Variable CoinMarketCapSymbolMap, CoinMarketCapRatesUSD, IDmap -ErrorAction Ignore
-
-        if ($Currencies = $Rates.USD.PSObject.Properties.Name) { 
-            # Add mBTC
-            if ($Session.Config.UsemBTC) { 
-                $Currencies += "mBTC"
-                $Rates.USD | Add-Member @{ "mBTC" = [Double]($Rates.USD.BTC / 1000) }
-            }
-
-            $Currencies.Where{ $_ -ne "USD" }.ForEach{ 
-                $Currency = $_
-                $Rates | Add-Member @{ $Currency = [PSCustomObject]@{ } } -ErrorAction Ignore
-                $Rates.USD.PSObject.Properties.Name.ForEach{ 
-                    $Rates.$Currency | Add-Member @{ $_ = [Double]($Rates.USD.$Currency / $Rates.USD.$_) }
+        if ($FIATexchangeRates) { 
+            foreach ($Currency in $Session.AllCurrencies) { 
+                if ($FIATexchangeRates.$Currency -and $Currency -ne "USD") { 
+                    $Rates.USD.$Currency = 1.0 / [Double]$FIATexchangeRates.$Currency
                 }
             }
-            Remove-Variable Currency -ErrorAction Ignore
+            Write-Message -Level Info "Loaded FIAT currency exchange rates from 'https://api.exchangerate.fun'."
+            Remove-Variable Currency, FIATexchangeRates -ErrorAction Ignore
 
-            Write-Message -Level Verbose "Loaded crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies.Where{ $_ -ne "mBTC" } | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
-            if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
-                $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).Where{ $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ }[0]
-                Write-Message -Level Warn "API does not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
-                $Session.Config.FIATcurrency = $FallbackCurrency
-                Remove-Variable FallbackCurrency
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+            $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/map", $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            $CoinMarketCapSymbolMapData = ($JSONstring | ConvertFrom-Json).data
+
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
+            $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/simple/price?ids=$(($CoinMarketCapSymbolMapData.Where{ $_.symbol -in $Session.AllCurrencies}.id | Sort-Object -Unique) -join ',')&convert=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            $CoinMarketCapRatesUSDdata = ($JSONstring | ConvertFrom-Json).data
+
+            $IDmap = @{ }
+            $CoinMarketCapSymbolMapData.ForEach{ 
+                $IDmap[$_.id] = $_.symbol
             }
-            $Session.Rates = $Rates
-            $Session.RefreshTimestamp = (Get-Date -Format "G")
-            $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
-            $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
-            Remove-Variable Currencies, Rates -ErrorAction Ignore
+            $CoinMarketCapRatesUSDdata.ForEach{ 
+                if (-not $Rates.USD.($IDmap[$_.id])) { $Rates.USD.($IDmap[$_.id]) = [Double]$_.price }
+            }
+            Remove-Variable CoinMarketCapSymbolMapData, CoinMarketCapRatesUSDdata, CurrencyDAGdataResponse, Handler, HttpClient, IDmap, JSONstring, Response -ErrorAction Ignore
+
+            if ($Currencies = $Rates.USD.Keys) { 
+                # Add mBTC
+                if ($Session.Config.UsemBTC) { 
+                    $Currencies += "mBTC"
+                    $Rates.USD."mBTC" = [Double]($Rates.USD.BTC / 1000)
+                }
+
+                $Currencies.Where{ $_ -ne "USD" }.ForEach{ 
+                    $Currency = $_
+                    $Rates.$Currency = [System.Collections.SortedList]@{ }
+                    $Rates.USD.Keys.ForEach{ 
+                        $Rates.$Currency.$_ = [Double]($Rates.USD.$Currency / $Rates.USD.$_)
+                    }
+                }
+                Remove-Variable Currency -ErrorAction Ignore
+
+                Write-Message -Level Verbose "Loaded crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies.Where{ $_ -ne "mBTC" } | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
+                if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
+                    $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).Where{ $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ }[0]
+                    Write-Message -Level Warn "API does not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
+                    $Session.Config.FIATcurrency = $FallbackCurrency
+                    Remove-Variable FallbackCurrency
+                }
+                $Session.Rates = $Rates
+                $Session.RefreshTimestamp = (Get-Date -Format "G")
+                $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
+                $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
+                Remove-Variable Currencies, Rates -ErrorAction Ignore
+            }
+        }
+        else { 
+            Write-Message -Level Warn "Could not load FIAT currency exchange rates from 'https://api.exchangerate.fun'."
+            return
         }
     }
     catch { 
@@ -1360,27 +1363,16 @@ function Get-Rate {
 
         if ($RatesCache.PSObject.Properties.Name) { 
             $Session.Rates = $RatesCache
-            if (-not $FIATexchangeRates.rates) { 
-                Write-Message -Level Warn "Could not load FIAT currency exchange rates from 'https://api.exchangerate.fun'. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
-            }
-            else { 
-                Write-Message -Level Warn "Could not load crypto exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
-            }
+            Write-Message -Level Warn "Could not load crypto exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
         }
         else { 
-            if (-not $FIATexchangeRates.rates) { 
-                Write-Message -Level Warn "Could not load FIAT currency exchange rates from 'https://api.exchangerate.fun'."
-            }
-            else { 
-                Write-Message -Level Warn "Could not load crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'."
-            }
+            Write-Message -Level Warn "Could not load crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'."
         }
         Remove-Variable RatesCacheFileName
 
         # Trigger next attempt 1 minute before 'normal' refresh
         $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime().AddMinutes($Session.Config.RatesUpdateInterval - 1)
     }
-    Remove-Variable CurrencyDAGdataResponse, Handler, HttpClient, JSONstring, Response -ErrorAction Ignore
 }
 
 function Write-Message { 
@@ -1394,17 +1386,13 @@ function Write-Message {
         [Boolean]$Console = $true
     )
 
-    # OPTIMIZATION 1: Use O(1) Dictionary lookups instead of scanning arrays via '-contains'
     $Config = $Session.Config
     if (-not $Config.Keys.Count -or $Config.LogLevel.Contains($Level)) { 
 
-        # OPTIMIZATION 2: Skip heavy regex parser if none of the target characters exist in the string
         if ($Message.Contains("`n") -or $Message.Contains("<br>") -or $Message.Contains("&ensp;")) { 
             $Message = $Message -replace "`n|(?:<br>)+|(?:&ensp;)+", " "
         }
 
-        # OPTIMIZATION 3: Check host constraints cleanly bypassing regex validation
-        # Make sure we are in main script
         if ($Console -and ($Host.Name -eq "ConsoleHost" -or $Host.Name -eq "Visual Studio Code Host")) { 
 
             switch ($Level) { 
@@ -1419,23 +1407,17 @@ function Write-Message {
             Write-Host ""
         }
 
-        # OPTIMIZATION 4: Pad log levels using simple string subtraction instead of multi-branch switches
         $PaddedLevel = $Level.PadRight(7)
         $FormattedMessage = "[$PaddedLevel] $(([DateTime]::Now).ToString("yyyy-MM-dd HH:mm:ss")) $Message"
 
-        # UI BLOCK OPTIMIZATION
         if ($null -ne $Session.TextBoxSystemLog) { 
             $SelectionLength = $Session.TextBoxSystemLog.SelectionLength
             $SelectionStart = $Session.TextBoxSystemLog.SelectionStart
 
-            # OPTIMIZATION 5: High-speed Win32 native text pruning (Eradicates 'Select-Object -Last 200')
-            # Manipulating lines via Select-Object redraws the UI and tanks thread speeds. 
-            # Instead, manipulate the raw string buffer directly if it gets too large.
             # Keep only 200 lines, more lines impact performance
             if ($Session.TextBoxSystemLog.Lines.Count -gt 200) { 
                 $TextLength = $Session.TextBoxSystemLog.TextLength
 
-                # High-speed memory slice: skip the first 50 lines to prevent thrashing the UI on every line append
                 $FirstLineIndexToKeep = $Session.TextBoxSystemLog.GetFirstCharIndexFromLine(50)
                 if ($FirstLineIndexToKeep -gt 0) { 
                     $Session.TextBoxSystemLog.Select(0, $FirstLineIndexToKeep)
@@ -1451,7 +1433,6 @@ function Write-Message {
             }
         }
 
-        # FILE I/O BLOCK OPTIMIZATION
         # Get mutex. Mutexes are shared across all threads and processes.
         # This lets us ensure only one thread is trying to write to the file at a time.
         $Mutex = [System.Threading.Mutex]::new($false, "$($Session.Branding.ProductLabel)_LogFile")
@@ -1460,8 +1441,6 @@ function Write-Message {
         if ($Mutex.WaitOne(1000)) { 
             try { 
                 $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
-                # OPTIMIZATION 6: Use native .NET AppendAllText instead of Out-File
-                # Out-File streams with dynamic parameters. This method drops raw text directly into the I/O table.
                 [System.IO.File]::AppendAllText($Session.LogFile, $FormattedMessage + [System.Environment]::NewLine)
             }
             catch { }

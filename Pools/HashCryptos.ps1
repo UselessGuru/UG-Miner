@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 param(
@@ -77,7 +77,7 @@ if ($DivisorMultiplier -and $PriceField) {
             $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
         }
 
-        [PSCustomObject]@{ 
+        @{ 
             Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
             Algorithm                = $AlgorithmNorm
             Currency                 = $Currency
@@ -88,21 +88,21 @@ if ($DivisorMultiplier -and $PriceField) {
             Key                      = $Key
             Name                     = $Name
             Pass                     = "x"
-            Port                     = [UInt16]($Request.$Algorithm.port -split " ")[0]
+            Port                     = ($Request.$Algorithm.port -split " ")[0]
             PortSSL                  = if (($Request.$Algorithm.port -split " ")[2]) { ($Request.$Algorithm.port -split " ")[2] } else { $null }
             PoolUri                  = ""
             Price                    = if ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } else { $Stat.Live }
             Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
             Reasons                  = $Reasons
-            Region                   = [String]$PoolConfig.Region
+            Region                   = $PoolConfig.Region
             SendHashrate             = $false
             SSLselfSignedCertificate = $true
             StablePrice              = $Stat.Week
-            Updated                  = [DateTime]$Request.$Algorithm.Updated
+            Updated                  = $Request.$Algorithm.Updated
             User                     = $Wallet
             Variant                  = $PoolVariant
             WorkerName               = $PoolConfig.WorkerName
-            Workers                  = [UInt]$Request.$Algorithm.workers
+            Workers                  = $Request.$Algorithm.workers
         }
     }
 }

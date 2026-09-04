@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.4.27
-Version date:   2026/09/01
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") })) { return }
@@ -73,7 +73,7 @@ if ($Algorithms) {
                     if ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
                     $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
 
-                    [PSCustomObject]@{ 
+                    @{ 
                         API         = "CcMiner"
                         Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach{ '{0:x}' -f ($_ + 1) }) -join ',')"
                         DeviceNames = $AvailableMinerDevices.Name

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 using module .\Includes\Include.psm1
@@ -316,11 +316,11 @@ $Session.PoolsConfigFile = $ExecutionContext.SessionState.Path.GetUnresolvedProv
 $Session.ErrorLogFile = "$($Session.MainPath)\Logs\$((Get-Item $MyInvocation.MyCommand.Path).BaseName)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
 
 # Branding data
-$Session.Branding = [PSCustomObject]@{ 
+$Session.Branding = @{ 
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.24"
+    Version      = [System.Version]"6.8.25"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -511,25 +511,34 @@ Write-Host "Loaded DAG database" -NoNewline; Write-Host " ✔  ($($Session.DAGda
 # Load PoolsLastUsed data as case insensitive sorted list
 try { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.PoolsLastUsed.psBase.Keys) { 
-    $Session.PoolsLastUsed = @{ }
+    $Session.PoolsLastUsed =  [System.Collections.SortedList]@{ }
 }
 else { 
     Write-Host "Loaded pools last used database" -NoNewline; Write-Host " ✔  ($($Session.PoolsLastUsed.Count) $(if ($Session.PoolsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
-# Load AlgorithmsLastUsed data as case insensitive sorted list
-try { $Session.AlgorithmsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastUsed.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
-if (-not $Session.AlgorithmsLastUsed.psBase.Keys) { 
-    $Session.AlgorithmsLastUsed = @{ }
+# Load AlgorithmsLastFound data as case insensitive sorted list
+try { $Session.AlgorithmsLastFound = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastFound.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+if (-not $Session.AlgorithmsLastFound.psBase.Keys) { 
+    $Session.AlgorithmsLastFound = [System.Collections.SortedList]@{ }
 }
 else { 
-    Write-Host "Loaded algorithms last used database" -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastUsed.Count) $(if ($Session.AlgorithmsLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+    Write-Host "Loaded algorithms last found database" -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastFound.Count) $(if ($Session.AlgorithmsLastFound.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
+}
+
+# Load AlgorithmsLastMined data as case insensitive sorted list
+try { $Session.AlgorithmsLastMined = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastMined.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+if (-not $Session.AlgorithmsLastMined.psBase.Keys) { 
+    $Session.AlgorithmsLastMined = [System.Collections.SortedList]@{ }
+}
+else { 
+    Write-Host "Loaded algorithms last used database" -NoNewline; Write-Host " ✔  ($($Session.AlgorithmsLastMined.Count) $(if ($Session.AlgorithmsLastMined.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 }
 
 # Load MinersLastUsed data as case insensitive sorted list
 try { $Session.MinersLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\MinersLastUsed.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
 if (-not $Session.MinersLastUsed.psBase.Keys) { 
-    $Session.MinersLastUsed = @{ }
+    $Session.MinersLastUsed = [System.Collections.SortedList]@{ }
 }
 else { 
     Write-Host "Loaded miners last used database" -NoNewline; Write-Host " ✔  ($($Session.MinersLastUsed.Count) $(if ($Session.MinersLastUsed.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
@@ -862,7 +871,7 @@ if ([System.IO.File]::Exists(".\Logs\SwitchingLog.csv")) { Get-ChildItem -Path "
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 if ($VertHashDatCheckJob | Wait-Job -Timeout 60 | Receive-Job -Wait -AutoRemoveJob) { 
     [Console]::SetCursorPosition($VertHashDatCursorPosition.X, $VertHashDatCursorPosition.Y)
-    Write-Host " ✔  (checksum ok)" -ForegroundColor Green
+    Write-Host " ✔ (checksum ok)" -ForegroundColor Green
 }
 else { 
     if ([System.IO.File]::Exists($Session.VertHashDatPath)) { 

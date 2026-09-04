@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -50,7 +50,7 @@ $Algorithms = $Algorithms.Where{ -not $_.Algorithms[1] -or $MinerPools[1][$_.Alg
 if ($Algorithms) { 
 
     # Intensities for 2. algorithm
-    $IntensityValues = [PSCustomObject]@{ 
+    $IntensityValues = @{ 
         "Blake2s" = @(10, 20, 30, 40)
     }
 
@@ -135,7 +135,7 @@ if ($Algorithms) {
                                 # Apply tuning parameters
                                 if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
-                                [PSCustomObject]@{ 
+                                @{ 
                                     API         = "EthMiner"
                                     Arguments   = "$Arguments -vmdag 0 -log 0 -wdog 0 -gsi 10 -cdmport $MinerAPIPort -gpus $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:d}' -f ($_ + 1) } -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name

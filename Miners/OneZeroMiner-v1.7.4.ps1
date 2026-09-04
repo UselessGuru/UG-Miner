@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 # Performance improvement for CMP 170hx and AMD cards(mostly Vega and Radeon VII)
@@ -71,7 +71,7 @@ if ($Algorithms) {
 
                         if (($_.Algorithms[1])) { $Arguments = "$Arguments$($_.Arguments[1]) --o2 stratum$(if ($Pool1.PoolPorts[1]) { "+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "://$($Pool1.Host):$($Pool1.PoolPorts[0])" }) --w2 $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --p2 $($Pool1.Pass)" }
 
-                        [PSCustomObject]@{ 
+                        @{ 
                             API         = "OneZero"
                             Arguments   = "$Arguments$(if (($Pool0.PoolPorts[1] -or $Pool1.PoolPorts[1]) -and $Session.Config.SSLallowSelfSignedCertificate) { " --no-cert-validation" }) --api-port $MinerAPIPort --hashrate-avg 5 --disable-telemetry --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                             DeviceNames = $AvailableMinerDevices.Name

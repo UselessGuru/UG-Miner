@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 param(
@@ -80,7 +80,7 @@ if ($DivisorMultiplier -and $PriceField) {
         foreach ($RegionNorm in $Session.Regions[$Session.Config.Region]) { 
             if ($Region = $PoolConfig.Region.Where{ (Get-Region $_) -eq $RegionNorm }) { 
 
-                [PSCustomObject]@{ 
+                @{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
                     Algorithm                = $AlgorithmNorm
                     Currency                 = $Currency
@@ -101,11 +101,11 @@ if ($DivisorMultiplier -and $PriceField) {
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week
-                    Updated                  = [DateTime]$Request.$Algorithm.Updated
+                    Updated                  = $Request.$Algorithm.Updated
                     User                     = "$($PoolConfig.UserName).$($PoolConfig.WorkerName)"
                     Variant                  = $PoolVariant
                     WorkerName               = ""
-                    Workers                  = [UInt]$Request.$Algorithm.workers_shared
+                    Workers                  = $Request.$Algorithm.workers_shared
                 }
                 break
             }

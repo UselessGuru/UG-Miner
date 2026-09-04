@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 # (XEL) Minor performance improvements on 50xx cards
@@ -130,7 +130,7 @@ if ($Algorithms) {
                         # Apply tuning parameters
                         if ($Session.ApplyMinerTweaks -and ($AvailableMinerDevices.Architecture | Sort-Object -Unique) -eq "Pascal" -and $Model -notmatch "^MX\d+") { $Arguments = "$Arguments$($_.Tuning)" }
 
-                        [PSCustomObject]@{ 
+                        @{ 
                             API         = "Rigel"
                             Arguments   = "$Arguments --api-bind 127.0.0.1:$($MinerAPIPort) --no-watchdog --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                             DeviceNames = $AvailableMinerDevices.Name

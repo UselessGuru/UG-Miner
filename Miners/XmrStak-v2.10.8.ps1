@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -122,12 +122,12 @@ if ($Algorithms) {
                     # Note: For fine tuning directly edit the configuration files in the miner binary directory
                     $PoolFileName = [System.Web.HttpUtility]::UrlEncode("PoolConf-$($_.Algorithm)-$($Pool.User)-$($Pool.Pass).txt")
 
-                    $Arguments = [PSCustomObject]@{ 
-                        PoolFile                      = [PSCustomObject]@{ 
+                    $Arguments = @{ 
+                        PoolFile                      = @{ 
                             FileName = $PoolFileName
-                            Content  = [PSCustomObject]@{ 
+                            Content  = @{ 
                                 pool_list = @(
-                                    [PSCustomObject]@{ 
+                                    @{ 
                                         pool_address    = "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
                                         wallet_address  = $Pool.User
                                         pool_password   = $Pool.Pass
@@ -141,9 +141,9 @@ if ($Algorithms) {
                                 currency  = if ($Coins -icontains $Pool.CoinName) { $Pool.CoinName } else { $Currency.($_.Algorithm) }
                             }
                         }
-                        ConfigFile                    = [PSCustomObject]@{ 
+                        ConfigFile                    = @{ 
                             FileName = $ConfigFileName
-                            Content  = [PSCustomObject]@{ 
+                            Content  = @{ 
                                 call_timeout    = 10
                                 retry_time      = 10
                                 giveup_limit    = 0
@@ -173,7 +173,7 @@ if ($Algorithms) {
 
                     if ($AvailableMinerDevices.PlatformId) { $Arguments.ConfigFile.Content | Add-Member "platform_index" (($AvailableMinerDevices | Select-Object PlatformId -Unique).PlatformId) }
 
-                    [PSCustomObject]@{ 
+                    @{ 
                         API         = "Fireice"
                         Arguments   = $Arguments | ConvertTo-Json -Depth 10 -Compress
                         DeviceNames = $AvailableMinerDevices.Name

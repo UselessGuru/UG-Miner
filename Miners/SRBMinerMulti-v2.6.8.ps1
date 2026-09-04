@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]|RDNA4" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
@@ -191,7 +191,7 @@ if ($Algorithms) {
                             # Apply tuning parameters
                             if ($_.Type -eq "CPU" -and -not $Session.ApplyMinerTweaks) { $Arguments = "$Arguments --disable-msr-tweaks" }
 
-                            [PSCustomObject]@{ 
+                            @{ 
                                 API              = "SRBMiner"
                                 Arguments        = "$Arguments --api-rig-name $($Session.Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
                                 DeviceNames      = $AvailableMinerDevices.Name

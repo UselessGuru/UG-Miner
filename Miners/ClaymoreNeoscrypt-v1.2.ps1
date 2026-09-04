@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -and $Session.DriverVersion.CIM.AMD -lt [System.Version]"26.20.15011.10003" })) { return }
@@ -63,7 +63,7 @@ if ($Algorithms) {
                         $Fee = if ($Pool.PoolPorts[1]) { @(2.5) } else { @(2) }
                     }
 
-                    [PSCustomObject]@{ 
+                    @{ 
                         API         = "EthMiner"
                         Arguments   = "$($_.Arguments) -pool $(if ($Pool.PoolPorts[1]) { "stratum+ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) -wal $($Pool.User)$(if ($Pool.Pass) { " -psw $($Pool.Pass)" }) -mport -$MinerAPIPort -di $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                         DeviceNames = $AvailableMinerDevices.Name

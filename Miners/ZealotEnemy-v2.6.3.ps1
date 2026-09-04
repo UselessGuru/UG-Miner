@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -76,7 +76,7 @@ if ($Algorithms) {
                     $Arguments = $_.Arguments
                     if ($AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
 
-                    [PSCustomObject]@{ 
+                    @{ 
                         API         = "Trex"
                         Arguments   = "$Arguments $(if ($Pool.PoolPorts[1]) { "$(if ($Session.Config.SSLallowSelfSignedCertificate) { "--no-cert-verify " })--url stratum+ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "--url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --api-bind 0 --api-bind-http $MinerAPIPort --retry-pause 1 --quiet --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                         DeviceNames = $AvailableMinerDevices.Name

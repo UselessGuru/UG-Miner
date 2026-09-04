@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -109,7 +109,7 @@ if ($Algorithms) {
                     $Arguments = "$Arguments --wallet $($Pool.User) --password $($Pool.Pass)"
                     if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
 
-                    [PSCustomObject]@{ 
+                    @{ 
                         API              = "SRBMiner"
                         Arguments        = "$Arguments --disable-workers-ramp-up --api-rig-name $($Session.Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort --gpu-auto-tune 2 --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                         DeviceNames      = $AvailableMinerDevices.Name

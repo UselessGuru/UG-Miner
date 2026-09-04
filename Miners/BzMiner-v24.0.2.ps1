@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 # Xelis support for Nvidia and AMD GPUs
@@ -163,7 +163,7 @@ if ($Algorithms) {
                             # Apply tuning parameters
                             if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
-                            [PSCustomObject]@{ 
+                            @{ 
                                 API         = "BzMiner"
                                 Arguments   = "$Arguments -v 2 --nc 1 --no_watchdog --avg_hr_ms 1000 --restart_on_disconnect 0 --http_enabled 1 --http_port $MinerAPIPort --enable $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0}:0' -f $_ } -join " ")"
                                 DeviceNames = $AvailableMinerDevices.Name

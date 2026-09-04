@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -51,7 +51,7 @@ if ($Algorithms) {
 
                 if ("MiningPoolHub", "NiceHash" -contains $Pool.Name) { $Arguments = "$Arguments --nicehash" }
 
-                [PSCustomObject]@{ 
+                @{ 
                     API         = "XmRig"
                     Arguments   = "$($_.Arguments) --url stratum+tcp://$(if ($Pool.PoolPorts[1]) { "$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { "$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port $MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                     DeviceNames = $AvailableMinerDevices.Name

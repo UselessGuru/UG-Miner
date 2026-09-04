@@ -1,7 +1,5 @@
 {
-  "Algorithm": [
-    "-YescryptR16"
-  ],
+  "Algorithm": [],
   "AutoExchange": true,
   "BalancesKeepAlive": 90, // Inactive accounts are purged after 90 days
   "BrainConfig": {

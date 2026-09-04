@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
+Version:        6.8.25
 Version date:   2024/01/29
 #>
 
@@ -93,7 +93,7 @@ if ($Algorithms) {
                         # Apply tuning parameters
                         if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
 
-                        [PSCustomObject]@{ 
+                        @{ 
                             API         = "NBMiner"
                             Arguments   = "$Arguments --no-watchdog --api 127.0.0.1:$($MinerAPIPort) --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                             DeviceNames = $AvailableMinerDevices.Name

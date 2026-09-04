@@ -1,6 +1,22 @@
 Changelog UG-Miner 6.8.25 2026/09/??
 ====================================
 
+Changes:
+- Core: Rename '.\Data\AlgorithmsLastUsed.Json' to '.\Data\AlgorithmsLastMined.json'
+
+Enhancements:
+- Balances tracker: Use hashtables for better performance
+- Core: Minor performance improvements
+- Miners: Convert miner definition file output to hashtable for better performance
+- Pools: Convert pool definition file output to hashtable for better performance
+
+Fixes:
+- Pool 'NiceHash': Pool update timestamp not getting updated. Pool data will age incorrectly
+
+Miner changes:
+- CcminerMemeHash-v2.5.5.9 (removed, algorithm not available at any supported pools)
+- Wildrig-v0.50.9.1 (update)
+
 
 Changelog UG-Miner 6.8.24 2026/09/01
 ====================================

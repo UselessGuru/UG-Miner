@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -131,7 +131,7 @@ if ($Algorithms) {
                     $WarmupTimes = [UInt16[]]$_.WarmupTimes
                     $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 5)
 
-                    [PSCustomObject]@{ 
+                    @{ 
                         API         = "EthMiner"
                         Arguments   = "$Arguments -report-average 1 -report-interval 5 -api-bind 127.0.0.1:$($MinerAPIPort)$(if ($_.Type -eq "CPU") { " -cpu $Threads" } else { " -d $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x2}:00' -f $_ } -join ',') -cuda-order" })"
                         DeviceNames = $AvailableMinerDevices.Name

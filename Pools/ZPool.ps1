@@ -79,7 +79,7 @@ if ($PriceField) {
         foreach ($RegionNorm in $Session.Regions[$Session.Config.Region]) { 
             if ($Region = $PoolConfig.Region.Where{ (Get-Region $_) -eq $RegionNorm }) { 
 
-                [PSCustomObject]@{ 
+                @{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
                     Algorithm                = $AlgorithmNorm
                     Currency                 = $Currency
@@ -90,8 +90,8 @@ if ($PriceField) {
                     Key                      = $Key
                     Name                     = $Name
                     Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(if ($Currency) { ",zap=$Currency" })"
-                    Port                     = [UInt16]$Request.$Algorithm.port
-                    PortSSL                  = [UInt16](50000 + $Request.$Algorithm.port)
+                    Port                     = $Request.$Algorithm.port
+                    PortSSL                  = 50000 + [UInt16]($Request.$Algorithm.port)
                     PoolUri                  = "https://zpool.ca/algo/$($Algorithm)"
                     Price                    = if ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } else { $Stat.Live }
                     Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethproxy" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
@@ -100,11 +100,11 @@ if ($PriceField) {
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week
-                    Updated                  = [DateTime]$Request.$Algorithm.Updated
+                    Updated                  = $Request.$Algorithm.Updated
                     User                     = $PoolConfig.Wallets.$PayoutCurrency
                     Variant                  = $PoolVariant
                     WorkerName               = ""
-                    Workers                  = [UInt]$Request.$Algorithm.workers
+                    Workers                  = $Request.$Algorithm.workers
                 }
                 break
             }

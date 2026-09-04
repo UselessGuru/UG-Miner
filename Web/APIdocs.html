@@ -16,15 +16,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 Product:        UG-Miner
 File:           API.psm1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 -->
 
 
 <html>
 
 <body style="font-size:20px; ">
-  <h1>UG-Miner API (version 6.1.8)</h1>
+  <h1>UG-Miner API (version 6.1.10)</h1>
 
   API data adn web GUI is available at http://localhost:[API port]/&lt;resource&gt.<br>
   The default API port is 3999. It can be changed by the configuration item 'APIport'.
@@ -42,8 +42,14 @@ Version date:   2026/09/01
   <b><a href="http://localhost:3999/algorithms">/algorithms</a></b>
   <p>Shows the algorithm mappings used in Get-Algorithm to build normalized algorithm names (defined in '\Data\Algorithms.json')</p>
   <br>
-  <b><a href="http://localhost:3999/algorithms/lastused">/algorithms/lastused</a></b>
-  <p>Date & time when algorithms were last used (data is stored in '\Data\AlgorithmsUsed.json')</p>
+  <b><a href="http://localhost:3999/algorithms/lastfound">/algorithms/lastfound</a></b>
+  <p>Date & time when algorithms were last found (data is stored in '\Data\AlgorithmsFound.json')</p>
+  <br>
+  <b><a href="http://localhost:3999/algorithms/lastmined">/algorithms/lastmined</a></b>
+  <p>Date & time when algorithms were last mined(data is stored in '\Data\AlgorithmsMined.json')</p>
+  <br>
+  <b><a href="http://localhost:3999/algorithms/withoutminer">/algorithms/withoutminer</a></b>
+  <p>Lost of all available algorithms for which no miner exists</p>
   <br>
   <b><a href="http://localhost:3999/allcurrencies">/allcurrencies</a></b>
   <p>Returns the list of all currencies (main currency, extra currency and all currencies from balances)</p>

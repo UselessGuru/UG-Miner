@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" })) { return }
@@ -28,7 +28,7 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.6.0 is fastest, but has 0.85% miner fee
+    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.6.2 is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -45,7 +45,7 @@ if ($Algorithms) {
         $ExcludePools = $_.ExcludePools
         foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name }) { 
 
-            [PSCustomObject]@{ 
+            @{ 
                 API         = "CcMiner"
                 Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --threads $Threads --statsavg 5 --retry-pause 1 --api-bind $MinerAPIPort"
                 DeviceNames = $AvailableMinerDevices.Name

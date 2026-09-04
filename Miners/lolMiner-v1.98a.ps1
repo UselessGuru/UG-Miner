@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
@@ -192,7 +192,7 @@ if ($Algorithms) {
                                     $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments --dualtls on" } else { "$Arguments --dualtls off" }
                                 }
 
-                                [PSCustomObject]@{ 
+                                @{ 
                                     API         = "lolMiner"
                                     Arguments   = "$Arguments --log off --apiport $MinerAPIPort --shortstats 1 --longstats 5 --digits 6 --watchdog exit --dns-over-https 1 --devicesbypcie --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0}:0' -f $_ } -join ',')"
                                     DeviceNames = $AvailableMinerDevices.Name

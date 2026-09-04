@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 param(
@@ -44,88 +44,92 @@ $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
 
 do { 
     try { 
-        if (-not $Request) { 
+        if (-not $RequestInfo) { 
             $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($PoolConfig.PoolAPItimeout))
             $RequestMessage = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/")
             $RequestMessage.Headers.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
             $Response = $HttpClient.SendAsync($RequestMessage, $CancellationTokenSource.Token).GetAwaiter().GetResult()
             # Read response as raw string
             $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            $Request = $JSONstring | ConvertFrom-Json
-            if (-not $Request.miningAlgorithms) { $Request = $null }
+            $RequestInfo = ($JSONstring | ConvertFrom-Json).miningAlgorithms
+            if (-not $RequestInfo) { $RequestInfo = $null }
         }
-        if (-not $RequestAlgodetails) { 
+        if (-not $RequestAlgorithms) { 
             $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($PoolConfig.PoolAPItimeout))
             $RequestMessage = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, "https://api2.nicehash.com/main/api/v2/mining/algorithms/")
             $RequestMessage.Headers.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
             $Response = $HttpClient.SendAsync($RequestMessage, $CancellationTokenSource.Token).GetAwaiter().GetResult()
             # Read response as raw string
             $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            $RequestAlgodetails = $JSONstring | ConvertFrom-Json
-            if (-not $RequestAlgodetails.miningAlgorithms) { $RequestAlgodetails = $null }
+            $RequestAlgorithms = ($JSONstring | ConvertFrom-Json).miningAlgorithms
+            if (-not $RequestAlgorithms) { $RequestAlgorithms = $null }
         }
     }
     catch { 
         $APICallFails ++
         Start-Sleep -Seconds ($APICallFails * 5 + $PoolConfig.PoolAPIretryInterval)
     }
-} while (-not ($Request -and $RequestAlgodetails) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
+} while (-not ($RequestInfo -and $RequestAlgorithms) -and $APICallFails -le $Session.Config.PoolAPIallowedFailureCount)
 $CancellationTokenSource.Dispose()
 Remove-Variable CancellationTokenSource, Handler, HttpClient, JSONstring, RequestMessage, Response
 
 if ($APICallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
     Write-Message -Level Warn "Error '$($_.Exception.Message)' when trying to access https://api2.nicehash.com/main/api/v2."
 }
-elseif ($Request.miningAlgorithms) { 
-    $Request.miningAlgorithms.ForEach{ 
+elseif ($RequestInfo) { 
+    $Timestamp = [DateTime]::Now.ToUniversalTime()
+
+    $RequestInfo.ForEach{ 
         $Algorithm = $_.Algorithm
-        $AlgorithmNorm = Get-Algorithm $Algorithm
-        $Currencies = Get-CurrencyFromAlgorithm $AlgorithmNorm
-        $Currency = if ($Currencies.Count -eq 1) { [String]$Currencies } else { "" }
-        $Divisor = 100000000
+        if ($RequestAlgorithm = $RequestAlgorithms.Where{ $_.algorithm -eq $Algorithm }) { 
+            $AlgorithmNorm = Get-Algorithm $Algorithm
+            $Currencies = Get-CurrencyFromAlgorithm $AlgorithmNorm
+            $Currency = if ($Currencies.Count -eq 1) { [String]$Currencies } else { "" }
+            $Divisor = 100000000
+            $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
+            if (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
+            if ($RequestAlgorithm.enabled -eq $false) { [Void]$Reasons.Add("Disabled at pool") }
+            if ($RequestAlgorithm.order -eq 0) { [Void]$Reasons.Add("No orders at pool") }
+            if ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
 
-        $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-        if (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
-        if ($RequestAlgodetails.miningAlgorithms.Where{ $_.Algorithm -eq $Algorithm }.order -eq 0) { [Void]$Reasons.Add("No orders at pool") }
-        if ($_.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+            $Key = "$($Name)_$($AlgorithmNorm)"
+            $Value = [Double]$_.paying / $Divisor
 
-        $Key = "$($Name)_$($AlgorithmNorm)"
-        $Value = [Double]$_.paying / $Divisor
+            $Stat = Get-Stat -Name "$($Key)_Profit"
+            if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
+                [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
+            }
+            else { 
+                $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
+            }
 
-        $Stat = Get-Stat -Name "$($Key)_Profit"
-        if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-            [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
-        }
-        else { 
-            $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
-        }
-
-        [PSCustomObject]@{ 
-            Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Minute_5_Fluctuation), 1) # Use short timespan to counter price spikes
-            Algorithm                = $AlgorithmNorm
-            Currency                 = $Currency
-            Disabled                 = $Stat.Disabled
-            EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-            Fee                      = $Fee
-            Host                     = "$Algorithm.$PoolHost".ToLower()
-            Key                      = $Key
-            Name                     = $Name
-            Pass                     = "x"
-            Port                     = 9200
-            PortSSL                  = 443
-            PoolUri                  = "https://www.nicehash.com/algorithm/$($_.Algorithm.ToLower())"
-            Price                    = if ($null -eq $_.paying) { [Double]::NaN } else { $Stat.Live }
-            Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratumnh" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
-            Region                   = [String]$PoolConfig.Region
-            Reasons                  = $Reasons
-            SendHashrate             = $false
-            SSLselfSignedCertificate = $false
-            StablePrice              = $Stat.Week
-            Updated                  = [DateTime]$Stat.Updated
-            User                     = "$($PoolConfig.Wallets.$PayoutCurrency).$($PoolConfig.WorkerName)"
-            Variant                  = $Name
-            WorkerName               = ""
-            Workers                  = $null
+            @{ 
+                Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Minute_5_Fluctuation), 1) # Use short timespan to counter price spikes
+                Algorithm                = $AlgorithmNorm
+                Currency                 = $Currency
+                Disabled                 = $Stat.Disabled
+                EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
+                Fee                      = $Fee
+                Host                     = "$Algorithm.$PoolHost".ToLower()
+                Key                      = $Key
+                Name                     = $Name
+                Pass                     = "x"
+                Port                     = 9200
+                PortSSL                  = 443
+                PoolUri                  = "https://www.nicehash.com/algorithm/$($_.Algorithm.ToLower())"
+                Price                    = if ($null -eq $_.paying) { [Double]::NaN } else { $Stat.Live }
+                Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratumnh" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
+                Region                   = $PoolConfig.Region
+                Reasons                  = $Reasons
+                SendHashrate             = $false
+                SSLselfSignedCertificate = $false
+                StablePrice              = $Stat.Week
+                Updated                  = $Timestamp
+                User                     = "$($PoolConfig.Wallets.$PayoutCurrency).$($PoolConfig.WorkerName)"
+                Variant                  = $Name
+                WorkerName               = ""
+                Workers                  = $null
+            }
         }
     }
 }

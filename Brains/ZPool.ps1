@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 using module ..\Includes\Include.psm1
@@ -125,9 +125,15 @@ while ($Config.PoolsConfig.$Name) {
                 ($CurrenciesArray | Group-Object -Property Algo).ForEach{ 
                     if ($AlgoData.($_.name)) { 
                         $BestCurrency = ($_.Group | Sort-Object -Property conversion_supported, estimate -Descending -Top 1)
-                        $AlgoData.($_.name) | Add-Member Currency $BestCurrency.currency -Force
-                        $AlgoData.($_.name) | Add-Member CoinName $BestCurrency.coinname -Force
-                        $AlgoData.($_.name) | Add-Member conversion_supported $BestCurrency.conversion_supported -Force
+                        if ($BestCurrency.currency) { 
+                            $AlgoData.($_.name) | Add-Member Currency $BestCurrency.currency -Force
+                            $AlgoData.($_.name) | Add-Member CoinName $BestCurrency.coinname -Force
+                            $AlgoData.($_.name) | Add-Member conversion_supported $BestCurrency.conversion_supported -Force
+                        }
+                        else { 
+                            $AlgoData.($_.name) | Add-Member Currency "" -Force
+                            $AlgoData.($_.name) | Add-Member CoinName "" -Force
+                        }
                     }
                 }
 
@@ -158,7 +164,7 @@ while ($Config.PoolsConfig.$Name) {
                     }
                     else { 
                         $AlgoData.$Algorithm | Add-Member error "" -Force
-                        $AlgoData.$Algorithm | Add-Member conversion_supported 0 -Force
+                        $AlgoData.$Algorithm | Add-Member conversion_supported $false -Force
                     }
                     $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
 
@@ -197,29 +203,31 @@ while ($Config.PoolsConfig.$Name) {
                 Remove-Variable PoolObjectsSampleSizets, PoolObjectsSampleSizeHalfts, SampleSizeHalfts, SampleSizets
 
                 $CurrentPoolObjects = $PoolObjects.Where{ $_.Date -eq $Timestamp }
-                    foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where{ $AlgoData.PSObject.Properties.Name -contains $_ }) { 
-                    $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }).Median)
-                    $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSize.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where{ $_.Name -eq $Algorithm }).Median)
-                    $Penalty = ($PenaltySampleSizeHalf * $Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + 1)
-                    $CurrentPoolObject = $CurrentPoolObjects.Where{ $_.Name -eq $Algorithm }
-                    $Currency = $CurrentPoolObject.currency
-                    $LastPrice = [Double]$CurrentPoolObject.estimate_current
-                    $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
+                foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where{ $AlgoData.PSObject.Properties.Name -contains $_ }) { 
+                    if ($AlgoGroup = $GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }) { 
+                        $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / ($AlgoGroup.Count)) * [Math]::abs($Algogroup.Median)
+                        $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSize.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where{ $_.Name -eq $Algorithm }).Median)
+                        $Penalty = ($PenaltySampleSizeHalf * $Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + 1)
+                        $CurrentPoolObject = $CurrentPoolObjects.Where{ $_.Name -eq $Algorithm }
+                        $Currency = $CurrentPoolObject.currency
+                        $LastPrice = [Double]$CurrentPoolObject.estimate_current
+                        $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
 
-                    $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
-                    # Reset history if current estimate is not within +/- 1000% of 24hr stat price
-                    if ($Stat = Get-Stat -Name $StatName) { 
-                        $Divisor = $Config.PoolsConfig.$Name.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
-                        if ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
-                            Remove-Stat -Name $StatName
-                            $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
-                            $PlusPrice = $LastPrice
-                            Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
+                        $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
+                        # Reset history if current estimate is not within +/- 1000% of 24hr stat price
+                        if ($Stat = Get-Stat -Name $StatName) { 
+                            $Divisor = $Config.PoolsConfig.$Name.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
+                            if ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
+                                Remove-Stat -Name $StatName
+                                $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
+                                $PlusPrice = $LastPrice
+                                Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
+                            }
                         }
+                        $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
                     }
-                    $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
                 }
-                Remove-Variable Algorithm, AlgorithmNorm, BasePrice, BestCurrency, CurrenciesArray, Currency, CurrentPoolObject, CurrentPoolObjects, DAGdata, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName -ErrorAction Ignore
+                Remove-Variable Algogroup, Algorithm, AlgorithmNorm, BasePrice, BestCurrency, CurrenciesArray, Currency, CurrentPoolObject, CurrentPoolObjects, DAGdata, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName -ErrorAction Ignore
 
                 if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
                     ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
@@ -236,7 +244,7 @@ while ($Config.PoolsConfig.$Name) {
             $PoolObjects = @($PoolObjects.Where{ $_.Date -ge $Timestamp.AddMinutes( - ($Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes + 10)) })
         }
         catch { 
-            Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting core..."
+            Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting brain..."
             "$(Get-Date -Format "yyyy-MM-dd_HH:mm:ss")" >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
             $_.Exception | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
             $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"

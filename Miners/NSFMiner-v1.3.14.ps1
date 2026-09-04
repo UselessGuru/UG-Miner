@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.CUDAversion -ge [System.Version]"9.1") })) { return }
@@ -70,7 +70,7 @@ if ($Algorithms) {
                     }
                     $Protocol = if ($Pool.PoolPorts[1]) { "$Protocol+ssl" } else { "$Protocol+tcp" }
 
-                    [PSCustomObject]@{ 
+                    @{ 
                         API         = "EthMiner"
                         Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --exit --api-port --$MinerAPIPort$($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join " ")"
                         DeviceNames = $AvailableMinerDevices.Name

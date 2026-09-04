@@ -18,17 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.8.22
-Version date:   2026/09/01
+Version date:   2026/09/04
 #>
 
-# + Added support for NVIDIA B300 on algorithm 'pearlhash'*
-# + Improved algorithm 'pearlhash' for NVIDIA B200
-# + Improved algorithm 'pearlhash' for unlocked CMP 70HX
-# + Minor improvements on 'pearlhash' for 5000 series GPUs
+# Improved algorithm 'pearlhash' for NVIDIA H100, H200 [H100 pretty good eff at cc 1200]
+# Improved algorithm 'pearlhash' for NVIDIA B200
+# Improved algorithm 'pearlhash' for 4000 series GPUs
+# Minor improvements on 'pearlhash' for : CMP 70HX, CMP 90HX, CMP 170HX, A100
+# Fixed progpow algorithms on newer ROCM stacks
+# Added parameter '--cpu-threads-percent' for limiting automatic CPU thread selection by percentage
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.6.1/SRBMiner-Multi-3-6-1-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.6.2/SRBMiner-Multi-3-6-2-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -301,7 +303,7 @@ if ($Algorithms) {
                             # Apply tuning parameters
                             if ($_.Type -eq "CPU" -and -not $Session.ApplyMinerTweaks) { $Arguments = "$Arguments --disable-msr-tweaks" }
 
-                            [PSCustomObject]@{ 
+                            @{ 
                                 API              = "SRBMiner"
                                 Arguments        = "$Arguments --api-rig-name $($Session.Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
                                 DeviceNames      = $AvailableMinerDevices.Name

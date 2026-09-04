@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 # Keep algorithms 'progpow_sero', 'progpow_telestai', 'walahash', 'karlsenhashv2' and related dual implementations (these were removed in v3.5.7)
@@ -143,7 +143,7 @@ if ($Algorithms) {
                             # Apply tuning parameters
                             if ($_.Type -eq "CPU" -and -not $Session.ApplyMinerTweaks) { $Arguments = "$Arguments --disable-msr-tweaks" }
 
-                            [PSCustomObject]@{ 
+                            @{ 
                                 API              = "SRBMiner"
                                 Arguments        = "$Arguments --api-rig-name $($Session.Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
                                 DeviceNames      = $AvailableMinerDevices.Name

@@ -760,7 +760,11 @@
           $('<label/>', { for: ('pool-' + poolvariant).toLowerCase(), text: poolvariant, title: title, style: 'margin-left: 5px; line-height: 75%;' }).appendTo(poolscontainer);
           if (poolbasename == poolvariant.toLowerCase()) {
             $('<input/>', { type: 'checkbox', class: 'switch', id: ('PoolBalanceTracker-' + poolvariant), disabled: (config.BalancesTrackerPollInterval <= 0), checked: !(config.BalancesTrackerExcludePools.map((poolname) => { return poolname.toLowerCase() }).includes(poolbasename)), title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running)", style: 'position: absolute; left: 50%; margin-top: 0.14rem;' }).appendTo(poolscontainer);
-            $('<label/>', { for: ('PoolBalanceTracker-' + poolvariant).toLowerCase(), text: "Track balances", title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running)", style: 'position: absolute; left: calc(50% + 20px); padding-top: 0.1rem;' }).appendTo(poolscontainer);
+            if (poolbasename == "nicehash") {
+              $('<label/>', { for: ('PoolBalanceTracker-' + poolvariant).toLowerCase(), text: "Track balances", title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running, and NiceHash API key, secret and organization Id configured)", style: 'position: absolute; left: calc(50% + 20px); padding-top: 0.1rem;' }).appendTo(poolscontainer);
+            } else {
+              $('<label/>', { for: ('PoolBalanceTracker-' + poolvariant).toLowerCase(), text: "Track balances", title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running)", style: 'position: absolute; left: calc(50% + 20px); padding-top: 0.1rem;' }).appendTo(poolscontainer);
+            };
           }
           $('<br>').appendTo(poolscontainer);
         });

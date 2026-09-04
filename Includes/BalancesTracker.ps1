@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 using module .\Include.psm1
@@ -265,7 +265,8 @@ do {
 
                 if ($BalanceObject.Balance -gt 0) { 
                     try { 
-                        $EarningsObject = [PSCustomObject]@{ 
+                        # $EarningsObject = [PSCustomObject]@{ 
+                        $EarningsObject = @{ 
                             Pool                    = $BalanceObject.Pool
                             Wallet                  = $BalanceObject.Wallet
                             Currency                = $BalanceObject.Currency
@@ -318,7 +319,8 @@ do {
                     $PoolTodaysEarnings.Payout        = $PoolTodaysEarnings.Payout + $BalanceObject.Payout
                 }
                 else { 
-                    $Earnings += [PSCustomObject]@{ 
+                    # $Earnings += [PSCustomObject]@{ 
+                    $Earnings += @{ 
                         Date          = $Now.ToString("yyyy-MM-dd")
                         Pool          = $EarningsObject.Pool
                         Currency      = $EarningsObject.Currency

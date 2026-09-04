@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.8.24
-Version date:   2026/09/01
+Version:        6.8.25
+Version date:   2026/09/04
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.1.8"
+$APIversion = "6.1.10"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -643,8 +643,16 @@ while ($Session.APIversion -and $Server.IsListening) {
             $Data = ConvertTo-Json -Depth 10 @($Session.Algorithms | Select-Object)
             break
         }
-        "/algorithms/lastused" { 
-            $Data = ConvertTo-Json -Depth 10 $Session.AlgorithmsLastUsed
+        "/algorithms/lastfound" { 
+            $Data = ConvertTo-Json -Depth 10 $Session.AlgorithmsLastFound
+            break
+        }
+        "/algorithms/lastmined" { 
+            $Data = ConvertTo-Json -Depth 10 $Session.AlgorithmsLastMined
+            break
+        }
+        "/algorithms/withoutminer" { 
+            $Data = ConvertTo-Json -Depth 10 $Session.AlgorithmsWithoutMiner
             break
         }
         "/allcurrencies" { 
