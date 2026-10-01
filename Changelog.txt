@@ -6,7 +6,7 @@ Fixes:
 - Legacy GUI: Reset pool stats not working
 - Miner API for MiniZ broken
 
-Miner updates:
+Miner changes:
 - BzMiner-v100.40 (new)
 - SRBMinerMulti-v3.7.1 (update)
 - Wildrig-v0.51.3 (update)
