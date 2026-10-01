@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.25
-Version date:   2026/09/04
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 # Fixed 192,7/Progpow/Kawpow/Ethash mining.
@@ -33,10 +33,10 @@ $Path = "Bin\$Name\miniZ.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Equihash1445";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^GCN1$";     ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --amd" } # FPGA
-    @{ Algorithm = "Equihash1927";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.3;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --amd" } # FPGA
-    @{ Algorithm = "Equihash2009";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=BgoldPoW" }
-    @{ Algorithm = "Equihash2109";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=210,9 --smart-pers" }
+    @{ Algorithm = "Equihash1445";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(45, 30); ExcludeGPUarchitectures = "^GCN1$";     ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --amd" } # FPGA
+    @{ Algorithm = "Equihash1927";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.3;  WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --amd" } # FPGA
+    @{ Algorithm = "Equihash2009";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --pers=BgoldPoW" }
+    @{ Algorithm = "Equihash2109";       Type = "AMD"; Fee = @(0.02);   MinMemGiB = 2.0;  WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @();           AutoCoinPers = "";             Arguments = " --amd --par=210,9 --smart-pers" }
     @{ Algorithm = "EtcHash";            Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=etcHash --dag-fix" }
     @{ Algorithm = "Ethash";             Type = "AMD"; Fee = @(0.0075); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --amd --par=ethash --dag-fix" }
     @{ Algorithm = "EthashB3";           Type = "AMD"; Fee = @(0.01);   MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";          ExcludePools = @( );          AutoCoinPers = "";             Arguments = " --amd --par=ethashb3 --dag-fix" }
@@ -55,7 +55,7 @@ $Algorithms = @(
 
     @{ Algorithm = "Equihash1445";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=144,5"; Arguments = " --nvidia" } # FPGA
     @{ Algorithm = "Equihash1927";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.3;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = " --par=192,7"; Arguments = " --nvidia" } # FPGA
-    @{ Algorithm = "Equihash2009";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=BgoldPoW" }
+    @{ Algorithm = "Equihash2009";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --pers=BgoldPoW" }
     @{ Algorithm = "Equihash2109";       Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=210,9 --smart-pers" }
     @{ Algorithm = "Equihash965";        Type = "NVIDIA"; Fee = @(0.02);   MinMemGiB = 2.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " "; ExcludePools = @();           AutoCoinPers = "";             Arguments = " --nvidia --par=96,5 --smart-pers" }
     @{ Algorithm = "EtcHash";            Type = "NVIDIA"; Fee = @(0.0075); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @("NiceHash"); AutoCoinPers = "";             Arguments = " --nvidia --par=etcHash --dag-fix" }
@@ -108,7 +108,7 @@ if ($Algorithms) {
 
                         @{ 
                             API         = "MiniZ"
-                            Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:d2}' -f $_ } -join " ")"
+                            Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=5 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:d2}' -f $_ } -join " ")"
                             DeviceNames = $AvailableMinerDevices.Name
                             Fee         = $_.Fee # Dev fee
                             MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"

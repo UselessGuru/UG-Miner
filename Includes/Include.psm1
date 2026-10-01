@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.25
-Version date:   2026/09/04
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -555,7 +555,7 @@ class Miner : IDisposable {
                     $JobResult = $this.ProcessJob | Receive-Job -ErrorAction Ignore
 
                     if ($JobResult -and $JobResult.MinerProcessId) { 
-                        $this.ProcessId           = $jobResult.MinerProcessId
+                        $this.ProcessId           = $JobResult.MinerProcessId
                         $this.DataSampleTimestamp = [DateTime]::MinValue
                         $this.Status              = [MinerStatus]::Running
                         $this.StatStart           = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
@@ -575,8 +575,10 @@ class Miner : IDisposable {
 
         [Int64]$Local:ProcessId = $null
 
-        Write-Message -Level Info "Stopping miner '$($this.Info)'..."
-        $this.StatusInfo = "$($this.Info) is stopping..."
+        if ($this.Status -ne [MinerStatus]::Failed) { 
+            Write-Message -Level Info "Stopping miner '$($this.Info)'..."
+            $this.StatusInfo = "$($this.Info) is stopping..."
+        }
 
         $this.StopDataReader()
 
@@ -1339,7 +1341,7 @@ function Get-Rate {
                 }
                 Remove-Variable Currency -ErrorAction Ignore
 
-                Write-Message -Level Verbose "Loaded crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies.Where{ $_ -ne "mBTC" } | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
+                Write-Message -Level Verbose "Loaded crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies.Where{ $_ -ne "mBTC" } | Select-Object) @((@($Session.AllCurrencies) + @("USD")) | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
                 if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
                     $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).Where{ $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ }[0]
                     Write-Message -Level Warn "API does not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
@@ -2066,37 +2068,32 @@ function Get-Stat {
                 $FileText = [System.IO.File]::ReadAllText($FilePath)
                 if ([String]::IsNullOrWhiteSpace($FileText)) { continue }
 
-                $Json = [System.Text.Json.JsonDocument]::Parse([String]$FileText)
-                $Root = $Json.RootElement
-
+                $Stat = $FileText | ConvertFrom-Json -ErrorAction Stop
                 $Global:Stats[$Name] = @{ 
                     Name                  = $Name
-                    Live                  = $Root.GetProperty("Live").GetDouble()
-                    Minute                = $Root.GetProperty("Minute").GetDouble()
-                    Minute_Fluctuation    = $Root.GetProperty("Minute_Fluctuation").GetDouble()
-                    Minute_5              = $Root.GetProperty("Minute_5").GetDouble()
-                    Minute_5_Fluctuation  = $Root.GetProperty("Minute_5_Fluctuation").GetDouble()
-                    Minute_10             = $Root.GetProperty("Minute_10").GetDouble()
-                    Minute_10_Fluctuation = $Root.GetProperty("Minute_10_Fluctuation").GetDouble()
-                    Hour                  = $Root.GetProperty("Hour").GetDouble()
-                    Hour_Fluctuation      = $Root.GetProperty("Hour_Fluctuation").GetDouble()
-                    Day                   = $Root.GetProperty("Day").GetDouble()
-                    Day_Fluctuation       = $Root.GetProperty("Day_Fluctuation").GetDouble()
-                    Week                  = $Root.GetProperty("Week").GetDouble()
-                    Week_Fluctuation      = $Root.GetProperty("Week_Fluctuation").GetDouble()
-                    Duration              = [TimeSpan]::Parse($Root.GetProperty("Duration").GetString())
-                    Updated               = [DateTime]::Parse($Root.GetProperty("Updated").GetString())
-                    Disabled              = $Root.GetProperty("Disabled").GetBoolean()
+                    Live                  = [Double]$Stat.Live
+                    Minute                = [Double]$Stat.Minute
+                    Minute_Fluctuation    = [Double]$Stat.Minute_Fluctuation
+                    Minute_5              = [Double]$Stat.Minute_5
+                    Minute_5_Fluctuation  = [Double]$Stat.Minute_5_Fluctuation
+                    Minute_10             = [Double]$Stat.Minute_10
+                    Minute_10_Fluctuation = [Double]$Stat.Minute_10_Fluctuation
+                    Hour                  = [Double]$Stat.Hour
+                    Hour_Fluctuation      = [Double]$Stat.Hour_Fluctuation
+                    Day                   = [Double]$Stat.Day
+                    Day_Fluctuation       = [Double]$Stat.Day_Fluctuation
+                    Week                  = [Double]$Stat.Week
+                    Week_Fluctuation      = [Double]$Stat.Week_Fluctuation
+                    Duration              = [TimeSpan]$Stat.Duration
+                    Updated               = [DateTime]$Stat.Updated
+                    Disabled              = [Boolean]$Stat.Disabled
                     ToleranceExceeded     = [UInt16]0
                 }
-
-                $Json.Dispose()
             }
             catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] { 
                 continue 
             }
             catch { 
-                if ($null -ne $Json) { $Json.Dispose() }
                 Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
                 Remove-Stat $Name
             }

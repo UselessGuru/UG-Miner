@@ -30,7 +30,7 @@
             <label for="MiningDutchUserName">Mining Dutch user name</label>
             <input type="text" id="MiningDutchUserName" name="MiningDutchUserName" maxlength=33 size=38>
           </div>
-          <div title="Your Mining Dutch API Key&#10;taken from your Mining Dutch account settings&#10;If left empty UG-Miner cannot retrieve balance data from Mining Dutch">
+          <div title="Your Mining Dutch API key&#10;taken from your Mining Dutch account settings&#10;&#10;Note: If left empty UG-Miner cannot retrieve balance data from Mining Dutch">
             <label for="MiningDutchAPIKey">Mining Dutch API key</label>
             <input type="text" id="MiningDutchAPIKey" name="MiningDutchAPIKey" maxlength=65 size=70>
           </div>
@@ -43,15 +43,15 @@
             <label for="NiceHashWallet">NiceHash Bitcoin wallet address</label>
             <input type="text" id="NiceHashWallet" name="NiceHashWallet" minlenght=26 maxlength=35 size=40>
           </div>
-          <div title="Your NiceHash API Key&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashAPIKey">
+          <div title="Your NiceHash API key&#10;taken from your NiceHash account settings&#10;&#10;Note: If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashAPIKey">
             <label for="NiceHashAPIKey">NiceHash API key</label>
             <input type="text" id="NiceHashAPIKey" name="NiceHashAPIKey" maxlength=37 size=42>
           </div>
-          <div title="Your NiceHash API Secret Key&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashAPISecret">
+          <div title="Your NiceHash API secret&#10;taken from your NiceHash account settings&#10;&#10;Note: If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashAPISecret">
             <label for="NiceHashAPISecret">NiceHash API secret</label>
             <input type="text" id="NiceHashAPISecret" name="NiceHashAPISecret" maxlength=73 size=73>
           </div>
-          <div title="Your NiceHash Organization Id (must be 36 chars long)&#10;taken from your NiceHash account settings&#10;If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashOrganizationId">
+          <div title="Your NiceHash Organization Id (must be 36 chars long)&#10;taken from your NiceHash account settings&#10;&#10;Note: If left empty UG-Miner cannot retrieve balance data from NiceHash wallet" for="NiceHashOrganizationId">
             <label for="NiceHashOrganizationId">NiceHash organization Id</label>
             <input type="text" id="NiceHashOrganizationId" name="NiceHashOrganizationId" maxlength=37 size=42>
           </div>
@@ -65,7 +65,7 @@
           <div style="padding-top: 0.3em;" title="Default payout currency for all pools&#10;Important: Not all pools allow payouts in currencies other than BTC&#10;Consult the pool API for more information&#10;&#10;Note: This is also a per pool configuration item (edit .'\Config\PoolsConfig.json')">Default payout currency
             <select style="height: 1.6em;" id="PayoutCurrency" name="PayoutCurrency"></select>
           </div>
-          <div title="Extra currencies to be shown in balances summary&#10;Currencies must be separated by commas. Do not use special characters.&#10;&#10;Enter FIAT or crypto currencies&#10;mBTC (milli BTC) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem;">Extra currencies</label>
+          <div title="Extra currencies to be shown in balances summary&#10;Currencies must be separated by commas. Do not use special characters.&#10;&#10;Enter FIAT or crypto currencies&#10;mBTC (BTC/1000) is also supported" for="ExtraCurrencies" style="padding-top: 0.3rem;">Extra currencies</label>
             <input type="text" id="ExtraCurrencies" name="ExtraCurrencies" maxlength=45 size=50 value="USD, ETC">
           </div>
           <div style="padding-top: 0.5rem;" title="If enabled UG-Miner will display BTC values in milli BTC">
@@ -118,7 +118,7 @@
           <div style="padding-top: 0.5rem;" title="Donation duration per day&#10;&#10;Please help support the great team behind UG-Miner&#10;by leaving mining donations turned on&#10;&#10;(min: 0, max: 60; default: 15 &#8792; 1%)">Donation
             <input type="number" id="Donation" name="Donation" min=0 max=60 value=15 style="width: 2.7em; text-align:right;"> minutes per day
           </div>
-          <div style="padding-top: 0.3rem;" title="Cycle duration&#10;This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
+          <div style="padding-top: 0.3rem;" title="This defines the approximate duration for one cycle&#10;&#10;(min: 30, max: 3600; default: 90)" for="Interval">Cycle duration
             <input type="number" id="Interval" name="Interval" min=30 max=3600 step=1 value=90 style="width: 3.8em; text-align:right;"> seconds
           </div>
           <div style="padding-top: 0.2rem;" title="Enter proxy IP address and port&#10;e.g. 192.168.1.1:3128">Proxy address & port
@@ -251,7 +251,7 @@
           <div style="padding-top: 0.6rem;" title="Enable miner specific tweaks, e.g. sharper memory timings or mild overclock&#10;&#10;Note: This may cause stability issues, use with caution!">
             <input type="checkbox" class="toggle-switch" id="UseMinerTweaks" name="UseMinerTweaks"> Enable miner tweaks (administrator rights required)
           </div>
-          <div style="padding-top: 0.4rem;" title="Minimum number of Continous<br>cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
+          <div style="padding-top: 0.4rem;" title="Minimum number of continous cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
             <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 style="width: 2.7em; text-align:right;"> cycles before switching
           </div>
           <div style="padding-top: 0.3rem;" title="Defines the minimum number of data samples to be collected from the miner&#10;while benchmarking before ending the cycle. Smaller numbers will&#10;make benchmarking faster, but the measured data will be less accurate.&#10;&#10;(min: 10, max: 100; default: 20)" for="MinDataSample">Minimum
@@ -270,7 +270,7 @@
           <div style="padding-top: 0.5rem;" title="UG-Miner will ignore the miner fee when calculating earnings & profit">
             <input type="checkbox" class="toggle-switch" id="IgnoreMinerFee" name="IgnoreMinerFee"> Ignore miner fees
           </div>
-          <div style="padding-top: 0.3rem;" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set Earnings adjustment factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">Earnings adjustment factor
+          <div style="padding-top: 0.3rem;" title="Default factor with which UG-Miner multiplies the prices reported by ALL pools&#10;&#10;E.g. If you feel that the effective earnings seen at the pools are 20% lower than what UG-Miner projects&#10;then set the earnings adjustment factor to 0.80&#10;&#10;(min: 0.00, max: 10.00; default: 1.00)" for="EarningsAdjustmentFactor&#10;&#10;Note: This is also a per pool setting (edit .'\Config\PoolsConfig.json')">Earnings adjustment factor
             <input type="number" min=0 max=10 value=1 step=0.01 size=34 id="EarningsAdjustmentFactor" name="EarningsAdjustmentFactor" style="width: 3.4em; text-align:right;">
           </div>
           <div style="padding-top: 0.3rem;" title="Mark a miner as unavailable if the calculated biased earnings are&#10;x times higher than any other miner for the device & next best algorithm&#10;&#10;(min: 1, max: 99; default: 10)&#10;Set to 1 to disable this check"> Unrealistic biased earnings factor (device & algorithm)

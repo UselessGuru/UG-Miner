@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.25
-Version date:   2026/09/04
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -693,15 +693,15 @@ function Update-TabControl {
                         $LegacyGUIelements.PoolsDGV.Columns[1].FillWeight = 80
                         $LegacyGUIelements.PoolsDGV.Columns[2].FillWeight = 40
                         $LegacyGUIelements.PoolsDGV.Columns[3].FillWeight = 70
-                        $LegacyGUIelements.PoolsDGV.Columns[4].FillWeight = 55; $LegacyGUIelements.PoolsDGV.Columns[3].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[3].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[5].FillWeight = 45; $LegacyGUIelements.PoolsDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[4].FillWeight = 55; $LegacyGUIelements.PoolsDGV.Columns[4].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[4].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[5].FillWeight = 45; $LegacyGUIelements.PoolsDGV.Columns[5].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[5].HeaderCell.Style.Alignment = "MiddleRight"
                         $LegacyGUIelements.PoolsDGV.Columns[6].FillWeight = 55
                         $LegacyGUIelements.PoolsDGV.Columns[7].FillWeight = 120
-                        $LegacyGUIelements.PoolsDGV.Columns[8].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[7].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[7].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[9].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[10].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
-                        $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
-                        if ($LegacyGUIelements.PoolsDGV.Columns[12]) { $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 140 }
+                        $LegacyGUIelements.PoolsDGV.Columns[8].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[8].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[8].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[9].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[9].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[9].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[10].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[10].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[10].HeaderCell.Style.Alignment = "MiddleRight"
+                        $LegacyGUIelements.PoolsDGV.Columns[11].FillWeight = 35; $LegacyGUIelements.PoolsDGV.Columns[11].DefaultCellStyle.Alignment = $LegacyGUIelements.PoolsDGV.Columns[11].HeaderCell.Style.Alignment = "MiddleRight"
+                        if ($LegacyGUIelements.PoolsDGV.Columns[12]) { $LegacyGUIelements.PoolsDGV.Columns[12].FillWeight = 140 }
                         $LegacyGUIelements.PoolsDGV | Add-Member ColumnWidthChanged $true -Force
                     }
                     $LegacyGUIelements.PoolsDGV.EndInit()
@@ -1219,8 +1219,8 @@ $LegacyGUIelements.ContextMenuStrip.Add_ItemClicked(
             switch ($_.ClickedItem.Text) { 
                 "Reset pool stat data" { 
                     $this.SourceControl.SelectedRows.ForEach{ 
-                        $SelectedPoolName = $_.Cells[5].Value
-                        $SelectedPoolAlgorithm = $_.Cells[0].Value
+                        $SelectedPoolName = $_.Cells[6].Value
+                        $SelectedPoolAlgorithm = $_.Cells[1].Value
                         $Session.Pools.Where{ $_.Name -eq $SelectedPoolName -and $_.Algorithm -eq $SelectedPoolAlgorithm }.ForEach{ 
                             $Data += "$($_.Algorithm)$(if ($_.Currency) { "-$($_.Currency)" })@$($_.Name)$(if ($($_.Variant -replace $_.Name)) { "[$($_.Variant -replace $_.Name)]" })"
 

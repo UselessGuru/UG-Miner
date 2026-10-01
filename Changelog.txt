@@ -1,3 +1,17 @@
+Changelog UG-Miner 6.8.26 2026/10/01
+====================================
+
+Fixes:
+- Legacy GUI: Column alignment incorrect
+- Legacy GUI: Reset pool stats not working
+- Miner API for MiniZ broken
+
+Miner updates:
+- BzMiner-v100.40 (new)
+- SRBMinerMulti-v3.7.1 (update)
+- Wildrig-v0.51.3 (update)
+
+
 Changelog UG-Miner 6.8.25 2026/09/04
 ====================================
 
@@ -11,10 +25,11 @@ Enhancements:
 - Pools: Convert pool definition file output to hashtable for better performance
 
 Fixes:
-- Pool 'NiceHash': Pool update timestamp not getting updated. Pool data will age incorrectly
+- Pool 'NiceHash': Pool update timestamp not getting updated, pool data will age incorrectly
 
 Miner changes:
 - CcminerMemeHash-v2.5.5.9 (removed, algorithm not available at any supported pools)
+- SRBMinerMulti-v3.6.2
 - Wildrig-v0.50.9.1 (update)
 
 

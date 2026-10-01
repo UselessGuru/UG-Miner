@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.8.25
-Version date:   2026/09/04
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 using module ..\Includes\Include.psm1
@@ -82,7 +82,7 @@ while ($Config.PoolsConfig.$Name) {
                 catch { 
                     $APIcallFails ++
                     $APIerror = $_.Exception #.Message
-                    Write-Message -Level Debug "Brain '$Name': Query to '$Request' failed ($($APIerror | ConvertTo-Json -Compress))"
+                    Write-Message -Level Debug "Brain '$Name': Query to '$Request' failed$(if ($Response) { " ($($APIerror | ConvertTo-Json -Compress))" })"
                     if ($APIcallFails -lt $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $Config.PoolsConfig.$Name.PoolAPIretryInterval)) }
                 }
                 $CancellationTokenSource.Dispose()
@@ -171,9 +171,11 @@ while ($Config.PoolsConfig.$Name) {
                     # Reset history when stat file got removed
                     if ($PoolVariant -like "*Plus") { 
                         $StatName = if ($Currency) { "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)_Profit" } else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }
-                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where{ $_.Name -eq $Algorithm }) { 
-                            $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
-                            Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
+                        if (-not ($Stat = Get-Stat -Name $StatName)) { 
+                            if ($PoolObjects.Where{ $_.Name -eq $Algorithm }) { 
+                                $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
+                                Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
+                            }
                         }
                     }
 

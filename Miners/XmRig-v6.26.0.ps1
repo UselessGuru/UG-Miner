@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.25
-Version date:   2026/09/04
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") })) { return }
@@ -68,33 +68,33 @@ $URI = switch ($Session.DriverVersion.CUDA) {
 }
 
 $Algorithms = @(
-    @{ Algorithm = "Cryptonight";          Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/0" }
-    @{ Algorithm = "CryptonightCcx";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/ccx" }
-    @{ Algorithm = "CryptonightDouble";    Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/double" }
-    @{ Algorithm = "CryptonightFast";      Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/fast" }
-    @{ Algorithm = "CryptonightLite";      Type = "AMD"; MinMemGiB = 1;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn-lite/0" }
-    @{ Algorithm = "CryptonightLiteV1";    Type = "AMD"; MinMemGiB = 1;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn-lite/1" }
-    @{ Algorithm = "CryptonightHalf";      Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/half" }
-    @{ Algorithm = "CryptonightHeavy";     Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn-heavy/0" }
-    @{ Algorithm = "CryptonightHeavyTube"; Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn-heavy/tube" }
-    @{ Algorithm = "CryptonightPico";      Type = "AMD"; MinMemGiB = 0.25; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn-pico" }
-    @{ Algorithm = "CryptonightPicoTlo";   Type = "AMD"; MinMemGiB = 0.25; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn-pico/tlo" }
-#   @{ Algorithm = "CryptonightR";         Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/r" } # ASIC
-    @{ Algorithm = "CryptonightRto";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/rto" }
-    @{ Algorithm = "CryptonightRwz";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/rwz" }
-    @{ Algorithm = "CryptonightV1";        Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/1" }
-    @{ Algorithm = "CryptonightV2";        Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/2" }
-    @{ Algorithm = "CryptonightXao";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/xao" }
-    @{ Algorithm = "CryptonightHeavyXhv";  Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
-    @{ Algorithm = "CryptonightZls";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "AMD"; MinMemGiB = 0.97; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo kawpow" }
-#   @{ Algorithm = "Randomx";              Type = "AMD"; MinMemGiB = 3;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxArq";           Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxKeva";          Type = "AMD"; MinMemGiB = 1;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxLoki";          Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo rx/loki" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxSfx";           Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo rx/sfx" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxWow";           Type = "AMD"; MinMemGiB = 3;    WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo rx/wow" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "Uplexa";               Type = "AMD"; MinMemGiB = 0.25; WarmupTimes = @(45, 0); ExcludePools = @(); Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+    @{ Algorithm = "Cryptonight";          Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/0" }
+    @{ Algorithm = "CryptonightCcx";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/ccx" }
+    @{ Algorithm = "CryptonightDouble";    Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/double" }
+    @{ Algorithm = "CryptonightFast";      Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/fast" }
+    @{ Algorithm = "CryptonightLite";      Type = "AMD"; MinMemGiB = 1;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn-lite/0" }
+    @{ Algorithm = "CryptonightLiteV1";    Type = "AMD"; MinMemGiB = 1;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn-lite/1" }
+    @{ Algorithm = "CryptonightHalf";      Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/half" }
+    @{ Algorithm = "CryptonightHeavy";     Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn-heavy/0" }
+    @{ Algorithm = "CryptonightHeavyTube"; Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn-heavy/tube" }
+    @{ Algorithm = "CryptonightPico";      Type = "AMD"; MinMemGiB = 0.25; WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn-pico" }
+    @{ Algorithm = "CryptonightPicoTlo";   Type = "AMD"; MinMemGiB = 0.25; WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn-pico/tlo" }
+#   @{ Algorithm = "CryptonightR";         Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/r" } # ASIC
+    @{ Algorithm = "CryptonightRto";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/rto" }
+    @{ Algorithm = "CryptonightRwz";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/rwz" }
+    @{ Algorithm = "CryptonightV1";        Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/1" }
+    @{ Algorithm = "CryptonightV2";        Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/2" }
+    @{ Algorithm = "CryptonightXao";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/xao" }
+    @{ Algorithm = "CryptonightHeavyXhv";  Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn-heavy/xhv" }
+    @{ Algorithm = "CryptonightZls";       Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo cn/zls" }
+    @{ Algorithm = "KawPow";               Type = "AMD"; MinMemGiB = 0.97; WarmupTimes = @(60, 0); ExcludePools = @("Zpool"); Arguments = " --algo kawpow" }
+#   @{ Algorithm = "Randomx";              Type = "AMD"; MinMemGiB = 3;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxArq";           Type = "AMD"; MinMemGiB = 4;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxKeva";          Type = "AMD"; MinMemGiB = 1;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxLoki";          Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo rx/loki" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxSfx";           Type = "AMD"; MinMemGiB = 2;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo rx/sfx" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxWow";           Type = "AMD"; MinMemGiB = 3;    WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo rx/wow" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "Uplexa";               Type = "AMD"; MinMemGiB = 0.25; WarmupTimes = @(45, 0); ExcludePools = @();        Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 
     @{ Algorithm = "Argon2Chukwa";         Type = "CPU"; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo argon2/chukwa" }
     @{ Algorithm = "Argon2ChukwaV2";       Type = "CPU"; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo argon2/chukwav2" }
@@ -133,61 +133,61 @@ $Algorithms = @(
     @{ Algorithm = "RandomxV2";            Type = "CPU"; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/2" }
     @{ Algorithm = "Uplexa";               Type = "CPU"; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" }
 
-    @{ Algorithm = "Cryptonight";          Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/0" }
-    @{ Algorithm = "CryptonightCcx";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/ccx" }
-    @{ Algorithm = "CryptonightDouble";    Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/double" }
-    @{ Algorithm = "CryptonightFast";      Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/fast" }
-    @{ Algorithm = "CryptonightLite";      Type = "INTEL"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-lite/0" }
-    @{ Algorithm = "CryptonightLiteV1";    Type = "INTEL"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-lite/1" }
-    @{ Algorithm = "CryptonightHalf";      Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/half" }
-    @{ Algorithm = "CryptonightHeavy";     Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/0" }
-    @{ Algorithm = "CryptonightHeavyTube"; Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/tube" }
-    @{ Algorithm = "CryptonightPico";      Type = "INTEL"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-pico" }
-    @{ Algorithm = "CryptonightPicoTlo";   Type = "INTEL"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-pico/tlo" }
-#   @{ Algorithm = "CryptonightR";         Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/r" } # ASIC
-    @{ Algorithm = "CryptonightRto";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/rto" }
-    @{ Algorithm = "CryptonightRwz";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/rwz" }
-    @{ Algorithm = "CryptonightV1";        Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/1" }
-    @{ Algorithm = "CryptonightV2";        Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/2" }
-    @{ Algorithm = "CryptonightXao";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
-    @{ Algorithm = "CryptonightHeavyXhv";  Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
-    @{ Algorithm = "CryptonightZls";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "INTEL"; MinMemGiB = 0.97; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" }
-#   @{ Algorithm = "Randomx";              Type = "INTEL"; MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxArq";           Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxKeva";          Type = "INTEL"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxLoki";          Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/loki" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxSfx";           Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/sfx" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxWow";           Type = "INTEL"; MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/wow" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "Uplexa";               Type = "INTEL"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+    @{ Algorithm = "Cryptonight";          Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/0" }
+    @{ Algorithm = "CryptonightCcx";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/ccx" }
+    @{ Algorithm = "CryptonightDouble";    Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/double" }
+    @{ Algorithm = "CryptonightFast";      Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/fast" }
+    @{ Algorithm = "CryptonightLite";      Type = "INTEL"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-lite/0" }
+    @{ Algorithm = "CryptonightLiteV1";    Type = "INTEL"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-lite/1" }
+    @{ Algorithm = "CryptonightHalf";      Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/half" }
+    @{ Algorithm = "CryptonightHeavy";     Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-heavy/0" }
+    @{ Algorithm = "CryptonightHeavyTube"; Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-heavy/tube" }
+    @{ Algorithm = "CryptonightPico";      Type = "INTEL"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-pico" }
+    @{ Algorithm = "CryptonightPicoTlo";   Type = "INTEL"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-pico/tlo" }
+#   @{ Algorithm = "CryptonightR";         Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/r" } # ASIC
+    @{ Algorithm = "CryptonightRto";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/rto" }
+    @{ Algorithm = "CryptonightRwz";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/rwz" }
+    @{ Algorithm = "CryptonightV1";        Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/1" }
+    @{ Algorithm = "CryptonightV2";        Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/2" }
+    @{ Algorithm = "CryptonightXao";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/xao" }
+    @{ Algorithm = "CryptonightHeavyXhv";  Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-heavy/xhv" }
+    @{ Algorithm = "CryptonightZls";       Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/zls" }
+    @{ Algorithm = "KawPow";               Type = "INTEL"; MinMemGiB = 0.97; WarmupTimes = @(60, 15); ExcludePools = @("ZPool"); Arguments = " --algo kawpow" }
+#   @{ Algorithm = "Randomx";              Type = "INTEL"; MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxArq";           Type = "INTEL"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxKeva";          Type = "INTEL"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxLoki";          Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/loki" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxSfx";           Type = "INTEL"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/sfx" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxWow";           Type = "INTEL"; MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/wow" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "Uplexa";               Type = "INTEL"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 
-    @{ Algorithm = "Cryptonight";          Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/0" }
-    @{ Algorithm = "CryptonightCcx";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/ccx" } # CryptoDredge-v0.27.0 is fastest, but has 1% miner fee
-    @{ Algorithm = "CryptonightDouble";    Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/double" }
-    @{ Algorithm = "CryptonightFast";      Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/fast" }
-    @{ Algorithm = "CryptonightLite";      Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-lite/0" }
-    @{ Algorithm = "CryptonightLiteV1";    Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-lite/1" }
-    @{ Algorithm = "CryptonightHalf";      Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/half" } # CryptoDredge-v0.27.0 is fastest, but has 1% miner fee
-    @{ Algorithm = "CryptonightHeavy";     Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/0" }
-    @{ Algorithm = "CryptonightHeavyTube"; Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/tube" }
-    @{ Algorithm = "CryptonightPico";      Type = "NVIDIA"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-pico" }
-    @{ Algorithm = "CryptonightPicoTlo";   Type = "NVIDIA"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-pico/tlo" }
-#   @{ Algorithm = "CryptonightR";         Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/r" } # ASIC
-    @{ Algorithm = "CryptonightRto";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/rto" }
-    @{ Algorithm = "CryptonightRwz";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/rwz" }
-    @{ Algorithm = "CryptonightV1";        Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/1" }
-    @{ Algorithm = "CryptonightV2";        Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/2" }
-    @{ Algorithm = "CryptonightXao";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/xao" }
-    @{ Algorithm = "CryptonightHeavyXhv";  Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn-heavy/xhv" }
-    @{ Algorithm = "CryptonightZls";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo cn/zls" }
-    @{ Algorithm = "KawPow";               Type = "NVIDIA"; MinMemGiB = 0.77; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo kawpow" } # Trex-v0.26.8 is fastest, but has 1% miner fee (Broken: https://github.com/RainbowMiner/RainbowMiner/issues/2224)
-#   @{ Algorithm = "Randomx";              Type = "NVIDIA"; MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxArq";           Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxKeva";          Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxLoki";          Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/loki" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxSfx";           Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/sfx" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "RandomxWow";           Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/wow" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
-#   @{ Algorithm = "Uplexa";               Type = "NVIDIA"; MinMemGiB = 0.5;  WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+    @{ Algorithm = "Cryptonight";          Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/0" }
+    @{ Algorithm = "CryptonightCcx";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/ccx" } # CryptoDredge-v0.27.0 is fastest, but has 1% miner fee
+    @{ Algorithm = "CryptonightDouble";    Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/double" }
+    @{ Algorithm = "CryptonightFast";      Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/fast" }
+    @{ Algorithm = "CryptonightLite";      Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-lite/0" }
+    @{ Algorithm = "CryptonightLiteV1";    Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-lite/1" }
+    @{ Algorithm = "CryptonightHalf";      Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/half" } # CryptoDredge-v0.27.0 is fastest, but has 1% miner fee
+    @{ Algorithm = "CryptonightHeavy";     Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-heavy/0" }
+    @{ Algorithm = "CryptonightHeavyTube"; Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-heavy/tube" }
+    @{ Algorithm = "CryptonightPico";      Type = "NVIDIA"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-pico" }
+    @{ Algorithm = "CryptonightPicoTlo";   Type = "NVIDIA"; MinMemGiB = 0.25; WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-pico/tlo" }
+#   @{ Algorithm = "CryptonightR";         Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/r" } # ASIC
+    @{ Algorithm = "CryptonightRto";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/rto" }
+    @{ Algorithm = "CryptonightRwz";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/rwz" }
+    @{ Algorithm = "CryptonightV1";        Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/1" }
+    @{ Algorithm = "CryptonightV2";        Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/2" }
+    @{ Algorithm = "CryptonightXao";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/xao" }
+    @{ Algorithm = "CryptonightHeavyXhv";  Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn-heavy/xhv" }
+    @{ Algorithm = "CryptonightZls";       Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo cn/zls" }
+    @{ Algorithm = "KawPow";               Type = "NVIDIA"; MinMemGiB = 0.77; WarmupTimes = @(60, 15); ExcludePools = @("Zpool"); Arguments = " --algo kawpow" } # Trex-v0.26.8 is fastest, but has 1% miner fee (Broken: https://github.com/RainbowMiner/RainbowMiner/issues/2224)
+#   @{ Algorithm = "Randomx";              Type = "NVIDIA"; MinMemGiB = 3;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/0" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxArq";           Type = "NVIDIA"; MinMemGiB = 4;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/arq" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxKeva";          Type = "NVIDIA"; MinMemGiB = 1;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/keva" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxLoki";          Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/loki" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxSfx";           Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/sfx" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "RandomxWow";           Type = "NVIDIA"; MinMemGiB = 2;    WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/wow" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
+#   @{ Algorithm = "Uplexa";               Type = "NVIDIA"; MinMemGiB = 0.5;  WarmupTimes = @(45, 0);  ExcludePools = @();        Arguments = " --algo rx/upx2" } # GPUs don't do Randomx and when they do it's a watt-wasting miracle anyway
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -206,9 +206,8 @@ if ($Algorithms) {
         $Fee = 0
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
-            # $ExcludePools = $_.ExcludePools
-            # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
-            foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
+            $ExcludePools = $_.ExcludePools
+            foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
 
                 $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
                 if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -gt $MinMemGiB }) { 

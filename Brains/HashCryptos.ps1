@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.8.25
-Version date:   2026/09/04
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 using module ..\Includes\Include.psm1
@@ -89,7 +89,7 @@ while ($Config.PoolsConfig.$Name) {
             $Timestamp = [DateTime]::Now.ToUniversalTime()
 
             if ($APIcallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://hashcryptos.com/api/status ($($APIerror | ConvertTo-Json -Compress))"
+                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://hashcryptos.com/api/status$(if ($Response) { " ($($APIerror | ConvertTo-Json -Compress))" })"
             }
             elseif ($AlgoData.PSObject.Properties.Name) { 
                 foreach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
@@ -110,10 +110,12 @@ while ($Config.PoolsConfig.$Name) {
                     # Reset history when stat file got removed
                     if ($PoolVariant -like "*Plus") { 
                         $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
-                        if (-not ($Stat = Get-Stat -Name $StatName) -and $PoolObjects.Where{ $_.Name -eq $Algorithm }) { 
-                            # Reset history when stat file got removed
-                            $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
-                            Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
+                        if (-not ($Stat = Get-Stat -Name $StatName)) { 
+                            if ($PoolObjects.Where{ $_.Name -eq $Algorithm }) { 
+                                # Reset history when stat file got removed
+                                $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
+                                Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
+                            }
                         }
                     }
 

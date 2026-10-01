@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.7.16
-Version date:   2025/12/31
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 param(

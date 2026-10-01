@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\MiniZ.ps1
-Version:        6.8.25
-Version date:   2026/09/04
+Version:        6.8.26
+Version date:   2026/10/01
 #>
 
 [NoRunspaceAffinity()]
@@ -31,7 +31,7 @@ class MiniZ : Miner {
         $Response = ""
 
         try { 
-            $Response = Invoke-TcpRequest 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout -ReadToEnd $true -ErrorAction Stop
+            $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout -ReadToEnd -ErrorAction Stop
             $Data = $Response | ConvertFrom-Json -ErrorAction Stop
             if (-not $Data -or $null -eq $Data.result.speed_sps) { return $null }
 

@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.25 / Updated 2026/09/04
+Version 6.8.26 / Updated 2026/10/01
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -316,8 +316,8 @@ UI style automatically switches to full during benchmarking or when measuring po
 
 Windows 10.x and PowerShell Version 7.4.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.6.5.  
-[Download the installer for version 7.6.5](https://github.com/PowerShell/PowerShell/releases/download/v7.6.5/PowerShell-7.6.5-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.6.6.  
+[Download the installer for version 7.6.6](https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  
