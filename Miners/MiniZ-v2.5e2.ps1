@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -68,10 +68,8 @@ if ($Algorithms) {
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                        $Arguments = "$($_.Arguments) --url=$(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.User)@$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$($Pool.User)@$($Pool.Host):$($Pool.PoolPorts[0])" })"
-                        if ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments = "$Arguments --worker=$($Pool.WorkerName)" }
-                        if ($_.AutoCoinPers) { $Arguments = "$Arguments$(Get-EquihashCoinPers -Command " --pers " -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers)" }
-                        $Arguments = "$Arguments --pass=$($Pool.Pass)"
+                        $Arguments = "$($_.Arguments) --url=$(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.User -replace "\..*")@$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$($Pool.User -replace "\..*")@$($Pool.Host):$($Pool.PoolPorts[0])" }) --pass=$($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
+                        if ($_.AutoCoinPers) { $Arguments = "$Arguments$(Get-EquihashCoinPers -Command " --pers=" -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers)" }
 
                         # Apply tuning parameters
                         if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }

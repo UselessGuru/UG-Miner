@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -129,7 +129,7 @@ if ($Algorithms) {
                                 pool_list = @(
                                     @{ 
                                         pool_address    = "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                        wallet_address  = $Pool.User
+                                        wallet_address  = $Pool.User -replace "\..*"
                                         pool_password   = $Pool.Pass
                                         use_nicehash    = $($Pool.Name -eq "NiceHash")
                                         use_tls         = [Boolean]$Pool.PoolPorts[1]

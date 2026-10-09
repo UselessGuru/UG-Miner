@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 # TT needs avx2 and aes https://github.com/TrailingStop/TT-Miner-beta/issues/7#issuecomment-2158058291
@@ -123,8 +123,7 @@ if ($Algorithms) {
                         # Default      { $Arguments = "$($Arguments)stratum+" }
                     }
                     $Arguments = if ($Pool.PoolPorts[1]) { "$($Arguments)ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$($Arguments)tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }
-                    $Arguments = "$Arguments -u $($Pool.User) -p $($Pool.Pass)"
-                    if ($Pool.WorkerName) { $Arguments = "$Arguments -w $($Pool.WorkerName)" }
+                    $Arguments = "$Arguments -u $($Pool.User -replace "\..*")$(if ($Pool.Pass -notmatch $Pool.WorkerName) { ".$($Pool.WorkerName)" }) -p $($Pool.Pass)"
                     if ($_.Algorithm -match $Session.RegexAlgoHasDAG) { $Arguments = "$Arguments -daginfo" }
 
                     # Allow more time to build larger DAGs, must use type cast to keep values in $_

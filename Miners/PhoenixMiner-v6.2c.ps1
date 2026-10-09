@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -101,7 +101,7 @@ if ($Algorithms) {
 
                                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)$(if ($_.Intensity) { "-Intensity $($_.Intensity)" })"})"
 
-                                $Arguments = "$($_.Arguments) -pool $(if ($Pool0.PoolPorts[1]) { "ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "$($Pool0.Host):$($Pool0.PoolPorts[0])" }) -wal $($Pool0.User) -pass $($Pool0.Pass)"
+                                $Arguments = "$($_.Arguments) -pool $(if ($Pool0.PoolPorts[1]) { "ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "$($Pool0.Host):$($Pool0.PoolPorts[0])" }) -wal $($Pool.User -replace "\..*") -pass $($Pool0.Pass)$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { " -worker $($Pool0.WorkerName)" })"
                                 $Arguments = switch ($Pool0.Protocol) { 
                                     "ethproxy"     { "$Arguments -proto 2"; break }
                                     "minerproxy"   { "$Arguments -proto 1"; break }
@@ -112,7 +112,6 @@ if ($Algorithms) {
                                     default        { "$Arguments -proto 1" }
                                 }
                                 if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool0.PoolPorts[1]) { $Arguments = "$Arguments -weakssl" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
-                                if ($Pool0.WorkerName) { $Arguments = "$Arguments -worker $($Pool0.WorkerName)" }
 
                                 # kernel 3 does not support dual mining
                                 if (($AvailableMinerDevices.Memory | Measure-Object -Minimum).Minimum / 1GB -ge 2 * $MinMemGiB -and -not $_.Algorithms[1]) { 
@@ -122,9 +121,8 @@ if ($Algorithms) {
                                 }
 
                                 if ($_.Algorithms[1]) { 
-                                    $Arguments = "$Arguments -dpool $(if ($Pool1.PoolPorts[1]) { "ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "$($Pool1.Host):$($Pool1.PoolPorts[0])" }) -dwal $($Pool1.User) -dpass $($Pool1.Pass)"
+                                    $Arguments = "$Arguments -dpool $(if ($Pool1.PoolPorts[1]) { "ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "$($Pool1.Host):$($Pool1.PoolPorts[0])" }) -dwal $($Pool1.User -replace "\..*") -dpass $($Pool1.Pass)$(if ($Pool1.Pass -notmatch $Pool1.WorkerName) { " -worker $($Pool1.WorkerName)" })"
                                     if ($Session.Config.SSLallowSelfSignedCertificate -and $Pool1.PoolPorts[1]) { $Arguments = "$Arguments -weakssl2" } # https://bitcointalk.org/index.php?topic=2647654.msg60032993#msg60032993
-                                    if ($Pool1.WorkerName) { $Arguments = "$Arguments -dworker $($Pool1.WorkerName)" }
                                     if ($_.Intensity) { $Arguments = "$Arguments -sci $($_.Intensity)" }
                                 }
 

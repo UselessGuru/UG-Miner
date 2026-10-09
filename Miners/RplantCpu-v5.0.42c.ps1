@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" })) { return }
@@ -43,7 +43,7 @@ $Algorithms = @(
     @{ Algorithm = "Argon2d4096";   WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo argon2d4096" }
     @{ Algorithm = "Axiom";         WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo axiom" }
     @{ Algorithm = "Balloon";       WarmupTimes = @(30, 15);  ExcludePools = @("Zpool");    Arguments = " --algo balloon" }
-    @{ Algorithm = "Blake2b";       WarmupTimes = @(30, 30);  ExcludePools = @();           Arguments = " --algo blake2b" } # FPGA
+#   @{ Algorithm = "Blake2b";       WarmupTimes = @(30, 30);  ExcludePools = @();           Arguments = " --algo blake2b" } # FPGA
     @{ Algorithm = "Bmw";           WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo bmw" }
 #   @{ Algorithm = "Bmw512";        WarmupTimes = @(30, 0);   ExcludePools = @();           Arguments = " --algo bmw512" } # ASIC
     @{ Algorithm = "C11";           WarmupTimes = @(30, 15);  ExcludePools = @();           Arguments = " --algo c11" } # GPU
@@ -127,7 +127,7 @@ if ($Algorithms) {
 
             @{ 
                 API         = "CcMiner"
-                Arguments   = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass)$(if ($Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --hash-meter --threads $Threads --api-bind $MinerAPIPort"
+                Arguments   = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User -replace "\..*") --pass $($Pool.Pass) --rig-id $($Pool.WorkerName) --hash-meter --threads $Threads --api-bind $MinerAPIPort"
                 DeviceNames = $AvailableMinerDevices.Name
                 Fee         = @(0) # Dev fee
                 Name        = $MinerName

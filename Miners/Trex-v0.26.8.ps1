@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -83,8 +83,7 @@ if ($Algorithms) {
                             default        { $Arguments = "$Arguments --url stratum" }
                         }
                         $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments+ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool0.Host):$($Pool0.PoolPorts[0])" }
-                        $Arguments = "$Arguments --user $($Pool0.User) --pass $($Pool0.Pass)"
-                        if ($Pool0.WorkerName) { $Arguments = "$Arguments --worker $($Pool0.WorkerName)" }
+                        $Arguments = "$Arguments --user $($Pool0.User -replace "\..*") --pass $($Pool0.Pass)$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { " --worker $($Pool0.WorkerName)" })"
 
                         if ("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool0.Currency) { 
                             $Arguments = "$Arguments --coin $($Pool0.Currency)"
@@ -98,8 +97,7 @@ if ($Algorithms) {
                                 default        { $Arguments = "$Arguments --url2 stratum" }
                             }
                             $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool1.Host):$($Pool1.PoolPorts[0])" }
-                            $Arguments = "$Arguments --user2 $($Pool1.User) --pass2 $($Pool1.Pass)"
-                            if ($Pool1.WorkerName) { $Arguments = "$Arguments --worker2 $($Pool1.WorkerName)" }
+                            $Arguments = "$Arguments --user2 $($Pool1.User -replace "\..*") --pass2 $($Pool1.Pass)$(if ($Pool1.Pass -notmatch $Pool1.WorkerName) { " --worker2 $($Pool1.WorkerName)" })"
                         }
 
                         if ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 # https://github.com/scala-network/XLArig/issues/59; Need to remove temp fix in \Includes\MinerAPIs\XMrig.psm1 when resolved
@@ -48,11 +48,9 @@ if ($Algorithms) {
         # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name }) { 
         foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-            $RigID = if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } else { $Session.Config.WorkerName }
-
             @{ 
                 API         = "XmRig"
-                Arguments   = "$($_.Arguments)$(if ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id=$RigID --donate-level=$Fee --http-enabled --http-host=127.0.0.1 --api-worker-id=$RigID --api-id=$MinerName --http-port=$MinerAPIPort --threads=$Threads --retry-pause 1 --keepalive"
+                Arguments   = "$($_.Arguments)$(if ($Pool.Name -eq "NiceHash") { " --nicehash" }) --url=stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user=$($Pool.User -replace "\..*") --pass=$($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --donate-level=$Fee --http-enabled --http-host=127.0.0.1 --api-worker-id=$RigID --api-id=$MinerName --http-port=$MinerAPIPort --threads=$Threads --retry-pause 1 --keepalive"
                 DeviceNames = $AvailableMinerDevices.Name
                 Fee         = @($Fee) # Dev fee
                 MinerUri    = "http://workers.xmrig.info/worker?url=$([System.Web.HTTPUtility]::UrlEncode("http://127.0.0.1:$($MinerAPIPort)"))?Authorization=Bearer $([System.Web.HTTPUtility]::UrlEncode($MinerName))"

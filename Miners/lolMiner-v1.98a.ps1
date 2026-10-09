@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 # Improved performance and efficiency of Sha3x code for RDNA1 and newer AMD cards as well as Turing and newer Nvidia cards by 1-3% depending on the actual hardware architecture.
@@ -175,19 +175,19 @@ if ($Algorithms) {
 
                             if ($_.Algorithms[0] -notin @("Equihash1445", "Equihash1927") -or $CoinPers) { 
                                 if ($CoinPers) { $Arguments = "$Arguments $CoinPers" }
-                                $Arguments = "$Arguments --pool $($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                                $Arguments = "$Arguments --user $($Pool0.User)$(if ($Pool0.Protocol -ne "ethproxy" -and $Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass $($Pool0.Pass)"
-                                $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments --tls on" } else { "$Arguments --tls off" }
+                                $Arguments = "$Arguments --pool $($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1) --pass $($Pool0.Pass)"
                                 switch ($Pool0.Protocol) { 
-                                    "ethproxy"     { $Arguments = "$Arguments --worker $($Pool0.WorkerName) --ethstratum ETHPROXY"; break }
-                                    "ethstratum1"  { $Arguments = "$Arguments --ethstratum ETHV1"; break }
-                                    "ethstratum2"  { $Arguments = "$Arguments --ethstratum ETHV1"; break }
-                                    "ethstratumnh" { $Arguments = "$Arguments --ethstratum ETHV1" }
+                                    "ethproxy"     { $Arguments = "$Arguments --user $($Pool0.User -replace "\..*") --ethstratum ETHPROXY --worker $($Pool0.WorkerName)"; break }
+                                    "ethstratum1"  { $Arguments = "$Arguments --user $($Pool0.User -replace "\..*")$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { ".$($Pool0.WorkerName)"}) --ethstratum ETHV1"; break }
+                                    "ethstratum2"  { $Arguments = "$Arguments --user $($Pool0.User -replace "\..*")$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { ".$($Pool0.WorkerName)"}) --ethstratum ETHV1"; break }
+                                    "ethstratumnh" { $Arguments = "$Arguments --user $($Pool0.User -replace "\..*")$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { ".$($Pool0.WorkerName)"}) --ethstratum ETHV1" }
+                                    default        { $Arguments = "$Arguments --user $($Pool0.User -replace "\..*")$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { ".$($Pool0.WorkerName)"})" }
                                 }
+                                $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments --tls on" } else { "$Arguments --tls off" }
 
                                 if ($_.Algorithms[1]) { 
                                     $Arguments = "$Arguments --dualpool $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                                    $Arguments = "$Arguments --dualuser $($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" }) --dualpass $($Pool1.Pass)"
+                                    $Arguments = "$Arguments --dualuser $($Pool1.User -replace "\..*")$(if ($Pool1.Pass -notmatch $Pool1.WorkerName) { ".$($Pool1.WorkerName)"}) --dualpass $($Pool1.Pass)"
                                     if ($_.MaxDualImpact) { $Arguments = "$Arguments --maxdualimpact $($_.MaxDualImpact)" }
                                     $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments --dualtls on" } else { "$Arguments --dualtls off" }
                                 }

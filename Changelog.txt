@@ -1,3 +1,21 @@
+Changelog UG-Miner 6.8.27 2026/10/09
+====================================
+
+Fixes:
+- Core / Includes-psm1: Function 'Get-Config' not merging data from $PoolsConfigFile
+- Core & Pools: Rework Workername handling to avoid double workernames
+
+Improvements:
+- Core: Remove obsolete code
+- Miners: Non-DAG miners performance improvements
+
+Miner changes:
+- BzMiner-v100.45 (update)
+- OneZeroMiner-v1.7.9 (update)
+- SRBMinerMulti-v3.7.3 (update)
+- Wildrig-v1.0.0g (new)
+
+
 Changelog UG-Miner 6.8.26 2026/10/01
 ====================================
 

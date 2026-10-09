@@ -32,8 +32,8 @@
             >
             <thead>
               <tr>
-                <th data-field="Currency" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Currency</th>
                 <th data-field="Algorithm" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Algorithm</th>
+                <th data-field="Currency" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Currency</th>
                 <th data-field="CoinName" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">CoinName</th>
                 <th data-field="DAGsize" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">DAG size (GiB)</th>
                 <th data-field="Epoch" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Epoch</th>
@@ -104,28 +104,9 @@
             $(".table").bootstrapTable({
               async: "false",
               autoRefreshInterval: parseInt(Math.max(configrunning.Interval, 30)), // refresh once per interval, at least 30 seconds
-              onColumnSwitch: function() {
-                $("body").css("cursor", "default");
-              },
-              onColumnSwitchAll: function() {
-                $("body").css("cursor", "default");
-              },
-              onCreatedControls: function() {
-                $("body").css("cursor", "wait");
-              },
               onLoadSuccess: function() {
                 document.getElementsByName("add-updatedtimestamp")[0].innerHTML = document.getElementsByName("add-updatedtimestamp")[0].innerHTML.replace(/\.$| \(information updated.+/, "") + " (information updated " + refreshtimestamp + ").";
-                $("body").css("cursor", "default");
               },
-              onRefresh: function() {
-                $("body").css("cursor", "wait");
-              },
-              onReorderColumn: function() {
-                $("body").css("cursor", "default");
-              },
-              onToggle: function() {
-                $("body").css("cursor", "default");
-              }
             });
 
             $(window).resize(function () {

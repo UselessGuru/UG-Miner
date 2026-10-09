@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" })) { return }
@@ -71,9 +71,7 @@ if ($Algorithms) {
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                        $Arguments = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User)"
-                        if ($Pool.WorkerName -and $Pool.User -notmatch "\.$($Pool.WorkerName)$") { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
-                        $Arguments = "$Arguments --pass $($Pool.Pass)"
+                        $Arguments = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User -replace "\..*") --pass $($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
 
                         @{ 
                             API         = "CcMiner"

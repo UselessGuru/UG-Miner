@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 param(
@@ -127,7 +127,7 @@ elseif ($RequestInfo) {
                 Updated                  = $Timestamp
                 User                     = "$($PoolConfig.Wallets.$PayoutCurrency).$($PoolConfig.WorkerName)"
                 Variant                  = $Name
-                WorkerName               = ""
+                WorkerName               = $PoolConfig.WorkerName
                 Workers                  = $null
             }
         }

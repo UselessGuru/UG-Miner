@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 using module .\Includes\Include.psm1
@@ -320,7 +320,7 @@ $Session.Branding = @{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.26"
+    Version      = [System.Version]"6.8.27"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -807,7 +807,7 @@ $Session.Donation = [System.Collections.SortedList]::new([StringComparer]::Ordin
 $Session.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $Session.Miners = [Miner[]]@()
 $Session.MiningEarnings = $Session.MiningProfit = $Session.MiningPowerCost = [Double]::NaN
-$Session.NewMiningStatus = if ($Session.Config.StartupMode -match "Paused|Running") { $Session.Config.StartupMode } else { "Idle" }
+$Session.NewMiningStatus = if ($Session.Config.StartupMode -in "Paused", "Running") { $Session.Config.StartupMode } else { "Idle" }
 $Session.PID = $PID
 $Session.Pools = [Pool[]]@()
 $Session.RestartCycle = $true
@@ -871,7 +871,7 @@ if ([System.IO.File]::Exists(".\Logs\SwitchingLog.csv")) { Get-ChildItem -Path "
 $CursorPosition = $Host.UI.RawUI.CursorPosition
 if ($VertHashDatCheckJob | Wait-Job -Timeout 60 | Receive-Job -Wait -AutoRemoveJob) { 
     [Console]::SetCursorPosition($VertHashDatCursorPosition.X, $VertHashDatCursorPosition.Y)
-    Write-Host " ✔ (checksum ok)" -ForegroundColor Green
+    Write-Host " ✔  (checksum ok)" -ForegroundColor Green
 }
 else { 
     if ([System.IO.File]::Exists($Session.VertHashDatPath)) { 
@@ -910,7 +910,7 @@ if ($Session.FreshConfig -or $Session.ConfigurationHasChangedDuringUpdate) {
         Write-Host ""
         Write-Message -Level Warn "No configuration file found. Edit and save your configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html)"
         $Session.Summary = "Edit your settings and save the configuration.<br>Then click the 'Start mining' button."
-        (New-Object -ComObject Wscript.Shell).Popup("No configuration file found.`n`nEdit and save your configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 48)) | Out-Null
+        (New-Object -ComObject Wscript.Shell).Popup("No configuration file found.`n`nEdit and save your configuration using the configuration editor (http://localhost:$($Session.Config.APIport)/configedit.html).`n`n`Start making money by clicking 'Start mining'.`n`nHappy Mining!", 0, "Welcome to $($Session.Branding.ProductLabel) v$($Session.Branding.Version)", (4096 + 64)) | Out-Null
     }
     elseif ($Session.Config.StartupMode -ne "Running") { 
         # Always accept changed config when StartupMode is 'running'

@@ -17,50 +17,55 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
+Version:        6.8.27
 Version date:   2026/09/01
 #>
 
-# Big Nvidia & AMD pearl optimizations
-# Further randomx optimizations
+# improvements (~2%) on pearl for nvidia
+# improvements on quantus on both amd and nvidia 30 and 50 series
+# big improvements on pearl for intel battlemage gpus
+# bc250 improvements on pearl, quantus, cn, and c29
+# fixed an issue with pools being unable to reconnect
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") })) { return }
 
-$URI = "https://github.com/bzminer/bzminer/releases/download/v100.40/bzminer_v100.40_windows.zip"
+$URI = "https://github.com/bzminer/bzminer/releases/download/v100.45/bzminer_v100.45_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"
 
 $Algorithms = @(
     @{ Algorithms = @("Autolykos2", "");  Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.44; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo ergo") }
+    @{ Algorithms = @("Cuckoo29", "");    Type = "AMD"; Fee = @(0.01);  MinMemGiB = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo c29") }
     @{ Algorithms = @("EtcHash", "");     Type = "AMD"; Fee = @(0.005); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo etc") }
     @{ Algorithms = @("Ethash", "");      Type = "AMD"; Fee = @(0.005); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo ethw") }
     @{ Algorithms = @("KawPow", "");      Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo kawpow") }
     @{ Algorithms = @("JanusHash", "");   Type = "AMD"; Fee = @(0.02);  MinMemGiB = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo warthog") }
     @{ Algorithms = @("PearlHash", "");   Type = "AMD"; Fee = @(0.02);  MinMemGiB = 1;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo pearl") }
 #   @{ Algorithms = @("SHA256d", "");     Type = "AMD"; Fee = @(0);     MinMemGiB = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo sha256d") } # ASIC
-    @{ Algorithms = @("Verus", "");       Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo verus") }
     @{ Algorithms = @("PearlHash", "");   Type = "AMD"; Fee = @(0.02);  MinMemGiB = 1;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo pearl") }
     @{ Algorithms = @("XelisHashV3", ""); Type = "AMD"; Fee = @(0.01);  MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo xelis") }
 
+    @{ Algorithms = @("VerusHash", ""); Type = "CPU"; Fee = @(0.01);  MinMemGiB = 0; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --algo verus") }
+
     @{ Algorithms = @("Autolykos2", "");  Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo ergo") }
+    @{ Algorithms = @("Cuckoo29", "");    Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo c29") }
     @{ Algorithms = @("EtcHash", "");     Type = "INTEL"; Fee = @(0.005); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo etc") }
     @{ Algorithms = @("Ethash", "");      Type = "INTEL"; Fee = @(0.005); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo ethw") }
     @{ Algorithms = @("KawPow", "");      Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo kawpow") }
     @{ Algorithms = @("JanusHash", "");   Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo warthog") }
     @{ Algorithms = @("PearlHash", "");   Type = "INTEL"; Fee = @(0.02);  MinMemGiB = 1;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo pearl") }
 #   @{ Algorithms = @("SHA256d", "");     Type = "INTEL"; Fee = @(0);     MinMemGiB = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo sha256d") } # ASIC
-    @{ Algorithms = @("Verus", "");       Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo verus") }
     @{ Algorithms = @("XelisHashV3", ""); Type = "INTEL"; Fee = @(0.01);  MinMemGiB = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo xelis") }
 
     @{ Algorithms = @("Autolykos2", "");  Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo ergo") }
+    @{ Algorithms = @("Cuckoo29", "");    Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo c29") }
     @{ Algorithms = @("EtcHash", "");     Type = "NVIDIA"; Fee = @(0.005); MinMemGiB = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo etc") }
     @{ Algorithms = @("Ethash", "");      Type = "NVIDIA"; Fee = @(0.005); MinMemGiB = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo ethw") }
     @{ Algorithms = @("KawPow", "");      Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo kawpow") }
     @{ Algorithms = @("JanusHash", "");   Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo warthog") }
     @{ Algorithms = @("PearlHash", "");   Type = "NVIDIA"; Fee = @(0.02);  MinMemGiB = 1;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo pearl") }
 #   @{ Algorithms = @("SHA256d", "");     Type = "NVIDIA"; Fee = @(0);     MinMemGiB = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo sha256d") } # ASIC
-    @{ Algorithms = @("Verus", "");       Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1;    WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo verus") }
     @{ Algorithms = @("XelisHashV3", ""); Type = "NVIDIA"; Fee = @(0.01);  MinMemGiB = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --algo xelis") }
     
 )
@@ -101,7 +106,7 @@ if ($Algorithms) {
                             }
                             $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
                             $Arguments = "$Arguments$($Pool0.Host):$($Pool0.PoolPorts | Select-Object -Last 1)"
-                            $Arguments = "$Arguments --user $($Pool0.User -replace "\..*") --pass $($Pool0.Pass) --worker $(if ($Pool0.WorkerName) { $Pool0.WorkerName } elseif ($Pool0.User -like "*.*") { $Pool0.User -replace ".+\." } else { $Session.Config.WorkerName })"
+                            $Arguments = "$Arguments --user $($Pool0.User -replace "\..*") --pass $($Pool0.Pass)$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { " --worker $($Pool0.WorkerName)" })"
 
                             # if ($_.Algorithms[1]) { 
                             #     $Arguments = "$Arguments$($_.Arguments[1])"
@@ -114,7 +119,7 @@ if ($Algorithms) {
                             #     }
                             #     $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments+ssl://" } else { "$Arguments+tcp://" }
                             #     $Arguments = "$Arguments$($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
-                            #     $Arguments = "$Arguments --user $($Pool1.User -replace "\..*") --pass $($Pool1.Pass) --worker $(if ($Pool1.WorkerName) { $Pool1.WorkerName } elseif ($Pool1.User -like "*.*") { $Pool1.User -replace ".+\." } else { $Session.Config.WorkerName })"
+                            #     $Arguments = "$Arguments --user $($Pool1.User -replace "\..*") --pass $($Pool1.Pass)$(if ($Pool1.Pass -notmatch $Pool1.WorkerName) { " --worker $($Pool1.WorkerName)" })"
                             # }
 
                             # Allow more time to build larger DAGs, must use type cast to keep values in $_
@@ -123,7 +128,7 @@ if ($Algorithms) {
 
                             @{ 
                                 API         = "BzMiner"
-                                Arguments   = "$Arguments --hashrate-window 5 --http_enabled --http_address 127.0.0.1 --http_port $MinerAPIPort --no-watchdog --disable_udp --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}:00' -f $_ } -join " ")"
+                                Arguments   = "$Arguments --hashrate-window 5 --http_enabled --http_address 127.0.0.1 --http_port $MinerAPIPort --no-watchdog --disable_udp$(if ($Type -ne "CPU") { " --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}:00' -f $_ } -join " ")" })"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 Fee         = $_.Fee # Dev fee
                                 MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"

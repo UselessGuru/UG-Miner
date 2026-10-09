@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
 Version:        6.8.22
-Version date:   2026/10/01
+Version date:   2026/10/09
 #>
 
 using module .\Include.psm1
@@ -163,6 +163,7 @@ try {
                                 $Session.CalculatePowerCost = $false
                             }
                         }
+                        Remove-Variable Matches -ErrorAction Ignore
                         # Add configured power consumption
                         $Session.Devices.Name.ForEach{ 
                             $DeviceName = $_
@@ -180,7 +181,7 @@ try {
 
                         # Enable read power consumption for configured devices
                         $Session.EnabledDevices.ForEach{ $_.ReadPowerConsumption = $PowerConsumptionData.psBase.Keys -contains $_.Name }
-                        Remove-Variable ConfiguredPowerConsumption, DeviceName, DeviceNamesMissingSensor, PowerConsumptionData, HWiNFO64RegTime -ErrorAction Ignore
+                        Remove-Variable ConfiguredPowerConsumption, DeviceName, DeviceNamesMissingSensor, PowerConsumptionData, HWiNFO64RegTime, Matches -ErrorAction Ignore
                     }
                 }
                 else { 
@@ -337,7 +338,7 @@ try {
             Remove-Variable StatFiles -ErrorAction Ignore
 
             # Read latest DAG data from web
-            $Session.DAGdata = Update-AllDAGdata $Session.DAGdata
+            try { $Session.DAGdata = Update-AllDAGdata $Session.DAGdata } catch { <# will retry on next loop #>}
 
             # Core suspended with <Ctrl><Alt>P in MainLoop
             while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
@@ -420,7 +421,7 @@ try {
                 }
 
                 if ($PoolsWithoutData = Compare-Object -PassThru @($PoolNames) @($Session.PoolsNew.Variant | Sort-Object -Unique)) { Write-Message -Level Warn "No data received from pool$(if ($PoolsWithoutData.Count -gt 1) { "s" }) $($PoolsWithoutData -join ", " -replace ",([^,]*)$", " &`$1")." }
-                Remove-Variable Factor, Pool, PoolName, PoolNames, PoolsWithoutData -ErrorAction Ignore
+                Remove-Variable Factor, Matches, Pool, PoolName, PoolNames, PoolsWithoutData -ErrorAction Ignore
                 $Session.PoolDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
 
                 # Remove and count deconfigured pools
@@ -574,7 +575,7 @@ try {
                                 Write-Message -Level Warn "Pool '$($Pool.Name)' prioritized to avoid forfeiting balance (pool would clear balance in 10 days)."
                             }
                         }
-                        Remove-Variable Pool
+                        Remove-Variable Pool -ErrorAction Ignore
 
                         if ($Session.Config.PoolNamesToKeepBalancesAlive) { 
                             $Pools.ForEach{ 
@@ -1004,7 +1005,7 @@ try {
             foreach ($Miner in $Miners) {
                 if ($Miner.BaseName_Version_Device -match $ExcludeMinerNameRegex) { [Void]$Miner.Reasons.Add("ExcludeMinerName ($JoinedExcludeMinerName)") }
             }
-            Remove-Variable ExcludeMinerNameRegex, JoinedExcludeMinerName
+            Remove-Variable ExcludeMinerNameRegex, JoinedExcludeMinerName, Matches -ErrorAction Ignore
         }
         Remove-Variable Miner
 
@@ -1145,7 +1146,7 @@ try {
                         }
                     }
                 }
-                Remove-Variable RelevantMiners -ErrorAction Ignore
+                Remove-Variable Matches, RelevantMiners -ErrorAction Ignore
             }
             Remove-Variable RelevantWatchdogTimers -ErrorAction Ignore
         }
@@ -1216,7 +1217,7 @@ try {
             $MinerDeviceNamesCombinations = (Get-Combination @($MinersBestPerDevice | Select-Object DeviceNames -Unique)).Where{ (Compare-Object ($_.Combination | Select-Object -ExpandProperty DeviceNames -Unique) ($_.Combination | Select-Object -ExpandProperty DeviceNames) | Measure-Object).Count -eq 0 }
 
             # Get best miner combination i.e. AMD+INTEL+NVIDIA+CPU
-            $MinersLookup = @{}
+            $MinersLookup = @{ }
             foreach ($Item in $MinersBestPerDevice) {
                 $MinersLookup[$Item.DeviceNames -join ' '] = $Item
             }
@@ -1229,7 +1230,7 @@ try {
                     }
                 }
             }
-            Remove-Variable Device, MinerDeviceNamesCombination -ErrorAction Ignore
+            Remove-Variable Device, MinerDeviceNamesCombination, MinersLookup -ErrorAction Ignore
             $MinersBest = ($MinerCombinations | Sort-Object -Descending { $_.Combination.Where{ $_.Benchmark }.Count }, { $_.Combination.Where{ $_.MeasurePowerConsumption }.Count }, { $_.Combination.Where{ [Double]::IsNaN($_.$Bias) }.Count }, { ($_.Combination.$Bias | Measure-Object -Sum).Sum }, { ($_.Combination.Where{ $_.$Bias -ne 0 } | Measure-Object).Count } -Top 1).Combination | Sort-Object { $_.BaseName_Version_Device.Split('-')[-1] }
 
             # Revert smallest bias hack
@@ -1302,7 +1303,7 @@ try {
             }
             if ($StuckMinerProcesses) { Start-Sleep -Seconds 1 }
         } while ($StuckMinerProcesses -and [DateTime]::Now -lt $EndLoop)
-        Remove-Variable EndLoop, MinerPaths, StuckMinerProcess -ErrorAction Ignore
+        Remove-Variable EndLoop, Matches, MinerPaths, StuckMinerProcess -ErrorAction Ignore
 
         if ($StuckMinerProcesses) { 
             if ($Session.Config.AutoReboot) { 
@@ -1615,6 +1616,9 @@ try {
                                 }
                             }
                         }
+                        # else { 
+                        #     $Miner.GetMinerData()
+                        # }
 
                         # Stop miner, it has not provided hash rate on time
                         if ($Miner.ValidDataSampleTimestamp -eq [DateTime]::MinValue -and [DateTime]::Now.ToUniversalTime() -gt $Miner.BeginTime.AddSeconds($Miner.WarmupTimes[0])) { 

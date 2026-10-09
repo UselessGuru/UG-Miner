@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
@@ -185,9 +185,8 @@ if ($Algorithms) {
                                     }
                                 }
                                 $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments --tls true --pool $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments --tls false --pool $($Pool.Host):$($Pool.PoolPorts[0])" }
-                                $Arguments = "$Arguments --wallet $($Pool.User) --password $($Pool.Pass)"
+                                $Arguments = "$Arguments --wallet $($Pool.User -replace "\..*") --password $($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
                                 if ($Pool.Name -eq "NiceHash") { $Arguments = "$Arguments --nicehash true" }
-                                if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
                                 if ($_.GpuDualMaxLoss) { $Arguments = "$Arguments --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
                             }
                             Remove-Variable Pool
@@ -210,7 +209,7 @@ if ($Algorithms) {
 
                             @{ 
                                 API              = "SRBMiner"
-                                Arguments        = "$Arguments --api-rig-name $($Session.Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort"
+                                Arguments        = "$Arguments --api-rig-name $($Pool.WorkerName) --api-enable --api-port $MinerAPIPort"
                                 DeviceNames      = $AvailableMinerDevices.Name
                                 Fee              = $_.Fee # Dev fee
                                 MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/stats"

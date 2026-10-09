@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -43,6 +43,8 @@ if ($Algorithms) {
         $MinerAPIPort = $Session.MinerBaseAPIport + ($AvailableMinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
+
+            $DeviceIDs = ($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ','
             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
             # $ExcludePools = $_.ExcludePools
@@ -53,7 +55,7 @@ if ($Algorithms) {
 
                 @{ 
                     API         = "XmRig"
-                    Arguments   = "$($_.Arguments) --url stratum+tcp://$(if ($Pool.PoolPorts[1]) { "$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { "$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port $MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                    Arguments   = "$($_.Arguments) --url stratum+tcp://$(if ($Pool.PoolPorts[1]) { "$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { "$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port $MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $DeviceIDs"
                     DeviceNames = $AvailableMinerDevices.Name
                     Fee         = @(0) # Dev fee
                     MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"

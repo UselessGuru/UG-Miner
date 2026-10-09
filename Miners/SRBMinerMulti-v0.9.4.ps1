@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 # Support for Pitcairn, Tahiti, Hawaii, Fiji and Tonga was removed in later versions
@@ -62,7 +62,6 @@ $Algorithms = @(
     @{ Algorithm = "ProgPowVeriblock";  Fee = @(0.0065); MinMemGiB = 2;    WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_veriblock" }
     @{ Algorithm = "ProgPowanoZ";       Fee = @(0.0065); MinMemGiB = 1.24; WarmupTimes = @(45, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm progpow_zano" }
     @{ Algorithm = "SHA3d";             Fee = @(0.0085); MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm sha3d" } # FPGU
-#   @{ Algorithm = "VerusHash";         Fee = @(0.0085); MinMemGiB = 1;    WarmupTimes = @(30, 30); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verushash" }
     @{ Algorithm = "VertHash";          Fee = @(0.0125); MinMemGiB = 1;    WarmupTimes = @(30, 10); ExcludePools = @(); Arguments = " --disable-cpu --algorithm verthash --verthash-dat-path ..\.$($Session.VertHashDatPath)" }
     @{ Algorithm = "Yescrypt";          Fee = @(0.0085); MinMemGiB = 1;    WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --disable-cpu --algorithm yescrypt" }
 )
@@ -106,12 +105,11 @@ if ($Algorithms) {
                     }
 
                     $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments --tls true --pool $($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments --tls false --pool $($Pool.Host):$($Pool.PoolPorts[0])" }
-                    $Arguments = "$Arguments --wallet $($Pool.User) --password $($Pool.Pass)"
-                    if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
+                    $Arguments = "$Arguments --wallet $($Pool.User -replace "\..*") --password $($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
 
                     @{ 
                         API              = "SRBMiner"
-                        Arguments        = "$Arguments --disable-workers-ramp-up --api-rig-name $($Session.Config.PoolsConfig.($Pool0.Name).WorkerName) --api-enable --api-port $MinerAPIPort --gpu-auto-tune 2 --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
+                        Arguments        = "$Arguments --disable-workers-ramp-up --api-rig-name $($Pool.WorkerName) --api-enable --api-port $MinerAPIPort --gpu-auto-tune 2 --gpu-id $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                         DeviceNames      = $AvailableMinerDevices.Name
                         Fee              = $_.Fee # Dev fee
                         MinerUri         = "http://127.0.0.1:$($MinerAPIPort)/stats"

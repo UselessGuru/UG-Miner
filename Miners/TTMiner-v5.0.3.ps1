@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -74,8 +74,7 @@ if ($Algorithms) {
                     if ($AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = $Arguments -replace " -intensity [0-9]+" }
 
                     $Arguments = if ($Pool.Protocol -like "ethproxy*" -or $_.Algorithm -eq "ProgPowZ") { "$Arguments -pool stratum1+tcp://" } else { "$Arguments -pool stratum+tcp://" }
-                    $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts[0]) -user $($Pool.User) -pass $($Pool.Pass)"
-                    if ($Pool.WorkerName) { $Arguments = "$Arguments -worker $($Pool.WorkerName)" }
+                    $Arguments = "$Arguments$($Pool.Host):$($Pool.PoolPorts[0]) -user $($Pool.User -replace "\..*")$(if ($Pool.Pass -notmatch $Pool.WorkerName) { ".$($Pool.WorkerName)" }) -pass $($Pool.Pass)"
                     if ($_.Algorithm -match $Session.RegexAlgoHasDAG) { $Arguments = "$Arguments -daginfo" }
 
                     @{ 

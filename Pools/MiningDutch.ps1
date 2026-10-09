@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 param(
@@ -102,9 +102,9 @@ if ($DivisorMultiplier -and $PriceField) {
                     SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week
                     Updated                  = $Request.$Algorithm.Updated
-                    User                     = "$($PoolConfig.UserName).$($PoolConfig.WorkerName)"
+                    User                     = $PoolConfig.UserName
                     Variant                  = $PoolVariant
-                    WorkerName               = ""
+                    WorkerName               = $PoolConfig.WorkerName
                     Workers                  = $Request.$Algorithm.workers_shared
                 }
                 break

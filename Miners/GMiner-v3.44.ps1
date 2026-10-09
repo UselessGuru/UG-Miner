@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 1.2") -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
@@ -102,15 +102,13 @@ if ($Algorithms) {
                                 "ethstratumnh" { $Arguments = "$Arguments --proto stratum" }
                             }
                             if ($Pool0.PoolPorts[1]) { $Arguments = "$Arguments --ssl 1" }
-                            $Arguments = "$Arguments --user $($Pool0.User) --pass $($Pool0.Pass)"
-                            if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { $Arguments = "$Arguments --worker $($Pool0.WorkerName)" }
+                            $Arguments = "$Arguments --user $($Pool0.User -replace "\..*") --pass $($Pool0.Pass)$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { " --worker $($Pool0.WorkerName)" })"
                             if ($_.AutoCoinPers) { $Arguments = "$Arguments$(Get-EquihashCoinPers -Command " --pers " -Currency $Pool0.Currency -DefaultCommand $_.AutoCoinPers)" }
 
                             if (($_.Algorithms[1])) { 
                                 $Arguments = "$Arguments --dserver $($Pool1.Host):$($Pool1.PoolPorts | Select-Object -Last 1)"
                                 if ($Pool1.PoolPorts[1]) { $Arguments = "$Arguments --dssl 1" }
-                                $Arguments = "$Arguments --duser $($Pool1.User) --dpass $($Pool1.Pass)"
-                                if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { $Arguments = "$Arguments --dworker $($Pool1.WorkerName)" }
+                                $Arguments = "$Arguments --duser $($Pool1.User -replace "\..*") --dpass $($Pool1.Pass)$(if ($Pool1.Pass -notmatch $Pool1.WorkerName) { " --dworker $($Pool1.WorkerName)" })"
                             }
 
                             # Contest ETH address (if ETH wallet is specified in config)

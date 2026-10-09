@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 using module .\Include.psm1
@@ -319,7 +319,6 @@ do {
                     $PoolTodaysEarnings.Payout        = $PoolTodaysEarnings.Payout + $BalanceObject.Payout
                 }
                 else { 
-                    # $Earnings += [PSCustomObject]@{ 
                     $Earnings += @{ 
                         Date          = $Now.ToString("yyyy-MM-dd")
                         Pool          = $EarningsObject.Pool
@@ -416,7 +415,7 @@ do {
     }
 
     # Sleep until next update (at least 5 minutes, maximum 60 minutes) or when no internet connection
-    while (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (5, [UInt16]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum ).Minimum)) { 
+    while (-not $Session.MyIPaddress -or [DateTime]::Now -le $Now.AddMinutes((60, (5, [UInt16]$Session.Config.BalancesTrackerPollInterval | Measure-Object -Maximum).Maximum | Measure-Object -Minimum).Minimum)) { 
         Start-Sleep -Seconds 5
     }
 } while ($true)

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") })) { return }
@@ -221,11 +221,10 @@ if ($Algorithms) {
                     if (-not $Session.IsLocalAdmin) { $Arguments = "$Arguments --randomx-wrmsr=-1" } #  disable MSR mod
 
                     $MinerPath = if ($_.Algorithm -in "Ghostrider", "Flex", "Panthera", "RandomXeq", "RandomxKeva") { $Path -replace "\\xmrig.exe$", "\xmrig-mo.exe" } else { $Path } # https://github.com/RainbowMiner/RainbowMiner/issues/2800
-                    $RigID = if ($Pool.WorkerName) { $Pool.WorkerName } elseif ($Pool.User -like "*.*") { $Pool.User -replace ".+\." } else { $Session.Config.WorkerName }
 
                     @{ 
                         API         = "XmRig"
-                        Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --url=$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { " --url=$($Pool.Host):$($Pool.PoolPorts[0])" }) --user=$($Pool.User) --pass=$($Pool.Pass) --rig-id=$RigID --donate-level=$Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$MinerAPIPort --api-worker-id=$RigID --api-id=$MinerName --retries=90 --retry-pause=1"
+                        Arguments   = "$Arguments$(if ($Pool.Name -eq "NiceHash") { " --nicehash" })$(if ($Pool.PoolPorts[1]) { " --url=$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { " --url=$($Pool.Host):$($Pool.PoolPorts[0])" }) --user=$($Pool.User -replace "\..*") --pass=$($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --rig-id $($Pool.WorkerName)" }) --donate-level=$Fee --keepalive --http-enabled --http-host=127.0.0.1 --http-port=$MinerAPIPort --api$Pool.WorkerName-id=$($Pool.WorkerName) --api-id=$MinerName --retries=90 --retry-pause=1"
                         DeviceNames = $AvailableMinerDevices.Name
                         Fee         = @($Fee) # Dev fee
                         MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/api.json"

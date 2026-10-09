@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 # Keep algorithms 'progpow_sero', 'progpow_telestai', 'walahash', 'karlsenhashv2' and related dual implementations (these were removed in v3.5.7)
@@ -120,9 +120,9 @@ if ($Algorithms) {
                                         "ethstratumnh" { $Arguments = "$Arguments --esm 2" }
                                     }
                                 }
-                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --wallet $($Pool.User) --password $($Pool.Pass)"
+                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "tcp://$($Pool.Host):$($Pool.PoolPorts[0])" })"
+                                $Arguments = "$Arguments --wallet $($Pool.User -replace "\..*") --password $($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
                                 if ($Pool.Name -eq "NiceHash") { $Arguments = "$Arguments --nicehash true" }
-                                if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
                                 if ($_.GpuDualMaxLoss) { $Arguments = "$Arguments --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
                             }
                             Remove-Variable Pool

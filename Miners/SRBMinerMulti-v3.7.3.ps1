@@ -18,14 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.8.22
-Version date:   2026/10/01
+Version date:   2026/10/09
 #>
 
-# Improvements on algorithm 'quantus' for AMD and INTEL GPUs [NVIDIA is still fast :)]
+# Previously experimental NVIDIA 'pearlhash' kernels are now the DEFAULT for Ampere (SM86), Ada (SM89) and Blackwell (SM120)*
+# Improvements on algorithm 'pearlhash' for AMD GPUs
+# Improvements on algorithm 'quantus' for NVIDIA GPUs
+# Removed support for QUIC protocol (algorithm 'quantus')
+# Removed parameters '--pearl-k1', '--pearl-k2', '--tls-cert-sha256'
+# Bug fixes
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.7.1/SRBMiner-Multi-3-7-1-win64.zip"
+$URI = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.7.3/SRBMiner-Multi-3-7-3-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -280,9 +285,9 @@ if ($Algorithms) {
                                         "ethstratumnh" { $Arguments = "$Arguments --esm 2" }
                                     }
                                 }
-                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --wallet $($Pool.User) --password $($Pool.Pass)"
+                                $Arguments = "$Arguments$($_.Arguments[$Pools.IndexOf($Pool)]) --pool $(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "tcp://$($Pool.Host):$($Pool.PoolPorts[0])" })"
+                                $Arguments = "$Arguments --wallet $($Pool.User -replace "\..*") --password $($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
                                 if ($Pool.Name -eq "NiceHash") { $Arguments = "$Arguments --nicehash true" }
-                                if ($Pool.WorkerName) { $Arguments = "$Arguments --worker $($Pool.WorkerName)" }
                                 if ($_.GpuDualMaxLoss) { $Arguments = "$Arguments --gpu-dual-max-loss $($_.GpuDualMaxLoss)" }
                             }
                             Remove-Variable Pool

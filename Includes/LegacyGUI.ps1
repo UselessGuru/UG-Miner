@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -729,17 +729,17 @@ function Update-TabControl {
         #             elseif ($Session.MiningStatus -eq "Idle") { 
         #                 $LegacyGUIelements.WorkersLabel.Text = "No workers - mining is stopped"
         #                 $LegacyGUIelements.WorkersDGV.DataSource = $null
-        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged
+        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged $false -Force
         #             }
         #             elseif ($Session.MiningStatus -eq "Paused" -and -not $DataSource) { 
         #                 $LegacyGUIelements.WorkersLabel.Text = "No workers - mining is paused"
         #                 $LegacyGUIelements.WorkersDGV.DataSource = $null
-        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged
+        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged $false -Force
         #             }
         #             elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
         #                 $LegacyGUIelements.MinersLabel.Text = "No workers - mining is suspended"
         #                 $LegacyGUIelements.WorkersDGV.DataSource = $null
-        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged
+        #                 $LegacyGUIelements.WorkersDGV | Add-Member ColumnWidthChanged $false -Force
         #             }
         #             else { $LegacyGUIelements.WorkersLabel.Text = "Waiting for monitoring information..." }
         #
@@ -799,17 +799,17 @@ function Update-TabControl {
                 if ($Session.NewMiningStatus -eq "Idle") { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No watchdog timers - mining is stopped"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged
+                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged $false -Force
                 }
                 elseif ($Session.NewMiningStatus -eq "Paused") { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No watchdog timers - mining is paused"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged
+                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged $false -Force
                 }
                 elseif ($Session.NewMiningStatus -eq "Running" -and $Session.MiningStatus -eq "Running" -and -not $Session.Pools -and $Global:CoreCycleRunspace.Job.IsCompleted -eq $true) { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "No watchdog timers - mining is suspended"
                     $LegacyGUIelements.WatchdogTimersDGV.DataSource = $null
-                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged
+                    $LegacyGUIelements.WatchdogTimersDGV | Add-Member ColumnWidthChanged $false -Force
                 }
                 elseif ($Session.WatchdogTimers) { 
                     $LegacyGUIelements.WatchdogTimersLabel.Text = "Watchdog timers updated $(($Session.WatchdogTimers.Kicked | Sort-Object -Bottom 1).ToLocalTime().ToString("G"))"
@@ -2188,8 +2188,13 @@ $LegacyGUIelements.Timer.Add_Tick(
                             Write-Host "`nKey '$_' pressed: '" -NoNewline; Write-Host "E" -ForegroundColor Cyan -NoNewline; Write-Host "arnings' column visibility is now " -NoNewline; if ($Config.ShowColumnEarnings) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
                             break
                         }
+                        "f" { 
+                            $Config.ShowColumnPoolFee = -not $Config.ShowColumnPoolFee
+                            Write-Host "`nKey '$_' pressed: 'Pool "-NoNewline; Write-Host "f" -ForegroundColor Cyan -NoNewline; Write-Host "ees' column visibility is now " -NoNewline; if ($Config.ShowColumnPoolFee) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
+                            break
+                        }
                         "h" { 
-                            Write-Host "`nHot key legend:                              Status:"
+                            Write-Host "`nHot key legend                               Status"
                             Write-Host "1: Toggle listing pool balances              [" -NoNewline; if ($Config.ShowPoolBalances) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "2: Toggle listing all optimal miners         [" -NoNewline; if ($Config.ShowAllOptimalMiners) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "3: Toggle UI style [full or light]           [" -NoNewline; Write-Host "$($Config.UIstyle)" -ForegroundColor Blue -NoNewline; Write-Host "]"
@@ -2203,19 +2208,19 @@ $LegacyGUIelements.Timer.Add_Tick(
                             Write-Host "b: Toggle 'Earnings " -NoNewline; Write-Host "b" -ForegroundColor Cyan -NoNewline; Write-Host "ias' column visibility  [" -NoNewline; if ($Config.ShowColumnEarningsBias) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "c: Toggle '" -NoNewline; Write-Host "C" -ForegroundColor Cyan -NoNewline; Write-Host "urrency' column visibility       [" -NoNewline; if ($Config.ShowColumnCurrency) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "e: Toggle '" -NoNewline; Write-Host "E" -ForegroundColor Cyan -NoNewline; Write-Host "arnings' column visibility       [" -NoNewline; if ($Config.ShowColumnEarnings) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
+                            Write-Host "f: Toggle 'Pool " -NoNewline; Write-Host "f" -ForegroundColor Cyan -NoNewline; Write-Host "ee' column visibility       [" -NoNewline; if ($Config.ShowColumnPoolFee) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "m: Toggle '" -NoNewline; Write-Host "M" -ForegroundColor Cyan -NoNewline; Write-Host "iner fee' column visibility      [" -NoNewline; if ($Config.ShowColumnMinerFee) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "n: Toggle 'Coin" -NoNewline; Write-Host "N" -ForegroundColor Cyan -NoNewline; Write-Host "ame' column visibility       [" -NoNewline; if ($Config.ShowColumnCoinName) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             if ($Session.CalculatePowerCost) { 
                                 Write-Host "o: Toggle 'Power c" -NoNewline; Write-Host "o" -ForegroundColor Cyan -NoNewline; Write-Host "st' column visibility     [" -NoNewline; if ($Config.ShowColumnPowerCost) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             }
-                            Write-Host "p: Toggle '" -NoNewline; Write-Host "P" -ForegroundColor Cyan -NoNewline; Write-Host "ool fee' column visibility       [" -NoNewline; if ($Config.ShowColumnPoolFee) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
+                            if ($Session.CalculatePowerCost) { 
+                                Write-Host "p: Toggle '" -NoNewline; Write-Host "P" -ForegroundColor Cyan -NoNewline; Write-Host "rofit' column visibility         [" -NoNewline; if ($Config.ShowColumnProfit) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
+                            }
                             if ($Session.CalculatePowerCost) { 
                                 Write-Host "r: Toggle 'P" -NoNewline; Write-Host "r" -ForegroundColor Cyan -NoNewline; Write-Host "ofit bias' column visibility    [" -NoNewline; if ($Config.ShowColumnProfitBias) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             }
                             Write-Host "s: Toggle 'Ha" -NoNewline; Write-Host "s" -ForegroundColor Cyan -NoNewline; Write-Host "hrate(s)' column visibility    [" -NoNewline; if ($Config.ShowColumnHashrate) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
-                            if ($Session.CalculatePowerCost) { 
-                                Write-Host "t: Toggle 'Profi" -NoNewline; Write-Host "t" -ForegroundColor Cyan -NoNewline; Write-Host "' column visibility         [" -NoNewline; if ($Config.ShowColumnProfit) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
-                            }
                             Write-Host "u: Toggle '" -NoNewline; Write-Host "U" -ForegroundColor Cyan -NoNewline; Write-Host "ser' column visibility           [" -NoNewline; if ($Config.ShowColumnUser) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             if ($Session.CalculatePowerCost) { 
                                 Write-Host "w: Toggle 'Po" -NoNewline; Write-Host "w" -ForegroundColor Cyan -NoNewline; Write-Host "er (W)' column visibility      [" -NoNewline; if ($Session.Config.CalculatePowerCost -and $Config.ShowColumnPowerConsumption) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
@@ -2241,8 +2246,10 @@ $LegacyGUIelements.Timer.Add_Tick(
                             break
                         }
                         "p" { 
-                            $Config.ShowColumnPoolFee = -not $Config.ShowColumnPoolFee
-                            Write-Host "`nKey '$_' pressed: '"-NoNewline; Write-Host "P" -ForegroundColor Cyan -NoNewline; Write-Host "ool fees' column visibility is now " -NoNewline; if ($Config.ShowColumnPoolFee) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
+                            if ($Session.CalculatePowerCost) { 
+                                $Config.ShowColumnProfit = -not $Config.ShowColumnProfit
+                                Write-Host "`nKey '$_' pressed: '" -NoNewline; Write-Host "P" -ForegroundColor Cyan -NoNewline; Write-Host "rofit' column visibility is now " -NoNewline; if ($Config.ShowColumnProfit) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
+                            }
                             break
                         }
                         "q" { 
@@ -2266,13 +2273,6 @@ $LegacyGUIelements.Timer.Add_Tick(
                         "s" { 
                             $Config.ShowColumnHashrate = -not $Config.ShowColumnHashrate
                             Write-Host "`nKey '$_' pressed: 'Ha" -NoNewline; Write-Host "s" -ForegroundColor Cyan -NoNewline; Write-Host "hrates(s)' column visibility is now " -NoNewline; if ($Config.ShowColumnHashrate) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
-                            break
-                        }
-                        "t" { 
-                            if ($Session.CalculatePowerCost) { 
-                                $Config.ShowColumnProfit = -not $Config.ShowColumnProfit
-                                Write-Host "`nKey '$_' pressed: 'Profi" -NoNewline; Write-Host "t" -ForegroundColor Cyan -NoNewline; Write-Host "' column visibility is now " -NoNewline; if ($Config.ShowColumnProfit) { Write-Host "on" -ForegroundColor Green } else { Write-Host "off" -ForegroundColor DarkYellow }
-                            }
                             break
                         }
                         "u" { 
@@ -2468,7 +2468,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                             if ($Config.ShowColumnPowerConsumption -and $Session.Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { if ([Double]::IsNaN($_.PowerConsumption_Live)) { "n/a" } else { "$($_.PowerConsumption_Live.ToString("N2"))" } }; Align = "right" } }
                             @{ Label = "Hashrate(s)"; Expression = { $_.Hashrates_Live.ForEach{ if ([Double]::IsNaN($_)) { "n/a" } else { $_ | ConvertTo-Hash } } -join " & " }; Align = "right" }
                             @{ Label = "Active (this run)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ([DateTime]::Now.ToUniversalTime() - $_.BeginTime) } }
-                            @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } }
+                            if (-not $Session.Config.DryRun) { @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } } }
                             @{ Label = "Cnt"; Expression = { switch ($_.Activated) { 0 { "Never"; break } 1 { "Once"; break } default { $_ } } } }
                             @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }
                             @{ Label = "Command"; Expression = { $_.CommandLine } }
@@ -2488,7 +2488,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                                 if ($Config.ShowColumnPowerConsumption -and $Session.Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { if ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
                                 @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach{ $_ | ConvertTo-Hash } -join " & " }; Align = "right" }
                                 @{ Label = "Time since last run"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
-                                @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
+                                if (-not $Session.Config.DryRun) { @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } } }
                                 @{ Label = "Cnt"; Expression = { switch ($_.Activated) { 0 { "Never"; break } 1 { "Once"; break } default { $_ } } } }
                                 @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }
                                 @{ Label = "Command"; Expression = { $_.CommandLine } }
@@ -2505,7 +2505,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                                 if ($Config.ShowColumnPowerConsumption -and $Session.Config.CalculatePowerCost) { @{ Label = "Power (W)"; Expression = { if ([Double]::IsNaN($_.PowerConsumption)) { "n/a" } else { "$($_.PowerConsumption.ToString("N2"))" } }; Align = "right" } }
                                 @{ Label = "Hashrate(s)"; Expression = { $_.Workers.Hashrate.ForEach{ $_ | ConvertTo-Hash } -join " & " }; Align = "right" }
                                 @{ Label = "Time since last fail"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $([DateTime]::Now - $_.EndTime.ToLocalTime()) } }
-                                @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $_.TotalMiningDuration } }
+                                if (-not $Session.Config.DryRun) { @{ Label = "Active (total)"; Expression = { "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f ($_.TotalMiningDuration) } } }
                                 @{ Label = "Cnt"; Expression = { switch ($_.Activated) { 0 { "Never"; break } 1 { "Once"; break } default { $_ } } } }
                                 @{ Label = "Device(s)"; Expression = { $_.BaseName_Version_Device.Split('-')[-1] } }
                                 @{ Label = "Command"; Expression = { $_.CommandLine } }
@@ -2531,7 +2531,7 @@ $LegacyGUIelements.Timer.Add_Tick(
 
                         if ($Config.UIstyle -ne "full" -and $Session.MinersBenchmarkingOrMeasuring) { Write-Host -ForegroundColor DarkYellow "$(if ($Session.MinersNeedingBenchmark) { "Benchmarking" })$(if ($Session.MinersNeedingBenchmark -and $Session.MinersNeedingPowerConsumptionMeasurement) { " / " })$(if ($Session.MinersNeedingPowerConsumptionMeasurement) { "Measuring power consumption" }): Temporarily switched UI style to 'full'. (Information about miners run in the past, failed miners & watchdog timers will be shown)`n" }
 
-                        $Colour = if ($Session.MinersRunning -and ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement)) { "DarkYello" } else { "White" }
+                        $Colour = if ($Session.MinersRunning -and ($Session.MinersNeedingBenchmark -or $Session.MinersNeedingPowerConsumptionMeasurement)) { "DarkYellow" } else { "White" }
                         Write-Host -ForegroundColor $Colour ($Session.Summary -replace "\.\.\.<br>", "... " -replace "<br>", " " -replace "\s*/\s*", "/" -replace "\s*=\s*", " = " -replace "Profit/day: n/a", "`nProfit/day: n/a")
                         Remove-Variable Colour
 
@@ -2544,7 +2544,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                                 # Mining profit is below the configured threshold
                                 Write-Host -ForegroundColor Blue ("Mining profit ({0} {1:n$($Session.Config.DecimalsMax)}) is below the configured threshold of {0} {2:n$($Session.Config.DecimalsMax)}/day. Mining is suspended until threshold is reached." -f $Session.Config.FIATcurrency, ($Session.MiningProfit * $Session.Rates.BTC.($Session.Config.FIATcurrency)), $Session.Config.ProfitabilityThreshold)
                             }
-                            $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(if ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } else { 'n/a (Mining is suspended)' })   |   Hot keys: $(if ($Session.CalculatePowerCost) { "[123456abcemnopqrstuw]" } else { "[12345abcemnpqsu]" })   |   Press 'h' for help"
+                            $StatusInfo = "Last refresh: $($Session.BeginCycleTime.ToLocalTime().ToString("G"))   |   Next refresh: $(if ($Session.EndCycleTime) { $($Session.EndCycleTime.ToLocalTime().ToString("G")) } else { 'n/a (Mining is suspended)' })   |   Hot keys: $(if ($Session.CalculatePowerCost) { "[123456abcefmnopqrsuw]" } else { "[123456abcefmnqsu]" })   |   Press 'h' for help"
                             Write-Host ("-" * $StatusInfo.Length)
                             Write-Host -ForegroundColor Yellow $StatusInfo
                             Remove-Variable StatusInfo

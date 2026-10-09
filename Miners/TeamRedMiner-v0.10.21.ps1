@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -and $_.OpenCL.ClVersion -ge "OpenCL C 2.0" -and $_.Architecture -ne "RDNA3" })) { return }
@@ -125,13 +125,12 @@ if ($Algorithms) {
                             switch ($Pool0.Protocol) { 
                                 "ethstratumnh" { $Arguments = "$Arguments --eth_stratum_mode=nicehash"; break }
                             }
-                            $Arguments = "$Arguments --user=$($Pool0.User)$(if ($Pool0.WorkerName -and $Pool0.User -notmatch "\.$($Pool0.WorkerName)$") { ".$($Pool0.WorkerName)" }) --pass=$($Pool0.Pass)"
+                            $Arguments = "$Arguments --user=$($Pool0.User -replace "\..*").$($Pool0.WorkerName) --pass=$($Pool0.Pass)"
 
                             if ($_.SecondaryAlgorithmPrefix) { 
                                 $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_start"
                                 $Arguments = "$Arguments --url=$(if ($Pool1.PoolPorts[1]) { "stratum+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "stratum+tcp://$($Pool1.Host):$($Pool1.PoolPorts[0])" })"
-                                $Arguments = "$Arguments --user=$($Pool1.User)$(if ($Pool1.WorkerName -and $Pool1.User -notmatch "\.$($Pool1.WorkerName)$") { ".$($Pool1.WorkerName)" })"
-                                $Arguments = "$Arguments --pass=$($Pool1.Pass)"
+                                $Arguments = "$Arguments --user=$($Pool1.User -replace "\..*").$($Pool1.WorkerName) --pass=$($Pool1.Pass)"
                                 $Arguments = "$Arguments --$($_.SecondaryAlgorithmPrefix)_end"
                             }
                             if ($_.Algorithms[0] -match '^Et(c)hash.+' -and $AvailableMinerDevices.Model -notmatch "^Radeon RX [0-9]{3} .+") { $_.Fee = @(0.0075) } # Polaris cards 0.75%

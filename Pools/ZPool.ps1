@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.8.26
-Version date:   2026/10/01
+Version:        6.8.27
+Version date:   2026/10/09
 #>
 
 param(
@@ -103,7 +103,7 @@ if ($PriceField) {
                     Updated                  = $Request.$Algorithm.Updated
                     User                     = $PoolConfig.Wallets.$PayoutCurrency
                     Variant                  = $PoolVariant
-                    WorkerName               = ""
+                    WorkerName               = $PoolConfig.WorkerName
                     Workers                  = $Request.$Algorithm.workers
                 }
                 break
