@@ -17,7 +17,7 @@ Improvements:
 
 Miner changes:
 - BzMiner-v100.51 (update)
-- OneZeroMiner-v1.8.2 (update)
+- OneZeroMiner-v1.8.3 (update)
 - SRBMinerMulti-v3.8.0 (update)
 - Wildrig-v1.0.0o(beta) (update)
 - Wildrig-v0.51.7 (update)
