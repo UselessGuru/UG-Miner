@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 # (XEL) Minor performance improvements on 50xx cards
@@ -28,54 +28,54 @@ Version date:   2026/10/09
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -gt "5.0" })) { return }
 
-$URI = "https://github.com/rigelminer/rigel/releases/download/1.23.2/rigel-1.23.2-win.zip"
+$URL = "https://github.com/rigelminer/rigel/releases/download/1.23.2/rigel-1.23.2-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Rigel.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
  
 $Algorithms = @(
-    @{ Algorithms = @("Autolykos2", "");                     Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2" }
-#   @{ Algorithms = @("Autolykos2", "Blake3");               Fee = @(0.01, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+alephium" } # CUDA error: a supplied argument was invalid
-#   @{ Algorithms = @("Autolykos2", "HeavyHashKarlsenV2");   Fee = @(0.01, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+karlsenhashv2" } # Not supported yet
-    @{ Algorithms = @("Autolykos2", "IronFish");             Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+fishhash" }
-    @{ Algorithms = @("Autolykos2", "SHA512256d");           Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+sha512256d" }
-    @{ Algorithms = @("Autolykos2", "SHA3x");                Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+sha3x" }
-    @{ Algorithms = @("Blake3", "");                         Fee = @(0.007);        MinMemGiB = 2.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm alephium" }
-    @{ Algorithms = @("EtcHash", "");                        Fee = @(0.007);        MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash" }
-    @{ Algorithms = @("EtcHash", "Blake3");                  Fee = @(0.007, 0.007); MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+alephium" }
-#   @{ Algorithms = @("EtcHash", "HeavyHashKarlsenv2");      Fee = @(0.007, 0.02);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+karlsenhashv2" } # Not supported yet
-    @{ Algorithms = @("EtcHash", "IronFish");                Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+fishhash" }
-    @{ Algorithms = @("EtcHash", "SHA512256d");              Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+sha512256d" }
-    @{ Algorithms = @("Ethash", "");                         Fee = @(0.007);        MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash" }
-    @{ Algorithms = @("Ethash", "Blake3");                   Fee = @(0.007, 0.007); MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+alephium" }
-#   @{ Algorithms = @("Ethash", "HeavyHashKarlsenV2");       Fee = @(0.007, 0.02);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+karlsenhashv2" } # Not supported yet
-    @{ Algorithms = @("Ethash", "IronFish");                 Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+fishhash" }
-    @{ Algorithms = @("Ethash", "SHA512256d");               Fee = @(0.007, 0.01);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(60, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+sha512256d" }
-    @{ Algorithms = @("EthashSHA256", "");                   Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian" }
-    @{ Algorithms = @("EthashSHA256", "Blake3");             Fee = @(0.01, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+alephium" }
-#   @{ Algorithms = @("EthashSHA256", "HeavyHashKarlsenV2"); Fee = @(0.01, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+karlsenhashv2" } # Not supported yet
-    @{ Algorithms = @("EthashSHA256", "IronFish");           Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+fishhash" }
-    @{ Algorithms = @("EthashSHA256", "SHA512256d");         Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+sha512256d" }
-    @{ Algorithms = @("EthashSHA256", "SHA3x");              Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+sha3x" }
-    @{ Algorithms = @("FishHash", "");                       Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash" }
-    @{ Algorithms = @("FishHash", "Blake3");                 Fee = @(0.01, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+alephium" }
-#   @{ Algorithms = @("FishHash", "HeavyHashKarlsenV2");     Fee = @(0.01, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+karlsenhashv2" } # Not supported yet
-    @{ Algorithms = @("FishHash", "SHA512256d");             Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+sha512256d" }
-    @{ Algorithms = @("FishHash", "SHA3x");                  Fee = @(0.01, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+sha3x" }
-    @{ Algorithms = @("HeavyHashKarlsenv2", "");             Fee = @(0.02);         MinMemGiB = 2.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhashv2" }
-    @{ Algorithms = @("HeavyHashKarlsenv2", "SHA3x");        Fee = @(0.02);         MinMemGiB = 2.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhashv2+sha3x" }
-    @{ Algorithms = @("KawPow", "");                         Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(90, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm kawpow" }
-    @{ Algorithms = @("NexaPow", "");                        Fee = @(0.02);         MinMemGiB = 3.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm nexapow" }
-    @{ Algorithms = @("Octopus", "");                        Fee = @(0.02);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus" }
-    @{ Algorithms = @("Octopus", "Blake3");                  Fee = @(0.02, 0.007);  MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+alephium" }
-#   @{ Algorithms = @("Octopus", "HeavyHashKarlsenV2");      Fee = @(0.02, 0.02);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+karlsenhashv2" } # Not supported yet
-    @{ Algorithms = @("Octopus", "SHA512256d");              Fee = @(0.02, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+sha512256d" }
-    @{ Algorithms = @("Octopus", "SHA3x");                   Fee = @(0.02, 0.01);   MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+sha3x" }
-    @{ Algorithms = @("ProgPowQuai", "");                    Fee = @(0.01);         MinMemGiB = 1.24; Tuning = " --mt 2"; WarmupTimes = @(45, 30); ExcludePools = @(@(), @()); Arguments = " --algorithm kawpow --coin quai" }
-    @{ Algorithms = @("ProgPowZano", "");                    Fee = @(0.01);         MinMemGiB = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm progpowz" }
-    @{ Algorithms = @("SHA512256d", "");                     Fee = @(0.01);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha512256d" }
-    @{ Algorithms = @("SHA3x","");                           Fee = @(0.01);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha3x" }
-    @{ Algorithms = @("XelisHashV3", "");                    Fee = @(0.02);         MinMemGiB = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm xelishashv3" }
+    @{ Algorithms = @("Autolykos2", "");                     Fee = @(0.01);         MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2" }
+#   @{ Algorithms = @("Autolykos2", "Blake3");               Fee = @(0.01, 0.007);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+alephium" } # CUDA error: a supplied argument was invalid
+#   @{ Algorithms = @("Autolykos2", "HeavyHashKarlsenV2");   Fee = @(0.01, 0.02);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+karlsenhashv2" } # Not supported yet
+    @{ Algorithms = @("Autolykos2", "IronFish");             Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+fishhash" }
+    @{ Algorithms = @("Autolykos2", "SHA512256d");           Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+sha512256d" }
+    @{ Algorithms = @("Autolykos2", "SHA3x");                Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm autolykos2+sha3x" }
+    @{ Algorithms = @("Blake3", "");                         Fee = @(0.007);        MinMemGiBfree = 2.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm alephium" }
+    @{ Algorithms = @("EtcHash", "");                        Fee = @(0.007);        MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash" }
+    @{ Algorithms = @("EtcHash", "Blake3");                  Fee = @(0.007, 0.007); MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+alephium" }
+#   @{ Algorithms = @("EtcHash", "HeavyHashKarlsenv2");      Fee = @(0.007, 0.02);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+karlsenhashv2" } # Not supported yet
+    @{ Algorithms = @("EtcHash", "IronFish");                Fee = @(0.007, 0.01);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+fishhash" }
+    @{ Algorithms = @("EtcHash", "SHA512256d");              Fee = @(0.007, 0.01);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm etchash+sha512256d" }
+    @{ Algorithms = @("Ethash", "");                         Fee = @(0.007);        MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash" }
+    @{ Algorithms = @("Ethash", "Blake3");                   Fee = @(0.007, 0.007); MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+alephium" }
+#   @{ Algorithms = @("Ethash", "HeavyHashKarlsenV2");       Fee = @(0.007, 0.02);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+karlsenhashv2" } # Not supported yet
+    @{ Algorithms = @("Ethash", "IronFish");                 Fee = @(0.007, 0.01);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+fishhash" }
+    @{ Algorithms = @("Ethash", "SHA512256d");               Fee = @(0.007, 0.01);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(60, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm ethash+sha512256d" }
+    @{ Algorithms = @("EthashSHA256", "");                   Fee = @(0.01);         MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian" }
+    @{ Algorithms = @("EthashSHA256", "Blake3");             Fee = @(0.01, 0.007);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+alephium" }
+#   @{ Algorithms = @("EthashSHA256", "HeavyHashKarlsenV2"); Fee = @(0.01, 0.02);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+karlsenhashv2" } # Not supported yet
+    @{ Algorithms = @("EthashSHA256", "IronFish");           Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+fishhash" }
+    @{ Algorithms = @("EthashSHA256", "SHA512256d");         Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+sha512256d" }
+    @{ Algorithms = @("EthashSHA256", "SHA3x");              Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm abelian+sha3x" }
+    @{ Algorithms = @("FishHash", "");                       Fee = @(0.01);         MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash" }
+    @{ Algorithms = @("FishHash", "Blake3");                 Fee = @(0.01, 0.007);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+alephium" }
+#   @{ Algorithms = @("FishHash", "HeavyHashKarlsenV2");     Fee = @(0.01, 0.02);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 25); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+karlsenhashv2" } # Not supported yet
+    @{ Algorithms = @("FishHash", "SHA512256d");             Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+sha512256d" }
+    @{ Algorithms = @("FishHash", "SHA3x");                  Fee = @(0.01, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm fishhash+sha3x" }
+    @{ Algorithms = @("HeavyHashKarlsenv2", "");             Fee = @(0.02);         MinMemGiBfree = 2.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhashv2" }
+    @{ Algorithms = @("HeavyHashKarlsenv2", "SHA3x");        Fee = @(0.02);         MinMemGiBfree = 2.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm karlsenhashv2+sha3x" }
+    @{ Algorithms = @("KawPow", "");                         Fee = @(0.01);         MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(90, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm kawpow" }
+    @{ Algorithms = @("NexaPow", "");                        Fee = @(0.02);         MinMemGiBfree = 3.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm nexapow" }
+    @{ Algorithms = @("Octopus", "");                        Fee = @(0.02);         MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus" }
+    @{ Algorithms = @("Octopus", "Blake3");                  Fee = @(0.02, 0.007);  MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+alephium" }
+#   @{ Algorithms = @("Octopus", "HeavyHashKarlsenV2");      Fee = @(0.02, 0.02);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+karlsenhashv2" } # Not supported yet
+    @{ Algorithms = @("Octopus", "SHA512256d");              Fee = @(0.02, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+sha512256d" }
+    @{ Algorithms = @("Octopus", "SHA3x");                   Fee = @(0.02, 0.01);   MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm octopus+sha3x" }
+    @{ Algorithms = @("ProgPowQuai", "");                    Fee = @(0.01);         MinMemGiBfree = 1.24; Tuning = " --mt 2"; WarmupTimes = @(45, 30); ExcludePools = @(@(), @()); Arguments = " --algorithm kawpow --coin quai" }
+    @{ Algorithms = @("ProgPowZano", "");                    Fee = @(0.01);         MinMemGiBfree = 0.94; Tuning = " --mt 2"; WarmupTimes = @(45, 10); ExcludePools = @(@(), @()); Arguments = " --algorithm progpowz" }
+    @{ Algorithms = @("SHA512256d", "");                     Fee = @(0.01);         MinMemGiBfree = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha512256d" }
+    @{ Algorithms = @("SHA3x","");                           Fee = @(0.01);         MinMemGiBfree = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm sha3x" }
+    @{ Algorithms = @("XelisHashV3", "");                    Fee = @(0.02);         MinMemGiBfree = 1.0;  Tuning = " --mt 2"; WarmupTimes = @(45, 15); ExcludePools = @(@(), @()); Arguments = " --algorithm xelishashv3" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithms[0]] }
@@ -97,8 +97,8 @@ if ($Algorithms) {
                 foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
                     $Pools = @(($Pool0, $Pool1).Where{ $_ })
 
-                    $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                    if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+                    $MinMemGiBfree = $_.MinMemGiBfree + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
+                    if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
@@ -109,14 +109,13 @@ if ($Algorithms) {
                         foreach ($Pool in $Pools) { 
                             switch ($Pool.Protocol) { 
                                 "ethproxy"     { $Arguments = "$Arguments --url [$Index]ethproxy"; break }
-                                "ethstratum1"  { $Arguments = "$Arguments --url [$Index]ethstratum"; break }
+                                "ethstratum1"  { $Arguments = "$Arguments --url [$Index]stratum"; break }
                                 "ethstratum2"  { $Arguments = "$Arguments --url [$Index]ethstratum"; break }
                                 "ethstratumnh" { $Arguments = "$Arguments --url [$Index]ethstratum"; break }
                                 default        { $Arguments = "$Arguments --url [$Index]stratum" }
                             }
                             $Arguments = if ($Pool.PoolPorts[1]) { "$Arguments+ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }
-                            $Arguments = "$Arguments --username [$Index]$($Pool.User -replace "\..*") --password [$Index]$($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker [$Index]$($Pool.WorkerName)" })"
-
+                            $Arguments = "$Arguments --username [$Index]$($Pool.User) --password [$Index]$($Pool.Pass)"
                             $Index ++
                         }
                         Remove-Variable Pool
@@ -134,14 +133,14 @@ if ($Algorithms) {
                             API         = "Rigel"
                             Arguments   = "$Arguments --api-bind 127.0.0.1:$($MinerAPIPort) --no-watchdog --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                             DeviceNames = $AvailableMinerDevices.Name
+                            DownloadURL = $URL
                             Fee         = $_.Fee # Dev fee
-                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                            MinerURL    = "http://127.0.0.1:$($MinerAPIPort)"
                             Name        = $MinerName
                             Path        = $Path
                             Port        = $MinerAPIPort
                             Type        = "NVIDIA"
-                            URI         = $URI
-                            WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                            WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                             Workers     = @($Pools.ForEach{ @{ Pool = $_ } })
                         }
                     }

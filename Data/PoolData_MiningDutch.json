@@ -3,7 +3,6 @@
     "-Yescrypt",
     "-YescryptR16"
   ],
-  "AutoExchange": true,
   "BalancesKeepAlive": 180, // https://www.mining-dutch.nl/index.php?page=wallets
   "BrainConfig": {
     "Debug": false,

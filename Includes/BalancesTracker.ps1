@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 using module .\Include.psm1
@@ -71,7 +71,7 @@ do {
 
     # Check internet connection
     $NetworkInterface = (Get-NetConnectionProfile).Where{ $_.IPv4Connectivity -eq "Internet" }.InterfaceIndex
-    $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
+    $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4 2>$null 3>$null 4>$null 5>$null 6>$null).IPAddress } else { $null }
     Remove-Variable NetworkInterface
 
     if ($Session.MyIPaddress) { 
@@ -82,20 +82,15 @@ do {
             if ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = [String[]]($PoolsToTrack -notmatch "MiningDutch"); $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
             $PoolsToTrack.ForEach{ 
                 try { 
-                    Write-Message -Level Debug "Balances tracker for pool '$_': Start building balances objects"
+                    Write-Message -Level Debug "BalancesTracker '$_': Start building balances objects"
                     $BalanceObjects += @(
                         & ".\Balances\$($_).ps1"
                     )
-                    Write-Message -Level Debug "Balances tracker for pool '$_': End building balances objects"
+                    Write-Message -Level Debug "BalancesTracker '$_': End building balances objects"
                 }
                 catch { 
-                    Write-Message -Level Error "Balances tracker for pool '$_': Error building balances objects"
+                    Write-Message -Level Error "BalancesTracker '$_': Error building balances objects"
                 }
-            }
-
-            # Always read exchange rates if a new currency was added to balances
-            if (($Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (Compare-Object ($BalanceObjects.Currency | Sort-Object -Unique) $Session.BalancesCurrencies).Where{ $_.SideIndicator -eq "<="} -or ($Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { 
-                Get-Rate
             }
 
             # Only keep non excluded balances
@@ -265,7 +260,6 @@ do {
 
                 if ($BalanceObject.Balance -gt 0) { 
                     try { 
-                        # $EarningsObject = [PSCustomObject]@{ 
                         $EarningsObject = @{ 
                             Pool                    = $BalanceObject.Pool
                             Wallet                  = $BalanceObject.Wallet
@@ -293,7 +287,7 @@ do {
                             PayoutThreshold         = $PayoutThreshold
                             PayoutThresholdCurrency = $PayoutThresholdCurrency
                             Payout                  = $BalanceObject.Payout
-                            Uri                     = $BalanceObject.Url
+                            URL                     = $BalanceObject.URL
                             LastEarnings            = if ($Growth24 -gt 0) { $BalanceObject.DateTime } else { $BalanceDataObjects[0].DateTime }
                         }
                         $Balances."$($BalanceObject.Pool) ($($BalanceObject.Currency):$($BalanceObject.Wallet))" = $EarningsObject
@@ -301,44 +295,49 @@ do {
                     catch { 
                         Start-Sleep -Seconds 0
                     }
-                }
-                Remove-Variable AvgHourlyGrowth, AvgDailyGrowth, AvgWeeklyGrowth, Growth1, Growth6, Growth24, Growth168, Growth720, PayoutThreshold, PayoutThresholdCurrency -ErrorAction Ignore
+                    Remove-Variable AvgHourlyGrowth, AvgDailyGrowth, AvgWeeklyGrowth, Growth1, Growth6, Growth24, Growth168, Growth720, PayoutThreshold, PayoutThresholdCurrency -ErrorAction Ignore
 
-                if ($Session.Config.BalancesTrackerLog) { 
-                    $EarningsObject | Export-Csv -NoTypeInformation -Append ".\Logs\BalancesTrackerLog.csv" -Force -ErrorAction Ignore
-                }
-
-                $PoolTodaysEarnings = $Earnings.Where{ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }[-1]
-
-                if ([String]$PoolTodaysEarnings.Date -eq $Now.ToString("yyyy-MM-dd")) { 
-                    $PoolTodaysEarnings.DailyEarnings = [Double]$GrowthToday
-                    $PoolTodaysEarnings.EndTime       = $Now.ToString("T")
-                    $PoolTodaysEarnings.EndValue      = $BalanceObject.Earnings
-                    $PoolTodaysEarnings.Balance       = $BalanceObject.Balance
-                    $PoolTodaysEarnings.Unpaid        = $BalanceObject.Unpaid
-                    $PoolTodaysEarnings.Payout        = $PoolTodaysEarnings.Payout + $BalanceObject.Payout
-                }
-                else { 
-                    $Earnings += @{ 
-                        Date          = $Now.ToString("yyyy-MM-dd")
-                        Pool          = $EarningsObject.Pool
-                        Currency      = $EarningsObject.Currency
-                        Wallet        = $BalanceObject.Wallet
-                        DailyEarnings = $GrowthToday
-                        StartTime     = $Now.ToString("T")
-                        StartValue    = if ($PoolTodaysEarnings) { [Double]$PoolTodaysEarnings.EndValue } else { [Double]$EarningsObject.Earnings }
-                        EndTime       = $Now.ToString("T")
-                        EndValue      = $EarningsObject.Earnings
-                        Balance       = $EarningsObject.Balance
-                        Pending       = $EarningsObject.Pending
-                        Unpaid        = $EarningsObject.Unpaid
-                        Payout        = [Double]0
+                    if ($Session.Config.BalancesTrackerLog) { 
+                        $EarningsObject | Export-Csv -NoTypeInformation -Append ".\Logs\BalancesTrackerLog.csv" -Force -ErrorAction Ignore
                     }
-                }
-                Remove-Variable EarningsObject, GrowthToday, PoolTodaysEarnings -ErrorAction Ignore
 
+                    $PoolTodaysEarnings = $Earnings.Where{ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }[-1]
+
+                    if ([String]$PoolTodaysEarnings.Date -eq $Now.ToString("yyyy-MM-dd")) { 
+                        $PoolTodaysEarnings.DailyEarnings = [Double]$GrowthToday
+                        $PoolTodaysEarnings.EndTime       = $Now.ToString("T")
+                        $PoolTodaysEarnings.EndValue      = $BalanceObject.Earnings
+                        $PoolTodaysEarnings.Balance       = $BalanceObject.Balance
+                        $PoolTodaysEarnings.Unpaid        = $BalanceObject.Unpaid
+                        $PoolTodaysEarnings.Payout        = $PoolTodaysEarnings.Payout + $BalanceObject.Payout
+                    }
+                    else { 
+                        $Earnings += @{ 
+                            Date          = $Now.ToString("yyyy-MM-dd")
+                            Pool          = $EarningsObject.Pool
+                            Currency      = $EarningsObject.Currency
+                            Wallet        = $BalanceObject.Wallet
+                            DailyEarnings = $GrowthToday
+                            StartTime     = $Now.ToString("T")
+                            StartValue    = if ($PoolTodaysEarnings) { [Double]$PoolTodaysEarnings.EndValue } else { [Double]$EarningsObject.Earnings }
+                            EndTime       = $Now.ToString("T")
+                            EndValue      = $EarningsObject.Earnings
+                            Balance       = $EarningsObject.Balance
+                            Pending       = $EarningsObject.Pending
+                            Unpaid        = $EarningsObject.Unpaid
+                            Payout        = [Double]0
+                        }
+                    }
+                    Remove-Variable EarningsObject, GrowthToday, PoolTodaysEarnings -ErrorAction Ignore
+                }
             }
+
             Remove-Variable BalanceObjects -ErrorAction Ignore
+        }
+
+        # Always read exchange rates if a new currency was added to balances
+        if ($Session.Config.FIATcurrency -notin $Session.AllCurrencies -or (Compare-Object @($Session.AllCurrencies | Select-Object)  @($Session.BalancesCurrencies | Select-Object)).Where{ $_.SideIndicator -eq "=>" } -or $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum)) { 
+            Get-Rate
         }
 
         # Always keep pools sorted, even when new pools were added

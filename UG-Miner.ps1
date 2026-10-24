@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 using module .\Includes\Include.psm1
@@ -108,7 +108,11 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$IgnorePowerCost = $false, # If true UG-Miner will ignore power cost in best miner selection, instead miners with best earnings will be selected
     [Parameter (Mandatory = $false)]
-    [UInt16]$Interval = 90, # Average cycle loop duration (seconds), min 60, max 3600
+    [UInt16]$Interval = 90, # Average cycle loop duration (seconds, min. 60, max. 3600)
+    [Parameter (Mandatory = $false)]
+    [String]$KryptexAPIKey = "", # Kryptex API key (required to retrieve balance information)
+    [Parameter (Mandatory = $false)]
+    [String]$KryptexUserName = "", # Kryptex username
     [Parameter (Mandatory = $false)]
     [Switch]$LegacyGUI = $true, # If true UG-Miner will start legacy GUI
     [Parameter (Mandatory = $false)]
@@ -196,7 +200,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$ShowColumnAccuracy = $false, # Show pool data accuracy column in main text window miner overview
     [Parameter (Mandatory = $false)]
-    [Switch]$ShowAllOptimalMiners = $false, # Always show all miners in main text window miner overview (if false, only the best miners will be shown except when in benchmark / PowerConsumption measurement)
+    [Switch]$ShowAllOptimalMiners = $false, # Always show all miners in main text window miner overview (if false, only the best miners will be shown except when in benchmark / power consumption measurement)
     [Parameter (Mandatory = $false)]
     [Switch]$ShowChangeLog = $true, # If true UG-Miner will show the changlog when an update is available
     [Parameter (Mandatory = $false)]
@@ -204,7 +208,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$ShowConsole = $true, # If true the UG-Miner console window will be shown
     [Parameter (Mandatory = $false)]
-    [Switch]$ShowColumnCurrency = $true, # Show Currency column in main text window miner overview
+    [Switch]$ShowColumnCurrency = $true, # Show currency column in main text window miner overview
     [Parameter (Mandatory = $false)]
     [Switch]$ShowColumnEarnings = $true, # Show miner earnings column in main text window miner overview
     [Parameter (Mandatory = $false)]
@@ -282,7 +286,7 @@ $Global:VerbosePreference     = "SilentlyContinue"
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$RecommendedPWSHversion = [Version]"7.6.6"
+$RecommendedPWSHversion = [Version]"7.6.7"
 
 # Close useless empty cmd window that comes up when starting from bat file
 if ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -320,7 +324,7 @@ $Session.Branding = @{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.8.27"
+    Version      = [System.Version]"6.9.0"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -344,7 +348,7 @@ Remove-Variable RecommendedPWSHversion
 # Another instance might already be running. Wait no more than 20 seconds (other instance might be from autoupdate)
 $Loops = 20
 $CursorPosition = $Host.UI.RawUI.CursorPosition
-while (((Get-CimInstance CIM_Process).Where{ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }.CommandLine).Count -gt 1) { 
+while (((Get-CimInstance Win32_Process).Where{ $_.CommandLine -like "PWSH* -Command $($Session.MainPath)*.ps1 *" }.CommandLine).Count -gt 1) { 
     $Loops --
     [Console]::SetCursorPosition(0, $CursorPosition.y)
     Write-Host "`nWaiting for another instance of $($Session.Branding.ProductLabel) to close... [-$Loops] " -ForegroundColor Yellow
@@ -624,7 +628,7 @@ if (-not $Session.Config.ConfigFileVersion -or [System.Version]::Parse($Session.
 Write-Host ""
 Write-Host "Checking internet connection..." -ForegroundColor Yellow -NoNewline
 $NetworkInterface = (Get-NetConnectionProfile).Where{ $_.IPv4Connectivity -eq "Internet" }.InterfaceIndex
-$Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
+$Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4 2>$null 3>$null 4>$null 5>$null 6>$null).IPAddress } else { $null }
 Remove-Variable NetworkInterface
 if (-not $Session.MyIPaddress) { 
     Write-Host " ✖" -ForegroundColor Red
@@ -699,14 +703,23 @@ if ($Session.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpCompu
         (New-Object -ComObject Wscript.Shell).Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis would lead to unpredictable results.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
         exit
     }
-    # Unblock files
+}
+
+# Unblock files
+if ((Get-Item -Path $MyInvocation.MyCommand.Path -Stream Zone.Identifier -ErrorAction Ignore) -or (Get-Item -Path "$($PSHOME)\*" -Stream Zone.* -ErrorAction Ignore)) { 
     if (Get-Command "Unblock-File" -ErrorAction Ignore) { 
-        if (Get-Item .\* -Stream Zone.*) { 
-            Write-Message -Level Verbose "Unblocking files that were downloaded from the internet..."
-            Get-ChildItem -Path . -Recurse | Unblock-File
-            [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-            Write-Host " ✔" -ForegroundColor Green
-        }
+        Write-Message -Level Verbose "Unblocking files that were downloaded from the internet..."
+        Get-ChildItem -Path . -Recurse | Unblock-File
+        Get-ChildItem -Path "$($PSHOME)\*" -Recurse | Unblock-File
+        [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+        Write-Host " ✔" -ForegroundColor Green
+    }
+    else { 
+        [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+        Write-Host " ✖" -ForegroundColor Red
+        Write-Message -Level Error "Cannot unblock files that were downloaded from the internet. $($Session.Branding.ProductLabel) will shut down."
+        (New-Object -ComObject Wscript.Shell).Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis would lead to unpredictable results.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+        exit
     }
 }
 
@@ -805,6 +818,7 @@ $Session.CPUfeatures = (Get-CpuId).Features
 $Session.CycleStarts = @()
 $Session.Donation = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
 $Session.IsLocalAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$Session.KryptexCurrencies = if ($Config.PoolName -like "Kryptex*")  { @($Session.PoolData.Kryptex.GuaranteedPayoutCurrencies) } else { @() }
 $Session.Miners = [Miner[]]@()
 $Session.MiningEarnings = $Session.MiningProfit = $Session.MiningPowerCost = [Double]::NaN
 $Session.NewMiningStatus = if ($Session.Config.StartupMode -in "Paused", "Running") { $Session.Config.StartupMode } else { "Idle" }
@@ -884,7 +898,7 @@ Remove-Variable VertHashDatCheckJob, VertHashDatCursorPosition -ErrorAction Igno
 [Console]::SetCursorPosition($CursorPosition.X, $CursorPosition.y)
 Remove-Variable CursorPosition
 
-if ($Session.Config.StartupMode -eq "Idle" -or $Session.Config.BalancesTrackerPollInterval - 0) { 
+if ($Session.Config.StartupMode -eq "Idle" -or $Session.Config.BalancesTrackerPollInterval -le 0) { 
     # Getting exchange rates
     Write-Host ""
     Get-Rate

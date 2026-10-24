@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 using module ..\Includes\Include.psm1
@@ -31,219 +31,92 @@ using module ..\Includes\Include.psm1
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
-$PoolObjects = @()
-$Durations = [TimeSpan[]]@()
+$Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
+$Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-$Handler = [System.Net.Http.HttpClientHandler]::new()
-$Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator
-$HttpClient = [System.Net.Http.HttpClient]::new($Handler)
-$HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
+$Durations = [TimeSpan[]]@()
 
 while ($Config.PoolsConfig.$Name) { 
 
-    $APIcallFails = 0
-    $PoolVariant = [String]$Session.Config.PoolName.Where{ $_ -like "$Name*" }
+    $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+
     $StartTime = [DateTime]::Now
+
+    Write-Message -Level Debug "Brain '$Name': Start loop$(if ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
     if ($Session.MyIPaddress) { 
         try { 
 
-            Write-Message -Level Debug "Brain '$Name': Start loop$(if ($Duration) { " (Previous loop duration: $Duration sec.)" })"
+            $AlgoData = [PSCustomObject]@{ }
+            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+            $URL = "https://www.zpool.ca/api/currencies"
 
+            Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
+            $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
             do { 
-                try { 
-                    if (-not $AlgoData) { 
-                        $Request = "https://www.zpool.ca/api/status"
-                        Write-Message -Level Debug "Brain '$Name': Querying '$Request'"
-                        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($Config.PoolsConfig.$Name.PoolAPItimeout))
-                        $Response = $HttpClient.GetAsync($Request, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-                        # Read response as raw string
-                        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                        Write-Message -Level Debug "Brain '$Name': Response from '$Request' received"
-                        if ($JSONstring -and (Test-Json $JSONstring -ErrorAction Ignore)) { 
-                            # Change numeric string to numbers, some values are null
-                            $AlgoData = ($JSONstring -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
-                        }
-                    }
-                    if (-not $CurrenciesData) { 
-                        $Request = "https://www.zpool.ca/api/currencies"
-                        Write-Message -Level Debug "Brain '$Name': Querying '$Request'"
-                        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($Config.PoolsConfig.$Name.PoolAPItimeout))
-                        $Response = $HttpClient.GetAsync($Request, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-                        # Read response as raw string
-                        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                        Write-Message -Level Debug "Brain '$Name': Response from '$Request' received"
-                        if ($JSONstring -and (Test-Json $JSONstring -ErrorAction Ignore)) { 
-                            # Change numeric string to numbers, some values are null
-                            $CurrenciesData = ($JSONstring -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
-                        } 
-                    }
-                }
-                catch { 
-                    $APIcallFails ++
-                    $APIerror = $_.Exception #.Message
-                    Write-Message -Level Debug "Brain '$Name': Query to '$Request' failed$(if ($Response) { " ($($APIerror | ConvertTo-Json -Compress))" })"
-                    if ($APIcallFails -lt $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $Config.PoolsConfig.$Name.PoolAPIretryInterval)) }
-                }
-                $CancellationTokenSource.Dispose()
-                Remove-Variable CancellationTokenSource, JSONstring, RequestMessage, Response -ErrorAction Ignore
-            } while (-not ($AlgoData -and $CurrenciesData) -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
+                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                $APIallowedFailureCount --
+            } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
-            $Timestamp = [DateTime]::Now.ToUniversalTime()
-
-            if ($APIcallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain $($Name): Problem when trying to access 'https://www.zpool.ca/api/*' ($($APIerror | ConvertTo-Json -Compress))"
+            if ($APIerror) { 
+                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
             }
-            elseif ($AlgoData -and $CurrenciesData) { 
+            elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
 
-                # Add currency and convert to array for easy sorting
-                $CurrenciesArray = [PSCustomObject[]]@()
-                $CurrenciesData.PSObject.Properties.Name.Where{ $_ -notmatch "Hashtap|SCC-firo" }.ForEach{ 
-                    $CoinName = $CurrenciesData.$_.Name
-                    $Currency = $($_ -replace '-.+$')
-                    try { 
-                        Add-CoinName -Currency $Currency -CoinName $CoinName
-                        # Add algorithm only if there is no other coin with the same algorithm
-                        if ($CurrenciesData.PSObject.Properties.Name.Where{ $($_ -replace '-.+$') -eq $Currency }.Count -eq 1) { 
-                            Add-CurrencyAlgorithm -Algorithm $CurrenciesData.$_.algo -Currency $Currency
+                # Change numeric string to numbers, some values are null
+                $CurrenciesData = ($APIdata.Content -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
+                $Timestamp = [DateTime]::Now.ToUniversalTime()
+
+                if ($CurrenciesData) { 
+
+                    # ZPool handles Firopow differently from all other supported pools
+                    $CurrenciesData.PSObject.Properties.Remove("SCC-firo")
+
+                    $CurrenciesData.PSObject.Properties.Name.Where{ $_ -notmatch "Hashtap" }.ForEach{ 
+                        $AlgorithmNorm = Get-Algorithm $CurrenciesData.$_.algo
+                        $CoinName = $CurrenciesData.$_.Name
+                        $Currency = $($_ -replace '-.+$')
+                        try { 
+                            if ($Currency -ne $CoinName) { Add-CoinName -Currency $Currency -CoinName $CoinName }
+                            # Add algorithm only if there is no other coin with the same algorithm
+                            if ($CurrenciesData.PSObject.Properties.Name.Where{ $($_ -replace '-.+$') -eq $Currency }.Count -eq 1) { 
+                                Add-CurrencyAlgorithm -Algorithm $CurrenciesData.$_.algo -Currency $Currency
+                            }
                         }
-                    }
-                    catch { }
+                        catch { }
 
-                    $CurrenciesData.$_ | Add-Member Currency $Currency -Force
-                    $CurrenciesData.$_ | Add-Member CoinName ([String]$Session.CoinNames[$Currency]) -Force
-                    $CurrenciesData.$_ | Add-Member conversion_supported ([Boolean]($Config.PoolsConfig.$Name.Wallets.$Currency -or -not $CurrenciesData.$_.only_direct))
+                        $CurrenciesData.$_ | Add-Member AlgorithmNorm $AlgorithmNorm -Force
+                        $CurrenciesData.$_ | Add-Member Currency $Currency -Force
+                        $CurrenciesData.$_ | Add-Member conversion_supported (-not $CurrenciesData.$_.only_direct)
+                        $CurrenciesData.$_ | Add-Member URL "https://www.nicehash.com/algorithm/$($CurrenciesData.$_.algo.ToLower())"
+                        $CurrenciesData.$_ | Add-Member Updated $Timestamp -Force
 
-                    $CurrenciesData.$_.PSObject.Properties.Remove("symbol")
-                    $CurrenciesData.$_.PSObject.Properties.Remove("name")
-                    $CurrenciesArray += $CurrenciesData.$_
-
-                    Remove-Variable CoinName, Currency
-                }
-
-                # Get best currency
-                ($CurrenciesArray | Group-Object -Property Algo).ForEach{ 
-                    if ($AlgoData.($_.name)) { 
-                        $BestCurrency = ($_.Group | Sort-Object -Property conversion_supported, estimate -Descending -Top 1)
-                        if ($BestCurrency.currency) { 
-                            $AlgoData.($_.name) | Add-Member Currency $BestCurrency.currency -Force
-                            $AlgoData.($_.name) | Add-Member CoinName $BestCurrency.coinname -Force
-                            $AlgoData.($_.name) | Add-Member conversion_supported $BestCurrency.conversion_supported -Force
-                        }
-                        else { 
-                            $AlgoData.($_.name) | Add-Member Currency "" -Force
-                            $AlgoData.($_.name) | Add-Member CoinName "" -Force
-                        }
-                    }
-                }
-
-                foreach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
-                    $AlgorithmNorm = Get-Algorithm $Algorithm
-                    if ($AlgoData.$Algorithm.actual_last24h) { $AlgoData.$Algorithm.actual_last24h /= 1000 }
-                    $BasePrice = if ($AlgoData.$Algorithm.actual_last24h) { $AlgoData.$Algorithm.actual_last24h } else { $AlgoData.$Algorithm.estimate_last24h }
-
-                    if ($Currency = $AlgoData.$Algorithm.Currency -replace "\s.*") { 
                         if ($AlgorithmNorm -match $Session.RegexAlgoHasDAG -and $CurrenciesData.$Currency.height -gt $Session.DAGdata.Currency.$Currency.BlockHeight) { 
                             # Keep DAG data data up to date
                             $DAGdata = (Get-DAGData -BlockHeight $CurrenciesData.$Currency.height -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2)
                             if ($DAGdata.Epoch -ge 0) { 
                                 $DAGdata.Updated = ([DateTime]::Now).ToUniversalTime()
-                                $DAGdata.Url     = "https://www.zpool.ca/api/currencies"
+                                $DAGdata.Url     = $URL
 
                                 $Session.DAGdata.Currency.$Currency = $DAGdata
-                                $Session.DAGdata.Updated."https://www.zpool.ca/api/currencies" = [DateTime]::Now.ToUniversalTime()
+                                $Session.DAGdata.Updated.$URL = [DateTime]::Now.ToUniversalTime()
                             }
                         }
-                        $AlgoData.$Algorithm | Add-Member conversion_supported $CurrenciesData.$Currency.conversion_supported -Force
-                        if ($CurrenciesData.$Currency.error) { 
-                            $AlgoData.$Algorithm | Add-Member error "Pool error msg: $($CurrenciesData.$Currency.error)" -Force
-                        }
-                        else { 
-                            $AlgoData.$Algorithm | Add-Member error "" -Force
-                        }
-                    }
-                    else { 
-                        $AlgoData.$Algorithm | Add-Member error "" -Force
-                        $AlgoData.$Algorithm | Add-Member conversion_supported $false -Force
-                    }
-                    $AlgoData.$Algorithm | Add-Member Updated $Timestamp -Force
 
-                    # Reset history when stat file got removed
-                    if ($PoolVariant -like "*Plus") { 
-                        $StatName = if ($Currency) { "$($PoolVariant)_$($AlgorithmNorm)-$($Currency)_Profit" } else { "$($PoolVariant)_$($AlgorithmNorm)_Profit" }
-                        if (-not ($Stat = Get-Stat -Name $StatName)) { 
-                            if ($PoolObjects.Where{ $_.Name -eq $Algorithm }) { 
-                                $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
-                                Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit")"
-                            }
-                        }
+                        $CurrenciesData.$_.PSObject.Properties.Remove("name")
+                        $CurrenciesData.$_.PSObject.Properties.Remove("only_direct")
                     }
 
-                    $PoolObjects += [PSCustomObject]@{ 
-                        actual_last24h      = $BasePrice
-                        currency            = $Currency
-                        Date                = $Timestamp
-                        estimate_current    = $AlgoData.$Algorithm.estimate_current
-                        estimate_last24h    = $AlgoData.$Algorithm.estimate_last24h
-                        Last24hDrift        = $AlgoData.$Algorithm.estimate_current - $BasePrice
-                        Last24hDriftPercent = if ($BasePrice -gt 0) { ($AlgoData.$Algorithm.estimate_current - $BasePrice) / $BasePrice } else { 0 }
-                        Last24hDriftSign    = if ($AlgoData.$Algorithm.estimate_current -ge $BasePrice) { "Up" } else { "Down" }
-                        Name                = $Algorithm
-                    }
-                }
-
-                # Created here for performance optimization, minimize # of lookups
-                $SampleSizets = New-TimeSpan -Minutes $Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes
-                $SampleSizeHalfts = New-TimeSpan -Minutes ($Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes / 2)
-                $PoolObjectsSampleSizets = $PoolObjects.Where{ $_.Date -ge ($Timestamp - $SampleSizets) }
-                $PoolObjectsSampleSizeHalfts = $PoolObjects.Where{ $_.Date -ge ($Timestamp - $SampleSizeHalfts) }
-                $GroupAvgSampleSize = $PoolObjectsSampleSizets | Group-Object -Property Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupMedSampleSize = $PoolObjectsSampleSizets | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupAvgSampleSizeHalf = $PoolObjectsSampleSizeHalfts | Group-Object -Property Name, Last24hDriftSign | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupMedSampleSizeHalf = $PoolObjectsSampleSizeHalfts | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDriftPercent } }
-                $GroupMedSampleSizeNoPercent = $PoolObjectsSampleSizets | Group-Object -Property Name | Select-Object Name, Count, @{ Name = "Avg"; Expression = { ($_.Group.Last24hDriftPercent | Measure-Object -Average).Average } }, @{ Name = "Median"; Expression = { Get-Median $_.Group.Last24hDrift } }
-                Remove-Variable PoolObjectsSampleSizets, PoolObjectsSampleSizeHalfts, SampleSizeHalfts, SampleSizets
-
-                $CurrentPoolObjects = $PoolObjects.Where{ $_.Date -eq $Timestamp }
-                foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where{ $AlgoData.PSObject.Properties.Name -contains $_ }) { 
-                    if ($AlgoGroup = $GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }) { 
-                        $PenaltySampleSizeHalf = ((($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / ($AlgoGroup.Count)) * [Math]::abs($Algogroup.Median)
-                        $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSize.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where{ $_.Name -eq $Algorithm }).Median)
-                        $Penalty = ($PenaltySampleSizeHalf * $Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + 1)
-                        $CurrentPoolObject = $CurrentPoolObjects.Where{ $_.Name -eq $Algorithm }
-                        $Currency = $CurrentPoolObject.currency
-                        $LastPrice = [Double]$CurrentPoolObject.estimate_current
-                        $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
-
-                        $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
-                        # Reset history if current estimate is not within +/- 1000% of 24hr stat price
-                        if ($Stat = Get-Stat -Name $StatName) { 
-                            $Divisor = $Config.PoolsConfig.$Name.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
-                            if ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
-                                Remove-Stat -Name $StatName
-                                $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
-                                $PlusPrice = $LastPrice
-                                Write-Message -Level Debug "Pool brain '$Name': PlusPrice history cleared for $($StatName -replace "_Profit") (stat day price: $($Stat.Day) vs. estimate current price: $($AlgoData.$Algorithm.estimate_current / $Divisor))"
-                            }
-                        }
-                        $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
-                    }
-                }
-                Remove-Variable Algogroup, Algorithm, AlgorithmNorm, BasePrice, BestCurrency, CurrenciesArray, Currency, CurrentPoolObject, CurrentPoolObjects, DAGdata, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName -ErrorAction Ignore
-
-                if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
-                    ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
+                    Remove-Variable Algorithm, AlgorithmNorm, CoinName, Currency, DAGdata -ErrorAction Ignore
                 }
             }
-            else { 
-                $AlgoData = [PSCustomObject]@{ }
-            }
 
-            $Session.BrainData.$Name = $AlgoData
+            $Session.BrainData.$Name = $CurrenciesData
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
-            # Limit to only sample size + 10 minutes history
-            $PoolObjects = @($PoolObjects.Where{ $_.Date -ge $Timestamp.AddMinutes( - ($Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes + 10)) })
+            if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
+                ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
+            }
         }
         catch { 
             Write-Message -Level Error "Error in file '$(($_.InvocationInfo.ScriptName -split "\\" | Select-Object -Last 2) -join "\")' line $($_.InvocationInfo.ScriptLineNumber) detected. Restarting brain..."
@@ -251,7 +124,7 @@ while ($Config.PoolsConfig.$Name) {
             $_.Exception | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
             $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
         }
-        Remove-Variable AlgoData, CurrenciesData -ErrorAction Ignore
+        Remove-Variable AlgoData, APIallowedFailureCount, CurrenciesData -ErrorAction Ignore
 
         $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
         $Durations += ($Duration, $Session.Interval | Measure-Object -Minimum).Minimum
@@ -266,4 +139,4 @@ while ($Config.PoolsConfig.$Name) {
     }
 }
 
-Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Handler, HttpClient, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, UserAgent -ErrorAction Ignore
+Remove-Variable BrainDataFile, Duration, Durations, DurationsAvg, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, UserAgent -ErrorAction Ignore

@@ -17,19 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -and $Session.DriverVersion.CIM.AMD -lt [System.Version]"26.20.15011.10003" })) { return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/ClaymoreNeoscrypt/Claymore-Neoscrypt-v1.2.zip"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/ClaymoreNeoscrypt/Claymore-Neoscrypt-v1.2.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\NeoScryptMiner.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Neoscrypt"; MinMemGiB = 2; WarmupTimes = @(45, 0); ExcludeGPUarchitectures = "^RDNA[123]$"; ExcludePools = @(); Arguments = "" } # FPGA
+    @{ Algorithm = "Neoscrypt"; MinMemGiBfree = 2; WarmupTimes = @(45, 0); ExcludeGPUarchitectures = "^RDNA[123]$"; ExcludePools = @(); Arguments = "" } # FPGA
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -45,8 +45,8 @@ if ($Algorithms) {
 
         $Algorithms.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree -and $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
 
                 $DeviceIDs = ($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ','
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -68,12 +68,12 @@ if ($Algorithms) {
                         API         = "EthMiner"
                         Arguments   = "$($_.Arguments) -pool $(if ($Pool.PoolPorts[1]) { "stratum+ssl://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) -wal $($Pool.User)$(if ($Pool.Pass) { " -psw $($Pool.Pass)" }) -mport -$MinerAPIPort -di $DeviceIDs"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         Fee         = $Fee # Dev fee
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = "AMD"
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

@@ -17,19 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return } # Cuda error in func 'argon2d_hash_cuda' at line 89 : an illegal instruction was encountered on GTX 750
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CCminerDyn/ccminerdyn_v1.0.2.7z"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CCminerDyn/ccminerdyn_v1.0.2.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Argon2d500"; MinMemGiB = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo argon2d" }
+    @{ Algorithm = "Argon2d500"; MinMemGiBfree = 2; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --algo argon2d" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -44,8 +44,8 @@ if ($Algorithms) {
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                 $DeviceIDs = ($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ','
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -58,12 +58,12 @@ if ($Algorithms) {
                         API         = "CcMiner"
                         Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --statsavg 1 --retry-pause 1 --api-bind $MinerAPIPort --devices $DeviceIDs"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         Fee         = @(0) # Dev fee
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = "NVIDIA"
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

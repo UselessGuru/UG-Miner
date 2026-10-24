@@ -17,15 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 return # Bad shares
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -gt "5.0") -or "AMD", "NVIDIA" -contains $_.Type })) { return }
 
-$URI = switch ($Session.DriverVersion.CUDA) { 
+$URL = switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/SCCminer/sccminer-1.1.0-Windows.zip" }
     default { return }
 }
@@ -34,9 +34,9 @@ $Path = "Bin\$Name\sccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "SCCpow"; Type = "AMD"; MinMemGiB = 1.24; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --opencl --opencl-devices" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
+    @{ Algorithm = "SCCpow"; Type = "AMD"; MinMemGiBfree = 1.24; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --opencl --opencl-devices" } # PhoenixMiner-v6.2c may be faster, but I see lower speed at the pool
 
-    @{ Algorithm = "SCCpow"; Type = "NVIDIA"; MinMemGiB = 1.24; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --cuda --cuda-devices" } # PhoenixMiner-v6.2c is fastest but has dev fee
+    @{ Algorithm = "SCCpow"; Type = "NVIDIA"; MinMemGiBfree = 1.24; WarmupTimes = @(45, 10); ExcludePools = @(); Arguments = " --cuda --cuda-devices" } # PhoenixMiner-v6.2c is fastest but has dev fee
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -55,8 +55,8 @@ if ($Algorithms) {
             # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
             foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+                $MinMemGiBfree = $_.MinMemGiBfree + $Pool.DAGsizeGiB
+                if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
@@ -72,14 +72,14 @@ if ($Algorithms) {
                         API         = "EthMiner"
                         Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --exit --api-port -$MinerAPIPort$($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join " ")"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         EnvVars     = @("SSL_NOVERIFY=TRUE")
                         Fee         = @(0) # Dev fee
-                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                        MinerURL    = "http://127.0.0.1:$($MinerAPIPort)"
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = $Type
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

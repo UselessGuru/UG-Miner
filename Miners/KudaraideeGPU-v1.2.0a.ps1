@@ -18,29 +18,29 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 Version:        6.4.27
-Version date:   2026/10/09
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.CUDAversion -ge [System.Version]"10.2") })) { return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Kudaraidee/kudaraidee-v1.2.0a-win64.7z"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/Kudaraidee/kudaraidee-v1.2.0a-win64.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\Multiminer.exe"
 $DeviceEnumerator = @{ AMD = "Type_Index"; NVIDIA = "Type_Vendor_Index" }
 
 # Algorithm parameter values are case sensitive!
 $Algorithms = @( 
-    @{ Algorithm = "Argon2d250";   Type = "AMD"; MinMemGiB = 2; Blocksize = 250;   WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d250 --use-gpu OpenCL" }
-    @{ Algorithm = "Argon2d8192";  Type = "AMD"; MinMemGiB = 2; Blocksize = 8192;  WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d8192 --use-gpu OpenCL" }
-    @{ Algorithm = "Argon2d500";   Type = "AMD"; MinMemGiB = 2; Blocksize = 500;   WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d500 --use-gpu OpenCL" }
-    @{ Algorithm = "Argon2d4096";  Type = "AMD"; MinMemGiB = 2; Blocksize = 4096;  WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d4096 --use-gpu OpenCL" }
-    @{ Algorithm = "Argon2d16000"; Type = "AMD"; MinMemGiB = 2; Blocksize = 16000; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d16000 --use-gpu OpenCL" }
+    @{ Algorithm = "Argon2d250";   Type = "AMD"; MinMemGiBfree = 2; Blocksize = 250;   WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d250 --use-gpu OpenCL" }
+    @{ Algorithm = "Argon2d8192";  Type = "AMD"; MinMemGiBfree = 2; Blocksize = 8192;  WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d8192 --use-gpu OpenCL" }
+    @{ Algorithm = "Argon2d500";   Type = "AMD"; MinMemGiBfree = 2; Blocksize = 500;   WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d500 --use-gpu OpenCL" }
+    @{ Algorithm = "Argon2d4096";  Type = "AMD"; MinMemGiBfree = 2; Blocksize = 4096;  WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d4096 --use-gpu OpenCL" }
+    @{ Algorithm = "Argon2d16000"; Type = "AMD"; MinMemGiBfree = 2; Blocksize = 16000; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d16000 --use-gpu OpenCL" }
 
-    @{ Algorithm = "Argon2d250";   Type = "NVIDIA"; MinMemGiB = 2; Blocksize = 250;   WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d250 --use-gpu CUDA" }
-    @{ Algorithm = "Argon2d8192";  Type = "NVIDIA"; MinMemGiB = 2; Blocksize = 8192;  WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d8192 --use-gpu CUDA" }
-    @{ Algorithm = "Argon2d500";   Type = "NVIDIA"; MinMemGiB = 2; Blocksize = 500;   WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d500 --use-gpu CUDA" }
-    @{ Algorithm = "Argon2d4096";  Type = "NVIDIA"; MinMemGiB = 2; Blocksize = 4096;  WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d4096 --use-gpu CUDA" }
-    @{ Algorithm = "Argon2d16000"; Type = "NVIDIA"; MinMemGiB = 2; Blocksize = 16000; WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d16000 --use-gpu CUDA" }
+    @{ Algorithm = "Argon2d250";   Type = "NVIDIA"; MinMemGiBfree = 2; Blocksize = 250;   WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d250 --use-gpu CUDA" }
+    @{ Algorithm = "Argon2d8192";  Type = "NVIDIA"; MinMemGiBfree = 2; Blocksize = 8192;  WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d8192 --use-gpu CUDA" }
+    @{ Algorithm = "Argon2d500";   Type = "NVIDIA"; MinMemGiBfree = 2; Blocksize = 500;   WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d500 --use-gpu CUDA" }
+    @{ Algorithm = "Argon2d4096";  Type = "NVIDIA"; MinMemGiBfree = 2; Blocksize = 4096;  WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d4096 --use-gpu CUDA" }
+    @{ Algorithm = "Argon2d16000"; Type = "NVIDIA"; MinMemGiBfree = 2; Blocksize = 16000; WarmupTimes = @(60, 60); ExcludePools = @(); Arguments = " --algo argon2d16000 --use-gpu CUDA" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -55,8 +55,8 @@ if ($Algorithms) {
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
@@ -66,10 +66,10 @@ if ($Algorithms) {
 
                     $BlockSize = $_.BlockSize
                     # 1 GB memory reserve, then 1 thread per 4GB
-                    $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach{ ($_.MemoryGiB - 1) / 4 } | Measure-Object -Minimum).Minimum)
+                    $Threads = [Math]::Ceiling(($AvailableMinerDevices.ForEach{ ($_.MemoryGiBfree - 1) / 4 } | Measure-Object -Minimum).Minimum)
 
                     # Reserve 250KB for AMD driver
-                    $GPUmemory = ($AvailableMinerDevices.ForEach{ $_.MemoryGiB } | Measure-Object -Minimum).Minimum
+                    $GPUmemory = ($AvailableMinerDevices.ForEach{ $_.MemoryGiBfree } | Measure-Object -Minimum).Minimum
                     if ($_.Type -eq "AMD") { $GPUmemory -= 0.25 } else { $GPUmemory = $GPUmemory * 0.95 - 0.4 }
                     $BatchSize = [Math]::Floor(($GPUmemory * 0.5MB / $Blocksize / $Threads) * 2)
 
@@ -77,12 +77,12 @@ if ($Algorithms) {
                         API         = "CcMiner"
                         Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --gpu-batchsize $BatchSize --threads $Threads --retry-pause 1 --api-bind 127.0.0.1:$($MinerAPIPort) --gpu-id $((($AvailableMinerDevices.($DeviceEnumerator.($_.Type)) | Sort-Object -Unique).ForEach{ '{0:x}' -f ($_ + 1) }) -join ',')"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         Fee         = @(0) # Dev fee
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = $Type
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

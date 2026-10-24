@@ -43,7 +43,8 @@
                 <th data-field="State"data-sortable="true" data-filter-control="select" data-visible="false">State</th>
                 <th data-field="Status"data-sortable="true" data-filter-control="select" data-visible="false">Status</th>
                 <th data-field="StatusInfo" data-sortable="true" data-filter-control="select">Status info</th>
-                <th data-field="Memory" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory</th>
+                <th data-field="tMemoryGiB" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory</th>
+                <th data-field="tMemoryGiBfree" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory free</th>
                 <th data-field="Cores" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Cores/Stream<br>processors</th>
                 <th data-field="ClockSpeed" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Clock speed</th>
                 <th data-field="DriverVersionCIM" data-filter-control="select" data-width=3>Driver version<br>CIM</th>
@@ -117,7 +118,8 @@
                 <th data-field="State"data-sortable="true" data-filter-control="select" data-visible="false">State</th>
                 <th data-field="Status"data-sortable="true" data-filter-control="select" data-visible="false">Status</th>
                 <th data-field="StatusInfo" data-sortable="true" data-filter-control="select">Status info</th>
-                <th data-field="Memory" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory</th>
+                <th data-field="tMemoryGiB" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory</th>
+                <th data-field="tMemoryGiBfree" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory free</th>
                 <th data-field="Cores" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Cores/Stream<br>processors</th>
                 <th data-field="ClockSpeed" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Clock speed</th>
                 <th data-field="DriverVersionCIM" data-filter-control="select" data-width=3>Driver version<br>CIM</th>
@@ -187,7 +189,8 @@
                   <th data-field="State"data-sortable="true" data-filter-control="select" data-visible="false">State</th>
                   <th data-field="Status"data-sortable="true" data-filter-control="select" data-visible="false">Status</th>
                   <th data-field="StatusInfo" data-sortable="true" data-filter-control="select">Status info</th>
-                  <th data-field="tMemory" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory</th>
+                  <th data-field="tMemoryGiB" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory</th>
+                  <th data-field="tMemoryGiBfree" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Memory free</th>
                   <th data-field="Cores" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Cores/Stream<br>processors</th>
                   <th data-field="ClockSpeed" data-filter-control="select" data-align="right" data-sortable="true" data-width=3>Clock speed</th>
                   <th data-field="DriverVersionCIM" data-filter-control="select" data-width=3>Driver version<br>CIM</th>
@@ -230,7 +233,8 @@
 
               $.each(data, function(index, item) {
                 // Format the device(s)
-                if (item.OpenCL) item.Memory = formatBytes(item.OpenCL.GlobalMemSize);
+                if (item.MemoryGiB) item.tMemoryGiB = formatGiBDigits2(item.MemoryGiB)
+                if (item.MemoryGiBfree) item.tMemoryGiBfree = formatGiBDigits2(item.MemoryGiBfree)
 
                 if (item.OpenCL) item.ClockSpeed = item.OpenCL.MaxClockFrequency;
                 else if (item.CIM) item.ClockSpeed = item.CIM.MaxClockSpeed;

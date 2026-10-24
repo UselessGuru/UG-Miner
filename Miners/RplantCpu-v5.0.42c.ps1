@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" })) { return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/RplantCpu/cpuminer-opt-win-5.0.42c.zip"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/RplantCpu/cpuminer-opt-win-5.0.42c.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 if ($AvailableMinerDevices.CPUfeatures -match "avx512")   { $Path = "Bin\$Name\cpuminer-Avx512.exe" }
@@ -127,14 +127,14 @@ if ($Algorithms) {
 
             @{ 
                 API         = "CcMiner"
-                Arguments   = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User -replace "\..*") --pass $($Pool.Pass) --rig-id $($Pool.WorkerName) --hash-meter --threads $Threads --api-bind $MinerAPIPort"
+                Arguments   = "$($_.Arguments) --url $(if ($Pool.PoolPorts[1]) { "stratum+tcps://$($Pool.Host):$($Pool.PoolPorts[1])" } else { "stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --hash-meter --threads $Threads --api-bind $MinerAPIPort"
                 DeviceNames = $AvailableMinerDevices.Name
+                DownloadURL = $URL
                 Fee         = @(0) # Dev fee
                 Name        = $MinerName
                 Path        = $Path
                 Port        = $MinerAPIPort
                 Type        = "CPU"
-                URI         = $URI
                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                 Workers     = @(@{ Pool = $Pool })
             }

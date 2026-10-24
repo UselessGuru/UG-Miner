@@ -17,21 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MeowPowMiner/MeowPowMiner-windows-2.0.0.zip"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MeowPowMiner/MeowPowMiner-windows-2.0.0.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\meowpowminer.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "MeowPow"; Type = "AMD"; MinMemGiB = 0.18; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = " --opencl --cl-devices" }
+    @{ Algorithm = "MeowPow"; Type = "AMD"; MinMemGiBfree = 0.18; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = " --opencl --cl-devices" }
 
-    @{ Algorithm = "MeowPow"; Type = "NVIDIA"; MinMemGiB = 0.18; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = " --cuda --cuda-devices" }
+    @{ Algorithm = "MeowPow"; Type = "NVIDIA"; MinMemGiBfree = 0.18; WarmupTimes = @(75, 10); ExcludePools = @(); Arguments = " --cuda --cuda-devices" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -49,8 +49,8 @@ if ($Algorithms) {
             # foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
             foreach ($Pool in $MinerPools[0][$_.Algorithm]) { 
 
-                $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+                $MinMemGiBfree = $_.MinMemGiBfree + $Pool.DAGsizeGiB
+                if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
@@ -66,13 +66,13 @@ if ($Algorithms) {
                         API         = "EthMiner"
                         Arguments   = " --pool $($Protocol)://$([System.Web.HttpUtility]::UrlEncode($Pool.User)):$([System.Web.HttpUtility]::UrlEncode($Pool.Pass))@$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1) --farm-recheck 10000 --farm-retries 40 --work-timeout 100000 --response-timeout 720 --api-bind 127.0.0.1:$($MinerAPIPort)$($_.Arguments) $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         EnvVars     = @("SSL_NOVERIFY=TRUE")
                         Fee         = @(0) # Dev fee
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = $Type
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

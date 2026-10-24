@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" -and $_.Architecture -ne "Other" })) { return }
 
-$URI = switch ($Session.DriverVersion.CUDA) { 
+$URL = switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CryptoDredge/CryptoDredge_0.27.0_cuda_11.4_windows.zip"; break }
     default { return }
 }
@@ -32,20 +32,20 @@ $Path = "Bin\$Name\CryptoDredge.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Argon2d4096";       Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d4096 --intensity 8" }
-    @{ Algorithm = "Argon2d500";        Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-dyn --intensity 6" }
-    @{ Algorithm = "Argon2dNim";        Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-nim --intensity 6" }
-    @{ Algorithm = "Argon2Chukwa";      Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa --intensity 8" }
-    @{ Algorithm = "Argon2ChukwaV2";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa2 --intensity 8" }
-    @{ Algorithm = "CryptonightCcx";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnconceal --intensity 8" }
-    @{ Algorithm = "CryptonightGpu";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cngpu --intensity 8" }
-    @{ Algorithm = "CryptonightHeavy";  Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnheavy --intensity 8" }
-    @{ Algorithm = "CryptonightTurtle"; Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnturtle --intensity 8" }
-    @{ Algorithm = "CryptonightUpx";    Fee = @(0.01); MinMemGiB = 2;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnupx2 --intensity 8" }
-    @{ Algorithm = "CryptonightXhv";    Fee = @(0.01); MinMemGiB = 1;    WarmupTimes = @(75, 15); ExcludePools = @();                            Arguments = " --algo cnhaven --intensity 8" }
-    @{ Algorithm = "Ethash";            Fee = @(0.01); MinMemGiB = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @("MiningPoolHub", "NiceHash"); Arguments = " --algo ethash" }
-    @{ Algorithm = "FiroPow";           Fee = @(0.01); MinMemGiB = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo firopow" }
-    @{ Algorithm = "KawPow";            Fee = @(0.01); MinMemGiB = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo kawpow --intensity 8" } # TTMiner-v5.0.3 is fastest
+    @{ Algorithm = "Argon2d4096";       Fee = @(0.01); MinMemGiBfree = 2;    WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d4096 --intensity 8" }
+    @{ Algorithm = "Argon2d500";        Fee = @(0.01); MinMemGiBfree = 2;    WarmupTimes = @(60, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-dyn --intensity 6" }
+    @{ Algorithm = "Argon2dNim";        Fee = @(0.01); MinMemGiBfree = 2;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo argon2d-nim --intensity 6" }
+    @{ Algorithm = "Argon2Chukwa";      Fee = @(0.01); MinMemGiBfree = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa --intensity 8" }
+    @{ Algorithm = "Argon2ChukwaV2";    Fee = @(0.01); MinMemGiBfree = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo chukwa2 --intensity 8" }
+    @{ Algorithm = "CryptonightCcx";    Fee = @(0.01); MinMemGiBfree = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnconceal --intensity 8" }
+    @{ Algorithm = "CryptonightGpu";    Fee = @(0.01); MinMemGiBfree = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cngpu --intensity 8" }
+    @{ Algorithm = "CryptonightHeavy";  Fee = @(0.01); MinMemGiBfree = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnheavy --intensity 8" }
+    @{ Algorithm = "CryptonightTurtle"; Fee = @(0.01); MinMemGiBfree = 1;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnturtle --intensity 8" }
+    @{ Algorithm = "CryptonightUpx";    Fee = @(0.01); MinMemGiBfree = 2;    WarmupTimes = @(30, 0);  ExcludePools = @();                            Arguments = " --algo cnupx2 --intensity 8" }
+    @{ Algorithm = "CryptonightXhv";    Fee = @(0.01); MinMemGiBfree = 1;    WarmupTimes = @(75, 15); ExcludePools = @();                            Arguments = " --algo cnhaven --intensity 8" }
+    @{ Algorithm = "Ethash";            Fee = @(0.01); MinMemGiBfree = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @("MiningPoolHub", "NiceHash"); Arguments = " --algo ethash" }
+    @{ Algorithm = "FiroPow";           Fee = @(0.01); MinMemGiBfree = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo firopow" }
+    @{ Algorithm = "KawPow";            Fee = @(0.01); MinMemGiBfree = 1.25; WarmupTimes = @(45, 0);  ExcludePools = @();                            Arguments = " --algo kawpow --intensity 8" } # TTMiner-v5.0.3 is fastest
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -66,24 +66,27 @@ if ($Algorithms) {
                 $ExcludePools = $_.ExcludePools
                 foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name }) { 
 
-                    $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+                    $MinMemGiBfree = $_.MinMemGiBfree + $Pool.DAGsizeGiB
+                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
 
-                        $Arguments = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User -replace "\..*") --pass $($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
-
+                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                        $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 2)
+                        
+                        $Arguments = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass)"
                         @{ 
                             API         = "CcMiner"
                             Arguments   = "$Arguments --cpu-priority $($Session.Config.GPUMinerProcessPriority + 2) --no-watchdog --no-crashreport --retries 1 --retry-pause 1 --api-type ccminer-tcp --api-bind 127.0.0.1:$($MinerAPIPort) --device $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                             DeviceNames = $AvailableMinerDevices.Name
+                            DownloadURL = $URL
                             Fee         = $_.Fee # Dev fee
                             Name        = $MinerName
                             Path        = $Path
                             Port        = $MinerAPIPort
                             Type        = "NVIDIA"
-                            URI         = $URI
-                            WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                            WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                             Workers     = @(@{ Pool = $Pool })
                         }
                     }

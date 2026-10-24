@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge [System.Version]"6.0" })) { return }
 
-$URI = switch ($Session.DriverVersion.CUDA) { 
+$URL = switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda118-x64.7z"; break }
     { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda117-x64.7z"; break }
     { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerKlausT/ccminerklaust-826x2-cuda116-x64.7z"; break }
@@ -35,18 +35,18 @@ $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Blakecoin";     MinMemGiB = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blakecoin --intensity 22" } # FPGA
-    @{ Algorithm = "C11";           MinMemGiB = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo c11 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
-#   @{ Algorithm = "Keccak";        MinMemGiB = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
-#   @{ Algorithm = "Lyra2RE2";      MinMemGiB = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
-    @{ Algorithm = "Neoscrypt";     MinMemGiB = 2; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 15.5" } # FPGA
-    @{ Algorithm = "NeoscryptXaya"; MinMemGiB = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo neoscrypt-xaya --intensity 15.5" } # CryptoDredge-v0.27.0 is fastest
-#   @{ Algorithm = "Skein";         MinMemGiB = 0; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo skein" } # ASIC
-    @{ Algorithm = "Veltor";        MinMemGiB = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
-#   @{ Algorithm = "Whirlcoin";     MinMemGiB = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirl" } # Cuda error in func 'whirlpool512_cpu_finalhash_64' at line 1795 : invalid argument.
-#   @{ Algorithm = "Whirlpool";     MinMemGiB = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirlpoolx" }
-    @{ Algorithm = "X11evo";        MinMemGiB = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
-    @{ Algorithm = "X17";           MinMemGiB = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo x17 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
+    @{ Algorithm = "Blakecoin";     MinMemGiBfree = 2; WarmupTimes = @(30, 0);  ExcludePools = @(); Arguments = " --algo blakecoin --intensity 22" } # FPGA
+    @{ Algorithm = "C11";           MinMemGiBfree = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo c11 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
+#   @{ Algorithm = "Keccak";        MinMemGiBfree = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo keccak --diff-multiplier 2 --intensity 29" } # ASIC
+#   @{ Algorithm = "Lyra2RE2";      MinMemGiBfree = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo lyra2v2" } # ASIC
+    @{ Algorithm = "Neoscrypt";     MinMemGiBfree = 2; WarmupTimes = @(60, 10); ExcludePools = @(); Arguments = " --algo neoscrypt --intensity 15.5" } # FPGA
+    @{ Algorithm = "NeoscryptXaya"; MinMemGiBfree = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo neoscrypt-xaya --intensity 15.5" } # CryptoDredge-v0.27.0 is fastest
+#   @{ Algorithm = "Skein";         MinMemGiBfree = 0; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo skein" } # ASIC
+    @{ Algorithm = "Veltor";        MinMemGiBfree = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo veltor --intensity 23" }
+#   @{ Algorithm = "Whirlcoin";     MinMemGiBfree = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirl" } # Cuda error in func 'whirlpool512_cpu_finalhash_64' at line 1795 : invalid argument.
+#   @{ Algorithm = "Whirlpool";     MinMemGiBfree = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo whirlpoolx" }
+    @{ Algorithm = "X11evo";        MinMemGiBfree = 2; WarmupTimes = @(60, 15); ExcludePools = @(); Arguments = " --algo x11evo --intensity 21" }
+    @{ Algorithm = "X17";           MinMemGiBfree = 2; WarmupTimes = @(60, 0);  ExcludePools = @(); Arguments = " --algo x17 --intensity 22" } # CcminerAlexis78-v1.5.2 is faster
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -61,8 +61,8 @@ if ($Algorithms) {
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                 $DeviceIDs = ($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ','
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -72,18 +72,18 @@ if ($Algorithms) {
                 foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] }) { 
 
                     $Arguments = $_.Arguments
-                    if ($AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
+                    if ($AvailableMinerDevices.Where{ $_.MemoryGiBfree -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
 
                     @{ 
                         API         = "CcMiner"
                         Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --timeout 50000 --retry-pause 1 --api-bind $MinerAPIPort --devices $DeviceIDs"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         Fee         = @(0) # Dev fee
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = "NVIDIA"
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

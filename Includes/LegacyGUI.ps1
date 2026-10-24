@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -2059,7 +2059,7 @@ $LegacyGUIelements.Timer.Add_Tick(
             # Check internet connection at least every 10 minutes
             if ($Session.NewMiningStatus -ne "Running" -and $Session.NetworkChecked -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-10)) { 
                 $NetworkInterface = (Get-NetConnectionProfile).Where{ $_.IPv4Connectivity -eq "Internet" }.InterfaceIndex
-                $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
+                $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4 2>$null 3>$null 4>$null 5>$null 6>$null).IPAddress } else { $null }
                 $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime()
                 Remove-Variable NetworkInterface
 
@@ -2068,7 +2068,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                     if ($Session.Config.BalancesTrackerPollInterval -gt 0) { Start-BalancesTracker } else { Stop-BalancesTracker }
 
                     # Read exchange rates at least once every hour
-                    if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { 
+                    if (($Session.MiningStatus -eq "Paused" -and $Session.Config.FIATcurrency -notin $Session.AllCurrencies) -or $Session.KryptexCurrenciesUpdated -gt $Session.RatesUpdated -or (-not $Session.BalancesTrackerRunning -and $Session.RatesUpdated -lt [DateTime]::Now.ToUniversalTime().AddMinutes(-((60, $Session.Config.RatesUpdateInterval) | Measure-Object -Minimum).Minimum))) { 
                         Get-Rate
                     }
                 }
@@ -2152,13 +2152,13 @@ $LegacyGUIelements.Timer.Add_Tick(
                             break
                         }
                         "6" { 
-                            if ((Get-CimInstance CIM_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { 
+                            if ((Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { 
                                 Stop-LogReader
                                 Write-Host "`nKey '$_' pressed: Log reader is now " -NoNewline; Write-Host "disabled" -ForegroundColor DarkYellow
                             }
                             elseif ($Session.Config.LogViewerConfig -and $Session.Config.LogViewerConfig) { 
                                 Start-LogReader
-                                if ((Get-CimInstance CIM_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { 
+                                if ((Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { 
                                     Write-Host "`nKey '$_' pressed: Log reader is now " -NoNewline; Write-Host "enabled" -ForegroundColor Green
                                 }
                             }
@@ -2201,7 +2201,7 @@ $LegacyGUIelements.Timer.Add_Tick(
                             Write-Host "4: Toggle legacy GUI                         [" -NoNewline; if ($Config.LegacyGUI) { Write-Host "enabled" -ForegroundColor Green -NoNewline } else { Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             Write-Host "5: Toggle API server and web GUI             [" -NoNewline; if ($Session.APIport) { Write-Host "running on TCP port $($Session.APIport)" -ForegroundColor Green -NoNewline } elseif ($Session.Config.APIport -and $Session.Config.WebGUI -and -not $Session.APIport) { Write-Host "error" -ForegroundColor Red -NoNewline } else { Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             if ($Session.Config.LogViewerConfig -and $Session.Config.LogViewerConfig) { 
-                                Write-Host "6: Toggle log reader                         [" -NoNewline; if ((Get-CimInstance CIM_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { Write-Host "enabled" -ForegroundColor Green -NoNewline } else { Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
+                                Write-Host "6: Toggle log reader                         [" -NoNewline; if ((Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { Write-Host "enabled" -ForegroundColor Green -NoNewline } else { Write-Host "disabled" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"
                             }
                             Write-Host
                             Write-Host "a: Toggle '" -NoNewline; Write-Host "A" -ForegroundColor Cyan -NoNewline; Write-Host "ccuracy' column visibility       [" -NoNewline; if ($Config.ShowColumnAccuracy) { Write-Host "on" -ForegroundColor Green -NoNewline } else { Write-Host "off" -ForegroundColor DarkYellow -NoNewline }; Write-Host "]"

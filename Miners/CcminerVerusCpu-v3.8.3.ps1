@@ -17,18 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($AvailableMinerDevices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" })) { return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerVerusHash/ccminer_CPU_3.8.3.zip"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerVerusHash/ccminer_CPU_3.8.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 
 $Algorithms = @(
-    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.7. is fastest, but has 0.85% miner fee
+    @{ Algorithm = "VerusHash"; WarmupTimes = @(90, 0); ExcludePools = @("NiceHash"); Arguments = " --algo verus" } # SRBMinerMulti-v3.7.8 is fastest, but has 0.85% miner fee
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -49,12 +49,12 @@ if ($Algorithms) {
                 API         = "CcMiner"
                 Arguments   = "$($_.Arguments) --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --threads $Threads --statsavg 5 --retry-pause 1 --api-bind $MinerAPIPort"
                 DeviceNames = $AvailableMinerDevices.Name
+                DownloadURL = $URL
                 Fee         = @(0) # Dev fee
                 Name        = $MinerName
                 Path        = $Path
                 Port        = $MinerAPIPort
                 Type        = "CPU"
-                URI         = $URI
                 WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                 Workers     = @(@{ Pool = $Pool })
             }

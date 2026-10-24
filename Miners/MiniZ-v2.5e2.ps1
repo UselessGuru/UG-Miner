@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -29,20 +29,20 @@ Version date:   2026/10/09
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MiniZ/miniZ_v2.5e2_win-x64.zip"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/MiniZ/miniZ_v2.5e2_win-x64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\miniZ.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
 
 $Algorithms = @(
-    @{ Algorithm = "Equihash1254"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 3.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiB = 4.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ ";         ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
-    @{ Algorithm = "EvrProgPow";   Type = "AMD"; Fee = @(0.01); MinMemGiB = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
+    @{ Algorithm = "Equihash1254"; Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 3.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " ";          ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505"; Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 4.0;  WarmupTimes = @(30, 30); ExcludeGPUarchitectures = "^ ";         ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --par=150,5 --smart-pers" }
+    @{ Algorithm = "EvrProgPow";   Type = "AMD"; Fee = @(0.01); MinMemGiBfree = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^GCN[123]$"; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --amd --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
 
-    @{ Algorithm = "ProgPowTelestai"; Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^Turing$"; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=progpow" }
-    @{ Algorithm = "Equihash1254";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 3.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
-    @{ Algorithm = "Equihash1505";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiB = 4.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
-    @{ Algorithm = "EvrProgPow";      Type = "NVIDIA"; Fee = @(0.01); MinMemGiB = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
+    @{ Algorithm = "ProgPowTelestai"; Type = "NVIDIA"; Fee = @(0.01); MinMemGiBfree = 1.08; Tuning = " --ocX"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = "^Turing$"; ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=progpow" }
+    @{ Algorithm = "Equihash1254";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 3.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=125,4 --smart-pers" }
+    @{ Algorithm = "Equihash1505";    Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 4.0;  Tuning = " --ocX"; WarmupTimes = @(45, 30); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --par=150,5 --smart-pers" }
+    @{ Algorithm = "EvrProgPow";      Type = "NVIDIA"; Fee = @(0.01); MinMemGiBfree = 1.08; Tuning = " --ocX"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";        ExcludePools = @(); AutoCoinPers = ""; Arguments = " --nvidia --pers=EVRMORE-PROGPOW --dag-fix" } # Crashes on v2.5e3, use v2.5e2 instead
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -63,13 +63,17 @@ if ($Algorithms) {
                 $ExcludePools = $_.ExcludePools
                 foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $ExcludePools -notcontains $_.Name }) { 
 
-                    $MinMemGiB = $_.MinMemGiB + $Pool.DAGsizeGiB
-                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+                    $MinMemGiBfree = $_.MinMemGiBfree + $Pool.DAGsizeGiB
+                    if ($AvailableMinerDevices = $SupportedMinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
-                        $Arguments = "$($_.Arguments) --url=$(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.User -replace "\..*")@$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$($Pool.User -replace "\..*")@$($Pool.Host):$($Pool.PoolPorts[0])" }) --pass=$($Pool.Pass)$(if ($Pool.Pass -notmatch $Pool.WorkerName) { " --worker $($Pool.WorkerName)" })"
+                        $Arguments = "$($_.Arguments) --url=$(if ($Pool.PoolPorts[1]) { "ssl://$($Pool.User)@$($Pool.Host):$($Pool.PoolPorts[1])" } else { "$($Pool.User)@$($Pool.Host):$($Pool.PoolPorts[0])" }) --pass=$($Pool.Pass)"
                         if ($_.AutoCoinPers) { $Arguments = "$Arguments$(Get-EquihashCoinPers -Command " --pers=" -Currency $Pool.Currency -DefaultCommand $_.AutoCoinPers)" }
+
+                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                        $WarmupTimes[0] += [UInt16]($Pool.DAGsizeGiB * 4)
 
                         # Apply tuning parameters
                         if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
@@ -78,14 +82,14 @@ if ($Algorithms) {
                             API         = "MiniZ"
                             Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:d2}' -f $_ } -join " ")"
                             DeviceNames = $AvailableMinerDevices.Name
+                            DownloadURL = $URL
                             Fee         = $_.Fee # Dev fee
-                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                            MinerURL    = "http://127.0.0.1:$($MinerAPIPort)"
                             Name        = $MinerName
                             Path        = $Path
                             Port        = $MinerAPIPort
                             Type        = $Type
-                            URI         = $URI
-                            WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                            WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                             Workers     = @(@{ Pool = $Pool })
                         }
                     }

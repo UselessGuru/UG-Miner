@@ -17,19 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.CUDAversion -ge "12.8" -and $_.Architecture -ne "Other" })) { return }
 
-$URI = "https://github.com/Zero-Dynamics/ccminer/releases/download/2.4.1-0dyn/ccminer.zip"
+$URL = "https://github.com/Zero-Dynamics/ccminer/releases/download/2.4.1-0dyn/ccminer.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Argon2d1000"; MinMemGiB = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d1000" }
+    @{ Algorithm = "Argon2d1000"; MinMemGiBfree = 2; WarmupTimes = @(60, 45); ExcludePools = @(); Arguments = " --algo argon2d1000" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -44,8 +44,8 @@ if ($Algorithms) {
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                 $DeviceIDs = ($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ','
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -54,18 +54,18 @@ if ($Algorithms) {
                 foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] -and $ExcludePools -notcontains $_.Name }) { 
 
                     $Arguments = $_.Arguments
-                    if ($AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
+                    if ($AvailableMinerDevices.Where{ $_.MemoryGiBfree -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
 
                     @{ 
                         API         = "CcMiner"
                         Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --timeout 50000 --retry-pause 1 --statsavg 5 --api-bind $MinerAPIPort --devices $DeviceIDs"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         Fee         = @(0) # Dev fee
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = "NVIDIA"
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

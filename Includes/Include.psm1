@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -222,6 +222,7 @@ class Device {
     [Int64]$Memory
     [String]$Model
     [Double]$MemoryGiB
+    [Double]$MemoryGiBfree
     [String]$Name
     [PSCustomObject]$OpenCL
     [UInt16]$PlatformId = 0
@@ -277,7 +278,7 @@ class Pool : IDisposable {
     [System.Collections.Generic.List[Nullable[UInt16]]]$PoolPorts
     [UInt16]$Port
     [UInt16]$PortSSL
-    [String]$PoolUri # Link to pool algorithm web page
+    [String]$PoolURL # Link to pool algorithm web page
     [Double]$Price
     [Double]$Price_Bias
     [Boolean]$Prioritize = $false # derived from BalancesKeepAlive
@@ -347,6 +348,7 @@ class Miner : IDisposable {
     [System.Collections.Generic.List[String]]$DeviceNames = @() # derived from devices
     [PSCustomObject[]]$Devices
     [Boolean]$Disabled = $false
+    [String]$DownloadURL # miner binary download address
     [Double]$Earnings = [Double]::NaN # derived from pool and stats
     [Double]$Earnings_Bias = [Double]::NaN # derived from pool and stats
     [Double]$Earnings_Accuracy = 0 # derived from pool and stats
@@ -361,12 +363,12 @@ class Miner : IDisposable {
     [String]$LogFile = "" # path to miner log file
     [Boolean]$MeasurePowerConsumption = $false # derived from stats
     [UInt16]$MinDataSample # for safe hashrate values
-    [String]$MinerUri # access to miner API / web interface
+    [String]$MinerURL # access to miner API / web interface
     [String]$Name
     [Boolean]$Optimal = $false
     [String]$Path
-    [String]$PrerequisitePath
-    [String]$PrerequisiteURI
+    [String]$PrerequisitePath # prerequisite binary path
+    [String]$PrerequisiteURL # prerequisite binary download address
     [UInt16]$Port # miner API port
     [Double]$PowerCost = [Double]::NaN
     [Double]$PowerConsumption = [Double]::NaN
@@ -386,7 +388,6 @@ class Miner : IDisposable {
     [TimeSpan]$TotalMiningDuration # derived from pool and stats
     [String]$Type
     [DateTime]$Updated # derived from pool update value
-    [String]$URI # miner binary download address
     [DateTime]$ValidDataSampleTimestamp = 0
     [String]$Version # miner version
     [UInt16[]]$WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
@@ -409,7 +410,7 @@ class Miner : IDisposable {
     }
 
     [String]GetCommandLineParameters() { 
-        if ($this.Arguments -and (Test-Json -Json $this.Arguments -ErrorAction Ignore)) { 
+        if (Test-Json [String]$this.Arguments -ErrorAction Ignore) { 
             return ($this.Arguments | ConvertFrom-Json).Arguments
         }
         else { 
@@ -510,7 +511,7 @@ class Miner : IDisposable {
         }
         else { 
             Write-Message -Level Info "Starting miner '$($this.Info)'..."
-            $this.StatusInfo = "$($this.Info) is getting ready"
+            $this.StatusInfo = "$($this.Info) is getting ready [$($this.WarmupTimes -join "|")]"
             $this.SubStatus = "starting"
         }
 
@@ -596,11 +597,11 @@ class Miner : IDisposable {
             $Local:ProcessId = $this.Process.Id
         }
         else { 
-            $Local:ProcessId = ((Get-CimInstance CIM_Process).Where{ $_.ExecutablePath -and $_.CommandLine -eq "$PWD\$($this.CommandLineLaunched)" })[0].ProcessId
+            $Local:ProcessId = ((Get-CimInstance Win32_Process).Where{ $_.ExecutablePath -and $_.CommandLine -eq "$PWD\$($this.CommandLineLaunched)" })[0].ProcessId
         }
         if ($Local:ProcessId) { 
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-            (Get-CimInstance win32_process -Filter "ParentProcessId = $($Local:ProcessId)").ForEach{ [Void](Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
+            (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($Local:ProcessId)").ForEach{ [Void](Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
             [Void](Stop-Process -Id $Local:ProcessId -Force -ErrorAction Ignore)
             $this.Process = $null
         }
@@ -984,7 +985,7 @@ public static class Kernel32
 
         $EndLoop = [DateTime]::Now.AddSeconds(3)
         do { 
-            if ($MinerProcess = (Get-CimInstance win32_process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")[0]) { break }
+            if ($MinerProcess = (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($ProcessInfo.dwProcessId)")[0]) { break }
             Start-Sleep -Milliseconds 50
         } while ([DateTime]::Now -lt $EndLoop)
         Remove-Variable EndLoop
@@ -1011,7 +1012,7 @@ public static class Kernel32
             if ($ControllerProcess.WaitForExit(100)) { 
                 # Kill process in bottom up order
                 # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                [Void](Get-CimInstance win32_process -Filter "ParentProcessId = $MinerProcessId").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
+                [Void](Get-CimInstance Win32_Process -Filter "ParentProcessId = $MinerProcessId").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
                 [Void](Stop-Process -Id $MinerProcessId -Force -ErrorAction Ignore)
                 [Void](Stop-Process -Id $ProcessInfo.dwProcessId -Force -ErrorAction Ignore)
                 $MinerProcess = $null
@@ -1273,102 +1274,182 @@ function Stop-BalancesTracker {
         Remove-Variable BalancesTrackerRunspace -Scope Global
     }
 }
+
+function Get-APIdata { 
+
+    param (
+        [Parameter (Mandatory = $true)]
+        [String[]]$URL,
+        [Parameter (Mandatory = $false)]
+        [UInt16]$Timeout = 3,
+        [Parameter (Mandatory = $false)]
+        [UInt16]$Retries = 3,
+        [Parameter (Mandatory = $false)]
+        [Uint16[]]$TerminatingStatuscode = @(200, 404),
+        [Parameter (Mandatory = $false)]
+        [String]$Source
+        
+    )
+
+    if ($Source) { $Source = "$($Source): " }
+
+    $Handler = [System.Net.Http.HttpClientHandler]::new()
+    $Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator # Equivalent to -SkipCertificateCheck
+    $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
+    $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
+    $HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36")
+
+    do { 
+        try { 
+            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($Timeout))
+            Write-Message -Level Debug "$($Source)Querying '$URL'..."
+            $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            Write-Message -Level Debug "$($Source)Response from '$URL' received."
+            if ($Response.StatusCode -in $TerminatingStatuscode) { break }
+        }
+        catch { 
+            if ($Response.StatusCode -in $TerminatingStatuscode) { break }
+            Start-Sleep -Seconds $Timeout
+        }
+        $Retries --
+    } while ($Retries -gt 0)
+
+    return @{ 
+        Data         = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        ReasonPhrase = $Response.ReasonPhrase
+        StatusCode   = [UInt16]$Response.StatusCode
+    }
+}
+
 function Get-Rate { 
 
     $RatesCacheFileName = "$($Session.MainPath)\Cache\Rates.json"
 
-    # Use stored currencies from last run
-    if (-not $Session.BalancesCurrencies -and $Session.Config.BalancesTrackerPollInterval) { $Session.BalancesCurrencies = @($Session.Rates.Keys -creplace "^m") }
+    $Session.AllCurrencies = @(@($Session.KryptexCurrencies) + @($Session.Config.FIATcurrency) + @($Session.Config.Wallets.psBase.Keys) + @($Session.Config.ExtraCurrencies) + @($Session.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
 
-    $Session.AllCurrencies = @(@($Session.Config.FIATcurrency) + @($Session.Config.Wallets.psBase.Keys) + @($Session.Config.ExtraCurrencies) + @($Session.BalancesCurrencies) -replace "mBTC", "BTC") | Where-Object { $_ } | Sort-Object -Unique
+    $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
+    $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-    try { 
-        $Handler = [System.Net.Http.HttpClientHandler]::new()
-        $Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator
-        $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
-        $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
+    # Get FIAT currency exchange rates (Base = USD)
+    # The API returns rates as 1 USD = X FIAT. So Price_in_USD = 1 / Rate
+    $URL = "https://api.exchangerate.fun/latest"
+    Write-Message -Level Info "Loading FIAT currency exchange rates from '$URL'..."
+    $APIallowedFailureCount = 3
+    do { 
+        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+        $APIallowedFailureCount --
+    } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+
+    if ($APIerror) { 
+        Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
+    }
+    elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($FIATexchangeRates = ($APIdata.Content | ConvertFrom-Json).rates)) { 
 
         $Rates = [System.Collections.SortedList]@{ USD = [System.Collections.SortedList]@{ "USD" = 1 } }
+        foreach ($Currency in $Session.AllCurrencies) { 
+            if ($FIATexchangeRates.$Currency -and $Currency -ne "USD") { 
+                $Rates.USD.$Currency = 1.0 / [Double]$FIATexchangeRates.$Currency
+            }
+        }
+        Remove-Variable Currency -ErrorAction Ignore
 
-        # Get FIAT currency exchange rates (Base = USD)
-        # The API returns rates as 1 USD = X FIAT. So Price_in_USD = 1 / Rate
-        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-        $Response = $HttpClient.GetAsync("https://api.exchangerate.fun/latest?base=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
-        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $FIATexchangeRates = ($JSONstring | ConvertFrom-Json).rates
+        # Use coinlore as primary currency exchange rate source
+        # Assets does not contain price information
+        $URL = "https://api.coinlore.net/api/assets"
+        Write-Message -Level Info "Loading crypto currency exchange rates from '$URL'..."
+        $APIallowedFailureCount = 3
+        do { 
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+            $APIallowedFailureCount --
+        } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
-        if ($FIATexchangeRates) { 
-            foreach ($Currency in $Session.AllCurrencies) { 
-                if ($FIATexchangeRates.$Currency -and $Currency -ne "USD") { 
-                    $Rates.USD.$Currency = 1.0 / [Double]$FIATexchangeRates.$Currency
+        if ($APIerror) { 
+            Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
+        }
+        elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinloreAssetsData = ($APIdata.Content | ConvertFrom-Json).data)) { 
+            if ($RelevantIDs = $CoinloreAssetsData.Where{ $_.symbol -in $Session.AllCurrencies}.id) { 
+                $URL = "https://api.coinlore.net/api/ticker"
+                # Get price information
+                $APIallowedFailureCount = 3
+                do { 
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL/?id=$(($RelevantIDs | Sort-Object -Unique) -join ',')" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    $APIallowedFailureCount --
+                } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+
+                if ($APIerror) { 
+                    Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
                 }
-            }
-            Write-Message -Level Info "Loaded FIAT currency exchange rates from 'https://api.exchangerate.fun'."
-            Remove-Variable Currency, FIATexchangeRates -ErrorAction Ignore
-
-            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/map", $CancellationTokenSource.Token).GetAwaiter().GetResult()
-            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            $CoinMarketCapSymbolMapData = ($JSONstring | ConvertFrom-Json).data
-
-            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync("https://pro-api.coinmarketcap.com/public-api/v1/simple/price?ids=$(($CoinMarketCapSymbolMapData.Where{ $_.symbol -in $Session.AllCurrencies}.id | Sort-Object -Unique) -join ',')&convert=USD", $CancellationTokenSource.Token).GetAwaiter().GetResult()
-            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            $CoinMarketCapRatesUSDdata = ($JSONstring | ConvertFrom-Json).data
-
-            $IDmap = @{ }
-            $CoinMarketCapSymbolMapData.ForEach{ 
-                $IDmap[$_.id] = $_.symbol
-            }
-            $CoinMarketCapRatesUSDdata.ForEach{ 
-                if (-not $Rates.USD.($IDmap[$_.id])) { $Rates.USD.($IDmap[$_.id]) = [Double]$_.price }
-            }
-            Remove-Variable CoinMarketCapSymbolMapData, CoinMarketCapRatesUSDdata, CurrencyDAGdataResponse, Handler, HttpClient, IDmap, JSONstring, Response -ErrorAction Ignore
-
-            if ($Currencies = $Rates.USD.Keys) { 
-                # Add mBTC
-                if ($Session.Config.UsemBTC) { 
-                    $Currencies += "mBTC"
-                    $Rates.USD."mBTC" = [Double]($Rates.USD.BTC / 1000)
-                }
-
-                $Currencies.Where{ $_ -ne "USD" }.ForEach{ 
-                    $Currency = $_
-                    $Rates.$Currency = [System.Collections.SortedList]@{ }
-                    $Rates.USD.Keys.ForEach{ 
-                        $Rates.$Currency.$_ = [Double]($Rates.USD.$Currency / $Rates.USD.$_)
+                elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinloreTicker = $APIdata.Content | ConvertFrom-Json)) { 
+                    $CoinloreTicker.ForEach{ 
+                        if (-not $Rates.USD.($_.symbol)) { $Rates.USD.($_.symbol) = [Double]$_.price_btc }
                     }
                 }
-                Remove-Variable Currency -ErrorAction Ignore
-
-                Write-Message -Level Verbose "Loaded crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'.$(if ($Session.RatesMissingCurrencies = Compare-Object @($Currencies.Where{ $_ -ne "mBTC" } | Select-Object) @((@($Session.AllCurrencies) + @("USD")) | Select-Object) -PassThru) { " API does not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
-                if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
-                    $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).Where{ $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ }[0]
-                    Write-Message -Level Warn "API does not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
-                    $Session.Config.FIATcurrency = $FallbackCurrency
-                    Remove-Variable FallbackCurrency
-                }
-                $Session.Rates = $Rates
-                $Session.RefreshTimestamp = (Get-Date -Format "G")
-                $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
-                $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
-                Remove-Variable Currencies, Rates -ErrorAction Ignore
             }
         }
-        else { 
-            Write-Message -Level Warn "Could not load FIAT currency exchange rates from 'https://api.exchangerate.fun'."
-            return
+        Remove-Variable APIdata, APIerror, CoinloreAssetsData, CoinloreTicker, RelevantIDs, Url -ErrorAction Ignore
+
+        $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @((@($Session.AllCurrencies | Select-Object) + @("USD")) | Select-Object) -PassThru
+        if ($Session.RatesMissingCurrencies) { 
+            $URL = "https://pro-api.coinmarketcap.com/public-api/v2/simple/price?symbol"
+            Write-Message -Level Info "Loading crypto currency exchange rates from '$URL'..."
+            $APIallowedFailureCount = 3
+            do { 
+                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.RatesMissingCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                $APIallowedFailureCount --
+            } until (($APIerror -and ($APIerror.Message | ConvertFrom-Json).status.error_code -eq 1022) -or $APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+
+            if ($APIerror) { 
+                Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($(($APIerror.Message | ConvertFrom-Json).status.error_message))"
+            }
+            elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinMarketCapPriceSymbol = ($APIdata.Content | ConvertFrom-Json).data)) { 
+                $CoinMarketCapPriceSymbol.ForEach{ $Rates.USD.($_.Symbol) = [Double]$_.Quotes.Where{ $_.symbol -EQ "USD" }.price } 
+            }
+            $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @((@($Session.AllCurrencies | Select-Object) + @("USD")) | Select-Object) -PassThru
+            Remove-Variable APIdata, APIerror, CoinMarketCapPriceSymbol -ErrorAction Ignore
+        }
+        Remove-Variable Currency, FIATexchangeRates, RequestUrl -ErrorAction Ignore
+
+        # Need at least USD/BTC conversion rates
+        if ($Rates.USD.BTC) {
+            $Currencies = $Rates.USD.Keys
+            # Add mBTC
+            if ($Session.Config.UsemBTC) { 
+                $Currencies += "mBTC"
+                $Rates.USD."mBTC" = [Double]($Rates.USD.BTC / 1000)
+            }
+
+            $Currencies.Where{ $_ -ne "USD" }.ForEach{ 
+                $Currency = $_
+                $Rates.$Currency = [System.Collections.SortedList]@{ }
+                $Rates.USD.Keys.ForEach{ 
+                    $Rates.$Currency.$_ = [Double]($Rates.USD.$Currency / $Rates.USD.$_)
+                }
+            }
+            Remove-Variable Currency -ErrorAction Ignore
+
+            Write-Message -Level Verbose "Loaded crypto currency exchange rates.$(if ($Session.RatesMissingCurrencies) { " APIs do not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
+            if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
+                $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).Where{ $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ }[0]
+                Write-Message -Level Warn "APIs do not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
+                $Session.Config.FIATcurrency = $FallbackCurrency
+                Remove-Variable FallbackCurrency
+            }
+            $Session.Rates = $Rates
+            $Session.RefreshTimestamp = (Get-Date -Format "G")
+            $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
+            $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
+            Remove-Variable Currencies, Rates -ErrorAction Ignore
         }
     }
-    catch { 
+    else { 
         $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -ErrorAction Ignore)
 
         if ($RatesCache.PSObject.Properties.Name) { 
             $Session.Rates = $RatesCache
-            Write-Message -Level Warn "Could not load crypto exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
+            Write-Message -Level Warn "Could not load crypto exchange rates. Using cached data from $((Get-Item -Path $RatesCacheFileName).LastWriteTime)."
         }
         else { 
-            Write-Message -Level Warn "Could not load crypto currency exchange rates from 'https://pro-api.coinmarketcap.com/public-api/v1'."
+            Write-Message -Level Warn "Could not load crypto currency exchange rates."
         }
         Remove-Variable RatesCacheFileName
 
@@ -1527,6 +1608,14 @@ function Update-ConfigFile {
     }
     $Config.Remove("NiceHashWalletIsInternal")
 
+    # ZPool24hr & ZPoolPlus removed in v6.9.0
+    if ($Config.PoolName -match "ZPool24hr|ZPoolPlus") { 
+        Write-Message -Level Warn "Configuration changed during update (Pool 'ZPool24hr' & 'ZPoolPlus' removed)."
+        $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'ZPool24hr' & 'ZPoolPlus' removed"
+        $Config.PoolName = $Config.PoolName -replace "ZPool24hr|ZPoolPlus", "ZPool"
+    }
+
+    $Config.Remove("NiceHashWalletIsInternal")
     # WorkerName must not contain '.'
     if ($Config.WorkerName -match "\.") { 
         $Config.WorkerName = $Config.WorkerName -replace "\."
@@ -1687,7 +1776,7 @@ function Edit-File {
         }
     }
 
-    if (-not ($NotepadProcessId = (Get-CimInstance CIM_Process).Where{ $_.CommandLine -like "*\Notepad.exe* $($FileName)" }[0].ProcessId)) { 
+    if (-not ($NotepadProcessId = (Get-CimInstance Win32_Process).Where{ $_.CommandLine -like "*\Notepad.exe* $($FileName)" }[0].ProcessId)) { 
         $NotepadProcessId = (Start-Process -FilePath Notepad.exe -ArgumentList $FileName -PassThru).Id
     }
 
@@ -2359,18 +2448,19 @@ function Get-Device {
 
     # Get WDDM data
     try { 
-        (Get-CimInstance CIM_Processor).ForEach{ 
+        (Get-CimInstance Win32_Processor).ForEach{ 
             $Device_CIM = [CimInstance]::new($_)
 
             # Add normalised values
             $Devices += $Device = [Device]@{ 
-                Bus       = $null
-                Name      = $null
-                Memory    = $null
-                MemoryGiB = $null
-                Model     = $Device_CIM.Name
-                Type      = "CPU"
-                Vendor    = $(
+                Bus           = $null
+                Name          = $null
+                Memory        = $null
+                MemoryGiB     = $null
+                MemoryGiBfree = $null
+                Model         = $Device_CIM.Name
+                Type          = "CPU"
+                Vendor        = $(
                     switch -Regex ($Device_CIM.Manufacturer) { 
                         "Advanced Micro Devices" { "AMD"; break }
                         "AMD"                    { "AMD"; break }
@@ -2404,6 +2494,9 @@ function Get-Device {
             $Device.CIM = $Device_CIM
         }
 
+        # # Get free GPU memory information
+        # $FreeMemCounterSamples = (Get-Counter -Counter "\GPU Adapter Memory(*)\Dedicated Usage").CounterSamples
+
         # Reading all PnpDevices is faster (https://www.erwinmcm.com/speed-tip-for-pnp-powershell/)
         $PnpDevices = Get-PnpDevice -Class Display
 
@@ -2412,20 +2505,26 @@ function Get-Device {
             $Device_PNP = [PSCustomObject]@{ }
 
             ($PnpDevices.Where{ $_.DeviceID -eq $Device_CIM.PNPDeviceID } | Get-PnpDeviceProperty).ForEach{ $Device_PNP | Add-Member $_.KeyName $_.Data }
-            $Device_PNP = $Device_PNP.PSObject.Copy()
             $Device_Reg = (Get-ItemProperty "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\$($Device_PNP.DEVPKEY_Device_Driver)").PSObject.Copy()
+
+            $TotalBytes = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
+            # Need to find a better way to find free mem 
+            # $UsedBytes  = $FreeMemCounterSamples[[UInt16]$Type_Id.("GPU")].CookedValue
+            $FreeBytes  = $TotalBytes  #if ($TotalBytes -gt $UsedBytes) { $TotalBytes - $UsedBytes } else { 0 }
+
             $Devices += $Device = [Device]@{ 
                 Bus       = $(
                     if ($Device_PNP.DEVPKEY_Device_BusNumber -is [UInt64] -or $Device_PNP.DEVPKEY_Device_BusNumber -is [UInt32]) { 
                         [Int64]$Device_PNP.DEVPKEY_Device_BusNumber
                     }
                 )
-                Name      = $null
-                Memory    = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
-                MemoryGiB = [Double]([Math]::Round([Math]::Max([UInt64]$Device_CIM.AdapterRAM, [uInt64]$Device_Reg.'HardwareInformation.qwMemorySize') / 0.05GB) / 20) # Round to nearest 50MB
-                Model     = $Device_CIM.Name
-                Type      = "GPU"
-                Vendor    = $(
+                Name          = $null
+                Memory        = [Math]::Max([UInt64]$Device_CIM.AdapterRAM, [UInt64]$Device_Reg.'HardwareInformation.qwMemorySize')
+                MemoryGiB     = [Double]($TotalBytes / 0.05GB / 20) # Round to nearest 50MB
+                MemoryGiBfree = [Double]($FreeBytes / 0.05GB / 20) # Round to nearest 50MB
+                Model         = $Device_CIM.Name
+                Type          = "GPU"
+                Vendor        = $(
                     switch -Regex ([String]$Device_CIM.AdapterCompatibility) { 
                         "Advanced Micro Devices" { "AMD"; break }
                         "AMD"                    { "AMD"; break }
@@ -2473,7 +2572,7 @@ function Get-Device {
             $OpenCLplatform = $_
             # Skip devices with negative PCIbus
             ([OpenCl.Device]::GetDeviceIDs($_, [OpenCl.DeviceType]::All).Where{ $_.PCIbus -ge 0 }.ForEach{ $_ | ConvertTo-Json -EnumsAsStrings -WarningAction SilentlyContinue } | Select-Object -Unique).ForEach{ 
-                $Device_OpenCL = $_ | ConvertFrom-Json
+                $Device_OpenCL = $_ | ConvertFrom-Json -ErrorAction Ignore
 
                 # Add normalised values
                 $Device = [Device]@{ 
@@ -2482,18 +2581,18 @@ function Get-Device {
                             [Int64]$Device_OpenCL.PCIBus
                         }
                     )
-                    Name      = $null
-                    Memory    = [UInt64]$Device_OpenCL.GlobalMemSize
-                    MemoryGiB = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
-                    Model     = $Device_OpenCL.Name
-                    Type      = $(
+                    Name          = $null
+                    Memory        = [UInt64]$Device_OpenCL.GlobalMemSize
+                    MemoryGiBfree = [Double]([Math]::Round($Device_OpenCL.GlobalMemSize / 0.05GB) / 20) # Round to nearest 50MB
+                    Model         = $Device_OpenCL.Name
+                    Type          = $(
                         switch -Regex ([String]$Device_OpenCL.Type) { 
                             "CPU"   { "CPU"; break }
                             "GPU"   { "GPU"; break }
                             default { [String]$Device_OpenCL.Type -replace "\(R\)|\(TM\)|\(C\)|Series|GeForce|Radeon|Intel" -replace "[^A-Z0-9]" }
                         }
                     )
-                    Vendor = $(
+                    Vendor        = $(
                         switch -Regex ([String]$Device_OpenCL.Vendor) { 
                             "Advanced Micro Devices" { "AMD"; break }
                             "AMD"                    { "AMD"; break }
@@ -2804,13 +2903,22 @@ function Get-PoolBaseName {
         [String[]]$PoolNames
     )
 
-    return ($PoolNames -replace "24hr$|coins$|coins24hr$|coinsplus$|plus$")
+    return ($PoolNames -replace "24hr$|plus$")
 }
 
 function Get-Version { 
-    try { 
-        $UpdateVersion = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/UselessGuru/UG-Miner/main/Version.txt" -TimeoutSec 15 -SkipCertificateCheck -Headers @{ "Cache-Control" = "no-cache" }).Content | ConvertFrom-Json
 
+    $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
+    $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+
+    $URL = "https://raw.githubusercontent.com/UselessGuru/UG-Miner/main/Version.txt"
+    $APIallowedFailureCount = 3
+    do { 
+        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+        $APIallowedFailureCount --
+    } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+
+    if (-not $APIError -and ($UpdateVersion = $APIdata.Content)) { 
         $Session.CheckedForUpdate = [DateTime]::Now
 
         if ($Session.Branding.ProductLabel -and [System.Version]$UpdateVersion.Version -gt $Session.Branding.Version) { 
@@ -2850,8 +2958,8 @@ function Get-Version {
             } catch { }
         }
     }
-    catch { 
-        Write-Message -Level Warn "Version checker could not contact update server."
+    else { 
+        Write-Message -Level Warn "Version checker could not contact update server.$(if ($APIerror) { " ($($APIerror.Message))" })"
         try { 
             [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
             Write-Host " ✖" -ForegroundColor Red
@@ -2879,7 +2987,7 @@ function Initialize-AutoUpdate {
         $CursorPosition = $Host.UI.RawUI.CursorPosition
         "Downloading update script '$($UpdateScript)'..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
         try { 
-            Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15
+            Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15 2>$null 3>$null 4>$null 5>$null 6>$null  
             [Console]::SetCursorPosition((31  + $UpdateScript.length), $CursorPosition.y)
             Write-Host " ✔" -ForegroundColor Green
         }
@@ -3006,12 +3114,12 @@ function Update-AllDAGdata {
     $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
 
     # Update on script start, once every 24hrs or if unable to get data from source on last attempt
-    $Url = "https://whattomine.com/coins.json"
-    if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    $URL = "https://whattomine.com/coins.json"
+    if ($DAGdata.Updated.$URL -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
         try { 
             $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
 
             $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
             $CurrencyDAGdataResponse = $JSONstring | ConvertFrom-Json
@@ -3026,36 +3134,36 @@ function Update-AllDAGdata {
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2
                                 if ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                                    $CurrencyDAGdata.Url     = $Url
+                                    $CurrencyDAGdata.Url     = $URL
 
                                     $DAGdata.Currency.$Currency = $CurrencyDAGdata
                                 }
                                 else { 
-                                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                                 }
                             }
                         }
                     }
                 }
-                $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
-                Write-Message -Level Info "Loaded DAG data from '$Url'..."
+                $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
+                Write-Message -Level Info "Loaded DAG data from '$URL'..."
             }
             else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
         catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+            Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source on last attempt
-    $Url = "https://pool.rplant.xyz/api/currencies"
-    if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    $URL = "https://pool.rplant.xyz/api/currencies"
+    if ($DAGdata.Updated.$URL -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
         try { 
             $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
             $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
             $CurrencyDAGdataResponse = $JSONstring | ConvertFrom-Json
 
@@ -3069,36 +3177,36 @@ function Update-AllDAGdata {
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.$Currency.height -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2
                                 if ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                                    $CurrencyDAGdata.Url     = $Url
+                                    $CurrencyDAGdata.Url     = $URL
 
                                     $DAGdata.Currency.$Currency = $CurrencyDAGdata
                                 }
                                 else { 
-                                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                                    Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                                 }
                             }
                         }
                     }
                 }
-                $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
-                Write-Message -Level Info "Loaded DAG data from '$Url'..."
+                $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
+                Write-Message -Level Info "Loaded DAG data from '$URL'..."
             }
             else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
         catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+            Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source on last attempt
-    $Url = "https://minerstat.com/dag-size-calculator"
-    if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+    $URL = "https://minerstat.com/dag-size-calculator"
+    if ($DAGdata.Updated.$URL -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data from Minerstat
         try { 
             $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+            $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
 
             if ($Response.StatusCode -eq 200) { 
                 $CurrencyDAGdataResponse = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
@@ -3111,25 +3219,25 @@ function Update-AllDAGdata {
                             $CurrencyDAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2
                             if ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                                    $CurrencyDAGdata.Url     = $Url
+                                    $CurrencyDAGdata.Url     = $URL
 
                                     $DAGdata.Currency.$Currency = $CurrencyDAGdata
                             }
                             else { 
-                                Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                                Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                             }
                         }
                     }
                 }
-                $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
-                Write-Message -Level Info "Loaded DAG data from '$Url'..."
+                $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
+                Write-Message -Level Info "Loaded DAG data from '$URL'..."
             }
             else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $([Int]$Response.StatusCode) $($Response.StatusCode)."
+                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $([Int]$Response.StatusCode) $([Uint]$Response.StatusCode)."
             }
         }
         catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+            Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
 
@@ -3138,12 +3246,12 @@ function Update-AllDAGdata {
         # Update on script start, once every 24hrs or if unable to get data from source on last attempt
         $Currency = "SCC"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
-            $Url = "https://www.coinexplorer.net/api/v1/SCC/block/latest"
-            if ($DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            $URL = "https://www.coinexplorer.net/api/v1/SCC/block/latest"
+            if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from StakeCube block explorer
                 try { 
                     $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                    $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                    $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
                     $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                     $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).result.height)
 
@@ -3151,19 +3259,19 @@ function Update-AllDAGdata {
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch) { 
                             $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                            $CurrencyDAGdata.Url     = $Url
+                            $CurrencyDAGdata.Url     = $URL
 
                             $DAGdata.Currency.$Currency = $CurrencyDAGdata
-                            $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
-                            Write-Message -Level Info "Loaded DAG data from '$Url'..."
+                            $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
+                            Write-Message -Level Info "Loaded DAG data from '$URL'..."
                         }
                         else { 
-                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                         }
                     }
                 }
                 catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                    Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
         }
@@ -3174,12 +3282,12 @@ function Update-AllDAGdata {
         # Update on script start, once every 24hrs or if unable to get data from source on last attempt
         $Currency = "PHI"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
-            $Url = "https://explorer.phicoin.net/api/getblockcount"
-            if ($DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            $URL = "https://explorer.phicoin.net/api/getblockcount"
+            if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from PHI block explorer
                 try { 
                     $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                    $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                    $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
                     $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                     $CurrencyDAGdataResponse = [UInt64]($JSONstring | ConvertFrom-Json)
 
@@ -3187,19 +3295,19 @@ function Update-AllDAGdata {
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
                         if ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                            $CurrencyDAGdata.Url     = $Url
+                            $CurrencyDAGdata.Url     = $URL
 
                             $DAGdata.Currency.$Currency = $CurrencyDAGdata
-                            $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
-                            Write-Message -Level Info "Loaded DAG data from '$Url'..."
+                            $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
+                            Write-Message -Level Info "Loaded DAG data from '$URL'..."
                         }
                         else { 
-                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                         }
                     }
                 }
                 catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                    Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
         }
@@ -3210,12 +3318,12 @@ function Update-AllDAGdata {
         # Update on script start, once every 24hrs or if unable to get data from source on last attempt
         $Currency = "MEWC"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
-            $Url = "https://api.mewccrypto.com/mining-info"
-            if ($DAGdata.Currency.$Currency.Date -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+            $URL = "https://api.mewccrypto.com/mining-info"
+            if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from MeowCoin block explorer
                 try { 
                     $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                    $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                    $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
                     $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                     $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).block_height)
 
@@ -3223,19 +3331,19 @@ function Update-AllDAGdata {
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                            $CurrencyDAGdata.Url     = $Url
+                            $CurrencyDAGdata.Url     = $URL
 
                             $DAGdata.Currency.$Currency = $CurrencyDAGdata
-                            $DAGdata.Updated.$Url = ([DateTime]::Now.ToUniversalTime())
-                            Write-Message -Level Info "Loaded DAG data from '$Url'..."
+                            $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
+                            Write-Message -Level Info "Loaded DAG data from '$URL'..."
                         }
                         else { 
-                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                         }
                     }
                 }
                 catch { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                    Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
         }
@@ -3244,12 +3352,12 @@ function Update-AllDAGdata {
     # Update on script start, once every 24hrs or if unable to get data from source on last attempt
     $Currency = "LAX"
     if ($Session.CurrencyAlgorithm[$Currency]) { 
-        $Url = "https://explorer.parallaxchain.org/api/v2/stats"
-        if ($DAGdata.Updated.$Url -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$Url -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
+        $URL = "https://explorer.parallaxchain.org/api/v2/stats"
+        if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from Parallax block explorer
             try { 
                 $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                $Response = $HttpClient.GetAsync($Url, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+                $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
                 $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                 $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).total_blocks)
 
@@ -3257,19 +3365,19 @@ function Update-AllDAGdata {
                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                     if ($CurrencyDAGdata.Epoch -ge 0) { 
                         $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                        $CurrencyDAGdata.Url     = $Url
+                        $CurrencyDAGdata.Url     = $URL
 
                         $DAGdata.Currency.$Currency = $CurrencyDAGdata
-                        $DAGdata.Updated.$Url       = ([DateTime]::Now.ToUniversalTime())
-                        Write-Message -Level Info "Loaded DAG data from '$Url'..."
+                        $DAGdata.Updated.$URL       = ([DateTime]::Now.ToUniversalTime())
+                        Write-Message -Level Info "Loaded DAG data from '$URL'..."
                     }
                     else { 
-                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$Url'."
+                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                     }
                 }
             }
             catch { 
-                Write-Message -Level Warn "Failed to load DAG data from '$Url' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
     }
@@ -3792,8 +3900,9 @@ function Read-Config {
 
         function Get-PoolsConfig { 
 
-            # Load default pool data
+            # # Load default pool data
             $Session.PoolData = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
+            # (Get-ChildItem -Path ".\Data\PoolData_*.json" | Sort-Object -Property BaseName).Where{ ($_.BaseName -replace "PoolData_") -in (Get-PoolBaseName $Config.PoolName) }.ForEach{ 
             (Get-ChildItem -Path ".\Data\PoolData_*.json" | Sort-Object -Property BaseName).ForEach{ 
                 $Session.PoolData.$($_.BaseName -replace "PoolData_") = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($_.ResolvedTarget) | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase)
             }
@@ -3828,6 +3937,11 @@ function Read-Config {
                     $PoolConfig.Region = $PoolConfig.Region.Where{ (Get-Region $_) -notin @($PoolConfig.ExcludeRegion) }
 
                     switch ($PoolName) { 
+                        "Kryptex" { 
+                            if (-not $PoolConfig.UserName -and $ConfigFromFile.KryptexUserName) { $PoolConfig.UserName = $ConfigFromFile.KryptexUserName }
+                            elseif (-not $PoolConfig.Wallets) { $PoolConfig.Wallets = $ConfigFromFile.Wallets }
+                            break
+                        }
                         "MiningDutch" { 
                             if ((-not $PoolConfig.PayoutCurrency) -or $PoolConfig.PayoutCurrency -eq "[Default]") { $PoolConfig.PayoutCurrency = $ConfigFromFile.PayoutCurrency }
                             if (-not $PoolConfig.UserName) { $PoolConfig.UserName = $ConfigFromFile.MiningDutchUserName }
@@ -3861,6 +3975,7 @@ function Read-Config {
                 $ConfigFromFile = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase)
             }
             catch { }
+
             if ($ConfigFromFile.Keys.Count -eq 0) { 
                 $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
                 Move-Item -Path $ConfigFile $CorruptConfigFile -Force
@@ -3903,6 +4018,7 @@ function Read-Config {
                         $ConfigFromFile.$_ = $Value
                     }
                 }
+
                 if ($ConfigFromFile.EarningsAdjustmentFactor -le 0 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 10) { 
                     $ConfigFromFile.EarningsAdjustmentFactor = $Session.AllCommandLineParameters.EarningsAdjustmentFactor
                     Write-Message -Level Warn "Configured EarningsAdjustmentFactor value $($ConfigFromFile.EarningsAdjustmentFactor) is not within supported range (0 - 10). Using default value $($Session.AllCommandLineParameters.EarningsAdjustmentFactor)."
@@ -3915,6 +4031,7 @@ function Read-Config {
                     $ConfigFromFile.CPUMiningReserveCPUcore = $Session.AllCommandLineParameters.CPUMiningReserveCPUcore
                     Write-Message -Level Warn "Configured CPUMiningReserveCPUcore value $($ConfigFromFile.CPUMiningReserveCPUcore) is not within supported range (0 - $([Environment]::ProcessorCount)). Using default value $($Session.AllCommandLineParameters.CPUMiningReserveCPUcore)."
                 }
+
             }
         }
         else { 
@@ -3949,32 +4066,30 @@ function Read-Config {
     }
 
     # Read-Config will read and apply configuration if configuration files have changed
-    if ([System.IO.File]::Exists($Session.ConfigFile)) { 
-        if ((Get-Item -Path $ConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp -or ([System.IO.File]::Exists($Session.PoolsConfigFile) -and (Get-Item -Path $PoolsConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp)) { 
+    if ((Get-Item -Path $ConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp -or ([System.IO.File]::Exists($PoolsConfigFile) -and (Get-Item -Path $PoolsConfigFile -ErrorAction Ignore).LastWriteTime.ToUniversalTime() -gt $Session.ConfigTimestamp)) { 
 
-            if ($Session.Config) { Write-Message -Level Verbose "Activating changed configuration..." }
+        if ($Session.Config) { Write-Message -Level Verbose "Activating changed configuration..." }
 
-            Read-ConfigFiles -ConfigFile $ConfigFile -PoolsConfigFile $PoolsConfigFile
+        Read-ConfigFiles -ConfigFile $ConfigFile -PoolsConfigFile $PoolsConfigFile
 
-            if ($Config.APIport -lt 1024) { 
-                $Config.APIPort = 3990
-                Write-Message -Level Warn "API port in stored configuration is invalid. Will use default TCP port $($Config.APIPort)."
-            }
-
-            if ($Config.IdleDetection -ne $Session.Config.IdleDetection) { 
-                if ($Config.IdleDetection) { 
-                    Write-Message -Level Verbose "Idle detection is enabled. Mining will get suspended on any keyboard or mouse activity."
-                }
-                elseif ($Session.MiningStatus) { 
-                    Write-Message -Level Verbose "Idle detection is disabled."
-                }
-            }
-
-            $Session.Config = $Config.Clone()
-            $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
-
-            if ($Session.APIport -and $Session.Config.APIport -ne $Session.APIport) { $Session.RefreshNeeded = $true }
+        if ($Config.APIport -lt 1024) { 
+            $Config.APIPort = 3990
+            Write-Message -Level Warn "API port in stored configuration is invalid. Will use default TCP port $($Config.APIPort)."
         }
+
+        if ($Config.IdleDetection -ne $Session.Config.IdleDetection) { 
+            if ($Config.IdleDetection) { 
+                Write-Message -Level Verbose "Idle detection is enabled. Mining will get suspended on any keyboard or mouse activity."
+            }
+            elseif ($Session.MiningStatus) { 
+                Write-Message -Level Verbose "Idle detection is disabled."
+            }
+        }
+
+        $Session.Config = $Config.Clone()
+        $Session.Config.MinerBaseAPIport = $Session.Config.APIport + 1
+
+        if ($Session.APIport -and $Session.Config.APIport -ne $Session.APIport) { $Session.RefreshNeeded = $true }
     }
 }
 
@@ -3992,14 +4107,14 @@ function Start-LogReader {
         $Session.Config.LogViewerConfig = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerConfig)
         $Session.Config.LogViewerExe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Session.Config.LogViewerExe)
 
-        if (-not (Get-CimInstance CIM_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { & $($Session.Config.LogViewerExe) $($Session.Config.LogViewerConfig) }
+        if (-not (Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { & $($Session.Config.LogViewerExe) $($Session.Config.LogViewerConfig) }
     }
 }
 
 function Stop-LogReader { 
-    if ($Session.Config.LogViewerExe -and $Session.Config.LogViewerConfig -and (Get-CimInstance CIM_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { 
+    if ($Session.Config.LogViewerExe -and $Session.Config.LogViewerConfig -and (Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { 
         try { 
-            (Get-CimInstance CIM_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }.ProcessId | ForEach-Object { Stop-Process -Id $_ }
+            (Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }.ProcessId | ForEach-Object { Stop-Process -Id $_ }
         } catch { }
     }
 }

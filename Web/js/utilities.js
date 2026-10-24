@@ -6,12 +6,12 @@ function formatMiners(data) {
   // that is easier to display and manipulate in a table
   $.each(data, function(index, item) {
     // Format miner link
-    if (item.MinerUri) {
+    if (item.MinerURL) {
       if (item.Best) {
         if (item.Status == 4) {
-          item.BaseName = '<a href="' + item.MinerUri + '" target="_blank">' + item.BaseName + '</a>';
-          item.Name = '<a href="' + item.MinerUri + '" target="_blank">' + item.Name + '</a>';
-          item.StatusInfo = '<a href="' + item.MinerUri + '" target="_blank">' + item.StatusInfo + '</a>';
+          item.BaseName = '<a href="' + item.MinerURL + '" target="_blank">' + item.BaseName + '</a>';
+          item.Name = '<a href="' + item.MinerURL + '" target="_blank">' + item.Name + '</a>';
+          item.StatusInfo = '<a href="' + item.MinerURL + '" target="_blank">' + item.StatusInfo + '</a>';
         }
       }
     }
@@ -347,7 +347,7 @@ function detailFormatter(index, row) {
   $.each(sortedObj, function (key, value) {
     if (key !== 'CheckboxSelected' && key !== 'StatusColor') {
       if (typeof value === 'string') {
-        if (key === 'PoolUri') { 
+        if (key === 'PoolURL') { 
           var target = JSON.stringify(value).replaceAll('\\\\', '\\').replaceAll('"', '');
           html.push(`<p class="mb-0"><b>${key}:</b> <a href=${target} target="_blank">${target}</a></p>`);
         } else { 

@@ -17,39 +17,39 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
-$URI = "https://github.com/trexminer/T-Rex/releases/download/0.26.8/t-rex-0.26.8-win.zip"
+$URL = "https://github.com/trexminer/T-Rex/releases/download/0.26.8/t-rex-0.26.8-win.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\t-rex.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithms = @("Autolykos2", "");       Fee = @(0.02);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(45, 0);   ExcludePools = @(@(), @()); Arguments = " --algo autolykos2 --intensity 25" }
-    @{ Algorithms = @("Blake3", "");           Fee = @(0.01);       MinMemGiB = 2;    Tuning = " --mt 3"; WarmupTimes = @(45, 0);   ExcludePools = @(@(), @()); Arguments = " --algo blake3 --intensity 25" }
-    @{ Algorithms = @("EtcHash", "");          Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 5);   ExcludePools = @(@(), @()); Arguments = " --algo etchash --intensity 25" } # GMiner-v3.44 is fastest
-    @{ Algorithms = @("EtcHash", "Blake3");    Fee = @(0.01, 0.01); MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo etchash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
-    @{ Algorithms = @("Ethash", "");           Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --intensity 25" } # GMiner-v3.44 is fastest
-    @{ Algorithms = @("Ethash", "Autolykos2"); Fee = @(0.01, 0.02); MinMemGiB = 8;    Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo autolykos2 --lhr-tune -1 --lhr-autotune-interval 1" }
-    @{ Algorithms = @("Ethash", "Blake3");     Fee = @(0.01, 0.01); MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
-    @{ Algorithms = @("Ethash", "FiroPow");    Fee = @(0.01, 0.01); MinMemGiB = 10;   Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo firopow --lhr-tune -1" }
-    @{ Algorithms = @("Ethash", "KawPow");     Fee = @(0.01, 0.01); MinMemGiB = 10;   Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo kawpow --lhr-tune -1" }
-    @{ Algorithms = @("Ethash", "Octopus");    Fee = @(0.01, 0.02); MinMemGiB = 8;    Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo octopus --lhr-tune -1" }
-    @{ Algorithms = @("FiroPow", "");          Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow --intensity 25" }
-    @{ Algorithms = @("KawPow", "");           Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.25.0 is almost as fast but has no fee
-#   @{ Algorithms = @("MTP", "");              Fee = @(0.01);       MinMemGiB = 3;    Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
-    @{ Algorithms = @("MTPTcr", "");           Fee = @(0.01);       MinMemGiB = 3;    Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp-tcr --intensity 21" }
-    @{ Algorithms = @("Multi", "");            Fee = @(0.01);       MinMemGiB = 2;    Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo multi --intensity 25" }
-    @{ Algorithms = @("Octopus", "");          Fee = @(0.02);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo octopus" } # 6GB is not enough
-    @{ Algorithms = @("ProgPowSero", "");      Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow --coin sero" }
-    @{ Algorithms = @("ProgPowVeil", "");      Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veil --intensity 24" }
-    @{ Algorithms = @("ProgPowVeriblock", ""); Fee = @(0.01);       MinMemGiB = 2;    Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veriblock" }
-    @{ Algorithms = @("ProgPowZ", "");         Fee = @(0.01);       MinMemGiB = 1.08; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpowz --intensity 25" }
-#   @{ Algorithms = @("Tensority", "");        Fee = @(0.01);       MinMemGiB = 2;    Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo tensority --intensity 25" } # ASIC
+    @{ Algorithms = @("Autolykos2", "");       Fee = @(0.02);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(45, 0);   ExcludePools = @(@(), @()); Arguments = " --algo autolykos2 --intensity 25" }
+    @{ Algorithms = @("Blake3", "");           Fee = @(0.01);       MinMemGiBfree = 2;    Tuning = " --mt 3"; WarmupTimes = @(45, 0);   ExcludePools = @(@(), @()); Arguments = " --algo blake3 --intensity 25" }
+    @{ Algorithms = @("EtcHash", "");          Fee = @(0.01);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 5);   ExcludePools = @(@(), @()); Arguments = " --algo etchash --intensity 25" } # GMiner-v3.44 is fastest
+    @{ Algorithms = @("EtcHash", "Blake3");    Fee = @(0.01, 0.01); MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo etchash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
+    @{ Algorithms = @("Ethash", "");           Fee = @(0.01);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --intensity 25" } # GMiner-v3.44 is fastest
+    @{ Algorithms = @("Ethash", "Autolykos2"); Fee = @(0.01, 0.02); MinMemGiBfree = 8;    Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo autolykos2 --lhr-tune -1 --lhr-autotune-interval 1" }
+    @{ Algorithms = @("Ethash", "Blake3");     Fee = @(0.01, 0.01); MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo blake3 --lhr-tune -1 --lhr-autotune-interval 1" }
+    @{ Algorithms = @("Ethash", "FiroPow");    Fee = @(0.01, 0.01); MinMemGiBfree = 10;   Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo firopow --lhr-tune -1" }
+    @{ Algorithms = @("Ethash", "KawPow");     Fee = @(0.01, 0.01); MinMemGiBfree = 10;   Tuning = " --mt 3"; WarmupTimes = @(255, 15); ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo kawpow --lhr-tune -1" }
+    @{ Algorithms = @("Ethash", "Octopus");    Fee = @(0.01, 0.02); MinMemGiBfree = 8;    Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo ethash --dual-algo octopus --lhr-tune -1" }
+    @{ Algorithms = @("FiroPow", "");          Fee = @(0.01);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 30);  ExcludePools = @(@(), @()); Arguments = " --algo firopow --intensity 25" }
+    @{ Algorithms = @("KawPow", "");           Fee = @(0.01);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(45, 20);  ExcludePools = @(@(), @()); Arguments = " --algo kawpow --intensity 25" } # XmRig-v6.25.0 is almost as fast but has no fee
+#   @{ Algorithms = @("MTP", "");              Fee = @(0.01);       MinMemGiBfree = 3;    Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp --intensity 21" } # Algorithm is dead
+    @{ Algorithms = @("MTPTcr", "");           Fee = @(0.01);       MinMemGiBfree = 3;    Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo mtp-tcr --intensity 21" }
+    @{ Algorithms = @("Multi", "");            Fee = @(0.01);       MinMemGiBfree = 2;    Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo multi --intensity 25" }
+    @{ Algorithms = @("Octopus", "");          Fee = @(0.02);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(60, 15);  ExcludePools = @(@(), @()); Arguments = " --algo octopus" } # 6GB is not enough
+    @{ Algorithms = @("ProgPowSero", "");      Fee = @(0.01);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow --coin sero" }
+    @{ Algorithms = @("ProgPowVeil", "");      Fee = @(0.01);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veil --intensity 24" }
+    @{ Algorithms = @("ProgPowVeriblock", ""); Fee = @(0.01);       MinMemGiBfree = 2;    Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpow-veriblock" }
+    @{ Algorithms = @("ProgPowZ", "");         Fee = @(0.01);       MinMemGiBfree = 1.08; Tuning = " --mt 3"; WarmupTimes = @(30, 15);  ExcludePools = @(@(), @()); Arguments = " --algo progpowz --intensity 25" }
+#   @{ Algorithms = @("Tensority", "");        Fee = @(0.01);       MinMemGiBfree = 2;    Tuning = " --mt 3"; WarmupTimes = @(30, 0);   ExcludePools = @(@(), @()); Arguments = " --algo tensority --intensity 25" } # ASIC
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithms[0]] }
@@ -68,12 +68,12 @@ if ($Algorithms) {
             foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]]) { 
                 foreach ($Pool1 in $MinerPools[1][$_.Algorithms[1]]) { 
 
-                    $MinMemGiB = $_.MinMemGiB + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
-                    if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+                    $MinMemGiBfree = $_.MinMemGiBfree + $Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB
+                    if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                         $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                        if ($AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
+                        if ($AvailableMinerDevices.Where{ $_.MemoryGiBfree -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
 
                         $Arguments = $_.Arguments
                         switch ($Pool0.Protocol) { 
@@ -83,7 +83,7 @@ if ($Algorithms) {
                             default        { $Arguments = "$Arguments --url stratum" }
                         }
                         $Arguments = if ($Pool0.PoolPorts[1]) { "$Arguments+ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool0.Host):$($Pool0.PoolPorts[0])" }
-                        $Arguments = "$Arguments --user $($Pool0.User -replace "\..*") --pass $($Pool0.Pass)$(if ($Pool0.Pass -notmatch $Pool0.WorkerName) { " --worker $($Pool0.WorkerName)" })"
+                        $Arguments = "$Arguments --user $($Pool0.User) --pass $($Pool0.Pass)"
 
                         if ("CLO", "ETC", "ETH", "ETHW", "ETP", "EXP", "MUSIC", "PIRL", "RVN", "TCR", "UBQ", "VBK", "ZCOIN", "ZELS" -contains $Pool0.Currency) { 
                             $Arguments = "$Arguments --coin $($Pool0.Currency)"
@@ -97,10 +97,14 @@ if ($Algorithms) {
                                 default        { $Arguments = "$Arguments --url2 stratum" }
                             }
                             $Arguments = if ($Pool1.PoolPorts[1]) { "$Arguments+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "$Arguments+tcp://$($Pool1.Host):$($Pool1.PoolPorts[0])" }
-                            $Arguments = "$Arguments --user2 $($Pool1.User -replace "\..*") --pass2 $($Pool1.Pass)$(if ($Pool1.Pass -notmatch $Pool1.WorkerName) { " --worker2 $($Pool1.WorkerName)" })"
+                            $Arguments = "$Arguments --user2 $($Pool1.User) --pass2 $($Pool1.Pass)"
                         }
 
                         if ($Arguments -notmatch "--kernel [0-9]") { $_.WarmupTimes[0] += 15 } # Allow extra seconds for kernel auto tuning
+
+                        # Allow more time to build larger DAGs, must use type cast to keep values in $_
+                        $WarmupTimes = [UInt16[]]$_.WarmupTimes
+                        $WarmupTimes[0] += [UInt16](($Pool0.DAGsizeGiB + $Pool1.DAGsizeGiB) * 2)
 
                         # Apply tuning parameters
                         if ($Session.ApplyMinerTweaks) { $Arguments = "$Arguments$($_.Tuning)" }
@@ -109,14 +113,14 @@ if ($Algorithms) {
                             API         = "Trex"
                             Arguments   = "$Arguments --no-strict-ssl --no-watchdog --gpu-report-interval 5 --quiet --retry-pause 1 --timeout 50000 --api-bind-http 127.0.0.1:$($MinerAPIPort) --api-read-only --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')"
                             DeviceNames = $AvailableMinerDevices.Name
+                            DownloadURL = $URL
                             Fee         = $_.Fee # Dev fee
-                            MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/trex"
+                            MinerURL    = "http://127.0.0.1:$($MinerAPIPort)/trex"
                             Name        = $MinerName
                             Path        = $Path
                             Port        = $MinerAPIPort
                             Type        = "NVIDIA"
-                            URI         = $URI
-                            WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
+                            WarmupTimes = $WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                             Workers     = @(($Pool0, $Pool1).ForEach{ if ($_) { @{ Pool = $_ } } })
                         }
                     }

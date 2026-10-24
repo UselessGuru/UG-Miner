@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
-$URI = "https://github.com/UselessGuru/miner-binaries/releases/download/v1.0.3/ninjarig_v1.0.3.zip"
+$URL = "https://github.com/UselessGuru/miner-binaries/releases/download/v1.0.3/ninjarig_v1.0.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ninjarig.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
@@ -57,13 +57,13 @@ if ($Algorithms) {
                     API         = "XmRig"
                     Arguments   = "$($_.Arguments) --url stratum+tcp://$(if ($Pool.PoolPorts[1]) { "$($Pool.Host):$($Pool.PoolPorts[1]) --tls" } else { "$($Pool.Host):$($Pool.PoolPorts[0])" }) --user $($Pool.User) --pass $($Pool.Pass) --keepalive --api-port $MinerAPIPort --donate-level 0 -R 1 --use-gpu=CUDA -t $DeviceIDs"
                     DeviceNames = $AvailableMinerDevices.Name
+                    DownloadURL = $URL
                     Fee         = @(0) # Dev fee
-                    MinerUri    = "http://127.0.0.1:$($MinerAPIPort)"
+                    MinerURL    = "http://127.0.0.1:$($MinerAPIPort)"
                     Name        = $MinerName
                     Path        = $Path
                     Port        = $MinerAPIPort
                     Type        = "NVIDIA"
-                    URI         = $URI
                     WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                     Workers     = @(@{ Pool = $Pool })
                 }

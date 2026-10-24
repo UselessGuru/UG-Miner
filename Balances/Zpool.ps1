@@ -18,70 +18,57 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
-$Handler = [System.Net.Http.HttpClientHandler]::new()
-$Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator # Equivalent to -SkipCertificateCheck
-$HttpClient = [System.Net.Http.HttpClient]::new($Handler)
-$HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
-
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
+$Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
+$Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
 $Config.PoolsConfig.$Name.Wallets.Keys.ForEach{ 
     $Currency = $_
     $Wallet = $Config.PoolsConfig.$Name.Wallets.$Currency
 
-    $RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
-    $Request = "https://zpool.ca/api/wallet?address=$Wallet"
+    if ($Wallet) { 
+        $URL = "https://zpool.ca/api/wallet?address=$Wallet"
 
-    while (-not $APIResponse -and $RetryCount -gt 0 -and $Wallet) { 
+        $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+        do { 
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+            $APIallowedFailureCount --
+        } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
-        try { 
-            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($Config.PoolsConfig.$Name.PoolAPItimeout))
-            $Response = $HttpClient.GetAsync($Request, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-            $CancellationTokenSource.Dispose()
-            Remove-Variable CancellationTokenSource
+        if ($APIerror) { 
+            Write-Message -Level Error "BalancesTracker '$Name': Query to '$URL' failed ($($APIerror.Message))"
+        }
+        elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
+            if ($BalanceInfo = $APIdata.Content | ConvertFrom-Json) {
+                $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+                Write-Message -Level $DebugLevel "BalancesTracker '$Name' {$_}: Response from '$URL' received."
 
-            # Read response as raw string
-            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                if ($Config.BalancesTrackerLogAPIResponse) { 
+                    "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                    ($URL.Replace("$Wallet", "***Wallet***")) | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                    $APIdata.Data | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
+                }
 
-            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-            Write-Message -Level $DebugLevel "BalancesTracker '$Name': Response from '$Request' received"
-
-            if ($Config.BalancesTrackerLogAPIResponse) { 
-                "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-                ($Request.Replace("$Wallet", "***Wallet***")) | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-                $JSONstring | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-            }
-
-            if ($JSONstring -and (Test-Json $JSONstring -ErrorAction Ignore)) { 
-                $APIresponse = $JSONstring | ConvertFrom-Json
-
-                if ($APIResponse.currency -and $APIResponse.currency -ne "INVALID" -and ($APIResponse.unsold -or $APIResponse.balance -or $APIResponse.unpaid)) { 
+                if ($BalanceInfo.currency -and $BalanceInfo.currency -ne "INVALID" -and ($BalanceInfo.unsold -or $BalanceInfo.balance -or $BalanceInfo.unpaid)) { 
                     [PSCustomObject]@{ 
                         DateTime = [DateTime]::Now.ToUniversalTime()
                         Pool     = $Name
-                        Currency = $APIResponse.currency
+                        Currency = $BalanceInfo.currency
                         Wallet   = $Wallet
-                        Pending  = [Double]$APIResponse.unsold # Pending
-                        Balance  = [Double]$APIResponse.balance
-                        Unpaid   = [Double]$APIResponse.unpaid # Balance + unsold (pending)
-                        # Paid     = [Double]$APIResponse.total # Reset after payout
-                        # Total    = [Double]$APIResponse.unpaid + [Double]$APIResponse.total # Reset after payout
+                        Pending  = [Double]$BalanceInfo.unsold # Pending
+                        Balance  = [Double]$BalanceInfo.balance
+                        Unpaid   = [Double]$BalanceInfo.unpaid # Balance + unsold (pending)
+                        # Paid     = [Double]$BalanceInfo.total # Reset after payout
+                        # Total    = [Double]$BalanceInfo.unpaid + [Double]$BalanceInfo.total # Reset after payout
                         Url      = "https://zpool.ca/wallet/$Wallet"
                     }
                 }
             }
-            $APIResponse = $null
-            $RetryCount = 0
-        }
-        catch { 
-            Start-Sleep -Seconds $RetryInterval # Pool might not like immediate requests
-            $RetryCount--
         }
     }
 }

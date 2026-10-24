@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.8.22
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 using module .\Include.psm1
@@ -42,7 +42,7 @@ try {
         Read-Config -ConfigFile $Session.ConfigFile -PoolsConfigFile $Session.PoolsConfigFile
 
         # Read exchange rates when FIAT currency has changed
-        if ($Session.Config.FIATcurrency -notin $Session.AllCurrencies) { Get-Rate }
+        if ($Session.Config.FIATcurrency -notin $Session.AllCurrencies -or $Session.KryptexCurrenciesUpdated -gt $Session.RatesUpdated) { Get-Rate }
 
         $Session.CoreLoopCounter ++
         $Session.EndCycleMessage = ""
@@ -58,7 +58,7 @@ try {
 
         # Internet connection must be available
         $NetworkInterface = (Get-NetConnectionProfile).Where{ $_.IPv4Connectivity -eq "Internet" }.InterfaceIndex
-        $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4).IPAddress } else { $null }
+        $Session.MyIPaddress = if ($NetworkInterface) { (Get-NetIPAddress -InterfaceIndex $NetworkInterface -AddressFamily IPV4 2>$null 3>$null 4>$null 5>$null 6>$null).IPAddress } else { $null }
         $Session.NetworkChecked = [DateTime]::Now.ToUniversalTime()
         Remove-Variable NetworkInterface
 
@@ -222,7 +222,7 @@ try {
         # Load unprofitable algorithms as case insensitive sorted list, cannot use one-liner (Error 'Cannot find an overload for "new" and the argument count: "2"')
         try { 
             if (-not $Session.UnprofitableAlgorithmsTimestamp -or (Get-ChildItem -Path ".\Data\UnprofitableAlgorithms.json").LastWriteTime -gt $Session.UnprofitableAlgorithmsTimestamp) { 
-                $UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -AsHashtable
+                $UnprofitableAlgorithms = [System.IO.File]::ReadAllLines("$PWD\Data\UnprofitableAlgorithms.json") | ConvertFrom-Json -AsHashtable -ErrorAction Ignore
                 $Session.UnprofitableAlgorithms = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase)
                 $UnprofitableAlgorithms.Keys.ForEach{ $Session.UnprofitableAlgorithms.$_ = $UnprofitableAlgorithms.$_ }
                 Remove-Variable UnprofitableAlgorithms
@@ -262,7 +262,7 @@ try {
                         $PoolName = $_
                         $Session.Donation.PoolsConfig.$PoolName.EarningsAdjustmentFactor = 1.0
                         $Session.DonationData.($Session.Donation.Username)[$PoolName].Keys.ForEach{ $Session.Donation.PoolsConfig[$PoolName].$_ = $Session.DonationData.($Session.Donation.Username)[$PoolName].$_ }
-                        $Session.Donation.PoolsConfig.$PoolName.WorkerName = "$($Session.Branding.ProductLabel)-$($Session.Branding.Version.ToString())-donate$($Session.Config.Donation)"
+                        $Session.Donation.PoolsConfig.$PoolName.WorkerName = "$($Session.Branding.ProductLabel)-$($Session.Branding.Version.ToString())-donate$($Session.Config.Donation)" -replace "\.", "_"
                     }
 
                     # Ensure full donation period
@@ -343,17 +343,17 @@ try {
             # Core suspended with <Ctrl><Alt>P in MainLoop
             while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }
 
-            # Collect pool data
+            # Collect pool brain data
             if ($Session.Config.PoolName) { 
                 $PoolNames = $Session.Config.PoolName.Where{ (Get-PoolBaseName $_) -in (Get-ChildItem -File ".\Pools\*.ps1" -ErrorAction Ignore).BaseName }
                 $Session.PoolsCount = $Session.Pools.Count
                 $Session.PoolsTimeout = ($Session.Config.PoolsConfig.Keys.ForEach{ $Session.Config.PoolsConfig.$_.PoolAPItimeout } | Measure-Object -Maximum).Maximum
 
-                # Wait for pool data message
+                # Wait for pool brain data message
                 if ($Session.Brains.Keys.Where{ $Session.Brains[$_].StartTime -gt $Session.Timer.AddSeconds(- $Session.Config.Interval) } -or -not $Session.Miners) { 
                     # Newly started brains, allow extra time for brains to get ready
                     $Session.PoolsTimeout = 2 * $Session.PoolsTimeout
-                    $Message = "Loading initial pool data from $((Get-PoolBaseName $PoolNames) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
+                    $Message = "Generating initial pool objects for $((Get-PoolBaseName $PoolNames) -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
                     if (-not $Session.Miners) { 
                         $Session.Summary = $Message
                         $Session.RefreshTimestamp = (Get-Date -Format "G")
@@ -363,7 +363,7 @@ try {
                     Remove-Variable Message
                 }
                 else { 
-                    Write-Message -Level Info "Loading pool data from $((Get-PoolBaseName $PoolNames) -join ", " -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
+                    Write-Message -Level Info "Generating pool objects for $((Get-PoolBaseName $PoolNames) -join ", " -join ", " -replace ",([^,]*)$", " &`$1").<br>This may take up to $($Session.PoolsTimeout) second$(if ($Session.PoolsTimeout -ne 1) { "s" })..."
                 }
 
                 # Wait for all brains
@@ -420,7 +420,7 @@ try {
                     $Pool
                 }
 
-                if ($PoolsWithoutData = Compare-Object -PassThru @($PoolNames) @($Session.PoolsNew.Variant | Sort-Object -Unique)) { Write-Message -Level Warn "No data received from pool$(if ($PoolsWithoutData.Count -gt 1) { "s" }) $($PoolsWithoutData -join ", " -replace ",([^,]*)$", " &`$1")." }
+                if ($PoolsWithoutData = Compare-Object -PassThru @($PoolNames) @($Session.PoolsNew.Variant | Sort-Object -Unique)) { Write-Message -Level Warn "No pool objects for $($PoolsWithoutData -join ", " -replace ",([^,]*)$", " &`$1")." }
                 Remove-Variable Factor, Matches, Pool, PoolName, PoolNames, PoolsWithoutData -ErrorAction Ignore
                 $Session.PoolDataCollectedTimeStamp = [DateTime]::Now.ToUniversalTime()
 
@@ -491,7 +491,7 @@ try {
                     # Pool price 0
                     $Pools.Where{ $_.Price -eq 0 -and -not ($Session.Config.PoolsConfig[$_.Name].PoolAllow0Price -or $Session.Config.PoolAllow0Price) }.ForEach{ [Void]$_.Reasons.Add("Price -eq 0") }
                     # No price data
-                    $Pools.Where{ [Double]::IsNaN($_.Price) }.ForEach{ [Void]$_.Reasons.Add("Price information not available") }
+                    $Pools.Where{ [Double]::IsNaN($_.Price) }.ForEach{ [Void]$_.Reasons.Add("No price information received from pool") }
                     # Ignore pool if price is more than UnrealisticPoolPriceFactor higher than the medium price of all pools with same algorithm; NiceHash & MiningPoolHub are always right
                     if ($Session.Config.UnrealisticPoolPriceFactor -gt 1) { 
                         ($Pools.Where{ $_.Price_Bias -gt 0 } | Group-Object -Property Algorithm).Where{ $_.Count -gt 3 }.ForEach{ 
@@ -539,8 +539,6 @@ try {
                     if (-not $Session.Config.SSLallowSelfSignedCertificate) { $Pools.Where{ $_.SSLselfSignedCertificate -and $null -eq $Session.Config.PoolsConfig[$_.Name].SSLallowSelfSignedCertificate }.ForEach{ [Void]$_.Reasons.Add("Pool uses self signed certificate (SSLallowSelfSignedCertificate -eq '`$false' in generic config)") } }
                     # At least one port (SSL or non-SSL) must be available
                     $Pools.Where{ -not ($_.PoolPorts | Select-Object) }.ForEach{ [Void]$_.Reasons.Add("No ports available") }
-                    # Second best pools per algorithm
-                    ($Pools.Where{ -not $_.Reasons.Count } | Group-Object -Property AlgorithmVariant, Name).ForEach{ ($_.Group | Sort-Object -Property Price_Bias -Descending | Select-Object -Skip 1).ForEach{ [Void]$_.Reasons.Add("There is a better paying pool for this algorithm") } }
 
                     # Apply watchdog to pools
                     if ($Pools.Count) { $Pools = Update-PoolWatchdog -Pools $Pools }
@@ -586,13 +584,13 @@ try {
                     }
 
                     # Mark best pools
-                    ($PoolsAvailable | Group-Object -Property Algorithm).ForEach{ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom 1).ForEach{ $_.Best = $true } }
+                    ($PoolsAvailable | Group-Object -Property Name, AlgorithmVariant).ForEach{ ($_.Group | Sort-Object -Property Prioritize, Price_Bias -Bottom 1).ForEach{ $_.Best = $true } }
                 }
                 $Session.PoolsUpdatedTimestamp = [DateTime]::Now.ToUniversalTime()
 
                 # Update data in API
                 $Session.Pools = $Pools
-                $Session.PoolsBest = $Session.Pools.Where{ $_.Best } | Sort-Object -Property Algorithm
+                $Session.PoolsBest = $Session.Pools.Where{ $_.Best } | Sort-Object -Property AlgorithmVariant
 
                 Remove-Variable Pools, PoolsDeconfiguredCount, PoolsUnavailableCount -ErrorAction Ignore
 
@@ -608,7 +606,6 @@ try {
             $Session.Summary = $Message
             Remove-Variable Message
 
-            Clear-Pools
             Clear-Miners
 
             $Session.RefreshNeeded = $true
@@ -656,7 +653,6 @@ try {
                                         MinerBaseName_Version_Device = $Miner.BaseName_Version_Device
                                         MinerName                    = $Miner.Name
                                         MinerVersion                 = $Miner.Version
-                                        PoolKey                      = $Worker.Pool.Key
                                         PoolName                     = $Worker.Pool.Name
                                         PoolRegion                   = $Worker.Pool.Region
                                         PoolVariant                  = $Worker.Pool.Variant
@@ -802,15 +798,15 @@ try {
         $MinerPools = [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase), [System.Collections.SortedList]::new([StringComparer]::OrdinalIgnoreCase)
         $MinerPools[1][""] = ""
         if ($Session.Config.UseUnprofitableAlgorithms) { 
-            ($PoolsAvailable | Group-Object -Property Algorithm).ForEach{ 
+            ($Session.PoolsBest | Group-Object -Property Algorithm).ForEach{ 
                 $MinerPools[0][$_.Name] = $_.Group
                 $MinerPools[1][$_.Name] = $_.Group
             }
         }
         else { 
             # Only add pools with profitable algorithms
-            ($PoolsAvailable.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|1" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[0][$_.Name] = $_.Group }
-            ($PoolsAvailable.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|2" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[1][$_.Name] = $_.Group }
+            ($Session.PoolsBest.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|1" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[0][$_.Name] = $_.Group }
+            ($Session.PoolsBest.Where{ $Session.UnprofitableAlgorithms[$_.Algorithm] -notmatch "\*|2" } | Group-Object -Property Algorithm).ForEach{ $MinerPools[1][$_.Name] = $_.Group }
         }
 
         $Message = "Loading miners.$(if (-not $Session.Miners) { "<br>This may take a while." }).."
@@ -913,7 +909,7 @@ try {
                                 $_.Restart     = $true
                             }
                             $_.PrerequisitePath = $MinerNew.PrerequisitePath
-                            $_.PrerequisiteURI  = $Miner.PrerequisiteURI
+                            $_.PrerequisiteURL  = $Miner.PrerequisiteURL
                             $_.Reasons          = [System.Collections.Generic.SortedSet[String]]::new()
                             $_.WarmupTimes      = $MinerNew.WarmupTimes
                             $_.Workers          = $MinerNew.Workers
@@ -963,8 +959,8 @@ try {
 
             if (-not $MustFlagAsUnavailable) { 
                 # Miner has an unavailable pool
-                foreach ($PoolKey in $Miner.Workers.Pool.Key) { 
-                    if ($PoolKey -in $Session.PoolsUnavailable.Key) { 
+                foreach ($Key in $Miner.Workers.Pool.Key) { 
+                    if ($Key -in $Session.PoolsUnavailable.Key) { 
                         $MustFlagAsUnavailable = $true
                         break
                     }
@@ -987,7 +983,7 @@ try {
                 $Miner.SideIndicator = "!"
             }
         }
-        Remove-Variable AgeThreshold, AllowedPoolNames, DeviceMap, DeviceName, MustFlagAsUnavailable, Variant -ErrorAction Ignore
+        Remove-Variable AgeThreshold, AllowedPoolNames, DeviceMap, DeviceName, MustFlagAsUnavailable, Key, Variant -ErrorAction Ignore
         #endregion
 
         #region Filter miners
@@ -1007,10 +1003,10 @@ try {
             }
             Remove-Variable ExcludeMinerNameRegex, JoinedExcludeMinerName, Matches -ErrorAction Ignore
         }
-        Remove-Variable Miner
+        Remove-Variable Miner -ErrorAction Ignore
 
         # Add reason 'Config.DisableCpuMiningOnBattery' for CPU miners when running on battery
-        if ($Session.Config.DisableCpuMiningOnBattery -and (Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miners.Where{ $_.Type -eq "CPU" }.ForEach{ [Void]$_.Reasons.Add("Config.DisableCpuMiningOnBattery") } }
+        if ($Session.Config.DisableCpuMiningOnBattery -and (Get-CimInstance CIM_Battery).BatteryStatus -eq 1) { $Miners.Where{ $_.Type -eq "CPU" }.ForEach{ [Void]$_.Reasons.Add("Config.DisableCpuMiningOnBattery") } }
 
         # Add reason 'Unrealistic earnings...' for miners with earnings > x times higher than any other miner for this device & algorithm
         if ($Session.Config.UnrealisticAlgorithmDeviceEarningsFactor -gt 1) { 
@@ -1047,7 +1043,7 @@ try {
             $_
         }
 
-        if ($DownloadList = @($Session.MinersMissingBinary | Sort-Object Uri -Unique | Select-Object URI, Path, @{ Name = "Searchable"; Expression = { $false } }, @{ Name = "Type"; Expression = { "miner binary" } }) + @($Session.MinersMissingPrerequisite | Sort-Object PrerequisiteURI -Unique | Select-Object @{ Name = "URI"; Expression = { $_.PrerequisiteURI } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }, @{ Name = "Type"; Expression = { "miner pre-requisite" } })) { 
+        if ($DownloadList = @($Session.MinersMissingBinary | Sort-Object DownloadURL -Unique | Select-Object @{ Name = "URL"; Expression = { $_.DownloadURL } }, @{ Name = "Path"; Expression = { $_.Path } }, @{ Name = "Searchable"; Expression = { $false } }, @{ Name = "Type"; Expression = { "miner binary" } }) + @($Session.MinersMissingPrerequisite | Sort-Object PrerequisiteURL -Unique | Select-Object @{ Name = "URL"; Expression = { $_.PrerequisiteURL } }, @{ Name = "Path"; Expression = { $_.PrerequisitePath } }, @{ Name = "Searchable"; Expression = { $false } }, @{ Name = "Type"; Expression = { "miner pre-requisite" } })) { 
             if ($Session.Downloader.State -ne "Running") { 
                 # Download miner binaries
                 Write-Message -Level Info "Some files are missing ($($DownloadList.Count) item$(if ($DownloadList.Count -ne 1) { "s" })). Starting downloader..."
@@ -1158,7 +1154,7 @@ try {
         $MinersAddedCount = $Miners.Where{ $_.SideIndicator -eq "=>" }.Count
         $MinersAvailable = $Miners.Where{ $_.Available }
         $MinersAvailableCount = $MinersAvailable.Count
-        $MinersFilteredCount = $Miners.Where{ -not $_.Available }.Count
+        $MinersFilteredCount = $Miners.Where{ -not $_.Available -and $_.SideIndicator -ne "!"}.Count
         $MinersToBeRemovedCount = $Miners.Where{ $_.SideIndicator -eq "!" }.Count
         $MinersUpdatedCount = $Miners.Where{ $_.SideIndicator -eq "==" }.Count
 
@@ -1190,7 +1186,7 @@ try {
 
         #region Get best miners
         $Bias = if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { "Profit_Bias" } else { "Earnings_Bias" }
-        Write-Message -Level Info "Selecting best miner$(if (($Session.EnabledDevices.Model | Select-Object -Unique).Count -gt 1) { " combinations" }) based on$(if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { " profit (power cost $($Session.Config.FIATcurrency) $($Session.PowerPricekWh)/kW⋅h)" } else { " earnings" })..."
+        Write-Message -Level Info "Selecting best miner combination based on$(if ($Session.CalculatePowerCost -and -not $Session.Config.IgnorePowerCost) { " profit (power cost $($Session.Config.FIATcurrency) $($Session.PowerPricekWh)/kW⋅h)" } else { " earnings" })..."
 
         if ($MinersAvailableCount -eq 1) { 
             $MinersBest = $Session.MinersBestPerDevice = $MinersOptimal = $MinersAvailable
@@ -1289,10 +1285,10 @@ try {
         $MinerPaths = ($Miners.Path | Sort-Object -Unique).ForEach{ "$PWD\$($_)" }
         $EndLoop = [DateTime]::Now.AddSeconds(60)
         do { 
-            $StuckMinerProcesses = (Get-CimInstance CIM_Process).Where{ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID }.ProcessId.ForEach{ (Get-Process -Id $_ -ErrorAction Ignore).Where{ $_.MainWindowTitle -match ".+ \{.+@.+\}" } }
+            $StuckMinerProcesses = (Get-CimInstance Win32_Process).Where{ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID }.ProcessId.ForEach{ (Get-Process -Id $_ -ErrorAction Ignore).Where{ $_.MainWindowTitle -match ".+ \{.+@.+\}" } }
             foreach ($StuckMinerProcess in $StuckMinerProcesses) { 
                 # Some miners, e.g. HellMiner, spawn child process(es) that may need separate killing
-                (Get-CimInstance win32_process -Filter "ParentProcessId = $($StuckMinerProcess.Id)").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
+                (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($StuckMinerProcess.Id)").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
                 Stop-Process -Id $StuckMinerProcess.Id -Force -ErrorAction Ignore
                 if (-not (Get-Process -Id $StuckMinerProcess.Id -ErrorAction Ignore)) { 
                     Write-Message -Level Warn "Successfully stopped stuck miner '$($StuckMinerProcess.MainWindowTitle -replace "\} .+", "}")'."
@@ -1437,7 +1433,7 @@ try {
                         # Add extra time when CPU mining and miner requires DAG creation
                         if ($Session.MinersBest.Type -contains "CPU") { $Miner.WarmupTimes[0] += 15 <# seconds #> }
                         # Add extra time when notebook runs on battery
-                        if ((Get-CimInstance Win32_Battery).BatteryStatus -eq 1) { $Miner.WarmupTimes[0] += 60 <# seconds #> }
+                        if ((Get-CimInstance CIM_Battery).BatteryStatus -eq 1) { $Miner.WarmupTimes[0] += 60 <# seconds #> }
                     }
 
                     $Miner.DataCollectInterval = $DataCollectInterval
@@ -1460,7 +1456,7 @@ try {
                                 MinerBaseName_Version_Device = $Miner.BaseName_Version_Device
                                 MinerName                    = $Miner.Name
                                 MinerVersion                 = $Miner.Version
-                                PoolKey                      = $Worker.Pool.Key
+                                Key                      = $Worker.Pool.Key
                                 PoolName                     = $Worker.Pool.Name
                                 PoolRegion                   = $Worker.Pool.Region
                                 PoolVariant                  = $Worker.Pool.Variant

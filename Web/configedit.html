@@ -23,6 +23,17 @@
           </fieldset>
           <br>
 
+          <!-- Kryptex -->
+          <legend class=h6 title="You must have a registered account with Kryptex">Kryptex
+            <a id="RegisterKryptex" href="https://www.kryptex.com/?ref=3b8163ff" target="_blank" style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
+          </legend>
+          <div style="padding-top: 0.2rem;" title="Your username as registered with Kryptex&#10;(10 characters)">
+            <label for="KryptexUserName">Kryptex user name</label>
+            <input type="text" id="KryptexUserName" name="KryptexUserName" maxlength=10 size=10>
+          </div>
+          <br>
+
+          <!-- Mining Dutch -->
           <legend class=h6 title="You must have a registered account with Mining Dutch">Mining Dutch
             <a id="RegisterMiningDutch" href="https://www.mining-dutch.nl/pools/account.php?page=register" target="_blank" style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
@@ -36,6 +47,7 @@
           </div>
           <br>
 
+          <!-- NiceHash -->
           <legend class=h6 title="You must have a registered account with NiceHash">NiceHash
             <a id="RegisterNiceHash" href="https://www.nicehash.com/my/register" target="_blank" style="float: right;" title="Click here to go to the pool registration web site to register an account">Goto registration page</a>
           </legend>
@@ -600,6 +612,9 @@
       document.getElementById(currency).remove();
     });
 
+    // Kryptex
+    document.getElementById('KryptexUserName').value = config.KryptexUserName || '';
+
     // MiningDutch
     document.getElementById('MiningDutchUserName').value = config.MiningDutchUserName || '';
     document.getElementById('MiningDutchAPIKey').value = config.MiningDutchAPIKey || '';
@@ -758,7 +773,7 @@
           };
           $('<input/>', { type: 'checkbox', class: 'toggle-switch', id: ('pool-' + poolvariant).toLowerCase(), style: 'margin-left: 0px;' }).appendTo(poolscontainer);
           $('<label/>', { for: ('pool-' + poolvariant).toLowerCase(), text: poolvariant, title: title, style: 'margin-left: 5px; line-height: 75%;' }).appendTo(poolscontainer);
-          if (poolbasename == poolvariant.toLowerCase()) {
+          if (poolbasename != "kryptex" && poolbasename == poolvariant.toLowerCase()) {
             $('<input/>', { type: 'checkbox', class: 'switch', id: ('PoolBalanceTracker-' + poolvariant), disabled: (config.BalancesTrackerPollInterval <= 0), checked: !(config.BalancesTrackerExcludePools.map((poolname) => { return poolname.toLowerCase() }).includes(poolbasename)), title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running)", style: 'position: absolute; left: 50%; margin-top: 0.14rem;' }).appendTo(poolscontainer);
             if (poolbasename == "nicehash") {
               $('<label/>', { for: ('PoolBalanceTracker-' + poolvariant).toLowerCase(), text: "Track balances", title: "Enable / disable balances tracker for this pool\n\n(requires balances tracker to be running, and NiceHash API key, secret and organization Id configured)", style: 'position: absolute; left: calc(50% + 20px); padding-top: 0.1rem;' }).appendTo(poolscontainer);
@@ -914,6 +929,7 @@
       $.each(poolbasenames, function (key, value) {
         if (document.getElementById('PoolBalanceTracker-' + value)) document.getElementById('PoolBalanceTracker-' + value).disabled = (parseInt(document.getElementById('BalancesTrackerPollInterval').value) == 0);
       });
+      $(document.getElementById('KryptexUserName')).trigger('change');
       $(document.getElementById('MiningDutchUserName')).trigger('change');
       $(document.getElementById('MiningDutchAPIKey')).trigger('change');
 
@@ -1052,6 +1068,12 @@
           maxlength: 42,
           pattern: '^0[x|X][0-9A-Za-z]{40}$'
         },
+        KryptexUserName: {
+          required: false,
+          minlength: 10,
+          maxlength: 10,
+          pattern: '^[0-9A-Za-z]{10,10}$'
+        },
         MiningDutchUserName: {
           required: false,
           minlength: 2,
@@ -1184,6 +1206,8 @@
         $.each(config.Wallets, function (key, value) {
           config.Wallets[key] = document.getElementById('Wallet' + key).value.toString();
         });
+        config.KryptexUserName = document.getElementById('KryptexUserName').value.toString().trim();
+        // config.KryptexAPIKey = document.getElementById('KryptexAPIKey').value = document.getElementById('MiningDutchAPIKey').value.toString().trim();
         config.MiningDutchUserName = document.getElementById('MiningDutchUserName').value.toString().trim();
         config.MiningDutchAPIKey = document.getElementById('MiningDutchAPIKey').value = document.getElementById('MiningDutchAPIKey').value.toString().trim();
         config.NiceHashAPIKey = document.getElementById('NiceHashAPIKey').value = document.getElementById('NiceHashAPIKey').value.toString().trim();
@@ -1342,7 +1366,7 @@
         config.BackupOnAutoUpdate = document.getElementById('BackupOnAutoUpdate').checked;
 
         // Write current config
-        if ((Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0) && /[a-zA-Z]{3}/.test(config.FIATcurrency) && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < availableDevicesCount) {
+        if ((Object.values(config.Wallets).toString().length > 0 || config.KryptexUserName.length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0) && /[a-zA-Z]{3}/.test(config.FIATcurrency) && config.Region && config.PoolName.length >= 1 && config.ExcludeDeviceName.length < availableDevicesCount) {
           var $command = '/functions/config/set?' + encodeURIComponent(JSON.stringify(config));
           $('.modal-body').load($command, function () {
             $('.modal-title').text('Save configuration');
@@ -1350,7 +1374,7 @@
             $('body').css('cursor', 'default');
             $('#myModal').on('hidden.bs.modal', function () { location.reload(true) })
           });
-        } else if (!(Object.values(config.Wallets).toString().length > 0 || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0)) {
+        } else if (!(Object.values(config.Wallets).toString().length > 0 || config.KryptexUserName.length > 0  || config.MiningDutchUserName.length > 0 || config.NiceHashWallet.length > 0)) {
           // No wallet or username
           $('.modal-title').html('Error: Invalid configuration');
           $('.modal-body').html('Cannot save configuration - you must set at least one wallet address or username.');

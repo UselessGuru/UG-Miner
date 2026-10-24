@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.8.27 / Updated 2026/10/09
+Version 6.9.0 / Updated 2026/10/24
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -39,16 +39,20 @@ UG-Miner code is partly based on
 - Calculate power cost<sup>(1)</sup>
 - Miner switching log
 - Supported pools:
+   - [Krptex](<https://www.kryptex.com/?ref=3b8163ff>)<sup>(2)</sup>
    - [HashCryptos](<https://hashcryptos.com/>)
    - [MiningDutch](<https://www.mining-dutch.nl/>)
-   - [NiceHash](<https://www.nicehash.com/>)<sup>(2)</sup>
-   - [ZPool](<https://zpool.ca/>)<sup>(3)</sup>
+   - [NiceHash](<https://www.nicehash.com/>)<sup>(3)</sup>
+   - [ZPool](<https://zpool.ca/>)<sup>(4)</sup>
 
 <sup>(1)</sup> Optional installation of HWiNFO required, see [ConfigHWinfo64.pdf](<https://github.com/UselessGuru/UG-Miner/blob/main/ConfigHWinfo64.pdf>)
 
-<sup>(2)</sup> Registration with NiceHash is required. For some countries private usage is no longer possible.  
+<sup>(2)</sup> To use the pools auto-conversion to BTC registration with Kryptex is required.  
+    To For direct currency minig you need to add a wallet addresses for each currency you want to mine.
 
-<sup>(3)</sup> Pool does not support auto-exchange for some currencies (Conversion: Direct mining only).  
+<sup>(3)</sup> Registration with NiceHash is required. For some countries private usage is no longer possible.  
+
+<sup>(4)</sup> Pool does not support auto-exchange for some currencies (Conversion: Direct mining only).  
     You need to configure a wallet address for these currencies.
 
 ## Easy configuration, easy start
@@ -316,8 +320,8 @@ UI style automatically switches to full during benchmarking or when measuring po
 
 Windows 10.x and PowerShell Version 7.4.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.6.6.  
-[Download the installer for version 7.6.6](https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.6.7.  
+[Download the installer for version 7.6.7](https://github.com/PowerShell/PowerShell/releases/download/v7.6.7/PowerShell-7.6.7-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  

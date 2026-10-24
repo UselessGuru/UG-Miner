@@ -17,25 +17,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.1" })) { return }
 
-$URI = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerYescrypt/ccmineryescryptrV5.zip"
+$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/CcminerYescrypt/ccmineryescryptrV5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "Blakecoin";   MinMemGiB = 2; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo blakecoin --intensity 13.2" } # FPGA
-#   @{ Algorithm = "Lyra2RE3";    MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2v3 --intensity 24" } # ASIC
-#   @{ Algorithm = "Lyra2z330";   MinMemGiB = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2z330 --intensity 13.2" } # Algorithm is dead
-#   @{ Algorithm = "Yescrypt";    MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescrypt" } # bad shares, CcminerLyra2z330-v8.21r9 is fastest
-    @{ Algorithm = "YescryptR16"; MinMemGiB = 4; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr16" }
-#   @{ Algorithm = "YescryptR32"; MinMemGiB = 3; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr32" } # No hashrate in time
-    @{ Algorithm = "YescryptR8";  MinMemGiB = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescryptr8 --intensity 13.2" }
+    @{ Algorithm = "Blakecoin";   MinMemGiBfree = 2; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo blakecoin --intensity 13.2" } # FPGA
+#   @{ Algorithm = "Lyra2RE3";    MinMemGiBfree = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2v3 --intensity 24" } # ASIC
+#   @{ Algorithm = "Lyra2z330";   MinMemGiBfree = 3; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo lyra2z330 --intensity 13.2" } # Algorithm is dead
+#   @{ Algorithm = "Yescrypt";    MinMemGiBfree = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescrypt" } # bad shares, CcminerLyra2z330-v8.21r9 is fastest
+    @{ Algorithm = "YescryptR16"; MinMemGiBfree = 4; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr16" }
+#   @{ Algorithm = "YescryptR32"; MinMemGiBfree = 3; WarmupTimes = @(60, 0); ExcludePools = @(); Arguments = " --algo yescryptr32" } # No hashrate in time
+    @{ Algorithm = "YescryptR8";  MinMemGiBfree = 2; WarmupTimes = @(30, 0); ExcludePools = @(); Arguments = " --algo yescryptr8 --intensity 13.2" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -50,8 +50,8 @@ if ($Algorithms) {
         $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
 
         $Algorithms.ForEach{ 
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree }) { 
 
                 $DeviceIDs = ($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ','
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -61,7 +61,7 @@ if ($Algorithms) {
                 foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] }) { 
 
                     $Arguments = $_.Arguments
-                    if ($AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
+                    if ($AvailableMinerDevices.Where{ $_.MemoryGiBfree -le 2 }) { $Arguments = $Arguments -replace " -{1,2}intensity [0-9]+[.]*[0-9]+" }
 
                     @{ 
                         API         = "CcMiner"
@@ -72,7 +72,7 @@ if ($Algorithms) {
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = "NVIDIA"
-                        URI         = $URI
+                        DownloadURL = $URL
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

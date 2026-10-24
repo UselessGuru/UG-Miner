@@ -17,32 +17,32 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -ne "NVIDIA" -or $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
-$URI = "https://github.com/fireice-uk/xmr-stak/releases/download/2.10.8/xmr-stak-win64-2.10.8.7z"
+$URL = "https://github.com/fireice-uk/xmr-stak/releases/download/2.10.8/xmr-stak-win64-2.10.8.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xmr-stak.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "CryptonightBittube2"; MinMemGiB = 4; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightGpu";      MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightLite";     MinMemGiB = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightLiteV1";   MinMemGiB = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightLiteItbc"; MinMemGiB = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightHeavy";    MinMemGiB = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.25.0 is fastest
-#   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiB = 4; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # PARSE error: Invalid job length
-    @{ Algorithm = "CryptonightMsr";      MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-#   @{ Algorithm = "CryptonightR";        MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # ASIC
-    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.25.0 is fastest
-    @{ Algorithm = "CryptonightRwz";      MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightV1";       MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightV2";       MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
-    @{ Algorithm = "CryptonightXtl";      MinMemGiB = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightBittube2"; MinMemGiBfree = 4; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightGpu";      MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightLite";     MinMemGiBfree = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightLiteV1";   MinMemGiBfree = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightLiteItbc"; MinMemGiBfree = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightHeavy";    MinMemGiBfree = 1; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.25.0 is fastest
+#   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiBfree = 4; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # PARSE error: Invalid job length
+    @{ Algorithm = "CryptonightMsr";      MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+#   @{ Algorithm = "CryptonightR";        MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # ASIC
+    @{ Algorithm = "CryptonightDouble";   MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" } # XmRig-v6.25.0 is fastest
+    @{ Algorithm = "CryptonightRwz";      MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightV1";       MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightV2";       MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
+    @{ Algorithm = "CryptonightXtl";      MinMemGiBfree = 2; Type = "AMD"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noCPU --noNVIDIA --amd" }
 
 #   @{ Algorithm = "CryptonightBittube2"; Type = "CPU"; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --noAMD --noNVIDIA --cpu" } # Not profitable with CPU
 #   @{ Algorithm = "CryptonightGpu";      Type = "CPU"; WarmupTimes = @(45, 20); ExcludePools = @(); Arguments = " --noAMD --noNVIDIA --cpu" } # Not profitable with CPU
@@ -59,20 +59,20 @@ $Algorithms = @(
 #   @{ Algorithm = "CryptonightV2";       Type = "CPU"; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --noAMD --noNVIDIA --cpu" } # Not profitable with CPU
 #   @{ Algorithm = "CryptonightXtl";      Type = "CPU"; WarmupTimes = @(45, 0);  ExcludePools = @(); Arguments = " --noAMD --noNVIDIA --cpu" } # Not profitable with CPU
 
-    @{ Algorithm = "CryptonightBittube2"; MinMemGiB = 4; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightGpu";      MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightLite";     MinMemGiB = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightLiteV1";   MinMemGiB = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightLiteItbc"; MinMemGiB = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightHeavy";    MinMemGiB = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # CryptoDredge-v0.27.0 is fastest
-#   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiB = 4; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # PARSE error: Invalid job length
-    @{ Algorithm = "CryptonightMsr";      MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-#   @{ Algorithm = "CryptonightR";        MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # ASIC
-    @{ Algorithm = "CryptonightDouble";   MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # XmRig-v6.25.0 is fastest
-    @{ Algorithm = "CryptonightRwz";      MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightV1";       MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightV2";       MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
-    @{ Algorithm = "CryptonightXtl";      MinMemGiB = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightBittube2"; MinMemGiBfree = 4; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightGpu";      MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightLite";     MinMemGiBfree = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightLiteV1";   MinMemGiBfree = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightLiteItbc"; MinMemGiBfree = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightHeavy";    MinMemGiBfree = 1; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # CryptoDredge-v0.27.0 is fastest
+#   @{ Algorithm = "CryptonightHeavyXhv"; MinMemGiBfree = 4; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # PARSE error: Invalid job length
+    @{ Algorithm = "CryptonightMsr";      MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+#   @{ Algorithm = "CryptonightR";        MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # ASIC
+    @{ Algorithm = "CryptonightDouble";   MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" } # XmRig-v6.25.0 is fastest
+    @{ Algorithm = "CryptonightRwz";      MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightV1";       MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightV2";       MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
+    @{ Algorithm = "CryptonightXtl";      MinMemGiBfree = 2; Type = "NVIDIA"; WarmupTimes = @(90, 15); ExcludePools = @(); Arguments = " --noAMD --noCPU --openCLVendor NVIDIA --nvidia" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -104,8 +104,8 @@ if ($Algorithms) {
         $Type = $MinerDevices[0].Type
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -gt $MinMemGiB }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -gt $MinMemGiBfree }) { 
 
                 $MinerAPIPort = $Session.MinerBaseAPIport + ($MinerDevices.Id | Sort-Object -Bottom 1)
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -129,13 +129,13 @@ if ($Algorithms) {
                                 pool_list = @(
                                     @{ 
                                         pool_address    = "$($Pool.Host):$($Pool.PoolPorts | Select-Object -Last 1)"
-                                        wallet_address  = $Pool.User -replace "\..*"
+                                        wallet_address  = $Pool.User
                                         pool_password   = $Pool.Pass
                                         use_nicehash    = $($Pool.Name -eq "NiceHash")
                                         use_tls         = [Boolean]$Pool.PoolPorts[1]
                                         tls_fingerprint = ""
                                         pool_weight     = 1
-                                        rig_id          = $Pool.WorkerName
+                                        rig_id          = ""
                                     }
                                 )
                                 currency  = if ($Coins -icontains $Pool.CoinName) { $Pool.CoinName } else { $Currency.($_.Algorithm) }
@@ -177,13 +177,13 @@ if ($Algorithms) {
                         API         = "Fireice"
                         Arguments   = $Arguments | ConvertTo-Json -Depth 10 -Compress
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         Fee         = @(0.02) # dev fee
-                        MinerUri    = "http://127.0.0.1:$($MinerAPIPort)/h"
+                        MinerURL    = "http://127.0.0.1:$($MinerAPIPort)/h"
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = $Type
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

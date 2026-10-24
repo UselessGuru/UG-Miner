@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.OpenCL.ComputeCapability -ge "5.0" })) { return }
 
-$URI = switch ($Session.DriverVersion.CUDA) { 
+$URL = switch ($Session.DriverVersion.CUDA) { 
     { $_ -ge [System.Version]"11.6" } { "https://github.com/xiaolin1579/radiator/releases/download/v1.0.0/Radiator1.0.0_cuda11.6_Win64.zip"; break }
     { $_ -ge [System.Version]"11.2" } { "https://github.com/xiaolin1579/radiator/releases/download/v1.0.0/Radiator1.0.0_cuda11.2_Win64.zip"; break }
     default { return }
@@ -33,8 +33,8 @@ $Path = "Bin\$Name\ccminer.exe"
 $DeviceEnumerator = "Type_Vendor_Index"
 
 $Algorithms = @(
-    @{ Algorithm = "SHA512256d"; MinMemGiB = 2; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = "^Other$"; ExcludePools = @(); Arguments = " --algo=rad" }
-    @{ Algorithm = "SHA256dt";   MinMemGiB = 2; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = " ";       ExcludePools = @(); Arguments = " --algo=novo" }
+    @{ Algorithm = "SHA512256d"; MinMemGiBfree = 2; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = "^Other$"; ExcludePools = @(); Arguments = " --algo=rad" }
+    @{ Algorithm = "SHA256dt";   MinMemGiBfree = 2; WarmupTimes = @(90, 0); ExcludeGPUarchitectures = " ";       ExcludePools = @(); Arguments = " --algo=novo" }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithm] }
@@ -50,8 +50,8 @@ if ($Algorithms) {
 
         $Algorithms.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-            $MinMemGiB = $_.MinMemGiB
-            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiB -ge $MinMemGiB -and $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
+            $MinMemGiBfree = $_.MinMemGiBfree
+            if ($AvailableMinerDevices = $MinerDevices.Where{ $_.MemoryGiBfree -ge $MinMemGiBfree -and $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
 
                 $DeviceIDs = ($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ','
                 $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($_.Algorithm)"
@@ -61,18 +61,18 @@ if ($Algorithms) {
                 foreach ($Pool in $MinerPools[0][$_.Algorithm].Where{ $_.PoolPorts[0] }) { 
 
                     $Arguments = $_.Arguments
-                    if ($_.Algorithm -eq "SHA512256d" -and $AvailableMinerDevices.Where{ $_.MemoryGiB -le 2 }) { $Arguments = "$Arguments --intensity 27.1" } # Default intensity is too high for 2GB cards
+                    if ($_.Algorithm -eq "SHA512256d" -and $AvailableMinerDevices.Where{ $_.MemoryGiBfree -le 2 }) { $Arguments = "$Arguments --intensity 27.1" } # Default intensity is too high for 2GB cards
 
                     @{ 
                         API         = "CcMiner"
                         Arguments   = "$Arguments --url stratum+tcp://$($Pool.Host):$($Pool.PoolPorts[0]) --user $($Pool.User) --pass $($Pool.Pass) --timeout 50000 --retry-pause 1 --api-bind $MinerAPIPort --devices $DeviceIDs"
                         DeviceNames = $AvailableMinerDevices.Name
+                        DownloadURL = $URL
                         Fee         = @(0) # Dev fee
                         Name        = $MinerName
                         Path        = $Path
                         Port        = $MinerAPIPort
                         Type        = "NVIDIA"
-                        URI         = $URI
                         WarmupTimes = $_.WarmupTimes # First value: seconds until miner must send first sample, if no sample is received miner will be marked as failed; second value: seconds from first sample until miner sends stable hashrates that will count for benchmarking
                         Workers     = @(@{ Pool = $Pool })
                     }

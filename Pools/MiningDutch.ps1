@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 param(
@@ -43,31 +43,31 @@ Write-Message -Level Debug "Pool '$PoolVariant': Start"
 if ($DivisorMultiplier -and $PriceField) { 
 
     try { 
-        $Request = if ($Session.Brains.$Name) { $Session.BrainData.$Name } else { [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json }
+        $BrainData = if ($Session.Brains.$Name) { $Session.BrainData.$Name } else { [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json -ErrorAction Ignore }
     }
-    catch { return }
+    catch { 
+        Write-Message -Level Warn "Pool '$Name': Cannot parse brain data."
+        return
+    }
+    if (-not $BrainData.PSObject.Properties.Name) { 
+        Write-Message -Level Warn "Pool '$Name': No brain data."
+        return
+    }
 
-    if (-not $Request.PSObject.Properties.Name) { return }
+    foreach ($Algorithm in $BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
 
-    foreach ($Algorithm in $Request.PSObject.Properties.Name.Where{ $Request.$_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
-        $AlgorithmNorm = Get-Algorithm $Algorithm
-        $Currency = "$($Request.$Algorithm.currency)" -replace "\s+"
-        $Divisor = [Double]$Request.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
-
-        # Add coin name
-        if ($Request.$Algorithm.CoinName -and $Currency) { 
-            Add-CoinName -Currency $Currency -CoinName $Request.$Algorithm.CoinName
-            Add-CurrencyAlgorithm -Algorithm $AlgorithmNorm -Currency $Currency
-        }
+        $AlgorithmNorm = $BrainData.$Algorithm.AlgorithmNorm
+        $Currency = $BrainData.$Algorithm.currency
+        $Divisor = [Double]$BrainData.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
 
         $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
         if (-not $PoolConfig.UserName) { [Void]$Reasons.Add("No username") }
         # Sometimes pool returns $null hashrate for all algorithms
-        if (-not $Request.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
-        # if ($Request.$Algorithm.coins -gt 1 -and [Double]$Request.$Algorithm.$PriceField -eq 0) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
+        if (-not $BrainData.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+        # if ($BrainData.$Algorithm.coins -gt 1 -and [Double]$BrainData.$Algorithm.$PriceField -eq 0) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
  
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
-        $Value = $Request.$Algorithm.$PriceField / $Divisor
+        $Value = $BrainData.$Algorithm.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
         if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
@@ -86,26 +86,26 @@ if ($DivisorMultiplier -and $PriceField) {
                     Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-                    Fee                      = $Request.$Algorithm.Fees / 100
+                    Fee                      = $BrainData.$Algorithm.Fees / 100
                     Host                     = "$($Region).$($HostSuffix)"
                     Key                      = $Key
                     Name                     = $Name
                     Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency"
-                    Port                     = [UInt16]$Request.$Algorithm.port
+                    Port                     = [UInt16]$BrainData.$Algorithm.port
                     PortSSL                  = 0
-                    PoolUri                  = "https://www.mining-dutch.nl/?page=pools"
-                    Price                    = if ($null -eq $Request.$Algorithm.$PriceField) { [Double]::NaN } else { $Stat.Live }
+                    PoolURL                  = "https://www.mining-dutch.nl/?page=pools"
+                    Price                    = if ($null -eq $BrainData.$Algorithm.$PriceField) { [Double]::NaN } else { $Stat.Live }
                     Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
                     Reasons                  = $Reasons
                     Region                   = $RegionNorm
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week
-                    Updated                  = $Request.$Algorithm.Updated
+                    Updated                  = $BrainData.$Algorithm.Updated
                     User                     = $PoolConfig.UserName
                     Variant                  = $PoolVariant
                     WorkerName               = $PoolConfig.WorkerName
-                    Workers                  = $Request.$Algorithm.workers_shared
+                    Workers                  = $BrainData.$Algorithm.workers_shared
                 }
                 break
             }

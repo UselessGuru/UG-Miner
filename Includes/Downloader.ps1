@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\Downloader.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 using module .\Includes\Include.psm1
@@ -28,7 +28,7 @@ function Expand-WebRequest {
 
     param (
         [Parameter (Mandatory = $true)]
-        [String]$Uri,
+        [String]$URL,
         [Parameter (Mandatory = $false)]
         [String]$Path = ""
     )
@@ -36,18 +36,18 @@ function Expand-WebRequest {
     # Set current path used by .net methods to the same as the script's path
     [Environment]::CurrentDirectory = $ExecutionContext.SessionState.Path.CurrentFileSystemLocation
 
-    if (-not $Path) { $Path = Join-Path ".\Downloads" ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName }
+    if (-not $Path) { $Path = Join-Path ".\Downloads" ([IO.FileInfo](Split-Path $URL -Leaf)).BaseName }
     if (-not [System.IO.Directory]::Exists(".\Downloads")) { New-Item "Downloads" -ItemType "directory" | Out-Null }
-    $FileName = Join-Path ".\Downloads" (Split-Path $Uri -Leaf)
+    $FileName = Join-Path ".\Downloads" (Split-Path $URL -Leaf)
 
     if ([System.IO.File]::Exists($FileName)) { Remove-Item $FileName }
-    Invoke-WebRequest -Uri $Uri -OutFile $FileName -TimeoutSec 5
+    Invoke-WebRequest -Uri $URL -OutFile $FileName -TimeoutSec 5 2>$null 3>$null 4>$null 5>$null 6>$null  
 
-    if (".msi", ".exe" -contains ([IO.FileInfo](Split-Path $Uri -Leaf)).Extension) { 
+    if (".msi", ".exe" -contains ([IO.FileInfo](Split-Path $URL -Leaf)).Extension) { 
         Start-Process $FileName "-qb" -Wait | Out-Null
     }
     else { 
-        $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
+        $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $URL -Leaf)).BaseName)
         $Path_New = Split-Path $Path
 
         if ([System.IO.Directory]::Exists($Path_Old)) { Remove-Item $Path_Old -Recurse -Force }
@@ -60,7 +60,7 @@ function Expand-WebRequest {
 
         if ($Path_Old) { 
             (Move-Item $Path_Old $Path_New -PassThru).ForEach{ $_.LastWriteTime = [DateTime]::Now }
-            $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $Uri -Leaf)).BaseName)
+            $Path_Old = (Join-Path (Split-Path (Split-Path $Path)) ([IO.FileInfo](Split-Path $URL -Leaf)).BaseName)
             if ([System.IO.File]::Exists($Path_Old)) {[System.IO.Directory]::Delete($Path_Old, $true) }
         }
         else { 
@@ -76,21 +76,21 @@ $Session = $args.Session
 $ProgressPreference = "SilentlyContinue"
 
 ($DownloadList | Select-Object).ForEach{ 
-    $URI = $_.URI
+    $URL = $_.URL
     $Path = $_.Path
     $Searchable = $_.Searchable
     $Type = $_.Type
 
     if (-not [System.IO.File]::Exists($Path)) { 
         try { 
-            Write-Message -Level Info "Downloader: Initiated download of $Type from '$URI'."
+            Write-Message -Level Info "Downloader: Initiated download of $Type from '$URL'."
 
-            if ($URI -and (Split-Path $URI -Leaf) -eq (Split-Path $Path -Leaf)) { 
+            if ($URL -and (Split-Path $URL -Leaf) -eq (Split-Path $Path -Leaf)) { 
                 New-Item (Split-Path $Path) -ItemType Directory | Out-Null
-                Invoke-WebRequest $URI -OutFile $Path -ErrorAction Stop
+                Invoke-WebRequest -Uri $URL -OutFile $Path -ErrorAction Stop 2>$null 3>$null 4>$null 5>$null 6>$null  
             }
             else { 
-                [Void](Expand-WebRequest $URI $Path -ErrorAction Stop)
+                [Void](Expand-WebRequest -URL $URL $Path -ErrorAction Stop)
             }
             Write-Message -Level Info "Downloader: Installed $Type '$($Path.Replace("$($Session.MainPath)\", ''))'."
             if (Get-Command "Unblock-File" -ErrorAction Ignore) { $Path | Unblock-File }
@@ -98,9 +98,9 @@ $ProgressPreference = "SilentlyContinue"
         catch { 
             $Path_Old = $null
 
-            if ($URI) { 
-                if (-not [System.IO.File]::Exists([System.IO.Path]::Combine($Session.MainPath, 'Downloads', [System.IO.Path]::GetFileName($URI)))) { 
-                    Write-Message -Level Warn "Downloader: Cannot download '$URI'."
+            if ($URL) { 
+                if (-not [System.IO.File]::Exists([System.IO.Path]::Combine($Session.MainPath, 'Downloads', [System.IO.Path]::GetFileName($URL)))) { 
+                    Write-Message -Level Warn "Downloader: Cannot download '$URL'."
                 }
             }
             else { Write-Message -Level Warn "Downloader: Cannot download '$(Split-Path $Path -Leaf)'." }
@@ -118,9 +118,9 @@ $ProgressPreference = "SilentlyContinue"
                 Write-Message -Level Info "Downloader: Copied $Type '$($Path.Replace("$($Session.MainPath)\", ''))' from local repository '$PathOld'."
             }
             else { 
-                if ($URI) { 
-                    if ([System.IO.File]::Exists("$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)")) { 
-                        Write-Message -Level Warn "Downloader: Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URI -Leaf)'."
+                if ($URL) { 
+                    if ([System.IO.File]::Exists("$($Session.MainPath)\Downloads\$(Split-Path $URL -Leaf)")) { 
+                        Write-Message -Level Warn "Downloader: Cannot find $Type '$(Split-Path $Path -Leaf)' in downloaded package '$($Session.MainPath)\Downloads\$(Split-Path $URL -Leaf)'."
                     }
                 }
                 else { Write-Message -Level Warn "Downloader: Cannot find $Type '$($Path.Replace("$($Session.MainPath)\", ''))'." }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 using module ..\Includes\Include.psm1
@@ -31,69 +31,47 @@ using module ..\Includes\Include.psm1
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
 
+$Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
+$Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+
 $PoolObjects = @()
 $Durations = [TimeSpan[]]@()
 
-$Handler = [System.Net.Http.HttpClientHandler]::new()
-$Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator # Equivalent to -SkipCertificateCheck
-$HttpClient = [System.Net.Http.HttpClient]::new($Handler)
-$HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
-$HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36")
-
-
 while ($Config.PoolsConfig.$Name) { 
 
-    $APIcallFails = 0
     $PoolVariant = $Session.Config.PoolName.Where{ $_ -like "$Name*" }
     $StartTime = [DateTime]::Now
+
+    Write-Message -Level Debug "Brain '$Name': Start loop$(if ($Duration) { " (Previous loop duration: $Duration sec.)" })"
 
     if ($Session.MyIPaddress) { 
         try { 
 
-            Write-Message -Level Debug "Brain '$Name': Start loop$(if ($Duration) { " (Previous loop duration: $Duration sec.)" })"
+            $AlgoData = [PSCustomObject]@{ }
+            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+            $URL = "https://hashcryptos.com/api/status"
 
+            Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
+            $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
             do { 
-                try { 
-                    $Request = "https://hashcryptos.com/api/status"
-                    Write-Message -Level Debug "Brain '$Name': Querying '$Request'"
-                    $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                    $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($Config.PoolsConfig.$Name.PoolAPItimeout))
-                    $Response = $HttpClient.GetAsync($Request, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-                    # Read response as raw string
-                    $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                $APIallowedFailureCount --
+            } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
-                    $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
-                    Write-Message -Level Debug "Brain '$Name': Response from '$Request' received"
-                    if ($JSONstring -match "Only \d request every ") { 
-                        $WaitSeconds = [UInt16]($JSONstring -replace ".+Only \d request every " -replace " seconds allowed.+")
-                        Write-Message -Level $DebugLevel "Brain '$Name': Response '$JSONstring' from '$Request' received -> waiting $WaitSeconds seconds"
-                        Start-Sleep -Seconds ($WaitSeconds + 1) # Pool does not like immediate requests
-                        Remove-Variable WaitSeconds
-                    }
-                    elseif ($JSONstring -and (Test-Json $JSONstring -ErrorAction Ignore)) { 
-                        # Change numeric string to numbers, some values are null
-                        $AlgoData = ($JSONstring -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
-                    }
-
-                }
-                catch { 
-                    $APIcallFails ++
-                    $APIerror = $_.Exception.Message
-                    Write-Message -Level Error "Brain '$Name': Query to '$Request' failed ($($APIerror | ConvertTo-Json -Compress))"
-                    if ($APIcallFails -lt $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount) { Start-Sleep -Seconds ([Math]::max(15, $Config.PoolsConfig.$Name.PoolAPIretryInterval)) }
-                }
-                $CancellationTokenSource.Dispose()
-                Remove-Variable CancellationTokenSource, JSONstring, RequestMessage, Response -ErrorAction Ignore
-            } while ($AlgoData.PSObject.Properties.Name.Count -lt 2 -and $APIcallFails -le $Session.Config.PoolAPIallowedFailureCount)
-
-            $Timestamp = [DateTime]::Now.ToUniversalTime()
-
-            if ($APIcallFails -gt $Session.Config.PoolAPIallowedFailureCount) { 
-                Write-Message -Level Warn "Brain $($Name): Problem when trying to access https://hashcryptos.com/api/status$(if ($Response) { " ($($APIerror | ConvertTo-Json -Compress))" })"
+            if ($APIerror) { 
+                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
             }
-            elseif ($AlgoData.PSObject.Properties.Name) { 
+            elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
+
+                $Timestamp = [DateTime]::Now.ToUniversalTime()
+
+                # Change numeric string to numbers, some values are null
+                $AlgoData = ($APIdata.Content -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
+
                 foreach ($Algorithm in $AlgoData.PSObject.Properties.Name) { 
                     $AlgorithmNorm = Get-Algorithm $Algorithm
+                    $AlgoData.$Algorithm | Add-Member AlgorithmNorm $AlgorithmNorm -Force
+
                     $Currency = ""
                     if ($AlgoData.$Algorithm.coins -eq 1) { 
                         $Currencies = Get-CurrencyFromAlgorithm $AlgorithmNorm
@@ -170,11 +148,7 @@ while ($Config.PoolsConfig.$Name) {
                             $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
                         }
                     }
-                    Remove-Variable AlgoGroup, Algorithm, AlgorithmNorm, BasePrice, Currencies, Currency, CurrentPoolObject, CurrentPoolObjects, Divisor, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName -ErrorAction Ignore
-
-                    if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
-                        ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
-                    }
+                    Remove-Variable AlgoGroup, Algorithm, AlgorithmNorm,APIallowedFailureCount,  BasePrice, Currencies, Currency, CurrentPoolObject, CurrentPoolObjects, Divisor, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, Headers, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName, UserAgent -ErrorAction Ignore
                 }
             }
             else { 
@@ -183,6 +157,10 @@ while ($Config.PoolsConfig.$Name) {
 
             $Session.BrainData.$Name = $AlgoData
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
+
+            if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
+                ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
+            }
 
             # Limit to only sample size + 10 minutes history
             $PoolObjects = @($PoolObjects.Where{ $_.Date -ge $Timestamp.AddMinutes( - ($Config.PoolsConfig.$Name.BrainConfig.SampleSizeMinutes + 10)) })
@@ -208,4 +186,4 @@ while ($Config.PoolsConfig.$Name) {
     }
 }
 
-Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Handler, HttpClient, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, UserAgent -ErrorAction Ignore
+Remove-Variable APIallowedFailureCount, BrainDataFile, Duration, Durations, DurationsAvg, Handler, HttpClient, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, UserAgent -ErrorAction Ignore

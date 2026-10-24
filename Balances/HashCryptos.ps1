@@ -18,71 +18,49 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
+$Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
+$Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+
 $PayoutCurrency = $Config.PoolsConfig.$Name.PayoutCurrency
-$PoolAPItimeout = $Config.PoolsConfig.$Name.PoolAPItimeout
-$RetryCount = $Config.PoolsConfig.$Name.PoolAPIallowedFailureCount
-$RetryInterval = $Config.PoolsConfig.$Name.PoolAPIretryInterval
 $Wallet = $Config.PoolsConfig.$Name.Wallets.$PayoutCurrency
 
-$Handler = [System.Net.Http.HttpClientHandler]::new()
-$Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator # Equivalent to -SkipCertificateCheck
-$HttpClient = [System.Net.Http.HttpClient]::new($Handler)
-$HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
-$HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36")
+if ($Wallet) { 
 
-while ($Wallet -and -not $APIresponse -and $RetryCount -gt 0) { 
+    $URL = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
 
-    $Request = "https://www.hashcryptos.com/api/wallet/?address=$Wallet"
+    Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
 
-    try { 
-        Write-Message -Level $DebugLevel "BalancesTracker '$Name': Querying $Request"
-        $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($PoolAPItimeout))
-        $Response = $HttpClient.GetAsync($Request, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-        # Read response as raw string
-        $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+    $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+    do { 
+        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+        $APIallowedFailureCount --
+    } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
-        if ($Session.Config.BalancesTrackerLogAPIResponse) { 
-            "$([DateTime]::Now.ToUniversalTime())" | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-            ($Request.Replace("$Wallet", "***Wallet***")) | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-            $APIresponse | ConvertTo-Json -Depth 10 | Out-File -LiteralPath ".\Logs\BalanceAPIResponse_$Name.json" -Append -Force -ErrorAction Ignore
-        }
-        if ($JSONstring -match "Only \d request every ") { 
-            $WaitSeconds = [UInt16]($JSONstring -replace ".+Only \d request every " -replace " seconds allowed.+")
-            Write-Message -Level $DebugLevel "Brain '$Name': Response '$JSONstring' from '$Request' received -> waiting $WaitSeconds seconds"
-            Start-Sleep -Seconds ($WaitSeconds + 1) # Pool does not like immediate requests
-            Remove-Variable WaitSeconds
-        }
-        else { 
-            Write-Message -Level $DebugLevel "BalancesTracker '$Name': Response from '$Request' received"
-        }
-
-        if ($JSONstring -and (Test-Json $JSONstring -ErrorAction Ignore)) { 
-            $APIresponse = $JSONstring | ConvertFrom-Json
-            if ($APIresponse.symbol) { 
+    if ($APIerror) { 
+        Write-Message -Level Error "BalancesTracker '$Name': Query to '$URL' failed ($($APIerror.Message))"
+    }
+    elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
+        if($BalanceInfo = $APIdata.Content | ConvertFrom-Json) {
+            if ($BalanceInfo.symbol) { 
                 return [PSCustomObject]@{ 
                     DateTime = [DateTime]::Now.ToUniversalTime()
                     Pool     = $Name
-                    Currency = $APIresponse.symbol
+                    Currency = $BalanceInfo.symbol
                     Wallet   = $Wallet
-                    Pending  = [Double]$APIresponse.unsold # Pending
-                    Balance  = [Double]$APIresponse.balance
-                    Unpaid   = [Double]$APIresponse.unpaid # Balance + unsold (pending)
-                    # Paid     = [Double]$APIresponse.total # Reset after payout
-                    # Total    = [Double]$APIresponse.unpaid + [Double]$APIresponse.total # Reset after payout
+                    Pending  = [Double]$BalanceInfo.unsold # Pending
+                    Balance  = [Double]$BalanceInfo.balance
+                    Unpaid   = [Double]$BalanceInfo.unpaid # Balance + unsold (pending)
+                    # Paid     = [Double]$BalanceInfo.total # Reset after payout
+                    # Total    = [Double]$BalanceInfo.unpaid + [Double]$BalanceInfo.total # Reset after payout
                     Url      = "https://hashcryptos.com/?address=$Wallet"
                 }
             }
         }
     }
-    catch { 
-        Start-Sleep -Seconds $RetryInterval # Pool does not like immediate requests
-    }
-
-    $RetryCount--
 }

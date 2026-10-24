@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\FireIce.ps1
-Version:        6.8.27
-Version date:   2026/10/09
+Version:        6.9.0
+Version date:   2026/10/24
 #>
 
 [NoRunspaceAffinity()]
@@ -84,7 +84,7 @@ class Fireice : Miner {
                         if ($this.Process.ParentId) { Stop-Process -Id $this.Process.ParentId -Force -ErrorAction Ignore | Out-Null }
                         Stop-Process -Id $this.Process.Id -Force -ErrorAction Ignore | Out-Null
                         # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-                        (Get-CimInstance win32_process -Filter "ParentProcessId = $($this.Process.Id)").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
+                        (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($this.Process.Id)").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }
                     }
                 }
                 else { 

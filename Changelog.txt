@@ -1,3 +1,33 @@
+Changelog UG-Miner 6.9.0 2026/10/24
+===================================
+
+Fixes:
+- Core: Fix donation workername (some miners had multiple '.' characters in the workername)
+
+Enhancements:
+- Added support for Kryptex; to use auto-exchange to BTC you must register at the pool, otherwise it will mine directly to all currencies with a configured wallet
+- Core / balances / Brains: Rework API request handling
+- Miner window: Add warmup times to title
+
+Improvements:
+- Balances Tracker: Execute 'Get-Rate' only when really neccesary
+- Core / Include.psm1: Reduce web API calls in funtion 'Update-AllDAGdata'
+- Core / Include.psm1: Function 'Get-Rate' gets FIAT currency exchange rates from 'https://api.coinlore.net/api/'. Use 'https://api.exchangerate.fun' as fallback.
+- Core / Include.psm1: Remove obsolete code
+
+Miner changes:
+- BzMiner-v100.51 (update)
+- OneZeroMiner-v1.8.2 (update)
+- SRBMinerMulti-v3.8.0 (update)
+- Wildrig-v1.0.0o(beta) (update)
+- Wildrig-v0.51.7 (update)
+
+Pool changes:
+- Kryptex (new)
+- NiceHash: Use Brain for faster core loop processing
+- ZPool: Removed 24hr & Plus variant
+
+
 Changelog UG-Miner 6.8.27 2026/10/09
 ====================================
 
