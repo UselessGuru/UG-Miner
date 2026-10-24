@@ -1,0 +1,46 @@
+{
+  "Algorithm": [],
+  "BalancesKeepAlive": 90, // Inactive accounts are purged after 90 days
+  "BrainConfig": {
+    "Debug": false,
+    "SampleHalfPower": 0,
+    "SampleSizeMinutes": 45,
+    "UseTransferFile": false
+  },
+  "GuaranteedPayoutCurrencies": [
+    "ALPH",
+    "BCH",
+    "BSV",
+    "BTC",
+    "CFX",
+    "DGB",
+    "ERG",
+    "ETC",
+    "ETHW",
+    "FB",
+    "IRON",
+    "KAS",
+    "LTC",
+    "NEXA",
+    "OCTA",
+    "PRL",
+    "QTC",
+    "QUAI",
+    "RVN",
+    "XEC",
+    "XEL",
+    "XMR",
+    "XNA",
+    "XTM",
+    "ZEC",
+    "ZEPH"
+  ],
+  "PayoutCurrency": "[Default]",
+  "PoolAPIAllowedFailureCount": 3,
+  "PoolAPIretryInterval": 3,
+  "PoolAPItimeout": 5,
+  "Variant": {
+    "Kryptex": {
+    }
+  }
+}

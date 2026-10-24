@@ -180,7 +180,7 @@ param(
     [Parameter (Mandatory = $false)]
     [UInt16]$PoolsMaxAge = 24, # Time (in hours) until a pool is seen as too old (e.g. is has not been updated) and will be removed from the pool list
     [Parameter (Mandatory = $false)]
-    [String[]]$PoolName = @("HashCryptosPlus", "MiningDutchPlus", "NiceHash", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ZPool", "ZPool24hr", "ZPoolPlus"
+    [String[]]$PoolName = @("HashCryptosPlus", "Kryptex", "MiningDutchPlus", "NiceHash", "ZPoolPlus"), # Valid values are "HashCryptos", "HashCryptos24hr", "HashCryptosPlus", "MiningDutch", "MiningDutch24hr", "MiningDutchPlus", "NiceHash", "ZPool"
     [Parameter (Mandatory = $false)]
     [Hashtable]$PowerPricekWh = @{ "00:00" = 0.26; "12:00" = 0.3 }, # Price of power per kW⋅h (in $FIATcurrency, e.g. CHF), valid from HH:mm (24hr format)
     [Parameter (Mandatory = $false)]
