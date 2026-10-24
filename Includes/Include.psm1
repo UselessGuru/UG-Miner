@@ -2918,7 +2918,7 @@ function Get-Version {
         $APIallowedFailureCount --
     } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
-    if (-not $APIError -and ($UpdateVersion = $APIdata.Content)) { 
+    if (-not $APIError -and ($UpdateVersion = $APIdata.Content | ConvertFrom-Json)) { 
         $Session.CheckedForUpdate = [DateTime]::Now
 
         if ($Session.Branding.ProductLabel -and [System.Version]$UpdateVersion.Version -gt $Session.Branding.Version) { 

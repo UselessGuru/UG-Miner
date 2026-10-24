@@ -6,7 +6,7 @@ Fixes:
 
 Enhancements:
 - Added support for Kryptex; to use auto-exchange to BTC you must register at the pool, otherwise it will mine directly to all currencies with a configured wallet
-- Core / balances / Brains: Rework API request handling
+- Core / Balances / Brains: Rework API request handling
 - Miner window: Add warmup times to title
 
 Improvements:
